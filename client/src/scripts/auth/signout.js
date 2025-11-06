@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error("Sign-out error:", error.message);
             alert(error.message);
         } else {
-            window.location.href = "/client/src/pages/resident/home.php"; // if using the 3000
+            window.location.href = "/Banwa/client/src/pages/resident/home.php"; // if using the 3000
             // window.location.href = "/Pawradise2025/associates/index.html"; // if using the 127.0.0.1
         }
     });

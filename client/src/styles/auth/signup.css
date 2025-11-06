@@ -214,6 +214,7 @@ label{font-size:0.95rem;color:#6c757d;margin-bottom:6px}
 .err-msg {
   color: red;
   font-size: 12px;
+  margin-top: 4px;
 }
 
 .error {

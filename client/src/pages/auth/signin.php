@@ -34,7 +34,7 @@
           <input type="password" id="password" name="password" >
           <div class="err-msg" id="errMsg"></div>
         </div>
-        <a href="#" class="forgot-link">Forgot password?</a>
+        <a href="../auth/forgot_pass.php" class="forgot-link">Forgot password?</a>
         <button type="submit" id="submit" class="login-btn">Login</button>
       </form>
     </div>

@@ -57,18 +57,10 @@ function showValidation() {
       passwordErr.textContent = 'Invalid email or password';
       return;
     }
-
-        // Set PHP session
-    await fetch('/client/src/pages/auth/set_session.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: data.user.id })
-    });
-
+    
     // Success
     console.log('Login success:', data);
-    window.location.href = '/client/src/pages/resident/home.php';
+    window.location.href = '/Banwa/client/src/pages/resident/home.php';
   });
 }
 

@@ -1,0 +1,14 @@
+/* small page-specific styles for reset password page */
+.reset-help{ color:#c21c1c; font-weight:700; font-size:0.95rem; margin-top:6px; }
+#resetForm label{ display:block; margin-top:14px; color:#6b7280; font-size:0.95rem }
+#resetForm input{ width:100%; padding:10px; border-radius:8px; border:1px solid #ebecef; background:#f8f9fb; margin-top:6px }
+#resetForm .next-btn{ width:160px; display:inline-block }
+
+@media (max-width:720px){
+  .reset-help{ font-size:0.9rem }
+}
+
+/* Success state styles */
+.success-circle{ width:120px; height:120px; border-radius:50%; border:8px solid #22c55e; display:inline-flex; align-items:center; justify-content:center; margin:18px auto 6px; background:#fff }
+.success-circle svg{ display:block }
+

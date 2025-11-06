@@ -283,6 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!isValid) return;
 
+        sessionStorage.setItem('reg_username', username.value.trim());
+        sessionStorage.setItem('reg_password', password.value); // Do NOT store plaintext in production!
+        console.log('Current registration data in sessionStorage:', {
+            username: sessionStorage.getItem('reg_username'),
+            password: sessionStorage.getItem('reg_password')
+        });
+
         // All valid: proceed
         showIDPanel();
     });
@@ -319,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const personalDetailsForm = document.getElementById('personalDetailsForm');
     const firstName = document.getElementById('firstName');
-    const middleName = document.getElementById('middleName');
     const lastName = document.getElementById('lastName');
     const sex = document.getElementById('sex');
     const address = document.getElementById('address');
@@ -339,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Real-time validation
-    [firstName, middleName, lastName, suffix, sex, address].forEach((input) => {
+    [firstName, lastName, suffix, sex, address].forEach((input) => {
         input.addEventListener('input', () => validateInput(input));
     });
 
@@ -348,23 +354,42 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const firstValid = validateInput(firstName, 'First name is required');
-        const middleValid = validateInput(middleName, 'Middle name is required');
         const lastValid = validateInput(lastName, 'Last name is required');
         const sexValid = validateInput(sex, 'Please select your sex');
         const addressValid = validateInput(address, 'Address is required');
-        const isValid = firstValid && middleValid && lastValid && sexValid && addressValid;
+        const isValid = firstValid && lastValid && sexValid && addressValid;
 
         if (!isValid) return;
 
-        // Success
-        console.log('signup success:', {
+        // --- RETRIEVE STORED ACCOUNT INFO (from session) ---
+        const reg_username = sessionStorage.getItem('reg_username');
+        const reg_password = sessionStorage.getItem('reg_password');
+
+        // You now have all info for the server/db:
+        const allSignupData = {
+            username: reg_username,
+            password: reg_password,    // In production, never handle password in plain text like this!
             firstName: firstName.value,
-            middleName: middleName.value,
             lastName: lastName.value,
             sex: sex.value,
             address: address.value
-        });
+        };
 
-        window.location.href = '/client/src/pages/auth/signin.php';
+        // ---- CONSOLE LOG ALL DATA CLEARLY ----
+        console.log('%c ALL REGISTRATION DATA:', 'color: green; font-weight: bold;');
+        console.log(allSignupData);
+
+        // --- SEND DATA TO SERVER or STORE ---
+        // Example: await fetch('/api/signup', { method: 'POST', body: JSON.stringify(allSignupData) });
+
+        // Clear sessionStorage for security after signup
+        sessionStorage.removeItem('reg_username');
+        sessionStorage.removeItem('reg_password');
+
+        // Success
+        alert('Registration successful!\nYou may now log in to your account.');
+        window.location.href = '/Banwa/client/src/pages/auth/signin.php';
+
+        window.location.href = '/Banwa/client/src/pages/auth/signin.php';
     });
 });

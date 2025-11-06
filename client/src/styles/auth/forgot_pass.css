@@ -1,0 +1,12 @@
+/* Page-specific styles for pages/forgotpassword.html */
+.forgot-card{ max-width:420px; width:100%; }
+.forgot-legend{ font-size:1.5rem; font-weight:800; color:var(--blue); margin-bottom:6px }
+.forgot-text{ color:#666; margin-bottom:18px }
+.number-input{ display:flex; gap:8px; align-items:flex-start; }
+.number-input .cc{ min-width:72px }
+.icon-input{ display:flex; align-items:center; gap:8px }
+.input-with-icon{ position:relative }
+.input-with-icon .input-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#8892b0 }
+.input-with-icon input{ padding-left:38px }
+.back-link{ margin-bottom:18px; display:inline-block }
+.text-input{ width:100%; padding:10px; border-radius:8px; border:1px solid #ebecef; background:#f8f9fb; box-sizing:border-box }
