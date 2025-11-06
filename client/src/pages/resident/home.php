@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Home page</title>
 </head>
 <body>
-    <h1>Hello, Welcome Back!!!</h1>
+    <h1>Home page</h1>
     <p id="userStatus"></p>
-    <a href="../resident/construction_app.php">Construction Application</a>
+    <a href="../resident/about_us.php">About Us</a><br>
+    <a href="../resident/contact_us.php">Contact Us</a><br>
+    <a href="../resident/profile.php">Profile</a><br>
+    <a href="../resident/construction_app.php">Construction Application</a><br>
+    <a href="../resident/utilities_app.php">Utilities Application</a><br>
+    <a href="../resident/business_app.php">Business Application</a><br>
     <button id="signoutBtn">Logout</button>
 
     <script type="module" src="../../scripts/auth/signout.js"></script>
