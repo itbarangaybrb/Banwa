@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $remarks = $_POST['remarks'];
 
     // Create folder if it does not exist
-    $upload_dir = "client/src/configs/uploads/construction/";
+    $upload_dir = "client/configs/uploads/construction/";
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
@@ -85,7 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($stmt->execute()) {
         echo "<script>
     alert('Construction Permit Form Submitted Successfully!');
-    window.location.href='/Banwa/client/src/pages/resident/home.php';
+    window.location.href='/Banwa/client/pages/resident/home.php';
 </script>";
     } else {
         echo "<script>alert('Error Saving Data!');</script>";

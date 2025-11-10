@@ -15,7 +15,7 @@
     <div class="container">
         <div class="left-panel">
             <div class="logo-circle">
-                <img src="../../assets/img/banwalogo.png" alt="Barangay Blue Ridge B Logo">
+                <img src="../../img/banwalogo.png" alt="Barangay Blue Ridge B Logo">
             </div>
         </div>
 

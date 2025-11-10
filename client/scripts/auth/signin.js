@@ -60,7 +60,7 @@ function showValidation() {
     
     // Success
     console.log('Login success:', data);
-    window.location.href = '/Banwa/client/src/pages/resident/home.php';
+    window.location.href = '/Banwa/client/pages/resident/home.php';
   });
 }
 

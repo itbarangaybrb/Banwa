@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       setTimeout(()=>{
         alert('OTP verified (demo)');
         // after successful OTP, proceed to reset password page
-        location.href = '/Banwa/client/src/pages/auth/reset_pass.php';
+        location.href = '/Banwa/client/pages/auth/reset_pass.php';
       }, 700);
     });
   }

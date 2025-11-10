@@ -388,8 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Success
         alert('Registration successful!\nYou may now log in to your account.');
-        window.location.href = '/Banwa/client/src/pages/auth/signin.php';
+        window.location.href = '/Banwa/client/pages/auth/signin.php';
 
-        window.location.href = '/Banwa/client/src/pages/auth/signin.php';
+        window.location.href = '/Banwa/client/pages/auth/signin.php';
     });
 });

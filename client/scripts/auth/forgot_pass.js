@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.innerText = 'SENT';
       // Simulate OTP send, then go to verification page
       setTimeout(() => {
-        location.href = '/Banwa/client/src/pages/auth/forgot_pass_verification.php';
+        location.href = '/Banwa/client/pages/auth/forgot_pass_verification.php';
       }, 600);
     });
   }

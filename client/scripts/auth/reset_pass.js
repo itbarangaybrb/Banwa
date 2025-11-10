@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn) btn.addEventListener('click', () => location.href = '/client/src/pages/auth/signin.php');
       }, 0);
     } else {
-      location.href = '/Banwa/client/src/pages/auth/signin.php';
+      location.href = '/Banwa/client/pages/auth/signin.php';
     }
   });
 });

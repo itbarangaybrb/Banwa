@@ -8,9 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-        // Redirect to sign-in page if not logged in
-        window.location.href = "/client/src/pages/auth/signin.php"; // if using the 3000
-        // window.location.href = "/Pawradise2025/associates/index.html"; // if using the 127.0.0.1
+        window.location.href = "/Banwa/client/pages/auth/signin.php"; 
     } else {
         const emailInput = document.getElementById("email");
 
@@ -29,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error("Sign-out error:", error.message);
             alert(error.message);
         } else {
-            window.location.href = "/Banwa/client/src/pages/resident/home.php"; // if using the 3000
+            window.location.href = "/Banwa/client/pages/auth/signin.php"; // if using the 3000
             // window.location.href = "/Pawradise2025/associates/index.html"; // if using the 127.0.0.1
         }
     });

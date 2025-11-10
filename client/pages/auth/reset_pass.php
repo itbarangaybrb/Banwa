@@ -13,7 +13,7 @@
   <div class="container">
     <div class="left-panel">
       <div class="logo-circle">
-        <img src="../../assets/img/banwalogo.png" alt="logo">
+        <img src="../../img/banwalogo.png" alt="logo">
       </div>
     </div>
     <div class="right-panel">
