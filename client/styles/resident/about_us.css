@@ -1,0 +1,203 @@
+:root {
+    --color-blue-1: #1249B4;
+    --color-blue-2: #00247C;
+
+    --h2: 60px;
+    --h2-lh: 62px;
+    --h2-letter-space: -0.4%;
+
+    --h3: 48px;
+    --h3-lh: 60px;
+    --h3-letter-space: -0.3%;
+
+    --h5: 30px;
+    --h5-lh: 38px;
+    --h5-letter-space: -0.15%;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+    --h6-letter-space: -0.1%;
+
+    --tx1: 20px;
+    --tx1-lh: 30px;
+
+    --tx3: 16px;
+    --tx3-lh: 24px;
+    --tx3-letter-space: 0.15%;
+
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+}
+
+.header-and-parags h1 {
+    margin-bottom: 12px;
+}
+
+.history,
+.officials .inner-container,
+.m-and-v .inner-container {
+    display: flex;
+    align-items: center;
+    column-gap: 32px;
+}
+
+
+/* ==================== History section ==================== */
+.history .carousel {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.select-images {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 8px;
+    padding: 0;
+    margin: 0;
+}
+
+.select-images img {
+    row-gap: 8px;
+}
+
+/* ==================== Officials section ==================== */
+.officials .cards img {
+    border-radius: 4px;
+}
+
+.officials .officials-images {
+    display: flex;
+    flex-direction: column;
+    row-gap: 64px;
+    padding: 32px;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 4px 25px 0px grey;
+}
+
+.officials .officials-images .row {
+    display: flex;
+    column-gap: 16px;
+}
+
+.officials .content:first-child .name-and-position h5 {
+    font-size: var(--h5);
+    font-weight: var(--fw-bold);
+    line-height: var(--h5-lh);
+    letter-spacing: var(--h5-letter-space);
+}
+
+.officials .content:first-child .name-and-position h6 {
+    font-size: var(--h6);
+    font-weight: var(--fw-regular);
+    line-height: var(--h6-lh);
+    letter-spacing: var(--h6-letter-space);
+    color: var(--color-blue-2);
+}
+
+.officials .officials-images .row {
+    display: flex;
+    column-gap: 16px;
+}
+
+.officials .inner-container .content:first-child .name-and-position {
+    text-align: center;
+    width: max-content;
+    margin-top: 8px;
+
+}
+
+.officials .inner-container .content:not(:first-child) .name-and-position {
+    text-align: center;
+    margin-top: 8px;
+    background-color: #1249B4;
+    color: white;
+    width: max-content;
+    padding: 8px;
+    margin-inline: auto;
+    border-radius: 8px;
+}
+
+.name-and-position p:nth-child(1) {
+    font-weight: var(--fw-semibold);
+}
+
+.name-and-position p {
+    font-size: var(--tx3);
+    font-weight: var(--fw-regular);
+    line-height: var(--tx3-lh);
+    letter-spacing: var(--tx3-letter-space);
+}
+
+
+/* ==================== Mission and Vision section ==================== */
+.m-and-v .inner-container {
+    box-shadow: 0 4px 25px 0px grey;
+    border-radius: 16px;
+    background-color: white;
+}
+
+.m-and-v .inner-container img {
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+
+.m-and-v .content:nth-child(2) {
+    margin-right: 32px;
+}
+
+.m-and-v .header-and-parags h3 {
+    color: #00247C;
+}
+
+.m-and-v .content .header-and-parags:first-child {
+    margin-bottom: 32px;
+}
+
+
+/* ==================== To all h2, h3 and p ==================== */
+h2 {
+    font-size: var(--h2);
+    font-weight: var(--fw-bold);
+    line-height: var(--h2-lh);
+    letter-spacing: var(--h2-letter-space);
+    margin-bottom: 64px;
+    text-align: center;
+}
+
+h3 {
+    font-size: var(--h3);
+    font-weight: var(--fw-bold);
+    line-height: var(--h3-lh);
+    letter-spacing: var(--h3-letter-space);
+    margin-bottom: 12px;
+}
+
+p {
+    font-size: var(--tx1);
+    font-weight: var(--fw-regular);
+    line-height: var(--tx1-lh);
+}
+
+@media screen and (max-width: 939px) {
+
+    .history,
+    .officials .inner-container,
+    .m-and-v .inner-container {
+        flex-direction: column;
+        row-gap: 32px;
+    }
+
+    .officials-images .row {
+        flex-wrap: wrap;
+        row-gap: 16px;
+    }
+
+    .officials-images .row .cards {
+        flex: 1;
+    }
+}

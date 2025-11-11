@@ -8,16 +8,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-        window.location.href = "/Banwa/client/pages/auth/signin.php"; 
+        window.location.href = "/Banwa/client/pages/auth/signin.php";
     } else {
         const emailInput = document.getElementById("email");
 
         if (emailInput) {
             emailInput.value = `${session.user.email}`;
-        } 
+        }
 
         userStatus.textContent = `${session.user.email}`;
-        signoutBtn.style.display = "block"; // Show sign-out button
+        signoutBtn.style.display = "block";
     }
 
     // Handle sign-out
@@ -27,8 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.error("Sign-out error:", error.message);
             alert(error.message);
         } else {
-            window.location.href = "/Banwa/client/pages/auth/signin.php"; // if using the 3000
-            // window.location.href = "/Pawradise2025/associates/index.html"; // if using the 127.0.0.1
+            window.location.href = "/Banwa/client/pages/auth/signin.php";
         }
     });
 });

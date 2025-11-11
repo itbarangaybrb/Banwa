@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $remarks = $_POST['remarks'];
 
     // Create folder if it does not exist
-    $upload_dir = "client/configs/uploads/construction/";
+    $upload_dir = "client/uploads/";
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
