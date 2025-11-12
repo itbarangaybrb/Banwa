@@ -38,6 +38,11 @@
 }
 
 /* ==================== History section ==================== */
+.history .content:nth-child(1),
+.history .content:nth-child(2) {
+    width: 100%;
+}
+
 .history .content:nth-child(2) .carousel {
     display: flex;
     flex-direction: column;
@@ -60,6 +65,10 @@
 .history .content:nth-child(3) .logos img:nth-child(1),
 .history .content:nth-child(3) .logos img:nth-child(2) {
     margin-bottom: 8px;
+}
+
+.history .content:nth-child(3) .logos img {
+    max-width: 91.51px;
 }
 
 /* ==================== Officials section ==================== */
