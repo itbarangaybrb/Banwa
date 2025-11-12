@@ -68,17 +68,18 @@
 
 .officials .container-1 {
     display: flex;
-    gap: 16px;
+    gap: 32px;
     align-items: center;
 }
 
 .officials .container-1 .officials-imgs {
     display: flex;
     flex-direction: column;
-    padding: 16px;
-    border: 1px solid grey;
+    padding: 32px;
+    box-shadow: 0 4px 25px 0px grey;
     border-radius: 16px;
     row-gap: 16px;
+    background-color: white;
 }
 
 .officials .container-1 .officials-imgs .row {
