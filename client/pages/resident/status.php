@@ -10,9 +10,10 @@
 </head>
 <body>
     <main>
+        <!-- ==================== Status section ==================== -->
         <section class="sections">
             <div class="containers status">
-                <div class="inner-container">
+                <div class="container-1">
                     <div class="content">
                         <div class="header-and-text">
                             <h4>Current Status</h4>
@@ -31,5 +32,7 @@
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
     </main>
+
+    <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 </html>

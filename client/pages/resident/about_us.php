@@ -23,7 +23,7 @@
                         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
                     </div>
                 </div>
-    
+
                 <div class="content">
                     <div class="carousel">
                         <div class="carouseld-image" id="imgPreviewer">
@@ -39,9 +39,9 @@
                 </div>
             </div>
         </section>
-    
+
         <!-- ================== Officials section ================== -->
-        <section class="sections">
+        <!-- <section class="sections">
             <div class="containers officials">
                 <h2>Officials</h2>
                 <div class="inner-container">
@@ -54,7 +54,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="content">
                         <div class="officials-images">
                             <div class="row">
@@ -121,23 +121,106 @@
                     </div>
                 </div>
             </div>
+        </section> -->
+
+        <section class="sections">
+            <div class="containers officials">
+                <h2>Officials</h2>
+                <div class="container-1">
+                    <div class="content">
+                        <div class="cards">
+                            <img src="../../img/official-1.png" alt="">
+                            <div class="name-and-position">
+                                <p>Kapitan Sessan Castro-Lee</p>
+                                <p>Punong Barangay</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="officials-imgs">
+                            <div class="row">
+                                <div class="cards">
+                                    <img src="../../img/official-2.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-3.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-4.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-5.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="cards">
+                                    <img src="../../img/official-6.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-7.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-8.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                                <div class="cards">
+                                    <img src="../../img/official-9.png" alt="">
+                                    <div class="name-and-position">
+                                        <p>Kapitan Sessan Castro-Lee</p>
+                                        <p>Punong Barangay</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
-    
+
         <!-- ================== Mission and Vision section ================== -->
         <section class="sections">
             <div class="containers m-and-v">
                 <h2>Vision & Mission</h2>
-                <div class="inner-container">
+                <div class="container-1">
                     <div class="content">
                         <img src="../../img/mv-1.png" alt="">
                     </div>
-    
+
                     <div class="content">
                         <div class="header-and-parags">
                             <h3>Mission</h3>
                             <p>We, as the front-liners of the government to its citizen at the Barangay level, are committed to become models of excellence and to deliver efficient, high quality and good value services to Blue Ridge B towards attainment of our vision.</p>
                         </div>
-    
+
                         <div class="header-and-parags">
                             <h3>Vision</h3>
                             <p>We envision Barangay Blue Ridge B to be a community of peacefull, drug-free, clean, environmentally aware, Self sufficient, disaster resilient, vigilant and ever ready to help and responsible Address the problem and needs of others. We intent to project a community that is morally and socially progressive, caring, disciplined, law-abiding, productive and health individuals.</p>
@@ -146,12 +229,13 @@
                 </div>
         </section>
 
-         <div class="bg-logo">
+        <div class="bg-logo">
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
     </main>
 
     <script src="../../scripts/resident/about_us.js"></script>
+    <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
 </html>

@@ -31,27 +31,21 @@
     --fw-bold: 700;
 }
 
-.header-and-parags h1 {
-    margin-bottom: 12px;
-}
-
 .history,
-.officials .inner-container,
-.m-and-v .inner-container {
+.m-and-v .container-1 {
     display: flex;
     align-items: center;
     column-gap: 32px;
 }
 
-
 /* ==================== History section ==================== */
-.history .carousel {
+.history .content .carousel {
     display: flex;
     flex-direction: column;
     row-gap: 8px;
 }
 
-.select-images {
+.history .content .carousel .select-images {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -60,38 +54,72 @@
     margin: 0;
 }
 
-.select-images img {
+.history .content .carousel .select-images img {
     row-gap: 8px;
 }
 
 /* ==================== Officials section ==================== */
-.officials .cards img {
-    border-radius: 4px;
+.officials img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
-.officials .officials-images {
+.officials .container-1 {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.officials .container-1 .officials-imgs {
     display: flex;
     flex-direction: column;
-    row-gap: 64px;
-    padding: 32px;
-    border-radius: 8px;
-    background-color: white;
-    box-shadow: 0 4px 25px 0px grey;
+    padding: 16px;
+    border: 1px solid grey;
+    border-radius: 16px;
+    row-gap: 16px;
 }
 
-.officials .officials-images .row {
+.officials .container-1 .officials-imgs .row {
     display: flex;
-    column-gap: 16px;
+    gap: 8px;
+    align-items: stretch;
+    /* makes cards equal height */
+    flex-wrap: wrap;
+    /* optional for responsiveness */
 }
 
-.officials .content:first-child .name-and-position h5 {
+.officials .container-1 .officials-imgs .row .cards {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.officials .container-1 .content .cards .name-and-position {
+    text-align: center;
+}
+
+.officials .officials-imgs .row .cards .name-and-position {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: var(--color-blue-1);
+    text-align: center;
+    color: white;
+}
+
+.officials .container-1 .content:first-child .cards .name-and-position p:nth-child(1) {
     font-size: var(--h5);
     font-weight: var(--fw-bold);
     line-height: var(--h5-lh);
     letter-spacing: var(--h5-letter-space);
+
+    /* i will apply the clamp here later... - jep */
 }
 
-.officials .content:first-child .name-and-position h6 {
+.officials .container-1 .content:first-child .cards .name-and-position p:nth-child(2) {
     font-size: var(--h6);
     font-weight: var(--fw-regular);
     line-height: var(--h6-lh);
@@ -99,49 +127,30 @@
     color: var(--color-blue-2);
 }
 
-.officials .officials-images .row {
-    display: flex;
-    column-gap: 16px;
-}
-
-.officials .inner-container .content:first-child .name-and-position {
-    text-align: center;
-    width: max-content;
-    margin-top: 8px;
-
-}
-
-.officials .inner-container .content:not(:first-child) .name-and-position {
-    text-align: center;
-    margin-top: 8px;
-    background-color: #1249B4;
-    color: white;
-    width: max-content;
-    padding: 8px;
-    margin-inline: auto;
-    border-radius: 8px;
-}
-
-.name-and-position p:nth-child(1) {
-    font-weight: var(--fw-semibold);
-}
-
-.name-and-position p {
+.officials .container-1 .officials-imgs .row .cards .name-and-position p {
     font-size: var(--tx3);
-    font-weight: var(--fw-regular);
     line-height: var(--tx3-lh);
     letter-spacing: var(--tx3-letter-space);
 }
 
 
+.officials .container-1 .officials-imgs .row .cards .name-and-position p:first-child {
+    font-weight: var(--fw-semibold);
+}
+
+.officials .container-1 .officials-imgs .row .cards .name-and-position p:last-child {
+    font-weight: var(--fw-regular);
+}
+
+
 /* ==================== Mission and Vision section ==================== */
-.m-and-v .inner-container {
+.m-and-v .container-1 {
     box-shadow: 0 4px 25px 0px grey;
     border-radius: 16px;
     background-color: white;
 }
 
-.m-and-v .inner-container img {
+.m-and-v .container-1 .content img {
     border-top-left-radius: 16px;
     border-bottom-left-radius: 16px;
 }
@@ -150,11 +159,11 @@
     margin-right: 32px;
 }
 
-.m-and-v .header-and-parags h3 {
+.m-and-v .content:nth-child(2) .header-and-parags h3 {
     color: #00247C;
 }
 
-.m-and-v .content .header-and-parags:first-child {
+.m-and-v .content:nth-child(2) .header-and-parags:first-child {
     margin-bottom: 32px;
 }
 
@@ -186,8 +195,7 @@ p {
 @media screen and (max-width: 939px) {
 
     .history,
-    .officials .inner-container,
-    .m-and-v .inner-container {
+    .m-and-v .container-1 {
         flex-direction: column;
         row-gap: 32px;
     }

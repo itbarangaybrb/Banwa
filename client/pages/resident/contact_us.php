@@ -55,6 +55,8 @@
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
     </main>
+
+    <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
 </html>
