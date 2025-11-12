@@ -37,6 +37,14 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="content">
+                    <div class="logos" id="imgSelector">
+                        <div><img src="../../img/logo-1.png" alt=""></div>
+                        <div><img src="../../img/logo-2.png" alt=""></div>
+                        <div><img src="../../img/logo-3.png" alt=""></div>
+                    </div>
+                </div>
             </div>
         </section>
 

@@ -34,18 +34,17 @@
 .history,
 .m-and-v .container-1 {
     display: flex;
-    align-items: center;
     column-gap: 32px;
 }
 
 /* ==================== History section ==================== */
-.history .content .carousel {
+.history .content:nth-child(2) .carousel {
     display: flex;
     flex-direction: column;
     row-gap: 8px;
 }
 
-.history .content .carousel .select-images {
+.history .content:nth-child(2) .carousel .select-images {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -54,8 +53,13 @@
     margin: 0;
 }
 
-.history .content .carousel .select-images img {
+.history .content:nth-child(2) .carousel .select-images img {
     row-gap: 8px;
+}
+
+.history .content:nth-child(3) .logos img:nth-child(1),
+.history .content:nth-child(3) .logos img:nth-child(2) {
+    margin-bottom: 8px;
 }
 
 /* ==================== Officials section ==================== */
@@ -84,7 +88,7 @@
 
 .officials .container-1 .officials-imgs .row {
     display: flex;
-    gap: 8px;
+    gap: 16px;
     align-items: stretch;
     flex-wrap: wrap;
 }
@@ -143,6 +147,10 @@
 
 
 /* ==================== Mission and Vision section ==================== */
+.m-and-v .container-1 {
+    align-items: center;
+}
+
 .m-and-v .container-1 {
     box-shadow: 0 4px 25px 0px grey;
     border-radius: 16px;
