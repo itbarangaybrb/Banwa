@@ -41,88 +41,6 @@
         </section>
 
         <!-- ================== Officials section ================== -->
-        <!-- <section class="sections">
-            <div class="containers officials">
-                <h2>Officials</h2>
-                <div class="inner-container">
-                    <div class="content">
-                        <div class="cards">
-                            <img src="../../img/official-1.png" alt="">
-                            <div class="name-and-position">
-                                <h5>Kapitan Sessan Castro-Lee</h5>
-                                <h6>Punong Barangay</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="content">
-                        <div class="officials-images">
-                            <div class="row">
-                                <div class="cards">
-                                    <img src="../../img/official-2.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>1st Kagawad</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-3.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>2nd Kagawad</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-4.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>3rd Kagawad</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-5.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>4th Kagawad</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="cards">
-                                    <img src="../../img/official-6.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>5th Kagawad</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-7.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>6th Kagawad</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-8.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>Barangay Secretary</p>
-                                    </div>
-                                </div>
-                                <div class="cards">
-                                    <img src="../../img/official-9.png" alt="">
-                                    <div class="name-and-position">
-                                        <p>Katherine T. De Jesus</p>
-                                        <p>Barangay Treasurer</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section> -->
-
         <section class="sections">
             <div class="containers officials">
                 <h2>Officials</h2>
@@ -136,7 +54,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="content">
                         <div class="officials-imgs">
                             <div class="row">

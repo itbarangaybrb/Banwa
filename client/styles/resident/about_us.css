@@ -86,9 +86,7 @@
     display: flex;
     gap: 8px;
     align-items: stretch;
-    /* makes cards equal height */
     flex-wrap: wrap;
-    /* optional for responsiveness */
 }
 
 .officials .container-1 .officials-imgs .row .cards {
