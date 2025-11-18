@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
     <title>About Us</title>
 
     <link rel="stylesheet" href="../../styles/global.css">
@@ -11,6 +14,14 @@
 </head>
 
 <body>
+    <!-- 
+        TODO: Front-end developer, will change
+        this into modal once the designs is fully completed. 
+      -->
+    <p id="userStatus"></p>
+    <button id="signoutBtn">Logout</button>
+
+
     <main>
         <!-- ================== History section ================== -->
         <section class="sections">
@@ -36,9 +47,7 @@
                             <div><img src="../../img/building-5.png" alt=""></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="content">
                     <div class="logos" id="imgSelector">
                         <div><img src="../../img/logo-1.png" alt=""></div>
                         <div><img src="../../img/logo-2.png" alt=""></div>

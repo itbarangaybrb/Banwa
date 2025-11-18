@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
     <title>Contact Us</title>
 
     <link rel="stylesheet" href="../../styles/global.css">
@@ -11,6 +14,13 @@
 </head>
 
 <body>
+    <!-- 
+        TODO: Front-end developer, will change
+        this into modal once the designs is fully completed. 
+      -->
+    <p id="userStatus"></p>
+    <button id="signoutBtn">Logout</button>
+
     <main>
         <!-- ================== Contanct section ================== -->
         <section class="sections">

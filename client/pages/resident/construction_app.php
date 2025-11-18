@@ -100,6 +100,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 
 <head>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
     <title>Construction Permit Form</title>
     <link rel="stylesheet" href="../../styles/resident/construction_app.css">
 </head>

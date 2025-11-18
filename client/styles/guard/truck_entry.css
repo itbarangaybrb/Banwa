@@ -1,0 +1,13 @@
+.error-msg {
+    color: red;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.error {
+  border: 1px solid red !important;
+}
+
+.hidden {
+    display: none;
+}

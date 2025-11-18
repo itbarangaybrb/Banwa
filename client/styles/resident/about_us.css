@@ -40,7 +40,12 @@
 /* ==================== History section ==================== */
 .history .content:nth-child(1),
 .history .content:nth-child(2) {
-    width: 100%;
+    flex: 1 1;
+}
+
+.history .content:nth-child(2) {
+    display: flex;
+    gap: 32px;
 }
 
 .history .content:nth-child(2) .carousel {
@@ -62,12 +67,12 @@
     row-gap: 8px;
 }
 
-.history .content:nth-child(3) .logos img:nth-child(1),
-.history .content:nth-child(3) .logos img:nth-child(2) {
+.history .content:nth-child(2) .logos img:nth-child(1),
+.history .content:nth-child(2) .logos img:nth-child(2) {
     margin-bottom: 8px;
 }
 
-.history .content:nth-child(3) .logos img {
+.history .content:nth-child(2) .logos img {
     max-width: 91.51px;
 }
 

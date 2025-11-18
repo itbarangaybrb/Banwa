@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,15 @@
     <link rel="stylesheet" href="../../styles/global.css">
     <link rel="stylesheet" href="../../styles/resident/status.css">
 </head>
+
 <body>
+    <!-- 
+        TODO: Front-end developer, will change
+        this into modal once the designs is fully completed. 
+      -->
+    <p id="userStatus"></p>
+    <button id="signoutBtn">Logout</button>
+
     <main>
         <!-- ==================== Status section ==================== -->
         <section class="sections">
@@ -28,11 +37,12 @@
             </div>
         </section>
 
-         <div class="bg-logo">
+        <div class="bg-logo">
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
     </main>
 
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
+
 </html>
