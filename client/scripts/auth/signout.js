@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!session) {
         window.location.href = "/Banwa/client/pages/auth/signin.php";
+        return;
     } else {
         const emailInput = document.getElementById("email");
 
@@ -31,3 +32,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
+
+
+// TODO: Front-end developer, need to change this for bfcache so users 
+// will not able to return.
+// Will update this later - jep

@@ -141,6 +141,7 @@
     </main>
 
     <script src="../../scripts/resident/utilities_app.js"></script>
+    <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
 </html>
