@@ -136,7 +136,7 @@ function validation() {
 
         if (validations.every(v => v)) {
             document.getElementById('waiverFullname').textContent = fullnameUtilities.value;
-            
+
             switchPanel('waiver');
         }
     });
@@ -190,7 +190,7 @@ function validation() {
                 agreed: agreeCheckBox.checked
             };
 
-           // TODO: Back-end developer, these are the data to be sent to db.
+            // TODO: Back-end developer, these are the data to be sent to db.
             // add here if necessary...
 
             console.log('Final Submission Data:', allData);
