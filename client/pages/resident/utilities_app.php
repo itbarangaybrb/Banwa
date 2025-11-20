@@ -29,7 +29,7 @@
                     <form action="" class="forms" id="utilitiesForms">
                         <h3>Utilities Application</h3>
 
-                        <div class="inputs">
+                        <div class="inputs-container">
                             <div class="label-and-input">
                                 <label for="requestDate">Request date</label>
                                 <input type="date" name="requestDate" id="requestDate">

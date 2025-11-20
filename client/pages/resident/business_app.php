@@ -19,8 +19,7 @@
                     <p>This form authorizes personnel to perform the requested utility service at your address.</p>
 
                     <form id="certificationForm" method="post">
-                        <fieldset>
-
+                        <div class="inputs-container">
                             <div class="label-and-input">
                                 <label for="businessName">Business Name</label>
                                 <input type="text" id="businessName" name="businessName">
@@ -153,8 +152,7 @@
                                 <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                                 <div class="error-msg"></div>
                             </div>
-
-                        </fieldset>
+                        </div>
 
                         <button type="button" id="nextToWaiver">Next</button>
                         <button type="button" id="utilitiesBackBtn">Back</button>
@@ -204,29 +202,17 @@
 
                         <div id="summaryContent">
                             <p><strong>Business Name:</strong> <span id="sumBusinessName"></span></p>
-
                             <p><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></p>
-
                             <p><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></p>
-
+                            <p><strong>Nature of Business:</strong> <span id="sumAddressOfBusiness"></span></p>
                             <p><strong>Business Telephone:</strong> <span id="sumTelephoneBusiness"></span></p>
-
                             <p><strong>Email:</strong> <span id="sumEmail"></span></p>
-
                             <p><strong>Owner Name:</strong> <span id="sumFullname"></span></p>
-
                             <p><strong>Owner Telephone:</strong> <span id="sumTelephoneOwner"></span></p>
-
                             <p><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></p>
-
                             <p><strong>Structure Type:</strong> <span id="sumStructureType"></span></p>
-
                             <p><strong>Requirements:</strong> <span id="sumRequirements"></span></p>
-
-                            <p><strong>Other Requirement:</strong> <span id="sumOtherReq"></span></p>
-
                             <p><strong>No. of Employees:</strong> <span id="sumEmployees"></span></p>
-
                             <p><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></p>
                         </div>
 

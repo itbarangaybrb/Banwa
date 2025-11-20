@@ -32,7 +32,7 @@
                         <form action="" class="forms" id="changePassForm">
                             <h3>Change Password</h3>
 
-                            <div class="inputs">
+                            <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="currentPassword">Current password</label>
                                     <input type="text" name="currentPassword" id="currentPassword">
@@ -59,7 +59,7 @@
                         <form action="" class="forms" id="mngAccForm">
                             <h3>Manage Account</h3>
 
-                            <div class="inputs">
+                            <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="firstName">First Name</label>
                                     <input type="text" name="firstName" id="firstName">

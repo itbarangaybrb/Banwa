@@ -47,7 +47,6 @@ function validation() {
         const errorEl = wrapper.querySelector('.error-msg');
         const value = input.value.trim();
 
-        // Required check
         if (value === '') {
             input.classList.add('error');
             errorEl.textContent = message;
@@ -56,21 +55,18 @@ function validation() {
             errorEl.textContent = '';
         }
 
-        // Pattern validation
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
             errorEl.textContent = rules.errorMessage || 'Invalid format';
             return false;
         }
 
-        // Max length validation
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
             errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
             return false;
         }
 
-        // Passed validation
         input.classList.remove('error');
         errorEl.textContent = '';
         return true;
@@ -223,7 +219,7 @@ function validation() {
             }
         }
 
-    });
+    }, { once: true });
 
     // =========================
     // Manage account "Save"
@@ -262,7 +258,7 @@ function validation() {
                 alert('Application submitted successfully!');
             }
         }
-    });
+    }, { once: true });
 
     // =========================
     // Change Password Panel Button

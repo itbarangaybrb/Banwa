@@ -61,7 +61,6 @@ function validation() {
     }
 
     natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
-
     typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
 
     // =========================
@@ -139,11 +138,8 @@ function validation() {
 
         inputs.forEach(input => {
             if (!input) return;
-            if (input.tagName === 'SELECT') {
-                input.addEventListener('change', () => validateInput(input));
-            } else {
-                input.addEventListener('input', () => validateInput(input));
-            }
+            const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
+            input.addEventListener(eventType, () => validateInput(input));
         });
 
         emailAddress.addEventListener('input', () => {
@@ -153,54 +149,15 @@ function validation() {
             });
         });
 
-
-        natureOfBusinessSelect.addEventListener('change', () => {
-            validateInput(natureOfBusinessSelect, 'Nature of business is required');
-
-            if (natureOfBusinessSelect.value === 'Others') {
-                natureOfBusinessSpecify.closest('.label-and-input').classList.remove('hidden');
-                validateInput(natureOfBusinessSpecify, 'Please specify the business details');
-            } else {
-                natureOfBusinessSpecify.closest('.label-and-input').classList.add('hidden');
-                natureOfBusinessSpecify.classList.remove('error');
-                const errorEl = natureOfBusinessSpecify.closest('.label-and-input').querySelector('.error-msg');
-                errorEl.textContent = '';
-            }
-        });
-
-        typeOfStructureSelect.addEventListener('change', () => {
-            validateInput(typeOfStructureSelect, 'Nature of business is required');
-
-            if (typeOfStructureSelect.value === 'Others') {
-                typeOfStructureSpecify.closest('.label-and-input').classList.remove('hidden');
-                validateInput(typeOfStructureSpecify, 'Please specify the business details');
-            } else {
-                typeOfStructureSpecify.closest('.label-and-input').classList.add('hidden');
-                typeOfStructureSpecify.classList.remove('error');
-                const errorEl = typeOfStructureSpecify.closest('.label-and-input').querySelector('.error-msg');
-                errorEl.textContent = '';
-            }
-        });
-
         telephoneNoBusiness.addEventListener('input', () => {
             const wrapper = telephoneNoBusiness.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
-            const value = telephoneNoBusiness.value;
-
-            telephoneNoBusiness.value = value.replace(/[^0-9]/g, '');
-
-            // Real-time validation feedback
-            if (value === '') {
-                telephoneNoBusiness.classList.add('error');
+            telephoneNoBusiness.value = telephoneNoBusiness.value.replace(/[^0-9]/g, '');
+            if (telephoneNoBusiness.value === '') {
                 errorEl.textContent = 'Contact number is required';
-            } else if (!/^[0-9]+$/.test(value)) {
-                telephoneNoBusiness.classList.add('error');
-                errorEl.textContent = 'Contact number must be numeric';
-            } else if (value.length !== 11) {
-                telephoneNoBusiness.classList.add('error');
+            } else if (telephoneNoBusiness.value.length !== 11) {
                 errorEl.textContent = 'Contact number must be exactly 11 digits';
             } else {
-                telephoneNoBusiness.classList.remove('error');
                 errorEl.textContent = '';
             }
         });
@@ -208,22 +165,12 @@ function validation() {
         telephoneNoOwner.addEventListener('input', () => {
             const wrapper = telephoneNoOwner.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
-            const value = telephoneNoOwner.value;
-
-            telephoneNoOwner.value = value.replace(/[^0-9]/g, '');
-
-            // Real-time validation feedback
-            if (value === '') {
-                telephoneNoOwner.classList.add('error');
+            telephoneNoOwner.value = telephoneNoOwner.value.replace(/[^0-9]/g, '');
+            if (telephoneNoOwner.value === '') {
                 errorEl.textContent = 'Telephone no. is required';
-            } else if (!/^[0-9]+$/.test(value)) {
-                telephoneNoOwner.classList.add('error');
-                errorEl.textContent = 'Telephone no. must be numeric';
-            } else if (value.length !== 11) {
-                telephoneNoOwner.classList.add('error');
+            } else if (telephoneNoOwner.value.length !== 11) {
                 errorEl.textContent = 'Telephone no. must be exactly 11 digits';
             } else {
-                telephoneNoOwner.classList.remove('error');
                 errorEl.textContent = '';
             }
         });
@@ -231,19 +178,10 @@ function validation() {
         noOfEmployees.addEventListener('input', () => {
             const wrapper = noOfEmployees.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
-            const value = noOfEmployees.value;
-
-            noOfEmployees.value = value.replace(/[^0-9]/g, '');
-
-            // Real-time validation feedback
-            if (value === '') {
-                noOfEmployees.classList.add('error');
+            noOfEmployees.value = noOfEmployees.value.replace(/[^0-9]/g, '');
+            if (noOfEmployees.value === '') {
                 errorEl.textContent = 'No. of employees is required';
-            } else if (!/^[0-9]+$/.test(value)) {
-                noOfEmployees.classList.add('error');
-                errorEl.textContent = 'No. of employees must be numeric';
             } else {
-                noOfEmployees.classList.remove('error');
                 errorEl.textContent = '';
             }
         });
@@ -263,17 +201,18 @@ function validation() {
         agreeCheckBox.addEventListener('change', () => validateInput(agreeCheckBox));
     })();
 
+
     // =========================
     // Business "Next" button click
     // =========================
     document.getElementById('nextToWaiver').addEventListener('click', () => {
         const validations = [
             validateInput(businessName, 'Business Name is required'),
+            validateRadioGroup(typeOfBusiness, 'Please select a type of business'),
             validateInput(natureOfBusinessSelect, 'Nature of business is required'),
             natureOfBusinessSelect.value === 'Others'
                 ? validateInput(natureOfBusinessSpecify, 'Please specify the business details')
                 : true,
-            validateRadioGroup(typeOfBusiness, 'Please select a type of business'),
             validateInput(addressOfBusiness, 'Please enter your business address'),
             validateCheckboxGroup(businessStatus, 'Please select business status'),
             validateInput(telephoneNoBusiness, 'Business telephone is required', {
@@ -325,19 +264,15 @@ function validation() {
 
         if (isValid) {
             document.getElementById('sumBusinessName').textContent = businessName.value;
-
             document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
-
             document.getElementById('sumNatureOfBusiness').textContent = `${natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value}`.trim();
-
+            document.getElementById('sumAddressOfBusiness').textContent = addressOfBusiness.value;
             document.getElementById('sumTelephoneBusiness').textContent = telephoneNoBusiness.value;
             document.getElementById('sumEmail').textContent = emailAddress.value;
             document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`.trim();
             document.getElementById('sumTelephoneOwner').textContent = telephoneNoOwner.value;
             document.getElementById('sumAddressOwner').textContent = addressOwner.value;
-
             document.getElementById('sumStructureType').textContent = `${typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value}`.trim();
-
             document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
             document.getElementById('sumEmployees').textContent = noOfEmployees.value;
             document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
