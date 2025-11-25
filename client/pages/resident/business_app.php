@@ -8,7 +8,8 @@
 
     <link rel="stylesheet" href="../../styles/resident/business_app.css">
 </head>
-
+<!-- Remember to make it the same with the Staff Side For Application Creation Part
+     as well as the connection to the DB -->
 <body>
     <main>
         <section class="sections">
