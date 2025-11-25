@@ -187,14 +187,24 @@ function validation() {
                 address: address.value,
                 provider: provider.value,
                 natureOfWork: natureOfWork.value,
-                agreed: agreeCheckBox.checked
+                agreed: agreeCheckBox.checked,
             };
 
             // TODO: Back-end developer, these are the data to be sent to db.
             // add here if necessary...
 
-            console.log('Final Submission Data:', allData);
-            alert('Application submitted successfully!');
+            fetch('submit.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(allData)
+            })
+                .then(res => res.json())
+                .then(data => console.log(data))
+                .catch(err => console.error(err));
+
+            // I will remove this later, this is only for test. - jep
+            // console.log('Final Submission Data:', allData);
+            // alert('Application submitted successfully!');
         }
     }, { once: true });
 }
