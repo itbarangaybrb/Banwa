@@ -2,14 +2,9 @@
 // Function: Hide/Show Panels
 // =========================
 function switchPanel(panelId) {
-    const business = document.getElementById('business');
-    const waiver = document.getElementById('waiver');
-    const summary = document.getElementById('summary');
-
-    const panels = [business, waiver, summary];
-    panels.forEach(panel => {
-        panel.classList.toggle('hidden', panel.id !== panelId);
-    });
+    const panels = ['business', 'waiver', 'summary']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
 }
 
 function validation() {
