@@ -24,15 +24,15 @@
 
       <form class="login-form" id="login">
         <div>
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" >
-          <div class="err-msg" id="errMsg"></div>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" >
+          <div class="error-msg"></div>
         </div>
 
         <div>
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" >
-          <div class="err-msg" id="errMsg"></div>
+          <input type="password" id="password" name="password" autocomplete="false">
+          <div class="error-msg"></div>
         </div>
         <a href="../auth/forgot_pass.php" class="forgot-link">Forgot password?</a>
         <button type="submit" id="submit" class="login-btn">Login</button>

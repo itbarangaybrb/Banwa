@@ -3,20 +3,20 @@
 // Add any client-side logic (form validation, ajax login) here in future.
 
 // document.addEventListener('DOMContentLoaded', ()=>{
-//   // Example: focus username on load
-//   const u = document.getElementById('username');
+//   // Example: focus email on load
+//   const u = document.getElementById('email');
 //   if(u) u.focus();
 // });
 
-import supabase from '../../configs/auth/supabase.js'
+import supabase from "../../../server/api/supabase.js";
 
 function showValidation() {
   const form = document.getElementById('login');
-  const username = document.getElementById('username');
+  const email = document.getElementById('email');
   const password = document.getElementById('password');
-  const usernameErr = username.parentElement.querySelector('.err-msg');
-  const passwordErr = password.parentElement.querySelector('.err-msg');
-  let isValid = false;
+
+  const emailErr = email.parentElement.querySelector('.error-msg');
+  const passwordErr = password.parentElement.querySelector('.error-msg');
 
   function validateInput(input, errorEl, message) {
     if (input.value.trim() === '') {
@@ -30,9 +30,10 @@ function showValidation() {
     }
   }
 
-  username.addEventListener('input', () =>
-    validateInput(username, usernameErr, 'Username is required')
+  email.addEventListener('input', () =>
+    validateInput(email, emailErr, 'Email is required')
   );
+
   password.addEventListener('input', () =>
     validateInput(password, passwordErr, 'Password is required')
   );
@@ -40,30 +41,23 @@ function showValidation() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const userValid = validateInput(username, usernameErr, 'Username is required');
+    const emailValid = validateInput(email, emailErr, 'Email is required');
     const passValid = validateInput(password, passwordErr, 'Password is required');
 
-    isValid = userValid && passValid;
+    if (!emailValid || !passValid) return;
 
-    if (!isValid) return;
-
-   const { data, error } = await supabase.auth.signInWithPassword({
-      email: username.value.trim(),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.value.trim(),
       password: password.value.trim(),
     });
 
     if (error) {
-      console.error('Login failed:', error.message);
-      passwordErr.textContent = 'Invalid email or password';
+      passwordErr.textContent = "Invalid email or password";
       return;
     }
-    
-    // Success
-    console.log('Login success:', data);
+
     window.location.href = '/Banwa/client/pages/resident/home.php';
   });
 }
 
 showValidation();
-
-
