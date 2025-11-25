@@ -16,7 +16,7 @@ define('DB_HOST', 'localhost');
 define('DB_PORT', '5432');
 define('DB_NAME', 'capstone');
 define('DB_USER', 'postgres');
-define('DB_PASS', '080702');
+define('DB_PASS', '$Xz_11182025');
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
