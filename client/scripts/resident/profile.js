@@ -1,4 +1,4 @@
-import supabase from '../../configs/auth/supabase.js'
+import supabase from '../../../server/api/supabase.js'
 
 // =========================
 // Function: Hide/Show Panels
@@ -253,6 +253,14 @@ function validation() {
 
                 // TODO: Back-end developer, these are the data to be sent to db.
                 // add here if necessary...
+                fetch('submit.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(allData)
+                })
+                    .then(res => res.json())
+                    .then(data => console.log(data))
+                    .catch(err => console.error(err));
 
                 console.log('Final Submission Data:', manageAccAllData);
                 alert('Application submitted successfully!');
