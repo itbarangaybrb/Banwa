@@ -138,85 +138,83 @@ function submitUpdate(event) {
 
     // VIEW DETAILS (MODIFIED to include comments & file link)
     function viewDetails(appId) {
-        const app = applications.find(a => a.id == appId);
-        if (!app) return;
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
 
-        const businessStatus = Array.isArray(app.business_status) ? app.business_status.join(', ') : 'Not specified';
-        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
-        
-        // Build the uploaded file link HTML
-        const fileUploadHtml = app.requirement_upload 
-            ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
-            : 'No file uploaded';
-
-        // Build comments HTML
-        let commentsHtml = '';
-        if (app.status === 'Approved' && app.approval_comments) {
-            commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
-        } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-            commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
-        }
-
-
-        const modalBody = document.getElementById('modalBody');
-        modalBody.innerHTML = `
-            <div class="summary-card">
-                <h3>📍 Business Information</h3>
-                <p><strong>Application ID:</strong> ${app.id}</p>
-                <p><strong>Business Name:</strong> ${app.business_name}</p>
-                <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
-                <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
-                <p><strong>Business Address:</strong> ${app.address_of_business}</p>
-                <p><strong>Business Status:</strong> ${businessStatus}</p>
-                <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
-                <p><strong>Email Address:</strong> ${app.email_address}</p>
-            </div>
-
-            <div class="summary-card">
-                <h3>👤 Owner Information</h3>
-                <p><strong>Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
-                <p><strong>Telephone:</strong> ${app.telephone_no_owner}</p>
-                <p><strong>Address:</strong> ${app.address_owner}</p>
-            </div>
-
-            <div class="summary-card">
-                <h3>🏢 Business Structure</h3>
-                <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
-                <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-            </div>
-
-            <div class="summary-card">
-                <h3>📋 Requirements</h3>
-                <p><strong>Submitted:</strong> ${requirementsList}</p>
-                <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-            </div>
-
-            <div class="summary-card">
-                <h3>📅 Application Details</h3>
-                <p><strong>Application Date:</strong> ${app.application_date}</p>
-                <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
-                ${commentsHtml}
-            </div>
-        `;
-        const paymentInfo = app.amount_due > 0 
-        ? `<div class="summary-card">
-            <h3>💰 Assessment & Payment</h3>
-            <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
-            <p><strong>Payment Status:</strong> ${app.payment_status}</p>
-            <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
-           </div>` 
-        : '';
+    const businessStatus = Array.isArray(app.business_status) ? app.business_status.join(', ') : 'Not specified';
+    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
     
-        document.getElementById('modalBody').innerHTML = `
-            <div class="summary-card">
-                <h3>📍 Business Info</h3>
-                <p><strong>Name:</strong> ${app.business_name}</p>
-                <p><strong>Status:</strong> ${app.status}</p>
-            </div>
-            ${paymentInfo}
-            `;
-        openModal('detailsModal');
+    // Build the uploaded file link HTML
+    const fileUploadHtml = app.requirement_upload 
+        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
+        : 'No file uploaded';
+
+    // Build comments HTML
+    let commentsHtml = '';
+    if (app.status === 'Approved' && app.approval_comments) {
+        commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
+    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
+        commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
     }
+
+    // CONDITIONAL PAYMENT BLOCK
+    const paymentInfo = app.amount_due > 0 
+    ? `<div class="summary-card">
+        <h3>💰 Assessment & Payment</h3>
+        <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
+        <p><strong>Payment Status:</strong> ${app.payment_status}</p>
+        <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
+       </div>` 
+    : '';
+
+    // COMBINE ALL HTML BLOCKS INTO ONE VARIABLE
+    const fullModalContent = `
+        <div class="summary-card">
+            <h3>📍 Business Information</h3>
+            <p><strong>Application ID:</strong> ${app.id}</p>
+            <p><strong>Business Name:</strong> ${app.business_name}</p>
+            <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
+            <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
+            <p><strong>Business Address:</strong> ${app.address_of_business}</p>
+            <p><strong>Business Status:</strong> ${businessStatus}</p>
+            <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
+            <p><strong>Email Address:</strong> ${app.email_address}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>👤 Owner Information</h3>
+            <p><strong>Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
+            <p><strong>Telephone:</strong> ${app.telephone_no_owner}</p>
+            <p><strong>Address:</strong> ${app.address_owner}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>🏢 Business Structure</h3>
+            <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
+            <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>📋 Requirements</h3>
+            <p><strong>Submitted:</strong> ${requirementsList}</p>
+            <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
+        </div>
+
+        <div class="summary-card">
+            <h3>📅 Application Details</h3>
+            <p><strong>Application Date:</strong> ${app.application_date}</p>
+            <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
+            ${commentsHtml}
+        </div>
+        
+        ${paymentInfo} `;
+
+    // SET THE MODAL CONTENT ONLY ONCE
+    document.getElementById('modalBody').innerHTML = fullModalContent;
+    
+    // OPEN THE MODAL
+    openModal('detailsModal');
+}
 
     // CREATE APPLICATION
     function createApplication(event) {
