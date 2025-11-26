@@ -2,157 +2,141 @@
     // Configuration
     const API_URL = '../../scripts/business_staff/business_handler.php';
     // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
-    const UPLOADS_BASE_PATH = '../../scripts/business_staff/uploads/'; // <--- This must be correct 
-
+    const UPLOADS_BASE_PATH = '../../scripts/business_staff/uploads/'; // <--- This must be correct for file links to work
     let applications = [];
 
-    // ===================================
+
     // TAB SWITCHING
-    // ===================================
-    function switchTab(event, tabName) {
-        event.preventDefault();
-        
-        const panes = document.querySelectorAll('.tab-pane');
-        panes.forEach(pane => pane.classList.remove('active'));
-        
-        const buttons = document.querySelectorAll('.tab-button');
-        buttons.forEach(btn => btn.classList.remove('active'));
-        
-        document.getElementById(tabName).classList.add('active');
-        event.target.classList.add('active');
+function switchTab(event, tabName) {
+    event.preventDefault();
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
 
-        if (tabName === 'review') {
+    if (tabName === 'review') loadReviewTable();
+    else if (tabName === 'process') loadProcessTable();
+    else if (tabName === 'summary') loadSummarySelect();
+}
+
+function loadApplicationsFromDB() {
+    return fetch(`${API_URL}?action=fetch`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') applications = data.data;
+            return applications;
+        });
+}
+
+function loadReviewTable() {
+    loadApplicationsFromDB().finally(() => {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        applications.forEach(app => {
+            // Status Badge Logic
+            let badgeClass = 'pending';
+            if(app.status === 'Approved') badgeClass = 'approved';
+            if(app.status === 'Disapproved') badgeClass = 'disapproved';
+            if(app.status === 'Paid') badgeClass = 'paid';
+            if(app.status === 'For Payment') badgeClass = 'for-payment';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${app.id}</td>
+                    <td>${app.business_name}</td>
+                    <td>${app.first_name} ${app.last_name}</td>
+                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                    <td>${app.payment_status || 'N/A'}</td>
+                    <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button></td>
+                </tr>
+            `;
+        });
+    });
+}
+
+function loadProcessTable() {
+    loadApplicationsFromDB().finally(() => {
+        const tbody = document.getElementById('processTableBody');
+        tbody.innerHTML = '';
+        
+        // Filter: Show everything NOT cancelled, so they can be processed
+        const actionable = applications.filter(a => a.status !== 'Cancelled');
+
+        actionable.forEach(app => {
+            let btnText = "⚙️ Update";
+            let btnClass = "btn-secondary";
+
+            // Highlight actions based on flow
+            if(app.status === 'Pending') { btnText = "Assess / Review"; btnClass = "btn-primary"; }
+            else if(app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${app.id}</td>
+                    <td>${app.business_name}</td>
+                    <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
+                    <td>${app.payment_status || 'Unpaid'}</td>
+                    <td>
+                        <button class="${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// NEW: UPDATE / ASSESS LOGIC
+function openUpdateModal(id) {
+    const app = applications.find(a => a.id == id);
+    document.getElementById('updateAppId').value = id;
+    document.getElementById('displayCurrentStatus').value = app.status;
+    document.getElementById('updateForm').reset();
+    if (app.status === 'For Payment' && app.amount_due) {
+        document.getElementById('assessmentAmount').value = parseFloat(app.amount_due).toFixed(2);
+    }
+    toggleAmountField(); // Reset visibility
+    openModal('updateModal');
+}
+
+function toggleAmountField() {
+    const status = document.getElementById('newStatus').value;
+    const amountGroup = document.getElementById('amountFieldGroup');
+    const amountInput = document.getElementById('assessmentAmount');
+
+    if (status === 'For Payment') {
+        amountGroup.classList.remove('hidden');
+        amountInput.required = true;
+    } else {
+        amountGroup.classList.add('hidden');
+        amountInput.required = false;
+        amountInput.value = '';
+    }
+}
+
+function submitUpdate(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(document.getElementById('updateForm'));
+    formData.append('action', 'update_status');
+
+    fetch(API_URL, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeModal('updateModal');
+            alert('Application updated successfully!');
             loadReviewTable();
-        } else if (tabName === 'approve') {
-            loadApprovalTable();
-        } else if (tabName === 'summary') {
-            loadSummarySelect();
+            loadProcessTable();
+        } else {
+            alert('Error: ' + data.message);
         }
-    }
+    });
+}
 
-    // ===================================
-    // FETCH APPLICATIONS FROM DATABASE
-    // ===================================
-    function loadApplicationsFromDB() {
-        // Updated to return the Promise for better control of async operations
-        return fetch(`${API_URL}?action=fetch`)
-            .then(response => {
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    return response.json();
-                } else {
-                    // Throw an error if the response is not JSON
-                    return response.text().then(text => {
-                            console.error('Non-JSON Response:', text);
-                            throw new Error('Server did not return JSON. Check PHP script for errors.');
-                    });
-                }
-            })
-            .then(data => {
-                if (data.status === 'success') {
-                    applications = data.data;
-                } else {
-                    showAlert('Error loading applications: ' + data.message, 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('Failed to load applications from database. See console for details.', 'danger');
-            });
-    }
-
-    // ===================================
-    // LOAD REVIEW TABLE
-    // ===================================
-    function loadReviewTable() {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" class="loading"><div class="spinner"></div>Loading applications...</td></tr>';
-        
-        loadApplicationsFromDB().finally(() => { // Use finally to ensure we update the table regardless of success/fail
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            if (applications.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No applications found</td></tr>';
-                return;
-            }
-
-            applications.forEach(app => {
-                const row = document.createElement('tr');
-                const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
-                row.innerHTML = `
-                    <td>${app.id}</td>
-                    <td>${app.business_name}</td>
-                    <td>${ownerName}</td>
-                    <td>${app.nature_of_business}</td>
-                    <td>${app.application_date}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        });
-    }
-
-    // ===================================
-    // LOAD APPROVAL TABLE
-    // ===================================
-    function loadApprovalTable() {
-        document.getElementById('approvalTableBody').innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading applications...</td></tr>';
-
-        loadApplicationsFromDB().finally(() => {
-            const tbody = document.getElementById('approvalTableBody');
-            tbody.innerHTML = '';
-            
-            if (applications.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px;">No applications found</td></tr>';
-                return;
-            }
-
-            applications.forEach(app => {
-                const row = document.createElement('tr');
-                const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
-                row.innerHTML = `
-                    <td>${app.id}</td>
-                    <td>${app.business_name}</td>
-                    <td>${ownerName}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn-success" onclick="openApproveModal(${app.id})">✅ Approve</button>
-                            <button class="btn-danger" onclick="openDisapproveModal(${app.id})">❌ Disapprove</button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        });
-    }
-
-    // ===================================
-    // LOAD SUMMARY SELECT
-    // ===================================
-    function loadSummarySelect() {
-        loadApplicationsFromDB().finally(() => {
-            const select = document.getElementById('summaryApplicationSelect');
-            select.innerHTML = '<option value="">Choose an application to view summary</option>';
-            
-            applications.forEach(app => {
-                const option = document.createElement('option');
-                option.value = app.id;
-                option.textContent = `${app.id} - ${app.business_name}`;
-                select.appendChild(option);
-            });
-            updateSummary(); // Call updateSummary to clear the output if nothing is selected
-        });
-    }
-
-    // ===================================
     // VIEW DETAILS (MODIFIED to include comments & file link)
-    // ===================================
     function viewDetails(appId) {
         const app = applications.find(a => a.id == appId);
         if (!app) return;
@@ -214,91 +198,27 @@
                 ${commentsHtml}
             </div>
         `;
+        const paymentInfo = app.amount_due > 0 
+        ? `<div class="summary-card">
+            <h3>💰 Assessment & Payment</h3>
+            <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
+            <p><strong>Payment Status:</strong> ${app.payment_status}</p>
+            <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
+           </div>` 
+        : '';
+    
+        document.getElementById('modalBody').innerHTML = `
+            <div class="summary-card">
+                <h3>📍 Business Info</h3>
+                <p><strong>Name:</strong> ${app.business_name}</p>
+                <p><strong>Status:</strong> ${app.status}</p>
+            </div>
+            ${paymentInfo}
+            `;
         openModal('detailsModal');
     }
 
-    // ===================================
-    // APPROVE/DISAPPROVE FUNCTIONS
-    // ===================================
-    function openApproveModal(appId) {
-        document.getElementById('approveAppId').value = appId;
-        document.getElementById('approveForm').reset();
-        openModal('approveModal');
-    }
-
-    function openDisapproveModal(appId) {
-        document.getElementById('disapproveAppId').value = appId;
-        document.getElementById('disapproveForm').reset();
-        openModal('disapproveModal');
-    }
-
-    function submitApproval(event) {
-        event.preventDefault();
-        
-        const appId = document.getElementById('approveAppId').value;
-        const comments = document.getElementById('approvalComments').value;
-        
-        const formData = new FormData();
-        formData.append('action', 'approve');
-        formData.append('id', appId);
-        formData.append('approvalComments', comments);
-
-        fetch(API_URL, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                closeModal('approveModal');
-                showAlert('Application approved successfully!', 'success');
-                loadApplicationsFromDB();
-                loadApprovalTable();
-            } else {
-                showAlert('Error: ' + data.message, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Failed to approve application', 'danger');
-        });
-    }
-
-    function submitDisapproval(event) {
-        event.preventDefault();
-        
-        const appId = document.getElementById('disapproveAppId').value;
-        const reason = document.getElementById('disapprovalReason').value;
-        
-        const formData = new FormData();
-        formData.append('action', 'disapprove');
-        formData.append('id', appId);
-        formData.append('disapprovalReason', reason);
-
-        fetch(API_URL, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                closeModal('disapproveModal');
-                showAlert('Application disapproved successfully!', 'success');
-                loadApplicationsFromDB();
-                loadApprovalTable();
-            } else {
-                showAlert('Error: ' + data.message, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Failed to disapprove application', 'danger');
-        });
-    }
-
-    // ===================================
     // CREATE APPLICATION
-    // ===================================
     function createApplication(event) {
         event.preventDefault();
         
@@ -325,9 +245,18 @@
         });
     }
 
-    // ===================================
+    // LOAD SUMMARY SELECT OPTIONS
+    function loadSummarySelect() {
+        loadApplicationsFromDB().finally(() => {
+            const select = document.getElementById('summaryApplicationSelect');
+            select.innerHTML = '<option value="">-- Select Application --</option>';
+            applications.forEach(app => {
+                select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name}</option>`;
+            }
+            );
+        });
+    }
     // UPDATE SUMMARY (MODIFIED to include comments & file link)
-    // ===================================
     function updateSummary() {
         const appId = document.getElementById('summaryApplicationSelect').value;
         const summaryOutput = document.getElementById('summaryOutput');
@@ -408,9 +337,7 @@
         `;
     }
 
-    // ===================================
     // FILTER APPLICATIONS
-    // ===================================
     function filterApplications() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const tbody = document.getElementById('tableBody');
@@ -448,9 +375,7 @@
         });
     }
 
-    // ===================================
     // MODAL FUNCTIONS
-    // ===================================
     function openModal(modalId) {
         document.getElementById(modalId).classList.add('active');
     }
@@ -459,9 +384,7 @@
         document.getElementById(modalId).classList.remove('active');
     }
 
-    // ===================================
     // ALERT FUNCTION
-    // ===================================
     function showAlert(message, type) {
         const alertContainer = document.getElementById('alert-container');
         const alertDiv = document.createElement('div');
@@ -475,9 +398,9 @@
         }, 4000);
     }
 
-    // ===================================
+
     // PRINT & DOWNLOAD (MODIFIED for Styled HTML/DOC)
-    // ===================================
+
     function printSummary() {
         window.print();
     }
@@ -595,9 +518,9 @@
         window.URL.revokeObjectURL(url);
     }
 
-    // ===================================
+
+
     // CLOSE MODAL ON OUTSIDE CLICK
-    // ===================================
     window.onclick = function(event) {
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
@@ -607,9 +530,9 @@
         });
     }
 
-    // ===================================
     // INITIALIZE ON LOAD
-    // ===================================
     window.addEventListener('load', function() {
         loadReviewTable();
     });
+
+    document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`)
