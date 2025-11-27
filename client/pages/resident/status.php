@@ -29,8 +29,8 @@
                             <p>Pending Applications</p>
                         </div>
 
-                        <div class="status-bar-container">
-                            <span>You have no active service requests.</span>
+                        <div class="status-bar-container" id="statusList">
+                            <!-- <span>You have no active service requests.</span> -->
                         </div>
                     </div>
                 </div>
@@ -43,6 +43,7 @@
     </main>
 
     <script type="module" src="../../scripts/auth/signout.js"></script>
+    <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 
 </html>

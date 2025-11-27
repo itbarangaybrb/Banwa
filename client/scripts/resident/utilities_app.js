@@ -193,10 +193,11 @@ function validation() {
             // TODO: Back-end developer, these are the data to be sent to db.
             // add here if necessary...
 
-            fetch('submit.php', {
+            fetch('/Banwa/server/api/resident/submit_utilities.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(allData)
+                body: JSON.stringify(allData),
+                credentials: 'include'
             })
                 .then(res => res.json())
                 .then(data => console.log(data))
@@ -210,3 +211,4 @@ function validation() {
 }
 
 validation();
+

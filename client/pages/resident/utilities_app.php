@@ -20,6 +20,8 @@
     <p id="userStatus"></p>
     <button id="signoutBtn">Logout</button>
 
+    <div id="utilitiesStatus"></div>
+
     <main>
         <section class="sections">
             <div class="containers">

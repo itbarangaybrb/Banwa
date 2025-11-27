@@ -14,6 +14,7 @@
     <a href="../resident/about_us.php">About Us</a><br>
     <a href="../resident/contact_us.php">Contact Us</a><br>
     <a href="../resident/profile.php">Profile</a><br>
+    <a href="../resident/status.php">status</a><br>
     <a href="../resident/construction_app.php">Construction Application</a><br>
     <a href="../resident/utilities_app.php">Utilities Application</a><br>
     <a href="../resident/business_app.php">Business Application</a><br>
