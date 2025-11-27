@@ -1,5 +1,5 @@
 <?php
-
+require_once __DIR__ . '../../../../server/configs/database.php';
 // Business Application Backend (FIXED)
 
 
@@ -12,31 +12,31 @@ ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
 // 3. Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_PORT', '5432');
-define('DB_NAME', 'capstone');
-define('DB_USER', 'postgres');
-define('DB_PASS', '080702');
+// define('DB_HOST', 'localhost');
+// define('DB_PORT', '5432');
+// define('DB_NAME', 'capstone');
+// define('DB_USER', 'postgres');
+// define('DB_PASS', '$Xz_11182025');
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 // 4. Check Drivers (Crucial for your setup)
-if (!extension_loaded('pdo_pgsql')) {
-    ob_clean(); // Clear any previous junk
-    die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
-}
+// if (!extension_loaded('pdo_pgsql')) {
+//     ob_clean(); // Clear any previous junk
+//     die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
+// }
 
-// 5. Database Connection
-try {
-    $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-} catch (PDOException $e) {
-    ob_clean();
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
-    exit;
-}
+// // 5. Database Connection
+// try {
+//     $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
+//     $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+// } catch (PDOException $e) {
+//     ob_clean();
+//     http_response_code(500);
+//     echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
+//     exit;
+// }
 
 // 6. Route Handling
 $action = $_REQUEST['action'] ?? null;

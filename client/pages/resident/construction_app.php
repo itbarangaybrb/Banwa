@@ -264,7 +264,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
 
                         <div class="label-and-input">
-                            <button type="button" class="map-btn" onclick="openMapPicker()">📍 Pick Location on Map</button>
+                            <button type="button" class="map-btn" onclick="openMapPicker()">Pick Location on Map</button>
                             <div class="label-and-input" id="map-preview" style="margin-top: 10px; display: none;">
                                 <p>Selected Location: <span id="selected-location">None</span></p>
                             </div>
