@@ -2,4 +2,5 @@
 .env
 
 # to hide the sensitive parts of php
-*configs
+server/configs/
+server/api/

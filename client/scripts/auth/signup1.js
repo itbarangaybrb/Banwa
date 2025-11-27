@@ -328,28 +328,28 @@ function validation() {
             // =============================
             // Insert user into your custom DB
             // =============================
-            try {
-                const response = await fetch('/server/api/resident/insert_user.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(allData)
-                });
+            // try {
+            //     const response = await fetch('/server/api/resident/insert_user.php', {
+            //         method: 'POST',
+            //         headers: { 'Content-Type': 'application/json' },
+            //         body: JSON.stringify(allData)
+            //     });
 
-                const result = await response.json();
+            //     const result = await response.json();
 
-                if (!result.success) {
-                    console.error('Custom DB insert error:', result.message);
-                    formMessage.style.color = 'red';
-                    formMessage.textContent = 'Signup succeeded in Supabase but failed in custom DB.';
-                    return;
-                }
+            //     if (!result.success) {
+            //         console.error('Custom DB insert error:', result.message);
+            //         formMessage.style.color = 'red';
+            //         formMessage.textContent = 'Signup succeeded in Supabase but failed in custom DB.';
+            //         return;
+            //     }
 
-            } catch (err) {
-                console.error('Custom DB AJAX error:', err);
-                formMessage.style.color = 'red';
-                formMessage.textContent = 'Signup succeeded in Supabase but custom DB server failed.';
-                return;
-            }
+            // } catch (err) {
+            //     console.error('Custom DB AJAX error:', err);
+            //     formMessage.style.color = 'red';
+            //     formMessage.textContent = 'Signup succeeded in Supabase but custom DB server failed.';
+            //     return;
+            // }
 
             console.log('User created successfully:', data.user);
             formMessage.style.color = 'green';
