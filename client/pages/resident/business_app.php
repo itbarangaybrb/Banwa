@@ -8,8 +8,6 @@
 
     <link rel="stylesheet" href="../../styles/resident/business_app.css">
 </head>
-<!-- Remember to make it the same with the Staff Side For Application Creation Part
-     as well as the connection to the DB -->
 <body>
     <main>
         <section class="sections">
@@ -19,7 +17,7 @@
                     <h1>Certification of Information</h1>
                     <p>This form authorizes personnel to perform the requested utility service at your address.</p>
 
-                    <form id="certificationForm" method="post">
+                    <form id="certificationForm">
                         <div class="inputs-container">
                             <div class="label-and-input">
                                 <label for="businessName">Business Name</label>
@@ -50,7 +48,7 @@
                             </div>
 
                             <div class="label-and-input">
-                                <label for="natureOfBusinessSpecify">Specify Details (if Others)</label>
+                                <label for="natureOfBusinessSpecify">Specify Details</label>
                                 <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                                 <div class="error-msg"></div>
                             </div>
@@ -63,10 +61,10 @@
 
                             <div class="label-and-input">
                                 <label>Status of business address</label>
-                                <label><input type="checkbox" name="businessStatus" value="Owned"> Owned</label>
-                                <label><input type="checkbox" name="businessStatus" value="Leased"> Leased</label>
-                                <label><input type="checkbox" name="businessStatus" value="Rent-Free"> Rent-Free</label>
-                                <label><input type="checkbox" name="businessStatus" value="Others"> Others</label>
+                                <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
+                                <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
+                                <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
+                                <label><input type="radio" name="businessStatus" value="Others"> Others</label>
                                 <div class="error-msg"></div>
                             </div>
 
@@ -153,6 +151,11 @@
                                 <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                                 <div class="error-msg"></div>
                             </div>
+
+                            <div class="label-and-input">
+                                <label for="applicationDate">Application Date</label>
+                                <input type="date" id="applicationDate" name="applicationDate" readonly>
+                            </div>
                         </div>
 
                         <button type="button" id="nextToWaiver">Next</button>
@@ -160,7 +163,6 @@
                     </form>
 
                 </div>
-                <!-- ==================== Waiver Form ==================== -->
                 <div class="waiver-container hidden" id="waiver">
                     <form id="waiverUtilitiesForm">
                         <h3>Waiver</h3>
@@ -196,7 +198,6 @@
                     </form>
                 </div>
 
-                <!-- ==================== Summary ==================== -->
                 <div class="summary-container hidden" id="summary">
                     <form id="summaryForm">
                         <h3>Summary</h3>
@@ -205,7 +206,10 @@
                             <p><strong>Business Name:</strong> <span id="sumBusinessName"></span></p>
                             <p><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></p>
                             <p><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></p>
-                            <p><strong>Nature of Business:</strong> <span id="sumAddressOfBusiness"></span></p>
+                            
+                            <p><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></p>
+                            
+                            <p><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></p>
                             <p><strong>Business Telephone:</strong> <span id="sumTelephoneBusiness"></span></p>
                             <p><strong>Email:</strong> <span id="sumEmail"></span></p>
                             <p><strong>Owner Name:</strong> <span id="sumFullname"></span></p>

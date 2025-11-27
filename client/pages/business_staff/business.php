@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Application Management System</title>
     <link rel="stylesheet" href="../../styles/business_staff/business.css">
-
 </head>
 <body>
     <div class="container">
         <header>
             <h1>📋 Business Application Management System</h1>
-            <p>Manage business applications with database integration</p>
+            <p>Manage applications, assessments, and approvals</p>
         </header>
 
         <div class="nav-tabs">
-            <button class="tab-button active" onclick="switchTab(event, 'review')">📊 Review</button>
+            <button class="tab-button active" onclick="switchTab(event, 'review')">📊 Review & Search</button>
             <button class="tab-button" onclick="switchTab(event, 'create')">➕ Create New</button>
-            <button class="tab-button" onclick="switchTab(event, 'approve')">✅ Approve/Disapprove</button>
+            <button class="tab-button" onclick="switchTab(event, 'process')">⚙️ Process & Assess</button>
             <button class="tab-button" onclick="switchTab(event, 'summary')">📝 Generate Summary</button>
         </div>
 
@@ -26,28 +25,23 @@
 
             <div id="review" class="tab-pane active">
                 <h2>Review Business Applications</h2>
-                <p class="form-description">View and search through all submitted business applications</p>
-                
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search by business name or owner name..." onkeyup="filterApplications()">
-                    <button class="btn-secondary" onclick="filterApplications()">🔍 Search</button>
+                    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
-
                 <div class="table-responsive">
                     <table id="applicationsTable">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Business Name</th>
-                                <th>Owner Name</th>
-                                <th>Nature of Business</th>
-                                <th>Application Date</th>
+                                <th>Owner</th>
                                 <th>Status</th>
+                                <th>Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <tr><td colspan="7" class="loading"><div class="spinner"></div>Loading applications...</td></tr>
+                            <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -94,7 +88,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="natureOfBusinessSpecify">Specify Details (if Others)</label>
+                            <label for="natureOfBusinessSpecify">Specify Details</label>
                             <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                             <div class="error-msg"></div>
                         </div>
@@ -110,11 +104,11 @@
 
                     <div class="form-group">
                         <label>Status of Business Address *</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="businessStatus" value="Owned"> Owned</label>
-                            <label><input type="checkbox" name="businessStatus" value="Leased"> Leased</label>
-                            <label><input type="checkbox" name="businessStatus" value="Rent-Free"> Rent-Free</label>
-                            <label><input type="checkbox" name="businessStatus" value="Others"> Others</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
+                            <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
+                            <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
+                            <label><input type="radio" name="businessStatus" value="Others"> Others</label>
                         </div>
                         <div class="error-msg"></div>
                     </div>
@@ -224,7 +218,7 @@
 
                     <div class="form-group">
                         <label for="applicationDate">Application Date *</label>
-                        <input type="date" id="applicationDate" name="applicationDate" required>
+                        <input type="date" id="applicationDate" name="applicationDate" readonly>
                         <div class="error-msg"></div>
                     </div>
 
@@ -235,9 +229,9 @@
                 </form>
             </div>
 
-            <div id="approve" class="tab-pane">
-                <h2>Approve or Disapprove Applications</h2>
-                <p class="form-description">Review pending applications and take action</p>
+            <div id="process" class="tab-pane">
+                <h2>Process Applications</h2>
+                <p class="form-description">Assess fees, send for payment, or issue final approval.</p>
                 
                 <div class="table-responsive">
                     <table>
@@ -245,29 +239,23 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Business Name</th>
-                                <th>Owner Name</th>
-                                <th>Status</th>
+                                <th>Current Status</th>
+                                <th>Payment Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="approvalTableBody">
-                            <tr><td colspan="5" class="loading"><div class="spinner"></div>Loading applications...</td></tr>
+                        <tbody id="processTableBody">
+                            <tr><td colspan="5" class="loading"><div class="spinner"></div>Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <div id="summary" class="tab-pane">
-                <h2>Generate Business Application Summary</h2>
-                <p class="form-description">Select an application to view its detailed summary</p>
-                
+                <h2>Generate Summary</h2>
                 <div class="form-group">
-                    <label for="summaryApplicationSelect">Select Application *</label>
-                    <select id="summaryApplicationSelect" onchange="updateSummary()">
-                        <option value="">Choose an application to view summary</option>
-                    </select>
+                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
                 </div>
-
                 <div id="summaryOutput"></div>
             </div>
         </div>
@@ -276,55 +264,59 @@
     <div id="detailsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Business Application Details</h2>
+                <h2>Application Details</h2>
                 <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
             </div>
             <div id="modalBody"></div>
         </div>
     </div>
 
-    <div id="approveModal" class="modal">
+    <div id="updateModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Approve Application</h2>
-                <button class="close-btn" onclick="closeModal('approveModal')">&times;</button>
+                <h2>⚙️ Update Application Status</h2>
+                <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
             </div>
-            <form id="approveForm" onsubmit="submitApproval(event)">
-                <input type="hidden" id="approveAppId" name="id">
+            <form id="updateForm" onsubmit="submitUpdate(event)">
+                <input type="hidden" id="updateAppId" name="id">
+                
                 <div class="form-group">
-                    <label for="approvalComments">Comments *</label>
-                    <textarea id="approvalComments" name="approvalComments" required></textarea>
+                    <label>Current Status:</label>
+                    <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
                 </div>
-                <div class="button-group">
-                    <button type="submit" class="btn-success">✅ Approve</button>
-                    <button type="button" class="btn-secondary" onclick="closeModal('approveModal')">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div id="disapproveModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Disapprove Application</h2>
-                <button class="close-btn" onclick="closeModal('disapproveModal')">&times;</button>
-            </div>
-            <form id="disapproveForm" onsubmit="submitDisapproval(event)">
-                <input type="hidden" id="disapproveAppId" name="id">
                 <div class="form-group">
-                    <label for="disapprovalReason">Reason for Disapproval *</label>
-                    <textarea id="disapprovalReason" name="disapprovalReason" required></textarea>
+                    <label for="newStatus">New Status *</label>
+                    <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
+                        <option value="" disabled selected>Select Action...</option>
+                        <option value="Pre-Approved">Pre-Approved</option>
+                        <option value="Additional Requirements">Additional Requirements</option>
+                        <option value="For Payment">For Payment (Assessment)</option>
+                        <option value="Approved">Approved (Final)</option>
+                        <option value="Disapproved">Disapproved</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
                 </div>
+
+                <div class="form-group hidden" id="amountFieldGroup">
+                    <label for="assessmentAmount">Assessment Amount (PHP) *</label>
+                    <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
+                    <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="updateComments">Remarks / Comments *</label>
+                    <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions, reasons, or notes..."></textarea>
+                </div>
+
                 <div class="button-group">
-                    <button type="submit" class="btn-danger">❌ Disapprove</button>
-                    <button type="button" class="btn-secondary" onclick="closeModal('disapproveModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">💾 Update Status</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script src="../../scripts/business_staff/business.js"></script>
-
 </body>
 </html>
-
