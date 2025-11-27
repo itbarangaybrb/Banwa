@@ -47,7 +47,8 @@ function loadReviewTable() {
                     <td>${app.first_name} ${app.last_name}</td>
                     <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
                     <td>${app.payment_status || 'N/A'}</td>
-                    <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button></td>
+                    <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
+                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button></td>
                 </tr>
             `;
         });
@@ -141,9 +142,9 @@ function submitUpdate(event) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    const businessStatus = Array.isArray(app.business_status) ? app.business_status.join(', ') : 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
-    
+    const businessStatus = app.business_status || 'Not specified';
+    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';   
+
     // Build the uploaded file link HTML
     const fileUploadHtml = app.requirement_upload 
         ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
@@ -209,7 +210,7 @@ function submitUpdate(event) {
         
         ${paymentInfo} `;
 
-    // SET THE MODAL CONTENT ONLY ONCE
+    // SET THE MODAL CONTENT
     document.getElementById('modalBody').innerHTML = fullModalContent;
     
     // OPEN THE MODAL
@@ -267,8 +268,8 @@ function submitUpdate(event) {
         const app = applications.find(a => a.id == appId);
         if (!app) return;
 
-        const businessStatus = Array.isArray(app.business_status) ? app.business_status.join(', ') : 'Not specified';
-        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
+        const businessStatus = app.business_status || 'Not specified';
+        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
         
         // Build the uploaded file link HTML
         const fileUploadHtml = app.requirement_upload 
@@ -408,8 +409,8 @@ function submitUpdate(event) {
         if (!app) return;
 
         // Prepare list data for HTML
-        const businessStatus = Array.isArray(app.business_status) ? app.business_status.join(', ') : 'Not specified';
-        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join('</li><li>') : 'None';
+        const businessStatus = app.business_status || 'Not specified';
+        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
         
         // Generate HTML for file upload link
         const fileUploadText = app.requirement_upload 
@@ -516,6 +517,30 @@ function submitUpdate(event) {
         window.URL.revokeObjectURL(url);
     }
 
+    function getCurrentDateString() {
+            const now = new Date();
+            
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        }
+
+        //Updates the date input field with the current date.
+        function updateApplicationDate() {
+            const dateInput = document.getElementById('applicationDate');
+            
+            if (dateInput) {
+                dateInput.value = getCurrentDateString();
+            }
+        }
+
+        // Wait for the DOM content to fully load before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+            updateApplicationDate();
+            setInterval(updateApplicationDate, 60000); 
+        });
 
 
     // CLOSE MODAL ON OUTSIDE CLICK

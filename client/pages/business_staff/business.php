@@ -88,7 +88,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="natureOfBusinessSpecify">Specify Details (if Others)</label>
+                            <label for="natureOfBusinessSpecify">Specify Details</label>
                             <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                             <div class="error-msg"></div>
                         </div>
@@ -104,11 +104,11 @@
 
                     <div class="form-group">
                         <label>Status of Business Address *</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="businessStatus" value="Owned"> Owned</label>
-                            <label><input type="checkbox" name="businessStatus" value="Leased"> Leased</label>
-                            <label><input type="checkbox" name="businessStatus" value="Rent-Free"> Rent-Free</label>
-                            <label><input type="checkbox" name="businessStatus" value="Others"> Others</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
+                            <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
+                            <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
+                            <label><input type="radio" name="businessStatus" value="Others"> Others</label>
                         </div>
                         <div class="error-msg"></div>
                     </div>
@@ -218,7 +218,7 @@
 
                     <div class="form-group">
                         <label for="applicationDate">Application Date *</label>
-                        <input type="date" id="applicationDate" name="applicationDate" required>
+                        <input type="date" id="applicationDate" name="applicationDate" readonly>
                         <div class="error-msg"></div>
                     </div>
 

@@ -1,7 +1,7 @@
 <?php
-// ===================================
+
 // Business Application Backend (FIXED)
-// ===================================
+
 
 // 1. Start Output Buffering (Prevents whitespace/warnings from breaking JSON)
 ob_start();
@@ -59,9 +59,9 @@ switch ($action) {
 // End the script here to ensure no extra whitespace is added
 exit;
 
-// ===================================
+
 // HELPER FUNCTIONS
-// ===================================
+
 
 function get_input($key) {
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
@@ -90,7 +90,11 @@ function handleCreateApplication($pdo) {
         $applicationDate = get_input('applicationDate');
         
         // Handle JSON Fields
-        $businessStatus = isset($_POST['businessStatus']) ? json_encode($_POST['businessStatus']) : '[]';
+        $rawStatus = $_POST['businessStatus'] ?? [];
+        if (!is_array($rawStatus)) {
+            $rawStatus = [$rawStatus]; // Convert string "Owned" to array ["Owned"]
+        }
+        $businessStatus = json_encode($rawStatus);
         $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
         
         // Handle File Upload
