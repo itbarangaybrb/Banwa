@@ -3,76 +3,80 @@
 // Session Security Settings
 // ============================
 ini_set('session.cookie_httponly', 1);   // Prevent JS access
-ini_set('session.cookie_secure', 1);     // Only HTTPS (if using HTTPS)
+ini_set('session.cookie_secure', 0);     // Set 1 if using HTTPS
 ini_set('session.cookie_samesite', 'Strict'); // Prevent CSRF
+ini_set('display_errors', 1);            // Temporary: show errors for debugging
+error_reporting(E_ALL);
 
 session_start();
 
-include './server/configs/database.php';
+require_once __DIR__ . '/../configs/database.php';
+define('SESSION_TIMEOUT', 3600); // 1 hour
 
-define('SESSION_TIMEOUT', 3600); // 1 hr as recommended of sb
+$isApi = strpos($_SERVER['REQUEST_URI'], '/api/') !== false;
 
-// ============================
-// Get Supabase JWT from cookie
-// ============================
-$supabaseToken = $_COOKIE['sb-access-token'] ?? null;
+try {
+    // ============================
+    // Get Supabase JWT from Authorization header
+    // ============================
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+    $supabaseToken = null;
 
-if (!$supabaseToken) {
-    header("Location: http://localhost:8080/Banwa/client/pages/auth/signin.php");
-    exit();
-}
+    if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        $supabaseToken = $matches[1];
+    }
 
-// ============================
-// Decode JWT payload (basic verification)
-// ============================
-$parts = explode('.', $supabaseToken);
-if (count($parts) !== 3) {
-    session_unset();
-    session_destroy();
-    header("Location: http://localhost:8080/Banwa/client/pages/auth/signin.php");
-    exit();
-}
+    if (!$supabaseToken) {
+        throw new Exception('Not logged in');
+    }
 
-// Decode payload
-$payload = json_decode(base64_decode($parts[1]), true);
+    // ============================
+    // Decode JWT payload (basic verification)
+    // ============================
+    $parts = explode('.', $supabaseToken);
+    if (count($parts) !== 3) {
+        throw new Exception('Invalid token');
+    }
 
-// Extract user email from JWT
-$email = $payload['email'] ?? null;
-if (!$email) {
-    session_unset();
-    session_destroy();
-    header("Location: http://localhost:8080/Banwa/client/pages/auth/signin.php");
-    exit();
-}
+    $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+    $email = $payload['email'] ?? null;
 
-// ============================
-// Check session timeout
-// ============================
-if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY']) > SESSION_TIMEOUT) {
-    session_unset();
-    session_destroy();
-    header("Location: http://localhost:8080/Banwa/client/pages/auth/signin.php");
-    exit();
-}
-$_SESSION['LAST_ACTIVITY'] = time(); // update last activity time
+    if (!$email) {
+        throw new Exception('Email missing in token');
+    }
 
-// ============================
-// Fetch user info from DB
-// ============================
-$stmt = $conn->prepare("SELECT id, fullname, img, role FROM users WHERE email = ?");
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+    // ============================
+    // Check session timeout
+    // ============================
+    if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY']) > SESSION_TIMEOUT) {
+        session_unset();
+        session_destroy();
+        throw new Exception('Session timed out');
+    }
+    $_SESSION['LAST_ACTIVITY'] = time();
 
-if ($user) {
-    $_SESSION['user']['id']       = $user['id'];
-    $_SESSION['user']['fullname'] = $user['fullname'];
-    $_SESSION['user']['img']      = $user['img'];
-    $_SESSION['user']['role']     = $user['role']; // important for access control
-} else {
-    // User not found in DB
-    session_unset();
-    session_destroy();
-    header("Location: http://localhost:8080/Banwa/client/pages/auth/signin.php");
+    // ============================
+    // Fetch user info from DB
+    // ============================
+    $stmt = $pdo->prepare("SELECT user_id, full_name, role_id FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        throw new Exception('User not found');
+    }
+
+    $_SESSION['user'] = [
+        'id' => $user['user_id'],
+        'fullname' => $user['full_name'],
+        'role_id' => $user['role_id']
+    ];
+    
+} catch (Exception $e) {
+    // Always return JSON on error
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
     exit();
 }
