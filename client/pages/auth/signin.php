@@ -15,7 +15,7 @@
     </div>
     <div class="right-panel">
       <div class="top-buttons">
-        <button type="button" onclick="location.href='./signup.php'">Sign Up</button>
+        <button type="button" onclick="location.href='./signup1.php'">Sign Up</button>
         <button class="active">Login</button>
       </div>
 
@@ -34,7 +34,7 @@
           <input type="password" id="password" name="password" autocomplete="false">
           <div class="error-msg"></div>
         </div>
-        <a href="../auth/forgot_pass.php" class="forgot-link">Forgot password?</a>
+        <a href="../auth/forgot_pass1.php" class="forgot-link">Forgot password?</a>
         <button type="submit" id="submit" class="login-btn">Login</button>
       </form>
     </div>

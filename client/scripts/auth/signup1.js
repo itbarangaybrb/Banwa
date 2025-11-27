@@ -105,27 +105,25 @@ function validation() {
 
 
     function checkPasswordMatch() {
-        if (!reTypePassword) return true;
-
         const wrapper = reTypePassword.closest('.label-and-input');
         const errorEl = wrapper?.querySelector('.error-msg');
+        const value = reTypePassword.value.trim();
 
-        // Only check if user typed something in reTypePassword
-        if (reTypePassword.value.trim() === '') {
-            reTypePassword.classList.remove('error');
-            if (errorEl) errorEl.textContent = '';
-            return true;
+        if (value === '') {
+            reTypePassword.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Please re-type your password';
+            return false;
         }
 
-        if (password.value !== reTypePassword.value) {
+        if (value !== password.value) {
             reTypePassword.classList.add('error');
             if (errorEl) errorEl.textContent = 'Passwords do not match';
             return false;
-        } else {
-            reTypePassword.classList.remove('error');
-            if (errorEl) errorEl.textContent = '';
-            return true;
         }
+
+        reTypePassword.classList.remove('error');
+        if (errorEl) errorEl.textContent = '';
+        return true;
     }
 
 
@@ -179,19 +177,30 @@ function validation() {
     // =========================
     function passwordValidation() {
         const wrapper = password.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
+        const errorEl = wrapper?.querySelector('.error-msg');
         const value = password.value;
+
+        if (value.trim() === '') {
+            password.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Password is required';
+            return false;
+        }
 
         if (value.length < 8 || value.length > 16) {
             password.classList.add('error');
-            errorEl.textContent = 'Password should be 8-16 characters long';
-        } else if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
-            password.classList.add('error');
-            errorEl.textContent = 'Password must contain letters and numbers';
-        } else {
-            password.classList.remove('error');
-            errorEl.textContent = '';
+            if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
+            return false;
         }
+
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+            password.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
+            return false;
+        }
+
+        password.classList.remove('error');
+        if (errorEl) errorEl.textContent = '';
+        return true;
     }
 
     // =========================
@@ -208,12 +217,9 @@ function validation() {
             } else if (input === email) {
                 input.addEventListener('input', emailValidation);
             } else if (input === password) {
-                input.addEventListener('input', () => {
-                    passwordValidation();
-                    checkPasswordMatch();
-                });
+                input.addEventListener('input', () => passwordValidation());
             } else if (input === reTypePassword) {
-                input.addEventListener('input', checkPasswordMatch);
+                input.addEventListener('input', () => checkPasswordMatch());
             } else if (input.type === 'checkbox' || input.tagName === 'SELECT' || input.type === 'file') {
                 input.addEventListener('change', () => validateInput(input));
             } else {
@@ -272,12 +278,11 @@ function validation() {
         formMessage.textContent = '';
 
         const validations = [
-            validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11, errorMessage: 'Phone number must be numeric, max 11 digits' }),
-            validateInput(email, 'Email is required', { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: 'Enter a valid email address' }),
-            validateInput(password, 'Password is required'),
-            validateInput(reTypePassword, 'Password is required'),
+            passwordValidation(),
             checkPasswordMatch(),
-            validateInput(agreeCheckBox, "You must agree with the terms")
+            validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11 }),
+            validateInput(email, 'Email is required', { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ }),
+            validateInput(agreeCheckBox, 'You must agree with the terms')
         ];
 
         if (!validations.every(v => v)) return;
@@ -298,7 +303,19 @@ function validation() {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
-                password: allData.password
+                password: allData.password,
+                options: {
+                    data: {
+                        fullname,
+                        sex,
+                        contactNo,
+                        address,
+                        idType,
+                        email,
+                        agreeCheckBox
+                    },
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.html",
+                },
             });
 
             if (error) {

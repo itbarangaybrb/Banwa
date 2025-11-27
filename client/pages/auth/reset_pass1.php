@@ -22,6 +22,8 @@
                         <h3>Reset Password</h3>
                         <!-- <p></p> -->
 
+                        <span id="formMessage" style="display:block; color:red; margin-bottom:10px;"></span>
+
                         <div class="inputs-container">
                             <div class="label-and-input">
                                 <label for="password">Password</label>
@@ -29,7 +31,7 @@
                                 <div class="error-msg"></div>
                             </div>
                             <div class="label-and-input">
-                                <label for="reTypePassword">Password</label>
+                                <label for="reTypePassword">Re-type password</label>
                                 <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" />
                                 <div class="error-msg"></div>
                             </div>

@@ -96,7 +96,11 @@ function validations() {
         if (!validations) return;
 
         try {
-            const { data, error } = await supabase.auth.resetPasswordForEmail(email.value);
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email.value,
+                {
+                    redirectTo: 'http://localhost:8080/Banwa/client/pages/auth/reset_pass1.php'
+                }
+            );
 
             if (error) {
                 console.error('Supabase reset error:', error.message);

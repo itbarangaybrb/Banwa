@@ -15,7 +15,7 @@ async function validations() {
         return;
     }
 
-    console.log("Recovery session active.");
+    // console.log("Recovery session active.");
 
     // =====================================================
     // Form elements
@@ -67,14 +67,15 @@ async function validations() {
     function checkPasswordMatch() {
         const wrapper = reTypePassword.closest('.label-and-input');
         const errorEl = wrapper?.querySelector('.error-msg');
+        const value = reTypePassword.value.trim();
 
-        if (reTypePassword.value.trim() === '') {
-            reTypePassword.classList.remove('error');
-            if (errorEl) errorEl.textContent = '';
-            return true;
+        if (value === '') {
+            reTypePassword.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Please re-type your password';
+            return false;
         }
 
-        if (password.value !== reTypePassword.value) {
+        if (value !== password.value) {
             reTypePassword.classList.add('error');
             if (errorEl) errorEl.textContent = 'Passwords do not match';
             return false;
@@ -87,22 +88,32 @@ async function validations() {
 
     // =====================================================
     // Password validation
-    // =====================================================
     function passwordValidation() {
         const wrapper = password.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
+        const errorEl = wrapper?.querySelector('.error-msg');
         const value = password.value;
+
+        if (value.trim() === '') {
+            password.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Password is required';
+            return false;
+        }
 
         if (value.length < 8 || value.length > 16) {
             password.classList.add('error');
-            errorEl.textContent = 'Password should be 8-16 characters long';
-        } else if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
-            password.classList.add('error');
-            errorEl.textContent = 'Password must contain letters and numbers';
-        } else {
-            password.classList.remove('error');
-            errorEl.textContent = '';
+            if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
+            return false;
         }
+
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+            password.classList.add('error');
+            if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
+            return false;
+        }
+
+        password.classList.remove('error');
+        if (errorEl) errorEl.textContent = '';
+        return true;
     }
 
     // =====================================================
@@ -110,10 +121,8 @@ async function validations() {
     // =====================================================
     (() => {
         if (!password) return;
-        password.addEventListener('input', () => {
-            passwordValidation();
-            checkPasswordMatch();
-        });
+        password.addEventListener('input', () => passwordValidation());
+        reTypePassword.addEventListener('input', () => checkPasswordMatch());
     })();
 
     // =====================================================
@@ -121,11 +130,10 @@ async function validations() {
     // =====================================================
     document.getElementById('resetPassForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        formMessage.textContent = '';
+        // formMessage.textContent = '';
 
         const allValid = [
-            validateInput(password, 'Password is required'),
-            validateInput(reTypePassword, 'Password is required'),
+            passwordValidation(),  // validate password independently
             checkPasswordMatch()
         ].every(v => v === true);
 
@@ -145,6 +153,10 @@ async function validations() {
 
             formMessage.style.color = 'green';
             formMessage.textContent = 'Password successfully updated. You may now sign in.';
+
+            setTimeout(() => {
+                window.location.href = '/Banwa/client/pages/auth/signin.php'; // change to your actual sign-in page path
+            }, 2000);
 
         } catch (err) {
             console.error('Unexpected error:', err);
