@@ -19,7 +19,7 @@
       -->
     <p id="userStatus"></p>
     <button id="signoutBtn">Logout</button>
-    
+
     <main>
         <section class="sections">
             <div class="containers">
@@ -31,8 +31,9 @@
                     <div class="chng-pass-container" id="changePass">
                         <form action="" class="forms" id="changePassForm">
                             <h3>Change Password</h3>
+                            <!-- <p></p> -->
 
-                            <div class="inputs">
+                            <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="currentPassword">Current password</label>
                                     <input type="text" name="currentPassword" id="currentPassword">
@@ -50,7 +51,11 @@
                                 </div>
                             </div>
 
-                            <button type="submit" id="saveNewPass">Save</button>
+                            <div class="buttons-container">
+                                <button type="submit" id="saveNewPass">Save</button>
+                                <button type="submit" id="changePassEditBtn">Edit</button>
+                                <button type="button" id="changePassCancelBtn">Cancel</button>
+                            </div>
                         </form>
                     </div>
 
@@ -58,8 +63,9 @@
                     <div class="mng-acc-container hidden" id="manageAcc">
                         <form action="" class="forms" id="mngAccForm">
                             <h3>Manage Account</h3>
+                            <!-- <p></p> -->
 
-                            <div class="inputs">
+                            <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="firstName">First Name</label>
                                     <input type="text" name="firstName" id="firstName">
@@ -92,12 +98,18 @@
                                 </div>
                             </div>
 
-                            <button type="submit" id="saveNewAccDetails">Save</button>
+                            <div class="buttons-container">
+                                <button type="submit" id="saveNewAccDetails">Save</button>
+                                <button type="submit" id="manageAccEditBtn">Edit</button>
+                                <button type="button" id="manageAccCancelBtn">Cancel</button>
+                            </div>
                         </form>
                     </div>
 
-                    <button type="button" id="changePasswordBtn">Change password</button>
-                    <button type="button" id="manageAccountBtn">Manage account</button>
+                    <div class="panel-buttons-container">
+                        <button type="button" id="changePasswordBtn">Change password</button>
+                        <button type="button" id="manageAccountBtn">Manage account</button>
+                    </div>
                 </div>
             </div>
         </section>

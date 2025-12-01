@@ -1,4 +1,4 @@
-import supabase from "../../configs/auth/supabase.js";
+import supabase from "../../../server/api/supabase.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const userStatus = document.getElementById("userStatus");

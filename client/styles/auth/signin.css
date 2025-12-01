@@ -84,7 +84,7 @@ body {
   color: #6c757d;
   margin-bottom: 6px;
 }
-.login-form input[type="text"], .login-form input[type="password"] {
+.login-form input[type="email"], .login-form input[type="password"] {
   width: 100%;
   padding: 9px 14px;
   border-radius: 7px;
@@ -132,7 +132,7 @@ body {
   .right-panel { padding: 30px 20px; align-items: center;}
 }
 
-.err-msg {
+.error-msg {
   color: red;
   font-size: 12px;
   margin-top: 4px;

@@ -1,10 +1,18 @@
 <?php
-// db connection
-include '../../configs/database.php';
+include __DIR__ . '../../../../server/configs/database.php';
+session_start(); // start session at the top
 
-// If form submitted
+$success_message = "";
+$error_message = "";
+
+// Check if there is a session success message
+if (!empty($_SESSION['success_message'])) {
+    $success_message = $_SESSION['success_message'];
+    unset($_SESSION['success_message']); // clear it after displaying
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
+    // Since you're using PDO from db.php, use PDO methods
     $permit_no = $_POST['permit_no'];
     $homeowner_name = $_POST['homeowner_name'];
     $contractor_name = $_POST['contractor_name'];
@@ -19,278 +27,367 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fee_paid = $_POST['fee_paid'];
     $payment_type = $_POST['payment_type'];
     $payment_status = $_POST['payment_status'];
-    $approved_by = $_POST['approved_by'];
-    $noted_by = $_POST['noted_by'];
-    $remarks = $_POST['remarks'];
+    $latitude = $_POST['latitude'];
+    $longitude = $_POST['longitude'];
 
-    // Create folder if it does not exist
-    $upload_dir = "client/uploads/";
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
+    $blueprint_image_path = "";
+    $additional_images = "";
 
-    // Handle Blueprint Upload
-    $blueprint_image_path = null;
-    if (!empty($_FILES['blueprint_image']['name'])) {
-        $blueprint_filename = time() . "_" . $_FILES['blueprint_image']['name'];
-        $blueprint_dest = $upload_dir . $blueprint_filename;
-        move_uploaded_file($_FILES['blueprint_image']['tmp_name'], $blueprint_dest);
-        $blueprint_image_path = $blueprint_dest;
-    }
+    // Blueprint upload
+    if (isset($_FILES['blueprint_image']) && $_FILES['blueprint_image']['error'] == 0) {
+        $target_dir = "uploads/blueprints/";
+        if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
+        $blueprint_file_name = time() . "_" . basename($_FILES["blueprint_image"]["name"]);
+        $target_file = $target_dir . $blueprint_file_name;
 
-    // Handle Additional Images (Multiple)
-    $additional_images = [];
-    if (!empty($_FILES['additional_images']['name'][0])) {
-        foreach ($_FILES['additional_images']['tmp_name'] as $key => $tmp_name) {
-            $add_filename = time() . "_" . $_FILES['additional_images']['name'][$key];
-            $add_dest = $upload_dir . $add_filename;
-            move_uploaded_file($tmp_name, $add_dest);
-            $additional_images[] = $add_dest;
+        if (move_uploaded_file($_FILES["blueprint_image"]["tmp_name"], $target_file)) {
+            $blueprint_image_path = $target_file;
+        } else {
+            $error_message = "Sorry, there was an error uploading your blueprint file.";
         }
     }
-    $additional_images = implode(",", $additional_images);
 
-    // Insert Data (Notice: NO document_id)
-    $stmt = $conn->prepare("INSERT INTO construction_doc (
-        permit_no, homeowner_name, contractor_name, address_of_construction, 
-        nature_of_activity, type_of_work, details_of_work, start_date, end_date,
-        num_of_workers, num_of_working_days, fee_paid, payment_type, payment_status,
-        approved_by, noted_by, remarks, blueprint_image_path, additional_images
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // Additional images upload
+    if (isset($_FILES['additional_images'])) {
+        $additional_files = [];
+        $target_dir = "uploads/additional/";
+        if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
 
-    $stmt->bind_param(
-        "sssssssss" . "iid" . "sssssss",
-        $permit_no,
-        $homeowner_name,
-        $contractor_name,
-        $address_of_construction,
-        $nature_of_activity,
-        $type_of_work,
-        $details_of_work,
-        $start_date,
-        $end_date,
-        $num_of_workers,
-        $num_of_working_days,
-        $fee_paid,
-        $payment_type,
-        $payment_status,
-        $approved_by,
-        $noted_by,
-        $remarks,
-        $blueprint_image_path,
-        $additional_images
-    );
-
-
-    if ($stmt->execute()) {
-        echo "<script>
-    alert('Construction Permit Form Submitted Successfully!');
-    window.location.href='/Banwa/client/pages/resident/home.php';
-</script>";
-    } else {
-        echo "<script>alert('Error Saving Data!');</script>";
+        foreach ($_FILES['additional_images']['tmp_name'] as $key => $tmp_name) {
+            if ($_FILES['additional_images']['error'][$key] == 0) {
+                $additional_file_name = time() . "_" . $key . "_" . basename($_FILES["additional_images"]["name"][$key]);
+                $target_file = $target_dir . $additional_file_name;
+                if (move_uploaded_file($tmp_name, $target_file)) {
+                    $additional_files[] = $target_file;
+                }
+            }
+        }
+        $additional_images = implode(",", $additional_files);
     }
 
-    $stmt->close();
-    $conn->close();
+    if (empty($error_message)) {
+        try {
+            $sql = "INSERT INTO construction_doc (
+                permit_no, homeowner_name, contractor_name, address_of_construction, 
+                nature_of_activity, type_of_work, details_of_work, start_date, end_date, 
+                num_of_workers, num_of_working_days, fee_paid, payment_type, payment_status, 
+                blueprint_image_path, additional_images, latitude, longitude
+            ) VALUES (
+                :permit_no, :homeowner_name, :contractor_name, :address_of_construction,
+                :nature_of_activity, :type_of_work, :details_of_work, :start_date, :end_date,
+                :num_of_workers, :num_of_working_days, :fee_paid, :payment_type, :payment_status,
+                :blueprint_image_path, :additional_images, :latitude, :longitude
+            )";
+
+            $stmt = $pdo->prepare($sql);
+            $result = $stmt->execute([
+                ':permit_no' => $permit_no,
+                ':homeowner_name' => $homeowner_name,
+                ':contractor_name' => $contractor_name,
+                ':address_of_construction' => $address_of_construction,
+                ':nature_of_activity' => $nature_of_activity,
+                ':type_of_work' => $type_of_work,
+                ':details_of_work' => $details_of_work,
+                ':start_date' => $start_date,
+                ':end_date' => $end_date,
+                ':num_of_workers' => $num_of_workers,
+                ':num_of_working_days' => $num_of_working_days,
+                ':fee_paid' => $fee_paid,
+                ':payment_type' => $payment_type,
+                ':payment_status' => $payment_status,
+                ':blueprint_image_path' => $blueprint_image_path,
+                ':additional_images' => $additional_images,
+                ':latitude' => $latitude,
+                ':longitude' => $longitude
+            ]);
+
+            if ($result) {
+                // Store success message in session
+                $_SESSION['success_message'] = "Construction permit application submitted successfully!";
+
+                // Redirect to same page to prevent resubmission
+                header("Location: " . $_SERVER['PHP_SELF']);
+                exit;
+            } else {
+                $error_message = "Error submitting application.";
+            }
+        } catch (PDOException $e) {
+            $error_message = "Database error: " . $e->getMessage();
+        }
+    }
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-
-    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-
-    <title>Construction Permit Form</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Permit Application</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="../../styles/resident/construction_app.css">
+    <script src="../../scripts/resident/construction_app.js" defer></script>
+
 </head>
 
 <body>
-
-
-
-    <div class="form-container">
-
-        <div class="form-header">
-            <h2>Construction Permit Application Form</h2>
-            <p>Please fill out all required fields.</p>
+    <!-- <nav class="side_nav">
+        <div class="nav_header">
+            <div class="logo_title">
+                <div class="nav_logo">C</div>
+                <div class="company_name">ConstructPro</div>
+            </div>
         </div>
 
-        <div class="stepper">
-            <div class="step active">Construction Permit Form</div>
+        <div class="nav_list">
+            <ul class="nav_list1">
+                <li><a href="#dashboard" class="nav_select active">
+                        <span class="nav_icon"></span>
+                        <span class="nav_text">Dashboard</span>
+                    </a></li>
+                <li><a href="#permits" class="nav_select">
+                        <span class="nav_icon"></span>
+                        <span class="nav_text">Permit Applications</span>
+                    </a></li>
+                <li><a href="#projects" class="nav_select">
+                        <span class="nav_icon"></span>
+                        <span class="nav_text">Applications</span>
+                    </a></li>
+                <li><a href="#reports" class="nav_select">
+                        <span class="nav_icon"></span>
+                        <span class="nav_text">Profile</span>
+                    </a></li>
+            </ul>
+
+            <ul class="nav_list2">
+                <li><a href="#settings" class="nav_select">
+                        <span class="nav_icon">⚙️</span>
+                        <span class="nav_text">Settings</span>
+                    </a></li>
+                <li><a href="#help" class="nav_select">
+                        <span class="nav_icon">❓</span>
+                        <span class="nav_text">Help & Support</span>
+                    </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header>
+        <div class="head_space">
+            <div class="logo_container">
+                <div class="time_date" id="currentDateTime"></div>
+            </div>
         </div>
 
-        <form action="" method="POST" enctype="multipart/form-data" id="constructionForm">
-
-            <h3>Owner & Project Information</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Permit No.</label>
-                    <input type="text" name="permit_no" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Homeowner Name</label>
-                    <input type="text" name="homeowner_name" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Contractor Name</label>
-                    <input type="text" name="contractor_name" required>
-                </div>
-
-                <div class="form-group full-width">
-                    <label>Address of Construction</label>
-                    <textarea name="address_of_construction" required></textarea>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="nature_of_activity">Nature of Activity</label>
-                    <select id="nature_of_activity" name="nature_of_activity" required>
-                        <option value="" disabled selected>Select Nature of Activity</option>
-                        <option value="Repairs">Repairs</option>
-                        <option value="Minor Construction">Minor Construction</option>
-                        <option value="Construction">Construction</option>
-                        <option value="Demolition">Demolition</option>
-                    </select>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="activity_details">Specific Details (if any)</label>
-                    <textarea id="activity_details" name="activity_details" placeholder="Example: Installation of roofing for open parking"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Type of Work</label>
-                    <input type="text" name="type_of_work" required>
-                </div>
-
-                <div class="form-group full-width">
-                    <label>Details of Work</label>
-                    <textarea name="details_of_work" required></textarea>
-                </div>
+        <div class="user_profile">
+            <div class="username">Welcome, User</div>
+            <div class="user_image">
+                <span>👤</span>
             </div>
+        </div>
+    </header> -->
 
-            <h3>Work Schedule & Labor</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Start Date</label>
-                    <input type="date" name="start_date" required>
+    <main class="content">
+        <div class="content_wrapper">
+            <?php if (!empty($success_message) || !empty($error_message)): ?>
+                <div id="formMessage" class="message <?php echo !empty($success_message) ? 'success' : 'error'; ?>">
+                    <?php echo !empty($success_message) ? $success_message : $error_message; ?>
                 </div>
 
-                <div class="form-group">
-                    <label>End Date</label>
-                    <input type="date" name="end_date" required>
+                <script>
+                    // Show the message immediately
+                    const formMessage = document.getElementById('formMessage');
+
+                    // Hide the message after 3 seconds (3000 ms)
+                    setTimeout(() => {
+                        formMessage.style.display = 'none';
+                    }, 2000);
+                </script>
+            <?php endif; ?>
+
+            <section id="permits" class="content-section active">
+                <div class="construction-form">
+                    <h2>Construction Permit Application Form</h2>
+                    <p>Please fill out all required fields.</p>
+
+                    <form id="construction-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data">
+
+
+                        <h3>Owner & Project Information</h3>
+
+                        <div class="label-and-input">
+                            <label for="permit_no" class="required-field">Permit No. *</label>
+                            <input type="text" id="permit_no" name="permit_no" value="<?php echo isset($_POST['permit_no']) ? htmlspecialchars($_POST['permit_no']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="homeowner_name" class="required-field">Homeowner Name *</label>
+                            <input type="text" id="homeowner_name" name="homeowner_name" value="<?php echo isset($_POST['homeowner_name']) ? htmlspecialchars($_POST['homeowner_name']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="contractor_name" class="required-field">Contractor Name *</label>
+                            <input type="text" id="contractor_name" name="contractor_name" value="<?php echo isset($_POST['contractor_name']) ? htmlspecialchars($_POST['contractor_name']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="address_of_construction" class="required-field">Address of Construction *</label>
+                            <textarea id="address_of_construction" name="address_of_construction" rows="3"><?php echo isset($_POST['address_of_construction']) ? htmlspecialchars($_POST['address_of_construction']) : ''; ?></textarea>
+                            <div class="error-msg"></div>
+                        </div>
+
+
+                        <h3>Construction Location Coordinates</h3>
+
+
+                        <div class="label-and-input">
+                            <label for="latitude" class="required-field">Latitude *</label>
+                            <input type="text" id="latitude" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
+                                title="Enter latitude in decimal format (e.g., 14.617500)"
+                                placeholder="e.g., 14.617500"
+                                value="<?php echo isset($_POST['latitude']) ? htmlspecialchars($_POST['latitude']) : ''; ?>">
+                            <small class="coord-help">Format: 14.617500 (decimal degrees)</small>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="longitude" class="required-field">Longitude *</label>
+                            <input type="text" id="longitude" name="longitude" pattern="-?\d{1,3}\.\d{6,8}"
+                                title="Enter longitude in decimal format (e.g., 121.075600)"
+                                placeholder="e.g., 121.075600"
+                                value="<?php echo isset($_POST['longitude']) ? htmlspecialchars($_POST['longitude']) : ''; ?>">
+                            <small class="coord-help">Format: 121.075600 (decimal degrees)</small>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <button type="button" class="map-btn" onclick="openMapPicker()">📍 Pick Location on Map</button>
+                            <div class="label-and-input" id="map-preview" style="margin-top: 10px; display: none;">
+                                <p>Selected Location: <span id="selected-location">None</span></p>
+                            </div>
+                        </div>
+
+
+
+                        <h3>Work Details</h3>
+
+
+                        <div class="label-and-input">
+                            <label for="nature_of_activity" class="required-field">Nature of Activity *</label>
+                            <textarea id="nature_of_activity" name="nature_of_activity" rows="3"><?php echo isset($_POST['nature_of_activity']) ? htmlspecialchars($_POST['nature_of_activity']) : ''; ?></textarea>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="type_of_work" class="required-field">Type of Work *</label>
+                            <select id="type_of_work" name="type_of_work">
+                                <option value="">Select Type of Work</option>
+                                <option value="residential" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'residential') ? 'selected' : ''; ?>>Residential Construction</option>
+                                <option value="commercial" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'commercial') ? 'selected' : ''; ?>>Commercial Construction</option>
+                                <option value="renovation" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'renovation') ? 'selected' : ''; ?>>Renovation</option>
+                                <option value="demolition" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'demolition') ? 'selected' : ''; ?>>Demolition</option>
+                                <option value="addition" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'addition') ? 'selected' : ''; ?>>Addition</option>
+                                <option value="repair" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'repair') ? 'selected' : ''; ?>>Repair</option>
+                                <option value="other" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'other') ? 'selected' : ''; ?>>Other</option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="details_of_work" class="required-field">Details of Work *</label>
+                            <textarea id="details_of_work" name="details_of_work" rows="3"><?php echo isset($_POST['details_of_work']) ? htmlspecialchars($_POST['details_of_work']) : ''; ?></textarea>
+                            <div class="error-msg"></div>
+                        </div>
+
+
+
+                        <div class="label-and-input">
+                            <h3>Project Timeline</h3>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="start_date" class="required-field">Start Date *</label>
+                            <input type="date" id="start_date" name="start_date" value="<?php echo isset($_POST['start_date']) ? htmlspecialchars($_POST['start_date']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="end_date" class="required-field">End Date *</label>
+                            <input type="date" id="end_date" name="end_date" value="<?php echo isset($_POST['end_date']) ? htmlspecialchars($_POST['end_date']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="num_of_workers" class="required-field">Number of Workers *</label>
+                            <input type="number" id="num_of_workers" name="num_of_workers" min="1" value="<?php echo isset($_POST['num_of_workers']) ? htmlspecialchars($_POST['num_of_workers']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="num_of_working_days" class="required-field">Number of Working Days *</label>
+                            <input type="number" id="num_of_working_days" name="num_of_working_days" min="1" value="<?php echo isset($_POST['num_of_working_days']) ? htmlspecialchars($_POST['num_of_working_days']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+
+
+
+                        <h3>Payment Information</h3>
+
+                        <div class="label-and-input">
+                            <label for="fee_paid" class="required-field">Fee Paid (₱) *</label>
+                            <input type="number" id="fee_paid" name="fee_paid" step="0.01" min="0" value="<?php echo isset($_POST['fee_paid']) ? htmlspecialchars($_POST['fee_paid']) : ''; ?>">
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="payment_type" class="required-field">Payment Type *</label>
+                            <select id="payment_type" name="payment_type">
+                                <option value="">Select Payment Type</option>
+                                <option value="cash" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'cash') ? 'selected' : ''; ?>>Cash</option>
+                                <option value="check" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'check') ? 'selected' : ''; ?>>Check</option>
+                                <option value="bank_transfer" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'bank_transfer') ? 'selected' : ''; ?>>Bank Transfer</option>
+                                <option value="online" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'online') ? 'selected' : ''; ?>>Online Payment</option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <label for="payment_status" class="required-field">Payment Status *</label>
+                            <select id="payment_status" name="payment_status">
+                                <option value="">Select Payment Status</option>
+                                <option value="pending" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
+                                <option value="paid" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'paid') ? 'selected' : ''; ?>>Paid</option>
+                                <option value="partial" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'partial') ? 'selected' : ''; ?>>Partial Payment</option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <h3>Document Uploads</h3>
+
+                        <div class="label-and-input">
+                            <label for="blueprint_image" class="required-field">Blueprint/Plan Image *</label>
+                            <input type="file" id="blueprint_image" name="blueprint_image" accept="image/*,.pdf">
+                            <div class="error-msg"></div>
+                        </div>
+                        <div class="label-and-input">
+                            <label for="additional_images">Additional Images/Documents</label>
+                            <input type="file" id="additional_images" name="additional_images[]" accept="image/*,.pdf,.doc,.docx" multiple>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="label-and-input">
+                            <button type="submit" class="submit-btn">Submit Application</button>
+                            <button type="reset" class="submit-btn reset-btn">Clear Form</button>
+                        </div>
+                    </form>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label>Number of Workers</label>
-                    <input type="number" name="num_of_workers" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Number of Working Days</label>
-                    <input type="number" name="num_of_working_days" required>
-                </div>
-            </div>
-
-            <h3>Payment & Approval</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Fee Paid</label>
-                    <input type="number" step="0.01" name="fee_paid" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Payment Type</label>
-                    <select name="payment_type">
-                        <option value="Cash">Cash</option>
-                        <option value="GCash">GCash</option>
-                        <option value="Bank">Bank</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Payment Status</label>
-                    <select name="payment_status">
-                        <option value="Paid">Paid</option>
-                        <option value="Unpaid">Unpaid</option>
-                        <option value="Pending">Pending</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Approved By</label>
-                    <input type="text" name="approved_by">
-                </div>
-
-                <div class="form-group">
-                    <label>Noted By</label>
-                    <input type="text" name="noted_by">
-                </div>
-
-                <div class="form-group full-width">
-                    <label>Remarks</label>
-                    <textarea name="remarks"></textarea>
-                </div>
-            </div>
-
-            <h3>Attachments</h3>
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <label>Upload Blueprint</label>
-                    <input type="file" name="blueprint_image" accept="image/*">
-                </div>
-
-                <div class="form-group full-width">
-                    <label>Upload Additional Images (Multiple)</label>
-                    <input type="file" name="additional_images[]" multiple accept="image/*">
-                </div>
-            </div>
-
-            <button type="submit" class="submit-btn">Submit Form</button>
-
-        </form>
-
-    </div>
-
-    <script>
-        document.getElementById("constructionForm").addEventListener("submit", function(e) {
-            let form = e.target;
-            let requiredFields = form.querySelectorAll("input[required], select[required], textarea[required]");
-            let allFilled = true;
-
-            requiredFields.forEach(field => {
-                field.style.border = "1px solid #ccc"; // reset border
-
-                if (!field.value.trim()) {
-                    field.style.border = "2px solid red"; // highlight missing
-                    allFilled = false;
-                }
-            });
-
-            if (!allFilled) {
-                e.preventDefault(); // stop submit
-                alert("Please fill in all required fields before submitting.");
-            }
-        });
-
-        // Validate Start Date < End Date
-        let start = document.querySelector("input[name='start_date']");
-        let end = document.querySelector("input[name='end_date']");
-
-        if (start.value && end.value && start.value > end.value) {
-            e.preventDefault();
-            start.style.border = end.style.border = "2px solid red";
-            alert("End Date must be later than Start Date.");
-            return;
-        }
-    </script>
-
-
+            <!-- <section id="dashboard" class="content-section">
+                <h2>Dashboard</h2>
+                <p>Welcome to your construction management dashboard.</p>
+            </section> -->
+        </div>
+    </main>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-import supabase from '../../configs/auth/supabase.js'
+import supabase from '../../../server/api/supabase.js'
 
 // =========================
 // Function: Hide/Show Panels
@@ -47,7 +47,6 @@ function validation() {
         const errorEl = wrapper.querySelector('.error-msg');
         const value = input.value.trim();
 
-        // Required check
         if (value === '') {
             input.classList.add('error');
             errorEl.textContent = message;
@@ -56,21 +55,18 @@ function validation() {
             errorEl.textContent = '';
         }
 
-        // Pattern validation
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
             errorEl.textContent = rules.errorMessage || 'Invalid format';
             return false;
         }
 
-        // Max length validation
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
             errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
             return false;
         }
 
-        // Passed validation
         input.classList.remove('error');
         errorEl.textContent = '';
         return true;
@@ -168,7 +164,137 @@ function validation() {
 
 
     // =========================
-    // Change password "Save"
+    // Autofill the Management Account form inputs
+    // =========================
+    // async function loadUserData() {
+    //     try {
+    //         const res = await fetch('/Banwa/server/api/resident/get_user.php', {
+    //             credentials: 'include'
+    //         });
+    //         const data = await res.json();
+
+    //         if (data.error) {
+    //             console.error(data.error);
+    //             return;
+    //         }
+
+    //         document.getElementById('firstName').value = data.first_name || '';
+    //         document.getElementById('middleName').value = data.middle_name || '';
+    //         document.getElementById('lastName').value = data.last_name || '';
+    //         document.getElementById('suffix').value = data.suffix || '';
+    //         document.getElementById('contactNo').value = data.contact_no || '';
+    //         document.getElementById('address').value = data.address || '';
+
+    //         captureOriginalData(); // for cancel functionality
+
+    //     } catch (err) {
+    //         console.error('Failed to load user data:', err);
+    //     }
+    // }
+
+    // Call after validation() has initialized inputs
+    // loadUserData();
+
+    // =========================
+    // Change Password: Read only the input
+    // =========================
+    function setChangePassReadonly(state) {
+        currentPassword.readOnly = state;
+        newPassword.readOnly = state;
+        reTypeNewPassword.readOnly = state;
+    }
+
+    // =========================
+    // Change Password: Show "Save" and "Cancel" after "Edit" click
+    // =========================
+    function toggleChangePassButtons(mode) {
+        const btnEdit = document.getElementById('changePassEditBtn');
+        const btnSave = document.getElementById('saveNewPass');
+        const btnCancel = document.getElementById('changePassCancelBtn');
+
+        if (mode === "view") {
+            btnEdit.style.display = "block";
+            btnSave.style.display = "none";
+            btnCancel.style.display = "none";
+        }
+
+        if (mode === "edit") {
+            btnEdit.style.display = "none";
+            btnSave.style.display = "block";
+            btnCancel.style.display = "block";
+        }
+    }
+
+    setChangePassReadonly(true);
+    toggleChangePassButtons("view");
+
+    // =========================
+    // Change Password: Remember the original if "Cancel" click
+    // =========================
+    let originalPassData = {};
+
+    function captureOriginalPassData() {
+        originalPassData = {
+            current: currentPassword.value,
+            newPass: newPassword.value,
+            retype: reTypeNewPassword.value
+        };
+    }
+
+    // =========================
+    // Change Password: Clear validations if "Cancel" click
+    // =========================
+    function clearChangePassErrors() {
+        [currentPassword, newPassword, reTypeNewPassword].forEach(input => {
+            input.classList.remove('error');
+            input.closest('.label-and-input').querySelector('.error-msg').textContent = "";
+        });
+    }
+
+    // =========================
+    // Change Password: "Edit" click
+    // =========================
+    document.getElementById('changePassEditBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        captureOriginalPassData();
+        setChangePassReadonly(false);
+        toggleChangePassButtons("edit");
+        disablePanelSwitch(true);
+    });
+
+    // =========================
+    // Change Password: "Cancel" click
+    // =========================
+    document.getElementById('changePassCancelBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (
+            currentPassword.value === originalPassData.current &&
+            newPassword.value === originalPassData.newPass &&
+            reTypeNewPassword.value === originalPassData.retype
+        ) {
+            clearChangePassErrors();
+            setChangePassReadonly(true);
+            toggleChangePassButtons("view");
+            disablePanelSwitch(false);
+            return;
+        }
+
+        if (confirm("Discard changes?")) {
+            currentPassword.value = originalPassData.current;
+            newPassword.value = originalPassData.newPass;
+            reTypeNewPassword.value = originalPassData.retype;
+        }
+
+        clearChangePassErrors();
+        setChangePassReadonly(true);
+        toggleChangePassButtons("view");
+        disablePanelSwitch(false);
+    });
+
+
+    // =========================
+    // Change Password: "Save" click
     // =========================
     document.getElementById('changePassForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -216,6 +342,12 @@ function validation() {
                 alert('Failed to update password: ' + error.message);
             } else {
                 alert('Password updated successfully!');
+
+                setChangePassReadonly(true);
+                toggleChangePassButtons("view");
+                captureOriginalPassData();
+                disablePanelSwitch(false);
+
                 console.log('Updated user data:', data);
 
                 // TODO: Back-end developer, these are the data to be sent to db.
@@ -223,11 +355,133 @@ function validation() {
             }
         }
 
-    });
+    }, { once: true });
+
 
     // =========================
-    // Manage account "Save"
+    // Manage Account: Read only the input
     // =========================
+    function setManageAccReadonly(state) {
+        [firstName, middleName, lastName, suffix, contactNo, address].forEach(i => {
+            i.readOnly = state;
+        });
+    }
+
+    // =========================
+    // Manage Account: Show "Save" and "Cancel" after "Edit" click
+    // =========================
+    function toggleManageButtons(mode) {
+        const btnEdit = document.getElementById('manageAccEditBtn');
+        const btnSave = document.getElementById('saveNewAccDetails');
+        const btnCancel = document.getElementById('manageAccCancelBtn');
+
+        if (mode === "view") {
+            btnEdit.style.display = "inline-block";
+            btnSave.style.display = "none";
+            btnCancel.style.display = "none";
+        }
+
+        if (mode === "edit") {
+            btnEdit.style.display = "none";
+            btnSave.style.display = "inline-block";
+            btnCancel.style.display = "inline-block";
+        }
+    }
+
+    setManageAccReadonly(true);
+    toggleManageButtons("view");
+
+    // =========================
+    // Manage Account: Remember the original if "Cancel" click
+    // =========================
+    let originalManageData = {};
+
+    function captureOriginalData() {
+        originalManageData = {
+            firstName: firstName.value,
+            middleName: middleName.value,
+            lastName: lastName.value,
+            suffix: suffix.value,
+            contactNo: contactNo.value,
+            address: address.value,
+        };
+    }
+
+    // =========================
+    // Manage Account: Check if there has change
+    // =========================
+    function hasChanges() {
+        return (
+            firstName.value !== originalManageData.firstName ||
+            middleName.value !== originalManageData.middleName ||
+            lastName.value !== originalManageData.lastName ||
+            suffix.value !== originalManageData.suffix ||
+            contactNo.value !== originalManageData.contactNo ||
+            address.value !== originalManageData.address
+        );
+    }
+
+    // =====================================
+    // Manage Account: "Edit" click
+    // =====================================
+    document.getElementById('manageAccEditBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+
+        captureOriginalData();
+        setManageAccReadonly(false);
+        toggleManageButtons("edit");
+        disablePanelSwitch(true);
+    });
+
+    // =====================================
+    // Manage Account: Clear Validations if "Cancel" click
+    // =====================================
+    function clearManageAccErrors() {
+        const inputs = [firstName, middleName, lastName, suffix, contactNo, address];
+
+        inputs.forEach(input => {
+            input.classList.remove('error');
+            const wrapper = input.closest('.label-and-input');
+            const errorEl = wrapper.querySelector('.error-msg');
+            errorEl.textContent = '';
+        });
+    }
+
+    // =====================================
+    // Manage Account: "Cancel" click
+    // =====================================
+    document.getElementById('manageAccCancelBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+
+        // If no changes, simply reset UI
+        if (!hasChanges()) {
+            clearManageAccErrors();
+            setManageAccReadonly(true);
+            toggleManageButtons("view");
+            disablePanelSwitch(false);
+            return;
+        }
+
+        // If there are changes, confirm discard
+        if (confirm("You made changes. Discard them?")) {
+            // Restore original values
+            firstName.value = originalManageData.firstName;
+            middleName.value = originalManageData.middleName;
+            lastName.value = originalManageData.lastName;
+            suffix.value = originalManageData.suffix;
+            contactNo.value = originalManageData.contactNo;
+            address.value = originalManageData.address;
+        }
+
+        clearManageAccErrors();
+        setManageAccReadonly(true);
+        toggleManageButtons("view");
+        disablePanelSwitch(false);
+    });
+
+    // =====================================
+    // Manage Account: "Save" click
+    // =====================================
     document.getElementById('mngAccForm').addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -244,25 +498,36 @@ function validation() {
             validateInput(address, 'Address is required'),
         ];
 
-        if (validations.every(v => v)) {
-            if (confirm('Are you sure you want to submit this application?')) {
-                const manageAccAllData = {
-                    firstName: firstName.value,
-                    middleName: middleName.value,
-                    lastName: lastName.value,
-                    suffix: suffix.value,
-                    contactNo: contactNo.value,
-                    address: address.value,
-                };
+        if (!validations.every(v => v)) return;
 
-                // TODO: Back-end developer, these are the data to be sent to db.
-                // add here if necessary...
+        if (!confirm('Save changes?')) return;
 
-                console.log('Final Submission Data:', manageAccAllData);
-                alert('Application submitted successfully!');
-            }
-        }
+        const manageAccAllData = {
+            firstName: firstName.value,
+            middleName: middleName.value,
+            lastName: lastName.value,
+            suffix: suffix.value,
+            contactNo: contactNo.value,
+            address: address.value,
+        };
+
+        fetch('submit.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(manageAccAllData)
+        })
+            .then(res => res.json())
+            .then(data => console.log(data))
+            .catch(err => console.error(err));
+
+        alert('Account details updated.');
+
+        setManageAccReadonly(true);
+        captureOriginalData();
+        toggleManageButtons("view");
+        disablePanelSwitch(false);
     });
+
 
     // =========================
     // Change Password Panel Button
@@ -272,11 +537,25 @@ function validation() {
     });
 
     // =========================
-    // Change Password Panel Button
+    // Manage Account Panel Button
     // =========================
     document.getElementById('manageAccountBtn').addEventListener('click', () => {
         switchPanel('manageAcc')
     });
+
+    // =========================
+    // Disable panesl if "Edit" click
+    // =========================
+    function disablePanelSwitch(state) {
+        const btnChange = document.getElementById('changePasswordBtn');
+        const btnManage = document.getElementById('manageAccountBtn');
+
+        btnChange.disabled = state;
+        btnManage.disabled = state;
+
+        btnChange.style.pointerEvents = state ? "none" : "auto";
+        btnManage.style.pointerEvents = state ? "none" : "auto";
+    }
 }
 
 validation();
