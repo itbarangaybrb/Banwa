@@ -195,6 +195,19 @@ function performAjaxSearch(searchTerm, tableBody) {
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAutoSearch();
+    // Initialize sidebar navigation (switch tab panes)
+    const navItems = document.querySelectorAll('.nav_select[data-tab]');
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tab = this.getAttribute('data-tab');
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav_select[data-tab]').forEach(i => i.classList.remove('active'));
+            const pane = document.getElementById(tab);
+            if (pane) pane.classList.add('active');
+            this.classList.add('active');
+        });
+    });
 });
 
 window.onclick = function(event) {

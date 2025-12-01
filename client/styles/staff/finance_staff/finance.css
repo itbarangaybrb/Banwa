@@ -512,3 +512,33 @@
             margin: 20% auto;
         }
     }
+.status-for-payment {
+    background: #ffc107;
+    color: #212529;
+}
+
+.status-paid {
+    background: #28a745;
+    color: white;
+}
+
+.status-pre-approved {
+    background: #17a2b8;
+    color: white;
+}
+
+.status-cancelled {
+    background: #6c757d;
+    color: white;
+}
+
+.status-completed {
+    background: #007bff;
+    color: white;
+}
+
+/* Modal text styling */
+#dispPayer, #dispAppId {
+    font-weight: bold;
+    color: #667eea;
+}

@@ -1,6 +1,9 @@
-// =========================
+// Configuration
+// Adjust this path to point to your existing staff handler. 
+// Assuming structure: /Banwa/client/pages/resident/business_app.php -> /Banwa/scripts/business_staff/business_handler.php
+const API_URL = '../../../client/scripts/business_staff/business_handler.php';
+
 // Function: Hide/Show Panels
-// =========================
 function switchPanel(panelId) {
     const panels = ['business', 'waiver', 'summary']
         .map(id => document.getElementById(id));
@@ -8,9 +11,7 @@ function switchPanel(panelId) {
 }
 
 function validation() {
-    // =========================
-    // Business/Utilities form elements
-    // =========================
+    // Business/Utilities form elements 
     const businessName = document.getElementById('businessName');
     const typeOfBusiness = document.getElementsByName('typeOfBusiness');
     const natureOfBusinessSelect = document.getElementById('natureOfBusinessSelect');
@@ -36,15 +37,11 @@ function validation() {
     // Show business panel by default
     switchPanel('business');
 
-    // =========================
     // Hide “Others” specify input initially
-    // =========================
-    natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
     typeOfStructureSpecify.closest('.label-and-input').style.display = 'none';
+    natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
 
-    // =========================
     // Function: handle "Others" selection
-    // =========================
     function handleOthersSelect(selectEl, specifyEl) {
         const wrapper = specifyEl.closest('.label-and-input');
         if (selectEl.value === 'Others') {
@@ -55,12 +52,10 @@ function validation() {
         }
     }
 
-    natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
     typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
+    natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 
-    // =========================
     // Function: Validate single input
-    // =========================
     function validateInput(input, message = 'This field is required', rules = {}) {
         if (!input) return true;
         const wrapper = input.closest('.label-and-input');
@@ -70,59 +65,60 @@ function validation() {
         if ((input.type === 'checkbox' && !value) ||
             (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = message;
             return false;
         }
 
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = rules.errorMessage || 'Invalid format';
             return false;
         }
 
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
             return false;
         }
 
         input.classList.remove('error');
+        errorEl.classList.remove('show');
         errorEl.textContent = '';
         return true;
     }
 
-    // =========================
     // Function: Validate checkbox
-    // =========================
     function validateCheckboxGroup(checkboxes, message) {
         const wrapper = checkboxes[0].closest('.label-and-input');
         const errorEl = wrapper.querySelector('.error-msg');
         if (!Array.from(checkboxes).some(c => c.checked)) {
             errorEl.textContent = message;
+            errorEl.classList.add('show');
             return false;
         }
         errorEl.textContent = '';
+        errorEl.classList.remove('show');
         return true;
     }
 
-    // =========================
     // Function: Validate radio
-    // =========================
     function validateRadioGroup(radios, message) {
         const wrapper = radios[0].closest('.label-and-input');
         const errorEl = wrapper.querySelector('.error-msg');
         if (!Array.from(radios).some(r => r.checked)) {
             errorEl.textContent = message;
+            errorEl.classList.add('show');
             return false;
         }
         errorEl.textContent = '';
+        errorEl.classList.remove('show');
         return true;
     }
 
-
-    // =========================
     // Real-time validation
-    // =========================
     (() => {
         const inputs = [
             businessName, natureOfBusinessSelect, natureOfBusinessSpecify,
@@ -149,10 +145,13 @@ function validation() {
             const errorEl = wrapper.querySelector('.error-msg');
             telephoneNoBusiness.value = telephoneNoBusiness.value.replace(/[^0-9]/g, '');
             if (telephoneNoBusiness.value === '') {
+                errorEl.classList.add('show');
                 errorEl.textContent = 'Contact number is required';
             } else if (telephoneNoBusiness.value.length !== 11) {
+                errorEl.classList.add('show');
                 errorEl.textContent = 'Contact number must be exactly 11 digits';
             } else {
+                errorEl.classList.remove('show');
                 errorEl.textContent = '';
             }
         });
@@ -162,10 +161,13 @@ function validation() {
             const errorEl = wrapper.querySelector('.error-msg');
             telephoneNoOwner.value = telephoneNoOwner.value.replace(/[^0-9]/g, '');
             if (telephoneNoOwner.value === '') {
+                errorEl.classList.add('show');
                 errorEl.textContent = 'Telephone no. is required';
             } else if (telephoneNoOwner.value.length !== 11) {
+                errorEl.classList.add('show');
                 errorEl.textContent = 'Telephone no. must be exactly 11 digits';
             } else {
+                errorEl.classList.remove('show');
                 errorEl.textContent = '';
             }
         });
@@ -175,8 +177,10 @@ function validation() {
             const errorEl = wrapper.querySelector('.error-msg');
             noOfEmployees.value = noOfEmployees.value.replace(/[^0-9]/g, '');
             if (noOfEmployees.value === '') {
+                errorEl.classList.add('show');
                 errorEl.textContent = 'No. of employees is required';
             } else {
+                errorEl.classList.remove('show');
                 errorEl.textContent = '';
             }
         });
@@ -185,8 +189,8 @@ function validation() {
             radio.addEventListener('change', () => validateRadioGroup(typeOfBusiness, 'Please select a type of business'));
         });
 
-        Array.from(businessStatus).forEach(checkbox => {
-            checkbox.addEventListener('change', () => validateCheckboxGroup(businessStatus, 'Please select business status'));
+        Array.from(businessStatus).forEach(radio => {
+            radio.addEventListener('change', () => validateRadioGroup(businessStatus, 'Please select business status'));
         });
 
         Array.from(requirements).forEach(checkbox => {
@@ -196,10 +200,7 @@ function validation() {
         agreeCheckBox.addEventListener('change', () => validateInput(agreeCheckBox));
     })();
 
-
-    // =========================
     // Business "Next" button click
-    // =========================
     document.getElementById('nextToWaiver').addEventListener('click', () => {
         const validations = [
             validateInput(businessName, 'Business Name is required'),
@@ -209,7 +210,7 @@ function validation() {
                 ? validateInput(natureOfBusinessSpecify, 'Please specify the business details')
                 : true,
             validateInput(addressOfBusiness, 'Please enter your business address'),
-            validateCheckboxGroup(businessStatus, 'Please select business status'),
+            validateRadioGroup(businessStatus, 'Please select business status'),
             validateInput(telephoneNoBusiness, 'Business telephone is required', {
                 pattern: /^[0-9]+$/,
                 maxLength: 11,
@@ -251,9 +252,7 @@ function validation() {
         }
     });
 
-    // =========================
-    // Waiver and Summary logic (unchanged)
-    // =========================
+    // Waiver "Next" button click
     document.getElementById('nextToSummary').addEventListener('click', () => {
         const isValid = validateInput(agreeCheckBox, 'You must agree to proceed');
 
@@ -261,6 +260,8 @@ function validation() {
             document.getElementById('sumBusinessName').textContent = businessName.value;
             document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
             document.getElementById('sumNatureOfBusiness').textContent = `${natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value}`.trim();
+            // This is the line we fixed earlier:
+            document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
             document.getElementById('sumAddressOfBusiness').textContent = addressOfBusiness.value;
             document.getElementById('sumTelephoneBusiness').textContent = telephoneNoBusiness.value;
             document.getElementById('sumEmail').textContent = emailAddress.value;
@@ -276,45 +277,122 @@ function validation() {
         }
     });
 
-    // =========================
     // Back buttons
-    // =========================
     (() => {
         document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
     })();
 
-    // =========================
-    // Final form submit
-    // =========================
-    document.getElementById('summaryForm').addEventListener('submit', function (e) {
+
+    // FINAL FORM SUBMISSION HANDLER
+
+    const summaryForm = document.getElementById('summaryForm');
+
+    // Remove existing listeners to prevent duplicates
+    const newSummaryForm = summaryForm.cloneNode(true);
+    summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
+
+    newSummaryForm.addEventListener('submit', function (e) {
         e.preventDefault();
 
         if (confirm('Are you sure you want to submit this application?')) {
-            const allData = {
-                businessName: businessName.value,
-                typeOfBusiness: Array.from(typeOfBusiness).find(r => r.checked)?.value || '',
-                natureOfBusiness: `${natureOfBusinessSelect.value} ${natureOfBusinessSpecify.value}`.trim(),
-                addressOfBusiness: Array.from(addressOfBusiness).filter(c => c.checked).map(c => c.value),
-                telephoneNoBusiness: telephoneNoBusiness.value,
-                emailAddress: emailAddress.value,
-                ownerName: `${firstName.value} ${middleName.value} ${lastName.value}`.trim(),
-                telephoneNoOwner: telephoneNoOwner.value,
-                addressOwner: addressOwner.value,
-                typeOfStructure: `${typeOfStructureSelect.value} ${typeOfStructureSpecify.value}`.trim(),
-                requirements: Array.from(requirements).filter(r => r.checked).map(r => r.value),
-                noOfEmployees: noOfEmployees.value,
-                agreed: agreeCheckBox.checked
-            };
+            const formData = new FormData();
 
-            //  TODO: Back-end developer these are the data to be sent in database.
-            // add here if necessary....
+            // 1. ADD THE ACTION (Crucial for business_handler.php)
+            formData.append('action', 'create');
 
-            console.log('Final Submission Data:', allData);
-            alert('Application submitted successfully!');
+            // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
+            formData.append('businessName', document.getElementById('businessName').value);
+
+            // Radio Buttons: Type of Business
+            const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
+            formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
+
+            // Nature of Business (Split into Select and Specify for the DB)
+            formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
+            formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
+
+            // Address & Contacts
+            formData.append('addressOfBusiness', document.getElementById('addressOfBusiness').value);
+            formData.append('telephoneNoBusiness', document.getElementById('telephoneNoBusiness').value);
+            formData.append('emailAddress', document.getElementById('emailAddress').value);
+
+            // Business Status (Radio Button)
+            const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
+            // The PHP handler expects this as an array/json, but implies a single string in your HTML structure. 
+            // We send it as a key that PHP will json_encode.
+            if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
+
+            // Owner Details
+            formData.append('firstName', document.getElementById('firstName').value);
+            formData.append('middleName', document.getElementById('middleName').value);
+            formData.append('lastName', document.getElementById('lastName').value);
+            formData.append('telephoneNoOwner', document.getElementById('telephoneNoOwner').value);
+            formData.append('addressOwner', document.getElementById('addressOwner').value);
+
+            // Structure (Split into Select and Specify)
+            formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
+            formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
+            formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
+
+            // Requirements (Checkbox Array)
+            const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
+            reqCheckboxes.forEach((checkbox) => {
+                formData.append('requirements[]', checkbox.value);
+            });
+
+            // File Upload
+            const fileInput = document.getElementById('requirementUpload');
+            if (fileInput.files.length > 0) {
+                formData.append('requirementUpload', fileInput.files[0]);
+            }
+
+            // Application Date
+            formData.append('applicationDate', document.getElementById('applicationDate').value);
+
+            // 3. SEND TO BACKEND
+            // Make sure this path points correctly to your business_handler.php
+            fetch('../../scripts/staff/business_staff/business_handler.php', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json()) // Parse JSON response
+                .then(data => {
+                    console.log('Server Response:', data);
+                    if (data.status === 'success') {
+                        alert('Application submitted successfully! Reference ID: ' + data.id);
+                        location.reload(); // Refresh page
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch Error:', error);
+                    alert('Something went wrong. Check console for details.');
+                });
         }
-    }, { once: true });
+    });
 }
+
+function getCurrentDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function updateApplicationDate() {
+    const dateInput = document.getElementById('applicationDate');
+    if (dateInput) {
+        dateInput.value = getCurrentDateString();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+});
 
 validation();

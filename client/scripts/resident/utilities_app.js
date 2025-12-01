@@ -47,6 +47,7 @@ function validation() {
         if ((input.type === 'checkbox' && !value) ||
             (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = message;
             return false;
         }
@@ -54,6 +55,7 @@ function validation() {
         // Pattern validation
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = rules.errorMessage || 'Invalid format';
             return false;
         }
@@ -61,12 +63,14 @@ function validation() {
         // Max length validation
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
             return false;
         }
 
         // Passed validation
         input.classList.remove('error');
+        errorEl.classList.remove('show');
         errorEl.textContent = '';
         return true;
     }
@@ -97,15 +101,19 @@ function validation() {
             // Real-time validation feedback
             if (value === '') {
                 contactNo.classList.add('error');
+                errorEl.classList.add('show');
                 errorEl.textContent = 'Contact number is required';
             } else if (!/^[0-9]+$/.test(value)) {
+                errorEl.classList.add('show');
                 contactNo.classList.add('error');
                 errorEl.textContent = 'Contact number must be numeric';
             } else if (value.length !== 11) {
+                errorEl.classList.add('show');
                 contactNo.classList.add('error');
                 errorEl.textContent = 'Contact number must be exactly 11 digits';
             } else {
                 contactNo.classList.remove('error');
+                errorEl.classList.remove('show');
                 errorEl.textContent = '';
             }
         });

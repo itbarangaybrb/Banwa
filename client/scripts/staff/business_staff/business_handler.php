@@ -1,7 +1,7 @@
 <?php
-// ===================================
+require_once __DIR__ . '/../../../../server/configs/database.php';
 // Business Application Backend (FIXED)
-// ===================================
+
 
 // 1. Start Output Buffering (Prevents whitespace/warnings from breaking JSON)
 ob_start();
@@ -11,12 +11,16 @@ ini_set('display_errors', 0); // Hide errors from output (log them instead)
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
+// Set up error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error.log');
+
 // 3. Database Configuration
 define('DB_HOST', 'localhost');
 define('DB_PORT', '5432');
 define('DB_NAME', 'capstone');
 define('DB_USER', 'postgres');
-define('DB_PASS', '$Xz_11182025');
+define('DB_PASS', '080702');
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -30,48 +34,43 @@ if (!extension_loaded('pdo_pgsql')) {
 // 5. Database Connection
 try {
     $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false 
-    ]);
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
-    ob_clean();
+     ob_clean();
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
-    exit;
-}
+     echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
+     exit;
+ }
 
 // 6. Route Handling
 $action = $_REQUEST['action'] ?? null;
-
 // Clear the buffer before sending the real response
 ob_clean(); 
 
-switch ($action) {
-    case 'create':
-        handleCreateApplication($pdo);
-        break;
-    case 'fetch':
-        handleFetchApplications($pdo);
-        break;
-    case 'approve':
-        handleApproveApplication($pdo);
-        break;
-    case 'disapprove':
-        handleDisapproveApplication($pdo);
-        break;
-    default:
-        echo json_encode(["status" => "error", "message" => "Invalid action: " . $action]);
-        break;
+try {
+    switch ($action) {
+        case 'create':
+            handleCreateApplication($pdo);
+            break;
+        case 'fetch':
+            handleFetchApplications($pdo);
+            break;
+        case 'update_status': // NEW UNIFIED ACTION
+                handleUpdateStatus($pdo);
+                break;
+            default:
+                echo json_encode(["status" => "error", "message" => "Invalid action"]);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
-
 // End the script here to ensure no extra whitespace is added
 exit;
 
-// ===================================
+
 // HELPER FUNCTIONS
-// ===================================
+
 
 function get_input($key) {
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
@@ -100,7 +99,11 @@ function handleCreateApplication($pdo) {
         $applicationDate = get_input('applicationDate');
         
         // Handle JSON Fields
-        $businessStatus = isset($_POST['businessStatus']) ? json_encode($_POST['businessStatus']) : '[]';
+        $rawStatus = $_POST['businessStatus'] ?? [];
+        if (!is_array($rawStatus)) {
+            $rawStatus = [$rawStatus]; // Convert string "Owned" to array ["Owned"]
+        }
+        $businessStatus = json_encode($rawStatus);
         $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
         
         // Handle File Upload
@@ -189,38 +192,39 @@ function handleFetchApplications($pdo) {
     }
 }
 
-function handleApproveApplication($pdo) {
+function handleUpdateStatus($pdo) {
     $id = $_POST['id'] ?? null;
-    $comments = $_POST['approvalComments'] ?? '';
-    
-    if (!$id) {
-        echo json_encode(["status" => "error", "message" => "Missing ID"]);
+    $newStatus = $_POST['newStatus'] ?? null;
+    $comments = $_POST['updateComments'] ?? '';
+    $amount = $_POST['assessmentAmount'] ?? 0;
+
+    if (!$id || !$newStatus) {
+        echo json_encode(["status" => "error", "message" => "Missing ID or Status"]);
         return;
     }
 
     try {
-        $stmt = $pdo->prepare("UPDATE business_applications SET status = 'Approved', approval_comments = :comments WHERE id = :id");
-        $stmt->execute([':id' => $id, ':comments' => $comments]);
-        echo json_encode(["status" => "success", "message" => "Approved"]);
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-    }
-}
+        $sql = "UPDATE business_applications SET status = :status, approval_comments = :comments ";
+        $params = [':status' => $newStatus, ':comments' => $comments, ':id' => $id];
 
-function handleDisapproveApplication($pdo) {
-    $id = $_POST['id'] ?? null;
-    $reason = $_POST['disapprovalReason'] ?? '';
-    
-    if (!$id) {
-        echo json_encode(["status" => "error", "message" => "Missing ID"]);
-        return;
-    }
+        // LOGIC: If sending for payment, update the Amount Due
+        if ($newStatus === 'For Payment') {
+            $sql .= ", amount_due = :amount, payment_status = 'Unpaid' ";
+            $params[':amount'] = $amount;
+        }
 
-    try {
-        $stmt = $pdo->prepare("UPDATE business_applications SET status = 'Disapproved', disapproval_reason = :reason WHERE id = :id");
-        $stmt->execute([':id' => $id, ':reason' => $reason]);
-        echo json_encode(["status" => "success", "message" => "Disapproved"]);
+        // LOGIC: If Disapproved, we might want to record the specific reason column
+        if ($newStatus === 'Disapproved') {
+            $sql .= ", disapproval_reason = :comments ";
+        }
+
+        $sql .= " WHERE id = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        echo json_encode(["status" => "success", "message" => "Status updated to " . $newStatus]);
+
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);

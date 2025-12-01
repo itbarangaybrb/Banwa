@@ -42,23 +42,27 @@ function validateInput(input, rules = {}) {
     if (rules.required && ((input.type === 'checkbox' && !value) || (!input.type.includes('checkbox') && value === ''))) {
         input.classList.add('error');
         errorEl.textContent = rules.message || 'This field is required';
+        errorEl.classList.add('show');
         return false;
     }
 
     if (rules.pattern && value && !rules.pattern.test(value)) {
         input.classList.add('error');
         errorEl.textContent = rules.errorMessage || 'Invalid format';
+        errorEl.classList.add('show');
         return false;
     }
 
     if (rules.min !== undefined && value && parseFloat(value) < rules.min) {
         input.classList.add('error');
         errorEl.textContent = `Minimum value is ${rules.min}`;
+        errorEl.classList.add('show');
         return false;
     }
     if (rules.max !== undefined && value && parseFloat(value) > rules.max) {
         input.classList.add('error');
         errorEl.textContent = `Maximum value is ${rules.max}`;
+        errorEl.classList.add('show');
         return false;
     }
 
@@ -72,11 +76,13 @@ function validateInput(input, rules = {}) {
             if (allowedTypes.length && !allowedTypes.includes(fileExt)) {
                 input.classList.add('error');
                 errorEl.textContent = `Invalid file type: ${file.name}`;
+                errorEl.classList.add('show');
                 return false;
             }
             if (file.size > maxSize) {
                 input.classList.add('error');
                 errorEl.textContent = `File too large: ${file.name}`;
+                errorEl.classList.add('show');
                 return false;
             }
         }
@@ -84,6 +90,7 @@ function validateInput(input, rules = {}) {
 
     input.classList.remove('error');
     errorEl.textContent = '';
+    errorEl.classList.remove('show');
     return true;
 }
 
@@ -134,6 +141,7 @@ function setupFormValidation() {
         if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
             const wrapper = document.getElementById('end_date').closest('.label-and-input');
             wrapper.querySelector('.error-msg').textContent = 'End date cannot be before start date';
+            errorEl.classList.add('show');
             isValid = false;
         }
 
