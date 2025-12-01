@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="../../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../../img/browser-icon.svg">
 
-    <title></title>
+    <title>Home</title>
 
     <link rel="stylesheet" href="../../styles/resident/nav.css">
     <link rel="stylesheet" href="../../styles/resident/body.css">
