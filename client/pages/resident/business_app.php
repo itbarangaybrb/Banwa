@@ -11,7 +11,7 @@
 <!-- Remember to make it the same with the Staff Side For Application Creation Part
      as well as the connection to the DB -->
 <?php 
-$page_title = "Home";
+$page_title = "Business Application";
 include '_layout/nav.php';
 ?>
 <body>

@@ -7,7 +7,7 @@
 $host = 'localhost';
 $db   = 'capstone';
 $user = 'postgres';
-$pass = '$Xz_11182025';
+$pass = '080702';
 $port = '5432';
 
 try {

@@ -1,3 +1,7 @@
+<?php
+$page_title = "Utilities Application";
+include '_layout/nav.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,10 +20,11 @@
     <!-- 
         TODO: Front-end developer, will change
         this into modal once the designs is fully completed. 
-      -->
-    <p id="userStatus"></p>
-    <button id="signoutBtn">Logout</button>
-
+      -->    
+<div class="content_wrapper">
+    <div class="content-section active" id="default">
+        <h2>Utiliies Application</h2>
+        <p>Select a size from the navigation menu to view product details.</p>
     <div id="utilitiesStatus"></div>
 
     <main>
@@ -147,3 +152,4 @@
 </body>
 
 </html>
+<?php include '_layout/end.php'; ?>
