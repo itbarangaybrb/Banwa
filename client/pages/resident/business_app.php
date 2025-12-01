@@ -161,7 +161,7 @@
 
                         <!-- ==================== Waiver Form ==================== -->
                         <div class="waiver-container hidden" id="waiver">
-                            <form id="waiverUtilitiesForm">
+                            <form class="form" id="waiverUtilitiesForm">
                                 <h3>Waiver</h3>
 
                                 <div id="waiverContent">
@@ -183,43 +183,42 @@
                                 </div>
 
                                 <div class="buttons-container">
-                                    <button type="button" id="nextToSummary">Next</button>
                                     <button type="button" id="waiverBackBtn">Back</button>
+                                    <button type="button" id="nextToSummary">Next</button>
                                 </div>
                             </form>
                         </div>
 
                         <!-- ==================== Summary ==================== -->
                         <div class="summary-container hidden" id="summary">
-                            <form id="summaryForm">
+                            <form class="form" id="summaryForm">
                                 <h3>Summary</h3>
 
                                 <div id="summaryContent">
-                                    <p><strong>Business Name:</strong> <span id="sumBusinessName"></span></p>
-                                    <p><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></p>
-                                    <p><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></p>
+                                    <div><strong>Business Name:</strong> <span id="sumBusinessName"></span></div>
+                                    <div><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></div>
+                                    <div><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></div>
 
-                                    <p><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></p>
+                                    <div><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></div>
 
-                                    <p><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></p>
-                                    <p><strong>Business Telephone:</strong> <span id="sumTelephoneBusiness"></span></p>
-                                    <p><strong>Email:</strong> <span id="sumEmail"></span></p>
-                                    <p><strong>Owner Name:</strong> <span id="sumFullname"></span></p>
-                                    <p><strong>Owner Telephone:</strong> <span id="sumTelephoneOwner"></span></p>
-                                    <p><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></p>
-                                    <p><strong>Structure Type:</strong> <span id="sumStructureType"></span></p>
-                                    <p><strong>Requirements:</strong> <span id="sumRequirements"></span></p>
-                                    <p><strong>No. of Employees:</strong> <span id="sumEmployees"></span></p>
-                                    <p><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></p>
+                                    <div><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></div>
+                                    <div><strong>Business Telephone:</strong> <span id="sumTelephoneBusiness"></span></div>
+                                    <div><strong>Email:</strong> <span id="sumEmail"></span></div>
+                                    <div><strong>Owner Name:</strong> <span id="sumFullname"></span></div>
+                                    <div><strong>Owner Telephone:</strong> <span id="sumTelephoneOwner"></span></div>
+                                    <div><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></div>
+                                    <div><strong>Structure Type:</strong> <span id="sumStructureType"></span></div>
+                                    <div><strong>Requirements:</strong> <span id="sumRequirements"></span></div>
+                                    <div><strong>No. of Employees:</strong> <span id="sumEmployees"></span></div>
+                                    <div><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></div>
                                 </div>
 
                                 <div class="buttons-container">
-                                    <button type="submit" id="submitApplication">Submit Application</button>
                                     <button type="button" id="summaryBackBtn">Back</button>
+                                    <button type="submit" id="submitApplication">Submit Application</button>
                                 </div>
                             </form>
                         </div>
-
                     </div>
                 </section>
             </div>

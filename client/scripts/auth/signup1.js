@@ -43,30 +43,36 @@ function validation() {
         if ((input.type === 'checkbox' && !value) ||
             (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = message;
+            errorEl.classList.add('show');
+            errorEl.textContent = message;
             return false;
         }
 
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = rules.errorMessage || 'Invalid format';
+            errorEl.textContent = rules.errorMessage || 'Invalid format';
+            errorEl.classList.add('error');
             return false;
         }
 
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
+            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
+            errorEl.classList.add('show');
             return false;
         }
 
         if (rules.minLength && value.length < rules.minLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Minimum ${rules.minLength} characters required`;
+            errorEl.textContent = `Minimum ${rules.minLength} characters required`;
+            errorEl.classList.add('show');
+
             return false;
         }
 
         input.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.classList.add('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -79,11 +85,13 @@ function validation() {
         const errorEl = wrapper?.querySelector('.error-msg');
 
         if (!anyChecked) {
-            if (errorEl) errorEl.textContent = message;
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
             return false;
         }
 
-        if (errorEl) errorEl.textContent = '';
+        errorEl.textContent = '';
+        errorEl.classList.add('show');
         return true;
     }
 
@@ -93,12 +101,15 @@ function validation() {
         const errorEl = wrapper?.querySelector('.error-msg');
 
         if (!input.files || input.files.length === 0) {
-            if (errorEl) errorEl.textContent = message;
+            errorEl.textContent = message;
             input.classList.add('error');
+            errorEl.classList.add('show');
+
             return false;
         }
 
-        if (errorEl) errorEl.textContent = '';
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
         input.classList.remove('error');
         return true;
     }
@@ -111,18 +122,21 @@ function validation() {
 
         if (value === '') {
             reTypePassword.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Please re-type your password';
+            errorEl.textContent = 'Please re-type your password';
+            errorEl.classList.add('show');
             return false;
         }
 
         if (value !== password.value) {
             reTypePassword.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Passwords do not match';
+            errorEl.textContent = 'Passwords do not match';
+            errorEl.classList.add('show');
             return false;
         }
 
         reTypePassword.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -138,15 +152,19 @@ function validation() {
 
         if (value.length === 0) {
             contactNo.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = 'Phone number is required';
         } else if (value.length < 11) {
             contactNo.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = 'Phone number must be 11 digits';
         } else if (value.length > 11) {
             contactNo.classList.add('error');
+            errorEl.classList.add('show');
             errorEl.textContent = 'Phone number must be 11 digits only';
         } else {
             contactNo.classList.remove('error');
+            errorEl.classList.remove('show');
             errorEl.textContent = '';
         }
     }
@@ -163,12 +181,15 @@ function validation() {
         if (value === '') {
             email.classList.add('error');
             errorEl.textContent = 'Email is required';
+            errorEl.classList.add('show');
         } else if (!emailPattern.test(value)) {
             email.classList.add('error');
             errorEl.textContent = 'Enter a valid email address';
+            errorEl.classList.add('show');
         } else {
             email.classList.remove('error');
             errorEl.textContent = '';
+            errorEl.classList.remove('show');
         }
     }
 
@@ -182,24 +203,28 @@ function validation() {
 
         if (value.trim() === '') {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password is required';
+            errorEl.textContent = 'Password is required';
+            errorEl.classList.add('show');
             return false;
         }
 
         if (value.length < 8 || value.length > 16) {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
+            errorEl.textContent = 'Password should be 8-16 characters long';
+            errorEl.classList.add('show');
             return false;
         }
 
         if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
+            errorEl.textContent = 'Password must contain letters and numbers';
+            errorEl.classList.add('show');
             return false;
         }
 
         password.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
         return true;
     }
 
