@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '../../../../server/configs/database.php';
+include __DIR__ . '/../../configs/database.php';
 session_start(); // start session at the top
 
 $success_message = "";

@@ -1,25 +1,53 @@
 
+
+
     // Configuration
-    const API_URL = '../../scripts/business_staff/business_handler.php';
+    const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
     // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
-    const UPLOADS_BASE_PATH = '../../scripts/business_staff/uploads/'; // <--- This must be correct for file links to work
+    const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
     let applications = [];
 
+    // Initialize sidebar navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSidebarNav();
+    });
+
+    function initializeSidebarNav() {
+        const navItems = document.querySelectorAll('.nav_select[data-tab]');
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tabName = this.getAttribute('data-tab');
+                switchTab(e, tabName);
+            });
+        });
+        
+        // Placeholder for user profile button
+        const userProfileBtn = document.getElementById('userProfileBtn');
+        if (userProfileBtn) {
+            userProfileBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Placeholder function - add user profile functionality here
+                console.log('User profile button clicked - add functionality here');
+            });
+        }
+        
+        // Load initial tab
+        loadReviewTable();
+    }
 
     // TAB SWITCHING
 function switchTab(event, tabName) {
     event.preventDefault();
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
     document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    event.target.closest('.nav_select').classList.add('active');
 
     if (tabName === 'review') loadReviewTable();
     else if (tabName === 'process') loadProcessTable();
     else if (tabName === 'summary') loadSummarySelect();
-}
-
-function loadApplicationsFromDB() {
+}function loadApplicationsFromDB() {
     return fetch(`${API_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
@@ -350,24 +378,29 @@ function submitUpdate(event) {
         );
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px;">No applications found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
             return;
         }
 
         filtered.forEach(app => {
+            // Status Badge Logic
+            let badgeClass = 'pending';
+            if(app.status === 'Approved') badgeClass = 'approved';
+            if(app.status === 'Disapproved') badgeClass = 'disapproved';
+            if(app.status === 'Paid') badgeClass = 'paid';
+            if(app.status === 'For Payment') badgeClass = 'for-payment';
+
             const row = document.createElement('tr');
             const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
             row.innerHTML = `
                 <td>${app.id}</td>
                 <td>${app.business_name}</td>
                 <td>${ownerName}</td>
-                <td>${app.nature_of_business}</td>
-                <td>${app.application_date}</td>
-                <td><span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></td>
+                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                <td>${app.payment_status || 'N/A'}</td>
                 <td>
-                    <div class="action-buttons">
-                        <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                    </div>
+                    <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
+                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
                 </td>
             `;
             tbody.appendChild(row);

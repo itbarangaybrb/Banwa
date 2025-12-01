@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '../../../../server/configs/database.php';
+require_once __DIR__ . '/../../../../server/configs/database.php';
 // Business Application Backend (FIXED)
 
 
@@ -11,50 +11,59 @@ ini_set('display_errors', 0); // Hide errors from output (log them instead)
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
+// Set up error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error.log');
+
 // 3. Database Configuration
-// define('DB_HOST', 'localhost');
-// define('DB_PORT', '5432');
-// define('DB_NAME', 'capstone');
-// define('DB_USER', 'postgres');
-// define('DB_PASS', '$Xz_11182025');
+define('DB_HOST', 'localhost');
+define('DB_PORT', '5432');
+define('DB_NAME', 'capstone');
+define('DB_USER', 'postgres');
+define('DB_PASS', '080702');
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 // 4. Check Drivers (Crucial for your setup)
-// if (!extension_loaded('pdo_pgsql')) {
-//     ob_clean(); // Clear any previous junk
-//     die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
-// }
+if (!extension_loaded('pdo_pgsql')) {
+    ob_clean(); // Clear any previous junk
+    die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
+}
 
-// // 5. Database Connection
-// try {
-//     $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
-//     $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-// } catch (PDOException $e) {
-//     ob_clean();
-//     http_response_code(500);
-//     echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
-//     exit;
-// }
+// 5. Database Connection
+try {
+    $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+} catch (PDOException $e) {
+     ob_clean();
+    http_response_code(500);
+     echo json_encode(["status" => "error", "message" => "DB Connection Failed: " . $e->getMessage()]);
+     exit;
+ }
 
 // 6. Route Handling
 $action = $_REQUEST['action'] ?? null;
 // Clear the buffer before sending the real response
 ob_clean(); 
 
-switch ($action) {
-    case 'create':
-        handleCreateApplication($pdo);
-        break;
-    case 'fetch':
-        handleFetchApplications($pdo);
-        break;
-    case 'update_status': // NEW UNIFIED ACTION
-            handleUpdateStatus($pdo);
+try {
+    switch ($action) {
+        case 'create':
+            handleCreateApplication($pdo);
             break;
-        default:
-            echo json_encode(["status" => "error", "message" => "Invalid action"]);
+        case 'fetch':
+            handleFetchApplications($pdo);
+            break;
+        case 'update_status': // NEW UNIFIED ACTION
+                handleUpdateStatus($pdo);
+                break;
+            default:
+                echo json_encode(["status" => "error", "message" => "Invalid action"]);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
 // End the script here to ensure no extra whitespace is added
 exit;

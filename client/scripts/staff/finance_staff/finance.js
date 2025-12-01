@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = '../../scripts/finance_staff/finance_handler.php';
+const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
