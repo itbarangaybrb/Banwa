@@ -296,6 +296,7 @@ body {
     display: flex;
     align-items: center;
     column-gap: 32px;
+        height: 100vh;
   }
 
   .container-1 .left-panel {
@@ -308,6 +309,7 @@ body {
     height: auto;
     object-fit: cover;
     display: block;
+    margin-block: auto;
   }
   
   

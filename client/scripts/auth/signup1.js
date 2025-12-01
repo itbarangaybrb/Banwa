@@ -331,13 +331,13 @@ function validation() {
                 password: allData.password,
                 options: {
                     data: {
-                        fullname,
-                        sex,
-                        contactNo,
-                        address,
-                        idType,
-                        email,
-                        agreeCheckBox
+                        fullname: allData.fullname,
+                        sex: allData.sex,
+                        contactNo: allData.contactNo,
+                        address: allData.address,
+                        idType: allData.idType,
+                        email: allData.email,
+                        agreeCheckBox: allData.agreeCheckBox
                     },
                     emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.html",
                 },
