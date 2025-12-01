@@ -138,7 +138,7 @@
 
                         <!-- ==================== Waiver Form ==================== -->
                         <div class="waiver-container hidden" id="waiver">
-                            <form class="forms" id="waiverUtilitiesForm">
+                            <form class="form" id="waiverUtilitiesForm">
                                 <h3>Authorization & Waiver</h3>
                                 <p>Please read and accept the terms to continue.</p>
 
@@ -165,7 +165,7 @@
 
                         <!-- ==================== Summary ==================== -->
                         <div class="summary-container hidden" id="summary">
-                            <form class="forms" id="summaryForm">
+                            <form class="form" id="summaryForm">
                                 <h3>Confirm your information</h3>
                                 <p>Please review all the information carefully before submitting</p>
 
