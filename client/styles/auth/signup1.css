@@ -22,7 +22,7 @@ body {
   width: 100%;
 }
 
-.containers {
+/* .containers {
   padding: 32px 16px;
 }
 
@@ -37,8 +37,7 @@ body {
 
 .container-1 .left-panel {
   display: none;
-
-}
+} */
 
 /* ==================== Personal Details Form ==================== */
 .personal-details-container {
@@ -294,12 +293,26 @@ body {
 
 @media screen and (min-width: 780px) {
   .container-1 {
-    /* display: flex;
+    display: flex;
     align-items: center;
-    column-gap: 32px; */
+    column-gap: 32px;
   }
 
+  .container-1 .left-panel {
+    display: block;
+    background-color: red;
+  }
+  
+  .container-1 .left-panel img {
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+    display: block;
+  }
+  
+  
   .container-1 .panel {
-    /* width: 50%; */
+    height: 100%;
+    width: 50%;
   }
 }
