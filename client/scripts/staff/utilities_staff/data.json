@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "business_name": "Globe",
+        "type_of_business": "Repair\/Maintenance",
+        "nature_of_business": "Repair\/Maintenance",
+        "address_of_business": "28 Sitio Pajo Baesa Quezon City",
+        "business_status": "",
+        "telephone_no_business": "09123456789",
+        "email_address": "",
+        "first_name": "Ronnel",
+        "middle_name": "",
+        "last_name": "Mateo",
+        "telephone_no_owner": "09123456789",
+        "address_owner": "28 Sitio Pajo Baesa Quezon City",
+        "type_of_structure": "",
+        "no_of_employees": 0,
+        "requirements": [],
+        "requirement_upload": "",
+        "application_date": "2025-12-01",
+        "status": "Pending",
+        "payment_status": "Unpaid",
+        "amount_due": 0,
+        "approval_comments": "",
+        "disapproval_reason": ""
+    }
+]
