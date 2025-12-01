@@ -1,13 +1,373 @@
+/* TODO:
+      Front-end dev, later will move this in global.css,
+      not today because of global may affected some files that use global.css 
+      that is why it is isolated for now for safety.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.sections {
+  width: 100%;
+}
+
+.containers {
+  padding: 32px 16px;
+}
+
+@media screen and (min-width: 780px) {
+  .containers {
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+  }
+}
+
+
+
+
+.header-and-text {
+  margin-bottom: 32px;
+}
+
+.header-and-text h2 {
+  margin-bottom: 8px;
+
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 30px;
+  color: #000000;
+}
+
+.header-and-text p {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+/* ==================== Utiliies Form ==================== */
+.utilities-container {
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid gray;
+}
+
+.utilities-container .top {
+  width: 100%;
+}
+
+.utilities-container .indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.utilities-container .indicator .circle {
+  width: 21px;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #00247C;
+  color: white;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.utilities-container .indicator .circle:nth-child(1) {
+  background-color: #00247C;
+  color: white;
+}
+
+.utilities-container .indicator .circle:nth-child(3),
+.utilities-container .indicator .circle:nth-child(5) {
+  background-color: #C8C8CA;
+  color: #969699;
+}
+
+.utilities-container .indicator .line {
+  height: 2px;
+  background-color: gray;
+  flex: 1;
+  font-size: 12px;
+  height: auto;
+}
+
+.utilities-container .forms {
+  margin-inline: auto;
+}
+
+.utilities-container .forms h3 {
+  margin-bottom: 8px;
+}
+
+.utilities-container .forms p:first-child {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+.utilities-container .forms .inputs-container {
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+  margin-block: 24px;
+}
+
+.utilities-container .forms .inputs-container .label-and-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.utilities-container .forms .inputs-container .label-and-input label {
+  margin-bottom: 8px;
+}
+
+.utilities-container .forms .inputs-container .label-and-input input[type="text"],
+.utilities-container .forms .inputs-container .label-and-input input[type="date"],
+.utilities-container .forms .inputs-container .label-and-input input[type="tel"],
+.utilities-container .forms .inputs-container .label-and-input input[type="date"],
+.utilities-container .forms .inputs-container .label-and-input select {
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid #e7e7e7;
+  width: 100%;
+  background-color: #f5f5f5;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.utilities-container .forms .buttons-container {
+  margin-left: auto;
+  width: max-content;
+}
+
+.utilities-container .forms .buttons-container button {
+  padding: 16px;
+  border-radius: 8px;
+  border: transparent;
+  transition: background-color 200ms ease;
+  font-weight: 500;
+}
+
+.utilities-container .forms .buttons-container button:nth-child(1) {
+  background-color: #dbdbdb;
+  color: black;
+}
+
+.utilities-container .forms .buttons-container button:nth-child(2) {
+  background-color: #00247C;
+  color: white;
+  margin-left: 4px;
+}
+
+.utilities-container .forms .buttons-container button:nth-child(1):hover {
+  background-color: #c9c9c9;
+}
+
+.utilities-container .forms .buttons-container button:nth-child(2):hover {
+  background-color: #00164d;
+}
+
+/* ==================== Waiver Form ==================== */
+.waiver-container .forms {
+  border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px;
+}
+
+.waiver-container .forms h3 {
+  margin-bottom: 8px;
+}
+
+.waiver-container .forms p:first-child {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+.waiver-container .forms #waiverContent {
+  border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px;
+  margin-block: 24px;
+}
+
+.waiver-container .forms .label-and-input {
+  border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px;
+}
+
+.waiver-container .forms .label-and-input label {
+  display: flex;
+  align-items: flex-start;
+  column-gap: 8px;
+}
+
+.waiver-container .forms .buttons-container {
+  margin-left: auto;
+  width: max-content;
+  margin-top: 24px;
+}
+
+.waiver-container .forms .buttons-container button {
+  padding: 16px;
+  border-radius: 8px;
+  border: transparent;
+  transition: background-color 200ms ease;
+  font-weight: 500;
+}
+
+.waiver-container .forms .buttons-container button:nth-child(1) {
+  background-color: #dbdbdb;
+  color: black;
+}
+
+.waiver-container .forms .buttons-container button:nth-child(2) {
+  background-color: #00247C;
+  color: white;
+  margin-left: 4px;
+}
+
+.waiver-container .forms .buttons-container button:nth-child(1):hover {
+  background-color: #c9c9c9;
+}
+
+.waiver-container .forms .buttons-container button:nth-child(2):hover {
+  background-color: #00164d;
+}
+
+/* ==================== Summary ==================== */
+.summary-container .forms {
+  border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px;
+}
+
+.summary-container .forms h3 {
+  margin-bottom: 8px;
+}
+
+.summary-container .forms p:first-child {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+.summary-container .forms #summaryContent {
+  margin-block: 24px;
+}
+
+.summary-container .forms #summaryContent h4 {
+  margin-bottom: 8px;
+}
+
+.summary-container .forms #summaryContent .divider {
+  margin-block: 8px;
+  height: 1px;
+  background-color: gray;
+  width: 100%;
+}
+
+.summary-container .forms p:first-child {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+.summary-container .forms #summaryContent .row {
+  display: flex;
+  row-gap: 8px;
+}
+
+.summary-container .forms #summaryContent .row div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.summary-container .forms .buttons-container {
+  margin-left: auto;
+  width: max-content;
+}
+
+.summary-container .forms .buttons-container button {
+  padding: 16px;
+  border-radius: 8px;
+  border: transparent;
+  transition: background-color 200ms ease;
+  font-weight: 500;
+}
+
+.summary-container .forms .buttons-container button:nth-child(1) {
+  background-color: #dbdbdb;
+  color: black;
+}
+
+.summary-container .forms .buttons-container button:nth-child(2) {
+  background-color: #00247C;
+  color: white;
+  margin-left: 4px;
+}
+
+.summary-container .forms .buttons-container button:nth-child(1):hover {
+  background-color: #c9c9c9;
+}
+
+.summary-container .forms .buttons-container button:nth-child(2):hover {
+  background-color: #00164d;
+}
+
 .error-msg {
-    color: red;
-    font-size: 12px;
-    margin-top: 4px;
+  color: red;
+  font-size: 12px;
+  margin-top: 8px;
+  display: none;
+}
+
+.error-msg.show {
+  display: block;
 }
 
 .error {
-  border: 1px solid red !important;
+  outline: 1px solid red;
+  /* border: 1px solid red !important; */
 }
 
 .hidden {
-    display: none;
+  display: none;
+}
+
+@media screen and (min-width: 780px) {
+  .utilities-container {
+    border-radius: 8px;
+    padding: 32px;
+    border: 1px solid gray;
+  }
+
+  .utilities-container .forms {
+    max-width: 927px;
+  }
 }
