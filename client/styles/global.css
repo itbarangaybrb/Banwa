@@ -3,27 +3,37 @@
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
-    padding: 0;
     margin: 0;
-}
-
-body {
+    padding: 0;
+    box-sizing: border-box;
     font-family: "Inter", sans-serif;
 }
 
-html {}
+body {
+    color: #333;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image: url('../img/banwa-logo-1.png');
+    background-size: 1020px auto;
+    background-position: right -50% bottom 170%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-color: #f8f9fa;
+    opacity: 1;
+}
 
 .sections {
     width: 100%;
 }
 
-.containers {
+/* .containers {
     max-width: 1440px;
     width: 100%;
-    padding: 96px 64px;
+    padding: 0px 64px;
     margin-inline: auto;
-}
+} */
 
 img {
     max-width: 100%;
@@ -37,7 +47,10 @@ img {
     z-index: -1;
     left: 50%;
     top: 40%;
-    
+    right: 5%;
+    bottom: 5%;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .bg-logo img {

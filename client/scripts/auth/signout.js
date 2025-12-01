@@ -32,8 +32,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
-
-
-// TODO: Front-end developer, need to change this for bfcache so users 
-// will not able to return.
-// Will update this later - jep

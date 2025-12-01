@@ -1,0 +1,261 @@
+.side_nav {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 70px;
+    background: linear-gradient(135deg, #00247C, #34495e);
+    color: white;
+    transition: all 0.3s ease;
+    z-index: 2000;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.side_nav:hover {
+    width: 325px;
+    box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
+}
+
+.nav_header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 25px;
+    height: 70px;
+    background: #19316b;
+    padding-left: 16px;
+}
+
+.nav_logo {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 24px;
+    flex-shrink: 0;
+    cursor: default;
+    transition: background-color 0.3s ease;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.nav_logo:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.logo_title {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+}
+
+.company_name {
+    font-size: 30px;
+    font-weight: 700;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.nav_list {
+    list-style: none;
+    padding: 16px 0 70px 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nav_list1 {
+    list-style: none;
+}
+
+.nav_list2 {
+    list-style: none;
+}
+
+.nav_select {
+    display: flex;
+    align-items: center;
+    padding: 16px 16px;
+    text-decoration: none;
+    color: #ecf0f1;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    gap: 15px;
+    white-space: nowrap;
+}
+
+.nav_select2 {
+    display: flex;
+    align-items: center;
+    padding: 16px 16px;
+    text-decoration: none;
+    color: #ecf0f1;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    gap: 15px;
+    white-space: nowrap;
+}
+
+.nav_select:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+    color: white;
+}
+
+.nav_select.active {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-left-color: #3498db;
+    color: white;
+}
+
+.nav_select_btn {
+    display: flex;
+    align-items: center;
+    padding: 16px 16px;
+    text-decoration: none;
+    color: #ecf0f1;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    gap: 15px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+.nav_select_btn:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+    color: white;
+}
+.nav_icon {
+    font-size: 21px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.nav_text {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    line-height: 1.4;
+}
+
+.side_nav:hover .nav_text {
+    opacity: 1;
+}
+
+.nav_dropdown {
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.nav_dropdown:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+}
+
+.dropdown-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+    opacity: 0;
+}
+
+.side_nav:hover .dropdown-arrow {
+    opacity: 1;
+}
+
+.nav_dropdown:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown_menu {
+    width: 100%;
+    background-color: rgba(52, 152, 219, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    list-style: none;
+}
+
+.side_nav:hover .nav_dropdown:hover .dropdown_menu {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dropdown_item {
+    display: none;
+    padding: 20px 6px 20px 70px;
+    color: #ecf0f1;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    white-space: nowrap;
+    column-gap: 0px;
+}
+
+.side_nav:hover .nav_dropdown:hover .dropdown_menu .dropdown_item {
+    display: flex;
+    flex-direction: column;
+    column-gap: 10px;
+    align-content: center;
+}
+
+.dropdown_item:hover {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: white;
+}
+
+
+/*
+not sure yet on how this will work with the side nav
+
+@media (max-width: 768px) {
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
+        background: rgba(255, 255, 255, 0.05);
+        margin-top: 5px;
+        border-radius: 4px;
+        display: none;
+    }
+    
+    .nav_dropdown.active .dropdown-menu {
+        display: block;
+    }
+    
+    .dropdown-arrow {
+        opacity: 1;
+    }
+} */
