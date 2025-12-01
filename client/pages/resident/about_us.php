@@ -1,5 +1,5 @@
 <?php 
-include './server/sessions/session.php';
+// include './server/sessions/session.php';
 ?>
 
 <!DOCTYPE html>
@@ -173,7 +173,7 @@ include './server/sessions/session.php';
         </div>
     </main>
 
-    <script src="../../scripts/resident/about_us.js"></script>
+    <!-- <script src="../../scripts/resident/about_us.js"></script> -->
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
