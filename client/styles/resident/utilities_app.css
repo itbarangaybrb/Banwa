@@ -219,7 +219,7 @@ body {
 
 .waiver-container .form .label-and-input label {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   column-gap: 8px;
 }
 
