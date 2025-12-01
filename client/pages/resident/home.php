@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,4 +22,26 @@
 
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
-</html>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Home</title>
+    <link rel="stylesheet" href="../../styles/resident/.css">
+</head>
+<body>
+<?php 
+$page_title = "Home";
+include '_layout/nav.php';
+?>
+
+ <div class="content_wrapper">
+    <div class="content-section active" id="default">
+        <h2>Welcome to BANWA</h2>
+        <p>Select a size from the navigation menu to view product details.</p>
+    </div>
+                <!-- Add other content sections for each size -->
+</div>
+
+<?php include '_layout/end.php'; ?>

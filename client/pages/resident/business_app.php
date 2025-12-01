@@ -8,8 +8,16 @@
 
     <link rel="stylesheet" href="../../styles/resident/business_app.css">
 </head>
+<?php 
+$page_title = "Business Application";
+include '_layout/nav.php';
+?>
 <body>
     <main>
+         <div class="content_wrapper">
+    <div class="content-section active" id="default">
+        <h2>Business Clearance Application</h2>
+        <p>Please fill out the form below to apply for a Business Clearance.</p>
         <section class="sections">
             <div class="containers">
 
@@ -229,8 +237,9 @@
             </div>
         </section>
     </main>
+    </div>
 
 </body>
 <script src="../../scripts/resident/business_app.js"></script>
-
 </html>
+<?php include '_layout/end.php'; ?>
