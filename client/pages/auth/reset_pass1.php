@@ -18,7 +18,7 @@
             <div class="containers">
                 <!-- ==================== Reset Password Form ==================== -->
                 <div class="reset-pass-container" id="forgotPass">
-                    <form action="" id="resetPassForm">
+                    <form class="form" id="resetPassForm">
                         <h3>Reset Password</h3>
                         <!-- <p></p> -->
 
