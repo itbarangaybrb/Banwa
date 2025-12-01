@@ -108,45 +108,45 @@ body {
   height: auto;
 }
 
-.utilities-container .forms {
+.utilities-container .form {
   margin-inline: auto;
 }
 
-.utilities-container .forms h3 {
+.utilities-container .form h1 {
   margin-bottom: 8px;
 }
 
-.utilities-container .forms p:first-child {
+.utilities-container .form p:first-child {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: #000000E5;
 }
 
-.utilities-container .forms .inputs-container {
+.utilities-container .form .inputs-container {
   display: flex;
   flex-direction: column;
   row-gap: 12px;
   margin-block: 24px;
 }
 
-.utilities-container .forms .inputs-container .label-and-input {
+.utilities-container .form .inputs-container .label-and-input {
   display: flex;
   flex-direction: column;
 }
 
-.utilities-container .forms .inputs-container .label-and-input label {
+.utilities-container .form .inputs-container .label-and-input label {
   margin-bottom: 8px;
 }
 
-.utilities-container .forms .inputs-container .label-and-input input[type="text"],
-.utilities-container .forms .inputs-container .label-and-input input[type="date"],
-.utilities-container .forms .inputs-container .label-and-input input[type="tel"],
-.utilities-container .forms .inputs-container .label-and-input input[type="date"],
-.utilities-container .forms .inputs-container .label-and-input select {
+.utilities-container .form .inputs-container .label-and-input input[type="text"],
+.utilities-container .form .inputs-container .label-and-input input[type="date"],
+.utilities-container .form .inputs-container .label-and-input input[type="tel"],
+.utilities-container .form .inputs-container .label-and-input input[type="date"],
+.utilities-container .form .inputs-container .label-and-input select {
   padding: 12px 8px;
   border-radius: 8px;
-  border: 1px solid #e7e7e7;
+  border: 1px solid #C4C4C4;
   width: 100%;
   background-color: #f5f5f5;
   -webkit-appearance: none;
@@ -154,12 +154,12 @@ body {
   appearance: none;
 }
 
-.utilities-container .forms .buttons-container {
+.utilities-container .form .buttons-container {
   margin-left: auto;
   width: max-content;
 }
 
-.utilities-container .forms .buttons-container button {
+.utilities-container .form .buttons-container button {
   padding: 16px;
   border-radius: 8px;
   border: transparent;
@@ -167,69 +167,69 @@ body {
   font-weight: 500;
 }
 
-.utilities-container .forms .buttons-container button:nth-child(1) {
+.utilities-container .form .buttons-container button:nth-child(1) {
   background-color: #dbdbdb;
   color: black;
 }
 
-.utilities-container .forms .buttons-container button:nth-child(2) {
+.utilities-container .form .buttons-container button:nth-child(2) {
   background-color: #00247C;
   color: white;
   margin-left: 4px;
 }
 
-.utilities-container .forms .buttons-container button:nth-child(1):hover {
+.utilities-container .form .buttons-container button:nth-child(1):hover {
   background-color: #c9c9c9;
 }
 
-.utilities-container .forms .buttons-container button:nth-child(2):hover {
+.utilities-container .form .buttons-container button:nth-child(2):hover {
   background-color: #00164d;
 }
 
 /* ==================== Waiver Form ==================== */
-.waiver-container .forms {
+.waiver-container .form {
   border-radius: 8px;
   border: 1px solid gray;
   padding: 12px;
 }
 
-.waiver-container .forms h3 {
+.waiver-container .form h3 {
   margin-bottom: 8px;
 }
 
-.waiver-container .forms p:first-child {
+.waiver-container .form p:first-child {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: #000000E5;
 }
 
-.waiver-container .forms #waiverContent {
+.waiver-container .form #waiverContent {
   border-radius: 8px;
   border: 1px solid gray;
   padding: 12px;
   margin-block: 24px;
 }
 
-.waiver-container .forms .label-and-input {
+.waiver-container .form .label-and-input {
   border-radius: 8px;
   border: 1px solid gray;
   padding: 12px;
 }
 
-.waiver-container .forms .label-and-input label {
+.waiver-container .form .label-and-input label {
   display: flex;
   align-items: flex-start;
   column-gap: 8px;
 }
 
-.waiver-container .forms .buttons-container {
+.waiver-container .form .buttons-container {
   margin-left: auto;
   width: max-content;
   margin-top: 24px;
 }
 
-.waiver-container .forms .buttons-container button {
+.waiver-container .form .buttons-container button {
   padding: 16px;
   border-radius: 8px;
   border: transparent;
@@ -237,83 +237,83 @@ body {
   font-weight: 500;
 }
 
-.waiver-container .forms .buttons-container button:nth-child(1) {
+.waiver-container .form .buttons-container button:nth-child(1) {
   background-color: #dbdbdb;
   color: black;
 }
 
-.waiver-container .forms .buttons-container button:nth-child(2) {
+.waiver-container .form .buttons-container button:nth-child(2) {
   background-color: #00247C;
   color: white;
   margin-left: 4px;
 }
 
-.waiver-container .forms .buttons-container button:nth-child(1):hover {
+.waiver-container .form .buttons-container button:nth-child(1):hover {
   background-color: #c9c9c9;
 }
 
-.waiver-container .forms .buttons-container button:nth-child(2):hover {
+.waiver-container .form .buttons-container button:nth-child(2):hover {
   background-color: #00164d;
 }
 
 /* ==================== Summary ==================== */
-.summary-container .forms {
+.summary-container .form {
   border-radius: 8px;
   border: 1px solid gray;
   padding: 12px;
 }
 
-.summary-container .forms h3 {
+.summary-container .form h3 {
   margin-bottom: 8px;
 }
 
-.summary-container .forms p:first-child {
+.summary-container .form p:first-child {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: #000000E5;
 }
 
-.summary-container .forms #summaryContent {
+.summary-container .form #summaryContent {
   margin-block: 24px;
 }
 
-.summary-container .forms #summaryContent h4 {
+.summary-container .form #summaryContent h4 {
   margin-bottom: 8px;
 }
 
-.summary-container .forms #summaryContent .divider {
+.summary-container .form #summaryContent .divider {
   margin-block: 8px;
   height: 1px;
   background-color: gray;
   width: 100%;
 }
 
-.summary-container .forms p:first-child {
+.summary-container .form p:first-child {
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   color: #000000E5;
 }
 
-.summary-container .forms #summaryContent .row {
+.summary-container .form #summaryContent .row {
   display: flex;
   row-gap: 8px;
 }
 
-.summary-container .forms #summaryContent .row div {
+.summary-container .form #summaryContent .row div {
   display: flex;
   flex-direction: column;
   width: 100%;
   justify-content: space-between;
 }
 
-.summary-container .forms .buttons-container {
+.summary-container .form .buttons-container {
   margin-left: auto;
   width: max-content;
 }
 
-.summary-container .forms .buttons-container button {
+.summary-container .form .buttons-container button {
   padding: 16px;
   border-radius: 8px;
   border: transparent;
@@ -321,22 +321,22 @@ body {
   font-weight: 500;
 }
 
-.summary-container .forms .buttons-container button:nth-child(1) {
+.summary-container .form .buttons-container button:nth-child(1) {
   background-color: #dbdbdb;
   color: black;
 }
 
-.summary-container .forms .buttons-container button:nth-child(2) {
+.summary-container .form .buttons-container button:nth-child(2) {
   background-color: #00247C;
   color: white;
   margin-left: 4px;
 }
 
-.summary-container .forms .buttons-container button:nth-child(1):hover {
+.summary-container .form .buttons-container button:nth-child(1):hover {
   background-color: #c9c9c9;
 }
 
-.summary-container .forms .buttons-container button:nth-child(2):hover {
+.summary-container .form .buttons-container button:nth-child(2):hover {
   background-color: #00164d;
 }
 
@@ -367,7 +367,7 @@ body {
     border: 1px solid gray;
   }
 
-  .utilities-container .forms {
+  .utilities-container .form {
     max-width: 927px;
   }
 }

@@ -1,8 +1,8 @@
 
     // Configuration
-    const API_URL = '../../scripts/business_staff/business_handler.php';
+    const API_URL = '../../scripts/staff/business_staff/business_handler.php';
     // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
-    const UPLOADS_BASE_PATH = '../../scripts/business_staff/uploads/'; // <--- This must be correct for file links to work
+    const UPLOADS_BASE_PATH = '../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
     let applications = [];
 
 

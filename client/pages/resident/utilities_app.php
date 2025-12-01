@@ -1,7 +1,3 @@
-<?php
-$page_title = "Utilities Application";
-include '_layout/nav.php';
-?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,7 +9,6 @@ include '_layout/nav.php';
 
     <title>Utilities Application</title>
 
-    <!-- <link rel="stylesheet" href="../../styles/global.css"> -->
     <link rel="stylesheet" href="../../styles/resident/utilities_app.css">
 </head>
 
@@ -22,13 +17,18 @@ include '_layout/nav.php';
         TODO: Front-end developer, will change
         this into modal once the designs is fully completed. 
       -->
-    <div class="content_wrapper">
-        <div class="content-section active" id="default">
-            <h2>Utiliies Application</h2>
-            <p>Select a size from the navigation menu to view product details.</p>
-            <div id="utilitiesStatus"></div>
+    <?php
+    $page_title = "Utilities Application";
+    include '_layout/nav.php';
+    ?>
 
-            <main>
+    <main>
+        <div class="content_wrapper">
+            <div class="content-section active" id="default">
+                <h2>Utiliies Application</h2>
+                <p>Select a size from the navigation menu to view product details.</p>
+                <div id="utilitiesStatus"></div>
+
                 <section class="sections">
                     <div class="containers">
 
@@ -67,7 +67,9 @@ include '_layout/nav.php';
                                 </div>
                             </div> -->
 
-                            <form class="forms" id="utilitiesForms">
+                            <form class="form" id="utilitiesForms">
+                                <h1>Application Details</h1>
+                                <p>All fields are required unless specified.</p>
                                 <div class="inputs-container">
                                     <div class="label-and-input">
                                         <label for="requestDate">Request date</label>
@@ -141,7 +143,7 @@ include '_layout/nav.php';
                                 <p>Please read and accept the terms to continue.</p>
 
                                 <div id="waiverContent">
-                                    <p id="waiverP1">By checking the box below, I hereby authorize <span id="waiverFullname"></span> to allow personnel from the above-named company to conduct work within my residence.</p>
+                                    <p>By checking the box below, I hereby authorize <span id="waiverFullname"></span> to allow personnel from the above-named company to conduct work within my residence.</p>
                                     <p>It is our responsibility to ensure that proper identification is presented by the work personnel and that adequate safety and security precautions are observed while they are within our premises. I relieve the Barangay of any obligation and liability regarding any untoward incident and quality of work rendered.</p>
                                     <p>I further understand that NO PERMIT, NO WORK will be strictly implemented by the Barangay.</p>
                                 </div>
@@ -196,10 +198,13 @@ include '_layout/nav.php';
                         </div>
                     </div>
                 </section>
-            </main>
+            </div>
+        </div>
+    </main>
 
-            <script src="../../scripts/resident/utilities_app.js"></script>
-            <script type="module" src="../../scripts/auth/signout.js"></script>
+    <script src="../../scripts/resident/utilities_app.js"></script>
+    <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
 </html>
+<?php include '_layout/end.php'; ?>
