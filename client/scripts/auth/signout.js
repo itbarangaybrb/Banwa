@@ -17,12 +17,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             emailInput.value = `${session.user.email}`;
         }
 
-        userStatus.textContent = `${session.user.email}`;
-        signoutBtn.style.display = "block";
+        if (userStatus) userStatus.textContent = `${session.user.email}`;
+        // keep the intended flex layout from CSS; avoid overriding it with "block"
+        if (signoutBtn) signoutBtn.style.display = "flex";
     }
 
-    // Handle sign-out
-    signoutBtn.addEventListener("click", async () => {
+    // Handle sign-out (only if button exists)
+    if (signoutBtn) {
+        signoutBtn.addEventListener("click", async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
             console.error("Sign-out error:", error.message);
@@ -30,5 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             window.location.href = "/Banwa/client/pages/auth/signin.php";
         }
-    });
+        });
+    }
 });

@@ -199,5 +199,3 @@ include '_layout/nav.php';
     <?php include '_layout/end.php'; ?>
     
     <script src="../../scripts/resident/about_us.js"></script>
-</body>
-</html>

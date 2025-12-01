@@ -151,7 +151,7 @@
                     <span class="company_name">BANWA</span>
                 </div>
                 <div class="user_profile">
-                    <p class="username">Anne Palen</p>
+                    <p id="userStatus"></p>
                     <div class="user_image">
                         <img src="../../img/sample.png" alt="User Profile">
                     </div>
