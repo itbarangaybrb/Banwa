@@ -100,6 +100,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle form submission for creation (from staff create form)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
+    try {
+        $permit_no = $_POST['permit_no'] ?? '';
+        $homeowner_name = $_POST['homeowner_name'] ?? '';
+        $contractor_name = $_POST['contractor_name'] ?? '';
+        $address_of_construction = $_POST['address_of_construction'] ?? '';
+        $nature_of_activity = $_POST['nature_of_activity'] ?? '';
+        $type_of_work = $_POST['type_of_work'] ?? '';
+        $details_of_work = $_POST['details_of_work'] ?? '';
+        $start_date = $_POST['start_date'] ?? null;
+        $end_date = $_POST['end_date'] ?? null;
+        $num_of_workers = (int)($_POST['num_of_workers'] ?? 0);
+        $num_of_working_days = (int)($_POST['num_of_working_days'] ?? 0);
+        $fee_paid = (float)($_POST['fee_paid'] ?? 0);
+        $payment_type = $_POST['payment_type'] ?? '';
+        $payment_status = $_POST['payment_status'] ?? 'Pending';
+        $latitude = $_POST['latitude'] ?? null;
+        $longitude = $_POST['longitude'] ?? null;
+
+        // File uploads: save into server configs uploads construction folder
+        $blueprint_path = '';
+        $additional_images = '';
+
+        $uploads_base = __DIR__ . '/../../../../../server/configs/uploads/construction/';
+        if (!file_exists($uploads_base)) mkdir($uploads_base, 0755, true);
+
+        if (isset($_FILES['blueprint_image']) && $_FILES['blueprint_image']['error'] === 0) {
+            $bp_name = time() . '_' . basename($_FILES['blueprint_image']['name']);
+            $target = $uploads_base . $bp_name;
+            if (move_uploaded_file($_FILES['blueprint_image']['tmp_name'], $target)) {
+                // store path relative to repo root for consistency
+                $blueprint_path = 'server/configs/uploads/construction/' . $bp_name;
+            }
+        }
+
+        if (isset($_FILES['additional_images'])) {
+            $added = [];
+            foreach ($_FILES['additional_images']['tmp_name'] as $k => $tmp) {
+                if ($_FILES['additional_images']['error'][$k] === 0) {
+                    $name = time() . '_' . $k . '_' . basename($_FILES['additional_images']['name'][$k]);
+                    $t = $uploads_base . $name;
+                    if (move_uploaded_file($tmp, $t)) {
+                        $added[] = 'server/configs/uploads/construction/' . $name;
+                    }
+                }
+            }
+            if (!empty($added)) $additional_images = implode(',', $added);
+        }
+
+        $sql = "INSERT INTO construction_doc (
+            permit_no, homeowner_name, contractor_name, address_of_construction,
+            nature_of_activity, type_of_work, details_of_work, start_date, end_date,
+            num_of_workers, num_of_working_days, fee_paid, payment_type, payment_status,
+            blueprint_image_path, additional_images, latitude, longitude
+        ) VALUES (
+            ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+        )";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $permit_no, $homeowner_name, $contractor_name, $address_of_construction,
+            $nature_of_activity, $type_of_work, $details_of_work, $start_date, $end_date,
+            $num_of_workers, $num_of_working_days, $fee_paid, $payment_type, $payment_status,
+            $blueprint_path, $additional_images, $latitude, $longitude
+        ]);
+
+        header('Location: construction.php?success=created');
+        exit;
+    } catch (PDOException $e) {
+        $error_message = 'Error creating record: ' . $e->getMessage();
+    }
+}
+
 // Sorting and initial data loading
 $allowedSortCols = ['construction_id','permit_no','homeowner_name','contractor_name','start_date','payment_status','approved_by', 'fee_paid'];
 $sort = isset($_GET['sort']) && in_array($_GET['sort'], $allowedSortCols) ? $_GET['sort'] : 'construction_id';

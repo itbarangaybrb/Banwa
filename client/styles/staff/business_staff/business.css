@@ -193,7 +193,7 @@ body {
     color: #19316b;
     padding: 0 5%;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    z-index: 1000;
+    z-index: 3000;
     height: 70px;
     display: flex;
     justify-content: space-between;
@@ -211,6 +211,16 @@ body {
     font-size: 1.5em;
     color: #19316b;
     margin: 0;
+}
+
+/* Ensure top header style overrides other global h1 rules (e.g., construction.css) */
+.top-header .header-left h1 {
+    background: none !important;
+    color: #19316b !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
 .header-right {
@@ -361,6 +371,36 @@ select:focus {
 textarea {
     resize: vertical;
     min-height: 100px;
+}
+
+/* Flash message styles */
+.message {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 12px;
+    color: #fff;
+    opacity: 1;
+}
+
+.message.success {
+    background: linear-gradient(180deg, #34c759, #28a745);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.message.error {
+    background: linear-gradient(180deg, #ff3b30, #e53935);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.message.info {
+    background: linear-gradient(180deg, #2089ff, #1467d6);
+}
+
+.message + .message {
+    margin-left: 8px;
 }
 
 .radio-group,
