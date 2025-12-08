@@ -23,12 +23,17 @@
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 </html> -->
+
+<?php 
+    require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <title>Home</title>
-    <link rel="stylesheet" href="../../styles/resident/.css">
+    <link rel="stylesheet" href="../../styles/resident/body.css">
 </head>
 <body>
 <?php 
