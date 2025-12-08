@@ -339,7 +339,7 @@ function validation() {
                         email: allData.email,
                         agreeCheckBox: allData.agreeCheckBox
                     },
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.html",
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.php",
                 },
             });
 
