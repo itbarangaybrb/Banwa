@@ -73,7 +73,7 @@
                                         <div class="error-msg"></div>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="middleName">Middle name</label>
+                                        <label for="middleName">Middle name <i>(Optional)</i></label>
                                         <input id="middleName" name="middleName" type="text">
                                         <div class="error-msg"></div>
                                     </div>
@@ -83,7 +83,7 @@
                                         <div class="error-msg"></div>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="suffix">Suffix</label>
+                                        <label for="suffix">Suffix <i>(Optional)</i></label>
                                         <input id="suffix" name="suffix" type="text">
                                         <div class="error-msg"></div>
                                     </div>
@@ -103,7 +103,11 @@
                                         <div class="error-msg"></div>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="address">Address</label>
+                                        <label for="address">
+                                            Address
+                                            <br>
+                                            <i>(Lot no. Street name ...)</i>
+                                        </label>
                                         <textarea id="address" name="address"></textarea>
                                         <div class="error-msg"></div>
                                     </div>
@@ -160,7 +164,7 @@
                                         <div class="error-msg"></div>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="reTypePassword">Password</label>
+                                        <label for="reTypePassword">Re-type password</label>
                                         <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" />
                                         <div class="error-msg"></div>
                                     </div>

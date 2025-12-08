@@ -76,7 +76,10 @@ body {
   row-gap: 8px;
 }
 
-.personal-details-container .form .inputs-container .label-and-input .label {}
+.personal-details-container .form .inputs-container .label-and-input label > i {
+  color: grey;
+  font-size: 14px;
+}
 
 .personal-details-container .form .inputs-container .label-and-input input[type="text"],
 .personal-details-container .form .inputs-container .label-and-input input[type="date"],
@@ -276,7 +279,7 @@ body {
 .error-msg {
   color: red;
   font-size: 12px;
-  margin-top: 8px;
+  /* margin-top: 8px; */
   display: none;
 }
 
