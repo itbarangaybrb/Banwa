@@ -40,23 +40,61 @@ function showValidation() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    formMessage.textContent = '';
 
     const emailValid = validateInput(email, emailErr, 'Email is required');
     const passValid = validateInput(password, passwordErr, 'Password is required');
-
     if (!emailValid || !passValid) return;
 
+    // 1️⃣ Check if user exists in custom DB
+    const checkResp = await fetch('/Banwa/server/api/resident/check_user.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.value.trim() })
+    });
+
+    const checkResult = await checkResp.json();
+
+    if (!checkResult.success) {
+      formMessage.style.color = 'red';
+      formMessage.textContent = "User not found";
+      return;
+    }
+
+    // 2️⃣ User exists → verify password with Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.value.trim(),
       password: password.value.trim(),
     });
 
-    if (error) {
-      passwordErr.textContent = "Invalid email or password";
+    if (error || !data.user) {
+      formMessage.style.color = 'red';
+      formMessage.textContent = "Incorrect password";
       return;
     }
 
-    window.location.href = '/Banwa/client/pages/resident/home.php';
+    // 3️⃣ Create PHP session
+    const resp = await fetch('/Banwa/server/api/resident/signin_user.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supabase_user_id: data.user.id }),
+      credentials: "include"
+    });
+
+    const result = await resp.json();
+
+    if (!result.success) {
+      formMessage.style.color = 'red';
+      formMessage.textContent = result.message;
+      return;
+    }
+
+    // 4️⃣ Success
+    formMessage.style.color = 'green';
+    formMessage.textContent = "Login successful! Redirecting...";
+    setTimeout(() => {
+      window.location.href = '/Banwa/client/pages/resident/home.php';
+    }, 1000);
   });
 }
 

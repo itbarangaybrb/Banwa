@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 ?>
 
@@ -51,7 +52,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                         <div class="construction-container">
 
                             <form class="form" id="construction-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data">
-                                <h2>Construction Permit Application Form</h2>
+                                <h2>Construction Clearance</h2>
                                 <p>Please fill out all required fields.</p>
 
                                 <div class="inputs-container">

@@ -1,6 +1,5 @@
 <?php
 include __DIR__ . '/../../configs/database.php';
-session_start(); // start session at the top
 
 $success_message = "";
 $error_message = "";

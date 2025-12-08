@@ -22,7 +22,7 @@ body {
   width: 100%;
 }
 
-/* .containers {
+.containers {
   padding: 32px 16px;
 }
 
@@ -37,7 +37,7 @@ body {
 
 .container-1 .left-panel {
   display: none;
-} */
+}
 
 /* ==================== Personal Details Form ==================== */
 .personal-details-container {
@@ -49,6 +49,7 @@ body {
 
 .personal-details-container .form {
   margin-inline: auto;
+  max-width: 780px;
 }
 
 .personal-details-container .form h3 {
@@ -75,7 +76,10 @@ body {
   row-gap: 8px;
 }
 
-.personal-details-container .form .inputs-container .label-and-input .label {}
+.personal-details-container .form .inputs-container .label-and-input label > i {
+  color: grey;
+  font-size: 14px;
+}
 
 .personal-details-container .form .inputs-container .label-and-input input[type="text"],
 .personal-details-container .form .inputs-container .label-and-input input[type="date"],
@@ -275,6 +279,7 @@ body {
 .error-msg {
   color: red;
   font-size: 12px;
+  /* margin-top: 8px; */
   display: none;
 }
 
@@ -292,7 +297,7 @@ body {
 }
 
 @media screen and (min-width: 780px) {
-  .container-1 {
+  /* .container-1 {
     display: flex;
     align-items: center;
     column-gap: 32px;
@@ -316,5 +321,7 @@ body {
   .container-1 .panel {
     height: 100%;
     width: 50%;
-  }
+  } */
+
+
 }

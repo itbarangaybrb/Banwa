@@ -17,30 +17,35 @@ function validations() {
         if ((input.type === 'checkbox' && !value) ||
             (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = message;
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
             return false;
         }
 
         if (rules.pattern && !rules.pattern.test(value)) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = rules.errorMessage || 'Invalid format';
+            errorEl.textContent = rules.errorMessage || 'Invalid format';
+            errorEl.classList.add('show');
             return false;
         }
 
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
+            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
+            errorEl.classList.add('show');
             return false;
         }
 
         if (rules.minLength && value.length < rules.minLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Minimum ${rules.minLength} characters required`;
+            errorEl.textContent = `Minimum ${rules.minLength} characters required`;
+            errorEl.classList.add('show');
             return false;
         }
 
         input.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -56,12 +61,15 @@ function validations() {
         if (value === '') {
             email.classList.add('error');
             errorEl.textContent = 'Email is required';
+            errorEl.classList.add('show');
         } else if (!emailPattern.test(value)) {
             email.classList.add('error');
             errorEl.textContent = 'Enter a valid email address';
+            errorEl.classList.add('show');
         } else {
             email.classList.remove('error');
             errorEl.textContent = '';
+            errorEl.classList.remove('show');
         }
     }
 

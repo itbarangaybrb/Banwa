@@ -18,7 +18,7 @@
             <div class="containers">
                 <!-- ==================== Forgot Password Form ==================== -->
                 <div class="forgot-pass-container" id="forgotPass">
-                    <form action="" id="forgotPassForm">
+                    <form class="form" id="forgotPassForm">
                         <h3>Forgot Password</h3>
                         <!-- <p></p> -->
 
@@ -32,8 +32,10 @@
                             </div>
                         </div>
 
-                        <button type="button" id="forgotPassBackBtn">Back</button>
-                        <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
+                        <div class="buttons-container">
+                            <button type="button" id="forgotPassBackBtn">Back</button>
+                            <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
+                        </div>
                     </form>
                 </div>
             </div>
