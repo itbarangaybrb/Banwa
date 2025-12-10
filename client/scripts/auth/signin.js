@@ -21,10 +21,12 @@ function showValidation() {
   function validateInput(input, errorEl, message) {
     if (input.value.trim() === '') {
       input.classList.add('error');
+      errorEl.classList.add('show');
       errorEl.textContent = message;
       return false;
     } else {
       input.classList.remove('error');
+      errorEl.classList.remove('show');
       errorEl.textContent = '';
       return true;
     }
@@ -46,7 +48,6 @@ function showValidation() {
     const passValid = validateInput(password, passwordErr, 'Password is required');
     if (!emailValid || !passValid) return;
 
-    // 1️⃣ Check if user exists in custom DB
     const checkResp = await fetch('/Banwa/server/api/resident/check_user.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,7 +62,6 @@ function showValidation() {
       return;
     }
 
-    // 2️⃣ User exists → verify password with Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.value.trim(),
       password: password.value.trim(),
@@ -73,7 +73,6 @@ function showValidation() {
       return;
     }
 
-    // 3️⃣ Create PHP session
     const resp = await fetch('/Banwa/server/api/resident/signin_user.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +88,6 @@ function showValidation() {
       return;
     }
 
-    // 4️⃣ Success
     formMessage.style.color = 'green';
     formMessage.textContent = "Login successful! Redirecting...";
     setTimeout(() => {

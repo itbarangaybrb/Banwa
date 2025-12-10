@@ -90,6 +90,7 @@ function validations() {
     });
 
     const formMessage = document.getElementById('formMessage');
+    formMessage.style.display = 'none';
 
     document.getElementById('forgotPassForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -112,16 +113,19 @@ function validations() {
 
             if (error) {
                 console.error('Supabase reset error:', error.message);
+                formMessage.style.display = 'block';
                 formMessage.style.color = 'red';
                 formMessage.textContent = `Reset failed: ${error.message}`;
                 return;
             }
 
+            formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.textContent = 'Email submitted. Check your inbox for the reset link.';
 
         } catch (err) {
             console.error('Unexpected error:', err);
+            formMessage.style.display = 'block';
             formMessage.style.color = 'red';
             formMessage.textContent = 'An unexpected error occurred. Please try again.';
         }

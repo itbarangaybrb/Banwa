@@ -24,11 +24,11 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     <main>
         <div class="content_wrapper">
             <div class="content-section active" id="default">
-                
+
                 <section class="sections">
                     <h2>Business Clearance</h2>
                     <p>This form authorizes personnel to perform the requested utility service at your address. </p>
-                    
+
                     <!-- ==================== Owner Form ==================== -->
                     <div class="containers owner-container" id="owner">
                         <form class="form" id="ownerform">

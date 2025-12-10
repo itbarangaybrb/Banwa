@@ -261,6 +261,10 @@ function validation() {
     // =========================
     // Navigation buttons
     // =========================
+    document.getElementById('personalDetailsBackBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/Banwa/client/pages/auth/signin.php';
+    });
     document.getElementById('selectIdBackBtn').addEventListener('click', () => switchPanel('personalDetails'));
     document.getElementById('createAccBackBtn').addEventListener('click', () => switchPanel('selectId'));
 
@@ -297,6 +301,7 @@ function validation() {
     // Personal Details 'Sbumit' Button
     // =========================
     const formMessage = document.getElementById('formMessage');
+    formMessage.style.display = 'none';
 
     document.getElementById('createAccForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -362,6 +367,7 @@ function validation() {
             const result = await response.json();
 
             if (!result.success) {
+                formMessage.style.display = 'block';
                 formMessage.style.color = 'red';
                 // I will change this later -jep
                 // This is only a test
@@ -370,12 +376,14 @@ function validation() {
             }
 
             // Success
+            formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.textContent = 'Application submitted successfully! Please check your email to verify your account.';
             console.log('User created successfully:', data.user);
 
         } catch (err) {
             console.error('Error during signup:', err);
+            formMessage.style.display = 'block';
             formMessage.style.color = 'red';
             formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }

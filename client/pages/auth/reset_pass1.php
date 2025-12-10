@@ -19,10 +19,10 @@
                 <!-- ==================== Reset Password Form ==================== -->
                 <div class="reset-pass-container" id="forgotPass">
                     <form class="form" id="resetPassForm">
-                        <h3>Reset Password</h3>
+                        <h5>Reset Password</h5>
                         <!-- <p></p> -->
 
-                        <span id="formMessage" style="display:block; color:red; margin-bottom:10px;"></span>
+                        <span id="formMessage"></span>
 
                         <div class="inputs-container">
                             <div class="label-and-input">
