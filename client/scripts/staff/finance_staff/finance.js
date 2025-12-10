@@ -4,9 +4,7 @@ const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
 let pendingApps = [];
 let paidApps = [];
 
-// ===================================
 // TAB SWITCHING
-// ===================================
 function switchTab(event, tabName) {
     event.preventDefault();
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -18,9 +16,7 @@ function switchTab(event, tabName) {
     else if (tabName === 'history') loadHistoryTable();
 }
 
-// ===================================
 // LOAD TABLES
-// ===================================
 function loadPendingTable() {
     fetch(`${API_URL}?action=fetch_pending`)
         .then(res => res.json())
@@ -66,6 +62,7 @@ function loadHistoryTable() {
                 }
                 paidApps.forEach(app => {
                     const name = `${app.first_name} ${app.last_name}`;
+                    // Display OR if Cash/Landbank, Ref# if GCash (Assumed stored in or_number column)
                     const row = `<tr>
                         <td><strong>${app.or_number}</strong></td>
                         <td>${app.id}</td>
@@ -83,9 +80,8 @@ function loadHistoryTable() {
         });
 }
 
-// ===================================
-// PAYMENT MODAL LOGIC
-// ===================================
+// === PAYMENT MODAL LOGIC ===
+
 function openPaymentModal(id) {
     const app = pendingApps.find(a => a.id == id);
     if (!app) return;
@@ -93,23 +89,61 @@ function openPaymentModal(id) {
     document.getElementById('payAppId').value = app.id;
     document.getElementById('dispAppId').textContent = app.id;
     document.getElementById('dispPayer').textContent = `${app.first_name} ${app.last_name}`;
-    document.getElementById('dispType').textContent = app.type_of_business;
     
-    // Default assessment amount (can be edited if logic requires)
+    // Set Amounts
     document.getElementById('amountDue').value = app.amount_due || '0.00';
     document.getElementById('amountPaid').value = '';
     document.getElementById('change').value = '0.00';
-    document.getElementById('orNumber').value = '';
+    document.getElementById('balance').value = '0.00';
     
+    // Reset Form Fields
+    document.getElementById('refNumber').value = '';
+    document.getElementById('proofFile').value = '';
+    
+    // Set Default Date to Today
+    document.getElementById('paymentDate').valueAsDate = new Date();
+    
+    // Default Method
+    document.getElementById('paymentMethod').value = 'Cash';
+    toggleReferenceInput(); // Ensure correct label
+
     openModal('paymentModal');
 }
 
-// Auto-calculate change
+// Toggle Label based on Method (Requirement: Cash(OR#), GCash(Ref#), Landbank(OR#))
+function toggleReferenceInput() {
+    const method = document.getElementById('paymentMethod').value;
+    const label = document.getElementById('refLabel');
+    const input = document.getElementById('refNumber');
+
+    if (method === 'GCash') {
+        label.textContent = 'Reference Number (Ref#) *';
+        input.placeholder = "e.g., 901230xxxxx";
+    } else if (method === 'Landbank') {
+        label.textContent = 'Transaction / OR Number *';
+        input.placeholder = "e.g., LBP-2023-xxxx";
+    } else {
+        label.textContent = 'Official Receipt (OR) No. *';
+        input.placeholder = "e.g., OR-2023-001";
+    }
+}
+
+// Auto-calculate Change AND Balance (Requirement: Add Balance instead of only Change)
 document.getElementById('amountPaid').addEventListener('input', function() {
     const due = parseFloat(document.getElementById('amountDue').value) || 0;
     const paid = parseFloat(this.value) || 0;
-    const change = paid - due;
-    document.getElementById('change').value = change.toFixed(2);
+    
+    if (paid >= due) {
+        // Full Payment or Overpayment
+        const change = paid - due;
+        document.getElementById('change').value = change.toFixed(2);
+        document.getElementById('balance').value = '0.00';
+    } else {
+        // Partial Payment
+        const balance = due - paid;
+        document.getElementById('change').value = '0.00';
+        document.getElementById('balance').value = balance.toFixed(2);
+    }
 });
 
 function submitPayment(event) {
@@ -117,46 +151,55 @@ function submitPayment(event) {
     const formData = new FormData(document.getElementById('paymentForm'));
     formData.append('action', 'process_payment');
 
-    // Validation: Check if paid amount is enough
-    const due = parseFloat(formData.get('amountDue'));
-    const paid = parseFloat(formData.get('amountPaid'));
-    if (paid < due) {
-        alert("Amount tendered is less than amount due!");
-        return;
+    // Validation
+    const balance = parseFloat(document.getElementById('balance').value);
+    
+    // Note: If you want to ALLOW partial payment (Balance > 0), remove the blocking alert.
+    // If strict full payment is required, uncomment below:
+    /*
+    if (balance > 0) {
+        if(!confirm("Amount tendered is less than due. Proceed with partial payment?")) return;
     }
+    */
 
     fetch(API_URL, {
         method: 'POST',
-        body: formData
+        body: formData // FormData handles file uploads automatically
     })
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
             closeModal('paymentModal');
-            alert('Payment Successful! Status changed to Paid.');
+            alert('Payment Successful!');
             loadPendingTable();
-            // Optional: Auto generate receipt
-             generateReceipt(data.id);
+            // generateReceipt(data.id); // Optional auto-print
         } else {
             alert('Error: ' + data.message);
         }
     });
 }
 
-// ===================================
-// GENERATE RECEIPT
-// ===================================
+// === PENALTY MODAL LOGIC ===
+function openPenaltyModal() {
+    openModal('penaltyModal');
+}
+
+function submitPenalty(event) {
+    event.preventDefault();
+    // Logic to submit penalty would go here
+    alert("Penalty Processed (Demo Only)");
+    closeModal('penaltyModal');
+}
+
+// === GENERIC FUNCTIONS ===
+
 function generateReceipt(id) {
-    // Find in paidApps first, if not try fetching fresh
     let app = paidApps.find(a => a.id == id);
-    
-    // If we just paid, it might not be in the loaded 'paidApps' array yet
     if (!app) {
+        // Fetch specific if not in list
         fetch(`${API_URL}?action=fetch_one&id=${id}`)
             .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') printReceiptWindow(data.data);
-            });
+            .then(data => { if(data.status === 'success') printReceiptWindow(data.data); });
     } else {
         printReceiptWindow(app);
     }
@@ -164,52 +207,39 @@ function generateReceipt(id) {
 
 function printReceiptWindow(app) {
     const receiptWindow = window.open('', 'PRINT', 'height=600,width=400');
-    
     receiptWindow.document.write(`
         <html>
         <head>
-            <title>Official Receipt - ${app.or_number}</title>
+            <title>Receipt - ${app.or_number}</title>
             <style>
                 body { font-family: 'Courier New', monospace; padding: 20px; text-align: center; }
-                .header { margin-bottom: 20px; border-bottom: 2px dashed #000; padding-bottom: 10px; }
-                .details { text-align: left; margin: 20px 0; }
-                .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-                .total { border-top: 2px dashed #000; border-bottom: 2px dashed #000; padding: 10px 0; margin-top: 10px; font-weight: bold; }
-                .footer { margin-top: 30px; font-size: 12px; }
+                .header { border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 20px;}
+                .row { display: flex; justify-content: space-between; margin-bottom: 5px; text-align: left; }
+                .total { border-top: 2px dashed #000; padding-top: 10px; font-weight: bold; }
             </style>
         </head>
         <body>
             <div class="header">
-                <h2>MUNICIPAL TREASURER'S OFFICE</h2>
-                <p>OFFICIAL RECEIPT</p>
-                <p><strong>OR No: ${app.or_number}</strong></p>
+                <h3>OFFICIAL RECEIPT</h3>
+                <p>OR/Ref: ${app.or_number}</p>
+                <p>Date: ${app.payment_date}</p>
             </div>
             <div class="details">
-                <div class="row"><span>Date:</span> <span>${app.payment_date}</span></div>
                 <div class="row"><span>Payer:</span> <span>${app.first_name} ${app.last_name}</span></div>
-                <div class="row"><span>App ID:</span> <span>${app.id}</span></div>
-                <div class="row"><span>Nature:</span> <span>${app.nature_of_business}</span></div>
-                <div class="row"><span>Payment Method:</span> <span>${app.payment_method}</span></div>
+                <div class="row"><span>Method:</span> <span>${app.payment_method}</span></div>
+                <div class="row"><span>Nature:</span> <span>${app.nature_of_business || 'Business Tax'}</span></div>
             </div>
             <div class="total">
-                <div class="row"><span>AMOUNT PAID:</span> <span>PHP ${parseFloat(app.amount_paid).toFixed(2)}</span></div>
+                <div class="row"><span>TOTAL PAID:</span> <span>PHP ${parseFloat(app.amount_paid).toFixed(2)}</span></div>
             </div>
-            <div class="footer">
-                <p>Received by: Finance Officer</p>
-                <p>Thank you for your payment!</p>
-            </div>
+            <p style="margin-top:20px; font-size:12px;">Thank you for your payment.</p>
         </body>
         </html>
     `);
-    
     receiptWindow.document.close();
-    receiptWindow.focus();
     setTimeout(() => { receiptWindow.print(); receiptWindow.close(); }, 500);
 }
 
-// ===================================
-// VIEW SUMMARY (Reused Logic)
-// ===================================
 function viewSummary(id, source) {
     let app;
     if (source === 'pending') app = pendingApps.find(a => a.id == id);
@@ -218,12 +248,11 @@ function viewSummary(id, source) {
     const modalBody = document.getElementById('summaryBody');
     modalBody.innerHTML = `
         <div class="summary-card">
-            <h3>📂 Application Details</h3>
             <p><strong>ID:</strong> ${app.id}</p>
-            <p><strong>Business:</strong> ${app.business_name}</p>
             <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Address:</strong> ${app.address_of_business}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></p>
+            <p><strong>Business:</strong> ${app.business_name || 'N/A'}</p>
+            <p><strong>Status:</strong> ${app.status}</p>
+            <p><strong>Assessment:</strong> ₱${app.amount_due || 0}</p>
         </div>
     `;
     openModal('detailsModal');
@@ -241,5 +270,4 @@ function filterTable(tableId, inputId) {
     }
 }
 
-// Init
 window.onload = function() { loadPendingTable(); };

@@ -1,4 +1,4 @@
-/* Business Staff CSS Styles*/
+/* Business Staff CSS Styles */
 * {
     margin: 0;
     padding: 0;
@@ -36,6 +36,16 @@ header h1 {
 header p {
     font-size: 1.1em;
     opacity: 0.9;
+    margin-bottom: 20px; /* Added spacing for buttons below */
+}
+
+/* NEW: Container for Header Action Buttons */
+.header-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 15px;
 }
 
 .nav-tabs {
@@ -99,6 +109,7 @@ label {
     color: #333;
 }
 
+/* Updated to include proper file input styling */
 input[type="text"],
 input[type="email"],
 input[type="date"],
@@ -114,14 +125,24 @@ select {
     font-size: 1em;
     font-family: inherit;
     transition: border-color 0.3s ease;
+    background-color: #fff; /* Ensure white background */
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="date"]:focus,
-input[type="tel"]:focus,
-input[type="number"]:focus,
-input[type="file"]:focus,
+/* NEW: Specific styling for file inputs to look cleaner */
+input[type="file"] {
+    padding: 9px; /* Adjust padding for file input */
+    background: #f8f9fa;
+}
+
+/* NEW: Small text helper styling */
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+input:focus,
 textarea:focus,
 select:focus {
     outline: none;
@@ -132,28 +153,6 @@ select:focus {
 textarea {
     resize: vertical;
     min-height: 100px;
-}
-
-.radio-group,
-.checkbox-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.radio-group label,
-.checkbox-group label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0;
-    cursor: pointer;
-}
-
-.radio-group input[type="radio"],
-.checkbox-group input[type="checkbox"] {
-    width: auto;
-    margin-right: 10px;
-    cursor: pointer;
 }
 
 .button-group {
@@ -177,7 +176,6 @@ button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
 }
-
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
@@ -188,7 +186,6 @@ button {
     color: #333;
     border: 1px solid #ddd;
 }
-
 .btn-secondary:hover {
     background: #e0e0e0;
 }
@@ -197,7 +194,6 @@ button {
     background: #28a745;
     color: white;
 }
-
 .btn-success:hover {
     background: #218838;
     transform: translateY(-2px);
@@ -207,7 +203,6 @@ button {
     background: #dc3545;
     color: white;
 }
-
 .btn-danger:hover {
     background: #c82333;
     transform: translateY(-2px);
@@ -217,9 +212,18 @@ button {
     background: #17a2b8;
     color: white;
 }
-
 .btn-info:hover {
     background: #138496;
+    transform: translateY(-2px);
+}
+
+/* NEW: Warning Button (for Penalties) */
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+.btn-warning:hover {
+    background: #e0a800;
     transform: translateY(-2px);
 }
 
@@ -264,20 +268,14 @@ tr:hover {
     text-transform: uppercase;
 }
 
-.status-approved {
-    background: #d4edda;
-    color: #155724;
-}
-
-.status-disapproved {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.status-pending {
-    background: #fff3cd;
-    color: #856404;
-}
+.status-approved { background: #d4edda; color: #155724; }
+.status-disapproved { background: #f8d7da; color: #721c24; }
+.status-pending { background: #fff3cd; color: #856404; }
+.status-for-payment { background: #ffc107; color: #212529; }
+.status-paid { background: #28a745; color: white; }
+.status-pre-approved { background: #17a2b8; color: white; }
+.status-cancelled { background: #6c757d; color: white; }
+.status-completed { background: #007bff; color: white; }
 
 .action-buttons {
     display: flex;
@@ -314,7 +312,7 @@ tr:hover {
     width: 90%;
     max-width: 700px;
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
-    max-height: 80vh;
+    max-height: 85vh; /* Increased slightly to accommodate file upload */
     overflow-y: auto;
 }
 
@@ -347,33 +345,26 @@ tr:hover {
     color: #000;
 }
 
-.alert {
-    padding: 15px;
+/* Instructions Modal Specific Styles */
+#instructionsModal .modal-content ul {
+    list-style-type: disc;
+    margin-left: 20px;
     margin-bottom: 20px;
-    border-radius: 5px;
-    display: none;
+    color: #555;
 }
 
-.alert.active {
-    display: block;
+#instructionsModal .modal-content li {
+    margin-bottom: 8px;
 }
 
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+#instructionsModal .modal-content hr {
+    border: 0;
+    border-top: 1px dashed #ddd;
+    margin: 20px 0;
 }
 
-.alert-danger {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.alert-info {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
+#instructionsModal .modal-content strong {
+    color: #667eea;
 }
 
 .summary-card {
@@ -396,10 +387,6 @@ tr:hover {
     margin-bottom: 10px;
 }
 
-.summary-card p strong {
-    color: #333;
-}
-
 .search-box {
     margin-bottom: 20px;
     display: flex;
@@ -408,42 +395,6 @@ tr:hover {
 
 .search-box input {
     flex: 1;
-}
-
-.hidden {
-    display: none !important;
-}
-
-.error-msg {
-    color: #dc3545;
-    font-size: 0.85em;
-    margin-top: 5px;
-    display: none;
-}
-
-.error-msg.show {
-    display: block;
-}
-
-h2 {
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.form-description {
-    color: #666;
-    margin-bottom: 20px;
-    font-size: 1em;
-}
-
-.section-title {
-    font-size: 1.2em;
-    font-weight: 700;
-    color: #333;
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #667eea;
-    padding-bottom: 10px;
 }
 
 .loading {
@@ -464,22 +415,36 @@ h2 {
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-    100% {
-        transform: rotate(360deg);
-    }
+/* Modal text styling */
+#dispPayer, #dispAppId {
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* Styles for Auto-calculated fields */
+#change {
+    background-color: #f0fff4; /* Light green bg */
+    border-color: #c3e6cb;
+}
+
+#balance {
+    background-color: #fff5f5; /* Light red bg */
+    border-color: #f5c6cb;
 }
 
 @media (max-width: 768px) {
-    header h1 {
-        font-size: 1.8em;
+    header h1 { font-size: 1.8em; }
+    
+    .header-actions {
+        flex-direction: column;
     }
-
-    .nav-tabs {
-        flex-wrap: wrap;
+    
+    .header-actions button {
+        width: 100%;
     }
 
     .nav-tabs button {
@@ -488,64 +453,10 @@ h2 {
         padding: 12px 10px;
     }
 
-    .button-group {
-        flex-direction: column;
-    }
-
-    button {
-        width: 100%;
-    }
-
-    .action-buttons {
-        flex-direction: column;
-    }
-
-    .action-buttons button {
-        width: 100%;
-    }
-
-    .search-box {
-        flex-direction: column;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
+    .form-row { grid-template-columns: 1fr; }
+    
     .modal-content {
         width: 95%;
-        margin: 20% auto;
+        margin: 15% auto;
     }
-}
-
-.status-for-payment {
-    background: #ffc107;
-    color: #212529;
-}
-
-.status-paid {
-    background: #28a745;
-    color: white;
-}
-
-.status-pre-approved {
-    background: #17a2b8;
-    color: white;
-}
-
-.status-cancelled {
-    background: #6c757d;
-    color: white;
-}
-
-.status-completed {
-    background: #007bff;
-    color: white;
-}
-
-/* Modal text styling */
-#dispPayer,
-#dispAppId {
-    font-weight: bold;
-    color: #667eea;
 }
