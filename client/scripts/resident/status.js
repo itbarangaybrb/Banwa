@@ -16,6 +16,8 @@ async function loadApplications() {
             return;
         }
 
+        // TODO:
+        // Front-end developer, add edit action if the status is === additional requirement ... - jep
         data.applications
             .sort((a, b) => new Date(b.request_date) - new Date(a.request_date)) // newest first
             .forEach(app => {
@@ -24,8 +26,9 @@ async function loadApplications() {
                 const remarks = app.approval_comments && app.approval_comments.trim() !== ''
                     ? `<p>Remarks: ${app.approval_comments}</p>`
                     : '';
+                const fullname = `${app.first_name} ${app.first_name} ${app.last_name}` || "No Name";
                 div.innerHTML = `
-            <h3>${app.fullname || 'No Name'}</h3>
+            <h3>${fullname}</h3>
             <p>Status: ${app.status || 'Pending'}</p>
             <p>Submitted: ${app.request_date || 'N/A'}</p>
             <p>Type: ${app.type || 'N/A'}</p>
