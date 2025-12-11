@@ -40,3 +40,13 @@
 [11-Dec-2025 12:29:24 UTC] DEBUG: Memory usage before fetch: 2 MB
 [11-Dec-2025 12:29:24 UTC] DEBUG: Rows fetched from DB: 3
 [11-Dec-2025 12:29:24 UTC] DEBUG: Memory usage after processing: 2 MB
+[11-Dec-2025 14:32:51 UTC] DEBUG: Memory usage before fetch: 2 MB
+[11-Dec-2025 14:32:51 UTC] DEBUG: Rows fetched from DB: 3
+[11-Dec-2025 14:32:51 UTC] DEBUG: Memory usage after processing: 2 MB
+[11-Dec-2025 14:32:51 UTC] DEBUG: Memory usage before fetch: 2 MB
+[11-Dec-2025 14:32:51 UTC] DEBUG: Rows fetched from DB: 3
+[11-Dec-2025 14:32:51 UTC] DEBUG: Memory usage after processing: 2 MB
+[11-Dec-2025 14:32:53 UTC] DEBUG: Memory usage before fetch: 2 MB
+[11-Dec-2025 14:32:53 UTC] DEBUG: Rows fetched from DB: 3
+[11-Dec-2025 14:32:53 UTC] DEBUG: Memory usage after processing: 2 MB
+[11-Dec-2025 14:32:56 UTC] PHP Warning:  Undefined array key "nature_of_application" in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 104

@@ -362,10 +362,10 @@ function handleGenerateClearance($pdo) {
 
                         <div class="business-nature-section">
                             Business Name/Trade Name: <span class="fill-line fill-block">' . htmlspecialchars($businessName) . '</span>
-                            <div class="checkbox-group">
-                                <span class="checkbox-option checked">NEW</span>
-                                <span class="checkbox-option">RENEWAL</span>
-                                <span class="checkbox-option">CLOSURE</span>
+                        <div class="checkbox-group">
+                                <span class="checkbox-option' . (strtoupper($applicationType) === 'NEW' ? ' checked' : '') . '">NEW</span>
+                                <span class="checkbox-option' . (strtoupper($applicationType) === 'RENEWAL' ? ' checked' : '') . '">RENEWAL</span>
+                                <span class="checkbox-option' . (strtoupper($applicationType) === 'CLOSURE' ? ' checked' : '') . '">CLOSURE</span>
                             </div>
                         </div>
 
