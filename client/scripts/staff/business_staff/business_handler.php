@@ -104,6 +104,8 @@ function handleCreateApplication($pdo)
         $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
         $noOfEmployees = get_input('noOfEmployees');
         $applicationDate = get_input('applicationDate');
+        $latitude = get_input('latitude2');
+        $longitude = get_input('longitude2');
 
         // Handle JSON Fields
         $rawStatus = $_POST['businessStatus'] ?? [];
@@ -126,21 +128,20 @@ function handleCreateApplication($pdo)
 
         // SQL Query (Explicit JSON Casting for Postgres)
         $sql = "INSERT INTO business_applications (
-            supabase_user_id, business_name, type_of_business, nature_of_business, nature_of_business_specify,
-            address_of_business, business_status, telephone_no_business, email_address,
-            first_name, middle_name, last_name, telephone_no_owner, address_owner,
-            type_of_structure, type_of_structure_specify, no_of_employees,
-            requirements, requirement_upload, application_date, status
+        supabase_user_id, business_name, type_of_business, nature_of_business, nature_of_business_specify,
+        address_of_business, latitude, longitude, business_status, telephone_no_business, email_address,
+        first_name, middle_name, last_name, telephone_no_owner, address_owner,
+        type_of_structure, type_of_structure_specify, no_of_employees,
+        requirements, requirement_upload, application_date, status
         ) VALUES (
             :supabase_user_id, :business_name, :type_of_business, :nature_of_business, :nature_of_business_specify,
-            :address_of_business, :business_status::json, :telephone_no_business, :email_address,
+            :address_of_business, :latitude, :longitude, :business_status::json, :telephone_no_business, :email_address,
             :first_name, :middle_name, :last_name, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
             :requirements::json, :requirement_upload, :application_date, 'Pending'
         ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
-
         $stmt->execute([
             ':supabase_user_id' => $supabaseUserId,
             ':business_name' => $businessName,
@@ -148,6 +149,8 @@ function handleCreateApplication($pdo)
             ':nature_of_business' => $natureOfBusiness,
             ':nature_of_business_specify' => $natureOfBusinessSpecify,
             ':address_of_business' => $addressOfBusiness,
+            ':latitude' => $latitude,
+            ':longitude' => $longitude,
             ':business_status' => $businessStatus,
             ':telephone_no_business' => $contactNoBusiness,
             ':email_address' => $emailAddress,
@@ -237,3 +240,4 @@ function handleUpdateStatus($pdo)
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 }
+

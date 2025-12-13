@@ -12,6 +12,8 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
     <link rel="stylesheet" href="../../styles/resident/business_app.css">
 </head>
 
@@ -24,16 +26,15 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     <main>
         <div class="content_wrapper">
             <div class="content-section active" id="default">
+                <h2>Business Clearance</h2>
+                <p>This form authorizes personnel to perform the requested business service at your address. </p>
 
                 <section class="sections">
-                    <h2>Business Clearance</h2>
-                    <p>This form authorizes personnel to perform the requested utility service at your address. </p>
-
                     <!-- ==================== Owner Form ==================== -->
                     <div class="containers owner-container" id="owner">
                         <form class="form" id="ownerform">
+                            <h5>Owner Information</h5>
                             <div class="inputs-container">
-                                <h3>Owner Information</h3>
                                 <div class="label-and-input">
                                     <label class="label" for="firstName">First Name</label>
                                     <input type="text" id="firstName" name="firstName">
@@ -68,19 +69,35 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <label class="label" for="street">Street</label>
                                     <select name="street" id="street">
                                         <option value="" disabled selected>Select</option>
-                                        <option value="Comets Loop, Blue Ridge B, Quezon City">Comets Loop, Blue Ridge B, Quezon City </option>
-                                        <option value="Crest Line Street, Blue Ridge B, Quezon City">Crest Line Street, Blue Ridge B, Quezon City </option>
-                                        <option value="Evening Glow Road, Blue Ridge B, Quezon City">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                                        <option value="Highland Drive, Blue Ridge B, Quezon City">Highland Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Hillside Drive, Blue Ridge B, Quezon City">Hillside Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Milky Way Drive, Blue Ridge B, Quezon City">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Moonlight Loop, Blue Ridge B, Quezon City">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                                        <option value="Promenade Lane, Blue Ridge B, Quezon City">Promenade Lane, Blue Ridge B, Quezon City </option>
-                                        <option value="Rajah Matanda Street, Blue Ridge B, Quezon City">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                                        <option value="Twin Peaks Drive, Blue Ridge B, Quezon City">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Union Lane, Blue Ridge B, Quezon City">Union Lane, Blue Ridge B, Quezon City </option>
+                                        <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                                        <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                                        <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                                        <option value="Evening Glow Road">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                                        <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Milky Way Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                        <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                                        <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                                        <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                                        <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
                                     </select>
                                     <div class="error-msg"></div>
+                                </div>
+                                <input type="hidden" id="latitude1" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
+                                    title="Enter latitude in decimal format (e.g., 14.617500)"
+                                    placeholder="e.g., 14.617500"
+                                    value="<?php echo isset($_POST['latitude1']) ? htmlspecialchars($_POST['latitude']) : ''; ?>">
+                                <input type="hidden" id="longitude1" name="longitude" pattern="-?\d{1,3}\.\d{6,8}"
+                                    title="Enter longitude in decimal format (e.g., 121.075600)"
+                                    placeholder="e.g., 121.075600"
+                                    value="<?php echo isset($_POST['longitude1']) ? htmlspecialchars($_POST['longitude']) : ''; ?>">
+
+                                <div class="label-and-input">
+                                    <button type="button" class="map-btn" data-target="1">Pick Location on Map</button>
+                                    <div class="map-preview" id="map-preview-1" style="margin-top: 10px; display: none;"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label class="label" for="applicationDate">Application Date</label>
@@ -99,7 +116,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                     <div class="containers business-container hidden" id="business">
                         <form class="form" id="certificationForm">
                             <div class="inputs-container">
-                                <h3>Business Information</h3>
+                                <h5>Business Information</h5>
                                 <div class="label-and-input">
                                     <label class="label" for="businessName">Name</label>
                                     <input type="text" id="businessName" name="businessName">
@@ -162,19 +179,34 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <label class="label" for="businessStreet">Street</label>
                                     <select name="businessStreet" id="businessStreet">
                                         <option value="" disabled selected>Select</option>
-                                        <option value="Comets Loop, Blue Ridge B, Quezon City">Comets Loop, Blue Ridge B, Quezon City </option>
-                                        <option value="Crest Line Street, Blue Ridge B, Quezon City">Crest Line Street, Blue Ridge B, Quezon City </option>
-                                        <option value="Evening Glow Road, Blue Ridge B, Quezon City">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                                        <option value="Highland Drive, Blue Ridge B, Quezon City">Highland Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Hillside Drive, Blue Ridge B, Quezon City">Hillside Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Milky Way Drive, Blue Ridge B, Quezon City">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Moonlight Loop, Blue Ridge B, Quezon City">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                                        <option value="Promenade Lane, Blue Ridge B, Quezon City">Promenade Lane, Blue Ridge B, Quezon City </option>
-                                        <option value="Rajah Matanda Street, Blue Ridge B, Quezon City">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                                        <option value="Twin Peaks Drive, Blue Ridge B, Quezon City">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                                        <option value="Union Lane, Blue Ridge B, Quezon City">Union Lane, Blue Ridge B, Quezon City </option>
+                                        <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                                        <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                                        <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                                        <option value="Evening Glow Road">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                                        <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                        <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                                        <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                                        <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                                        <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                                        <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
                                     </select>
                                     <div class="error-msg"></div>
+                                </div>
+                                <input type="hidden" id="latitude2" name="latitude2" pattern="-?\d{1,2}\.\d{6,8}"
+                                    title="Enter latitude in decimal format (e.g., 14.617500)"
+                                    placeholder="e.g., 14.617500"
+                                    value="<?php echo isset($_POST['latitude2']) ? htmlspecialchars($_POST['latitude2']) : ''; ?>">
+                                <input type="hidden" id="longitude2" name="longitude2" pattern="-?\d{1,3}\.\d{6,8}"
+                                    title="Enter longitude in decimal format (e.g., 121.075600)"
+                                    placeholder="e.g., 121.075600"
+                                    value="<?php echo isset($_POST['longitude2']) ? htmlspecialchars($_POST['longitude2']) : ''; ?>">
+                                <div class="label-and-input">
+                                    <button type="button" class="map-btn" data-target="2">Pick Location on Map</button>
+                                    <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label class="label" for="typeOfStructureSelect">Structure Type</label>
@@ -230,7 +262,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                     <!-- ==================== Waiver Form ==================== -->
                     <div class="containers waiver-container hidden" id="waiver">
                         <form class="form" id="waiverUtilitiesForm">
-                            <h3>Waiver</h3>
+                            <h5>Waiver</h5>
 
                             <div id="waiverContent">
                                 <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
@@ -260,23 +292,34 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                     <!-- ==================== Summary Form ==================== -->
                     <div class="containers summary-container hidden" id="summary">
                         <form class="form" id="summaryForm">
-                            <h3>Summary</h3>
+                            <h5>Summary</h5>
 
                             <div id="summaryContent">
-                                <div><strong>Business Name:</strong> <span id="sumBusinessName"></span></div>
-                                <div><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></div>
-                                <div><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></div>
-                                <div><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></div>
-                                <div><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></div>
-                                <div><strong>Business Telephone:</strong> <span id="sumContactNoBusiness"></span></div>
-                                <div><strong>Email:</strong> <span id="sumEmail"></span></div>
-                                <div><strong>Owner Name:</strong> <span id="sumFullname"></span></div>
-                                <div><strong>Owner Telephone:</strong> <span id="sumContactNoOwner"></span></div>
-                                <div><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></div>
-                                <div><strong>Structure Type:</strong> <span id="sumStructureType"></span></div>
-                                <div><strong>Requirements:</strong> <span id="sumRequirements"></span></div>
-                                <div><strong>No. of Employees:</strong> <span id="sumEmployees"></span></div>
-                                <div><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></div>
+                                <div class="summary-header-and-info">
+                                    <h6>Business Information</h6>
+                                    <div class="summary-info">
+                                        <div><strong>Business Name:</strong> <span id="sumBusinessName"></span></div>
+                                        <div><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></div>
+                                        <div><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></div>
+                                        <div><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></div>
+                                        <div><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></div>
+                                        <div><strong>Business Telephone:</strong> <span id="sumContactNoBusiness"></span></div>
+                                        <div><strong>Email:</strong> <span id="sumEmail"></span></div>
+                                    </div>
+                                </div>
+
+                                <div class="summary-header-and-info">
+                                    <h6>Owner Information</h6>
+                                    <div class="summary-info">
+                                        <div><strong>Owner Name:</strong> <span id="sumFullname"></span></div>
+                                        <div><strong>Owner Telephone:</strong> <span id="sumContactNoOwner"></span></div>
+                                        <div><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></div>
+                                        <div><strong>Structure Type:</strong> <span id="sumStructureType"></span></div>
+                                        <div><strong>Requirements:</strong> <span id="sumRequirements"></span></div>
+                                        <div><strong>No. of Employees:</strong> <span id="sumEmployees"></span></div>
+                                        <div><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="buttons-container">
@@ -286,11 +329,12 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         </form>
                     </div>
                 </section>
-                <!-- </div>
-        </div> -->
+            </div>
+        </div>
     </main>
 
     <script type="module" src="../../scripts/resident/business_app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 
 </html>
