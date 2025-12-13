@@ -11,10 +11,10 @@
 </head>
 
 <body>
-<?php 
-$page_title = "About Us";
-include '_layout/nav.php';
-?>
+    <?php 
+    $page_title = "About Us";
+    include '_layout/nav.php';
+    ?>
             <!-- ================== About Content Section ================== -->
             <section class="about-section">
                 <div class="about-container">
