@@ -232,7 +232,7 @@ function validation() {
     // Real-time validation setup (single IIFE)
     // =========================
     (() => {
-        const inputs = [firstName, middleName, lastName, suffix, sex, contactNo, address, email, password, reTypePassword, agreeCheckBox, idFile];
+        const inputs = [firstName, lastName, sex, contactNo, address, email, password, reTypePassword, agreeCheckBox, idFile];
 
         inputs.forEach(input => {
             if (!input) return;
@@ -261,6 +261,10 @@ function validation() {
     // =========================
     // Navigation buttons
     // =========================
+    document.getElementById('personalDetailsBackBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/Banwa/client/pages/auth/signin.php';
+    });
     document.getElementById('selectIdBackBtn').addEventListener('click', () => switchPanel('personalDetails'));
     document.getElementById('createAccBackBtn').addEventListener('click', () => switchPanel('selectId'));
 
@@ -271,9 +275,9 @@ function validation() {
         e.preventDefault();
         const validations = [
             validateInput(firstName, 'First name is required'),
-            validateInput(middleName, 'Middle name is required'),
+            // validateInput(middleName, 'Middle name is required'),
             validateInput(lastName, 'Last name is required'),
-            validateInput(suffix, 'Suffix is required'),
+            // validateInput(suffix, 'Suffix is required'),
             validateInput(sex, 'Sex is required'),
             validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11, errorMessage: 'Phone number must be numeric, max 11 digits' }),
             validateInput(address, 'Address is required')
@@ -297,6 +301,7 @@ function validation() {
     // Personal Details 'Sbumit' Button
     // =========================
     const formMessage = document.getElementById('formMessage');
+    formMessage.style.display = 'none';
 
     document.getElementById('createAccForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -305,7 +310,7 @@ function validation() {
         const validations = [
             passwordValidation(),
             checkPasswordMatch(),
-            validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11 }),
+            // validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11 }),
             validateInput(email, 'Email is required', { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ }),
             validateInput(agreeCheckBox, 'You must agree with the terms')
         ];
@@ -326,64 +331,61 @@ function validation() {
         };
 
         try {
+            // =========================
+            // Supabase Signup
+            // =========================
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
                 options: {
                     data: {
-                        fullname,
-                        sex,
-                        contactNo,
-                        address,
-                        idType,
-                        email,
-                        agreeCheckBox
+                        fullname: allData.fullname,
+                        sex: allData.sex,
+                        contactNo: allData.contactNo,
+                        address: allData.address,
+                        idType: allData.idType,
+                        email: allData.email,
+                        agreeCheckBox: allData.agreeCheckBox
                     },
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.html",
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.php",
                 },
             });
 
-            if (error) {
-                console.error('Supabase signup error:', error.message);
+            if (error) throw error;
+
+            const supabaseUserId = data.user.id;
+
+            // =========================
+            // Insert into Custom DB
+            // =========================
+            const response = await fetch('/Banwa/server/api/resident/signup_user.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...allData, user_id: supabaseUserId })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                formMessage.style.display = 'block';
                 formMessage.style.color = 'red';
-                formMessage.textContent = `Signup failed: ${error.message}`;
+                // I will change this later -jep
+                // This is only a test
+                formMessage.textContent = result.message;
                 return;
             }
 
-            // =============================
-            // Insert user into your custom DB
-            // =============================
-            // try {
-            //     const response = await fetch('/server/api/resident/insert_user.php', {
-            //         method: 'POST',
-            //         headers: { 'Content-Type': 'application/json' },
-            //         body: JSON.stringify(allData)
-            //     });
-
-            //     const result = await response.json();
-
-            //     if (!result.success) {
-            //         console.error('Custom DB insert error:', result.message);
-            //         formMessage.style.color = 'red';
-            //         formMessage.textContent = 'Signup succeeded in Supabase but failed in custom DB.';
-            //         return;
-            //     }
-
-            // } catch (err) {
-            //     console.error('Custom DB AJAX error:', err);
-            //     formMessage.style.color = 'red';
-            //     formMessage.textContent = 'Signup succeeded in Supabase but custom DB server failed.';
-            //     return;
-            // }
-
-            console.log('User created successfully:', data.user);
+            // Success
+            formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.textContent = 'Application submitted successfully! Please check your email to verify your account.';
+            console.log('User created successfully:', data.user);
 
         } catch (err) {
-            console.error('Unexpected error:', err);
+            console.error('Error during signup:', err);
+            formMessage.style.display = 'block';
             formMessage.style.color = 'red';
-            formMessage.textContent = 'An unexpected error occurred. Please try again.';
+            formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
     });
 

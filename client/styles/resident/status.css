@@ -16,17 +16,17 @@
 }
 
 /* ==================== Status section ==================== */
-.status .container-1 {
-    padding: 32px 64px;
+.status {
+    /* padding: 32px 64px;
     border: 1px solid grey;
-    border-radius: 16px;
+    border-radius: 16px; */
 }
 
-.status .container-1 .content .header-and-text {
+.status .content .header-and-text {
     margin-bottom: 32px;
 }
 
-.status .container-1 .content .header-and-text h4 {
+.status .content .header-and-text h4 {
     font-size: var(--h4);
     font-weight: var(--fw-bold);
     line-height: var(--h4-lh);
@@ -34,18 +34,20 @@
     margin-bottom: 12px;
 }
 
-.status .container-1 .content .header-and-text p {
+.status .content .header-and-text p {
     font-size: var(--tx1);
     font-weight: var(--fw-regular);
     line-height: var(--tx1-lh);
 }
 
-.status .container-1 .status-bar-container {
+.status .status-bar-container {
     width: 100%;
-    text-align: center;
     border: 1px solid grey;
     border-radius: 12px;
     padding: 32px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
 }
 
 .status-bar-container span {
@@ -54,6 +56,8 @@
     line-height: var(--tx1-lh);
     color: grey;
 }
+
+.status-bar-container .application-card {}
 
 /* ================== Desktop breakpoint ================== */
 /* ================== Tablet breakpoint ================== */

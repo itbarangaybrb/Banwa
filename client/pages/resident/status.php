@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,23 +19,26 @@
         TODO: Front-end developer, will change
         this into modal once the designs is fully completed. 
       -->
-    <p id="userStatus"></p>
-    <button id="signoutBtn">Logout</button>
+    <!-- <p id="userStatus"></p>
+    <button id="signoutBtn">Logout</button> -->
+
+    <?php
+    $page_title = "Home";
+    include '_layout/nav.php';
+    ?>
 
     <main>
         <!-- ==================== Status section ==================== -->
         <section class="sections">
             <div class="containers status">
-                <div class="container-1">
-                    <div class="content">
-                        <div class="header-and-text">
-                            <h4>Current Status</h4>
-                            <p>Pending Applications</p>
-                        </div>
+                <div class="content">
+                    <div class="header-and-text">
+                        <h4>Current Status</h4>
+                        <p>Pending Applications</p>
+                    </div>
 
-                        <div class="status-bar-container" id="statusList">
-                            <!-- <span>You have no active service requests.</span> -->
-                        </div>
+                    <div class="status-bar-container" id="applicationStatus">
+                        <!-- <span>You have no active service requests.</span> -->
                     </div>
                 </div>
             </div>
@@ -42,8 +49,9 @@
         </div>
     </main>
 
-    <script type="module" src="../../scripts/auth/signout.js"></script>
     <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 
 </html>
+
+<?php include '_layout/end.php'; ?>

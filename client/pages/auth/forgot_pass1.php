@@ -18,11 +18,11 @@
             <div class="containers">
                 <!-- ==================== Forgot Password Form ==================== -->
                 <div class="forgot-pass-container" id="forgotPass">
-                    <form action="" id="forgotPassForm">
-                        <h3>Forgot Password</h3>
+                    <form class="form" id="forgotPassForm">
+                        <h5>Forgot Password</h5>
                         <!-- <p></p> -->
 
-                        <span id="formMessage" style="display:block; color:red; margin-bottom:10px;"></span>
+                        <span id="formMessage"></span>
 
                         <div class="inputs-container">
                             <div class="label-and-input">
@@ -32,8 +32,10 @@
                             </div>
                         </div>
 
-                        <button type="button" id="forgotPassBackBtn">Back</button>
-                        <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
+                        <div class="buttons-container">
+                            <button type="button" id="forgotPassBackBtn">Back</button>
+                            <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
+                        </div>
                     </form>
                 </div>
             </div>

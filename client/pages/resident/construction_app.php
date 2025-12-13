@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 ?>
 
@@ -51,7 +52,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                         <div class="construction-container">
 
                             <form class="form" id="construction-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data">
-                                <h2>Construction Permit Application Form</h2>
+                                <h2>Construction Clearance</h2>
                                 <p>Please fill out all required fields.</p>
 
                                 <div class="inputs-container">
@@ -82,7 +83,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 
                                     <h3>Construction Location Coordinates</h3>
 
-                                    <div class="label-and-input">
+                                    <div class="label-and-input test">
                                         <label for="latitude" class="required-field">Latitude *</label>
                                         <input type="text" id="latitude" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
                                             title="Enter latitude in decimal format (e.g., 14.617500)"
@@ -91,7 +92,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                                         <small class="coord-help">Format: 14.617500 (decimal degrees)</small>
                                         <div class="error-msg"></div>
                                     </div>
-                                    <div class="label-and-input">
+                                    <div class="label-and-input test">
                                         <label for="longitude" class="required-field">Longitude *</label>
                                         <input type="text" id="longitude" name="longitude" pattern="-?\d{1,3}\.\d{6,8}"
                                             title="Enter longitude in decimal format (e.g., 121.075600)"

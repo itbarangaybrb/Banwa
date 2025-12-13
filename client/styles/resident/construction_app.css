@@ -9,30 +9,30 @@
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
 }
 
 body {
-  font-family: "Inter", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .sections {
-  width: 100%;
+    width: 100%;
 }
 
 .containers {
-  padding: 32px 16px;
+    padding: 32px 16px;
 }
 
 @media screen and (min-width: 780px) {
-  .containers {
-    max-width: 1440px;
-    width: 100%;
-    padding: 96px 64px;
-    margin-inline: auto;
-  }
+    .containers {
+        max-width: 1440px;
+        width: 100%;
+        padding: 96px 64px;
+        margin-inline: auto;
+    }
 }
 
 /* ==================== Construction Form ==================== */
@@ -61,6 +61,10 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* .construction-container .form .inputs-container .test {
+    display: none;
+} */
 
 .construction-container .form .inputs-container .label-and-input label {
     margin-bottom: 8px;
@@ -135,15 +139,15 @@ body {
 }
 
 @media screen and (min-width: 780px) {
-  .construction-container {
-    border-radius: 8px;
-    padding: 32px;
-    border: 1px solid gray;
-  }
+    .construction-container {
+        border-radius: 8px;
+        padding: 32px;
+        border: 1px solid gray;
+    }
 
-  .construction-container .form {
-    max-width: 927px;
-  }
+    .construction-container .form {
+        max-width: 927px;
+    }
 }
 
 
@@ -160,7 +164,18 @@ body {
 }
 
 .map-modal-content {
-    position: absolute;
+    /* position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    height: 80%;
+    max-width: 1000px; */
+
+    position: relative;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -199,10 +214,17 @@ body {
 }
 
 #map-container {
-    width: 100%;
+    /* width: 100%;
     height: calc(100% - 60px);
     border-radius: 8px;
-    overflow: hidden;
+    overflow: hidden; */
+
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    margin: 20px;
+    outline-style: none;
+    top: calc(94.5938px + 20px);
 }
 
 .coordinate-display {
@@ -286,19 +308,19 @@ body {
 }
 
 .error-msg {
-  color: red;
-  font-size: 12px;
-  margin-top: 8px;
-  display: none;
+    color: red;
+    font-size: 12px;
+    margin-top: 8px;
+    display: none;
 }
 
 .error-msg.show {
-  display: block;
+    display: block;
 }
 
 .error {
-  outline: 1px solid red;
-  /* border: 1px solid red !important; */
+    outline: 1px solid red;
+    /* border: 1px solid red !important; */
 }
 
 /* .hidden {

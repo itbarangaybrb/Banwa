@@ -159,12 +159,14 @@ function openMapPicker() {
     modal.className = 'map-modal';
     modal.innerHTML = `
         <div class="map-modal-content">
-            <div class="map-modal-header">
-                <h3>Select Construction Location</h3>
-                <button class="close-map" onclick="closeMapPicker()">Close</button>
-            </div>
-            <div class="coordinate-display">
-                Click on the map to select location: <span id="current-coords">Not selected</span>
+            <div class="map-header">
+                <div class="map-modal-header">
+                    <h3>Select Construction Location</h3>
+                    <button class="close-map" onclick="closeMapPicker()">Close</button>
+                </div>
+                <div class="coordinate-display">
+                    Click on the map to select location: <span id="current-coords">Not selected</span>
+                </div>
             </div>
             <div id="map-container"></div>
         </div>

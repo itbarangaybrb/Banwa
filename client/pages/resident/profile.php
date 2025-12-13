@@ -1,4 +1,8 @@
-<!-- <!DOCTYPE html>
+<?php
+require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+?>
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>

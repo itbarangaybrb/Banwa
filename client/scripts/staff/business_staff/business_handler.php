@@ -45,7 +45,7 @@ if (!extension_loaded('pdo_pgsql')) {
 // 6. Route Handling
 $action = $_REQUEST['action'] ?? null;
 // Clear the buffer before sending the real response
-ob_clean(); 
+ob_clean();
 
 try {
     switch ($action) {
@@ -56,10 +56,10 @@ try {
             handleFetchApplications($pdo);
             break;
         case 'update_status': // NEW UNIFIED ACTION
-                handleUpdateStatus($pdo);
-                break;
-            default:
-                echo json_encode(["status" => "error", "message" => "Invalid action"]);
+            handleUpdateStatus($pdo);
+            break;
+        default:
+            echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
 } catch (Exception $e) {
     http_response_code(500);
@@ -72,32 +72,39 @@ exit;
 // HELPER FUNCTIONS
 
 
-function get_input($key) {
+function get_input($key)
+{
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
-function handleCreateApplication($pdo) {
+function handleCreateApplication($pdo)
+{
     try {
+        $supabaseUserId = get_input('supabase_user_id');
         // Collect Data
         $businessName = get_input('businessName');
         $typeOfBusiness = get_input('typeOfBusiness');
         $natureOfBusiness = get_input('natureOfBusiness');
         $natureOfBusinessSpecify = get_input('natureOfBusinessSpecify');
-        $addressOfBusiness = get_input('addressOfBusiness');
-        $telephoneNoBusiness = get_input('telephoneNoBusiness');
+        $businessLotNo = get_input('businessLotNo');
+        $businessStreet = get_input('businessStreet');
+        $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
+        $contactNoBusiness = get_input('contactNoBusiness');
         $emailAddress = get_input('emailAddress');
-        
+
         $firstName = get_input('firstName');
         $middleName = get_input('middleName');
         $lastName = get_input('lastName');
-        $telephoneNoOwner = get_input('telephoneNoOwner');
-        $addressOwner = get_input('addressOwner');
-        
+        $contactNoOwner = get_input('contactNoOwner');
+        $lotNo = get_input('lotNo');
+        $street = get_input('street');
+        $addressOwner = trim($lotNo . ' ' . $street);
+
         $typeOfStructure = get_input('typeOfStructureSelect');
         $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
         $noOfEmployees = get_input('noOfEmployees');
         $applicationDate = get_input('applicationDate');
-        
+
         // Handle JSON Fields
         $rawStatus = $_POST['businessStatus'] ?? [];
         if (!is_array($rawStatus)) {
@@ -105,7 +112,7 @@ function handleCreateApplication($pdo) {
         }
         $businessStatus = json_encode($rawStatus);
         $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
-        
+
         // Handle File Upload
         $requirementUpload = null;
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
@@ -119,34 +126,35 @@ function handleCreateApplication($pdo) {
 
         // SQL Query (Explicit JSON Casting for Postgres)
         $sql = "INSERT INTO business_applications (
-            business_name, type_of_business, nature_of_business, nature_of_business_specify,
+            supabase_user_id, business_name, type_of_business, nature_of_business, nature_of_business_specify,
             address_of_business, business_status, telephone_no_business, email_address,
             first_name, middle_name, last_name, telephone_no_owner, address_owner,
             type_of_structure, type_of_structure_specify, no_of_employees,
             requirements, requirement_upload, application_date, status
         ) VALUES (
-            :business_name, :type_of_business, :nature_of_business, :nature_of_business_specify,
+            :supabase_user_id, :business_name, :type_of_business, :nature_of_business, :nature_of_business_specify,
             :address_of_business, :business_status::json, :telephone_no_business, :email_address,
             :first_name, :middle_name, :last_name, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
             :requirements::json, :requirement_upload, :application_date, 'Pending'
-        ) RETURNING id"; 
+        ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
-        
+
         $stmt->execute([
+            ':supabase_user_id' => $supabaseUserId,
             ':business_name' => $businessName,
             ':type_of_business' => $typeOfBusiness,
             ':nature_of_business' => $natureOfBusiness,
             ':nature_of_business_specify' => $natureOfBusinessSpecify,
             ':address_of_business' => $addressOfBusiness,
             ':business_status' => $businessStatus,
-            ':telephone_no_business' => $telephoneNoBusiness,
+            ':telephone_no_business' => $contactNoBusiness,
             ':email_address' => $emailAddress,
             ':first_name' => $firstName,
             ':middle_name' => $middleName,
             ':last_name' => $lastName,
-            ':telephone_no_owner' => $telephoneNoOwner,
+            ':telephone_no_owner' => $contactNoOwner,
             ':address_owner' => $addressOwner,
             ':type_of_structure' => $typeOfStructure,
             ':type_of_structure_specify' => $typeOfStructureSpecify,
@@ -155,10 +163,9 @@ function handleCreateApplication($pdo) {
             ':requirement_upload' => $requirementUpload,
             ':application_date' => $applicationDate
         ]);
-        
+
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         echo json_encode(["status" => "success", "id" => $result['id'], "message" => "Application Created!"]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -168,11 +175,12 @@ function handleCreateApplication($pdo) {
     }
 }
 
-function handleFetchApplications($pdo) {
+function handleFetchApplications($pdo)
+{
     try {
         $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at DESC");
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Decode JSON fields for frontend
         foreach ($applications as &$app) {
             // Check if it's already an array (Postgres driver sometimes auto-decodes)
@@ -183,16 +191,16 @@ function handleFetchApplications($pdo) {
                 $app['requirements'] = json_decode($app['requirements'], true);
             }
         }
-        
+
         echo json_encode(["status" => "success", "data" => $applications]);
-        
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
     }
 }
 
-function handleUpdateStatus($pdo) {
+function handleUpdateStatus($pdo)
+{
     $id = $_POST['id'] ?? null;
     $newStatus = $_POST['newStatus'] ?? null;
     $comments = $_POST['updateComments'] ?? '';
@@ -224,10 +232,8 @@ function handleUpdateStatus($pdo) {
         $stmt->execute($params);
 
         echo json_encode(["status" => "success", "message" => "Status updated to " . $newStatus]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 }
-?>

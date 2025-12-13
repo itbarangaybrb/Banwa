@@ -6,10 +6,12 @@ async function validations() {
     // Check the session if it is valid or not
     // =====================================================
     const formMessage = document.getElementById('formMessage');
+    formMessage.style.display = 'none';
 
     const { data: sessionData } = await supabase.auth.getSession();
 
     if (!sessionData || !sessionData.session) {
+        formMessage.style.display = 'block';
         formMessage.style.color = 'red';
         formMessage.textContent = 'Reset link is invalid or expired.';
         return;
@@ -34,30 +36,35 @@ async function validations() {
         if ((input.type === 'checkbox' && !value) ||
             (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = message;
+            errorEl.classList.add('show');
+            errorEl.textContent = message;
             return false;
         }
 
         if (rules.pattern && !rules.pattern.test(value)) {
+            input.classList.add('show');
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = rules.errorMessage || 'Invalid format';
+            errorEl.textContent = rules.errorMessage || 'Invalid format';
             return false;
         }
 
         if (rules.maxLength && value.length > rules.maxLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
+            errorEl.classList.add('show');
+            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
             return false;
         }
 
         if (rules.minLength && value.length < rules.minLength) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = `Minimum ${rules.minLength} characters required`;
+            errorEl.classList.add('show');
+            errorEl.textContent = `Minimum ${rules.minLength} characters required`;
             return false;
         }
 
         input.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        input.classList.remove('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -71,18 +78,21 @@ async function validations() {
 
         if (value === '') {
             reTypePassword.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Please re-type your password';
+            errorEl.classList.add('show');
+            errorEl.textContent = 'Please re-type your password';
             return false;
         }
 
         if (value !== password.value) {
             reTypePassword.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Passwords do not match';
+            errorEl.classList.add('show');
+            errorEl.textContent = 'Passwords do not match';
             return false;
         }
 
         reTypePassword.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -95,24 +105,28 @@ async function validations() {
 
         if (value.trim() === '') {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password is required';
+            errorEl.classList.add('show');
+            errorEl.textContent = 'Password is required';
             return false;
         }
 
         if (value.length < 8 || value.length > 16) {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
+            errorEl.classList.add('show');
+            errorEl.textContent = 'Password should be 8-16 characters long';
             return false;
         }
 
         if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
             password.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
+            errorEl.classList.add('show');
+            errorEl.textContent = 'Password must contain letters and numbers';
             return false;
         }
 
         password.classList.remove('error');
-        if (errorEl) errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
         return true;
     }
 
@@ -146,11 +160,13 @@ async function validations() {
 
             if (error) {
                 console.error('Supabase reset error:', error.message);
+                formMessage.style.display = 'block';
                 formMessage.style.color = 'red';
                 formMessage.textContent = `Reset failed: ${error.message}`;
                 return;
             }
 
+            formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.textContent = 'Password successfully updated. You may now sign in.';
 
@@ -160,6 +176,7 @@ async function validations() {
 
         } catch (err) {
             console.error('Unexpected error:', err);
+            formMessage.style.display = 'block';
             formMessage.style.color = 'red';
             formMessage.textContent = 'An unexpected error occurred. Please try again.';
         }
