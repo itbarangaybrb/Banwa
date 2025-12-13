@@ -2,8 +2,11 @@
 // Adjust this path to point to your existing staff handler. 
 // Assuming structure: /Banwa/client/pages/resident/business_app.php -> /Banwa/scripts/business_staff/business_handler.php
 import supabase from '../../../server/api/supabase.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
-const API_URL = '../../../client/scripts/business_staff/business_handler.php';
+// const API_URL = '../../../client/scripts/business_staff/business_handler.php';
+
+
 
 // ==========================
 // Function: Hide/Show Panels
@@ -135,9 +138,64 @@ function validation() {
         return true;
     }
 
+    // ===========================
+    // Function: Validate address
+    // ===========================
+    function validateAddress(lotInput, streetInput) {
+        const lotWrapper = lotInput.closest('.label-and-input');
+        const streetWrapper = streetInput.closest('.label-and-input');
+
+        const lotError = lotWrapper.querySelector('.error-msg');
+        const streetError = streetWrapper.querySelector('.error-msg');
+
+        const lot = lotInput.value.trim();
+        const street = streetInput.value.trim();
+
+        // reset errors
+        [lotInput, streetInput].forEach(i => i.classList.remove('error'));
+        [lotError, streetError].forEach(e => {
+            e.textContent = '';
+            e.classList.remove('show');
+        });
+
+        if (lot === '') {
+            lotInput.classList.add('error');
+            lotError.textContent = 'Lot no. is required';
+            lotError.classList.add('show');
+            return false;
+        }
+
+        if (street === '' || street === 'select') {
+            return true; // skip validation if street not selected
+        }
+
+        // validate lot + street combination
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(entry => entry.address === fullAddress);
+
+        if (!match) {
+            lotInput.classList.add('error');
+            lotError.textContent = 'Street does not exist for this lot';
+            lotError.classList.add('show');
+            return false;
+        }
+
+        // If matched, fill coordinates automatically
+        const latInput = document.getElementById('latitude2');
+        const lngInput = document.getElementById('longitude2');
+        if (latInput && lngInput) {
+            latInput.value = match.lat.toFixed(6);
+            lngInput.value = match.lng.toFixed(6);
+        }
+
+        return true;
+    }
+
     // ==============================
     // Function: Real-time validation
     // ==============================
+    // TODO: FOR JEFERSON
+    // change the input into ( change or  blur).
     (() => {
         const inputs = [
             natureOfApplication, businessName, natureOfBusinessSelect, natureOfBusinessSpecify,
@@ -159,22 +217,36 @@ function validation() {
             });
         });
 
-        const lots = [lotNo, businessLotNo];
-        lots.forEach(lot => {
+        const lots = [
+            { lot: lotNo, street: street },
+            { lot: businessLotNo, street: businessStreet }
+        ];
+
+        lots.forEach(({ lot, street }) => {
+
             lot.addEventListener('input', () => {
                 const wrapper = lot.closest('.label-and-input');
                 const errorEl = wrapper.querySelector('.error-msg');
+
                 lot.value = lot.value.replace(/[^0-9]/g, '');
-                if (lot.value === '') {
+
+                if (lot.value.trim() === '') {
                     lot.classList.add('error');
-                    errorEl.classList.add('show');
                     errorEl.textContent = 'Lot no. is required';
+                    errorEl.classList.add('show');
                 } else {
-                    errorEl.classList.remove('show');
+                    lot.classList.remove('error');
                     errorEl.textContent = '';
+                    errorEl.classList.remove('show');
                 }
             });
-        })
+
+            // revalidate address when lot or street changes
+            lot.addEventListener('input', () => validateAddress(lot, street));
+            street.addEventListener('change', () => validateAddress(lot, street));
+        });
+
+
 
         contactNoBusiness.addEventListener('input', () => {
             const wrapper = contactNoBusiness.closest('.label-and-input');
@@ -218,7 +290,7 @@ function validation() {
             noOfEmployees.value = noOfEmployees.value.replace(/[^0-9]/g, '');
             if (noOfEmployees.value === '') {
                 errorEl.classList.add('show');
-                lot.classList.add('error');
+                noOfEmployees.classList.add('error');
                 errorEl.textContent = 'No. of employees is required';
             } else {
                 errorEl.classList.remove('show');
@@ -265,6 +337,7 @@ function validation() {
                 errorMessage: 'Lot no. must be numeric, max 2 digits'
             }),
             validateInput(street, 'Street is required'),
+            validateAddress(lotNo, street)
         ];
 
         if (validations.every(v => v)) {
@@ -311,6 +384,7 @@ function validation() {
             typeOfStructureSelect.value === 'Others'
                 ? validateInput(typeOfStructureSpecify, 'Please specify the business details')
                 : true,
+            validateAddress(businessLotNo, businessStreet),
         ];
 
         if (validations.every(v => v)) {
@@ -323,6 +397,8 @@ function validation() {
     // Waiver "Next" button click
     // ==========================
     document.getElementById('nextToSummary').addEventListener('click', () => {
+        const lat = document.getElementById('latitude2').value;
+        const lng = document.getElementById('longitude2').value;
         const isValid = validateInput(agreeCheckBox, 'You must agree to proceed');
 
         if (isValid) {
@@ -330,12 +406,14 @@ function validation() {
             document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
             document.getElementById('sumNatureOfBusiness').textContent = `${natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value}`.trim();
             document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
-            document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}`.trim();
+            document.getElementById('sumAddressOfBusiness').textContent =
+                `${document.getElementById('businessLotNo').value} ${document.getElementById('businessStreet').value}` +
+                (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
             document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
             document.getElementById('sumEmail').textContent = emailAddress.value;
             document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
             document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-            document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`.trim();
+            document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
             document.getElementById('sumStructureType').textContent = `${typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value}`.trim();
             document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
             document.getElementById('sumEmployees').textContent = noOfEmployees.value;
@@ -348,11 +426,12 @@ function validation() {
     // ==========================
     // Back buttons
     // ==========================
-    (() => {
+    document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
         document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
-    })();
+    });
+
 
 
     // FINAL FORM SUBMISSION HANDLER
@@ -422,6 +501,11 @@ function validation() {
             if (fileInput.files.length > 0) {
                 formData.append('requirementUpload', fileInput.files[0]);
             }
+
+            const latitudeEl = document.getElementById('latitude2');
+            const longitudeEl = document.getElementById('longitude2');
+            formData.append('latitude2', latitudeEl?.value || '');
+            formData.append('longitude2', longitudeEl?.value || '');
 
             // Application Date
             formData.append('applicationDate', document.getElementById('applicationDate').value);
@@ -521,3 +605,195 @@ function natureOfApplicationSel(selectEl) {
     // Show/hide the whole Requirements section
     requirementsSection.style.display = anyVisible ? 'block' : 'none';
 }
+
+// =========================
+// Map & Coordinate Functions
+// =========================
+function openMapPicker(target) {
+    const modal = document.createElement('div');
+    modal.className = 'map-modal';
+    modal.innerHTML = `
+        <div class="map-modal-content">
+            <div class="map-header">
+                <div class="map-modal-header">
+                    <h3>Select Location</h3>
+                    <button class="close-map">Close</button>
+                </div>
+            </div>
+            <div id="map-container"></div>
+        </div>
+    `;
+    modal.dataset.target = target;
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    modal.querySelector('.close-map').addEventListener('click', () => {
+        const target = modal.dataset.target; // 1 or 2
+        const preview = document.getElementById(`map-preview-${target}`);
+        if (preview) preview.style.display = 'none'; // hide the preview
+        modal.remove(); // remove the modal
+    });
+
+    initializeMapPicker(target, `map-container-${target}`);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
+});
+
+async function initializeMapPicker(target, containerId) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
+
+    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    // Map click handler
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
+
+        document.getElementById(`latitude${target}`).value = lat;
+        document.getElementById(`longitude${target}`).value = lng;
+        document.getElementById(`map-preview-${target}`).style.display = 'block';
+    });
+
+    // Optional: Load barangay polygon
+    const blueRidgeGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "properties": { "name": "Barangay Blue Ridge B" },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [121.07278956348526, 14.61639406374255],
+                    [121.07392145567032, 14.61595803532421],
+                    [121.07419772320655, 14.616251316435923],
+                    [121.07617987565104, 14.616430399403944],
+                    [121.07651515177966, 14.617647640629082],
+                    [121.07800914220171, 14.617803363969443],
+                    [121.07872851395038, 14.617316502559932],
+                    [121.07891090415784, 14.617705811277993],
+                    [121.07449698388697, 14.62017411386342]
+                ]]
+            }
+        }]
+    };
+    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
+
+    // Load houses from server
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_houses');
+        const response = await fetch('../../pages/staff/map_handler.php', { method: 'POST', body: formData });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        if (data.success && data.houses) {
+            const houseLayer = L.layerGroup();
+
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        const coords = JSON.parse(house.coordinates);
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        latLngCoords.push(latLngCoords[0]); // close polygon
+
+                        const polygon = L.polygon(latLngCoords, {
+                            color: '#3388ff',
+                            weight: 1,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.1,
+                            interactive: true
+                        }).addTo(houseLayer);
+
+                        // Polygon click autofill
+                        polygon.on('click', function (e) {
+                            const lat = e.latlng.lat.toFixed(6);
+                            const lng = e.latlng.lng.toFixed(6);
+
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+
+                            // document.getElementById(`current-coords`).textContent = `${lat}, ${lng}`;
+                            document.getElementById(`latitude${target}`).value = lat;
+                            document.getElementById(`longitude${target}`).value = lng;
+                            document.getElementById(`map-preview-${target}`).style.display = 'block';
+
+                            // Only fill fields for the correct target
+                            if (target === '1') { // Owner
+                                const lotNo = document.getElementById('lotNo');
+                                const street = document.getElementById('street');
+                                lotNo.value = house.house_number || '';
+                                street.value = house.street_name || '';
+                                [lotNo, street].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
+
+                            if (target === '2') { // Business
+                                const businessLot = document.getElementById('businessLotNo');
+                                const businessStreet = document.getElementById('businessStreet');
+                                businessLot.value = house.house_number || '';
+                                businessStreet.value = house.street_name || '';
+                                document.getElementById(`latitude2`).value = lat;
+                                document.getElementById(`longitude2`).value = lng;
+
+                                [businessLot, businessStreet].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
+                        });
+
+
+                        // Add popup
+                        polygon.bindPopup(`
+                            <div class="house-popup">
+                                <h4>🏠 ${house.address}</h4>
+                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
+                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
+                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
+                            </div>
+                        `);
+
+                    } catch (err) {
+                        console.error('Error parsing house coordinates:', err);
+                    }
+                }
+            });
+
+            houseLayer.addTo(map);
+        }
+    } catch (err) {
+        console.error('Error loading houses:', err);
+    }
+}
+
+function setupCoordinateAutoFormat(target) {
+    const latInput = document.getElementById(`latitude${target}`);
+    const lngInput = document.getElementById(`longitude${target}`);
+    if (!latInput || !lngInput) return;
+
+    [latInput, lngInput].forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6);
+        });
+    });
+}
+
+// Initialize both forms
+document.addEventListener('DOMContentLoaded', () => {
+    [1, 2].forEach(target => setupCoordinateAutoFormat(target));
+});

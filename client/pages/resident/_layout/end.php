@@ -1,4 +1,4 @@
-</main>
+        </main>
 
 <footer>
     <div class="footer_cont1">
@@ -116,5 +116,4 @@
     <script src="../../scripts/resident/nav.js" defer></script>
     <script type="module" src="../../scripts/auth/signout.js"></script>
     </body>
-
 </html>

@@ -19,10 +19,10 @@
                 <!-- ==================== Forgot Password Form ==================== -->
                 <div class="forgot-pass-container" id="forgotPass">
                     <form class="form" id="forgotPassForm">
-                        <h3>Forgot Password</h3>
+                        <h5>Forgot Password</h5>
                         <!-- <p></p> -->
 
-                        <span id="formMessage" style="display:block; color:red; margin-bottom:10px;"></span>
+                        <span id="formMessage"></span>
 
                         <div class="inputs-container">
                             <div class="label-and-input">
