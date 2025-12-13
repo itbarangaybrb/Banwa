@@ -70,7 +70,7 @@
     <div class="main-wrapper">
         <header class="top-header">
             <div class="header-left">
-                <h1>📋 Business Application Management System</h1>
+                <h1>Business Application Management</h1>
             </div>
             <div class="header-right">
                 <div class="user-greeting">
@@ -114,11 +114,11 @@
                 <p class="form-description">Fill in the details to create a new business application</p>
                 
                 <form id="createForm" onsubmit="createApplication(event)">
-                    <div class="section-title">📍 Business Information</div>
+                    <div class="section-title">Business Information</div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="businessName">Business Name *</label>
+                            <label for="businessName">Business Name*</label>
                             <input type="text" id="businessName" name="businessName" required>
                             <div class="error-msg"></div>
                         </div>
@@ -189,7 +189,7 @@
                         </div>
                     </div>
 
-                    <div class="section-title">👤 Owner Information</div>
+                    <div class="section-title">Owner Information</div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -227,7 +227,7 @@
                         </div>
                     </div>
 
-                    <div class="section-title">🏢 Business Structure</div>
+                    <div class="section-title">Business Structure</div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -245,7 +245,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="typeOfStructureSpecify">Specify Details (if Others)</label>
+                            <label for="typeOfStructureSpecify">Specify Details</label>
                             <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
                             <div class="error-msg"></div>
                         </div>
@@ -259,7 +259,7 @@
                         </div>
                     </div>
 
-                    <div class="section-title">📋 Requirements (Photocopy Only)</div>
+                    <div class="section-title">Requirements (Photocopy Only)</div>
 
                     <div class="form-group">
                         <div class="checkbox-group">
@@ -273,20 +273,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="requirementUpload">Upload Document</label>
+                        <label for="requirementUpload">Attachment/s *</label>
                         <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="applicationDate">Application Date *</label>
-                        <input type="date" id="applicationDate" name="applicationDate" readonly>
+                        <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="button-group">
-                        <button type="submit" class="btn-primary">✅ Create Application</button>
-                        <button type="reset" class="btn-secondary">🔄 Clear Form</button>
+                        <button type="submit" class="btn-primary">Create Application</button>
+                        <button type="reset" class="btn-secondary">Clear Form</button>
                     </div>
                 </form>
             </div>
