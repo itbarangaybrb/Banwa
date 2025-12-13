@@ -76,32 +76,32 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                 <p>All fields are required unless specified.</p>
                                 <div class="inputs-container">
                                     <div class="label-and-input">
-                                        <label for="requestDate">Request date</label>
+                                        <label for="requestDate">Request Date*</label>
                                         <input type="date" name="requestDate" id="requestDate">
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="dateOfWork">Date of work</label>
+                                        <label for="dateOfWork">Date of Work*</label>
                                         <input type="date" name="dateOfWork" id="dateOfWork">
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="fullnameUtilities">Fullname</label>
+                                        <label for="fullnameUtilities">Full Name*</label>
                                         <input type="text" name="fullname" id="fullnameUtilities">
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="contactNo">Contact no.</label>
+                                        <label for="contactNo">Contact No.*</label>
                                         <input type="tel" name="contactNo" id="contactNo" maxlength="11" pattern="[0-9]{1,11}">
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="address">Address</label>
+                                        <label for="address">Address*</label>
                                         <input type="text" name="address" id="address">
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="provider">Select Provider</label>
+                                        <label for="provider">Select Provider*</label>
                                         <div class="select-and-icon">
                                             <select name="provider" id="provider">
                                                 <option value="select">Select</option>
@@ -119,7 +119,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                         <span class="error-msg"></span>
                                     </div>
                                     <div class="label-and-input">
-                                        <label for="natureOfWork">Nature of work to be done</label>
+                                        <label for="natureOfWork">Nature of Work*</label>
                                         <div class="select-and-icon">
                                             <select name="natureOfWork" id="natureOfWork">
                                                 <option value="select">Select</option>
@@ -176,22 +176,22 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                 <div id="summaryContent">
                                     <h4>Request Details</h4>
                                     <div class="row">
-                                        <div><strong>Request date</strong> <span id="sumRequestDate">test</span></div>
-                                        <div><strong>Date of work</strong> <span id="sumDateOfWork">test</span></div>
+                                        <div><strong>Request Date</strong> <span id="sumRequestDate">test</span></div>
+                                        <div><strong>Date of Work</strong> <span id="sumDateOfWork">test</span></div>
                                     </div>
                                     <div class="row">
-                                        <div><strong>Control no.</strong> <span id="sumProvider"></span></div>
+                                        <div><strong>Control No.</strong> <span id="sumProvider"></span></div>
                                         <div><strong>Provider:</strong> <span id="sumProvider"></span></div>
                                     </div>
                                     <div class="divider"></div>
-                                    <h4>Confirm your information</h4>
+                                    <h4>Confirm your Information</h4>
                                     <div class="row">
-                                        <div><strong>Fullname</strong> <span id="sumFullname"></span></div>
-                                        <div><strong>Contact no.</strong> <span id="sumContactNo"></span></div>
+                                        <div><strong>Full Name*</strong> <span id="sumFullname"></span></div>
+                                        <div><strong>Contact No.*</strong> <span id="sumContactNo"></span></div>
                                     </div>
-                                    <div><strong>Full address</strong> <span id="sumAddress"></span></div>
-                                    <div><strong>Nature of work</strong> <span id="sumNatureOfWork"></span></div>
-                                    <div><strong>Agreed to terms</strong> <span id="sumAgreed"></span></div>
+                                    <div><strong>Full Address</strong> <span id="sumAddress"></span></div>
+                                    <div><strong>Nature of Work</strong> <span id="sumNatureOfWork"></span></div>
+                                    <div><strong>Agreed to Terms</strong> <span id="sumAgreed"></span></div>
                                 </div>
 
                                 <div class="buttons-container">

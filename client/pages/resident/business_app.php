@@ -36,7 +36,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                             <h5>Owner Information</h5>
                             <div class="inputs-container">
                                 <div class="label-and-input">
-                                    <label class="label" for="firstName">First Name</label>
+                                    <label class="label" for="firstName">First Name*</label>
                                     <input type="text" id="firstName" name="firstName">
                                     <div class="error-msg"></div>
                                 </div>
@@ -46,7 +46,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="lastName">Last Name</label>
+                                    <label class="label" for="lastName">Last Name*</label>
                                     <input type="text" id="lastName" name="lastName">
                                     <div class="error-msg"></div>
                                 </div>
@@ -56,17 +56,17 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="contactNoOwner">Landline/phone no.</label>
+                                    <label class="label" for="contactNoOwner">Landline/Phone No.</label>
                                     <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="lotNo">Lot no.</label>
+                                    <label class="label" for="lotNo">Lot no.*</label>
                                     <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="street">Street</label>
+                                    <label class="label" for="street">Street Name*</label>
                                     <select name="street" id="street">
                                         <option value="" disabled selected>Select</option>
                                         <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -100,8 +100,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="map-preview" id="map-preview-1" style="margin-top: 10px; display: none;"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="applicationDate">Application Date</label>
-                                    <input type="date" id="applicationDate" name="applicationDate" readonly>
+                                    <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
                                 </div>
                             </div>
 
@@ -118,19 +117,19 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                             <div class="inputs-container">
                                 <h5>Business Information</h5>
                                 <div class="label-and-input">
-                                    <label class="label" for="businessName">Name</label>
+                                    <label class="label" for="businessName">Business Name*</label>
                                     <input type="text" id="businessName" name="businessName">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label">Type of Business</label>
+                                    <label class="label">Business Type*</label>
                                     <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship"> Single Proprietorship</label>
                                     <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
                                     <label><input type="radio" name="typeOfBusiness" value="Corporation"> Corporation</label>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="natureOfBusinessSelect">Nature of Business</label>
+                                    <label class="label" for="natureOfBusinessSelect">Nature of Business*</label>
                                     <select name="natureOfBusiness" id="natureOfBusinessSelect">
                                         <option value="" disabled selected>Select</option>
                                         <option value="Manufacturing">Manufacturing</option>
@@ -143,12 +142,12 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="natureOfBusinessSpecify">Specify Details</label>
+                                    <label class="label" for="natureOfBusinessSpecify">Specify Details*</label>
                                     <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label">Status of business address</label>
+                                    <label class="label">Business Address Status*</label>
                                     <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
                                     <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
                                     <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
@@ -156,27 +155,27 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="contactNoBusiness">Landline/phone no.</label>
+                                    <label class="label" for="contactNoBusiness">Landline/Phone No.*</label>
                                     <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="emailAddress">Email Address</label>
+                                    <label class="label" for="emailAddress">Email Address*</label>
                                     <input type="email" id="emailAddress" name="emailAddress">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="noOfEmployees">Number of Employees</label>
+                                    <label class="label" for="noOfEmployees">Number of Employees*</label>
                                     <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="businessLotNo">Lot no.</label>
+                                    <label class="label" for="businessLotNo">Lot no.*</label>
                                     <input type="tel" name="businessLotNo" id="businessLotNo" maxlength="2" pattern="[0-9]{1,2}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="businessStreet">Street</label>
+                                    <label class="label" for="businessStreet">Street Name*</label>
                                     <select name="businessStreet" id="businessStreet">
                                         <option value="" disabled selected>Select</option>
                                         <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -209,7 +208,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="typeOfStructureSelect">Structure Type</label>
+                                    <label class="label" for="typeOfStructureSelect">Structure Type*</label>
                                     <select id="typeOfStructureSelect" name="typeOfStructureSelect">
                                         <option value="" disabled selected>Select Structure Type</option>
                                         <option value="Residence">Residence</option>
@@ -222,12 +221,12 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="typeOfStructureSpecify">Specify Details (if Others)</label>
+                                    <label class="label" for="typeOfStructureSpecify">Specify Details*</label>
                                     <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="natureOfApplication">Nature of application</label>
+                                    <label class="label" for="natureOfApplication">Nature of application*</label>
                                     <select name="natureOfApplication" id="natureOfApplication">
                                         <option value="" disabled selected>Select</option>
                                         <option value="New">New</option>
@@ -237,7 +236,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input" id="requirementsSection">
-                                    <label class="label">Requirements (Photocopy Only)</label>
+                                    <label class="label">Requirements (Photocopy Only)*</label>
                                     <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
                                     <label><input type="checkbox" name="requirements" value="DTI"> DTI</label>
                                     <label><input type="checkbox" name="requirements" value="TCT"> TCT</label>
@@ -246,7 +245,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label class="label" for="requirementUpload">Upload Document</label>
+                                    <label class="label" for="requirementUpload">Attachment/s*</label>
                                     <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
                                     <div class="error-msg"></div>
                                 </div>
