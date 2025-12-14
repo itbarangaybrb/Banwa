@@ -224,6 +224,7 @@ header {
     -moz-user-select: none;
     -ms-user-select: none;
 }
+
 /* Header End */
 
 /* Nav */
@@ -250,7 +251,27 @@ nav {
     height: 100%;
 }
 
+button.nav_select {
+    /* remove this later - jep */
+    background-color: transparent;
+    border: transparent;
+    font-size: 16px;
+
+    transition: all 0.8s ease;
+    border-radius: 0 0 7px 7px;
+    border-bottom: 3px solid transparent;
+
+    cursor: pointer;
+}
+
 .nav_select:hover {
+    background-color: transparent;
+    border-bottom-color: white;
+    color: white;
+}
+
+button.nav_select:hover {
+    /* remove this later - jep */
     background-color: transparent;
     border-bottom-color: white;
     color: white;
@@ -261,4 +282,5 @@ nav {
     border-bottom-color: white;
     color: white;
 }
+
 /* Nav End */

@@ -178,6 +178,7 @@
 
                     <li><a class="nav_select" href="../resident/status.php" <?php if ($page_title == "Status") echo 'class="active"'; ?>>Status</a></li>
                     <li><a class="nav_select" href="../resident/profile.php" <?php if ($page_title == "Profile") echo 'class="active"'; ?>>Profile</a></li>
+                    <li><button class="nav_select" id="signoutBtn">Logout</button></li>
                 </ul>
             </nav>
             <div class="user_profile">
