@@ -26,8 +26,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fee_paid = $_POST['fee_paid'];
     $payment_type = $_POST['payment_type'];
     $payment_status = $_POST['payment_status'];
-    $latitude = $_POST['latitude'];
-    $longitude = $_POST['longitude'];
+    $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? (float)$_POST['latitude'] : null;
+    $longitude = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? (float)$_POST['longitude'] : null;
 
     $blueprint_image_path = "";
     $additional_images = "";
@@ -70,12 +70,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 permit_no, homeowner_name, contractor_name, address_of_construction, 
                 nature_of_activity, type_of_work, details_of_work, start_date, end_date, 
                 num_of_workers, num_of_working_days, fee_paid, payment_type, payment_status, 
-                blueprint_image_path, additional_images, latitude, longitude
+                blueprint_image_path, additional_images, latitude, longitude, application_status
             ) VALUES (
                 :permit_no, :homeowner_name, :contractor_name, :address_of_construction,
                 :nature_of_activity, :type_of_work, :details_of_work, :start_date, :end_date,
                 :num_of_workers, :num_of_working_days, :fee_paid, :payment_type, :payment_status,
-                :blueprint_image_path, :additional_images, :latitude, :longitude
+                :blueprint_image_path, :additional_images, :latitude, :longitude, :application_status
             )";
 
             $stmt = $pdo->prepare($sql);
@@ -97,7 +97,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ':blueprint_image_path' => $blueprint_image_path,
                 ':additional_images' => $additional_images,
                 ':latitude' => $latitude,
-                ':longitude' => $longitude
+                ':longitude' => $longitude,
+                ':application_status' => 'Complied'
             ]);
 
             if ($result) {

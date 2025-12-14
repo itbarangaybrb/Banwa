@@ -209,3 +209,31 @@
 [13-Dec-2025 14:57:57 UTC] DEBUG: Memory usage before fetch: 2 MB
 [13-Dec-2025 14:57:57 UTC] DEBUG: Rows fetched from DB: 4
 [13-Dec-2025 14:57:57 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 08:48:39 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 182
+[14-Dec-2025 08:48:39 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 183
+[14-Dec-2025 08:48:55 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 182
+[14-Dec-2025 08:48:55 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 183
+[14-Dec-2025 09:16:48 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:16:48 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:16:48 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:17:31 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:17:31 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:17:31 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:17:31 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:17:31 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:17:31 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:18:37 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:18:37 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:18:37 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:18:48 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:18:48 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:18:48 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:19:23 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:19:23 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:19:23 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:19:54 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:19:54 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:19:54 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 09:19:55 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 09:19:55 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 09:19:55 UTC] DEBUG: Memory usage after processing: 2 MB

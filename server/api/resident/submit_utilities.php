@@ -20,10 +20,10 @@ if (!$data) {
 $stmt = $pdo->prepare("
     INSERT INTO utility_doc (
         applicant_name, applicant_address, contact_no, date_of_request,
-        date_of_work, service_provider, nature_of_work, authorization_name, waiver_acknowledgement
+        date_of_work, service_provider, nature_of_work, authorization_name, waiver_acknowledgement, application_status
     ) VALUES (
         :fullname, :address, :contactNo, :requestDate,
-        :dateOfWork, :provider, :natureOfWork, :authorizationName, :waiverAcknowledgement
+        :dateOfWork, :provider, :natureOfWork, :authorizationName, :waiverAcknowledgement, :application_status
     )
 ");
 
@@ -38,7 +38,8 @@ try {
         ':provider' => $data['provider'] ?? null,
         ':natureOfWork' => $data['natureOfWork'] ?? null,
         ':authorizationName' => $data['authorizationName'] ?? null,
-        ':waiverAcknowledgement' => !empty($data['agreed']) && $data['agreed'] ? 'Agreed' : 'Not Agreed'
+        ':waiverAcknowledgement' => !empty($data['agreed']) && $data['agreed'] ? 'Agreed' : 'Not Agreed',
+        ':application_status' => 'Complied'
     ]);
 
     echo json_encode(['success' => true, 'message' => 'Utilities application submitted successfully.']);
