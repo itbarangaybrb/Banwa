@@ -1,4 +1,5 @@
 <?php
+error_log("check_user.php: Script started.");
 session_start();
 header("Content-Type: application/json");
 require_once __DIR__ . '/../../configs/database.php';
@@ -10,10 +11,17 @@ if (!$input || !isset($input['email'])) {
     exit;
 }
 
-$email = $input['email'];
+// Trim whitespace and convert to lowercase for consistent matching
+$email = trim(strtolower($input['email']));
+
+if (empty($email)) {
+    echo json_encode(["success" => false, "message" => "Email cannot be empty"]);
+    exit;
+}
 
 try {
-    $stmt = $pdo->prepare("SELECT user_id, full_name, supabase_user_id FROM users WHERE email = :email");
+    // Use LOWER() in the query for case-insensitive comparison
+    $stmt = $pdo->prepare("SELECT user_id, full_name, supabase_user_id FROM users WHERE LOWER(email) = :email");
     $stmt->execute([":email" => $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -25,7 +33,8 @@ try {
 
         echo json_encode(["success" => true, "message" => "User exists", "user" => $user]);
     } else {
-        echo json_encode(["success" => false, "message" => "User not found"]);
+        // For debugging, you can temporarily return the email that was checked
+        echo json_encode(["success" => false, "message" => "User not found", "checked_email" => $email]);
     }
 
 } catch (PDOException $e) {
