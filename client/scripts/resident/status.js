@@ -26,8 +26,8 @@ async function loadApplications() {
                 const remarks = app.approval_comments && app.approval_comments.trim() !== ''
                     ? `<p>Remarks: ${app.approval_comments}</p>`
                     : '';
-                const fullname = `${app.first_name} ${app.first_name} ${app.last_name}` || "No Name";
-                div.innerHTML = `
+                const middle_initial_part = app.middle_name ? ` ${app.middle_name}` : '';
+                const fullname = `${app.first_name}${middle_initial_part} ${app.last_name}` || "No Name";                div.innerHTML = `
             <h3>${fullname}</h3>
             <p>Status: ${app.status || 'Pending'}</p>
             <p>Submitted: ${app.request_date || 'N/A'}</p>
