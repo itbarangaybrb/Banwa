@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 type_of_work = ?, details_of_work = ?, start_date = ?, 
                 end_date = ?, num_of_workers = ?, num_of_working_days = ?, 
                 fee_paid = ?, payment_type = ?, payment_status = ?, 
-                approved_by = ?, noted_by = ?, remarks = ? 
+                approved_by = ?, noted_by = ?, remarks = ?, application_status = ?
                 WHERE construction_id = ?";
         
         $stmt = $pdo->prepare($sql);
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $type_of_work, $details_of_work, $start_date, 
             $end_date, $num_of_workers, $num_of_working_days, 
             $fee_paid, $payment_type, $payment_status, 
-            $approved_by, $noted_by, $remarks, $construction_id
+            $approved_by, $noted_by, $remarks, 'Complied', $construction_id
         ]);
         
         // Redirect to show success message

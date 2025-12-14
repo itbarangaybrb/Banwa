@@ -59,6 +59,164 @@
 
 .status-bar-container .application-card {}
 
-/* ================== Desktop breakpoint ================== */
-/* ================== Tablet breakpoint ================== */
-/* ================== Mobile breakpoint ================== */
+/* ==================== Modal Styles ==================== */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    padding-top: 60px; /* Location of the box */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 5% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 700px; /* Max width for larger screens */
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+/* Add Animation */
+@keyframes animatetop {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
+}
+
+.modal-close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal-form-content h2 {
+    margin-top: 0;
+    color: var(--color-blue-1);
+}
+
+#modal-form-content .form-group {
+    margin-bottom: 15px;
+}
+
+#modal-form-content .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: var(--fw-medium);
+}
+
+#modal-form-content .form-group input[type="text"],
+#modal-form-content .form-group textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#modal-form-content .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+#modal-form-content .form-group input[type="file"] {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    width: calc(100% - 16px);
+    box-sizing: border-box;
+}
+
+#modal-form-content .form-group small {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+    display: block;
+}
+
+#modal-form-content .form-actions {
+    text-align: right;
+    margin-top: 20px;
+}
+
+#modal-form-content .form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: var(--fw-semibold);
+    transition: background-color 0.3s ease;
+}
+
+#modal-form-content .form-actions .cancel-btn {
+    background-color: #f44336;
+    color: white;
+    margin-right: 10px;
+}
+
+#modal-form-content .form-actions .cancel-btn:hover {
+    background-color: #da190b;
+}
+
+#modal-form-content .form-actions .submit-btn {
+    background-color: var(--color-blue-1);
+    color: white;
+}
+
+#modal-form-content .form-actions .submit-btn:hover {
+    background-color: var(--color-blue-2);
+}
+
+#modal-form-content .remarks {
+    background-color: #f0f8ff; /* Light blue background for remarks */
+    border-left: 5px solid var(--color-blue-1);
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+#modal-form-content .remarks label {
+    font-weight: var(--fw-bold);
+    color: var(--color-blue-2);
+}
+
+#modal-form-content .remarks p {
+    margin-top: 5px;
+    font-style: italic;
+    color: #333;
+}
+
+/* New styles for the edit application button */
+.edit-action-btn {
+    background-color: var(--color-blue-1);
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease;
+    margin-top: 10px; /* Adjust as needed for spacing */
+}
+
+.edit-action-btn:hover {
+    background-color: var(--color-blue-2);
+}

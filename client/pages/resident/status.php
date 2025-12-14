@@ -47,6 +47,15 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <div class="bg-logo">
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
+
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <span class="modal-close-btn">&times;</span>
+                <div id="modal-form-content">
+                    <!-- Form content will be loaded here by JavaScript -->
+                </div>
+            </div>
+        </div>
     </main>
 
     <script type="module" src="../../scripts/resident/status.js"></script>
