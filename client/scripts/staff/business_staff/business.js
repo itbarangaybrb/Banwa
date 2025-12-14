@@ -88,8 +88,6 @@ function loadProcessTable() {
         const tbody = document.getElementById('processTableBody');
         tbody.innerHTML = '';
 
-        // FIX: Define which statuses should be excluded from the "Process" table.
-        // We only want to process things that require staff attention.
         const excludedStatuses = ['Cancelled', 'Archived']; // Add more if needed
 
         const actionable = applications.filter(app => {
@@ -119,7 +117,7 @@ function loadProcessTable() {
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
                         <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                        ${ (app.status === 'Approved' || app.status === 'Paid')
+                        ${ (app.status === 'Approved') // CONDITION MODIFIED: Only checks for 'Approved'
                             ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
                             : ''
                         }

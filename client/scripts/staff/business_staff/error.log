@@ -237,3 +237,252 @@
 [14-Dec-2025 09:19:55 UTC] DEBUG: Memory usage before fetch: 2 MB
 [14-Dec-2025 09:19:55 UTC] DEBUG: Rows fetched from DB: 4
 [14-Dec-2025 09:19:55 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:19:07 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:19:07 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:19:07 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:20:13 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:20:13 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:20:13 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:20:13 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:20:13 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:20:13 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:20:16 UTC] PHP Warning:  Undefined array key "nature_of_application" in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 250
+[14-Dec-2025 12:20:16 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 512
+[14-Dec-2025 12:20:16 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 512
+[14-Dec-2025 12:20:16 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 513
+[14-Dec-2025 12:20:16 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 513
+[14-Dec-2025 12:20:16 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 514
+[14-Dec-2025 12:20:16 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 514
+[14-Dec-2025 12:22:13 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:22:13 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:22:13 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:30:08 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:30:08 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:30:08 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:47:10 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 624
+[14-Dec-2025 12:47:10 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 625
+[14-Dec-2025 12:47:50 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:47:50 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:47:50 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:48:07 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:48:07 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:48:07 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:48:07 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:48:07 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:48:07 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:48:10 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:48:10 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:48:10 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:49:17 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:49:17 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:49:17 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:49:19 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:49:19 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:49:19 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:49:30 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:49:30 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:49:30 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:49:37 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:49:37 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:49:37 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:49:37 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:49:37 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:49:37 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:50:29 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:50:29 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:50:29 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:50:29 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:50:29 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:50:29 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:51:10 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:51:10 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:51:10 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:51:24 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:51:24 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:51:24 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:51:32 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:51:32 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:51:32 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:52:11 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:52:11 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:52:11 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:52:11 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:52:11 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:52:11 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:54:22 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:54:22 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:54:22 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:54:40 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:54:40 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:54:40 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:54:40 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 12:54:40 UTC] DEBUG: Rows fetched from DB: 4
+[14-Dec-2025 12:54:40 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 12:55:08 UTC] PHP Warning:  Undefined array key "nature_of_application" in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 250
+[14-Dec-2025 12:55:08 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 512
+[14-Dec-2025 12:55:08 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 512
+[14-Dec-2025 12:55:08 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 513
+[14-Dec-2025 12:55:08 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 513
+[14-Dec-2025 12:55:08 UTC] PHP Warning:  Undefined variable $applicationType in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 514
+[14-Dec-2025 12:55:08 UTC] PHP Deprecated:  strtoupper(): Passing null to parameter #1 ($string) of type string is deprecated in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 514
+[14-Dec-2025 13:07:27 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 624
+[14-Dec-2025 13:07:27 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 625
+[14-Dec-2025 13:10:07 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 624
+[14-Dec-2025 13:10:07 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 625
+[14-Dec-2025 13:32:35 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 623
+[14-Dec-2025 13:32:35 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 624
+[14-Dec-2025 13:46:53 UTC] PHP Warning:  Undefined variable $latitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 623
+[14-Dec-2025 13:46:53 UTC] PHP Warning:  Undefined variable $longitude in C:\Users\rvmat\Banwa\client\scripts\staff\business_staff\business_handler.php on line 624
+[14-Dec-2025 13:59:21 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 13:59:21 UTC] DEBUG: Rows fetched from DB: 5
+[14-Dec-2025 13:59:21 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 13:59:21 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 13:59:21 UTC] DEBUG: Rows fetched from DB: 5
+[14-Dec-2025 13:59:21 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 13:59:27 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 13:59:27 UTC] DEBUG: Rows fetched from DB: 5
+[14-Dec-2025 13:59:27 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:00:54 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:00:54 UTC] DEBUG: Rows fetched from DB: 5
+[14-Dec-2025 14:00:54 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:00:54 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:00:54 UTC] DEBUG: Rows fetched from DB: 5
+[14-Dec-2025 14:00:54 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:02:56 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:02:56 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:02:56 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:03:08 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:03:08 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:03:08 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:03:38 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:03:38 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:03:38 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:03:38 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:03:38 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:03:38 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:25 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:25 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:25 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:25 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:26 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:26 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:29 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:29 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:29 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:35 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:35 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:35 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:39 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:39 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:39 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:40 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:40 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:40 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:41 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:41 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:41 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:05:42 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:05:42 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:05:42 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:10:45 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:10:45 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:10:45 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:11:48 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:11:48 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:11:48 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:12:31 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:12:31 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:12:31 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:12:31 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:12:31 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:12:31 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:15:41 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:15:41 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:15:41 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:16:48 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:16:48 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:16:48 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:16:48 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:16:48 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:16:48 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:16:53 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:16:53 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:25:23 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:25:23 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:25:23 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:26:00 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:26:00 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:26:00 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:26:00 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:26:00 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:26:00 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:27:06 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:27:06 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:27:06 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:27:07 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:27:07 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:27:07 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:43 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:43 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:43 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:45 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:45 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:45 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:45 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:45 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:45 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:46 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:46 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:46 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:47 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:47 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:47 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:49 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:49 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:49 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:33:49 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:33:49 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:33:50 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:34:26 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:34:26 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:34:26 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:34:26 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:34:26 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:34:26 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:15 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:15 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:15 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:17 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:17 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:17 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:21 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:21 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:23 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:23 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:23 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:23 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:23 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:23 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:24 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:24 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:24 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:36:43 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:36:43 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:36:43 UTC] DEBUG: Memory usage after processing: 2 MB
+[14-Dec-2025 14:37:07 UTC] DEBUG: Memory usage before fetch: 2 MB
+[14-Dec-2025 14:37:07 UTC] DEBUG: Rows fetched from DB: 6
+[14-Dec-2025 14:37:07 UTC] DEBUG: Memory usage after processing: 2 MB

@@ -66,13 +66,16 @@ try {
             handleUpdateApplication($pdo);
             break;
         default:
+            ob_clean(); // Ensure no prior output before echoing error
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
 } catch (Exception $e) {
+    ob_clean(); // Ensure no prior output before echoing error
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
 exit;
+ob_end_flush(); // End output buffering here!
 
 
 // HELPER FUNCTIONS
@@ -202,22 +205,26 @@ function handleUpdateApplication($pdo) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
+        ob_clean(); // Ensure no prior output before echoing JSON
         echo json_encode(["status" => "success", "message" => "Application Updated Successfully!"]);
 
     } catch (PDOException $e) {
+        ob_clean(); // Ensure no prior output before echoing error
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
     } catch (Exception $e) {
+        ob_clean(); // Ensure no prior output before echoing error
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
     }
 }
 
-
 function handleGenerateClearance($pdo) {
     $id = $_GET['id'] ?? null;
 
     if (!$id) {
+        // This case should still output JSON and clear buffer
+        ob_clean();
         echo json_encode(['status' => 'error', 'message' => 'Missing application ID']);
         return;
     }
@@ -230,6 +237,7 @@ function handleGenerateClearance($pdo) {
     $app = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$app) {
+        ob_clean(); // Clear buffer before JSON output
         echo json_encode(['status' => 'error', 'message' => 'Application not found']);
         return;
     }
@@ -545,6 +553,7 @@ function handleGenerateClearance($pdo) {
 
     // Must set header to text/html so the browser renders it, not JSON
     header('Content-Type: text/html; charset=UTF-8');
+    ob_clean(); // Ensure no prior output before echoing HTML
     echo $html;
 }
 
@@ -591,16 +600,16 @@ function handleCreateApplication($pdo) {
 
         $sql = "INSERT INTO business_applications (
         supabase_user_id, business_name, type_of_business, nature_of_business, nature_of_business_specify,
-        address_of_business, latitude, longitude, business_status, telephone_no_business, email_address,
+        address_of_business, business_status, telephone_no_business, email_address,
         first_name, middle_name, last_name, telephone_no_owner, address_owner,
         type_of_structure, type_of_structure_specify, no_of_employees,
         requirements, requirement_upload, application_date, status
         ) VALUES (
             :supabase_user_id, :business_name, :type_of_business, :nature_of_business, :nature_of_business_specify,
-            :address_of_business, :latitude, :longitude, :business_status::json, :telephone_no_business, :email_address,
+            :address_of_business, :business_status::json, :telephone_no_business, :email_address,
             :first_name, :middle_name, :last_name, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
-            :requirements::json, :requirement_upload, :application_date, 'Complied'
+            :requirements::json, :requirement_upload, :application_date, 'Pending'
         ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
@@ -611,8 +620,6 @@ function handleCreateApplication($pdo) {
             ':nature_of_business' => $natureOfBusiness,
             ':nature_of_business_specify' => $natureOfBusinessSpecify,
             ':address_of_business' => $addressOfBusiness,
-            ':latitude' => $latitude,
-            ':longitude' => $longitude,
             ':business_status' => $businessStatus,
             ':telephone_no_business' => $contactNoBusiness,
             ':email_address' => $emailAddress,
@@ -630,11 +637,14 @@ function handleCreateApplication($pdo) {
         ]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        ob_clean(); // Ensure no prior output before echoing JSON
         echo json_encode(["status" => "success", "id" => $result['id'], "message" => "Application Created!"]);
     } catch (PDOException $e) {
+        ob_clean(); // Ensure no prior output before echoing error
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
     } catch (Exception $e) {
+        ob_clean(); // Ensure no prior output before echoing error
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
     }
@@ -661,6 +671,7 @@ function handleFetchApplications($pdo) {
         error_log("DEBUG: Rows fetched from DB: " . count($applications));
 
         if (empty($applications)) {
+            ob_clean(); // Clear buffer before JSON output
             error_log("DEBUG: No applications found in the database.");
             echo json_encode(["status" => "success", "data" => []]);
             return;
@@ -702,13 +713,16 @@ function handleFetchApplications($pdo) {
             throw new Exception($error_message);
         }
 
+        ob_clean(); // Clear buffer before final JSON output
         echo $jsonOutput;
 
     } catch (PDOException $e) {
+        ob_clean(); // Clear buffer before error output
         http_response_code(500);
         error_log("PDO ERROR: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
     } catch (Exception $e) {
+        ob_clean(); // Clear buffer before error output
         http_response_code(500);
         error_log("SERVER ERROR: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
@@ -716,8 +730,7 @@ function handleFetchApplications($pdo) {
 }
 
 
-function handleUpdateStatus($pdo)
-{
+function handleUpdateStatus($pdo){
     // [COMMENT] Logic for updating status (from previous conversation)
     $id = $_POST['id'] ?? null;
     $newStatus = $_POST['newStatus'] ?? null;
@@ -725,6 +738,7 @@ function handleUpdateStatus($pdo)
     $amount = $_POST['assessmentAmount'] ?? 0;
 
     if (!$id || !$newStatus) {
+        ob_clean(); // Clear buffer before JSON output
         echo json_encode(["status" => "error", "message" => "Missing ID or Status"]);
         return;
     }
@@ -749,8 +763,10 @@ function handleUpdateStatus($pdo)
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
+        ob_clean(); // Clear buffer before JSON output
         echo json_encode(["status" => "success", "message" => "Status updated to " . $newStatus]);
     } catch (PDOException $e) {
+        ob_clean(); // Clear buffer before error output
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }

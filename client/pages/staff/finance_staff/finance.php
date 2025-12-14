@@ -218,14 +218,25 @@
     </div>
 
     <div id="detailsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Application Summary</h2>
-                <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Application Summary</h2>
+                    <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+                </div>
+                <div id="summaryBody"></div>
             </div>
-            <div id="summaryBody"></div>
         </div>
-    </div>
+        
+        <div id="verificationModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Verify Resident Payment</h2>
+                    <button class="close-btn" onclick="closeModal('verificationModal')">&times;</button>
+                </div>
+                <div id="verificationBody">
+                    </div>
+            </div>
+        </div>
 
     <script src="../../../scripts/staff/finance_staff/finance.js"></script>
 </body>

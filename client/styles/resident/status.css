@@ -59,6 +59,34 @@
 
 .status-bar-container .application-card {}
 
+.status-bar-container .payment-card {
+    background-color: #f9f9f9; /* Lighter background for payments */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px; /* Spacing between payment cards */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.status-bar-container .payment-card h3 {
+    font-size: 1.2em;
+    color: var(--color-blue-2);
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.status-bar-container .payment-card p {
+    font-size: 0.95em;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.status-bar-container .payment-card p:last-child {
+    margin-bottom: 0;
+}
+
+
 /* ==================== Modal Styles ==================== */
 .modal {
     display: none; /* Hidden by default */
@@ -107,6 +135,7 @@
     cursor: pointer;
 }
 
+/* Edit Modal specific styles */
 #modal-form-content h2 {
     margin-top: 0;
     color: var(--color-blue-1);
@@ -218,5 +247,125 @@
 }
 
 .edit-action-btn:hover {
+    background-color: var(--color-blue-2);
+}
+
+/* New styles for payment action button */
+.payment-action-btn {
+    background-color: #28a745; /* Green color for payment */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    margin-left: 5px; /* Spacing between buttons */
+}
+
+.payment-action-btn:hover {
+    background-color: #218838;
+}
+
+/* Payment Modal specific styles */
+#paymentModal .modal-content {
+    max-width: 600px; /* Adjust as needed for payment form */
+}
+
+.payment-modal-close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.payment-modal-close-btn:hover,
+.payment-modal-close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#payment-modal-form-content h2 {
+    margin-top: 0;
+    color: var(--color-blue-1);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#payment-modal-form-content .form-group {
+    margin-bottom: 15px;
+}
+
+#payment-modal-form-content .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: var(--fw-medium);
+}
+
+#payment-modal-form-content .form-group input[type="text"],
+#payment-modal-form-content .form-group input[type="number"],
+#payment-modal-form-content .form-group input[type="date"],
+#payment-modal-form-content .form-group select {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#payment-modal-form-content .form-group input[type="file"] {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    width: calc(100% - 16px);
+    box-sizing: border-box;
+}
+
+#payment-modal-form-content .form-group small {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+    display: block;
+}
+
+#payment-modal-form-content .form-group .required {
+    color: #f44336;
+    margin-left: 3px;
+}
+
+#payment-modal-form-content .form-actions {
+    text-align: right;
+    margin-top: 20px;
+}
+
+#payment-modal-form-content .form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: var(--fw-semibold);
+    transition: background-color 0.3s ease;
+}
+
+#payment-modal-form-content .form-actions .cancel-btn {
+    background-color: #f44336;
+    color: white;
+    margin-right: 10px;
+}
+
+#payment-modal-form-content .form-actions .cancel-btn:hover {
+    background-color: #da190b;
+}
+
+#payment-modal-form-content .form-actions .submit-btn {
+    background-color: var(--color-blue-1);
+    color: white;
+}
+
+#payment-modal-form-content .form-actions .submit-btn:hover {
     background-color: var(--color-blue-2);
 }

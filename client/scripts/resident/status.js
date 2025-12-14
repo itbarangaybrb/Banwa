@@ -3,28 +3,48 @@
 // MODAL HANDLING
 // =================================================================
 const editModal = document.getElementById('editModal');
-const closeModalBtn = document.querySelector('.modal-close-btn');
-const modalFormContent = document.getElementById('modal-form-content');
+const paymentModal = document.getElementById('paymentModal'); // New payment modal
+const closeModalBtn = document.querySelector('.modal-close-btn'); // For edit modal
+const closePaymentModalBtn = document.querySelector('.payment-modal-close-btn'); // For payment modal
+const modalFormContent = document.getElementById('modal-form-content'); // For edit modal
+const paymentModalFormContent = document.getElementById('payment-modal-form-content'); // For payment modal
 
-function openModal() {
+function openEditModal() {
     if (editModal) editModal.style.display = 'block';
 }
 
-function closeModal() {
+function closeEditModal() {
     if (editModal) {
         editModal.style.display = 'none';
         if(modalFormContent) modalFormContent.innerHTML = ''; // Clear content
     }
 }
 
+function openPaymentModal() {
+    if (paymentModal) paymentModal.style.display = 'block';
+}
+
+function closePaymentModal() {
+    if (paymentModal) {
+        paymentModal.style.display = 'none';
+        if(paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
+    }
+}
+
 // Close modal event listeners
 if(closeModalBtn) {
-    closeModalBtn.onclick = closeModal;
+    closeModalBtn.onclick = closeEditModal; // Changed to closeEditModal
+}
+
+if(closePaymentModalBtn) {
+    closePaymentModalBtn.onclick = closePaymentModal;
 }
 
 window.onclick = function(event) {
     if (event.target == editModal) {
-        closeModal();
+        closeEditModal();
+    } else if (event.target == paymentModal) { // Handle closing payment modal
+        closePaymentModal();
     }
 };
 
@@ -41,7 +61,7 @@ async function openEditModalFor(appId, appType) {
     if (!modalFormContent) return;
 
     modalFormContent.innerHTML = '<p>Loading application data...</p>';
-    openModal();
+    openEditModal(); // Use specific open function
 
     try {
         // We only have the business endpoint for now, so we hardcode it.
@@ -69,7 +89,7 @@ async function openEditModalFor(appId, appType) {
         }
         const cancelBtn = document.getElementById('modal-cancel-btn');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeEditModal); // Changed to closeEditModal
         }
 
     } catch (error) {
@@ -78,6 +98,217 @@ async function openEditModalFor(appId, appType) {
     }
 }
 
+// =================================================================
+// PAYMENT FORM HANDLING (NEW)
+// =================================================================
+
+/**
+ * Fetches application data and opens the payment modal with the payment form.
+ * @param {string} appId The ID of the application for which to submit payment.
+ * @param {string} appType The type of application (e.g., 'Business').
+ * @param {string} appPurpose The purpose of the payment, typically the appType.
+ */
+async function openPaymentModalFor(appId, appType, appPurpose) {
+    if (!paymentModalFormContent) return;
+
+    paymentModalFormContent.innerHTML = '<p>Loading payment form...</p>';
+    openPaymentModal(); // Use specific open function
+
+    try {
+        // Fetch application details to get amount due, etc.
+        // For now, we hardcode business application fetching
+        let appDetailsResponse;
+        if (appType === 'Business') {
+            appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+        } else {
+            // Placeholder for other app types if they get payment functionality
+            throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
+        }
+        
+        const appDetailsResult = await appDetailsResponse.json();
+
+        if (!appDetailsResult.success) {
+            throw new Error(appDetailsResult.error || 'Failed to fetch application details for payment.');
+        }
+
+        const appData = appDetailsResult.data;
+        
+        // Use a function to generate the payment form HTML
+        paymentModalFormContent.innerHTML = generatePaymentFormHtml(appData, appPurpose);
+
+        // Attach event listeners for dynamic instructions and form submission
+        const paymentMethodSelect = document.getElementById('paymentMethod');
+        const orNumberGroup = document.getElementById('orNumberGroup');
+        const paymentInstructions = document.getElementById('paymentInstructions');
+        const paymentForm = document.getElementById('payment-submission-form');
+
+        if (paymentMethodSelect) {
+            paymentMethodSelect.addEventListener('change', () => {
+                updatePaymentInstructions(paymentMethodSelect.value, orNumberGroup, paymentInstructions);
+            });
+            // Trigger initial display
+            updatePaymentInstructions(paymentMethodSelect.value, orNumberGroup, paymentInstructions);
+        }
+
+        if (paymentForm) {
+            paymentForm.addEventListener('submit', (event) => handleSubmitPayment(event, appId));
+        }
+
+        const cancelBtn = document.getElementById('payment-modal-cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closePaymentModal);
+        }
+
+    } catch (error) {
+        console.error('Error opening payment modal:', error);
+        paymentModalFormContent.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+
+/**
+ * Dynamically updates payment instructions and OR number visibility based on payment method.
+ * Also controls the visibility of the main payment details section.
+ * @param {string} method The selected payment method.
+ * @param {HTMLElement} orNumberGroup The OR number input group element.
+ * @param {HTMLElement} instructionsElement The element to display instructions.
+ */
+function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
+    if (!orNumberGroup || !instructionsElement) return;
+
+    const paymentDetailsSection = document.getElementById('paymentDetailsSection');
+    if (!paymentDetailsSection) return;
+
+    // Initially hide OR number field and clear instructions
+    orNumberGroup.style.display = 'none';
+    orNumberGroup.querySelector('input').removeAttribute('required');
+    instructionsElement.innerHTML = ''; // Clear previous instructions
+
+    // Show/hide the entire payment details section based on whether a method is selected
+    if (method) {
+        paymentDetailsSection.style.display = 'block';
+    } else {
+        paymentDetailsSection.style.display = 'none';
+        return; // No method selected, so no specific instructions or OR logic
+    }
+
+    switch (method) {
+        case 'GCash/QR':
+            instructionsElement.innerHTML = `
+                <p><strong>GCash Payment:</strong></p>
+                <ul>
+                    <li>Send amount to Official Number: <strong>09XX-XXX-XXXX</strong>.</li>
+                    <li>Use <strong>Business Name</strong> as the "Message".</li>
+                    <li>Save the Screenshot/Reference No. for validation.</li>
+                </ul>
+            `;
+            break;
+        case 'Cash (Over-the-Counter)':
+            orNumberGroup.style.display = 'block';
+            orNumberGroup.querySelector('input').setAttribute('required', 'required');
+            instructionsElement.innerHTML = `
+                <p><strong>Cash Payment:</strong></p>
+                <ul>
+                    <li>Proceed to <strong>Window 3 (Treasury Office)</strong>.</li>
+                    <li>Present your Assessment Form.</li>
+                    <li>Wait for your Official Receipt (OR).</li>
+                </ul>
+            `;
+            break;
+        case 'LandBank':
+            orNumberGroup.style.display = 'block';
+            orNumberGroup.querySelector('input').setAttribute('required', 'required');
+            instructionsElement.innerHTML = `
+                <p><strong>Landbank Online:</strong></p>
+                <ul>
+                    <li>Account Name: <strong>Municipality Treasury</strong></li>
+                    <li>Account No: <strong>1234-5678-90</strong></li>
+                    <li>Upload proof of transfer via portal or present printed copy.</li>
+                </ul>
+            `;
+            break;
+        default:
+            instructionsElement.innerHTML = '<p>Please select a payment method.</p>';
+    }
+}
+
+
+/**
+ * Generates the HTML for the payment submission form.
+ * @param {object} appData The application data for which payment is being submitted.
+ * @param {string} appPurpose The purpose of the payment (e.g., 'Business', 'Construction', 'Utilities').
+ * @returns {string} The HTML string for the form.
+ */
+function generatePaymentFormHtml(appData, appPurpose) {
+    const amountDue = appData.amount_due ? parseFloat(appData.amount_due).toFixed(2) : '0.00';
+    const purposeOptions = {
+        'Business': 'Business Permit Fee',
+        'Construction': 'Construction Permit Fee',
+        'Utilities': 'Utility Service Fee',
+        // Add more as needed
+    };
+    const paymentPurposeText = purposeOptions[appPurpose] || 'General Payment';
+
+    return `
+        <form id="payment-submission-form" enctype="multipart/form-data">
+            <h2>Payment Submission</h2>
+            <p>Application ID: <strong>${appData.id}</strong></p>
+            <p>Amount Due: ₱<strong>${amountDue}</strong></p>
+            
+            <input type="hidden" name="application_id" value="${appData.id}">
+            <input type="hidden" name="payment_purpose_app_type" value="${appPurpose}">
+
+            <div class="form-group">
+                <label for="paymentPurpose">Payment Purpose</label>
+                <select id="paymentPurpose" name="paymentPurpose" disabled>
+                    <option value="${appPurpose}">${paymentPurposeText}</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="paymentMethod">Payment Method <span class="required">*</span></label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                    <option value="">Select Method</option>
+                    <option value="GCash/QR">GCash/QR</option>
+                    <option value="Cash (Over-the-Counter)">Cash (Over-the-Counter)</option>
+                    <option value="LandBank">LandBank</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="paymentInstructions">
+                <!-- Dynamic payment instructions will be loaded here -->
+            </div>
+
+            <div id="paymentDetailsSection" style="display: none;">
+                <div class="form-group">
+                    <label for="amountPaid">Amount Paid <span class="required">*</span></label>
+                    <input type="number" id="amountPaid" name="amountPaid" step="0.01" min="0" value="${amountDue}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="dateOfPayment">Date of Payment <span class="required">*</span></label>
+                    <input type="date" id="dateOfPayment" name="dateOfPayment" required>
+                </div>
+
+                <div class="form-group" id="orNumberGroup" style="display: none;">
+                    <label for="orNumber">Official Receipt (OR) Number</label>
+                    <input type="text" id="orNumber" name="orNumber">
+                    <small>This is the number printed on your official receipt.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="proofOfPayment">Proof of Payment <span class="required">*</span></label>
+                    <input type="file" id="proofOfPayment" name="proofOfPayment" accept=".jpg,.jpeg,.png,.pdf" required>
+                    <small>Upload a clear photo or scanned copy of the deposit slip, transfer receipt, or official receipt (Max File Size: 5MB).</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="payment-modal-cancel-btn" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Payment</button>
+            </div>
+        </form>
+    `;
+}
 
 /**
  * Generates the HTML for the simplified business application edit form.
@@ -244,7 +475,7 @@ async function handleSubmitChanges(event, appId) {
         }
 
         alert('Application updated successfully!');
-        closeModal();
+        closeEditModal();
         loadApplications(); // Refresh the list
 
     } catch (error) {
@@ -252,6 +483,48 @@ async function handleSubmitChanges(event, appId) {
         alert(`Error: ${error.message}`);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Changes';
+    }
+}
+
+
+/**
+ * Handles the submission of the payment form.
+ * @param {Event} event The form submission event.
+ * @param {string} appId The ID of the application for which payment is being submitted.
+ */
+async function handleSubmitPayment(event, appId) {
+    event.preventDefault();
+    const form = event.target;
+    const submitBtn = form.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+        const formData = new FormData(form);
+        
+        // Append application ID to form data
+        formData.append('application_id', appId);
+
+        const response = await fetch('/Banwa/server/api/resident/submit_payment.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to submit payment details.');
+        }
+
+        alert('Payment details submitted successfully! Your payment is now Pending Verification.');
+        closePaymentModal();
+        loadApplications(); // Refresh the application list
+
+    } catch (error) {
+        console.error('Error submitting payment:', error);
+        alert(`Error: ${error.message}`);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Payment';
     }
 }
 
@@ -289,9 +562,13 @@ async function loadApplications() {
                 const middle_initial_part = app.middle_name ? ` ${app.middle_name}` : '';
                 const fullname = `${app.first_name}${middle_initial_part} ${app.last_name}` || "No Name";
                 const applicationType = app.type || "N/A";
-                const editButton = app.status && app.status.toLowerCase() === 'additional requirements'
-                    ? `<button class="edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`
-                    : '';
+                const actionButtons = [];
+                if (app.status && app.status.toLowerCase() === 'additional requirements') {
+                    actionButtons.push(`<button class="edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`);
+                }
+                if (app.status && app.status.toLowerCase() === 'for payment') {
+                    actionButtons.push(`<button class="payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`);
+                }
 
                 div.innerHTML = `
                     <h3>${fullname}</h3>
@@ -299,20 +576,28 @@ async function loadApplications() {
                     <p>Submitted: ${app.request_date || 'N/A'}</p>
                     <p>Type: ${applicationType}</p>
                     ${remarks}
-                    <div class="card-actions">${editButton}</div>
+                    <div class="card-actions">${actionButtons.join('')}</div>
                 `;
                 
                 container.appendChild(div);
 
-                if (editButton) {
-                    const button = div.querySelector('.edit-action-btn');
-                    if (button) {
-                        button.addEventListener('click', (e) => {
-                            const appId = e.target.getAttribute('data-app-id');
-                            const appType = e.target.getAttribute('data-app-type');
-                            openEditModalFor(appId, appType);
-                        });
-                    }
+                const editButtonElement = div.querySelector('.edit-action-btn');
+                if (editButtonElement) {
+                    editButtonElement.addEventListener('click', (e) => {
+                        const appId = e.target.getAttribute('data-app-id');
+                        const appType = e.target.getAttribute('data-app-type');
+                        openEditModalFor(appId, appType);
+                    });
+                }
+
+                const paymentButtonElement = div.querySelector('.payment-action-btn');
+                if (paymentButtonElement) {
+                    paymentButtonElement.addEventListener('click', (e) => {
+                        const appId = e.target.getAttribute('data-app-id');
+                        const appType = e.target.getAttribute('data-app-type'); // e.g., 'Business'
+                        const appPurpose = e.target.getAttribute('data-app-purpose'); // e.g., 'Business'
+                        openPaymentModalFor(appId, appType, appPurpose);
+                    });
                 }
             });
 
@@ -322,4 +607,64 @@ async function loadApplications() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', loadApplications);
+document.addEventListener('DOMContentLoaded', () => {
+    loadApplications();
+    loadPayments(); // Call the new loadPayments function
+});
+
+// =================================================================
+// LOAD PAYMENTS HISTORY
+// =================================================================
+async function loadPayments() {
+    try {
+        const res = await fetch('/Banwa/server/api/resident/get_payment.php');
+        const data = await res.json();
+
+        const container = document.getElementById('paymentHistoryList'); // Assuming this container exists in HTML
+        if (!container) {
+            console.warn('Payment history container #paymentHistoryList not found.');
+            return;
+        }
+        container.innerHTML = ''; // Clear previous content
+
+        if (data.error) {
+            container.innerText = data.error;
+            return;
+        }
+
+        if (!data.success || !Array.isArray(data.payments) || data.payments.length === 0) {
+            container.innerText = 'No payment history found.';
+            return;
+        }
+
+        data.payments
+            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)) // newest first
+            .forEach(payment => {
+                const div = document.createElement('div');
+                div.className = 'payment-card'; // Use a new class for styling payments
+
+                const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                div.innerHTML = `
+                    <h3>Payment for ${payment.type || 'N/A'}</h3>
+                    <p>Amount: ₱${parseFloat(payment.amount).toFixed(2)}</p>
+                    <p>Date: ${paymentDate}</p>
+                    <p>Status: ${payment.status || 'Pending'}</p>
+                    <p>Reference No.: ${payment.reference_number || 'N/A'}</p>
+                    <p>Transaction ID: ${payment.id}</p>
+                `;
+                
+                container.appendChild(div);
+            });
+
+    } catch (err) {
+        console.error('Error loading payment history:', err);
+        const container = document.getElementById('paymentHistoryList');
+        if (container) {
+            container.innerText = 'Failed to load payment history.';
+        }
+    }
+}
+
