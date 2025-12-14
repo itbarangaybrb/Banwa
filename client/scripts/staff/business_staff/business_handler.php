@@ -55,15 +55,12 @@ try {
         case 'fetch':
             handleFetchApplications($pdo);
             break;
-        case 'update_status':
+        case 'update_status': // NEW UNIFIED ACTION
             handleUpdateStatus($pdo);
             break;
         // FIX 1: Changed case to lowercase to match JavaScript 'action=generateclearance'
         case 'generateclearance': 
             handleGenerateClearance($pdo);
-            break;
-        case 'update': // New case for updating applications
-            handleUpdateApplication($pdo);
             break;
         default:
             ob_clean(); // Ensure no prior output before echoing error
@@ -74,12 +71,16 @@ try {
     http_response_code(500);
     echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
+// End the script here to ensure no extra whitespace is added
 exit;
 ob_end_flush(); // End output buffering here!
 
 
 // HELPER FUNCTIONS
-function get_input($key) {
+
+
+function get_input($key)
+{
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
@@ -562,6 +563,7 @@ function handleCreateApplication($pdo) {
     // Note: ensure this code block remains from your original file
     try {
         $supabaseUserId = get_input('supabase_user_id');
+        // Collect Data
         $businessName = get_input('businessName');
         $typeOfBusiness = get_input('typeOfBusiness');
         $natureOfBusiness = get_input('natureOfBusiness');
@@ -571,6 +573,7 @@ function handleCreateApplication($pdo) {
         $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
         $contactNoBusiness = get_input('contactNoBusiness');
         $emailAddress = get_input('emailAddress');
+
         $firstName = get_input('firstName');
         $middleName = get_input('middleName');
         $lastName = get_input('lastName');
@@ -578,16 +581,21 @@ function handleCreateApplication($pdo) {
         $lotNo = get_input('lotNo');
         $street = get_input('street');
         $addressOwner = trim($lotNo . ' ' . $street);
+
         $typeOfStructure = get_input('typeOfStructureSelect');
         $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
         $noOfEmployees = get_input('noOfEmployees');
         $applicationDate = get_input('applicationDate');
 
+        // Handle JSON Fields
         $rawStatus = $_POST['businessStatus'] ?? [];
-        if (!is_array($rawStatus)) { $rawStatus = [$rawStatus]; }
+        if (!is_array($rawStatus)) {
+            $rawStatus = [$rawStatus]; // Convert string "Owned" to array ["Owned"]
+        }
         $businessStatus = json_encode($rawStatus);
         $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
 
+        // Handle File Upload
         $requirementUpload = null;
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = '../../../../server/configs/uploads/business_requirements/'; // Correct path for uploads
@@ -598,6 +606,7 @@ function handleCreateApplication($pdo) {
             }
         }
 
+        // SQL Query (Explicit JSON Casting for Postgres)
         $sql = "INSERT INTO business_applications (
         supabase_user_id, business_name, type_of_business, nature_of_business, nature_of_business_specify,
         address_of_business, business_status, telephone_no_business, email_address,
@@ -651,20 +660,10 @@ function handleCreateApplication($pdo) {
 }
 
 
-function handleFetchApplications($pdo) {
-    // Check current memory usage before the fetch
-    error_log("DEBUG: Memory usage before fetch: " . memory_get_usage(true) / (1024 * 1024) . " MB");
-    
+function handleFetchApplications($pdo)
+{
     try {
-        // Use an ID-based ordering for reliability
-        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY id DESC");
-        
-        if (!$stmt) {
-             // This should be caught by PDOException, but good to have an explicit check
-             throw new Exception("SQL Query execution failed. Check DB permissions or query syntax.");
-        }
-
-        // Fetch all rows
+        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at DESC");
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Check if any data was retrieved
@@ -729,7 +728,6 @@ function handleFetchApplications($pdo) {
     }
 }
 
-
 function handleUpdateStatus($pdo){
     // [COMMENT] Logic for updating status (from previous conversation)
     $id = $_POST['id'] ?? null;
@@ -771,4 +769,4 @@ function handleUpdateStatus($pdo){
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 }
-?>
+

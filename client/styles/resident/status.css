@@ -15,6 +15,95 @@
     --fw-bold: 700;
 }
 
+/* TODO:
+      Front-end dev, later will move this in global.css,
+      not today because of global may affected some files that use global.css 
+      that is why it is isolated for now for safety.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --h4: 36px;
+    --h4-lh: 44px;
+
+    --h5: 30px;
+    --h5-lh: 38px;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+
+    --txt3: 16;
+    --txt3-lh: 24px;
+
+    --regular: 400;
+    --bold: 700;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+.sections {
+    width: 100%;
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+}
+
+/* .containers {
+  padding: 32px 16px;
+} */
+
+@media screen and (min-width: 780px) {
+    .sections {
+        width: 100%;
+        max-width: 1440px;
+        width: 100%;
+        padding: 96px 64px;
+        margin-inline: auto;
+    }
+
+    /* .containers {
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+  } */
+}
+
+.containers {
+    max-width: 927px;
+    margin-inline: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    /* border: 1px solid gray; */
+    /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); */
+}
+
+.sections .header-and-parag {
+    max-width: 927px;
+    margin-inline: auto;
+    margin-bottom: 40px;
+}
+
+.sections .header-and-parag h4 {
+    margin-bottom: 8px;
+    font-size: var(--h4);
+    line-height: var(--h4-lh);
+    font-weight: var(--bold);
+}
+
 /* ==================== Status section ==================== */
 .status {
     /* padding: 32px 64px;
@@ -22,11 +111,11 @@
     border-radius: 16px; */
 }
 
-.status .content .header-and-text {
+.status .content .header-and-parag {
     margin-bottom: 32px;
 }
 
-.status .content .header-and-text h4 {
+.status .content .header-and-parag h4 {
     font-size: var(--h4);
     font-weight: var(--fw-bold);
     line-height: var(--h4-lh);
@@ -34,7 +123,7 @@
     margin-bottom: 12px;
 }
 
-.status .content .header-and-text p {
+.status .content .header-and-parag p {
     font-size: var(--tx1);
     font-weight: var(--fw-regular);
     line-height: var(--tx1-lh);
@@ -42,9 +131,9 @@
 
 .status .status-bar-container {
     width: 100%;
-    border: 1px solid grey;
+    /* border: 1px solid grey; */
     border-radius: 12px;
-    padding: 32px;
+    /* padding: 32px; */
     display: flex;
     flex-direction: column;
     row-gap: 16px;
@@ -89,36 +178,54 @@
 
 /* ==================== Modal Styles ==================== */
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1000;
+    /* Sit on top */
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    padding-top: 60px; /* Location of the box */
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+    padding-top: 60px;
+    /* Location of the box */
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 5% auto; /* 5% from the top and centered */
+    margin: 5% auto;
+    /* 5% from the top and centered */
     padding: 20px;
     border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-    max-width: 700px; /* Max width for larger screens */
+    width: 80%;
+    /* Could be more or less, depending on screen size */
+    max-width: 700px;
+    /* Max width for larger screens */
     border-radius: 8px;
     position: relative;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     animation-name: animatetop;
     animation-duration: 0.4s
 }
 
 /* Add Animation */
 @keyframes animatetop {
-    from {top: -300px; opacity: 0}
-    to {top: 0; opacity: 1}
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
 }
 
 .modal-close-btn {
@@ -215,7 +322,8 @@
 }
 
 #modal-form-content .remarks {
-    background-color: #f0f8ff; /* Light blue background for remarks */
+    background-color: #f0f8ff;
+    /* Light blue background for remarks */
     border-left: 5px solid var(--color-blue-1);
     padding: 10px;
     margin-bottom: 20px;
@@ -243,7 +351,8 @@
     font-size: 14px;
     font-weight: var(--fw-medium);
     transition: background-color 0.3s ease;
-    margin-top: 10px; /* Adjust as needed for spacing */
+    margin-top: 10px;
+    /* Adjust as needed for spacing */
 }
 
 .edit-action-btn:hover {
