@@ -202,3 +202,21 @@
     font-style: italic;
     color: #333;
 }
+
+/* New styles for the edit application button */
+.edit-action-btn {
+    background-color: var(--color-blue-1);
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: var(--fw-medium);
+    transition: background-color 0.3s ease;
+    margin-top: 10px; /* Adjust as needed for spacing */
+}
+
+.edit-action-btn:hover {
+    background-color: var(--color-blue-2);
+}
