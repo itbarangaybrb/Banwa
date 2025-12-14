@@ -58,10 +58,6 @@ try {
         case 'update_status': // NEW UNIFIED ACTION
             handleUpdateStatus($pdo);
             break;
-        // FIX 1: Changed case to lowercase to match JavaScript 'action=generateclearance'
-        case 'generateclearance': 
-            handleGenerateClearance($pdo);
-            break;
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -80,140 +76,6 @@ function get_input($key)
 {
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
-
-function handleUpdateApplication($pdo) {
-    try {
-        $applicationId = get_input('application_id');
-        if (!$applicationId) {
-            throw new Exception("Application ID is required for update.");
-        }
-
-        $supabaseUserId = get_input('supabase_user_id'); // From originalData in status.js
-        $businessName = get_input('businessName');
-        $typeOfBusiness = get_input('typeOfBusiness');
-        $natureOfBusiness = get_input('natureOfBusiness');
-        $natureOfBusinessSpecify = get_input('natureOfBusinessSpecify');
-        $businessLotNo = get_input('businessLotNo');
-        $businessStreet = get_input('businessStreet');
-        $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
-        $contactNoBusiness = get_input('contactNoBusiness');
-        $emailAddress = get_input('emailAddress');
-        $firstName = get_input('firstName');
-        $middleName = get_input('middleName');
-        $lastName = get_input('lastName');
-        $contactNoOwner = get_input('contactNoOwner');
-        $lotNo = get_input('lotNo');
-        $street = get_input('street');
-        $addressOwner = trim($lotNo . ' ' . $street);
-        $typeOfStructure = get_input('typeOfStructureSelect');
-        $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
-        $noOfEmployees = get_input('noOfEmployees');
-        $applicationDate = get_input('applicationDate');
-
-        // Status and requirements might be passed as JSON strings from JS
-        $rawBusinessStatus = $_POST['businessStatus'] ?? [];
-        // If it's a string, try to decode it, otherwise ensure it's an array for json_encode
-        if (is_string($rawBusinessStatus)) {
-            $decoded = json_decode($rawBusinessStatus, true);
-            $businessStatus = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$rawBusinessStatus];
-        } else if (is_array($rawBusinessStatus)) {
-            $businessStatus = $rawBusinessStatus;
-        } else {
-            $businessStatus = [];
-        }
-        $businessStatus = json_encode($businessStatus);
-
-        $rawRequirements = $_POST['requirements'] ?? [];
-        if (is_string($rawRequirements)) {
-            $decoded = json_decode($rawRequirements, true);
-            $requirements = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [$rawRequirements];
-        } else if (is_array($rawRequirements)) {
-            $requirements = $rawRequirements;
-        } else {
-            $requirements = [];
-        }
-        $requirements = json_encode($requirements);
-
-
-        $requirementUpload = null;
-        // Check if a new file was uploaded
-        if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = '../../../../server/configs/uploads/business_requirements/'; // Correct path for uploads
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-            $fileName = time() . '_' . basename($_FILES['requirementUpload']['name']);
-            if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
-                $requirementUpload = $fileName;
-            } else {
-                throw new Exception("Failed to move uploaded file.");
-            }
-        }
-
-
-        $sql = "UPDATE business_applications SET
-            supabase_user_id = :supabase_user_id,
-            business_name = :business_name,
-            type_of_business = :type_of_business,
-            nature_of_business = :nature_of_business,
-            nature_of_business_specify = :nature_of_business_specify,
-            address_of_business = :address_of_business,
-            business_status = :business_status::json,
-            telephone_no_business = :telephone_no_business,
-            email_address = :email_address,
-            first_name = :first_name,
-            middle_name = :middle_name,
-            last_name = :last_name,
-            telephone_no_owner = :telephone_no_owner,
-            address_owner = :address_owner,
-            type_of_structure = :type_of_structure,
-            type_of_structure_specify = :type_of_structure_specify,
-            no_of_employees = :no_of_employees,
-            requirements = :requirements::json,
-            application_date = :application_date,
-            status = 'Complied'
-            " . ($requirementUpload ? ", requirement_upload = :requirement_upload" : "") . "
-            WHERE id = :id";
-
-        $params = [
-            ':id' => $applicationId,
-            ':supabase_user_id' => $supabaseUserId,
-            ':business_name' => $businessName,
-            ':type_of_business' => $typeOfBusiness,
-            ':nature_of_business' => $natureOfBusiness,
-            ':nature_of_business_specify' => $natureOfBusinessSpecify,
-            ':address_of_business' => $addressOfBusiness,
-            ':business_status' => $businessStatus,
-            ':telephone_no_business' => $contactNoBusiness,
-            ':email_address' => $emailAddress,
-            ':first_name' => $firstName,
-            ':middle_name' => $middleName,
-            ':last_name' => $lastName,
-            ':telephone_no_owner' => $contactNoOwner,
-            ':address_owner' => $addressOwner,
-            ':type_of_structure' => $typeOfStructure,
-            ':type_of_structure_specify' => $typeOfStructureSpecify,
-            ':no_of_employees' => $noOfEmployees ?: 0,
-            ':requirements' => $requirements,
-            ':application_date' => $applicationDate
-        ];
-
-        if ($requirementUpload) {
-            $params[':requirement_upload'] = $requirementUpload;
-        }
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-
-        echo json_encode(["status" => "success", "message" => "Application Updated Successfully!"]);
-
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
-    }
-}
-
 
 function handleCreateApplication($pdo)
 {
@@ -242,6 +104,8 @@ function handleCreateApplication($pdo)
         $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
         $noOfEmployees = get_input('noOfEmployees');
         $applicationDate = get_input('applicationDate');
+        $latitude = get_input('latitude2');
+        $longitude = get_input('longitude2');
 
         // Handle JSON Fields
         $rawStatus = $_POST['businessStatus'] ?? [];
@@ -254,7 +118,7 @@ function handleCreateApplication($pdo)
         // Handle File Upload
         $requirementUpload = null;
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = '../../../../server/configs/uploads/business_requirements/'; // Correct path for uploads
+            $uploadDir = 'uploads/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             $fileName = time() . '_' . basename($_FILES['requirementUpload']['name']);
             if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
@@ -274,7 +138,7 @@ function handleCreateApplication($pdo)
             :address_of_business, :latitude, :longitude, :business_status::json, :telephone_no_business, :email_address,
             :first_name, :middle_name, :last_name, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
-            :requirements::json, :requirement_upload, :application_date, 'Complied'
+            :requirements::json, :requirement_upload, :application_date, 'Pending'
         ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
@@ -313,7 +177,6 @@ function handleCreateApplication($pdo)
         echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
     }
 }
-
 
 function handleFetchApplications($pdo)
 {
