@@ -649,9 +649,7 @@ async function initializeMapPicker(target, containerId) {
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxNativeZoom: 19,
-        maxZoom: 22
+        attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     let marker = null;
