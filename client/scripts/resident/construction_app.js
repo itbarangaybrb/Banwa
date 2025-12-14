@@ -159,12 +159,14 @@ function openMapPicker() {
     modal.className = 'map-modal';
     modal.innerHTML = `
         <div class="map-modal-content">
-            <div class="map-modal-header">
-                <h3>Select Construction Location</h3>
-                <button class="close-map" onclick="closeMapPicker()">Close</button>
-            </div>
-            <div class="coordinate-display">
-                Click on the map to select location: <span id="current-coords">Not selected</span>
+            <div class="map-header">
+                <div class="map-modal-header">
+                    <h3>Select Construction Location</h3>
+                    <button class="close-map" onclick="closeMapPicker()">Close</button>
+                </div>
+                <div class="coordinate-display">
+                    Click on the map to select location: <span id="current-coords">Not selected</span>
+                </div>
             </div>
             <div id="map-container"></div>
         </div>
@@ -179,12 +181,12 @@ function closeMapPicker() {
     if (modal) modal.remove();
 }
 
-function initializeMapPicker() {
+async function initializeMapPicker() {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'Â© OpenStreetMap contributors' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
     let marker = null;
 
@@ -217,6 +219,7 @@ function initializeMapPicker() {
         // Show preview
         document.getElementById('map-preview').style.display = 'block';
         document.getElementById('selected-location').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
     });
 
     const blueRidgeGeoJSON = {
@@ -241,6 +244,93 @@ function initializeMapPicker() {
         }]
     };
     L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_houses');
+
+        const response = await fetch('../../pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (data.success && data.houses) {
+            // Create a layer group for houses
+            const houseLayer = L.layerGroup();
+
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        const coords = JSON.parse(house.coordinates);
+                        // Convert [lng, lat] to [lat, lng] for Leaflet
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+
+                        // Close the polygon
+                        latLngCoords.push(latLngCoords[0]);
+
+                        const polygon = L.polygon(latLngCoords, {
+                            color: '#3388ff',
+                            weight: 1,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.1,
+                            interactive: true
+                        }).addTo(houseLayer);
+
+                        // ADD THIS
+                        polygon.on('click', function (e) {
+                            const lat = e.latlng.lat;
+                            const lng = e.latlng.lng;
+
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+
+                            document.getElementById('current-coords').textContent =
+                                `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+                            const latInput = document.getElementById('latitude');
+                            const lngInput = document.getElementById('longitude');
+
+                            latInput.value = lat.toFixed(6);
+                            lngInput.value = lng.toFixed(6);
+
+                            latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            latInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            lngInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            lngInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                            document.getElementById('map-preview').style.display = 'block';
+                            document.getElementById('selected-location').textContent =
+                                `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        });
+
+                        // Add popup
+                        polygon.bindPopup(`
+                            <div class="house-popup">
+                                <h4>🏠 ${house.address}</h4>
+                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
+                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
+                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
+                            </div>
+                        `);
+
+                        polygon.houseId = house.house_id;
+
+                    } catch (e) {
+                        console.error('Error parsing house coordinates:', e);
+                    }
+                }
+            });
+
+            houseLayer.addTo(map);
+            console.log(`Loaded ${data.houses.length} house polygons`);
+        }
+    } catch (error) {
+        console.error('ERROR LOADING HOUSE POLYGONS:', error);
+    }
 }
 
 function validateCoordinates() {
@@ -302,8 +392,6 @@ function validateCoordinates() {
 
     return valid;
 }
-
-
 
 function setupCoordinateValidation() {
     const form = document.getElementById('construction-form');
