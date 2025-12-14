@@ -33,7 +33,7 @@
 
 <head>
     <title>Home</title>
-    <link rel="stylesheet" href="../../styles/resident/body.css">
+    <link rel="stylesheet" href="../../styles/resident/home.css">
 </head>
 <body>
 <?php 
@@ -43,7 +43,9 @@ include '_layout/nav.php';
 
     <body>
 
-    <?php  $page_title = "Home"; include '_layout/nav2.php'; ?>
+    <?php  
+    // $page_title = "Home"; include '_layout/nav.php'; 
+    ?>
 
         <section data-theme="banner" class="hero-section">
             <div class="hero-cont">
@@ -182,7 +184,7 @@ include '_layout/nav.php';
             </div>
         </section>
 
-        <?php include '_layout/end2.php'; ?>
+        <?php include '_layout/end.php'; ?>
 
         <script src="../../scripts/resident/home.js" defer></script>
     </body>

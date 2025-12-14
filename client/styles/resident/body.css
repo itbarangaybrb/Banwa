@@ -203,6 +203,7 @@ header {
     visibility: visible;
     bottom: -35px;
 }
+
 /* Main Content Area */
 .content {
     margin-left: 70px;
@@ -303,11 +304,10 @@ header {
     display: block;
 }
 
-.content-section:target ~ .content-section.active {
+.content-section:target~.content-section.active {
     display: none;
 }
 
-:target ~ .content-section.active {
+:target~.content-section.active {
     display: none;
 }
-
