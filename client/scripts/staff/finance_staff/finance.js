@@ -26,25 +26,44 @@ function loadPendingTable() {
             if (data.status === 'success') {
                 pendingApps = data.data;
                 if (pendingApps.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No applications for payment.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No applications for payment or verification.</td></tr>';
                     return;
                 }
                 pendingApps.forEach(app => {
                     const name = `${app.first_name} ${app.last_name}`;
+                    
+                    let actionButton;
+                    let paymentStatusDisplay = app.payment_status || 'N/A';
+
+                    if (app.payment_status === 'Pending Verification') {
+                        // NEW: Button for verifying online payment submission
+                        actionButton = `<button class="btn-success verify-action-btn" onclick="openVerificationModal(${app.id})">Verify Payment</button>`;
+                    } else {
+                        // Existing: Button for over-the-counter payment processing
+                        actionButton = `<button class="btn-primary process-action-btn" onclick="openPaymentModal(${app.id}, ${app.amount_due})">Process Payment</button>`;
+                    }
+
                     const row = `<tr>
                         <td>${app.id}</td>
                         <td>${name}</td>
-                        <td>${app.type_of_business}</td>
+                        <td>${app.business_name || 'N/A'}</td>
                         <td>₱${parseFloat(app.amount_due || 0).toFixed(2)}</td>
-                        <td><span class="status-badge status-pending">For Payment</span></td>
+                        <td>${app.status} / ${paymentStatusDisplay}</td>
                         <td>
-                            <button class="btn-info" onclick="viewSummary(${app.id}, 'pending')">👁️ View</button>
-                            <button class="btn-success" onclick="openPaymentModal(${app.id})">💰 Process</button>
+                            ${actionButton}
+                            <button class="btn-info" onclick="viewSummary(${app.id}, 'pending')">View Details</button>
                         </td>
                     </tr>`;
+                    
                     tbody.innerHTML += row;
                 });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error loading data: ${data.message}</td></tr>`;
             }
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            document.getElementById('pendingTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Network Error.</td></tr>';
         });
 }
 
@@ -78,6 +97,84 @@ function loadHistoryTable() {
                 });
             }
         });
+}
+
+// =================================================================
+// PAYMENT VERIFICATION LOGIC (NEW)
+// =================================================================
+
+/**
+ * Opens the modal to display payment details and proof for verification.
+ * @param {number} appId The ID of the application to verify.
+ */
+function openVerificationModal(appId) {
+    const app = pendingApps.find(a => a.id == appId);
+    if (!app) return;
+
+    const modalBody = document.getElementById('verificationBody');
+    const proofPath = app.requirement_upload ? `../../../server/${app.requirement_upload}` : '#';
+    const proofLink = app.requirement_upload 
+        ? `<a href="${proofPath}" target="_blank" class="btn-info">View Proof of Payment</a>`
+        : `<p style="color: red;">No proof of payment uploaded.</p>`;
+
+    modalBody.innerHTML = `
+        <h3>Payment Details for Application ID: ${app.id}</h3>
+        <div class="summary-card">
+            <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
+            <p><strong>Business:</strong> ${app.business_name || 'N/A'}</p>
+            <p><strong>Amount Due:</strong> ₱${parseFloat(app.amount_due || 0).toFixed(2)}</p>
+            <p><strong>Amount Paid:</strong> ₱${parseFloat(app.amount_paid || 0).toFixed(2)}</p>
+            <p><strong>Payment Method:</strong> ${app.payment_method || 'N/A'}</p>
+            <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
+            <p><strong>Date of Payment:</strong> ${app.payment_date || 'N/A'}</p>
+        </div>
+        <hr>
+        <h3>Action:</h3>
+        ${proofLink}
+        <div class="form-actions" style="margin-top: 20px;">
+            <button class="btn-success" onclick="verifyPayment(${app.id}, 'Approved')">Approve Payment</button>
+            <button class="btn-warning" onclick="verifyPayment(${app.id}, 'Rejected')">Reject Payment</button>
+        </div>
+    `;
+    openModal('verificationModal');
+}
+
+/**
+ * Submits the verification decision to the backend.
+ * @param {number} id The application ID.
+ * @param {string} action 'Approved' or 'Rejected'.
+ */
+async function verifyPayment(id, action) {
+    if (!confirm(`Confirm to set payment status to '${action}' for ID ${id}?`)) return;
+
+    const actionText = action === 'Approved' ? 'Approving...' : 'Rejecting...';
+    const buttons = document.querySelectorAll('.form-actions button');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.classList.contains('btn-success')) btn.textContent = actionText;
+    });
+
+    try {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `action=verify_payment&id=${id}&verification_action=${action}`
+        });
+        const result = await res.json();
+
+        if (result.status === 'success') {
+            showAlert(`Payment ${action} successfully! Status updated.`, 'success');
+            closeModal('verificationModal');
+            loadPendingTable(); // Reload data
+        } else {
+            throw new Error(result.message || 'Failed to complete verification.');
+        }
+
+    } catch (e) {
+        showAlert(`Verification Error: ${e.message}`, 'error');
+        buttons.forEach(btn => btn.disabled = false);
+        document.querySelector('.btn-success').textContent = 'Approve Payment';
+    }
 }
 
 // === PAYMENT MODAL LOGIC ===
@@ -256,6 +353,26 @@ function viewSummary(id, source) {
         </div>
     `;
     openModal('detailsModal');
+}
+function showAlert(message, type) {
+    const container = document.getElementById('alert-container');
+    if (!container) return;
+
+    const alertBox = document.createElement('div');
+    alertBox.className = `alert alert-${type}`; // Assumes you have CSS classes like .alert-success, .alert-error
+    alertBox.innerHTML = `
+        <strong>${type.toUpperCase()}!</strong> ${message}
+        <button class="close-alert" onclick="this.parentElement.remove()">&times;</button>
+    `;
+    
+    // Clear old alerts and append the new one
+    container.innerHTML = '';
+    container.appendChild(alertBox);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alertBox.remove();
+    }, 5000);
 }
 
 // Helpers

@@ -43,6 +43,20 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
             </div>
         </section>
 
+        <section class="sections">
+            <div class="containers status">
+                <div class="content">
+                    <div class="header-and-text">
+                        <h4>Payment History</h4>
+                        <p>Past and Pending Payments</p>
+                    </div>
+                    <div class="status-bar-container" id="paymentHistoryList">
+                        <!-- Payment history will be loaded here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <div class="bg-logo">
             <img src="../../img/banwa-logo-1.png" alt="">
         </div>
@@ -52,6 +66,15 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                 <span class="modal-close-btn">&times;</span>
                 <div id="modal-form-content">
                     <!-- Form content will be loaded here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="paymentModal">
+            <div class="modal-content">
+                <span class="modal-close-btn payment-modal-close-btn">&times;</span>
+                <div id="payment-modal-form-content">
+                    <!-- Payment form content will be loaded here by JavaScript -->
                 </div>
             </div>
         </div>

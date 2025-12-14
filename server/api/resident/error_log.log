@@ -1,0 +1,8 @@
+[14-Dec-2025 10:55:34 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function finfo_open() in C:\Users\rvmat\Banwa\server\api\resident\submit_payment.php:58
+Stack trace:
+#0 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\resident\submit_payment.php on line 58
+[14-Dec-2025 10:58:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function finfo_open() in C:\Users\rvmat\Banwa\server\api\resident\submit_payment.php:58
+Stack trace:
+#0 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\resident\submit_payment.php on line 58

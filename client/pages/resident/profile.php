@@ -141,6 +141,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
             <div class="profile-header">
                 <h1>My Profile</h1>
                 <p>Manage your account information and preferences</p>
+                <button id="logoutBtn" class="btn-logout">Logout</button>
             </div>
 
             <div class="profile-content">
