@@ -1,5 +1,5 @@
 <?php
-include __DIR__ . '../../../../../server/configs/database.php';
+include __DIR__ . '/../../../../server/configs/database.php';
 
 
 // Initialize error message variable

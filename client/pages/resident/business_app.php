@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 ?>
 
+<?php
+$is_edit = isset($_GET['is_edit']) && $_GET['is_edit'] === 'true';
+$body_class = $is_edit ? 'in-modal' : '';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +21,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 </head>
 
 
-<body>
+<body class="<?php echo $body_class; ?>">
     <?php
     $page_title = "Business Application";
     include '_layout/nav.php';

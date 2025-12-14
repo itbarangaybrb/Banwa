@@ -54,4 +54,11 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 
 </html>
 
+<div id="editModal" class="modal-container" style="display:none;">
+    <div class="modal-content">
+        <button class="modal-close-btn">&times;</button>
+        <div id="modal-form-content"></div>
+    </div>
+</div>
+
 <?php include '_layout/end.php'; ?>

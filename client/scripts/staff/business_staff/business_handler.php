@@ -58,6 +58,9 @@ try {
         case 'update_status':
             handleUpdateStatus($pdo);
             break;
+        case 'update':
+            handleUpdateApplication($pdo);
+            break;
         // FIX 1: Changed case to lowercase to match JavaScript 'action=generateclearance'
         case 'generateclearance': 
             handleGenerateClearance($pdo);
@@ -409,6 +412,116 @@ function handleGenerateClearance($pdo) {
     // Must set header to text/html so the browser renders it, not JSON
     header('Content-Type: text/html; charset=UTF-8');
     echo $html;
+}
+
+function handleUpdateApplication($pdo) {
+    try {
+        // All the same inputs as create, plus the application ID
+        $applicationId = get_input('application_id');
+        if (!$applicationId) {
+            throw new Exception("Application ID is required for update.");
+        }
+
+        $supabaseUserId = get_input('supabase_user_id');
+        $businessName = get_input('businessName');
+        $typeOfBusiness = get_input('typeOfBusiness');
+        $natureOfBusiness = get_input('natureOfBusiness');
+        $natureOfBusinessSpecify = get_input('natureOfBusinessSpecify');
+        $businessLotNo = get_input('businessLotNo');
+        $businessStreet = get_input('businessStreet');
+        $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
+        $contactNoBusiness = get_input('contactNoBusiness');
+        $emailAddress = get_input('emailAddress');
+        $firstName = get_input('firstName');
+        $middleName = get_input('middleName');
+        $lastName = get_input('lastName');
+        $contactNoOwner = get_input('contactNoOwner');
+        $lotNo = get_input('lotNo');
+        $street = get_input('street');
+        $addressOwner = trim($lotNo . ' ' . $street);
+        $typeOfStructure = get_input('typeOfStructureSelect');
+        $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
+        $noOfEmployees = get_input('noOfEmployees');
+        $applicationDate = get_input('applicationDate');
+
+        $rawStatus = $_POST['businessStatus'] ?? [];
+        if (!is_array($rawStatus)) { $rawStatus = [$rawStatus]; }
+        $businessStatus = json_encode($rawStatus);
+        $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
+
+        // Initialize params for SQL query
+        $params = [
+            ':id' => $applicationId,
+            ':supabase_user_id' => $supabaseUserId,
+            ':business_name' => $businessName,
+            ':type_of_business' => $typeOfBusiness,
+            ':nature_of_business' => $natureOfBusiness,
+            ':nature_of_business_specify' => $natureOfBusinessSpecify,
+            ':address_of_business' => $addressOfBusiness,
+            ':business_status' => $businessStatus,
+            ':telephone_no_business' => $contactNoBusiness,
+            ':email_address' => $emailAddress,
+            ':first_name' => $firstName,
+            ':middle_name' => $middleName,
+            ':last_name' => $lastName,
+            ':telephone_no_owner' => $contactNoOwner,
+            ':address_owner' => $addressOwner,
+            ':type_of_structure' => $typeOfStructure,
+            ':type_of_structure_specify' => $typeOfStructureSpecify,
+            ':no_of_employees' => $noOfEmployees ?: 0,
+            ':requirements' => $requirements,
+            ':application_date' => $applicationDate,
+        ];
+        
+        $sql = "UPDATE business_applications SET
+            business_name = :business_name,
+            type_of_business = :type_of_business,
+            nature_of_business = :nature_of_business,
+            nature_of_business_specify = :nature_of_business_specify,
+            address_of_business = :address_of_business,
+            business_status = :business_status::json,
+            telephone_no_business = :telephone_no_business,
+            email_address = :email_address,
+            first_name = :first_name,
+            middle_name = :middle_name,
+            last_name = :last_name,
+            telephone_no_owner = :telephone_no_owner,
+            address_owner = :address_owner,
+            type_of_structure = :type_of_structure,
+            type_of_structure_specify = :type_of_structure_specify,
+            no_of_employees = :no_of_employees,
+            requirements = :requirements::json,
+            application_date = :application_date,
+            status = 'Pending', 
+            approval_comments = ''
+        ";
+
+        // Handle file upload only if a new file is provided
+        if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'uploads/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            $fileName = time() . '_' . basename($_FILES['requirementUpload']['name']);
+            if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
+                $requirementUpload = $fileName;
+                $sql .= ", requirement_upload = :requirement_upload";
+                $params[':requirement_upload'] = $requirementUpload;
+            }
+        }
+
+        $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Updated!"]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
+    }
 }
 
 function handleCreateApplication($pdo) {

@@ -17,9 +17,9 @@
 
 /* ==================== Status section ==================== */
 .status {
-    /* padding: 32px 64px;
+    padding: 32px 64px;
     border: 1px solid grey;
-    border-radius: 16px; */
+    border-radius: 16px; 
 }
 
 .status .content .header-and-text {
@@ -57,7 +57,113 @@
     color: grey;
 }
 
-.status-bar-container .application-card {}
+
+/* ==================== Modal Form Styles ==================== */
+
+.modal-container {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 5% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    height: 90%;
+    position: relative;
+    border-radius: 12px;
+}
+
+.modal-close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 28px;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#modal-form-content {
+    width: 100%;
+    height: 100%;
+    border: none;
+    overflow-y: auto;
+}
+
+#modal-form-content .form-group {
+    margin-bottom: 1rem;
+}
+
+#modal-form-content label {
+    display: block;
+    margin-bottom: .5rem;
+    font-weight: 600;
+}
+
+#modal-form-content input[type="text"],
+#modal-form-content input[type="email"],
+#modal-form-content textarea,
+#modal-form-content select {
+    width: 100%;
+    padding: .5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#modal-form-content textarea {
+    min-height: 80px;
+}
+
+#modal-form-content .remarks {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#modal-form-content .form-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+#modal-form-content .form-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#modal-form-content .form-actions .submit-btn {
+    background-color: var(--color-blue-2);
+    color: white;
+}
+
+#modal-form-content .form-actions .cancel-btn {
+    background-color: #dbdbdb;
+    color: black;
+}
 
 /* ================== Desktop breakpoint ================== */
 /* ================== Tablet breakpoint ================== */

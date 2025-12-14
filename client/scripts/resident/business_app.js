@@ -1,9 +1,13 @@
-// Configuration
-// Adjust this path to point to your existing staff handler. 
-// Assuming structure: /Banwa/client/pages/resident/business_app.php -> /Banwa/scripts/business_staff/business_handler.php
 import supabase from '../../../server/api/supabase.js';
 
-const API_URL = '../../../client/scripts/business_staff/business_handler.php';
+// ==========================
+// CONFIGURATION
+// ==========================
+const API_URL = '../../../client/scripts/staff/business_staff/business_handler.php';
+const urlParams = new URLSearchParams(window.location.search);
+const isEditMode = urlParams.get('is_edit') === 'true';
+const applicationId = urlParams.get('id');
+
 
 // ==========================
 // Function: Hide/Show Panels
@@ -12,15 +16,87 @@ function switchPanel(panelId) {
     const panels = ['owner', 'business', 'waiver', 'summary']
         .map(id => document.getElementById(id));
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
-
     window.scrollTo(0, 0);
-
 }
+
+// ===============================================
+// Function: Populate form for editing
+// ===============================================
+async function loadApplicationForEdit(id) {
+    try {
+        const response = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${id}`);
+        const result = await response.json();
+
+        if (!result.success) {
+            alert('Error: ' + result.error);
+            return;
+        }
+
+        const data = result.data;
+
+        // Populate Owner Info
+        document.getElementById('firstName').value = data.first_name || '';
+        document.getElementById('middleName').value = data.middle_name || '';
+        document.getElementById('lastName').value = data.last_name || '';
+        document.getElementById('suffix').value = data.suffix || '';
+        document.getElementById('contactNoOwner').value = data.telephone_no_owner || '';
+        
+        // Address needs to be split
+        const ownerAddressParts = (data.address_owner || '').split(' ');
+        document.getElementById('lotNo').value = ownerAddressParts.shift() || '';
+        document.getElementById('street').value = ownerAddressParts.join(' ') || '';
+
+        // Populate Business Info
+        document.getElementById('businessName').value = data.business_name || '';
+        
+        if (data.type_of_business) {
+            const typeRadio = document.querySelector(`input[name="typeOfBusiness"][value="${data.type_of_business}"]`);
+            if (typeRadio) typeRadio.checked = true;
+        }
+        
+        document.getElementById('natureOfBusinessSelect').value = data.nature_of_business || '';
+        handleOthersSelect(document.getElementById('natureOfBusinessSelect'), document.getElementById('natureOfBusinessSpecify')); // show specify if "Others"
+        document.getElementById('natureOfBusinessSpecify').value = data.nature_of_business_specify || '';
+
+        if (data.business_status && data.business_status.length > 0) {
+             const statusRadio = document.querySelector(`input[name="businessStatus"][value="${data.business_status[0]}"]`);
+             if(statusRadio) statusRadio.checked = true;
+        }
+
+        document.getElementById('contactNoBusiness').value = data.telephone_no_business || '';
+        document.getElementById('emailAddress').value = data.email_address || '';
+        document.getElementById('noOfEmployees').value = data.no_of_employees || '';
+
+        const businessAddressParts = (data.address_of_business || '').split(' ');
+        document.getElementById('businessLotNo').value = businessAddressParts.shift() || '';
+        document.getElementById('businessStreet').value = businessAddressParts.join(' ') || '';
+        
+        document.getElementById('typeOfStructureSelect').value = data.type_of_structure || '';
+        handleOthersSelect(document.getElementById('typeOfStructureSelect'), document.getElementById('typeOfStructureSpecify'));
+        document.getElementById('typeOfStructureSpecify').value = data.type_of_structure_specify || '';
+        
+        document.getElementById('natureOfApplication').value = data.nature_of_application || '';
+        natureOfApplicationSel(document.getElementById('natureOfApplication'));
+
+        if (data.requirements && Array.isArray(data.requirements)) {
+            data.requirements.forEach(reqValue => {
+                const reqCheckbox = document.querySelector(`input[name="requirements"][value="${reqValue}"]`);
+                if (reqCheckbox) reqCheckbox.checked = true;
+            });
+        }
+
+    } catch (error) {
+        console.error('Failed to load application data:', error);
+        alert('Could not load application data for editing. Please try again.');
+    }
+}
+
 
 // ==========================
 // Function: Validation
 // ==========================
 function validation() {
+    // ... (All the element selections are the same)
     // Owner form elements 
     const firstName = document.getElementById('firstName');
     const middleName = document.getElementById('middleName');
@@ -62,10 +138,8 @@ function validation() {
     natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 
     natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
-
-    // ===============================
-    // Function: Validate single input
-    // ===============================
+    
+    // (The validation and real-time functions are unchanged)
     function validateInput(input, message = 'This field is required', rules = {}) {
         if (!input) return true;
         const wrapper = input.closest('.label-and-input');
@@ -100,9 +174,6 @@ function validation() {
         return true;
     }
 
-    // ===========================
-    // Function: Validate checkbox
-    // ===========================
     function validateCheckboxGroup(checkboxes, message) {
         const wrapper = checkboxes[0].closest('.label-and-input');
 
@@ -118,10 +189,7 @@ function validation() {
         errorEl.classList.remove('show');
         return true;
     }
-
-    // ========================
-    // Function: Validate radio
-    // ========================
+    
     function validateRadioGroup(radios, message) {
         const wrapper = radios[0].closest('.label-and-input');
         const errorEl = wrapper.querySelector('.error-msg');
@@ -134,10 +202,7 @@ function validation() {
         errorEl.classList.remove('show');
         return true;
     }
-
-    // ==============================
-    // Function: Real-time validation
-    // ==============================
+    
     (() => {
         const inputs = [
             natureOfApplication, businessName, natureOfBusinessSelect, natureOfBusinessSpecify,
@@ -241,9 +306,8 @@ function validation() {
         agreeCheckBox.addEventListener('change', () => validateInput(agreeCheckBox));
     })();
 
-    // =========================
-    // Owner "Next" button click
-    // =========================
+
+    // (Next and Back button logic is unchanged)
     document.getElementById('nextToBusiness').addEventListener('click', () => {
         const validations = [
             validateInput(firstName, 'First name is required', {
@@ -273,9 +337,6 @@ function validation() {
         }
     });
 
-    // ============================
-    // Business "Next" button click
-    // ============================
     document.getElementById('nextToWaiver').addEventListener('click', () => {
         const validations = [
             validateInput(businessName, 'Business Name is required'),
@@ -295,7 +356,7 @@ function validation() {
                 errorMessage: 'Please enter a valid email address'
             }),
             validateCheckboxGroup(requirements, 'Please select at least one requirement'),
-            validateInput(requirementUpload, 'Please upload a document'),
+            isEditMode ? true : validateInput(requirementUpload, 'Please upload a document'), // In edit mode, upload is optional
             validateInput(noOfEmployees, 'Number of employees is required', {
                 pattern: /^[0-9]{1,2}$/,
                 errorMessage: 'Number of employees must be 1 or 2 digits'
@@ -319,9 +380,6 @@ function validation() {
         }
     });
 
-    // ==========================
-    // Waiver "Next" button click
-    // ==========================
     document.getElementById('nextToSummary').addEventListener('click', () => {
         const isValid = validateInput(agreeCheckBox, 'You must agree to proceed');
 
@@ -344,60 +402,80 @@ function validation() {
             switchPanel('summary');
         }
     });
-
-    // ==========================
-    // Back buttons
-    // ==========================
+    
     (() => {
         document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
         document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
     })();
+    
+    // ===================================
+    // UI MODIFICATION FOR EDIT MODE
+    // ===================================
+    if(isEditMode) {
+        const submitBtn = document.getElementById('submitApplication');
+        if(submitBtn) {
+            submitBtn.textContent = 'Submit Changes';
+        }
+
+        const summaryButtonsContainer = document.querySelector('#summary .buttons-container');
+        if(summaryButtonsContainer) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.id = 'cancelChanges';
+            cancelBtn.textContent = 'Cancel';
+            summaryButtonsContainer.appendChild(cancelBtn);
+
+            cancelBtn.addEventListener('click', () => {
+                if(confirm('Are you sure you want to cancel editing? Any unsaved changes will be lost.')) {
+                     window.parent.postMessage('close-modal', '*');
+                }
+            });
+        }
+    }
 
 
+    // ===================================
     // FINAL FORM SUBMISSION HANDLER
+    // ===================================
     const summaryForm = document.getElementById('summaryForm');
-
-    // Remove existing listeners to prevent duplicates
     const newSummaryForm = summaryForm.cloneNode(true);
     summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
     newSummaryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (confirm('Are you sure you want to submit this application?')) {
+        const confirmationMessage = isEditMode 
+            ? 'Are you sure you want to submit these changes?'
+            : 'Are you sure you want to submit this application?';
+
+        if (confirm(confirmationMessage)) {
             const formData = new FormData();
+            
+            // Add action and ID for edit mode
+            if(isEditMode) {
+                formData.append('action', 'update');
+                formData.append('application_id', applicationId);
+            } else {
+                formData.append('action', 'create');
+            }
 
-            // 1. ADD THE ACTION (Crucial for business_handler.php)
-            formData.append('action', 'create');
-
-            // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
-            formData.append('businessName', document.getElementById('businessName').value);
+            // (The rest of the formData appending is the same)
             const { data: { user } } = await supabase.auth.getUser();
             const supabaseUserId = user?.id;
             formData.append('supabase_user_id', supabaseUserId);
-
-            // Radio Buttons: Type of Business
+            
+            formData.append('businessName', document.getElementById('businessName').value);
             const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
             formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
-
-            // Nature of Business (Split into Select and Specify for the DB)
             formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
             formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
-
-            // Address & Contacts
             formData.append('businessLotNo', document.getElementById('businessLotNo').value);
             formData.append('businessStreet', document.getElementById('businessStreet').value);
             formData.append('contactNoBusiness', document.getElementById('contactNoBusiness').value);
             formData.append('emailAddress', document.getElementById('emailAddress').value);
-
-            // Business Status (Radio Button)
             const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
-            // The PHP handler expects this as an array/json, but implies a single string in your HTML structure. 
-            // We send it as a key that PHP will json_encode.
             if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
-
-            // Owner Details
             formData.append('firstName', document.getElementById('firstName').value);
             formData.append('middleName', document.getElementById('middleName').value);
             formData.append('suffix', document.getElementById('suffix').value);
@@ -405,57 +483,56 @@ function validation() {
             formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
             formData.append('lotNo', document.getElementById('lotNo').value);
             formData.append('street', document.getElementById('street').value);
-
-            // Structure (Split into Select and Specify)
             formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
             formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
             formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
-
-            // Requirements (Checkbox Array)
             const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
             reqCheckboxes.forEach((checkbox) => {
                 formData.append('requirements[]', checkbox.value);
             });
-
-            // File Upload
             const fileInput = document.getElementById('requirementUpload');
             if (fileInput.files.length > 0) {
                 formData.append('requirementUpload', fileInput.files[0]);
             }
-
-            // Application Date
             formData.append('applicationDate', document.getElementById('applicationDate').value);
 
-            // 3. SEND TO BACKEND
-            // Make sure this path points correctly to your business_handler.php
-            fetch('../../scripts/staff/business_staff/business_handler.php', {
+            // SEND TO BACKEND
+            fetch(API_URL, {
                 method: 'POST',
                 body: formData
             })
-                .then(response => response.json()) // Parse JSON response
-                .then(data => {
-                    console.log('Server Response:', data);
-                    if (data.status === 'success') {
-                        alert('Application submitted successfully! Reference ID: ' + data.id);
-                        // location.reload(); // Refresh page
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server Response:', data);
+                if (data.status === 'success') {
+                    const successMessage = isEditMode 
+                        ? 'Application updated successfully!' 
+                        : 'Application submitted successfully! Reference ID: ' + data.id;
+                    alert(successMessage);
+                    
+                    if(isEditMode) {
+                        window.parent.postMessage('close-modal', '*');
                     } else {
-                        alert('Error: ' + data.message);
+                        window.location.href = '/Banwa/client/pages/resident/status.php';
                     }
-                })
-                .catch(error => {
-                    console.error('Fetch Error:', error);
-                    alert('Something went wrong. Check console for details.');
-                });
+
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                alert('Something went wrong. Check console for details.');
+            });
         }
     });
 }
 
 validation();
 
-// ==============================
-// Function: Real-time validation
-// ==============================
+// ==========================
+// UTILITY FUNCTIONS
+// ==========================
 function getCurrentDateString() {
     const now = new Date();
     const year = now.getFullYear();
@@ -464,9 +541,6 @@ function getCurrentDateString() {
     return `${year}-${month}-${day}`;
 }
 
-// ==============================
-// Function: Real-time validation
-// ==============================
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
     if (dateInput) {
@@ -474,14 +548,6 @@ function updateApplicationDate() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    updateApplicationDate();
-    setInterval(updateApplicationDate, 60000);
-});
-
-// ===============================================
-// Function: Handler "Others" Select Show Sepecify
-// ===============================================
 function handleOthersSelect(selectEl, specifyEl) {
     const wrapper = specifyEl.closest('.label-and-input');
     if (selectEl.value === 'Others') {
@@ -492,32 +558,47 @@ function handleOthersSelect(selectEl, specifyEl) {
     }
 }
 
-// ======================================
-// Function: Nature Of Application Select
-// ======================================
 function natureOfApplicationSel(selectEl) {
+    const requirementsSection = document.getElementById('requirementsSection');
     const checkboxes = requirementsSection.querySelectorAll('input[name="requirements"]');
 
     const visibleMap = {
         'New': ['SEC', 'DTI', 'TCT', 'Lease Contract'],
-        'Renew': ['Previous Business Permit', 'Photocopy of Valid ID of Business Owner'],
-        'Closure': ['Notarized affidavit for Business Closure']
+        'Renew': ['Previous Business Permit'],
+        'Closure': [] // No requirements for closure
     };
-
+    
+    // Corrected value from the old code
+    if(selectEl.value === 'Renew'){
+         visibleMap.Renew.push('Photocopy of Valid ID of Business Owner');
+    }
+    
     const selected = selectEl.value;
-
     let anyVisible = false;
 
     checkboxes.forEach(cb => {
+        const label = cb.parentElement;
         if (visibleMap[selected] && visibleMap[selected].includes(cb.value)) {
-            cb.parentElement.style.display = 'block';
+            label.style.display = 'block';
             anyVisible = true;
         } else {
-            cb.parentElement.style.display = 'none';
+            label.style.display = 'none';
             cb.checked = false;
         }
     });
 
-    // Show/hide the whole Requirements section
     requirementsSection.style.display = anyVisible ? 'block' : 'none';
 }
+
+
+// ==========================
+// INITIALIZATION
+// ==========================
+document.addEventListener('DOMContentLoaded', () => {
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+
+    if (isEditMode && applicationId) {
+        loadApplicationForEdit(applicationId);
+    }
+});

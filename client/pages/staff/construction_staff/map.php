@@ -2,7 +2,7 @@
 // Start output buffering to catch any unwanted output
 ob_start();
 
-include __DIR__ . '/../../../../../server/configs/database.php';
+include __DIR__ . '/../../../../server/configs/database.php';
 
 // Function definitions
 function getConstructionMarkers() {

@@ -358,3 +358,11 @@ body {
     max-width: 927px;
   } */
 }
+
+body.in-modal nav {
+    display: none;
+}
+
+body.in-modal .sections {
+    padding: 24px 0 0 0;
+}
