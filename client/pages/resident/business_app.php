@@ -73,7 +73,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
                             <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
                             <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Road">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
                             <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
                             <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
                             <option value="Milky Way Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
@@ -182,7 +182,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
                             <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
                             <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Road">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
                             <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
                             <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
                             <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
