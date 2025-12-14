@@ -74,7 +74,7 @@
     <div class="main-wrapper">
         <header class="top-header">
             <div class="header-left">
-                <h1>Construction Application Management System</h1>
+                <h1>Construction Application Management</h1>
             </div>
             <div class="header-right">
                 <div class="user-greeting">
@@ -188,7 +188,7 @@
                         </div>
 
                         <div class="label-and-input">
-                            <label for="contractor_name" class="required-field">Contractor Name</label>
+                            <label for="contractor_name" class="required-field">Contractor Name *</label>
                             <input type="text" id="contractor_name" name="contractor_name">
                             <div class="error-msg"></div>
                         </div>

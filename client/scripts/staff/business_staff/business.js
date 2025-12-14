@@ -6,7 +6,7 @@
     // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
     const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
     let applications = [];
-
+    
     // Initialize sidebar navigation
     document.addEventListener('DOMContentLoaded', function() {
         initializeSidebarNav();
@@ -87,9 +87,20 @@ function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
         tbody.innerHTML = '';
-        
-        // Filter: Show everything NOT cancelled, so they can be processed
-        const actionable = applications.filter(a => a.status !== 'Cancelled');
+
+        // FIX: Define which statuses should be excluded from the "Process" table.
+        // We only want to process things that require staff attention.
+        const excludedStatuses = ['Cancelled', 'Archived']; // Add more if needed
+
+        const actionable = applications.filter(app => {
+            // Include the application IF its status is NOT in the excludedStatuses list
+            return !excludedStatuses.includes(app.status);
+        });
+
+        if(actionable.length === 0) {
+             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications to process.</td></tr>';
+             return;
+        }
 
         actionable.forEach(app => {
             let btnText = "⚙️ Update";
@@ -97,21 +108,41 @@ function loadProcessTable() {
 
             // Highlight actions based on flow
             if(app.status === 'Pending') { btnText = "Assess / Review"; btnClass = "btn-primary"; }
+            else if(app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "btn-warning"; }
             else if(app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
 
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.business_name}</td>
+                    <td>${app.business_name}</td> 
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
-                        <button class="${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
+                        <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
+                        ${ (app.status === 'Approved' || app.status === 'Paid')
+                            ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
+                            : ''
+                        }
                     </td>
                 </tr>
             `;
         });
     });
+}
+
+function generateClearance(appId) {
+    fetch(`${API_URL}?action=generateclearance&id=${appId}`)
+        .then(res => res.text())
+        .then(html => {
+            const w = window.open('', '_blank', 'height=800,width=1000');
+            w.document.write(html);
+            w.document.close();
+            w.onload = () => {
+                w.print();
+                w.onafterprint = () => w.close();
+            };
+        })
+        .catch(err => showAlert('Error generating clearance: ' + err, 'danger'));
 }
 
 // NEW: UPDATE / ASSESS LOGIC
@@ -208,28 +239,16 @@ function submitUpdate(event) {
             <p><strong>Business Status:</strong> ${businessStatus}</p>
             <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
             <p><strong>Email Address:</strong> ${app.email_address}</p>
-        </div>
-
-        <div class="summary-card">
             <h3>👤 Owner Information</h3>
             <p><strong>Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
             <p><strong>Telephone:</strong> ${app.telephone_no_owner}</p>
             <p><strong>Address:</strong> ${app.address_owner}</p>
-        </div>
-
-        <div class="summary-card">
             <h3>🏢 Business Structure</h3>
             <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
             <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-        </div>
-
-        <div class="summary-card">
             <h3>📋 Requirements</h3>
             <p><strong>Submitted:</strong> ${requirementsList}</p>
             <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-        </div>
-
-        <div class="summary-card">
             <h3>📅 Application Details</h3>
             <p><strong>Application Date:</strong> ${app.application_date}</p>
             <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
@@ -318,9 +337,7 @@ function submitUpdate(event) {
                 <h3>📄 Business Application Summary Report</h3>
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
-            </div>
 
-            <div class="summary-card">
                 <h3>📍 Business Information</h3>
                 <p><strong>Business Name:</strong> ${app.business_name}</p>
                 <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
@@ -329,35 +346,29 @@ function submitUpdate(event) {
                 <p><strong>Business Address Status:</strong> ${businessStatus}</p>
                 <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
                 <p><strong>Email Address:</strong> ${app.email_address}</p>
-            </div>
 
-            <div class="summary-card">
                 <h3>👤 Owner Information</h3>
                 <p><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
                 <p><strong>Owner Telephone:</strong> ${app.telephone_no_owner}</p>
                 <p><strong>Owner Address:</strong> ${app.address_owner}</p>
-            </div>
+                </div>
 
-            <div class="summary-card">
+                <div class="summary-card">
                 <h3>🏢 Business Structure & Operations</h3>
                 <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
                 <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-            </div>
 
-            <div class="summary-card">
                 <h3>📋 Requirements Submitted</h3>
                 <p><strong>Documents:</strong> ${requirementsList}</p>
                 <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-            </div>
 
-            <div class="summary-card">
                 <h3>📅 Application Status</h3>
                 <p><strong>Submission Date:</strong> ${app.application_date}</p>
                 <p><strong>Current Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
                 ${commentsHtml}
             </div>
 
-            <div class="button-group">
+            <div class="summary-actions">
                 <button class="btn-primary" onclick="printSummary()">🖨️ Print Summary</button>
                 <button class="btn-secondary" onclick="downloadSummary(${app.id})">📥 Download</button>
             </div>
@@ -407,6 +418,28 @@ function submitUpdate(event) {
         });
     }
 
+    // ARCHIVE APPLICATION
+    function archiveApplication(appId) {
+        if (!confirm('Are you sure you want to archive this application?')) return;
+        fetch(`${API_URL}?action=archive&id=${appId}`, {
+            method: 'GET'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('Application archived successfully!', 'success');
+                loadReviewTable();
+                loadProcessTable();
+            } else {
+                showAlert('Error: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Failed to archive application', 'danger');
+        });
+    }
+    
     // MODAL FUNCTIONS
     function openModal(modalId) {
         document.getElementById(modalId).classList.add('active');
@@ -434,7 +467,51 @@ function submitUpdate(event) {
     // PRINT & DOWNLOAD (MODIFIED for Styled HTML/DOC)
 
     function printSummary() {
-        window.print();
+        // 1. Get the main content area of the entire page (e.g., body or main container)
+    // You may need to replace 'document.body' with the ID of your main content wrapper
+    const mainContent = document.body; 
+    
+    // 2. Get the element you want to print (the summary)
+    const summaryToPrint = document.getElementById('summaryOutput'); // Assuming summaryOutput is the ID of the container element
+
+    // 3. Temporarily hide everything except the summary content
+    // This uses a clever technique by moving the summary content to a new window/tab,
+    // or by applying styles. The simplest approach for most web layouts is to 
+    // dynamically change the print media CSS.
+    
+    // Create a new print-only window
+    const printWindow = window.open('', '', 'height=600,width=800');
+    
+    // Write the content you want to print into the new window
+    printWindow.document.write('<html><head><title>Application Summary</title>');
+    
+    // Copy necessary styles (optional, but highly recommended for formatting)
+    // You may need to adjust this to include your specific CSS files or <style> tags
+    printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+    printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">');
+
+
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(summaryToPrint.innerHTML); // Write only the summary HTML
+    printWindow.document.write('');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    // Initiate printing in the new window
+    printWindow.focus();
+
+    // Close the window after printing (or immediately after print is called, depending on browser)
+    // printWindow.close(); // Uncomment this if you want the new window to close automatically
+
+    // Alternatively, a simpler but less robust method:
+    /*
+    const originalBody = document.body.innerHTML;
+    const printContent = summaryToPrint.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalBody;
+    window.location.reload(); // Might be necessary to restore full functionality
+    */
     }
 
     function downloadSummary(appId) {
