@@ -54,11 +54,17 @@ function showValidation() {
       body: JSON.stringify({ email: email.value.trim() })
     });
 
+    if (!checkResp.ok) {
+      formMessage.style.color = 'red';
+      formMessage.textContent = 'Server error. Please try again.';
+      return;
+    }
+
     const checkResult = await checkResp.json();
 
     if (!checkResult.success) {
       formMessage.style.color = 'red';
-      formMessage.textContent = "User not found";
+      formMessage.textContent = 'User not found';
       return;
     }
 

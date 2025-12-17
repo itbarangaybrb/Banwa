@@ -351,7 +351,20 @@ function validation() {
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                if (
+                    error.message.toLowerCase().includes('already') ||
+                    error.message.toLowerCase().includes('registered')
+                ) {
+                    formMessage.style.display = 'block';
+                    formMessage.style.color = 'red';
+                    formMessage.textContent = 'An account with this email already exists.';
+                    return;
+                }
+
+                throw error;
+            }
+
 
             const supabaseUserId = data.user.id;
 
