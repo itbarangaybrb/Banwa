@@ -75,7 +75,12 @@ function showValidation() {
 
     if (error || !data.user) {
       formMessage.style.color = 'red';
-      formMessage.textContent = "Incorrect password";
+
+      // User exists in DB but Supabase blocked login
+      // → most likely unverified email
+      formMessage.textContent =
+        'Account not verified. Please check your email.';
+
       return;
     }
 
