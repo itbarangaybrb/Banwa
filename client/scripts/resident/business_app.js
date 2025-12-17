@@ -314,6 +314,26 @@ function validation() {
     })();
 
     // =========================
+    // Owner Autofilled Application
+    // =========================
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+            const data = await resp.json();
+
+            if (data.error) {
+                console.log('Autofill error:', data.error);
+                return;
+            }
+
+            if (data.household_head_name) firstName.value = data.household_head_name;
+            if (data.contact_no) contactNoOwner.value = data.contact_no;
+        } catch (err) {
+            console.error('Failed to fetch user data for autofill:', err);
+        }
+    });
+
+    // =========================
     // Owner "Next" button click
     // =========================
     document.getElementById('nextToBusiness').addEventListener('click', () => {
