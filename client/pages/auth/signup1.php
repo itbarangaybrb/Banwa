@@ -127,15 +127,26 @@
                             <div class="inputs-container">
                                 <div class="label-and-input" id="idTypeWrapper">
                                     <label>Types of ID</label>
-                                    <label><input type="radio" name="idType" value="National"> National ID</label>
+                                    <select name="idType" id="idType">
+                                        <option value="" disabled selected>Select ID Type</option>
+                                        <option value="National">National ID</option>
+                                        <option value="Quezon">Quezon City ID</option>
+                                        <option value="Postal">Postal ID</option>
+                                        <option value="Passport">Philippine Passport</option>
+                                    </select>
+
+                                    <!-- <label><input type="radio" name="idType" value="National"> National ID</label>
                                     <label><input type="radio" name="idType" value="Quezon"> Quezon City ID</label>
                                     <label><input type="radio" name="idType" value="Postal"> Postal ID</label>
-                                    <label><input type="radio" name="idType" value="Passport"> Philippine Passport</label>
+                                    <label><input type="radio" name="idType" value="Passport"> Philippine Passport</label> -->
                                     <div class="error-msg"></div>
                                 </div>
 
                                 <div class="label-and-input" id="idFileWrapper">
-                                    <label for="idFile">Upload ID File</label>
+                                    <label for="idFile">
+                                        Upload ID File <br>
+                                        <i>(Accepted formats: .jpeg, .png, .pdf)</i>
+                                    </label>
                                     <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" />
                                     <div class="error-msg"></div>
                                 </div>
@@ -181,7 +192,8 @@
 
                             <div class="buttons-container">
                                 <button type="button" id="createAccBackBtn">Back</button>
-                                <button type="submit" id="createAccNextBtn">Submit</button>
+                                <button type="submit" id="createAccSubmitBtn">Submit</button>
+                                <button type="button" id="resendEmailBtn">Resend verification email</button>
                             </div>
 
                         </form>

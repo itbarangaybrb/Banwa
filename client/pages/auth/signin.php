@@ -81,7 +81,7 @@
       </form>
     </div>
   </div> -->
+  <script type="module" src="../../scripts/auth/signin.js"></script>
 </body>
-<script type="module" src="../../scripts/auth/signin.js"></script>
 
 </html>
