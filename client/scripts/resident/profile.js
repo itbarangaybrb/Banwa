@@ -555,43 +555,44 @@ function validation() {
 
         btnChange.style.pointerEvents = state ? "none" : "auto";
         btnManage.style.pointerEvents = state ? "none" : "auto";
-    // =========================
-    // Logout button event listener
-    // =========================
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-            // Confirm with the user before logging out
-            if (!confirm("Are you sure you want to log out?")) {
-                return;
-            }
-
-            // Call Supabase sign-out
-            const { error: supabaseError } = await supabase.auth.signOut();
-            if (supabaseError) {
-                console.error("Supabase sign-out error:", supabaseError.message);
-                alert("Failed to log out from Supabase. Please try again.");
-                return;
-            }
-
-            // Make a POST request to the server to sign out the user session
-            try {
-                const response = await fetch('/Banwa/server/api/resident/signout_user.php', {
-                    method: 'POST'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+        // =========================
+        // Logout button event listener
+        // =========================
+        const logoutBtn = document.getElementById("logoutBtn");
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+                // Confirm with the user before logging out
+                if (!confirm("Are you sure you want to log out?")) {
+                    return;
                 }
 
-                // Redirect to the sign-in page after successful logout
-                window.location.href = "/Banwa/client/pages/auth/signin.php";
+                // Call Supabase sign-out
+                const { error: supabaseError } = await supabase.auth.signOut();
+                if (supabaseError) {
+                    console.error("Supabase sign-out error:", supabaseError.message);
+                    alert("Failed to log out from Supabase. Please try again.");
+                    return;
+                }
 
-            } catch (fetchError) {
-                console.error("Server sign-out error:", fetchError);
-                alert("Failed to log out from the server. Please try again.");
-            }
-        });
+                // Make a POST request to the server to sign out the user session
+                try {
+                    const response = await fetch('/Banwa/server/api/resident/signout_user.php', {
+                        method: 'POST'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    // Redirect to the sign-in page after successful logout
+                    window.location.href = "/Banwa/client/pages/auth/signin.php";
+
+                } catch (fetchError) {
+                    console.error("Server sign-out error:", fetchError);
+                    alert("Failed to log out from the server. Please try again.");
+                }
+            });
+        }
     }
 }
 

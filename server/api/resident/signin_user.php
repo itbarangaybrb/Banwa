@@ -24,9 +24,8 @@ try {
 
         echo json_encode(["success" => true, "message" => "Logged in", "user" => $user]);
     } else {
-        echo json_encode(["success" => false, "message" => "User not found in custom DB"]);
+        echo json_encode(["success" => false, "message" => "User not found"]);
     }
-
 } catch (PDOException $e) {
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }

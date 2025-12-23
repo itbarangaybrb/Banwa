@@ -213,7 +213,7 @@ function validation() {
 
             // I will remove this later, this is only for test. - jep
             // console.log('Final Submission Data:', allData);
-            // alert('Application submitted successfully!');
+            alert('Application submitted successfully!');
         }
     }, { once: true });
 }
