@@ -21,7 +21,7 @@
     transition: margin-left 0.3s ease;
 }
 
-.side_nav:hover ~ .content {
+.side_nav:hover~.content {
     margin-left: 325px;
     width: calc(100% - 325px);
 }
@@ -376,7 +376,7 @@
     .profile-content {
         grid-template-columns: 1fr;
     }
-    
+
     .profile-left {
         max-width: 500px;
         margin: 0 auto;
@@ -389,25 +389,25 @@
         padding: 20px 15px;
         width: 100%;
     }
-    
-    .side_nav:hover ~ .content {
+
+    .side_nav:hover~.content {
         margin-left: 0;
         width: 100%;
     }
-    
+
     .profile-container {
         padding: 10px;
     }
-    
+
     .profile-header h1 {
         font-size: 28px;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
         gap: 0;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }

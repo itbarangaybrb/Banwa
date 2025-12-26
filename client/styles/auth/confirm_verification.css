@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  --txt2: 18px;
+  --txt2-lh: 28px;
+
+  --regular: 400;
+
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body,
+button {
+  font-family: "Inter", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+p#status {
+  font-size: var(--txt2);
+  line-height: var(--txt2-lh);
+  font-weight: var(--regular);
+  color: #000000E5;
+}

@@ -26,14 +26,17 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     include '_layout/nav.php';
     ?>
 
+
     <main>
         <div class="content_wrapper">
             <div class="content-section active" id="default">
-                <h2>Utiliies Clearance</h2>
-                <p>Select a size from the navigation menu to view product details.</p>
                 <div id="utilitiesStatus"></div>
 
                 <section class="sections">
+                    <div class="header-and-parag">
+                        <h4>Utiliies Clearance</h4>
+                        <p>Select a size from the navigation menu to view product details.</p>
+                    </div>
                     <div class="containers">
 
                         <!-- <div class="top">
@@ -72,7 +75,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                             </div> -->
 
                             <form class="form" id="utilitiesForms">
-                                <h1>Application Details</h1>
+                                <h5>Application Details</h5>
                                 <p>All fields are required unless specified.</p>
                                 <div class="inputs-container">
                                     <div class="label-and-input">
@@ -143,7 +146,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <!-- ==================== Waiver Form ==================== -->
                         <div class="waiver-container hidden" id="waiver">
                             <form class="form" id="waiverUtilitiesForm">
-                                <h3>Authorization & Waiver</h3>
+                                <h5>Authorization & Waiver</h5>
                                 <p>Please read and accept the terms to continue.</p>
 
                                 <div id="waiverContent">
@@ -170,7 +173,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <!-- ==================== Summary ==================== -->
                         <div class="summary-container hidden" id="summary">
                             <form class="form" id="summaryForm">
-                                <h3>Confirm your information</h3>
+                                <h5>Confirm your information</h5>
                                 <p>Please review all the information carefully before submitting</p>
 
                                 <div id="summaryContent">

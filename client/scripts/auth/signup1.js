@@ -13,7 +13,7 @@ function validation() {
     // =========================
     // Form elements
     // =========================
-    const idType = document.getElementsByName('idType');
+    const idType = document.getElementById('idType');
     const idFile = document.getElementById('idFile');
 
     const firstName = document.getElementById('firstName');
@@ -33,230 +33,114 @@ function validation() {
     switchPanel('personalDetails');
 
     // =========================
-    // Validation inputs (GENERIC)
+    // Validation inputs (text, select, checkbox, textarea)
     // =========================
-    function validateInput(input, message = 'This field is required', rules = {}) {
+    function validateInput(input, message) {
         const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg') || input.nextElementSibling;
+        const errorEl = wrapper?.querySelector('.error-msg');
+        if (!errorEl) return true;
+
         const value = input.type === 'checkbox' ? input.checked : input.value.trim();
 
-        if ((input.type === 'checkbox' && !value) ||
-            (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
+        const setError = (msg) => {
             input.classList.add('error');
             errorEl.classList.add('show');
-            errorEl.textContent = message;
-            return false;
-        }
+            errorEl.textContent = msg;
+        };
 
-        if (rules.pattern && !rules.pattern.test(value)) {
-            input.classList.add('error');
-            errorEl.textContent = rules.errorMessage || 'Invalid format';
-            errorEl.classList.add('error');
-            return false;
-        }
-
-        if (rules.maxLength && value.length > rules.maxLength) {
-            input.classList.add('error');
-            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        if (rules.minLength && value.length < rules.minLength) {
-            input.classList.add('error');
-            errorEl.textContent = `Minimum ${rules.minLength} characters required`;
-            errorEl.classList.add('show');
-
-            return false;
-        }
-
-        input.classList.remove('error');
-        errorEl.classList.add('show');
-        errorEl.textContent = '';
-        return true;
-    }
-
-    // Validate a radio group
-    function validateRadioGroup(radios, message) {
-        const anyChecked = Array.from(radios).some(r => r.checked);
-
-        // Find wrapper for first radio to show error
-        const wrapper = radios[0]?.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg');
-
-        if (!anyChecked) {
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        errorEl.textContent = '';
-        errorEl.classList.add('show');
-        return true;
-    }
-
-    // Validate file input
-    function validateFileInput(input, message = 'File is required') {
-        const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg');
-
-        if (!input.files || input.files.length === 0) {
-            errorEl.textContent = message;
-            input.classList.add('error');
-            errorEl.classList.add('show');
-
-            return false;
-        }
-
-        errorEl.textContent = '';
-        errorEl.classList.remove('show');
-        input.classList.remove('error');
-        return true;
-    }
-
-
-    function checkPasswordMatch() {
-        const wrapper = reTypePassword.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg');
-        const value = reTypePassword.value.trim();
-
-        if (value === '') {
-            reTypePassword.classList.add('error');
-            errorEl.textContent = 'Please re-type your password';
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        if (value !== password.value) {
-            reTypePassword.classList.add('error');
-            errorEl.textContent = 'Passwords do not match';
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        reTypePassword.classList.remove('error');
-        errorEl.classList.remove('show');
-        errorEl.textContent = '';
-        return true;
-    }
-
-
-    // =========================
-    // Specialized Phone Validations
-    // =========================
-    function phoneValidation() {
-        const wrapper = contactNo.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        let value = contactNo.value.replace(/\D/g, '');
-        contactNo.value = value;
-
-        if (value.length === 0) {
-            contactNo.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = 'Phone number is required';
-        } else if (value.length < 11) {
-            contactNo.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = 'Phone number must be 11 digits';
-        } else if (value.length > 11) {
-            contactNo.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = 'Phone number must be 11 digits only';
-        } else {
-            contactNo.classList.remove('error');
+        const clearError = () => {
+            input.classList.remove('error');
             errorEl.classList.remove('show');
             errorEl.textContent = '';
-        }
-    }
+        };
 
-    // =========================
-    // Specialized Email Validations
-    // =========================
-    function emailValidation() {
-        const wrapper = email.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        const value = email.value.trim();
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (value === '') {
-            email.classList.add('error');
-            errorEl.textContent = 'Email is required';
-            errorEl.classList.add('show');
-        } else if (!emailPattern.test(value)) {
-            email.classList.add('error');
-            errorEl.textContent = 'Enter a valid email address';
-            errorEl.classList.add('show');
-        } else {
-            email.classList.remove('error');
-            errorEl.textContent = '';
-            errorEl.classList.remove('show');
-        }
-    }
-
-    // =========================
-    // Specialized Password Validations
-    // =========================
-    function passwordValidation() {
-        const wrapper = password.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg');
-        const value = password.value;
-
-        if (value.trim() === '') {
-            password.classList.add('error');
-            errorEl.textContent = 'Password is required';
-            errorEl.classList.add('show');
+        if ((input.type === 'checkbox' && !value) || (input.type === 'email' && !value) ||
+            (!['checkbox', 'file', 'email'].includes(input.type) && (value === '' || value === 'select'))) {
+            setError(message);
             return false;
         }
 
-        if (value.length < 8 || value.length > 16) {
-            password.classList.add('error');
-            errorEl.textContent = 'Password should be 8-16 characters long';
-            errorEl.classList.add('show');
-            return false;
+        if (input.type === 'file') {
+            if (!input.files || input.files.length === 0) {
+                setError(message);
+                return false;
+            }
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            for (let file of input.files) {
+                if (!allowedTypes.includes(file.type)) {
+                    setError('Invalid file type. Only JPG, PNG, PDF allowed');
+                    return false;
+                }
+            }
         }
 
-        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
-            password.classList.add('error');
-            errorEl.textContent = 'Password must contain letters and numbers';
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        password.classList.remove('error');
-        errorEl.textContent = '';
-        errorEl.classList.remove('show');
+        clearError();
         return true;
     }
 
     // =========================
-    // Real-time validation setup (single IIFE)
+    // Attach events
     // =========================
     (() => {
-        const inputs = [firstName, lastName, sex, contactNo, address, email, password, reTypePassword, agreeCheckBox, idFile];
+        const inputs = [firstName, lastName, sex, address, agreeCheckBox, idType, idFile, password, reTypePassword, contactNo, email];
 
         inputs.forEach(input => {
             if (!input) return;
+            const wrapper = input.closest('.label-and-input');
+            const errorEl = wrapper?.querySelector('.error-msg');
+            if (!errorEl) return;
 
-            if (input === contactNo) {
-                input.addEventListener('input', phoneValidation);
-            } else if (input === email) {
-                input.addEventListener('input', emailValidation);
-            } else if (input === password) {
-                input.addEventListener('input', () => passwordValidation());
-            } else if (input === reTypePassword) {
-                input.addEventListener('input', () => checkPasswordMatch());
-            } else if (input.type === 'checkbox' || input.tagName === 'SELECT' || input.type === 'file') {
-                input.addEventListener('change', () => validateInput(input));
-            } else {
-                input.addEventListener('input', () => validateInput(input));
-            }
-        });
+            const setError = (msg) => {
+                input.classList.add('error');
+                errorEl.classList.add('show');
+                errorEl.textContent = msg;
+            };
 
-        // Radio group
-        Array.from(idType).forEach(radio => {
-            radio.addEventListener('change', () => validateRadioGroup(idType, 'Please select a type of ID'));
+            const clearError = () => {
+                input.classList.remove('error');
+                errorEl.classList.remove('show');
+                errorEl.textContent = '';
+            };
+
+            // Clear error on input
+            input.addEventListener('input', () => {
+                if (input === contactNo) input.value = input.value.replace(/\D/g, '');
+                clearError();
+            });
+
+            // Validate on blur
+            input.addEventListener('blur', () => {
+                if (input === password) {
+                    const val = input.value.trim();
+                    if (!val) setError('Password is required');
+                    else if (val.length < 8 || val.length > 16) setError('Password should be 8-16 characters long');
+                    else if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) setError('Password must contain letters and numbers');
+                    else clearError();
+                } else if (input === reTypePassword) {
+                    const val = input.value.trim();
+                    if (!val) setError('Please re-type your password');
+                    else if (val !== password.value.trim()) setError('Passwords do not match');
+                    else clearError();
+                } else if (input === contactNo) {
+                    const val = input.value.replace(/\D/g, '');
+                    input.value = val;
+                    if (!val) setError('Phone number is required');
+                    else if (val.length !== 11) setError('Phone number must be 11 digits');
+                    else clearError();
+                } else if (input === email) {
+                    const val = input.value.trim();
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!val) setError('Email is required');
+                    else if (!emailPattern.test(val)) setError('Enter a valid email address');
+                    else clearError();
+                } else {
+                    validateInput(input, 'This field is required');
+                }
+            });
         });
     })();
+
+
 
     // =========================
     // Navigation buttons
@@ -275,11 +159,9 @@ function validation() {
         e.preventDefault();
         const validations = [
             validateInput(firstName, 'First name is required'),
-            // validateInput(middleName, 'Middle name is required'),
             validateInput(lastName, 'Last name is required'),
-            // validateInput(suffix, 'Suffix is required'),
             validateInput(sex, 'Sex is required'),
-            validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11, errorMessage: 'Phone number must be numeric, max 11 digits' }),
+            validateInput(contactNo, 'Phone number is required'),
             validateInput(address, 'Address is required')
         ];
 
@@ -290,103 +172,167 @@ function validation() {
     // Select ID 'Next' Button
     // =========================
     document.getElementById('selectIdNextBtn').addEventListener('click', () => {
-        const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
-        const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
+        const validations = [
+            validateInput(idType, 'Please select a type of ID'),
+            validateInput(idFile, 'Please upload your ID file')
+        ];
+        // const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
+        // const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
 
-        if (isValidRadio && isValidFile) switchPanel('createAcc');
+        if (validations.every(v => v)) switchPanel('createAcc');
     });
 
 
     // =========================
-    // Personal Details 'Sbumit' Button
+    // Create Account 'Submit' Button
     // =========================
     const formMessage = document.getElementById('formMessage');
     formMessage.style.display = 'none';
+    const resendBtn = document.getElementById('resendEmailBtn');
+    let allData = null;
 
     document.getElementById('createAccForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         formMessage.textContent = '';
 
         const validations = [
-            passwordValidation(),
-            checkPasswordMatch(),
-            // validateInput(contactNo, 'Phone number is required', { pattern: /^[0-9]{11}$/, maxLength: 11 }),
-            validateInput(email, 'Email is required', { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ }),
+            validateInput(password, 'Password is required'),
+            validateInput(reTypePassword, 'Please re-type your password'),
+            password.value !== reTypePassword.value ? (() => {
+                const wrapper = reTypePassword.closest('.label-and-input');
+                const errorEl = wrapper.querySelector('.error-msg');
+                reTypePassword.classList.add('error');
+                errorEl.classList.add('show');
+                errorEl.textContent = 'Passwords do not match';
+                return false;
+            })() : true,
+            validateInput(email, 'Email is required'),
             validateInput(agreeCheckBox, 'You must agree with the terms')
         ];
 
-        if (!validations.every(v => v)) return;
 
+        if (!validations.every(v => v)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
-        const allData = {
+        allData = {
             fullname: `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim(),
             sex: sex.value,
             contactNo: contactNo.value,
             address: address.value,
-            idType: Array.from(idType).find(r => r.checked)?.value || '',
+            idType: idType.value,
             email: email.value,
             password: password.value,
             agreeCheckBox: agreeCheckBox.checked
         };
 
         try {
-            // =========================
-            // Supabase Signup
-            // =========================
+            const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
+            const dbCheck = await respCheck.json();
+
+            if (dbCheck.exists) {
+                formMessage.style.display = 'block';
+                formMessage.style.color = 'red';
+                formMessage.textContent = 'An account with this email already exists.';
+                return;
+            }
+
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
                 options: {
-                    data: {
-                        fullname: allData.fullname,
-                        sex: allData.sex,
-                        contactNo: allData.contactNo,
-                        address: allData.address,
-                        idType: allData.idType,
-                        email: allData.email,
-                        agreeCheckBox: allData.agreeCheckBox
-                    },
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/signin.php",
+                    data: allData,
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php",
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                const msg = (error.message || '').toLowerCase();
+                if (msg.includes('already') || msg.includes('registered') || error.status === 400) {
+                    formMessage.style.display = 'block';
+                    formMessage.style.color = 'red';
+                    formMessage.textContent = 'An account with this email already exists.';
+                    return;
+                }
+                throw error;
+            } 
 
-            const supabaseUserId = data.user.id;
-
-            // =========================
-            // Insert into Custom DB
-            // =========================
-            const response = await fetch('/Banwa/server/api/resident/signup_user.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...allData, user_id: supabaseUserId })
-            });
-
-            const result = await response.json();
-
-            if (!result.success) {
-                formMessage.style.display = 'block';
-                formMessage.style.color = 'red';
-                // I will change this later -jep
-                // This is only a test
-                formMessage.textContent = result.message;
-                return;
-            }
-
-            // Success
             formMessage.style.display = 'block';
             formMessage.style.color = 'green';
-            formMessage.textContent = 'Application submitted successfully! Please check your email to verify your account.';
-            console.log('User created successfully:', data.user);
+            formMessage.innerHTML = `
+            Account created successfully.<br>
+            Please verify your email to activate your account.<br><br>
+            If you don’t receive the email within 1–2 minutes:
+            <br>
+            1. Make sure the email address is correct<br>
+            2. Check your Spam / Promotions folder<br>
+            3. You can resend the verification email<br>
+           
+        `;
+
+            resendBtn.classList.add('show');
+            startResendCooldown();
 
         } catch (err) {
-            console.error('Error during signup:', err);
+            // console.error('Error during signup:', err);
             formMessage.style.display = 'block';
             formMessage.style.color = 'red';
             formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
+    });
+
+
+    let resendCount = 0;
+    const MAX_RESENDS = 3;
+
+    function startResendCooldown() {
+        const submitBtn = document.getElementById('createAccSubmitBtn');
+        if (submitBtn) submitBtn.style.display = 'none';
+
+        const btn = resendBtn;
+        btn.disabled = true;
+        let countdown = 90;
+        btn.textContent = `Resend available in ${countdown}s`;
+
+        const interval = setInterval(() => {
+            countdown--;
+            btn.textContent = `Resend available in ${countdown}s`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                if (resendCount < MAX_RESENDS) {
+                    btn.disabled = false;
+                    btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
+                } else {
+                    btn.remove();
+                }
+            }
+        }, 1000);
+    }
+
+    resendBtn.addEventListener('click', async () => {
+        if (!allData || resendCount >= MAX_RESENDS) return;
+
+        resendBtn.disabled = true;
+
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: allData.email,
+            options: {
+                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+            }
+        });
+
+        if (error) {
+            formMessage.style.color = 'red';
+            formMessage.textContent = 'Failed to resend verification email. Please try again later.';
+            resendBtn.disabled = false;
+            return;
+        }
+
+        resendCount++;
+        formMessage.style.color = 'green';
+        formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
+
+        startResendCooldown();
     });
 
 }

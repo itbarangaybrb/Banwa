@@ -185,7 +185,13 @@ body {
   row-gap: 4px;
 }
 
-.select-id-container .form .inputs-container .label-and-input input[type="file"] {
+.select-id-container .form .inputs-container .label-and-input label>i {
+  color: grey;
+  font-size: 14px;
+}
+
+.select-id-container .form .inputs-container .label-and-input input[type="file"],
+.select-id-container .form .inputs-container .label-and-input select {
   padding: 12px 8px;
   border-radius: 8px;
   border: 1px solid #C4C4C4;
@@ -294,12 +300,14 @@ body {
   font-weight: 500;
 }
 
-.create-account-container .form .buttons-container button:nth-child(1) {
+.create-account-container .form .buttons-container button:nth-child(1),
+.create-account-container .form .buttons-container button:nth-child(3):disabled {
   background-color: #dbdbdb;
   color: black;
 }
 
-.create-account-container .form .buttons-container button:nth-child(2) {
+.create-account-container .form .buttons-container button:nth-child(2),
+.create-account-container .form .buttons-container button:nth-child(3) {
   background-color: #00247C;
   color: white;
   margin-left: 4px;
@@ -309,8 +317,17 @@ body {
   background-color: #c9c9c9;
 }
 
-.create-account-container .form .buttons-container button:nth-child(2):hover {
+.create-account-container .form .buttons-container button:nth-child(2):hover,
+.create-account-container .form .buttons-container button:nth-child(3):not(:disabled):hover {
   background-color: #00164d;
+}
+
+.create-account-container .form .buttons-container button:nth-child(3) {
+  display: none;
+}
+
+.create-account-container .form .buttons-container button:nth-child(3).show {
+  display: inline-block;
 }
 
 .error-msg {

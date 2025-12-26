@@ -17,8 +17,6 @@ async function validations() {
         return;
     }
 
-    // console.log("Recovery session active.");
-
     // =====================================================
     // Form elements
     // =====================================================

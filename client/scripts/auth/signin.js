@@ -15,69 +15,125 @@ function showValidation() {
   const email = document.getElementById('email');
   const password = document.getElementById('password');
 
-  const emailErr = email.parentElement.querySelector('.error-msg');
-  const passwordErr = password.parentElement.querySelector('.error-msg');
+  function validateInput(input, message) {
+    const wrapper = input.closest('.label-and-input');
+    const errorEl = wrapper?.querySelector('.error-msg');
+    if (!errorEl) return true;
 
-  function validateInput(input, errorEl, message) {
-    if (input.value.trim() === '') {
+    const value = input.value.trim();
+
+    const setError = (msg) => {
       input.classList.add('error');
       errorEl.classList.add('show');
-      errorEl.textContent = message;
-      return false;
-    } else {
+      errorEl.textContent = msg;
+    };
+
+    const clearError = () => {
       input.classList.remove('error');
       errorEl.classList.remove('show');
       errorEl.textContent = '';
-      return true;
+    };
+
+    if (!value) {
+      setError(message);
+      return false;
     }
+
+    if (input.type === 'password') {
+      if (value.length < 8 || value.length > 16) {
+        setError('Password should be 8-16 characters long');
+        return false;
+      }
+      if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+        setError('Password must contain letters and numbers');
+        return false;
+      }
+    }
+
+    if (input.type === 'email') {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(value)) {
+        setError('Enter a valid email');
+        return false;
+      }
+    }
+
+    clearError();
+    return true;
   }
 
-  email.addEventListener('input', () =>
-    validateInput(email, emailErr, 'Email is required')
-  );
+  // =========================
+  // Attach events (IIFE)
+  // =========================
+  (() => {
+    const fields = [email, password]; // add other fields here if needed
 
-  password.addEventListener('input', () =>
-    validateInput(password, passwordErr, 'Password is required')
-  );
+    fields.forEach(input => {
+      if (!input) return;
+
+      const wrapper = input.closest('.label-and-input');
+      const errorEl = wrapper?.querySelector('.error-msg');
+      if (!errorEl) return;
+
+      const clearError = () => {
+        input.classList.remove('error');
+        errorEl.classList.remove('show');
+        errorEl.textContent = '';
+      };
+
+      // Clear error on input
+      input.addEventListener('input', clearError);
+
+      // Validate on blur
+      input.addEventListener('blur', () => {
+        const msg = input.type === 'password' ? 'Password is required' :
+          input.type === 'email' ? 'Email is required' :
+            'This field is required';
+        validateInput(input, msg);
+      });
+    });
+  })();
+
+
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const formMessage = document.getElementById('formMessage');
     formMessage.textContent = '';
 
-    const emailValid = validateInput(email, emailErr, 'Email is required');
-    const passValid = validateInput(password, passwordErr, 'Password is required');
-    if (!emailValid || !passValid) return;
+    const validations = [
+      validateInput(email, 'Email is required'),
+      validateInput(password, 'Password is required')
+    ];
 
-    const checkResp = await fetch('/Banwa/server/api/resident/check_user.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.value.trim() })
-    });
-
-    const checkResult = await checkResp.json();
-
-    if (!checkResult.success) {
-      formMessage.style.color = 'red';
-      formMessage.textContent = "User not found";
-      return;
-    }
+    if (!validations.every(Boolean)) return;
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.value.trim(),
       password: password.value.trim(),
     });
 
-    if (error || !data.user) {
+    if (error) {
       formMessage.style.color = 'red';
-      formMessage.textContent = "Incorrect password";
+
+      if (error.message.toLowerCase().includes('not confirmed')) {
+        formMessage.textContent =
+          'Account not verified. Please check your email.';
+      } else {
+        formMessage.textContent =
+          'Account does not exist';
+      }
       return;
     }
 
     const resp = await fetch('/Banwa/server/api/resident/signin_user.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ supabase_user_id: data.user.id }),
-      credentials: "include"
+      credentials: 'include',
+      body: JSON.stringify({
+        supabase_user_id: data.user.id
+      })
     });
 
     const result = await resp.json();
@@ -89,7 +145,8 @@ function showValidation() {
     }
 
     formMessage.style.color = 'green';
-    formMessage.textContent = "Login successful! Redirecting...";
+    formMessage.textContent = 'Login successful! Redirecting...';
+
     setTimeout(() => {
       window.location.href = '/Banwa/client/pages/resident/home.php';
     }, 1000);
