@@ -10,12 +10,12 @@
 <body>
     <div class="container">
         <header>
-            <h1>💰 Finance Management System</h1>
+            <!-- <h1>💰 Finance Management System</h1> -->
             <p>Process payments, penalties, and generate receipts</p>
-            <div class="header-actions">
+            <!-- <div class="header-actions">
                 <button class="btn-info" onclick="openModal('instructionsModal')">ℹ️ Payment Instructions</button>
                 <button class="btn-warning" onclick="openPenaltyModal()">⚠️ Pay Annual Penalties</button>
-            </div>
+            </div> -->
         </header>
 
         <div class="nav-tabs">
@@ -188,10 +188,10 @@
 
     <div id="instructionsModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
+            <!-- <div class="modal-header">
                 <h2>ℹ️ Payment Instructions for Residents</h2>
                 <button class="close-btn" onclick="closeModal('instructionsModal')">&times;</button>
-            </div>
+            </div> -->
             <div style="padding: 10px; line-height: 1.6;">
                 <p><strong>Cash Payment:</strong></p>
                 <ul>

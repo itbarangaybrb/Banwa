@@ -74,7 +74,7 @@ include '_layout/nav.php';
                     <div class="hero_content">
                         <h1>BANWA</h1>
                 <h6>Barangay Blue Ridge B</h6>
-                    <p>Welcome to BANWA. The system enables Barangay Blue Ridge B to efficiently manage infrastructure, clearance, utilities, and incidents through interactive mapping and data-driven tools.</p>
+                    <p>Welcome to BANWA (Barangay Aklatan ng Nawawari at Asosasyon). The system enables Barangay Blue Ridge B to manage infrastructure, clearance, utilities, and incidents through interactive mapping and data-driven tools.</p>
                     </div>
                 </div>
             </div>
@@ -86,7 +86,7 @@ include '_layout/nav.php';
         </section>
 
         <section data-theme="white">
-            <h1>Serives</h1>
+            <h1>Services</h1>
                 <p>Your gateway to convenient access and management of municipal services.</p>
         </section>
 
@@ -151,7 +151,7 @@ include '_layout/nav.php';
                             <li><strong>Phone:</strong> +63 946 456 6986</li>
                             <li><strong>Email:</strong>
                                 <a href="mailto:
-                            <span class="__cf_email__" data-cfemail="c1aeb7aeb4c1b6a3a8a2b7a5b4b9e1aca0a2">[email&#160;protected]</span>">[email protected]</a>
+                            <span class="__cf_email__" data-cfemail="c1aeb7aeb4c1b6a3a8a2b7a5b4b9e1aca0a2"></span>Barangay Blue Ridge B</a>
                             </li>
                             <li><strong>Facebook:</strong>
                                 <a href="https://www.facebook.com/BarangayBlueRidgeB" target="_blank">facebook.com/BarangayBlueRidgeB</a>
