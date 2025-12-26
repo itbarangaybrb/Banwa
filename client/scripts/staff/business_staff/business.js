@@ -128,6 +128,19 @@ function loadProcessTable() {
     });
 }
 
+function applyPrompt(text) {
+    const textarea = document.getElementById('updateComments');
+    if (textarea) {
+        // Option A: Replace everything
+        textarea.value = text;
+        
+        // Option B: Append instead of replace (Uncomment below if preferred)
+        // textarea.value += (textarea.value ? ' ' : '') + text;
+        
+        textarea.focus();
+    }
+}
+
 function generateClearance(appId) {
     fetch(`${API_URL}?action=generateclearance&id=${appId}`)
         .then(res => res.text())

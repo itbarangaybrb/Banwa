@@ -363,8 +363,15 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="updateComments">Remarks / Comments *</label>
-                            <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions, reasons, or notes..."></textarea>
+                        <label for="updateComments">Remarks / Comments *</label>
+                            <div class="prompt-container">
+                                <div class="prompt-suggestions">
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
+                                </div>
+                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
+                            </div>
                         </div>
 
                         <div class="button-group">

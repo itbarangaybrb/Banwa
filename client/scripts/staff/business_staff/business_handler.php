@@ -184,7 +184,7 @@ function handleCreateApplication($pdo){
 function handleFetchApplications($pdo)
 {
     try {
-        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at DESC");
+        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at ASC");
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Decode JSON fields for frontend
