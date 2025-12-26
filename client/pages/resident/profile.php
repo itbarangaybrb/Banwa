@@ -18,7 +18,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 
 <body>
 
-    <p id="userStatus"></p>
+    <!-- <p id="userStatus"></p>
     <button id="signoutBtn">Logout</button>
 
     <main>
@@ -58,9 +58,9 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                 <button type="button" id="changePassCancelBtn">Cancel</button>
                             </div>
                         </form>
-                    </div>
+                    </div> -->
 
-
+<!--                     
                     <div class="mng-acc-container hidden" id="manageAcc">
                         <form action="" class="forms" id="mngAccForm">
                             <h3>Manage Account</h3>
@@ -105,8 +105,8 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                                 <button type="button" id="manageAccCancelBtn">Cancel</button>
                             </div>
                         </form>
-                    </div>
-
+                    </div> -->
+<!-- 
                     <div class="panel-buttons-container">
                         <button type="button" id="changePasswordBtn">Change password</button>
                         <button type="button" id="manageAccountBtn">Manage account</button>
@@ -114,9 +114,9 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                 </div>
             </div>
         </section>
-    </main>
+    </main> -->
 
-    <script type="module" src="../../scripts/resident/profile.js"></script>
+    <!-- <script type="module" src="../../scripts/resident/profile.js"></script>
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 
@@ -138,13 +138,13 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     $page_title = "About Us";
     include '_layout/nav.php';
     ?>
-    <div class="profile-container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <h1>My Profile</h1>
-            <p>Manage your account information and preferences</p>
-            <button id="logoutBtn" class="btn-logout">Logout</button>
-        </div>
+        <div class="profile-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <h1>My Profile</h1>
+                <p>Manage your account information and preferences</p>
+                <!-- <button id="logoutBtn" class="btn-logout">Logout</button> -->
+            </div>
 
         <div class="profile-content">
             <!-- Left Column: User Info -->

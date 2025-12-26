@@ -241,9 +241,9 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
 function generatePaymentFormHtml(appData, appPurpose) {
     const amountDue = appData.amount_due ? parseFloat(appData.amount_due).toFixed(2) : '0.00';
     const purposeOptions = {
-        'Business': 'Business Permit Fee',
-        'Construction': 'Construction Permit Fee',
-        'Utilities': 'Utility Service Fee',
+        'Business': 'Business Clearance Fee',
+        'Construction': 'Construction Clearance Fee',
+        // 'Utilities': 'Utility Service Fee',
         // Add more as needed
     };
     const paymentPurposeText = purposeOptions[appPurpose] || 'General Payment';
