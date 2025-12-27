@@ -169,7 +169,7 @@
                 <ul class="nav_list">
                     <li><a class="nav_select" href="../resident/home.php" <?php if ($page_title == "Home") echo 'class="active"'; ?>>Home</a></li>
                     <!-- <li><a class="nav_select" href="../resident/update.php" <?php if ($page_title == "Home") echo 'class="active"'; ?>>Update</a></li> -->
-                    <li><a class="nav_select" href="../resident/business_app.php" <?php if ($page_title == "Business") echo 'class="active"'; ?>>Services</a></li>
+                    <li><a class="nav_select" href="../resident/services.php" <?php if ($page_title == "Services") echo 'class="active"'; ?>>Services</a></li>
                     <!-- <li><a class="nav_select" href="../resident/about_us.php" <?php if ($page_title == "About Us") echo 'class="active"'; ?>>Updates</a></li> -->
                     <!-- <li><a class="nav_select" href="../resident/contact_us.php" <?php if ($page_title == "Contact Us") echo 'class="active"'; ?>>Clearances</a></li> -->
                     <!-- <li><a href="../resident/construction_app2.php" <?php if ($page_title == "Construction Application") echo 'class="active"'; ?>>Construction Application</a></li>
