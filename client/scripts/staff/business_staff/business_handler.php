@@ -63,6 +63,10 @@ try {
         case 'update':
             handleUpdateApplication($pdo);
             break;
+        case 'chart_business_type':
+            handleChartBusinessType($pdo);
+            break;
+
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -77,11 +81,13 @@ exit;
 // HELPER FUNCTIONS
 
 
-function get_input($key){
+function get_input($key)
+{
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
-function handleCreateApplication($pdo){
+function handleCreateApplication($pdo)
+{
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
         // Collect Data
@@ -244,7 +250,8 @@ function handleUpdateStatus($pdo)
     }
 }
 
-function handleUpdateApplication($pdo){
+function handleUpdateApplication($pdo)
+{
     try {
         $applicationId = get_input('application_id');
         // Basic validation
@@ -348,7 +355,7 @@ function handleUpdateApplication($pdo){
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // Add a check for ownership for security
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
@@ -368,7 +375,6 @@ function handleUpdateApplication($pdo){
             http_response_code(404);
             echo json_encode(["status" => "error", "message" => "Application not found or not authorized to update."]);
         }
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -379,3 +385,20 @@ function handleUpdateApplication($pdo){
 }
 
 
+function handleChartBusinessType($pdo)
+{
+    $sql = "
+        SELECT application_date, COUNT(*) AS total
+        FROM business_applications
+        GROUP BY application_date
+        ORDER BY application_date ASC
+    ";
+
+    $stmt = $pdo->query($sql);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "status" => "success",
+        "data" => $data
+    ]);
+}

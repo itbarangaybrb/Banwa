@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Application Management System</title>
+    <title>Analytics</title>
+
     <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
+
     <!-- Sidebar -->
     <aside class="side_nav">
         <div class="nav_header">
@@ -22,7 +26,7 @@
                 <li>
                     <a href="../business_staff/analytics.php" class="nav_select active">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <span class="nav_text">Analytics</span>
                     </a>
@@ -30,7 +34,7 @@
                 <li>
                     <a href="#" class="nav_select active" data-tab="review">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <span class="nav_text">Review & Search</span>
                     </a>
@@ -38,7 +42,7 @@
                 <li>
                     <a href="#" class="nav_select" data-tab="create">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <span class="nav_text">Create New</span>
                     </a>
@@ -46,7 +50,7 @@
                 <li>
                     <a href="#" class="nav_select" data-tab="process">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white"/>
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
                         </svg>
                         <span class="nav_text">Process & Assess</span>
                     </a>
@@ -54,8 +58,8 @@
                 <li>
                     <a href="#" class="nav_select" data-tab="summary">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <span class="nav_text">Generate Summary</span>
                     </a>
@@ -93,7 +97,9 @@
         <div class="content">
             <div id="alert-container"></div>
 
-            <div id="review" class="tab-pane active">
+            <canvas id="businessChart"></canvas>
+
+            <!-- <div id="review" class="tab-pane active">
                 <h2>Review Business Applications</h2>
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
@@ -111,7 +117,11 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>Loading...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -120,10 +130,10 @@
             <div id="create" class="tab-pane">
                 <h2>Create New Business Application</h2>
                 <p class="form-description">Fill in the details to create a new business application</p>
-                
+
                 <form id="createForm" onsubmit="createApplication(event)">
                     <div class="section-title">Business Information</div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="businessName">Business Name*</label>
@@ -301,7 +311,7 @@
             <div id="process" class="tab-pane">
                 <h2>Process Applications</h2>
                 <p class="form-description">Assess fees, send for payment, or issue final approval.</p>
-                
+
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -314,7 +324,11 @@
                             </tr>
                         </thead>
                         <tbody id="processTableBody">
-                            <tr><td colspan="5" class="loading"><div class="spinner"></div>Loading...</td></tr>
+                            <tr>
+                                <td colspan="5" class="loading">
+                                    <div class="spinner"></div>Loading...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -327,6 +341,7 @@
                 </div>
                 <div id="summaryOutput"></div>
             </div>
+
             <div id="detailsModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -345,7 +360,7 @@
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
                         <input type="hidden" id="updateAppId" name="id">
-                        
+
                         <div class="form-group">
                             <label>Current Status:</label>
                             <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
@@ -371,7 +386,7 @@
                         </div>
 
                         <div class="form-group">
-                        <label for="updateComments">Remarks / Comments *</label>
+                            <label for="updateComments">Remarks / Comments *</label>
                             <div class="prompt-container">
                                 <div class="prompt-suggestions">
                                     <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
@@ -388,9 +403,44 @@
                         </div>
                     </form>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
-    <script src="../../../scripts/staff/business_staff/business.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php?action=chart_business_type')
+            .then(res => res.json())
+            .then(res => {
+                if (res.status !== 'success') return;
+
+                const labels = res.data.map(x => x.application_date);
+                const values = res.data.map(x => x.total);
+
+                // Your fixed colors
+                const backgroundColors = [
+                    '#FF6384', // Example: Red
+                    '#36A2EB', // Example: Blue
+                    '#FFCE56', // Example: Yellow
+                    '#4BC0C0', // Example: Teal
+                    '#9966FF', // Example: Purple
+                    '#FF9F40' // Example: Orange
+                ];
+
+                new Chart(document.getElementById('businessChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Applications per Business Type',
+                            data: values,
+                            backgroundColor: backgroundColors,
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            });
+    </script>
 </body>
+
 </html>
