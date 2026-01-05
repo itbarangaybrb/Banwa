@@ -6,404 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics</title>
 
-    <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
+    <link rel="stylesheet" href="../../../styles/staff/business_staff/analytics.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-
-    <!-- Sidebar -->
-    <aside class="side_nav">
-        <div class="nav_header">
-            <div class="nav_logo">☰</div>
-            <div class="logo_title">
-                <img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo">
-                <span class="company_name">BANWA</span>
-            </div>
+    <div class="analytics-container">
+        <div class="charts">
+            <canvas id="businessChart1"></canvas>
         </div>
-        <ul class="nav_list">
-            <div>
-                <li>
-                    <a href="../business_staff/analytics.php" class="nav_select active">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Analytics</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav_select active" data-tab="review">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Review & Search</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav_select" data-tab="create">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Create New</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav_select" data-tab="process">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
-                        </svg>
-                        <span class="nav_text">Process & Assess</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav_select" data-tab="summary">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Generate Summary</span>
-                    </a>
-                </li>
-            </div>
-            <div>
-                <li>
-                    <button class="nav_select_btn" id="userProfileBtn">
-                        <div class="user_image_container">
-                            <span class="user_avatar_sidebar">A</span>
-                        </div>
-                        <span class="nav_text">Profile</span>
-                    </button>
-                </li>
-            </div>
-        </ul>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-wrapper">
-        <header class="top-header">
-            <div class="header-left">
-                <h1>Business Application Management</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-greeting">
-                    <p class="username">Admin</p>
-                    <div class="user_image">
-                        <span class="user_avatar_header">A</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="content">
-            <div id="alert-container"></div>
-
-            <canvas id="businessChart"></canvas>
-
-            <!-- <div id="review" class="tab-pane active">
-                <h2>Review Business Applications</h2>
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
-                </div>
-                <div class="table-responsive">
-                    <table id="applicationsTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Business Name</th>
-                                <th>Owner</th>
-                                <th>Status</th>
-                                <th>Payment</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <tr>
-                                <td colspan="6" class="loading">
-                                    <div class="spinner"></div>Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="create" class="tab-pane">
-                <h2>Create New Business Application</h2>
-                <p class="form-description">Fill in the details to create a new business application</p>
-
-                <form id="createForm" onsubmit="createApplication(event)">
-                    <div class="section-title">Business Information</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="businessName">Business Name*</label>
-                            <input type="text" id="businessName" name="businessName" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Type of Business *</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship" required> Single Proprietorship</label>
-                            <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
-                            <label><input type="radio" name="typeOfBusiness" value="Corporation"> Corporation</label>
-                        </div>
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="natureOfBusinessSelect">Nature of Business *</label>
-                            <select name="natureOfBusiness" id="natureOfBusinessSelect" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="Manufacturing">Manufacturing</option>
-                                <option value="Retailing">Retailing</option>
-                                <option value="Services">Services</option>
-                                <option value="Rentals">Rentals</option>
-                                <option value="Wholesale/Repacking">Wholesale/Repacking</option>
-                                <option value="Others">Others</option>
-                            </select>
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="natureOfBusinessSpecify">Specify Details</label>
-                            <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="addressOfBusiness">Address of Business *</label>
-                            <input type="text" name="addressOfBusiness" id="addressOfBusiness" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Status of Business Address *</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
-                            <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
-                            <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
-                            <label><input type="radio" name="businessStatus" value="Others"> Others</label>
-                        </div>
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="telephoneNoBusiness">Business Telephone *</label>
-                            <input type="tel" id="telephoneNoBusiness" name="telephoneNoBusiness" required>
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="emailAddress">Email Address *</label>
-                            <input type="email" id="emailAddress" name="emailAddress" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="section-title">Owner Information</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="firstName">Owner First Name *</label>
-                            <input type="text" id="firstName" name="firstName" required>
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="middleName">Owner Middle Name</label>
-                            <input type="text" id="middleName" name="middleName">
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lastName">Owner Last Name *</label>
-                            <input type="text" id="lastName" name="lastName" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="telephoneNoOwner">Owner Telephone *</label>
-                            <input type="tel" id="telephoneNoOwner" name="telephoneNoOwner" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="addressOwner">Owner Address *</label>
-                            <input type="text" id="addressOwner" name="addressOwner" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="section-title">Business Structure</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="typeOfStructureSelect">Structure Type *</label>
-                            <select id="typeOfStructureSelect" name="typeOfStructureSelect" required>
-                                <option value="" disabled selected>Select Structure Type</option>
-                                <option value="Residence">Residence</option>
-                                <option value="Store">Store</option>
-                                <option value="Office">Office</option>
-                                <option value="Warehouse">Warehouse</option>
-                                <option value="Factory">Factory</option>
-                                <option value="Others">Others</option>
-                            </select>
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="typeOfStructureSpecify">Specify Details</label>
-                            <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="noOfEmployees">Number of Employees *</label>
-                            <input type="number" id="noOfEmployees" name="noOfEmployees" min="0" max="99" required>
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="section-title">Requirements (Photocopy Only)</div>
-
-                    <div class="form-group">
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
-                            <label><input type="checkbox" name="requirements" value="DTI"> DTI</label>
-                            <label><input type="checkbox" name="requirements" value="TCT"> TCT</label>
-                            <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
-                            <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
-                        </div>
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="requirementUpload">Attachment/s *</label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Create Application</button>
-                        <button type="reset" class="btn-secondary">Clear Form</button>
-                    </div>
-                </form>
-            </div>
-
-            <div id="process" class="tab-pane">
-                <h2>Process Applications</h2>
-                <p class="form-description">Assess fees, send for payment, or issue final approval.</p>
-
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Business Name</th>
-                                <th>Current Status</th>
-                                <th>Payment Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="processTableBody">
-                            <tr>
-                                <td colspan="5" class="loading">
-                                    <div class="spinner"></div>Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="summary" class="tab-pane">
-                <h2>Generate Summary</h2>
-                <div class="form-group">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
-                </div>
-                <div id="summaryOutput"></div>
-            </div>
-
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Application Details</h2>
-                        <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
-                    </div>
-                    <div id="modalBody"></div>
-                </div>
-            </div>
-
-            <div id="updateModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>⚙️ Update Application Status</h2>
-                        <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
-                    </div>
-                    <form id="updateForm" onsubmit="submitUpdate(event)">
-                        <input type="hidden" id="updateAppId" name="id">
-
-                        <div class="form-group">
-                            <label>Current Status:</label>
-                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="newStatus">New Status *</label>
-                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
-                                <option value="" disabled selected>Select Action...</option>
-                                <option value="Pre-Approved">Pre-Approved</option>
-                                <option value="Additional Requirements">Additional Requirements</option>
-                                <option value="For Payment">For Payment (Assessment)</option>
-                                <option value="Approved">Approved (Final)</option>
-                                <option value="Disapproved">Disapproved</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group hidden" id="amountFieldGroup">
-                            <label for="assessmentAmount">Assessment Amount (PHP) *</label>
-                            <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
-                            <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="updateComments">Remarks / Comments *</label>
-                            <div class="prompt-container">
-                                <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
-                                </div>
-                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="button-group">
-                            <button type="submit" class="btn-primary">💾 Update Status</button>
-                            <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div> -->
+        <div class="charts">
+            <canvas id="businessChart2"></canvas>
         </div>
     </div>
 
@@ -414,29 +27,65 @@
             .then(res => {
                 if (res.status !== 'success') return;
 
-                const labels = res.data.map(x => x.application_date);
-                const values = res.data.map(x => x.total);
+                const labels1 = res.data_by_date.map(x => x.application_date);
+                const values1 = res.data_by_date.map(x => x.total);
 
+                const labels2 = res.data_by_type.map(x => x.type_of_business);
+                const values2 = res.data_by_type.map(x => x.total);
+                
                 // Your fixed colors
-                const backgroundColors = [
-                    '#FF6384', // Example: Red
-                    '#36A2EB', // Example: Blue
-                    '#FFCE56', // Example: Yellow
-                    '#4BC0C0', // Example: Teal
-                    '#9966FF', // Example: Purple
-                    '#FF9F40' // Example: Orange
+                // Will change this later to dynamic colors based on number of business types
+                // - jep
+                const dateColors = [
+                    '#4F46E5',
+                    '#2563EB',
+                    '#0284C7',
+                    '#0891B2',
+                    '#0D9488',
+                    '#14B8A6'
                 ];
 
-                new Chart(document.getElementById('businessChart'), {
+                const typeColors = [
+                    '#F59E0B',
+                    '#F97316',
+                    '#EF4444',
+                    '#8B5CF6',
+                    '#EC4899',
+                    '#84CC16'
+                ];
+
+
+                new Chart(document.getElementById('businessChart1'), {
                     type: 'line',
                     data: {
-                        labels: labels,
+                        labels: labels1,
                         datasets: [{
-                            label: 'Applications per Business Type',
-                            data: values,
-                            backgroundColor: backgroundColors,
+                            label: 'Business Dates',
+                            data: values1,
+                            backgroundColor: dateColors,
                             borderWidth: 1
                         }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                new Chart(document.getElementById('businessChart2'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels2,
+                        datasets: [{
+                            label: 'Business Types',
+                            data: values2,
+                            backgroundColor: typeColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
                     }
                 });
             });

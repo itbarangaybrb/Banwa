@@ -69,248 +69,300 @@ function validation() {
     // ===============================
     // Function: Validate single input
     // ===============================
-    function validateInput(input, message = 'This field is required', rules = {}) {
-        if (!input) return true;
-        const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        const value = input.type === 'checkbox' ? input.checked : input.value.trim();
-
-        if ((input.type === 'checkbox' && !value) ||
-            (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
-            input.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = message;
-            return false;
+    const validator = (() => {
+        function getWrapper(el) {
+            return el.closest('.label-and-input');
         }
 
-        if (rules.pattern && !rules.pattern.test(value)) {
-            input.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = rules.errorMessage || 'Invalid format';
-            return false;
+        function getErrorEl(el) {
+            return getWrapper(el).querySelector('.error-msg');
         }
 
-        if (rules.maxLength && value.length > rules.maxLength) {
-            input.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
-            return false;
-        }
-
-        input.classList.remove('error');
-        errorEl.classList.remove('show');
-        errorEl.textContent = '';
-        return true;
-    }
-
-    // ===========================
-    // Function: Validate checkbox
-    // ===========================
-    function validateCheckboxGroup(checkboxes, message) {
-        const wrapper = checkboxes[0].closest('.label-and-input');
-
-        if (wrapper.style.display === 'none') return true;
-
-        const errorEl = wrapper.querySelector('.error-msg');
-        if (!Array.from(checkboxes).some(c => c.checked)) {
+        function showError(el, message) {
+            const errorEl = getErrorEl(el);
+            el.classList.add('error');
             errorEl.textContent = message;
             errorEl.classList.add('show');
-            return false;
-        }
-        errorEl.textContent = '';
-        errorEl.classList.remove('show');
-        return true;
-    }
-
-    // ========================
-    // Function: Validate radio
-    // ========================
-    function validateRadioGroup(radios, message) {
-        const wrapper = radios[0].closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        if (!Array.from(radios).some(r => r.checked)) {
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            return false;
-        }
-        errorEl.textContent = '';
-        errorEl.classList.remove('show');
-        return true;
-    }
-
-    // ===========================
-    // Function: Validate address
-    // ===========================
-    function validateAddress(lotInput, streetInput) {
-        const lotWrapper = lotInput.closest('.label-and-input');
-        const streetWrapper = streetInput.closest('.label-and-input');
-
-        const lotError = lotWrapper.querySelector('.error-msg');
-        const streetError = streetWrapper.querySelector('.error-msg');
-
-        const lot = lotInput.value.trim();
-        const street = streetInput.value.trim();
-
-        // reset errors
-        [lotInput, streetInput].forEach(i => i.classList.remove('error'));
-        [lotError, streetError].forEach(e => {
-            e.textContent = '';
-            e.classList.remove('show');
-        });
-
-        if (lot === '') {
-            lotInput.classList.add('error');
-            lotError.textContent = 'Lot no. is required';
-            lotError.classList.add('show');
-            return false;
         }
 
-        if (street === '' || street === 'select') {
-            return true; // skip validation if street not selected
+        function clearError(el) {
+            const errorEl = getErrorEl(el);
+            el.classList.remove('error');
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
         }
 
-        // validate lot + street combination
-        const fullAddress = `${lot} ${street}`;
-        const match = addressCoordinates.find(entry => entry.address === fullAddress);
+        function validateText(input, message, rules = {}) {
+            if (!input) return true;
 
-        if (!match) {
-            lotInput.classList.add('error');
-            lotError.textContent = 'Street does not exist for this lot';
-            lotError.classList.add('show');
-            return false;
+            let value = input.value.trim();
+
+            if (rules.normalizeSpaces) {
+                value = value.replace(/\s+/g, ' ').trim();
+            }
+
+            if (value === '' || value === 'select') {
+                showError(input, message);
+                return false;
+            }
+
+            if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters with single spaces are allowed');
+                return false;
+            }
+
+            if (rules.pattern && !rules.pattern.test(value)) {
+                showError(input, rules.errorMessage || message);
+                return false;
+            }
+
+            if (rules.minLength && value.length < rules.minLength) {
+                showError(input, rules.errorMessage || message);
+                return false;
+            }
+
+            if (rules.maxLength && value.length > rules.maxLength) {
+                showError(input, rules.errorMessage || message);
+                return false;
+            }
+
+            clearError(input);
+            return true;
         }
 
-        // If matched, fill coordinates automatically
-        const latInput = document.getElementById('latitude2');
-        const lngInput = document.getElementById('longitude2');
-        if (latInput && lngInput) {
-            latInput.value = match.lat.toFixed(6);
-            lngInput.value = match.lng.toFixed(6);
+        function validateSelect(input, message) {
+            if (!input) return true;
+
+            let value = input.value.trim();
+
+            if (value === '' || value === 'select') {
+                showError(input, message);
+                return false;
+            }
+
+            clearError(input);
+            return true;
         }
 
-        return true;
-    }
+
+        function validateNumber(input, message, rules = {}) {
+            if (!input) return true;
+
+            // Remove any non-digit characters immediately
+            input.value = input.value.replace(/\D/g, '');
+
+            const value = input.value.trim();
+
+            if (value === '') {
+                showError(input, message);
+                return false;
+            }
+
+            // Minimum length check (e.g., 7 for landline)
+            if (rules.minLength && value.length < rules.minLength) {
+                showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`);
+                return false;
+            }
+
+            // Maximum length check (e.g., 11 for mobile)
+            if (rules.maxLength && value.length > rules.maxLength) {
+                showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`);
+                return false;
+            }
+
+            clearError(input);
+            return true;
+        }
+
+
+        function validateCheckbox(input, message) {
+            if (!input.checked) {
+                showError(input, message);
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
+
+        function validateCheckboxGroup(checkboxes, message) {
+            const wrapper = checkboxes[0].closest('.label-and-input');
+            if (wrapper.style.display === 'none') return true;
+
+            if (!Array.from(checkboxes).some(c => c.checked)) {
+                showError(checkboxes[0], message);
+                return false;
+            }
+
+            clearError(checkboxes[0]);
+            return true;
+        }
+
+        function validateRadioGroup(radios, message) {
+            if (!Array.from(radios).some(r => r.checked)) {
+                showError(radios[0], message);
+                return false;
+            }
+
+            clearError(radios[0]);
+            return true;
+        }
+
+        function validateAddress(lotInput, streetInput) {
+            const lot = lotInput.value.trim();
+            const street = streetInput.value.trim();
+
+            if (!lot) {
+                validator.number(lotInput, 'Lot no. is required');
+                return false;
+            }
+
+            if (!street || street === 'select') {
+                validator.select(streetInput, 'Street is required');
+                return false;
+            }
+
+            const fullAddress = `${lot} ${street}`;
+            const match = addressCoordinates.find(a => a.address === fullAddress);
+
+            if (!match) {
+                // Show error directly instead of using validator.select
+                const wrapper = streetInput.closest('.label-and-input');
+                const errorEl = wrapper.querySelector('.error-msg');
+                streetInput.classList.add('error');
+                errorEl.textContent = 'Street does not exist for this lot';
+                errorEl.classList.add('show');
+                return false;
+            }
+
+            // Clear error if valid
+            validator.clear(streetInput);
+
+            // Fill coordinates
+            const lat = document.getElementById('latitude2');
+            const lng = document.getElementById('longitude2');
+            if (lat && lng) {
+                lat.value = match.lat.toFixed(6);
+                lng.value = match.lng.toFixed(6);
+            }
+
+            return true;
+        }
+
+
+        return {
+            text: validateText,
+            select: validateSelect,
+            number: validateNumber,
+            checkbox: validateCheckbox,
+            checkboxGroup: validateCheckboxGroup,
+            radioGroup: validateRadioGroup,
+            address: validateAddress,
+            clear: clearError
+        };
+
+    })();
 
     // ==============================
     // Function: Real-time validation
     // ==============================
-    // TODO: FOR JEFERSON
-    // change the input into ( change or  blur).
     (() => {
-        const inputs = [
-            natureOfApplication, businessName, natureOfBusinessSelect, natureOfBusinessSpecify,
-            contactNoBusiness, emailAddress, firstName, lastName,
-            contactNoOwner, typeOfStructureSelect, typeOfStructureSpecify, noOfEmployees,
-            requirementUpload, lotNo, businessLotNo, street, businessStreet
+        // Configuration object for all inputs
+        const validationConfig = [
+            { el: firstName, type: 'text', message: 'First name is required', rules: { normalizeSpaces: true, lettersOnly: true } },
+            { el: lastName, type: 'text', message: 'Last name is required', rules: { normalizeSpaces: true, lettersOnly: true } },
+            { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, errorMessage: 'Contact no. must be exactly 11 digits', minLength: 7, maxLength: 11 } },
+            { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+            { el: street, type: 'select', message: 'Street is required' },
+            { el: businessName, type: 'text', message: 'Business Name is required' },
+            { el: natureOfBusinessSelect, type: 'text', message: 'Nature of business is required' },
+            { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
+            { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
+            { el: businessStatus, type: 'radio', message: 'Please select business status' },
+            { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, errorMessage: 'Contact no. must be exactly 11 digits', minLength: 7, maxLength: 11 } },
+            { el: emailAddress, type: 'text', message: 'Email is required', rules: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: 'Please enter a valid email address' } },
+            { el: noOfEmployees, type: 'text', message: 'No. of employees is required', rules: { pattern: /^[0-9]{1,2}$/, errorMessage: 'Number of employees must be 1 or 2 digits' } },
+            { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+            { el: businessStreet, type: 'select', message: 'Street is required' },
+            { el: typeOfStructureSelect, type: 'text', message: 'Type of structure is required' },
+            { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
+            { el: natureOfApplication, type: 'text', message: 'Nature of application is required' },
+            { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+            { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
+            { el: requirementUpload, type: 'text', message: 'Please upload a document' }
         ];
 
-        inputs.forEach(input => {
-            if (!input) return;
-            const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
-            input.addEventListener(eventType, () => validateInput(input));
-        });
+        // Generic handler to attach listeners
+        validationConfig.forEach(config => {
+            const { el, type, message, rules } = config;
+            if (!el) return;
 
-        emailAddress.addEventListener('input', () => {
-            validateInput(emailAddress, 'Email is required', {
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                errorMessage: 'Please enter a valid email address'
+            const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+
+            targets.forEach(target => {
+                target.addEventListener('blur', () => {
+                    switch (type) {
+                        case 'number':
+                            validator.number(target, message, rules);
+                            break;
+
+                        case 'text':
+                            validator.text(target, message, rules);
+                            break;
+
+                        case 'checkbox':
+                            validator.checkbox(target, message);
+                            break;
+
+                        case 'checkboxGroup':
+                            validator.checkboxGroup(el, message);
+                            break;
+
+                        case 'radio':
+                            validator.radioGroup(el, message);
+                            break;
+
+                        case 'select':
+                            validator.select(target, message);
+                            break;
+                    }
+                });
+
+                target.addEventListener('input', () => validator.clear(target));
             });
         });
 
-        const lots = [
-            { lot: lotNo, street: street },
-            { lot: businessLotNo, street: businessStreet }
-        ];
-
-        lots.forEach(({ lot, street }) => {
-
-            lot.addEventListener('input', () => {
-                const wrapper = lot.closest('.label-and-input');
-                const errorEl = wrapper.querySelector('.error-msg');
-
-                lot.value = lot.value.replace(/[^0-9]/g, '');
-
-                if (lot.value.trim() === '') {
-                    lot.classList.add('error');
-                    errorEl.textContent = 'Lot no. is required';
-                    errorEl.classList.add('show');
-                } else {
-                    lot.classList.remove('error');
-                    errorEl.textContent = '';
-                    errorEl.classList.remove('show');
+        // Trigger address validation when lotNo or street changes
+        [lotNo, street].forEach(el => {
+            el.addEventListener('blur', () => {
+                const lotVal = lotNo.value.trim();
+                const streetVal = street.value.trim();
+                if (lotVal && streetVal) {
+                    validator.address(lotNo, street);
                 }
             });
 
-            // revalidate address when lot or street changes
-            lot.addEventListener('input', () => validateAddress(lot, street));
-            street.addEventListener('change', () => validateAddress(lot, street));
+            el.addEventListener('input', () => validator.clear(el));
         });
 
+        [businessLotNo, businessStreet].forEach(el => {
+            el.addEventListener('blur', () => {
+                const lotVal = businessLotNo.value.trim();
+                const streetVal = businessStreet.value.trim();
+                if (lotVal && streetVal) {
+                    validator.address(businessLotNo, businessStreet);
+                }
+            });
 
-
-        contactNoBusiness.addEventListener('input', () => {
-            const wrapper = contactNoBusiness.closest('.label-and-input');
-            const errorEl = wrapper.querySelector('.error-msg');
-            contactNoBusiness.value = contactNoBusiness.value.replace(/[^0-9]/g, '');
-            if (contactNoBusiness.value === '') {
-                contactNoBusiness.classList.add('error');
-                errorEl.classList.add('show');
-                errorEl.textContent = 'Contact number is required';
-            } else if (contactNoBusiness.value.length !== 11) {
-                contactNoBusiness.classList.add('error');
-                errorEl.classList.add('show');
-                errorEl.textContent = 'Contact number must be exactly 11 digits';
-            } else {
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            }
+            el.addEventListener('input', () => validator.clear(el));
         });
 
-        contactNoOwner.addEventListener('input', () => {
-            const wrapper = contactNoOwner.closest('.label-and-input');
-            const errorEl = wrapper.querySelector('.error-msg');
-            contactNoOwner.value = contactNoOwner.value.replace(/[^0-9]/g, '');
-            if (contactNoOwner.value === '') {
-                errorEl.classList.add('show');
-                contactNoOwner.classList.add('error');
-                errorEl.textContent = 'Contact no. is required';
-            } else if (contactNoOwner.value.length !== 11) {
-                errorEl.classList.add('show');
-                contactNoOwner.classList.add('error');
-                errorEl.textContent = 'Contact no. must be exactly 11 digits';
-            } else {
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            }
+        [contactNoOwner, contactNoBusiness].forEach(el => {
+            el.addEventListener('input', () => {
+                el.value = el.value.replace(/\D/g, '');
+                validator.clear(el);
+            });
         });
 
-        noOfEmployees.addEventListener('input', () => {
-            const wrapper = noOfEmployees.closest('.label-and-input');
-            const errorEl = wrapper.querySelector('.error-msg');
-            noOfEmployees.value = noOfEmployees.value.replace(/[^0-9]/g, '');
-            if (noOfEmployees.value === '') {
-                errorEl.classList.add('show');
-                noOfEmployees.classList.add('error');
-                errorEl.textContent = 'No. of employees is required';
-            } else {
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            }
-        });
-
-        Array.from(typeOfBusiness).forEach(radio => {
-            radio.addEventListener('change', () => validateRadioGroup(typeOfBusiness, 'Please select a type of business'));
-        });
-
-        Array.from(businessStatus).forEach(radio => {
-            radio.addEventListener('change', () => validateRadioGroup(businessStatus, 'Please select business status'));
-        });
-
-        Array.from(requirements).forEach(checkbox => {
-            checkbox.addEventListener('change', () => validateCheckboxGroup(requirements, 'Please select at least one requirement'));
-        });
-
-        agreeCheckBox.addEventListener('change', () => validateInput(agreeCheckBox));
     })();
 
     // =========================
@@ -338,26 +390,18 @@ function validation() {
     // =========================
     document.getElementById('nextToBusiness').addEventListener('click', () => {
         const validations = [
-            validateInput(firstName, 'First name is required', {
+            validator.text(firstName, 'First name is required', {
                 pattern: /^[a-zA-Z\s]+$/,
-                errorMessage: 'First name must only contain letters and spaces'
+                errorMessage: 'First name must only contain letters'
             }),
-            validateInput(lastName, 'Last name is required', {
+            validator.text(lastName, 'Last name is required', {
                 pattern: /^[a-zA-Z\s]+$/,
-                errorMessage: 'Last name must only contain letters and spaces'
+                errorMessage: 'Last name must only contain letters'
             }),
-            validateInput(contactNoOwner, 'Contact no. is required', {
-                pattern: /^[0-9]+$/,
-                maxLength: 11,
-                errorMessage: 'Contact no. must be numeric, max 11 digits'
-            }),
-            validateInput(lotNo, 'Lot no. is required', {
-                pattern: /^[0-9]+$/,
-                maxLength: 2,
-                errorMessage: 'Lot no. must be numeric, max 2 digits'
-            }),
-            validateInput(street, 'Street is required'),
-            validateAddress(lotNo, street)
+            validator.number(contactNoOwner, 'Contact no. is required', { minLength: 7, maxLength: 11 }),
+            validator.number(lotNo, 'Lot no. is required', { maxLength: 2 }),
+            validator.select(street, 'Street is required'),
+            validator.address(lotNo, street)
         ];
 
         if (validations.every(v => v)) {
@@ -371,41 +415,37 @@ function validation() {
     // ============================
     document.getElementById('nextToWaiver').addEventListener('click', () => {
         const validations = [
-            validateInput(businessName, 'Business Name is required'),
-            validateRadioGroup(typeOfBusiness, 'Please select a type of business'),
-            validateInput(natureOfBusinessSelect, 'Nature of business is required'),
+            validator.text(businessName, 'Business Name is required'),
+            validator.radioGroup(typeOfBusiness, 'Please select a type of business'),
+            validator.text(natureOfBusinessSelect, 'Nature of business is required'),
             natureOfBusinessSelect.value === 'Others'
-                ? validateInput(natureOfBusinessSpecify, 'Please specify the business details')
+                ? validator.text(natureOfBusinessSpecify, 'Please specify the business details')
                 : true,
-            validateRadioGroup(businessStatus, 'Please select business status'),
-            validateInput(contactNoBusiness, 'Contact no. is required', {
-                pattern: /^[0-9]+$/,
-                maxLength: 11,
-                errorMessage: 'Contact no. must be numeric, max 11 digits'
-            }),
-            validateInput(emailAddress, 'Email is required', {
+            validator.radioGroup(businessStatus, 'Please select business status'),
+            validator.number(contactNoBusiness, 'Contact no. is required', { minLength: 7, maxLength: 11 }),
+            validator.text(emailAddress, 'Email is required', {
                 pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                 errorMessage: 'Please enter a valid email address'
             }),
-            validateCheckboxGroup(requirements, 'Please select at least one requirement'),
-            validateInput(requirementUpload, 'Please upload a document'),
-            validateInput(noOfEmployees, 'Number of employees is required', {
-                pattern: /^[0-9]{1,2}$/,
-                errorMessage: 'Number of employees must be 1 or 2 digits'
-            }),
-            validateInput(businessLotNo, 'Lot no. is required', {
+            validator.checkboxGroup(requirements, 'Please select at least one requirement'),
+            validator.text(requirementUpload, 'Please upload a document'),
+            validator.number(noOfEmployees, 'Number of employees is required', { minLength: 1, maxLength: 30 }),
+            validator.number(businessLotNo, 'Lot no. is required', {
                 pattern: /^[0-9]+$/,
                 maxLength: 2,
                 errorMessage: 'Lot no. must be numeric, max 2 digits'
             }),
-            validateInput(natureOfApplication, 'Nature of application is required'),
-            validateInput(businessStreet, 'Street is required'),
-            validateInput(typeOfStructureSelect, 'Type of structure is required'),
+            validator.text(natureOfApplication, 'Nature of application is required'),
+            validator.text(businessStreet, 'Street is required'),
+            validator.text(typeOfStructureSelect, 'Type of structure is required'),
             typeOfStructureSelect.value === 'Others'
-                ? validateInput(typeOfStructureSpecify, 'Please specify the business details')
+                ? validator.text(typeOfStructureSpecify, 'Please specify the business details')
                 : true,
-            validateAddress(businessLotNo, businessStreet),
+            validator.number(businessLotNo, 'Lot no. is required', { maxLength: 2 }),
+            validator.select(businessStreet, 'Street is required'),
+            validator.address(businessLotNo, businessStreet)
         ];
+
 
         if (validations.every(v => v)) {
             document.getElementById('waiverFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`;
@@ -419,7 +459,7 @@ function validation() {
     document.getElementById('nextToSummary').addEventListener('click', () => {
         const lat = document.getElementById('latitude2').value;
         const lng = document.getElementById('longitude2').value;
-        const isValid = validateInput(agreeCheckBox, 'You must agree to proceed');
+        const isValid = validator.checkbox(agreeCheckBox, 'You must agree to proceed');
 
         if (isValid) {
             document.getElementById('sumBusinessName').textContent = businessName.value;

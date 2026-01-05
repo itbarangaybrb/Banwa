@@ -387,18 +387,31 @@ function handleUpdateApplication($pdo)
 
 function handleChartBusinessType($pdo)
 {
-    $sql = "
+    // Data by Application Date
+    $sql1 = "
         SELECT application_date, COUNT(*) AS total
         FROM business_applications
         GROUP BY application_date
         ORDER BY application_date ASC
     ";
 
-    $stmt = $pdo->query($sql);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt1 = $pdo->query($sql1);
+    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    // Data by Application Type of Business
+    $sql2 = "
+        SELECT type_of_business, COUNT(*) AS total
+        FROM business_applications
+        GROUP BY type_of_business
+        ORDER BY type_of_business ASC
+    ";
+
+    $stmt2 = $pdo->query($sql2);
+    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         "status" => "success",
-        "data" => $data
+        "data_by_date" => $dataByDate,
+        "data_by_type" => $dataByType
     ]);
 }
