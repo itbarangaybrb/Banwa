@@ -69,7 +69,7 @@
                             <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="firstName">First name *</label>
-                                    <input id="firstName" name="firstName" type="text" required>
+                                    <input id="firstName" name="firstName" type="text">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -79,7 +79,7 @@
                                 </div>
                                 <div class="label-and-input">
                                     <label for="lastName">Last name *</label>
-                                    <input id="lastName" name="lastName" type="text" required>
+                                    <input id="lastName" name="lastName" type="text">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -89,7 +89,7 @@
                                 </div>
                                 <div class="label-and-input">
                                     <label for="sex">Sex *</label>
-                                    <select id="sex" name="sex" required>
+                                    <select id="sex" name="sex">
                                         <option value="">Select</option>
                                         <option value="female">Female</option>
                                         <option value="male">Male</option>
@@ -99,7 +99,7 @@
                                 </div>
                                 <div class="label-and-input">
                                     <label for="contactNo">Contact no. *</label>
-                                    <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
+                                    <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}">
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -147,7 +147,7 @@
                                         Upload ID File * <br>
                                         <i>(Accepted formats: .jpeg, .png, .pdf)</i>
                                     </label>
-                                    <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" required />
+                                    <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" />
                                     <div class="error-msg"></div>
                                 </div>
                             </div>
@@ -169,22 +169,22 @@
                             <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="createAccEmail">Email *</label>
-                                    <input type="email" name="createAccEmail" id="createAccEmail" required />
+                                    <input type="email" name="createAccEmail" id="createAccEmail" />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label for="password">Password *</label>
-                                    <input type="password" name="password" id="password" autocomplete="false" required />
+                                    <input type="password" name="password" id="password" autocomplete="false" />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label for="reTypePassword">Re-type password *</label>
-                                    <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" required />
+                                    <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label>
-                                        <input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
+                                        <input type="checkbox" id="agreeCheckBox"> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
                                     </label>
                                     <div class="error-msg"></div>
                                 </div>

@@ -25,7 +25,7 @@
 </html> -->
 
 <?php 
-    require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+    require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 ?>
 
 <!DOCTYPE html>

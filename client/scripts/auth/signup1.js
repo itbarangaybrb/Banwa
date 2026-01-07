@@ -1,7 +1,7 @@
 import supabase from "../../../server/api/supabase.js";
 
 // =========================
-// Switch panel utility
+// Panel Utility
 // =========================
 function switchPanel(panelId) {
     const panels = ['personalDetails', 'selectId', 'createAcc']
@@ -9,257 +9,291 @@ function switchPanel(panelId) {
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
 }
 
-function validation() {
-    // =========================
-    // Form elements
-    // =========================
-    const idType = document.getElementById('idType');
-    const idFile = document.getElementById('idFile');
+// =========================
+// Form Elements
+// =========================
+const formElements = {
+    idType: document.getElementById('idType'),
+    idFile: document.getElementById('idFile'),
+    firstName: document.getElementById('firstName'),
+    middleName: document.getElementById('middleName'),
+    lastName: document.getElementById('lastName'),
+    suffix: document.getElementById('suffix'),
+    sex: document.getElementById('sex'),
+    contactNo: document.getElementById('contactNo'),
+    address: document.getElementById('address'),
+    email: document.getElementById('createAccEmail'),
+    password: document.getElementById('password'),
+    reTypePassword: document.getElementById('reTypePassword'),
+    agreeCheckBox: document.getElementById('agreeCheckBox'),
+    formMessage: document.getElementById('formMessage'),
+    resendBtn: document.getElementById('resendEmailBtn'),
+    createAccForm: document.getElementById('createAccForm')
+};
 
-    const firstName = document.getElementById('firstName');
-    const middleName = document.getElementById('middleName');
-    const lastName = document.getElementById('lastName');
-    const suffix = document.getElementById('suffix');
-    const sex = document.getElementById('sex');
-    const contactNo = document.getElementById('contactNo');
-    const address = document.getElementById('address');
+switchPanel('personalDetails');
 
-    const email = document.getElementById('createAccEmail');
-    const password = document.getElementById('password');
-    const reTypePassword = document.getElementById('reTypePassword');
-    const agreeCheckBox = document.getElementById('agreeCheckBox');
-
-    // Show first panel
-    switchPanel('personalDetails');
-
-    // =========================
-    // Validation inputs (text, select, checkbox, textarea)
-    // =========================
-    function validateInput(input, message) {
-        const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg');
-        if (!errorEl) return true;
-        const valueRaw = input.type === 'checkbox' ? input.checked : (input.value ?? '');
-        const value = (typeof valueRaw === 'string') ? valueRaw.trim() : valueRaw;
-
-        const setError = (msg) => {
-            input.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = msg;
-        };
-
-        const clearError = () => {
-            input.classList.remove('error');
-            errorEl.classList.remove('show');
-            errorEl.textContent = '';
-        };
-
-        // Field-specific validations
-        if (input === password) {
-            const val = value;
-            if (!val) {
-                setError('Password is required');
-                return false;
-            }
-            if (val.length < 8 || val.length > 16) {
-                setError('Password should be 8-16 characters long');
-                return false;
-            }
-            if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) {
-                setError('Password must contain letters and numbers');
-                return false;
-            }
-            clearError();
-            return true;
-        }
-
-        if (input === reTypePassword) {
-            const val = value;
-            if (!val) {
-                setError('Please re-type your password');
-                return false;
-            }
-            if (val !== (password.value || '').trim()) {
-                setError('Passwords do not match');
-                return false;
-            }
-            clearError();
-            return true;
-        }
-
-        if (input === contactNo) {
-            const digits = (input.value || '').replace(/\D/g, '');
-            input.value = digits;
-            if (!digits) {
-                setError('Phone number is required');
-                return false;
-            }
-            if (digits.length !== 11) {
-                setError('Phone number must be 11 digits');
-                return false;
-            }
-            clearError();
-            return true;
-        }
-
-        if (input === email) {
-            const val = value;
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!val) {
-                setError('Email is required');
-                return false;
-            }
-            if (!emailPattern.test(val)) {
-                setError('Enter a valid email address');
-                return false;
-            }
-            clearError();
-            return true;
-        }
-
-        // Generic validations
-        if ((input.type === 'checkbox' && !value) || (!['checkbox', 'file'].includes(input.type) && (value === '' || value === 'select'))) {
-            setError(message);
-            return false;
-        }
-
-        if (input.type === 'file') {
-            if (!input.files || input.files.length === 0) {
-                setError(message);
-                return false;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-            for (let file of input.files) {
-                if (!allowedTypes.includes(file.type)) {
-                    setError('Invalid file type. Only JPG, PNG, PDF allowed');
-                    return false;
-                }
-            }
-        }
-
-        clearError();
-        return true;
+// =========================
+// Validator Module
+// =========================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    }
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
     }
 
-    // =========================
-    // Attach events (refactored)
-    // =========================
-    (() => {
-        const inputs = [firstName, lastName, sex, address, agreeCheckBox, idType, idFile, password, reTypePassword, contactNo, email];
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+        clearError(input); return true;
+    }
 
-        const getErrorHandlers = (input) => {
-            const wrapper = input.closest('.label-and-input');
-            const errorEl = wrapper?.querySelector('.error-msg');
-            if (!errorEl) return null;
+    function validatePassword(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (value.length < 8 || value.length > 16) { showError(input, 'Password should be 8-16 characters long'); return false; }
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must contain letters and numbers'); return false; }
+        clearError(input); return true;
+    }
 
-            const clearError = () => {
-                input.classList.remove('error');
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            };
+    function validatePasswordMatches(passwordInput, reTypeInput) {
+        const password = passwordInput.value.trim();
+        const reType = reTypeInput.value.trim();
+        if (!reType) { showError(reTypeInput, 'Please re-type your password'); return false; }
+        if (password !== reType) { showError(reTypeInput, 'Passwords do not match'); return false; }
+        clearError(reTypeInput); return true;
+    }
 
-            return { clearError };
-        };
+    function validateEmail(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
+        clearError(input); return true;
+    }
 
-        inputs.forEach(input => {
-            if (!input) return;
-            const handlers = getErrorHandlers(input);
-            if (!handlers) return;
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
 
-            input.addEventListener('input', () => {
-                if (input === contactNo) input.value = input.value.replace(/\D/g, '');
-                handlers.clearError();
-            });
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+        clearError(input); return true;
+    }
 
-            input.addEventListener('blur', () => validateInput(input, 'This field is required'));
+    function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
+
+    function validateFile(input, message, options = {}) {
+        if (!input || input.files.length === 0) { showError(input, message); return false; }
+        const file = input.files[0];
+        if (options.accept?.length > 0) {
+            const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
+            if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
+        }
+        if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
+        clearError(input); return true;
+    }
+
+    return {
+        text: validateText,
+        password: validatePassword,
+        matchPassword: validatePasswordMatches,
+        email: validateEmail,
+        file: validateFile,
+        select: validateSelect,
+        number: validateNumber,
+        checkbox: validateCheckbox,
+        clear: clearError
+    };
+})();
+
+// =========================
+// Validation Config
+// =========================
+const validationConfig = [
+    { el: formElements.firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: formElements.lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: formElements.sex, type: 'select', message: 'Please select sex' },
+    { el: formElements.contactNo, type: 'number', message: 'Contact no. is required', rules: { minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: formElements.email, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
+    { el: formElements.address, type: 'text', message: 'Address is required' },
+    { el: formElements.agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+    { el: formElements.idType, type: 'select', message: 'Please select type of ID' },
+    { el: formElements.idFile, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
+    { el: formElements.password, type: 'password', message: 'Please enter a password' },
+    { el: formElements.reTypePassword, type: 'password', message: 'Please re-type your password' }
+];
+
+// =========================
+// Validate Field Helper
+// =========================
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'email': return validator.email(el, message, rules);
+        case 'file': return validator.file(el, message, rules);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'radio': return validator.radioGroup(el, message);
+        case 'select': return validator.select(el, message);
+        case 'password': return validator.password(el, message);
+    }
+}
+
+// =========================
+// Real-time Validation
+// =========================
+function setupRealtimeValidation() {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
+        if (!el) return;
+        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
         });
-    })();
-
-
-
-    // =========================
-    // Navigation buttons
-    // =========================
-    document.getElementById('personalDetailsBackBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
     });
+
+    formElements.reTypePassword.addEventListener('blur', () => validator.matchPassword(formElements.password, formElements.reTypePassword));
+    formElements.reTypePassword.addEventListener('input', () => validator.clear(formElements.reTypePassword));
+    formElements.contactNo.addEventListener('input', () => {
+        formElements.contactNo.value = formElements.contactNo.value.replace(/\D/g, '');
+        validator.clear(formElements.contactNo);
+    });
+}
+
+// =========================
+// Step Validation
+// =========================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+// =========================
+// Navigation Buttons
+// =========================
+function setupNavigationButtons() {
+    document.getElementById('personalDetailsBackBtn').addEventListener('click', e => { e.preventDefault(); window.location.href = '/Banwa/client/pages/auth/signin.php'; });
     document.getElementById('selectIdBackBtn').addEventListener('click', () => switchPanel('personalDetails'));
     document.getElementById('createAccBackBtn').addEventListener('click', () => switchPanel('selectId'));
 
-    // =========================
-    // Personal Details 'Next' Button
-    // =========================
-    document.getElementById('personalDetailsNextBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-        const validations = [
-            validateInput(firstName, 'First name is required'),
-            validateInput(lastName, 'Last name is required'),
-            validateInput(sex, 'Sex is required'),
-            validateInput(contactNo, 'Phone number is required'),
-            validateInput(address, 'Address is required')
-        ];
-
-        if (validations.every(v => v)) switchPanel('selectId');
+    document.getElementById('personalDetailsNextBtn').addEventListener('click', () => {
+        const stepFields = [formElements.firstName, formElements.lastName, formElements.sex, formElements.contactNo, formElements.address];
+        if (validateStep(stepFields)) switchPanel('selectId');
     });
 
-    // =========================
-    // Select ID 'Next' Button
-    // =========================
     document.getElementById('selectIdNextBtn').addEventListener('click', () => {
-        const validations = [
-            validateInput(idType, 'Please select a type of ID'),
-            validateInput(idFile, 'Please upload your ID file')
-        ];
-        // const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
-        // const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
-
-        if (validations.every(v => v)) switchPanel('createAcc');
+        const stepFields = [formElements.idType, formElements.idFile];
+        if (validateStep(stepFields)) switchPanel('createAcc');
     });
+}
 
+// =========================
+// Account Submission
+// =========================
+let allData = null;
+let resendCount = 0;
+const MAX_RESENDS = 3;
 
-    // =========================
-    // Create Account 'Submit' Button
-    // =========================
-    const formMessage = document.getElementById('formMessage');
-    formMessage.style.display = 'none';
-    const resendBtn = document.getElementById('resendEmailBtn');
-    let allData = null;
+function startResendCooldown() {
+    const submitBtn = document.getElementById('createAccSubmitBtn');
+    if (submitBtn) submitBtn.style.display = 'none';
+    const btn = formElements.resendBtn;
+    btn.disabled = true;
+    let countdown = 90;
+    btn.textContent = `Resend available in ${countdown}s`;
+    const interval = setInterval(() => {
+        countdown--;
+        btn.textContent = `Resend available in ${countdown}s`;
+        if (countdown <= 0) {
+            clearInterval(interval);
+            if (resendCount < MAX_RESENDS) { btn.disabled = false; btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`; }
+            else btn.remove();
+        }
+    }, 1000);
+}
 
-    document.getElementById('createAccForm').addEventListener('submit', async (e) => {
+async function resendVerificationEmail() {
+    if (!allData || resendCount >= MAX_RESENDS) return;
+    formElements.resendBtn.disabled = true;
+    const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: allData.email,
+        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+    });
+    if (error) {
+        formElements.formMessage.style.color = 'red';
+        formElements.formMessage.textContent = 'Failed to resend verification email. Please try again later.';
+        formElements.resendBtn.disabled = false;
+        return;
+    }
+    resendCount++;
+    formElements.formMessage.style.color = 'green';
+    formElements.formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
+    startResendCooldown();
+}
+
+formElements.resendBtn.addEventListener('click', resendVerificationEmail);
+
+function setupAccountSubmission() {
+    formElements.formMessage.style.display = 'none';
+    formElements.createAccForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        formMessage.textContent = '';
-
-        const validations = [
-            validateInput(password, 'Password is required'),
-            validateInput(reTypePassword, 'Please re-type your password'),
-            validateInput(email, 'Email is required'),
-            validateInput(agreeCheckBox, 'You must agree with the terms')
-        ];
-
-
-        if (!validations.every(v => v)) return;
+        formElements.formMessage.textContent = '';
+        const stepFields = [formElements.password, formElements.reTypePassword, formElements.email, formElements.agreeCheckBox];
+        if (!validateStep(stepFields)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
         allData = {
-            fullname: `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim(),
-            sex: sex.value,
-            contactNo: contactNo.value,
-            address: address.value,
-            idType: idType.value,
-            email: email.value,
-            password: password.value,
-            agreeCheckBox: agreeCheckBox.checked
+            fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
+            sex: formElements.sex.value,
+            contactNo: formElements.contactNo.value,
+            address: formElements.address.value,
+            idType: formElements.idType.value,
+            email: formElements.email.value,
+            password: formElements.password.value,
+            agreeCheckBox: formElements.agreeCheckBox.checked
         };
 
         try {
-            const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
+            const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: allData.email })
+            });
             const dbCheck = await respCheck.json();
-
             if (dbCheck.exists) {
-                formMessage.style.display = 'block';
-                formMessage.style.color = 'red';
-                formMessage.textContent = 'An account with this email already exists.';
+                formElements.formMessage.style.display = 'block';
+                formElements.formMessage.style.color = 'red';
+                formElements.formMessage.textContent = 'An account with this email already exists.';
                 return;
             }
 
@@ -275,93 +309,45 @@ function validation() {
             if (error) {
                 const msg = (error.message || '').toLowerCase();
                 if (msg.includes('already') || msg.includes('registered') || error.status === 400) {
-                    formMessage.style.display = 'block';
-                    formMessage.style.color = 'red';
-                    formMessage.textContent = 'An account with this email already exists.';
+                    formElements.formMessage.style.display = 'block';
+                    formElements.formMessage.style.color = 'red';
+                    formElements.formMessage.textContent = 'An account with this email already exists.';
                     return;
                 }
                 throw error;
             }
 
-            formMessage.style.display = 'block';
-            formMessage.style.color = 'green';
-            formMessage.innerHTML = `
-            Account created successfully.<br>
-            Please verify your email to activate your account.<br><br>
-            If you don’t receive the email within 1–2 minutes:
-            <br>
-            1. Make sure the email address is correct<br>
-            2. Check your Spam / Promotions folder<br>
-            3. You can resend the verification email<br>
-           
-        `;
+            formElements.formMessage.style.display = 'block';
+            formElements.formMessage.style.color = 'green';
+            formElements.formMessage.innerHTML = `
+                Account created successfully.<br>
+                Please verify your email to activate your account.<br><br>
+                If you don’t receive the email within 1–2 minutes:
+                <br>
+                1. Make sure the email address is correct<br>
+                2. Check your Spam / Promotions folder<br>
+                3. You can resend the verification email
+            `;
 
-            resendBtn.classList.add('show');
+            formElements.resendBtn.classList.add('show');
             startResendCooldown();
 
         } catch (err) {
-            // console.error('Error during signup:', err);
-            formMessage.style.display = 'block';
-            formMessage.style.color = 'red';
-            formMessage.textContent = 'An error occurred. ' + (err.message || err);
+            formElements.formMessage.style.display = 'block';
+            formElements.formMessage.style.color = 'red';
+            formElements.formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
     });
-
-
-    let resendCount = 0;
-    const MAX_RESENDS = 3;
-
-    function startResendCooldown() {
-        const submitBtn = document.getElementById('createAccSubmitBtn');
-        if (submitBtn) submitBtn.style.display = 'none';
-
-        const btn = resendBtn;
-        btn.disabled = true;
-        let countdown = 90;
-        btn.textContent = `Resend available in ${countdown}s`;
-
-        const interval = setInterval(() => {
-            countdown--;
-            btn.textContent = `Resend available in ${countdown}s`;
-            if (countdown <= 0) {
-                clearInterval(interval);
-                if (resendCount < MAX_RESENDS) {
-                    btn.disabled = false;
-                    btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
-                } else {
-                    btn.remove();
-                }
-            }
-        }, 1000);
-    }
-
-    resendBtn.addEventListener('click', async () => {
-        if (!allData || resendCount >= MAX_RESENDS) return;
-
-        resendBtn.disabled = true;
-
-        const { error } = await supabase.auth.resend({
-            type: 'signup',
-            email: allData.email,
-            options: {
-                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
-            }
-        });
-
-        if (error) {
-            formMessage.style.color = 'red';
-            formMessage.textContent = 'Failed to resend verification email. Please try again later.';
-            resendBtn.disabled = false;
-            return;
-        }
-
-        resendCount++;
-        formMessage.style.color = 'green';
-        formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
-
-        startResendCooldown();
-    });
-
 }
 
-validation();
+// =========================
+// Initialize all functionality
+// =========================
+function initialize() {
+    switchPanel('personalDetails');
+    setupRealtimeValidation();
+    setupNavigationButtons();
+    setupAccountSubmission();
+}
+
+document.addEventListener('DOMContentLoaded', initialize);

@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 console.error("Supabase sign-out error:", error.message);
             }
 
-            await fetch('/Banwa/server/api/resident/signout_user.php', {
+            await fetch('/Banwa/server/api/shared/signout_user.php', {
                 method: 'POST'
             });
 

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 ?>
 

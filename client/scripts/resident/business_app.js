@@ -70,21 +70,14 @@ function validation() {
     // Function: Validate single input
     // ===============================
     const validator = (() => {
-        function getWrapper(el) {
-            return el.closest('.label-and-input');
-        }
-
-        function getErrorEl(el) {
-            return getWrapper(el).querySelector('.error-msg');
-        }
-
+        function getWrapper(el) { return el.closest('.label-and-input'); }
+        function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
         function showError(el, message) {
             const errorEl = getErrorEl(el);
             el.classList.add('error');
             errorEl.textContent = message;
             errorEl.classList.add('show');
         }
-
         function clearError(el) {
             const errorEl = getErrorEl(el);
             el.classList.remove('error');
@@ -94,138 +87,91 @@ function validation() {
 
         function validateText(input, message, rules = {}) {
             if (!input) return true;
-
             let value = input.value.trim();
-
-            if (rules.normalizeSpaces) {
-                value = value.replace(/\s+/g, ' ').trim();
-            }
-
-            if (value === '' || value === 'select') {
-                showError(input, message);
-                return false;
-            }
-
+            if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+            if (value === '' || value === 'select') { showError(input, message); return false; }
             if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-                showError(input, rules.errorMessage || 'Only letters with single spaces are allowed');
-                return false;
+                showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
             }
+            if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+            if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+            clearError(input); return true;
+        }
 
-            if (rules.pattern && !rules.pattern.test(value)) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
+        function validatePassword(input, message) {
+            if (!input) return true;
+            const value = input.value.trim();
+            if (value === '') { showError(input, message); return false; }
+            if (value.length < 8 || value.length > 16) { showError(input, 'Password should be 8-16 characters long'); return false; }
+            if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must contain letters and numbers'); return false; }
+            clearError(input); return true;
+        }
 
-            if (rules.minLength && value.length < rules.minLength) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
+        function validatePasswordMatches(passwordInput, reTypeInput) {
+            const password = passwordInput.value.trim();
+            const reType = reTypeInput.value.trim();
+            if (!reType) { showError(reTypeInput, 'Please re-type your password'); return false; }
+            if (password !== reType) { showError(reTypeInput, 'Passwords do not match'); return false; }
+            clearError(reTypeInput); return true;
+        }
 
-            if (rules.maxLength && value.length > rules.maxLength) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
-
-            clearError(input);
-            return true;
+        function validateEmail(input, message) {
+            if (!input) return true;
+            const value = input.value.trim();
+            if (value === '') { showError(input, message); return false; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
+            clearError(input); return true;
         }
 
         function validateSelect(input, message) {
             if (!input) return true;
-
-            let value = input.value.trim();
-
-            if (value === '' || value === 'select') {
-                showError(input, message);
-                return false;
-            }
-
-            clearError(input);
-            return true;
+            const value = input.value.trim();
+            if (value === '' || value === 'select') { showError(input, message); return false; }
+            clearError(input); return true;
         }
-
 
         function validateNumber(input, message, rules = {}) {
             if (!input) return true;
-
-            // Remove any non-digit characters immediately
-            input.value = input.value.replace(/\D/g, '');
-
             const value = input.value.trim();
-
-            if (value === '') {
-                showError(input, message);
-                return false;
-            }
-
-            // Minimum length check (e.g., 7 for landline)
-            if (rules.minLength && value.length < rules.minLength) {
-                showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`);
-                return false;
-            }
-
-            // Maximum length check (e.g., 11 for mobile)
-            if (rules.maxLength && value.length > rules.maxLength) {
-                showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`);
-                return false;
-            }
-
-            clearError(input);
-            return true;
+            if (value === '') { showError(input, message); return false; }
+            if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+            if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+            if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+            clearError(input); return true;
         }
 
+        function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
 
-        function validateCheckbox(input, message) {
-            if (!input.checked) {
-                showError(input, message);
-                return false;
+        function validateFile(input, message, options = {}) {
+            if (!input || input.files.length === 0) { showError(input, message); return false; }
+            const file = input.files[0];
+            if (options.accept?.length > 0) {
+                const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
+                if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
             }
-            clearError(input);
-            return true;
+            if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
+            clearError(input); return true;
         }
 
         function validateCheckboxGroup(checkboxes, message) {
             const wrapper = checkboxes[0].closest('.label-and-input');
             if (wrapper.style.display === 'none') return true;
-
-            if (!Array.from(checkboxes).some(c => c.checked)) {
-                showError(checkboxes[0], message);
-                return false;
-            }
-
-            clearError(checkboxes[0]);
-            return true;
+            if (!Array.from(checkboxes).some(c => c.checked)) { showError(checkboxes[0], message); return false; }
+            clearError(checkboxes[0]); return true;
         }
 
         function validateRadioGroup(radios, message) {
-            if (!Array.from(radios).some(r => r.checked)) {
-                showError(radios[0], message);
-                return false;
-            }
-
-            clearError(radios[0]);
-            return true;
+            if (!Array.from(radios).some(r => r.checked)) { showError(radios[0], message); return false; }
+            clearError(radios[0]); return true;
         }
 
         function validateAddress(lotInput, streetInput) {
-            const lot = lotInput.value.trim();
-            const street = streetInput.value.trim();
-
-            if (!lot) {
-                validator.number(lotInput, 'Lot no. is required');
-                return false;
-            }
-
-            if (!street || street === 'select') {
-                validator.select(streetInput, 'Street is required');
-                return false;
-            }
-
+            const lot = lotInput.value.trim(), street = streetInput.value.trim();
+            if (!lot) return validator.number(lotInput, 'Lot no. is required');
+            if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
             const fullAddress = `${lot} ${street}`;
             const match = addressCoordinates.find(a => a.address === fullAddress);
-
             if (!match) {
-                // Show error directly instead of using validator.select
                 const wrapper = streetInput.closest('.label-and-input');
                 const errorEl = wrapper.querySelector('.error-msg');
                 streetInput.classList.add('error');
@@ -233,24 +179,17 @@ function validation() {
                 errorEl.classList.add('show');
                 return false;
             }
-
-            // Clear error if valid
-            validator.clear(streetInput);
-
-            // Fill coordinates
+            clearError(streetInput);
             const lat = document.getElementById('latitude2');
             const lng = document.getElementById('longitude2');
-            if (lat && lng) {
-                lat.value = match.lat.toFixed(6);
-                lng.value = match.lng.toFixed(6);
-            }
-
+            if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
             return true;
         }
 
-
         return {
             text: validateText,
+            email: validateEmail,
+            file: validateFile,
             select: validateSelect,
             number: validateNumber,
             checkbox: validateCheckbox,
@@ -259,152 +198,105 @@ function validation() {
             address: validateAddress,
             clear: clearError
         };
-
     })();
 
     // ==============================
-    // Function: Real-time validation
+    // Configuration for all inputs
+    // ==============================
+    const validationConfig = [
+        { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+        { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+        { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+        { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+        { el: street, type: 'select', message: 'Street is required' },
+        { el: businessName, type: 'text', message: 'Business Name is required' },
+        { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
+        { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
+        { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
+        { el: businessStatus, type: 'radio', message: 'Please select business status' },
+        { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+        { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
+        { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
+        { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+        { el: businessStreet, type: 'select', message: 'Street is required' },
+        { el: typeOfStructureSelect, type: 'select', message: 'Type of structure is required' },
+        { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
+        { el: natureOfApplication, type: 'select', message: 'Nature of application is required' },
+        { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+        { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
+        { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } }
+    ];
+
+    // ==============================
+    // Helper: validate a field by config
+    // ==============================
+    function validateField(config) {
+        const { el, type, message, rules } = config;
+        if (!el) return true;
+
+        switch (type) {
+            case 'number': return validator.number(el, message, rules);
+            case 'text': return validator.text(el, message, rules);
+            case 'email': return validator.email(el, message, rules);
+            case 'file': return validator.file(el, message, rules);
+            case 'checkbox': return validator.checkbox(el, message);
+            case 'checkboxGroup': return validator.checkboxGroup(el, message);
+            case 'radio': return validator.radioGroup(el, message);
+            case 'select': return validator.select(el, message);
+        }
+    }
+
+    // ==============================
+    // Real-time validator
     // ==============================
     (() => {
-        // Configuration object for all inputs
-        const validationConfig = [
-            { el: firstName, type: 'text', message: 'First name is required', rules: { normalizeSpaces: true, lettersOnly: true } },
-            { el: lastName, type: 'text', message: 'Last name is required', rules: { normalizeSpaces: true, lettersOnly: true } },
-            { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, errorMessage: 'Contact no. must be exactly 11 digits', minLength: 7, maxLength: 11 } },
-            { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-            { el: street, type: 'select', message: 'Street is required' },
-            { el: businessName, type: 'text', message: 'Business Name is required' },
-            { el: natureOfBusinessSelect, type: 'text', message: 'Nature of business is required' },
-            { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
-            { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
-            { el: businessStatus, type: 'radio', message: 'Please select business status' },
-            { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, errorMessage: 'Contact no. must be exactly 11 digits', minLength: 7, maxLength: 11 } },
-            { el: emailAddress, type: 'text', message: 'Email is required', rules: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: 'Please enter a valid email address' } },
-            { el: noOfEmployees, type: 'text', message: 'No. of employees is required', rules: { pattern: /^[0-9]{1,2}$/, errorMessage: 'Number of employees must be 1 or 2 digits' } },
-            { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-            { el: businessStreet, type: 'select', message: 'Street is required' },
-            { el: typeOfStructureSelect, type: 'text', message: 'Type of structure is required' },
-            { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
-            { el: natureOfApplication, type: 'text', message: 'Nature of application is required' },
-            { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
-            { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
-            { el: requirementUpload, type: 'text', message: 'Please upload a document' }
-        ];
-
-        // Generic handler to attach listeners
         validationConfig.forEach(config => {
-            const { el, type, message, rules } = config;
+            const { el, type } = config;
             if (!el) return;
 
             const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
 
             targets.forEach(target => {
-                target.addEventListener('blur', () => {
-                    switch (type) {
-                        case 'number':
-                            validator.number(target, message, rules);
-                            break;
-
-                        case 'text':
-                            validator.text(target, message, rules);
-                            break;
-
-                        case 'checkbox':
-                            validator.checkbox(target, message);
-                            break;
-
-                        case 'checkboxGroup':
-                            validator.checkboxGroup(el, message);
-                            break;
-
-                        case 'radio':
-                            validator.radioGroup(el, message);
-                            break;
-
-                        case 'select':
-                            validator.select(target, message);
-                            break;
-                    }
-                });
-
+                target.addEventListener('blur', () => validateField(config));
                 target.addEventListener('input', () => validator.clear(target));
             });
         });
 
-        // Trigger address validation when lotNo or street changes
         [lotNo, street].forEach(el => {
             el.addEventListener('blur', () => {
-                const lotVal = lotNo.value.trim();
-                const streetVal = street.value.trim();
-                if (lotVal && streetVal) {
-                    validator.address(lotNo, street);
-                }
+                if (lotNo.value && street.value) validator.address(lotNo, street);
             });
-
             el.addEventListener('input', () => validator.clear(el));
         });
 
         [businessLotNo, businessStreet].forEach(el => {
             el.addEventListener('blur', () => {
-                const lotVal = businessLotNo.value.trim();
-                const streetVal = businessStreet.value.trim();
-                if (lotVal && streetVal) {
-                    validator.address(businessLotNo, businessStreet);
-                }
+                if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
             });
-
             el.addEventListener('input', () => validator.clear(el));
         });
 
-        [contactNoOwner, contactNoBusiness].forEach(el => {
+        [contactNoOwner, contactNoBusiness, lotNo, businessLotNo, noOfEmployees].forEach(el => {
             el.addEventListener('input', () => {
                 el.value = el.value.replace(/\D/g, '');
                 validator.clear(el);
             });
         });
-
     })();
 
-    // =========================
-    // Owner Autofilled Application
-    // =========================
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const resp = await fetch('/Banwa/server/api/resident/get_user.php');
-            const data = await resp.json();
-
-            if (data.error) {
-                console.log('Autofill error:', data.error);
-                return;
-            }
-
-            if (data.household_head_name) firstName.value = data.household_head_name;
-            if (data.contact_no) contactNoOwner.value = data.contact_no;
-        } catch (err) {
-            console.error('Failed to fetch user data for autofill:', err);
-        }
-    });
+    // ==============================
+    // Button-triggered validation (for steps)
+    // ==============================
+    function validateStep(fields) {
+        return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+    }
 
     // =========================
     // Owner "Next" button click
     // =========================
     document.getElementById('nextToBusiness').addEventListener('click', () => {
-        const validations = [
-            validator.text(firstName, 'First name is required', {
-                pattern: /^[a-zA-Z\s]+$/,
-                errorMessage: 'First name must only contain letters'
-            }),
-            validator.text(lastName, 'Last name is required', {
-                pattern: /^[a-zA-Z\s]+$/,
-                errorMessage: 'Last name must only contain letters'
-            }),
-            validator.number(contactNoOwner, 'Contact no. is required', { minLength: 7, maxLength: 11 }),
-            validator.number(lotNo, 'Lot no. is required', { maxLength: 2 }),
-            validator.select(street, 'Street is required'),
-            validator.address(lotNo, street)
-        ];
-
-        if (validations.every(v => v)) {
+        const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+        if (validateStep(stepFields)) {
             document.getElementById('waiverFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`;
             switchPanel('business');
         }
@@ -414,40 +306,26 @@ function validation() {
     // Business "Next" button click
     // ============================
     document.getElementById('nextToWaiver').addEventListener('click', () => {
-        const validations = [
-            validator.text(businessName, 'Business Name is required'),
-            validator.radioGroup(typeOfBusiness, 'Please select a type of business'),
-            validator.text(natureOfBusinessSelect, 'Nature of business is required'),
-            natureOfBusinessSelect.value === 'Others'
-                ? validator.text(natureOfBusinessSpecify, 'Please specify the business details')
-                : true,
-            validator.radioGroup(businessStatus, 'Please select business status'),
-            validator.number(contactNoBusiness, 'Contact no. is required', { minLength: 7, maxLength: 11 }),
-            validator.text(emailAddress, 'Email is required', {
-                pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                errorMessage: 'Please enter a valid email address'
-            }),
-            validator.checkboxGroup(requirements, 'Please select at least one requirement'),
-            validator.text(requirementUpload, 'Please upload a document'),
-            validator.number(noOfEmployees, 'Number of employees is required', { minLength: 1, maxLength: 30 }),
-            validator.number(businessLotNo, 'Lot no. is required', {
-                pattern: /^[0-9]+$/,
-                maxLength: 2,
-                errorMessage: 'Lot no. must be numeric, max 2 digits'
-            }),
-            validator.text(natureOfApplication, 'Nature of application is required'),
-            validator.text(businessStreet, 'Street is required'),
-            validator.text(typeOfStructureSelect, 'Type of structure is required'),
-            typeOfStructureSelect.value === 'Others'
-                ? validator.text(typeOfStructureSpecify, 'Please specify the business details')
-                : true,
-            validator.number(businessLotNo, 'Lot no. is required', { maxLength: 2 }),
-            validator.select(businessStreet, 'Street is required'),
-            validator.address(businessLotNo, businessStreet)
-        ];
+        const stepFields = [
+            businessName,
+            typeOfBusiness,
+            natureOfBusinessSelect,
+            natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
+            businessStatus,
+            contactNoBusiness,
+            emailAddress,
+            requirements,
+            requirementUpload,
+            noOfEmployees,
+            natureOfApplication,
+            typeOfStructureSelect,
+            typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify : null,
+            businessLotNo,
+            businessStreet,
+            noOfEmployees
+        ].filter(Boolean);
 
-
-        if (validations.every(v => v)) {
+        if (validateStep(stepFields)) {
             document.getElementById('waiverFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`;
             switchPanel('waiver');
         }
@@ -459,22 +337,19 @@ function validation() {
     document.getElementById('nextToSummary').addEventListener('click', () => {
         const lat = document.getElementById('latitude2').value;
         const lng = document.getElementById('longitude2').value;
-        const isValid = validator.checkbox(agreeCheckBox, 'You must agree to proceed');
 
-        if (isValid) {
+        if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
             document.getElementById('sumBusinessName').textContent = businessName.value;
             document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
-            document.getElementById('sumNatureOfBusiness').textContent = `${natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value}`.trim();
+            document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
             document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
-            document.getElementById('sumAddressOfBusiness').textContent =
-                `${document.getElementById('businessLotNo').value} ${document.getElementById('businessStreet').value}` +
-                (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+            document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
             document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
             document.getElementById('sumEmail').textContent = emailAddress.value;
             document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
             document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
             document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
-            document.getElementById('sumStructureType').textContent = `${typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value}`.trim();
+            document.getElementById('sumStructureType').textContent = (typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value).trim();
             document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
             document.getElementById('sumEmployees').textContent = noOfEmployees.value;
             document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
@@ -491,7 +366,6 @@ function validation() {
         document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
     });
-
 
 
     // FINAL FORM SUBMISSION HANDLER
@@ -598,7 +472,7 @@ function validation() {
 validation();
 
 // ==============================
-// Function: Real-time validation
+// Function: Get current date
 // ==============================
 function getCurrentDateString() {
     const now = new Date();
@@ -609,7 +483,7 @@ function getCurrentDateString() {
 }
 
 // ==============================
-// Function: Real-time validation
+// Function: update the applciation date
 // ==============================
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
@@ -624,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===============================================
-// Function: Handler "Others" Select Show Sepecify
+// Function: Handler "Others" Select input Show Sepecify
 // ===============================================
 function handleOthersSelect(selectEl, specifyEl) {
     const wrapper = specifyEl.closest('.label-and-input');
@@ -662,12 +536,11 @@ function natureOfApplicationSel(selectEl) {
         }
     });
 
-    // Show/hide the whole Requirements section
     requirementsSection.style.display = anyVisible ? 'block' : 'none';
 }
 
 // =========================
-// Map & Coordinate Functions
+// FN: Map & Coordinate Functions
 // =========================
 function openMapPicker(target) {
     const modal = document.createElement('div');
@@ -688,13 +561,12 @@ function openMapPicker(target) {
     modal.style.display = 'block';
 
     modal.querySelector('.close-map').addEventListener('click', () => {
-        const target = modal.dataset.target; // 1 or 2
         const preview = document.getElementById(`map-preview-${target}`);
-        if (preview) preview.style.display = 'none'; // hide the preview
-        modal.remove(); // remove the modal
+        if (preview) preview.style.display = 'none';
+        modal.remove();
     });
 
-    initializeMapPicker(target, `map-container-${target}`);
+    initializeMapPicker(target);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -703,18 +575,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-async function initializeMapPicker(target, containerId) {
+async function initializeMapPicker(target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     let marker = null;
 
-    // Map click handler
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
@@ -841,6 +713,9 @@ async function initializeMapPicker(target, containerId) {
     }
 }
 
+// =========================
+// FN: Auto format coordinates on blur
+// =========================
 function setupCoordinateAutoFormat(target) {
     const latInput = document.getElementById(`latitude${target}`);
     const lngInput = document.getElementById(`longitude${target}`);
@@ -856,4 +731,24 @@ function setupCoordinateAutoFormat(target) {
 // Initialize both forms
 document.addEventListener('DOMContentLoaded', () => {
     [1, 2].forEach(target => setupCoordinateAutoFormat(target));
+});
+
+// =========================
+// FN: Owner Autofilled Application
+// =========================
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const data = await resp.json();
+
+        if (data.error) {
+            console.log('Autofill error:', data.error);
+            return;
+        }
+
+        if (data.household_head_name) firstName.value = data.household_head_name;
+        if (data.contact_no) contactNoOwner.value = data.contact_no;
+    } catch (err) {
+        console.error('Failed to fetch user data for autofill:', err);
+    }
 });
