@@ -6,8 +6,6 @@ import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
 // const API_URL = '../../../client/scripts/business_staff/business_handler.php';
 
-
-
 // ==========================
 // Function: Hide/Show Panels
 // ==========================
@@ -15,9 +13,7 @@ function switchPanel(panelId) {
     const panels = ['owner', 'business', 'waiver', 'summary']
         .map(id => document.getElementById(id));
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
-
     window.scrollTo(0, 0);
-
 }
 
 // ==========================
@@ -96,23 +92,6 @@ function validation() {
             if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
             if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
             clearError(input); return true;
-        }
-
-        function validatePassword(input, message) {
-            if (!input) return true;
-            const value = input.value.trim();
-            if (value === '') { showError(input, message); return false; }
-            if (value.length < 8 || value.length > 16) { showError(input, 'Password should be 8-16 characters long'); return false; }
-            if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must contain letters and numbers'); return false; }
-            clearError(input); return true;
-        }
-
-        function validatePasswordMatches(passwordInput, reTypeInput) {
-            const password = passwordInput.value.trim();
-            const reType = reTypeInput.value.trim();
-            if (!reType) { showError(reTypeInput, 'Please re-type your password'); return false; }
-            if (password !== reType) { showError(reTypeInput, 'Passwords do not match'); return false; }
-            clearError(reTypeInput); return true;
         }
 
         function validateEmail(input, message) {

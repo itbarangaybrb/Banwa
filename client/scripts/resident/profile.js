@@ -576,7 +576,7 @@ function validation() {
 
                 // Make a POST request to the server to sign out the user session
                 try {
-                    const response = await fetch('/Banwa/server/api/resident/signout_user.php', {
+                    const response = await fetch('/Banwa/server/api/shared/signout_user.php', {
                         method: 'POST'
                     });
 
