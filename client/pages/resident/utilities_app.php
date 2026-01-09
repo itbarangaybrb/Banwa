@@ -27,19 +27,15 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
     ?>
 
 
-    <main>
-        <div class="content_wrapper">
-            <div class="content-section active" id="default">
-                <div id="utilitiesStatus"></div>
 
-                <section class="sections">
-                    <div class="header-and-parag">
-                        <h4>Utiliies Clearance</h4>
-                        <p>Select a size from the navigation menu to view product details.</p>
-                    </div>
-                    <div class="containers">
 
-                        <!-- <div class="top">
+    <section class="sections">
+        <div class="header-and-parag">
+            <h4>Utiliies Clearance</h4>
+            <p>Select a size from the navigation menu to view product details.</p>
+        </div>
+
+        <!-- <div class="top">
                             <div class="back-icon">
                                 <img src="../../img/arrow-left.svg" alt="">
                             </div>
@@ -50,9 +46,9 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
                             </div>
                         </div> -->
 
-                        <!-- ==================== Utiliies Form ==================== -->
-                        <div class="utilities-container" id="utilities">
-                            <!-- <div class="top">
+        <!-- ==================== Utiliies Form ==================== -->
+        <div class="containers utilities-container" id="utilities">
+            <!-- <div class="top">
                                 <div class="indicator">
                                     <div class="circle">
                                         <h5 class="num">1</h5>
@@ -74,142 +70,146 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
                                 </div>
                             </div> -->
 
-                            <form class="form" id="utilitiesForms">
-                                <h5>Application Details</h5>
-                                <p>All fields are required unless specified.</p>
-                                <div class="inputs-container">
-                                    <div class="label-and-input">
-                                        <label for="requestDate">Request Date*</label>
-                                        <input type="date" name="requestDate" id="requestDate">
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="dateOfWork">Date of Work*</label>
-                                        <input type="date" name="dateOfWork" id="dateOfWork">
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="fullnameUtilities">Full Name*</label>
-                                        <input type="text" name="fullname" id="fullnameUtilities">
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="contactNo">Contact No.*</label>
-                                        <input type="tel" name="contactNo" id="contactNo" maxlength="11" pattern="[0-9]{1,11}">
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="address">Address*</label>
-                                        <input type="text" name="address" id="address">
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="provider">Select Provider*</label>
-                                        <div class="select-and-icon">
-                                            <select name="provider" id="provider">
-                                                <option value="select">Select</option>
-                                                <option value="Meralco">Meralco</option>
-                                                <option value="Manila Water">Manila Water</option>
-                                                <option value="Globe">Globe</option>
-                                                <option value="Smart">Smart</option>
-                                                <option value="PLDT">PLDT</option>
-                                                <option value="Bayantel">Bayantel</option>
-                                                <option value="Sky Cable">Sky Cable</option>
-                                                <option value="Destiny">Destiny</option>
-                                                <option value="Cignal">Cignal</option>
-                                            </select>
-                                        </div>
-                                        <span class="error-msg"></span>
-                                    </div>
-                                    <div class="label-and-input">
-                                        <label for="natureOfWork">Nature of Work*</label>
-                                        <div class="select-and-icon">
-                                            <select name="natureOfWork" id="natureOfWork">
-                                                <option value="select">Select</option>
-                                                <option value="New Installation">New Installation</option>
-                                                <option value="Repair/Maintenance">Repair/Maintenance</option>
-                                                <option value="Permanent Disconnection">Permanent Disconnection</option>
-                                                <option value="Reconnection">Reconnection</option>
-                                            </select>
-                                        </div>
-                                        <span class="error-msg"></span>
-                                    </div>
-                                </div>
-
-                                <div class="buttons-container">
-                                    <button type="button" id="utilitiesBackBtn">Back</button>
-                                    <button type="button" id="nextToWaiver">Next</button>
-                                </div>
-                            </form>
+            <form class="form" id="utilitiesForms">
+                <h5>Owner Information</h5>
+                <div class="inputs-container">
+                    <div class="label-and-input">
+                        <label for="requestDate">Request Date*</label>
+                        <input type="date" name="requestDate" id="requestDate">
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="dateOfWork">Date of Work*</label>
+                        <input type="date" name="dateOfWork" id="dateOfWork">
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="fullnameUtilities">Full Name*</label>
+                        <input type="text" name="fullname" id="fullnameUtilities">
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="contactNo">Contact No.*</label>
+                        <input type="tel" name="contactNo" id="contactNo" maxlength="11" pattern="[0-9]{1,11}">
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="address">Address*</label>
+                        <input type="text" name="address" id="address">
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="provider">Select Provider*</label>
+                        <div class="select-and-icon">
+                            <select name="provider" id="provider">
+                                <option value="select">Select</option>
+                                <option value="Meralco">Meralco</option>
+                                <option value="Manila Water">Manila Water</option>
+                                <option value="Globe">Globe</option>
+                                <option value="Smart">Smart</option>
+                                <option value="PLDT">PLDT</option>
+                                <option value="Bayantel">Bayantel</option>
+                                <option value="Sky Cable">Sky Cable</option>
+                                <option value="Destiny">Destiny</option>
+                                <option value="Cignal">Cignal</option>
+                            </select>
                         </div>
-
-                        <!-- ==================== Waiver Form ==================== -->
-                        <div class="waiver-container hidden" id="waiver">
-                            <form class="form" id="waiverUtilitiesForm">
-                                <h5>Authorization & Waiver</h5>
-                                <p>Please read and accept the terms to continue.</p>
-
-                                <div id="waiverContent">
-                                    <p>By checking the box below, I hereby authorize <span id="waiverFullname"></span> to allow personnel from the above-named company to conduct work within my residence.</p>
-                                    <p>It is our responsibility to ensure that proper identification is presented by the work personnel and that adequate safety and security precautions are observed while they are within our premises. I relieve the Barangay of any obligation and liability regarding any untoward incident and quality of work rendered.</p>
-                                    <p>I further understand that NO PERMIT, NO WORK will be strictly implemented by the Barangay.</p>
-                                </div>
-
-                                <div class="label-and-input">
-                                    <label for="agreeCheckBox">
-                                        <input type="checkbox" name="agree" id="agreeCheckBox">
-                                        I have read, understood, and agree to the Authorization and Waiver.
-                                    </label>
-                                    <span class="error-msg"></span>
-                                </div>
-
-                                <div class="buttons-container">
-                                    <button type="button" id="waiverBackBtn">Back</button>
-                                    <button type="button" id="nextToSummary">Next</button>
-                                </div>
-                            </form>
+                        <span class="error-msg"></span>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="natureOfWork">Nature of Work*</label>
+                        <div class="select-and-icon">
+                            <select name="natureOfWork" id="natureOfWork">
+                                <option value="select">Select</option>
+                                <option value="New Installation">New Installation</option>
+                                <option value="Repair/Maintenance">Repair/Maintenance</option>
+                                <option value="Permanent Disconnection">Permanent Disconnection</option>
+                                <option value="Reconnection">Reconnection</option>
+                            </select>
                         </div>
+                        <span class="error-msg"></span>
+                    </div>
+                </div>
 
-                        <!-- ==================== Summary ==================== -->
-                        <div class="summary-container hidden" id="summary">
-                            <form class="form" id="summaryForm">
-                                <h5>Confirm your information</h5>
-                                <p>Please review all the information carefully before submitting</p>
+                <div class="buttons-container">
+                    <button type="button" id="utilitiesBackBtn">Back</button>
+                    <button type="button" id="nextToWaiver">Next</button>
+                </div>
+            </form>
+        </div>
 
-                                <div id="summaryContent">
-                                    <h4>Request Details</h4>
-                                    <div class="row">
-                                        <div><strong>Request Date</strong> <span id="sumRequestDate">test</span></div>
-                                        <div><strong>Date of Work</strong> <span id="sumDateOfWork">test</span></div>
-                                    </div>
-                                    <div class="row">
-                                        <div><strong>Control No.</strong> <span id="sumProvider"></span></div>
-                                        <div><strong>Provider:</strong> <span id="sumProvider"></span></div>
-                                    </div>
-                                    <div class="divider"></div>
-                                    <h4>Confirm your Information</h4>
-                                    <div class="row">
-                                        <div><strong>Full Name*</strong> <span id="sumFullname"></span></div>
-                                        <div><strong>Contact No.*</strong> <span id="sumContactNo"></span></div>
-                                    </div>
-                                    <div><strong>Full Address</strong> <span id="sumAddress"></span></div>
-                                    <div><strong>Nature of Work</strong> <span id="sumNatureOfWork"></span></div>
-                                    <div><strong>Agreed to Terms</strong> <span id="sumAgreed"></span></div>
-                                </div>
+        <!-- ==================== Waiver Form ==================== -->
+        <div class="containers waiver-container hidden" id="waiver">
+            <form class="form" id="waiverUtilitiesForm">
+                <h5>Waiver</h5>
 
-                                <div class="buttons-container">
-                                    <button type="button" id="summaryBackBtn">Back</button>
-                                    <button type="submit" id="submitApplication">Submit</button>
-                                </div>
-                            </form>
+                <div id="waiverContent">
+                    <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
+                        Business Application Form is true and correct. I authorize the Barangay to verify the information
+                        with the documents submitted.</p>
+                    <p>I understand that any false declaration or withholding of relevant information may result in
+                        the denial, revocation, or suspension of my business permit.</p>
+                    <p> I agree that the Barangay shall not be held liable for any incorrect information or discrepancies
+                        provided in this form and supporting documents.</p>
+                </div>
+
+                <div class="label-and-input">
+                    <label for="agreeCheckBox">
+                        <input type="checkbox" id="agreeCheckBox" name="agree">
+                        I agree to the terms and conditions
+                    </label>
+                    <div class="error-msg"></div>
+                </div>
+
+                <div class="buttons-container">
+                    <button type="button" id="waiverBackBtn">Back</button>
+                    <button type="button" id="nextToSummary">Next</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ==================== Summary Form ==================== -->
+        <div class="containers summary-container hidden" id="summary">
+            <form class="form" id="summaryForm">
+                <h5>Summary</h5>
+
+                <div id="summaryContent">
+                    <div class="summary-header-and-info">
+                        <h6>Construction Information</h6>
+                        <div class="summary-info">
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
                         </div>
                     </div>
-                </section>
-            </div>
-        </div>
-    </main>
 
-    <script src="../../scripts/resident/utilities_app.js"></script>
+                    <div class="summary-header-and-info">
+                        <h6>Owner Information</h6>lorem
+                        <div class="summary-info">
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="buttons-container">
+                    <button type="button" id="summaryBackBtn">Back</button>
+                    <button type="submit" id="submitApplication">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <script type="module" src="../../scripts/resident/utilities_app.js"></script>
     <script type="module" src="../../scripts/auth/signout.js"></script>
 </body>
 

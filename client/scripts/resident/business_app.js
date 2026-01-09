@@ -3,8 +3,11 @@
 // Assuming structure: /Banwa/client/pages/resident/business_app.php -> /Banwa/scripts/business_staff/business_handler.php
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { registerServiceWorker } from '../../../register_sw.js';
 
 // const API_URL = '../../../client/scripts/business_staff/business_handler.php';
+
+registerServiceWorker();
 
 // ==========================
 // Function: Hide/Show Panels
@@ -341,6 +344,10 @@ function validation() {
     // Back buttons
     // ==========================
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('ownerBackBtn').addEventListener('click', () => {
+            window.location.href = '/Banwa/client/pages/resident/services.php';
+        });
+        
         document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
         document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
         document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -356,6 +363,21 @@ function validation() {
 
     newSummaryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (Notification.permission !== "granted") {
+            await Notification.requestPermission();
+        }
+
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Application Submitted", {
+                    body: "Click to view your application status",
+                    icon: "/Banwa/client/img/banwalogo.png",
+                    data: { url: "/Banwa/client/pages/resident/status.php" }
+                });
+            });
+        }
+
 
         if (confirm('Are you sure you want to submit this application?')) {
             const formData = new FormData();

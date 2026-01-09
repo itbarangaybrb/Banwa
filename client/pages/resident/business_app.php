@@ -100,7 +100,7 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
                         <button type="button" class="map-btn" data-target="1">Pick Location on Map</button>
                         <div class="map-preview" id="map-preview-1" style="margin-top: 10px; display: none;"></div>
                     </div> -->
-                    
+
                     <div class="label-and-input">
                         <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
                     </div>

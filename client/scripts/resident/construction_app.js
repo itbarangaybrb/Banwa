@@ -12,6 +12,47 @@
 //     document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
 // }
 
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { registerServiceWorker } from '../../../register_sw.js';
+registerServiceWorker();
+
+// ==========================
+// Function: Hide/Show Panels
+// ==========================
+function switchPanel(panelId) {
+    const panels = ['construction', 'waiver', 'summary']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    window.scrollTo(0, 0);
+}
+
+switchPanel('construction');
+
+// ============================
+// Business "Next" button click
+// ============================
+document.getElementById('nextToWaiver').addEventListener('click', () => {
+    switchPanel('waiver');
+});
+
+// ============================
+// Waiver "Next" button click
+// ============================
+document.getElementById('nextToSummary').addEventListener('click', () => {
+    switchPanel('summary');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('constructionBackBtn').addEventListener('click', () => {
+        window.location.href = '/Banwa/client/pages/resident/services.php';
+    });
+
+    // document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('ownder'));
+    document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('utilities'));
+    document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
+});
+
+
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav_select');
     navLinks.forEach(link => {
