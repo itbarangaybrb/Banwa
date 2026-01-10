@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -71,35 +76,35 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
                             </div> -->
 
             <form class="form" id="utilitiesForms">
-                <h5>Owner Information</h5>
+                <h6>Owner Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label for="requestDate">Request Date*</label>
+                        <label for="requestDate">Request Date <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" name="requestDate" id="requestDate">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="dateOfWork">Date of Work*</label>
+                        <label for="dateOfWork">Date of Work <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" name="dateOfWork" id="dateOfWork">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="fullnameUtilities">Full Name*</label>
+                        <label for="fullnameUtilities">Full Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" name="fullname" id="fullnameUtilities">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="contactNo">Contact No.*</label>
+                        <label for="contactNo">Contact No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="contactNo" id="contactNo" maxlength="11" pattern="[0-9]{1,11}">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="address">Address*</label>
+                        <label for="address">Address <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" name="address" id="address">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="provider">Select Provider*</label>
+                        <label for="provider">Select Provider <span style="color: #BB1B1B;">*</span></label>
                         <div class="select-and-icon">
                             <select name="provider" id="provider">
                                 <option value="select">Select</option>
@@ -117,7 +122,7 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="natureOfWork">Nature of Work*</label>
+                        <label for="natureOfWork">Nature of Work <span style="color: #BB1B1B;">*</span></label>
                         <div class="select-and-icon">
                             <select name="natureOfWork" id="natureOfWork">
                                 <option value="select">Select</option>
@@ -141,7 +146,7 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
         <!-- ==================== Waiver Form ==================== -->
         <div class="containers waiver-container hidden" id="waiver">
             <form class="form" id="waiverUtilitiesForm">
-                <h5>Waiver</h5>
+                <h6>Waiver</h6>
 
                 <div id="waiverContent">
                     <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
@@ -171,32 +176,60 @@ require_once __DIR__ . '/../../../server/api/shared/check_session.php';
         <!-- ==================== Summary Form ==================== -->
         <div class="containers summary-container hidden" id="summary">
             <form class="form" id="summaryForm">
-                <h5>Summary</h5>
+                <h6>Summary</h6>
 
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
-                        <h6>Construction Information</h6>
+                        <p>Utilities Information</p>
                         <div class="summary-info">
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="summary-header-and-info">
-                        <h6>Owner Information</h6>lorem
+                        <p>Owner Information</p>
                         <div class="summary-info">
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
                         </div>
                     </div>
                 </div>

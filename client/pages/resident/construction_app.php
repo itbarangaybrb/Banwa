@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 include __DIR__ . '../../../../server/api/resident/submit_construction.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -53,34 +58,34 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 
             <form class="form" id="construction-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data">
                 <div class="inputs-container">
-                    <h5>Owner Information</h5>
+                    <h6>Owner Information</h6>
                     <div class="label-and-input">
-                        <label for="permit_no" class="required-field">Permit No. *</label>
+                        <label for="permit_no" class="required-field">Permit No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="permit_no" name="permit_no" value="<?php echo isset($_POST['permit_no']) ? htmlspecialchars($_POST['permit_no']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="homeowner_name" class="required-field">Homeowner Name *</label>
+                        <label for="homeowner_name" class="required-field">Homeowner Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="homeowner_name" name="homeowner_name" value="<?php echo isset($_POST['homeowner_name']) ? htmlspecialchars($_POST['homeowner_name']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="label-and-input">
-                        <label for="contractor_name" class="required-field">Contractor Name *</label>
+                        <label for="contractor_name" class="required-field">Contractor Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="contractor_name" name="contractor_name" value="<?php echo isset($_POST['contractor_name']) ? htmlspecialchars($_POST['contractor_name']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="label-and-input">
-                        <label for="address_of_construction" class="required-field">Address of Construction *</label>
+                        <label for="address_of_construction" class="required-field">Address of Construction <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="address_of_construction" name="address_of_construction" rows="3"><?php echo isset($_POST['address_of_construction']) ? htmlspecialchars($_POST['address_of_construction']) : ''; ?></textarea>
                         <div class="error-msg"></div>
                     </div>
 
 
-                    <h5>Construction Location Coordinates</h5>
+                    <h6>Construction Location Coordinates</h6>
                     <div class="label-and-input test">
-                        <label for="latitude" class="required-field">Latitude *</label>
+                        <label for="latitude" class="required-field">Latitude <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="latitude" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
                             title="Enter latitude in decimal format (e.g., 14.617500)"
                             placeholder="e.g., 14.617500"
@@ -107,15 +112,15 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 
 
 
-                    <h5>Work Details</h5>
+                    <h6>Work Details</h6>
                     <div class="label-and-input">
-                        <label for="nature_of_activity" class="required-field">Nature of Activity *</label>
+                        <label for="nature_of_activity" class="required-field">Nature of Activity <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="nature_of_activity" name="nature_of_activity" rows="3"><?php echo isset($_POST['nature_of_activity']) ? htmlspecialchars($_POST['nature_of_activity']) : ''; ?></textarea>
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="label-and-input">
-                        <label for="type_of_work" class="required-field">Type of Work *</label>
+                        <label for="type_of_work" class="required-field">Type of Work <span style="color: #BB1B1B;">*</span></label>
                         <select id="type_of_work" name="type_of_work">
                             <option value="">Select Type of Work</option>
                             <option value="residential" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'residential') ? 'selected' : ''; ?>>Residential Construction</option>
@@ -129,7 +134,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="details_of_work" class="required-field">Details of Work *</label>
+                        <label for="details_of_work" class="required-field">Details of Work <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="details_of_work" name="details_of_work" rows="3"><?php echo isset($_POST['details_of_work']) ? htmlspecialchars($_POST['details_of_work']) : ''; ?></textarea>
                         <div class="error-msg"></div>
                     </div>
@@ -137,39 +142,39 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 
 
 
-                    <h5>Project Timeline</h5>
+                    <h6>Project Timeline</h6>
                     <div class="label-and-input">
-                        <label for="start_date" class="required-field">Start Date *</label>
+                        <label for="start_date" class="required-field">Start Date <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" id="start_date" name="start_date" value="<?php echo isset($_POST['start_date']) ? htmlspecialchars($_POST['start_date']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="end_date" class="required-field">End Date *</label>
+                        <label for="end_date" class="required-field">End Date <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" id="end_date" name="end_date" value="<?php echo isset($_POST['end_date']) ? htmlspecialchars($_POST['end_date']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="label-and-input">
-                        <label for="num_of_workers" class="required-field">Number of Workers *</label>
+                        <label for="num_of_workers" class="required-field">Number of Workers <span style="color: #BB1B1B;">*</span></label>
                         <input type="number" id="num_of_workers" name="num_of_workers" min="1" value="<?php echo isset($_POST['num_of_workers']) ? htmlspecialchars($_POST['num_of_workers']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="num_of_working_days" class="required-field">Number of Working Days *</label>
+                        <label for="num_of_working_days" class="required-field">Number of Working Days <span style="color: #BB1B1B;">*</span></label>
                         <input type="number" id="num_of_working_days" name="num_of_working_days" min="1" value="<?php echo isset($_POST['num_of_working_days']) ? htmlspecialchars($_POST['num_of_working_days']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
 
 
 
-                    <h5>Payment Information</h5>
+                    <h6>Payment Information</h6>
                     <div class="label-and-input">
-                        <label for="fee_paid" class="required-field">Fee Paid (₱) *</label>
+                        <label for="fee_paid" class="required-field">Fee Paid (₱) <span style="color: #BB1B1B;">*</span></label>
                         <input type="number" id="fee_paid" name="fee_paid" step="0.01" min="0" value="<?php echo isset($_POST['fee_paid']) ? htmlspecialchars($_POST['fee_paid']) : ''; ?>">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="payment_type" class="required-field">Payment Type *</label>
+                        <label for="payment_type" class="required-field">Payment Type <span style="color: #BB1B1B;">*</span></label>
                         <select id="payment_type" name="payment_type">
                             <option value="">Select Payment Type</option>
                             <option value="cash" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'cash') ? 'selected' : ''; ?>>Cash</option>
@@ -180,7 +185,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="payment_status" class="required-field">Payment Status *</label>
+                        <label for="payment_status" class="required-field">Payment Status <span style="color: #BB1B1B;">*</span></label>
                         <select id="payment_status" name="payment_status">
                             <option value="">Select Payment Status</option>
                             <option value="pending" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
@@ -191,9 +196,9 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                     </div>
 
 
-                    <h5>Document Uploads</h5>
+                    <h6>Document Uploads</h6>
                     <div class="label-and-input">
-                        <label for="blueprint_image" class="required-field">Blueprint/Plan Image *</label>
+                        <label for="blueprint_image" class="required-field">Blueprint/Plan Image <span style="color: #BB1B1B;">*</span></label>
                         <input type="file" id="blueprint_image" name="blueprint_image" accept="image/*,.pdf">
                         <div class="error-msg"></div>
                     </div>
@@ -205,8 +210,9 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
                 </div>
 
                 <div class="buttons-container">
-                    <button type="reset" class="submit-btn reset-btn">Clear Form</button>
-                    <button type="submit" class="submit-btn">Submit Application</button>
+                    <!-- <button type="reset" class="submit-btn reset-btn">Clear Form</button> -->
+                    <!-- <button type="submit" class="submit-btn">Submit Application</button> -->
+                    <button type="button" id="constructionBackBtn">Back</button>
                     <button type="button" id="nextToWaiver">Next</button>
                 </div>
             </form>
@@ -215,7 +221,7 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
         <!-- ==================== Waiver Form ==================== -->
         <div class="containers waiver-container hidden" id="waiver">
             <form class="form" id="waiverUtilitiesForm">
-                <h5>Waiver</h5>
+                <h6>Waiver</h6>
 
                 <div id="waiverContent">
                     <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
@@ -245,32 +251,32 @@ include __DIR__ . '../../../../server/api/resident/submit_construction.php';
         <!-- ==================== Summary Form ==================== -->
         <div class="containers summary-container hidden" id="summary">
             <form class="form" id="summaryForm">
-                <h5>Summary</h5>
+                <h6>Summary</h6>
 
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
-                        <h6>Construction Information</h6>
+                        <p>Construction Information</p>
                         <div class="summary-info">
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
                         </div>
                     </div>
 
                     <div class="summary-header-and-info">
-                        <h6>Owner Information</h6>lorem
+                        <p>Owner Information</p>lorem
                         <div class="summary-info">
-                             <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
-                            <div><strong>lorem</strong> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div><p>lorem:</p> <span id="lorem"></span></div>
                         </div>
                     </div>
                 </div>

@@ -16,10 +16,15 @@
     --h6: 24px;
     --h6-lh: 32px;
 
+    --txt2: 18;
+    --txt2-lh: 28px;
+
     --txt3: 16;
     --txt3-lh: 24px;
 
     --regular: 400;
+    --mediium: 500;
+    --semibold: 600;
     --bold: 700;
 }
 
@@ -89,9 +94,9 @@ body {
     row-gap: 32px;
 }
 
-.construction-container .form h5 {
-    font-size: var(--h5);
-    line-height: var(--h5-lh);
+.construction-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
     font-weight: var(--bold);
 }
 
@@ -101,9 +106,9 @@ body {
     row-gap: 16px;
 }
 
-.construction-container .form .inputs-container h5 {
-    font-size: var(--h5);
-    line-height: var(--h5-lh);
+.construction-container .form .inputs-container h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
     font-weight: var(--bold);
 }
 
@@ -339,9 +344,9 @@ body {
     row-gap: 32px;
 }
 
-.waiver-container .form h5 {
-    font-size: var(--h5);
-    line-height: var(--h5-lh);
+.waiver-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
     font-weight: var(--bold);
 }
 
@@ -411,9 +416,9 @@ body {
     row-gap: 32px;
 }
 
-.summary-container .form h5 {
-    font-size: var(--h5);
-    line-height: var(--h5-lh);
+.summary-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
     font-weight: var(--bold);
 }
 
@@ -436,10 +441,10 @@ body {
     row-gap: 24px;
 }
 
-.summary-container .form #summaryContent .summary-header-and-info h6 {
-    font-size: var(--h6);
-    line-height: var(--h6-lh);
-    font-weight: var(--bold);
+.summary-container .form #summaryContent .summary-header-and-info p {
+    font-size: var(--txt2);
+    line-height: var(--txt2-lh);
+    font-weight: var(--semibold);
 }
 
 .summary-container .form #summaryContent .summary-info {
@@ -448,8 +453,10 @@ body {
     row-gap: 16px;
 }
 
-.summary-container .form #summaryContent h4 {
-    margin-bottom: 8px;
+.summary-container .form #summaryContent .summary-info p {
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+    font-weight: var(--medium);
 }
 
 .summary-container .form #summaryContent .divider {

@@ -78,6 +78,3 @@ document.getElementById('summaryForm').addEventListener('submit', function (e) {
         alert('Application submitted successfully!');
     }
 }, { once: true });
-
-
-
