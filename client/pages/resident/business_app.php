@@ -304,26 +304,54 @@ if ($_SESSION['role_id'] != 1) {
                     <div class="summary-header-and-info">
                         <p>Business Information</p>
                         <div class="summary-info">
-                            <div><p>Business Name:</p> <span id="sumBusinessName"></span></div>
-                            <div><p>Type of Business:</p> <span id="sumTypeOfBusiness"></span></div>
-                            <div><p>Nature of Business:</p> <span id="sumNatureOfBusiness"></span></div>
-                            <div><p>Business Status:</p> <span id="sumBusinessStatus"></span></div>
-                            <div><p>Address of Business:</p> <span id="sumAddressOfBusiness"></span></div>
-                            <div><p>Business Telephone:</p> <span id="sumContactNoBusiness"></span></div>
-                            <div><p>Email:</p> <span id="sumEmail"></span></div>
+                            <div>
+                                <p>Business Name:</p> <span id="sumBusinessName"></span>
+                            </div>
+                            <div>
+                                <p>Type of Business:</p> <span id="sumTypeOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Nature of Business:</p> <span id="sumNatureOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Business Status:</p> <span id="sumBusinessStatus"></span>
+                            </div>
+                            <div>
+                                <p>Address of Business:</p> <span id="sumAddressOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Business Telephone:</p> <span id="sumContactNoBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Email:</p> <span id="sumEmail"></span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="summary-header-and-info">
                         <p>Owner Information</p>
                         <div class="summary-info">
-                            <div><p>Owner Name:</p> <span id="sumFullname"></span></div>
-                            <div><p>Owner Telephone:</p> <span id="sumContactNoOwner"></span></div>
-                            <div><p>Owner Address:</p> <span id="sumAddressOwner"></span></div>
-                            <div><p>Structure Type:</p> <span id="sumStructureType"></span></div>
-                            <div><p>Requirements:</p> <span id="sumRequirements"></span></div>
-                            <div><p>No. of Employees:</p> <span id="sumEmployees"></span></div>
-                            <div><p>Agreed to Terms:</p> <span id="sumAgreed"></span></div>
+                            <div>
+                                <p>Owner Name:</p> <span id="sumFullname"></span>
+                            </div>
+                            <div>
+                                <p>Owner Telephone:</p> <span id="sumContactNoOwner"></span>
+                            </div>
+                            <div>
+                                <p>Owner Address:</p> <span id="sumAddressOwner"></span>
+                            </div>
+                            <div>
+                                <p>Structure Type:</p> <span id="sumStructureType"></span>
+                            </div>
+                            <div>
+                                <p>Requirements:</p> <span id="sumRequirements"></span>
+                            </div>
+                            <div>
+                                <p>No. of Employees:</p> <span id="sumEmployees"></span>
+                            </div>
+                            <div>
+                                <p>Agreed to Terms:</p> <span id="sumAgreed"></span>
+                            </div>
                         </div>
                     </div>
                 </div>

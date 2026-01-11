@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     } else {
         if (userStatus) userStatus.textContent = `${session.user.email}`;
-        if (signoutBtn) signoutBtn.style.display = "flex";
+        // if (signoutBtn) signoutBtn.style.display = "flex";
     }
 
     if (signoutBtn) {

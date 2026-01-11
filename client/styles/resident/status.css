@@ -56,7 +56,7 @@ body {
     width: 100%;
     max-width: 1440px;
     width: 100%;
-    padding: 96px 64px;
+    padding: 96px 16px;
     margin-inline: auto;
 }
 
@@ -84,8 +84,8 @@ body {
 .containers {
     max-width: 927px;
     margin-inline: auto;
-    background: white;
-    padding: 2rem;
+    /* background: white; */
+    /* padding: 2rem; */
     border-radius: 8px;
     /* border: 1px solid gray; */
     /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); */
@@ -146,15 +146,23 @@ body {
     color: grey;
 }
 
-.status-bar-container .application-card {}
+.status-bar-container .application-card {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: white;
+    border-radius: 8px;
+}
 
 .status-bar-container .payment-card {
-    background-color: #f9f9f9; /* Lighter background for payments */
+    background-color: #f9f9f9;
+    /* Lighter background for payments */
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 15px; /* Spacing between payment cards */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+    /* Spacing between payment cards */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .status-bar-container .payment-card h3 {
@@ -361,7 +369,8 @@ body {
 
 /* New styles for payment action button */
 .payment-action-btn {
-    background-color: #28a745; /* Green color for payment */
+    background-color: #28a745;
+    /* Green color for payment */
     color: white;
     padding: 8px 15px;
     border: none;
@@ -371,7 +380,8 @@ body {
     font-weight: var(--fw-medium);
     transition: background-color 0.3s ease;
     margin-top: 10px;
-    margin-left: 5px; /* Spacing between buttons */
+    margin-left: 5px;
+    /* Spacing between buttons */
 }
 
 .payment-action-btn:hover {
@@ -380,7 +390,8 @@ body {
 
 /* Payment Modal specific styles */
 #paymentModal .modal-content {
-    max-width: 600px; /* Adjust as needed for payment form */
+    max-width: 600px;
+    /* Adjust as needed for payment form */
 }
 
 .payment-modal-close-btn {

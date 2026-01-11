@@ -16,7 +16,7 @@ function openEditModal() {
 function closeEditModal() {
     if (editModal) {
         editModal.style.display = 'none';
-        if(modalFormContent) modalFormContent.innerHTML = ''; // Clear content
+        if (modalFormContent) modalFormContent.innerHTML = ''; // Clear content
     }
 }
 
@@ -27,20 +27,20 @@ function openPaymentModal() {
 function closePaymentModal() {
     if (paymentModal) {
         paymentModal.style.display = 'none';
-        if(paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
+        if (paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
     }
 }
 
 // Close modal event listeners
-if(closeModalBtn) {
+if (closeModalBtn) {
     closeModalBtn.onclick = closeEditModal; // Changed to closeEditModal
 }
 
-if(closePaymentModalBtn) {
+if (closePaymentModalBtn) {
     closePaymentModalBtn.onclick = closePaymentModal;
 }
 
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (event.target == editModal) {
         closeEditModal();
     } else if (event.target == paymentModal) { // Handle closing payment modal
@@ -78,7 +78,7 @@ async function openEditModalFor(appId, appType) {
         }
 
         const appData = result.data;
-        
+
         // Use a function to generate the form HTML
         modalFormContent.innerHTML = generateBusinessFormHtml(appData);
 
@@ -124,7 +124,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
             // Placeholder for other app types if they get payment functionality
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
-        
+
         const appDetailsResult = await appDetailsResponse.json();
 
         if (!appDetailsResult.success) {
@@ -132,7 +132,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
         }
 
         const appData = appDetailsResult.data;
-        
+
         // Use a function to generate the payment form HTML
         paymentModalFormContent.innerHTML = generatePaymentFormHtml(appData, appPurpose);
 
@@ -372,14 +372,14 @@ async function handleSubmitChanges(event, appId) {
 
     try {
         const formData = new FormData(form);
-        
+
         // We need to fetch the original record to get all fields for the update,
         // as the simple form doesn't contain all of them.
         const response = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
         const result = await response.json();
         if (!result.success) throw new Error('Could not retrieve original data for update.');
         const originalData = result.data;
-        
+
         // Create a complete FormData object for the backend handler
         const finalFormData = new FormData();
 
@@ -422,7 +422,7 @@ async function handleSubmitChanges(event, appId) {
                 }
             }
         }
-        
+
         // Handle address_owner split
         if (originalData.address_owner) {
             const ownerAddressParts = (originalData.address_owner || '').split(' ');
@@ -434,7 +434,7 @@ async function handleSubmitChanges(event, appId) {
 
         // Overwrite with the fields from our simple form
         finalFormData.set('businessName', formData.get('businessName'));
-        
+
         // The address needs to be split back into lot and street for the handler
         const fullAddress = formData.get('addressOfBusiness');
         const addressParts = (fullAddress || '').split(' ');
@@ -442,7 +442,7 @@ async function handleSubmitChanges(event, appId) {
         const street = addressParts.join(' ') || '';
         finalFormData.set('businessLotNo', lotNo);
         finalFormData.set('businessStreet', street);
-        
+
         // Handle the file if it was changed
         const fileInput = form.querySelector('#requirementUpload');
         if (fileInput.files.length > 0) {
@@ -450,7 +450,7 @@ async function handleSubmitChanges(event, appId) {
         } else {
             // The handler might expect the field to be present, so we remove it
             // if no new file is there, to avoid overwriting with nothing.
-             finalFormData.delete('requirementUpload');
+            finalFormData.delete('requirementUpload');
         }
 
         // Add the required action for the handler
@@ -501,7 +501,7 @@ async function handleSubmitPayment(event, appId) {
 
     try {
         const formData = new FormData(form);
-        
+
         // Append application ID to form data
         formData.append('application_id', appId);
 
@@ -550,7 +550,7 @@ async function loadApplications() {
             return;
         }
 
-    data.applications
+        data.applications
             .sort((a, b) => new Date(b.request_date) - new Date(a.request_date)) // newest first
             .forEach(app => {
                 const div = document.createElement('div');
@@ -570,15 +570,18 @@ async function loadApplications() {
                     actionButtons.push(`<button class="payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`);
                 }
 
+                // removed temporary <h3>{fullname}</h3>
                 div.innerHTML = `
-                    <h3>${fullname}</h3>
-                    <p>Status: ${app.status || 'Pending'}</p>
-                    <p>Submitted: ${app.request_date || 'N/A'}</p>
+                <div class="grouped">
                     <p>Type: ${applicationType}</p>
+                    <p>Status: ${app.status || 'Pending'}</p>
                     ${remarks}
                     <div class="card-actions">${actionButtons.join('')}</div>
+                </div>
+                <p>${app.request_date || 'N/A'}</p>
+                  
                 `;
-                
+
                 container.appendChild(div);
 
                 const editButtonElement = div.querySelector('.edit-action-btn');
@@ -655,7 +658,7 @@ async function loadPayments() {
                     <p>Reference No.: ${payment.reference_number || 'N/A'}</p>
                     <p>Transaction ID: ${payment.id}</p>
                 `;
-                
+
                 container.appendChild(div);
             });
 

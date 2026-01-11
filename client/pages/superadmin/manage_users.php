@@ -16,11 +16,12 @@ if ($_SESSION['role_id'] != 2) {
     <title>Dashboard</title>
 
     <link rel="stylesheet" href="../../styles/superadmin/main.css">
+    <link rel="stylesheet" href="../../styles/superadmin/manage_users.css">
 </head>
 
 <body>
     <header class="header">
-        <h1>Dashboard</h1>
+        <h1>Manage Users</h1>
     </header>
 
     <aside class="aside">
@@ -32,7 +33,7 @@ if ($_SESSION['role_id'] != 2) {
                 </li>
                 <li class="items">
                     <img src="" alt="" class="icon">
-                    <a class="links" href="../superadmin/manage_users.php">Manage Users</a>
+                    <a class="links" href="#">Manage Users</a>
                 </li>
                 <li class="items">
                     <img src="" alt="" class="icon">
@@ -41,6 +42,12 @@ if ($_SESSION['role_id'] != 2) {
             </ul>
         </nav>
     </aside>
+
+    <main class="main">
+        <section class="sections">
+            <div class="containers">h1 main</div>
+        </section>
+    </main>
 
 
 

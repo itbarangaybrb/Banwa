@@ -38,7 +38,6 @@ if ($_SESSION['role_id'] != 1) {
             <div class="header-and-parag">
                 <h4>Current Status</h4>
                 <p>Pending Applications</p>
-                <button id="notificationBtn">notify</button>
             </div>
             <div class="containers status">
                 <div class="content">

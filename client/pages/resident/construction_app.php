@@ -257,26 +257,54 @@ if ($_SESSION['role_id'] != 1) {
                     <div class="summary-header-and-info">
                         <p>Construction Information</p>
                         <div class="summary-info">
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="summary-header-and-info">
-                        <p>Owner Information</p>lorem
+                        <p>Owner Information</p>
                         <div class="summary-info">
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
-                            <div><p>lorem:</p> <span id="lorem"></span></div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="lorem"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
