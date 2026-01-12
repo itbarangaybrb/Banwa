@@ -1,0 +1,63 @@
+1. WORKFLOW OF OCR
+    1. user upload file (valid id)
+        description: 
+            what type of id:
+                1. National Id
+                2. Qcitizen Id
+                3. Postal Id
+                4. Passport Id
+                5. Barangay Id ( not yet )
+
+    2. system will use OCR to extract name from the ID (automatically)
+        what to get from id:
+            1. Full name or (First name, middle name, last name)
+            2. address
+            3. sex
+            4. contact no.
+
+        Q/A:
+            1. What if the id name is using the full name not seperated as (First name, middle name, last name)?
+            2. What if the id does not contains the specific information what requires from out system?
+
+    3. pre-fill the name fields in personal details
+    4. user can edit the pre-filled name fields if needed
+
+2. SOFTWARE
+    1. Tesseract js (still considering)
+    2. 
+
+===================================================================================================
+2. WORKFLOW OF APPLICATIONS
+    1. fillout
+    2. submit
+    3. analyze by DST 
+    4. show fail/success message
+    5. store in database
+    6. review by admin/staff
+    7. update the status
+    8. notify the user
+    9. review by the user
+
+===================================================================================================
+3. DSS
+    1. fact
+    2. nodes
+        - alpha
+        - beta
+    3. actions
+
+    Questions:
+
+===================================================================================================
+4. MAP TO BE APPLY
+    1. staffs
+        - business staff
+        - construction staff
+        - utilities staff
+
+    2. admins
+        - regular admin
+   
+
+integrete time
+01-12-2026
