@@ -27,33 +27,56 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
     include '_layout/nav.php';
     ?>
 
+ <body>
+    <?php
+    $page_title = "Home";
+    include '_layout/nav.php';
+    ?>
+
     <main>
-        <!-- ==================== Status section ==================== -->
         <section class="sections">
             <div class="header-and-parag">
                 <h4>Current Status</h4>
-                <p>Pending Applications</p>
+                <p>Track your ongoing applications</p>
             </div>
-            <div class="containers status">
-                <div class="content">
-                    <div class="status-bar-container" id="applicationStatus">
-                        <!-- <span>You have no active service requests.</span> -->
-                    </div>
-                </div>
+            
+            <div class="containers status-table-container">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Reference Number</th>
+                            <th style="width: 35%;">Details</th>
+                            <th style="width: 20%;">Status</th>
+                            <th style="width: 25%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationTableBody">
+                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
         <section class="sections">
-            <div class="containers status">
-                <div class="content">
-                    <div class="header-and-text">
-                        <h4>Payment History</h4>
-                        <p>Past and Pending Payments</p>
-                    </div>
-                    <div class="status-bar-container" id="paymentHistoryList">
-                        <!-- Payment history will be loaded here by JavaScript -->
-                    </div>
-                </div>
+            <div class="header-and-parag">
+                <h4>Payment History</h4>
+                <p>Past and Pending Payments</p>
+            </div>
+
+            <div class="containers status-table-container">
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Transaction ID</th>
+                            <th style="width: 35%;">Details</th>
+                            <th style="width: 20%;">Status</th>
+                            <th style="width: 25%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentTableBody">
+                        <tr><td colspan="4" style="text-align:center; padding: 20px;">Loading...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -64,22 +87,18 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <div class="modal" id="editModal">
             <div class="modal-content">
                 <span class="modal-close-btn">&times;</span>
-                <div id="modal-form-content">
-                    <!-- Form content will be loaded here by JavaScript -->
-                </div>
+                <div id="modal-form-content"></div>
             </div>
         </div>
 
         <div class="modal" id="paymentModal">
             <div class="modal-content">
                 <span class="modal-close-btn payment-modal-close-btn">&times;</span>
-                <div id="payment-modal-form-content">
-                    <!-- Payment form content will be loaded here by JavaScript -->
-                </div>
+                <div id="payment-modal-form-content"></div>
             </div>
         </div>
     </main>
-
+    
     <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 

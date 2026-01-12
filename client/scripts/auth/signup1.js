@@ -1,162 +1,186 @@
 import supabase from "../../../server/api/supabase.js";
 
 // =========================
-// Switch panel utility
+// 1. Navigation Logic
 // =========================
 function switchPanel(panelId) {
-    const panels = ['personalDetails', 'selectId', 'createAcc']
-        .map(id => document.getElementById(id));
-    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    const panels = ['selectId', 'personalDetails', 'createAcc'];
+    panels.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+    
+    const target = document.getElementById(panelId);
+    if (target) {
+        target.classList.remove('hidden');
+    } else {
+        console.error(`Panel with ID "${panelId}" not found.`);
+    }
 }
 
-function validation() {
-    // =========================
-    // Form elements
-    // =========================
+document.addEventListener('DOMContentLoaded', () => {
+    switchPanel('selectId');
+
+    // --- FORM ELEMENTS ---
+    // Panel 1: Select ID
+    const selectIdNextBtn = document.getElementById('selectIdNextBtn');
     const idType = document.getElementById('idType');
     const idFile = document.getElementById('idFile');
+    const ocrStatus = document.getElementById('ocrStatus');
+    const idImagePreview = document.getElementById('idImagePreview');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
 
+    // Panel 2: Personal Details
     const firstName = document.getElementById('firstName');
     const middleName = document.getElementById('middleName');
     const lastName = document.getElementById('lastName');
-    const suffix = document.getElementById('suffix');
+    const suffix = document.getElementById('suffix'); // Optional if exists in HTML
     const sex = document.getElementById('sex');
     const contactNo = document.getElementById('contactNo');
     const address = document.getElementById('address');
+    const personalDetailsNextBtn = document.getElementById('personalDetailsNextBtn');
 
+    // Panel 3: Create Account
+    const createAccForm = document.getElementById('createAccForm');
     const email = document.getElementById('createAccEmail');
     const password = document.getElementById('password');
     const reTypePassword = document.getElementById('reTypePassword');
     const agreeCheckBox = document.getElementById('agreeCheckBox');
-
-    // Show first panel
-    switchPanel('personalDetails');
+    const formMessage = document.getElementById('formMessage');
+    const resendBtn = document.getElementById('resendEmailBtn');
 
     // =========================
-    // Validation inputs (text, select, checkbox, textarea)
+    // 2. Validation Helper
     // =========================
     function validateInput(input, message) {
+        if (!input) return false;
         const wrapper = input.closest('.label-and-input');
         const errorEl = wrapper?.querySelector('.error-msg');
-        if (!errorEl) return true;
+        
+        let isValid = true;
 
-        const value = input.type === 'checkbox' ? input.checked : input.value.trim();
+        if (input.type === 'checkbox') {
+            isValid = input.checked;
+        } else {
+            isValid = input.value.trim() !== '';
+        }
 
-        const setError = (msg) => {
+        if (!isValid) {
             input.classList.add('error');
-            errorEl.classList.add('show');
-            errorEl.textContent = msg;
-        };
-
-        const clearError = () => {
-            input.classList.remove('error');
-            errorEl.classList.remove('show');
-            errorEl.textContent = '';
-        };
-
-        if ((input.type === 'checkbox' && !value) || (input.type === 'email' && !value) ||
-            (!['checkbox', 'file', 'email'].includes(input.type) && (value === '' || value === 'select'))) {
-            setError(message);
+            if (errorEl) {
+                errorEl.classList.add('show');
+                errorEl.textContent = message;
+            }
             return false;
         }
 
-        if (input.type === 'file') {
-            if (!input.files || input.files.length === 0) {
-                setError(message);
-                return false;
-            }
-            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-            for (let file of input.files) {
-                if (!allowedTypes.includes(file.type)) {
-                    setError('Invalid file type. Only JPG, PNG, PDF allowed');
-                    return false;
-                }
-            }
-        }
-
-        clearError();
+        // Clear error if valid
+        input.classList.remove('error');
+        if (errorEl) errorEl.classList.remove('show');
         return true;
     }
 
     // =========================
-    // Attach events
+    // 3. ID Preview Logic
     // =========================
-    (() => {
-        const inputs = [firstName, lastName, sex, address, agreeCheckBox, idType, idFile, password, reTypePassword, contactNo, email];
-
-        inputs.forEach(input => {
-            if (!input) return;
-            const wrapper = input.closest('.label-and-input');
-            const errorEl = wrapper?.querySelector('.error-msg');
-            if (!errorEl) return;
-
-            const setError = (msg) => {
-                input.classList.add('error');
-                errorEl.classList.add('show');
-                errorEl.textContent = msg;
-            };
-
-            const clearError = () => {
-                input.classList.remove('error');
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            };
-
-            // Clear error on input
-            input.addEventListener('input', () => {
-                if (input === contactNo) input.value = input.value.replace(/\D/g, '');
-                clearError();
-            });
-
-            // Validate on blur
-            input.addEventListener('blur', () => {
-                if (input === password) {
-                    const val = input.value.trim();
-                    if (!val) setError('Password is required');
-                    else if (val.length < 8 || val.length > 16) setError('Password should be 8-16 characters long');
-                    else if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) setError('Password must contain letters and numbers');
-                    else clearError();
-                } else if (input === reTypePassword) {
-                    const val = input.value.trim();
-                    if (!val) setError('Please re-type your password');
-                    else if (val !== password.value.trim()) setError('Passwords do not match');
-                    else clearError();
-                } else if (input === contactNo) {
-                    const val = input.value.replace(/\D/g, '');
-                    input.value = val;
-                    if (!val) setError('Phone number is required');
-                    else if (val.length !== 11) setError('Phone number must be 11 digits');
-                    else clearError();
-                } else if (input === email) {
-                    const val = input.value.trim();
-                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!val) setError('Email is required');
-                    else if (!emailPattern.test(val)) setError('Enter a valid email address');
-                    else clearError();
-                } else {
-                    validateInput(input, 'This field is required');
+    if (idFile) {
+        idFile.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (idImagePreview) idImagePreview.setAttribute('src', e.target.result);
+                    if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
                 }
-            });
+                reader.readAsDataURL(file);
+            }
         });
-    })();
-
-
+    }
 
     // =========================
-    // Navigation buttons
+    // 4. OCR / Backend Integration
     // =========================
-    document.getElementById('personalDetailsBackBtn').addEventListener('click', (e) => {
+    async function processOCR() {
+        if (!idFile.files[0] || !idType.value) return;
+
+        // Visual Feedback: Disable button and show status
+        selectIdNextBtn.disabled = true;
+        selectIdNextBtn.classList.add('scanning-btn'); // Add CSS class
+        selectIdNextBtn.textContent = "Scanning...";
+        
+        ocrStatus.style.display = 'block';
+        ocrStatus.style.color = '#00247C';
+        ocrStatus.textContent = "Analyzing ID... please wait.";
+
+        const formData = new FormData();
+        formData.append('file', idFile.files[0]);
+        formData.append('idType', idType.value);
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/process_ocr', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const d = result.data;
+                if (d.firstName) firstName.value = d.firstName;
+                if (d.lastName) lastName.value = d.lastName;
+                if (d.middleName) middleName.value = d.middleName;
+                if (d.address) address.value = d.address;
+                
+                ocrStatus.style.color = 'green';
+                ocrStatus.textContent = "Scan complete! Details auto-filled.";
+            } else {
+                ocrStatus.style.color = 'red';
+                ocrStatus.textContent = "Could not read ID automatically.";
+            }
+        } catch (error) {
+            console.error("OCR Error:", error);
+            ocrStatus.style.color = 'red';
+            ocrStatus.textContent = "Scanner offline. Please enter manually.";
+        } finally {
+            // Re-enable button and move to next panel regardless of result
+            selectIdNextBtn.disabled = false;
+            selectIdNextBtn.classList.remove('scanning-btn');
+            selectIdNextBtn.textContent = "Next";
+            switchPanel('personalDetails');
+        }
+    }
+
+    // =========================
+    // 5. Navigation Event Listeners
+    // =========================
+
+    // --- STEP 1: SELECT ID ---
+    selectIdNextBtn?.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+        const v1 = validateInput(idType, "Please select ID type");
+        const v2 = validateInput(idFile, "Please upload ID file");
+
+        if (v1 && v2) {
+            processOCR();
+        }
     });
-    document.getElementById('selectIdBackBtn').addEventListener('click', () => switchPanel('personalDetails'));
-    document.getElementById('createAccBackBtn').addEventListener('click', () => switchPanel('selectId'));
 
-    // =========================
-    // Personal Details 'Next' Button
-    // =========================
-    document.getElementById('personalDetailsNextBtn').addEventListener('click', function (e) {
+    // --- STEP 2: PERSONAL DETAILS ---
+    document.getElementById('personalDetailsBackBtn')?.addEventListener('click', () => {
+        switchPanel('selectId');
+    });
+
+    personalDetailsNextBtn?.addEventListener('click', (e) => {
         e.preventDefault();
+
+        // Clean Address
+        if (address && address.value) {
+            address.value = address.value
+                .replace(/Last Name, First Name\.?/gi, "")
+                .replace(/^[,\.\s]+/, "")
+                .trim();
+        }
+
+        // Validate all required fields
         const validations = [
             validateInput(firstName, 'First name is required'),
             validateInput(lastName, 'Last name is required'),
@@ -165,67 +189,62 @@ function validation() {
             validateInput(address, 'Address is required')
         ];
 
-        if (validations.every(v => v)) switchPanel('selectId');
+        // Only proceed if EVERY validation is true
+        if (validations.every(v => v === true)) {
+            switchPanel('createAcc');
+        }
+    });
+
+    // --- STEP 3: CREATE ACCOUNT ---
+    document.getElementById('createAccBackBtn')?.addEventListener('click', () => {
+        switchPanel('personalDetails');
     });
 
     // =========================
-    // Select ID 'Next' Button
+    // 6. Final Form Submission
     // =========================
-    document.getElementById('selectIdNextBtn').addEventListener('click', () => {
-        const validations = [
-            validateInput(idType, 'Please select a type of ID'),
-            validateInput(idFile, 'Please upload your ID file')
-        ];
-        // const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
-        // const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
-
-        if (validations.every(v => v)) switchPanel('createAcc');
-    });
-
-
-    // =========================
-    // Create Account 'Submit' Button
-    // =========================
-    const formMessage = document.getElementById('formMessage');
-    formMessage.style.display = 'none';
-    const resendBtn = document.getElementById('resendEmailBtn');
     let allData = null;
 
-    document.getElementById('createAccForm').addEventListener('submit', async (e) => {
+    createAccForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        formMessage.textContent = '';
-
+        formMessage.style.display = 'none';
+        
+        // 1. Basic Validations
         const validations = [
-            validateInput(password, 'Password is required'),
-            validateInput(reTypePassword, 'Please re-type your password'),
-            password.value !== reTypePassword.value ? (() => {
-                const wrapper = reTypePassword.closest('.label-and-input');
-                const errorEl = wrapper.querySelector('.error-msg');
-                reTypePassword.classList.add('error');
-                errorEl.classList.add('show');
-                errorEl.textContent = 'Passwords do not match';
-                return false;
-            })() : true,
             validateInput(email, 'Email is required'),
-            validateInput(agreeCheckBox, 'You must agree with the terms')
+            validateInput(password, 'Password is required'),
+            validateInput(reTypePassword, 'Please re-type password'),
+            validateInput(agreeCheckBox, 'You must agree to terms')
         ];
 
+        // 2. Password Match Check
+        if (password.value !== reTypePassword.value) {
+            const wrapper = reTypePassword.closest('.label-and-input');
+            const errorEl = wrapper?.querySelector('.error-msg');
+            reTypePassword.classList.add('error');
+            if(errorEl) {
+                errorEl.classList.add('show');
+                errorEl.textContent = 'Passwords do not match';
+            }
+            return;
+        }
 
-        if (!validations.every(v => v)) return;
+        if (!validations.every(v => v === true)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
+        // 3. Prepare Data
         allData = {
-            fullname: `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim(),
+            fullname: `${firstName.value} ${middleName.value || ''} ${lastName.value} ${suffix?.value || ''}`.trim(),
             sex: sex.value,
             contactNo: contactNo.value,
             address: address.value,
             idType: idType.value,
             email: email.value,
-            password: password.value,
-            agreeCheckBox: agreeCheckBox.checked
+            password: password.value
         };
 
         try {
+            // 4. Check if Email Exists (PHP Backend)
             const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
             const dbCheck = await respCheck.json();
 
@@ -236,6 +255,7 @@ function validation() {
                 return;
             }
 
+            // 5. Sign Up with Supabase
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
@@ -245,73 +265,63 @@ function validation() {
                 },
             });
 
-            if (error) {
-                const msg = (error.message || '').toLowerCase();
-                if (msg.includes('already') || msg.includes('registered') || error.status === 400) {
-                    formMessage.style.display = 'block';
-                    formMessage.style.color = 'red';
-                    formMessage.textContent = 'An account with this email already exists.';
-                    return;
-                }
-                throw error;
-            } 
+            if (error) throw error;
 
+            // 6. Success State
             formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.innerHTML = `
-            Account created successfully.<br>
-            Please verify your email to activate your account.<br><br>
-            If you don’t receive the email within 1–2 minutes:
-            <br>
-            1. Make sure the email address is correct<br>
-            2. Check your Spam / Promotions folder<br>
-            3. You can resend the verification email<br>
-           
-        `;
+                Account created successfully.<br>
+                Please verify your email to activate your account.<br>
+                Check your Spam / Promotions folder if not received.
+            `;
 
-            resendBtn.classList.add('show');
-            startResendCooldown();
+            // Enable Resend Button Logic
+            if(resendBtn) {
+                resendBtn.classList.add('show'); // Ensure you have CSS to show this
+                startResendCooldown();
+            }
+            
+            // Hide submit button to prevent double submission
+            const submitBtn = document.getElementById('createAccSubmitBtn');
+            if(submitBtn) submitBtn.style.display = 'none';
 
         } catch (err) {
-            // console.error('Error during signup:', err);
             formMessage.style.display = 'block';
             formMessage.style.color = 'red';
-            formMessage.textContent = 'An error occurred. ' + (err.message || err);
+            formMessage.textContent = 'Error: ' + (err.message || err);
         }
     });
 
-
+    // =========================
+    // 7. Resend Logic
+    // =========================
     let resendCount = 0;
     const MAX_RESENDS = 3;
 
     function startResendCooldown() {
-        const submitBtn = document.getElementById('createAccSubmitBtn');
-        if (submitBtn) submitBtn.style.display = 'none';
-
-        const btn = resendBtn;
-        btn.disabled = true;
-        let countdown = 90;
-        btn.textContent = `Resend available in ${countdown}s`;
-
+        if (!resendBtn) return;
+        resendBtn.disabled = true;
+        let countdown = 60; // 60 seconds cooldown
+        
         const interval = setInterval(() => {
+            resendBtn.textContent = `Resend available in ${countdown}s`;
             countdown--;
-            btn.textContent = `Resend available in ${countdown}s`;
-            if (countdown <= 0) {
+            
+            if (countdown < 0) {
                 clearInterval(interval);
                 if (resendCount < MAX_RESENDS) {
-                    btn.disabled = false;
-                    btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
+                    resendBtn.disabled = false;
+                    resendBtn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
                 } else {
-                    btn.remove();
+                    resendBtn.textContent = "Max resend attempts reached";
                 }
             }
         }, 1000);
     }
 
-    resendBtn.addEventListener('click', async () => {
+    resendBtn?.addEventListener('click', async () => {
         if (!allData || resendCount >= MAX_RESENDS) return;
-
-        resendBtn.disabled = true;
 
         const { error } = await supabase.auth.resend({
             type: 'signup',
@@ -323,18 +333,12 @@ function validation() {
 
         if (error) {
             formMessage.style.color = 'red';
-            formMessage.textContent = 'Failed to resend verification email. Please try again later.';
-            resendBtn.disabled = false;
-            return;
+            formMessage.textContent = 'Failed to resend email. Try again later.';
+        } else {
+            resendCount++;
+            formMessage.style.color = 'green';
+            formMessage.textContent = `Email resent! (${resendCount}/${MAX_RESENDS})`;
+            startResendCooldown();
         }
-
-        resendCount++;
-        formMessage.style.color = 'green';
-        formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
-
-        startResendCooldown();
     });
-
-}
-
-validation();
+});
