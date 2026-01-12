@@ -16,7 +16,7 @@ function openEditModal() {
 function closeEditModal() {
     if (editModal) {
         editModal.style.display = 'none';
-        if (modalFormContent) modalFormContent.innerHTML = ''; // Clear content
+        if(modalFormContent) modalFormContent.innerHTML = ''; // Clear content
     }
 }
 
@@ -27,20 +27,20 @@ function openPaymentModal() {
 function closePaymentModal() {
     if (paymentModal) {
         paymentModal.style.display = 'none';
-        if (paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
+        if(paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
     }
 }
 
 // Close modal event listeners
-if (closeModalBtn) {
+if(closeModalBtn) {
     closeModalBtn.onclick = closeEditModal; // Changed to closeEditModal
 }
 
-if (closePaymentModalBtn) {
+if(closePaymentModalBtn) {
     closePaymentModalBtn.onclick = closePaymentModal;
 }
 
-window.onclick = function (event) {
+window.onclick = function(event) {
     if (event.target == editModal) {
         closeEditModal();
     } else if (event.target == paymentModal) { // Handle closing payment modal
@@ -78,7 +78,7 @@ async function openEditModalFor(appId, appType) {
         }
 
         const appData = result.data;
-
+        
         // Use a function to generate the form HTML
         modalFormContent.innerHTML = generateBusinessFormHtml(appData);
 
@@ -124,7 +124,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
             // Placeholder for other app types if they get payment functionality
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
-
+        
         const appDetailsResult = await appDetailsResponse.json();
 
         if (!appDetailsResult.success) {
@@ -132,7 +132,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
         }
 
         const appData = appDetailsResult.data;
-
+        
         // Use a function to generate the payment form HTML
         paymentModalFormContent.innerHTML = generatePaymentFormHtml(appData, appPurpose);
 
@@ -372,14 +372,14 @@ async function handleSubmitChanges(event, appId) {
 
     try {
         const formData = new FormData(form);
-
+        
         // We need to fetch the original record to get all fields for the update,
         // as the simple form doesn't contain all of them.
         const response = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
         const result = await response.json();
         if (!result.success) throw new Error('Could not retrieve original data for update.');
         const originalData = result.data;
-
+        
         // Create a complete FormData object for the backend handler
         const finalFormData = new FormData();
 
@@ -422,7 +422,7 @@ async function handleSubmitChanges(event, appId) {
                 }
             }
         }
-
+        
         // Handle address_owner split
         if (originalData.address_owner) {
             const ownerAddressParts = (originalData.address_owner || '').split(' ');
@@ -434,7 +434,7 @@ async function handleSubmitChanges(event, appId) {
 
         // Overwrite with the fields from our simple form
         finalFormData.set('businessName', formData.get('businessName'));
-
+        
         // The address needs to be split back into lot and street for the handler
         const fullAddress = formData.get('addressOfBusiness');
         const addressParts = (fullAddress || '').split(' ');
@@ -442,7 +442,7 @@ async function handleSubmitChanges(event, appId) {
         const street = addressParts.join(' ') || '';
         finalFormData.set('businessLotNo', lotNo);
         finalFormData.set('businessStreet', street);
-
+        
         // Handle the file if it was changed
         const fileInput = form.querySelector('#requirementUpload');
         if (fileInput.files.length > 0) {
@@ -450,7 +450,7 @@ async function handleSubmitChanges(event, appId) {
         } else {
             // The handler might expect the field to be present, so we remove it
             // if no new file is there, to avoid overwriting with nothing.
-            finalFormData.delete('requirementUpload');
+             finalFormData.delete('requirementUpload');
         }
 
         // Add the required action for the handler
@@ -501,7 +501,7 @@ async function handleSubmitPayment(event, appId) {
 
     try {
         const formData = new FormData(form);
-
+        
         // Append application ID to form data
         formData.append('application_id', appId);
 
@@ -530,23 +530,25 @@ async function handleSubmitPayment(event, appId) {
 
 
 // =================================================================
-// LOAD APPLICATIONS LIST
+// LOAD APPLICATIONS LIST (Updated for Table Layout)
 // =================================================================
 async function loadApplications() {
+    const tableBody = document.getElementById('applicationTableBody');
+    if (!tableBody) return;
+
     try {
         const res = await fetch('/Banwa/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        const container = document.getElementById('applicationStatus');
-        container.innerHTML = '';
+        tableBody.innerHTML = ''; // Clear loading state
 
         if (data.error) {
-            container.innerText = data.error;
+            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
             return;
         }
 
         if (!data.success || !Array.isArray(data.applications) || data.applications.length === 0) {
-            container.innerText = 'No applications found.';
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">You have no active applications.</td></tr>`;
             return;
         }
 
@@ -557,32 +559,34 @@ async function loadApplications() {
 
                 // 1. Format Reference Data
                 const dateFiled = app.request_date ? new Date(app.request_date).toLocaleString() : 'N/A';
-
+                
                 // 2. Format Details Data
                 const appType = app.type || "Application";
                 const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
                 const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
-
+                
                 // 3. Format Status Data
                 const statusText = app.status || 'Pending';
                 let statusClass = 'pending';
-                if (statusText.toLowerCase().includes('approved')) statusClass = 'success';
-                if (statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
-
+                if(statusText.toLowerCase().includes('approved')) statusClass = 'success';
+                if(statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
+                
                 // Prepare remarks button if remarks exist
-                const remarksBtn = app.approval_comments
+                const remarksBtn = app.approval_comments 
                     ? `<button class="validation-btn" onclick="alert('${app.approval_comments.replace(/'/g, "\\'")}')">View Remarks</button>
                        <span class="validation-hint">Click to view staff comments</span>`
                     : '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks yet</span>';
 
                 // 4. Format Action Buttons
                 let actionButtonsHtml = '';
-
+                
                 // Edit Button Logic
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
-                    actionButtons.push(`<button class="edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`);
+                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">
+                        Edit Application
+                    </button>`;
                 }
-
+                
                 // Payment Button Logic
                 if (app.status && app.status.toLowerCase() === 'for payment') {
                     actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">
@@ -619,7 +623,7 @@ async function loadApplications() {
                         </div>
                     </td>
                 `;
-
+                
                 tableBody.appendChild(tr);
 
                 // Re-attach event listeners for dynamic buttons
@@ -632,12 +636,12 @@ async function loadApplications() {
                     });
                 }
 
-                const paymentButtonElement = div.querySelector('.payment-action-btn');
-                if (paymentButtonElement) {
-                    paymentButtonElement.addEventListener('click', (e) => {
+                const payBtn = tr.querySelector('.payment-action-btn');
+                if (payBtn) {
+                    payBtn.addEventListener('click', (e) => {
                         const appId = e.target.getAttribute('data-app-id');
-                        const appType = e.target.getAttribute('data-app-type'); // e.g., 'Business'
-                        const appPurpose = e.target.getAttribute('data-app-purpose'); // e.g., 'Business'
+                        const appType = e.target.getAttribute('data-app-type');
+                        const appPurpose = e.target.getAttribute('data-app-purpose');
                         openPaymentModalFor(appId, appType, appPurpose);
                     });
                 }
@@ -645,45 +649,37 @@ async function loadApplications() {
 
     } catch (err) {
         console.error('Error loading applications:', err);
-        document.getElementById('applicationStatus').innerText = 'Failed to load applications.';
+        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load applications.</td></tr>`;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadApplications();
-    loadPayments(); // Call the new loadPayments function
-});
-
 // =================================================================
-// LOAD PAYMENTS HISTORY
+// LOAD PAYMENTS HISTORY (Updated for Table Layout)
 // =================================================================
 async function loadPayments() {
+    const tableBody = document.getElementById('paymentTableBody');
+    if (!tableBody) return;
+
     try {
         const res = await fetch('/Banwa/server/api/resident/get_payment.php');
         const data = await res.json();
 
-        const container = document.getElementById('paymentHistoryList'); // Assuming this container exists in HTML
-        if (!container) {
-            console.warn('Payment history container #paymentHistoryList not found.');
-            return;
-        }
-        container.innerHTML = ''; // Clear previous content
+        tableBody.innerHTML = '';
 
         if (data.error) {
-            container.innerText = data.error;
+            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
             return;
         }
 
         if (!data.success || !Array.isArray(data.payments) || data.payments.length === 0) {
-            container.innerText = 'No payment history found.';
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No payment history found.</td></tr>`;
             return;
         }
 
         data.payments
-            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)) // newest first
+            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))
             .forEach(payment => {
-                const div = document.createElement('div');
-                div.className = 'payment-card'; // Use a new class for styling payments
+                const tr = document.createElement('tr');
 
                 const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
@@ -691,7 +687,7 @@ async function loadPayments() {
 
                 // Status Logic
                 let statusClass = 'pending';
-                if (payment.status === 'Verified') statusClass = 'success';
+                if(payment.status === 'Verified') statusClass = 'success';
 
                 tr.innerHTML = `
                     <td>
@@ -715,16 +711,17 @@ async function loadPayments() {
                         </div>
                     </td>
                 `;
-
+                
                 tableBody.appendChild(tr);
             });
 
     } catch (err) {
         console.error('Error loading payment history:', err);
-        const container = document.getElementById('paymentHistoryList');
-        if (container) {
-            container.innerText = 'Failed to load payment history.';
-        }
+        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load history.</td></tr>`;
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadApplications();
+    loadPayments();
+});
