@@ -252,7 +252,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="requirementUpload">Attachment/s*</label>
+                        <label class="label" for="requirementUpload">Attachment/s <span style="color: #BB1B1B;">*</span></label>
                         <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
                         <div class="error-msg"></div>
                     </div>

@@ -18,7 +18,7 @@
                     link.href &&
                     !link.target &&
                     !link.href.startsWith("javascript:") &&
-                    !link.href.includes("#") &&
+                    link.href.includes("#") &&
                     document.getElementById("page-loader")
                 ) {
                     loader.style.display = "flex";
