@@ -530,75 +530,118 @@ async function handleSubmitPayment(event, appId) {
 
 
 // =================================================================
-// LOAD APPLICATIONS LIST
+// LOAD APPLICATIONS LIST (Updated for Table Layout)
 // =================================================================
 async function loadApplications() {
+    const tableBody = document.getElementById('applicationTableBody');
+    if (!tableBody) return;
+
     try {
         const res = await fetch('/Banwa/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        const container = document.getElementById('applicationStatus');
-        container.innerHTML = '';
+        tableBody.innerHTML = ''; // Clear loading state
 
         if (data.error) {
-            container.innerText = data.error;
+            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
             return;
         }
 
         if (!data.success || !Array.isArray(data.applications) || data.applications.length === 0) {
-            container.innerText = 'No applications found.';
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">You have no active applications.</td></tr>`;
             return;
         }
 
         data.applications
-            .sort((a, b) => new Date(b.request_date) - new Date(a.request_date)) // newest first
+            .sort((a, b) => new Date(b.request_date) - new Date(a.request_date))
             .forEach(app => {
-                const div = document.createElement('div');
-                div.className = 'application-card';
+                const tr = document.createElement('tr');
 
-                const remarks = app.approval_comments && app.approval_comments.trim() !== ''
-                    ? `<p>Remarks: ${app.approval_comments}</p>`
-                    : '';
-                const middle_initial_part = app.middle_name ? ` ${app.middle_name}` : '';
-                const fullname = `${app.first_name}${middle_initial_part} ${app.last_name}` || "No Name";
-                const applicationType = app.type || "N/A";
-                const actionButtons = [];
+                // 1. Format Reference Data
+                const dateFiled = app.request_date ? new Date(app.request_date).toLocaleString() : 'N/A';
+
+                // 2. Format Details Data
+                const appType = app.type || "Application";
+                const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
+                const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
+
+                // 3. Format Status Data
+                const statusText = app.status || 'Pending';
+                let statusClass = 'pending';
+                if (statusText.toLowerCase().includes('approved')) statusClass = 'success';
+                if (statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
+
+                // Prepare remarks button if remarks exist
+                const remarksBtn = app.approval_comments
+                    ? `<button class="validation-btn" onclick="alert('${app.approval_comments.replace(/'/g, "\\'")}')">View Remarks</button>
+                       <span class="validation-hint">Click to view staff comments</span>`
+                    : '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks yet</span>';
+
+                // 4. Format Action Buttons
+                let actionButtonsHtml = '';
+
+                // Edit Button Logic
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
-                    actionButtons.push(`<button class="edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`);
-                }
-                if (app.status && app.status.toLowerCase() === 'for payment') {
-                    actionButtons.push(`<button class="payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`);
+                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">
+                        Edit Application
+                    </button>`;
                 }
 
-                // removed temporary <h3>{fullname}</h3>
-                div.innerHTML = `
-                <div class="grouped">
-                    <p>Type: ${applicationType}</p>
-                    <p>Status: ${app.status || 'Pending'}</p>
-                    ${remarks}
-                    <div class="card-actions">${actionButtons.join('')}</div>
-                </div>
-                <p>${app.request_date || 'N/A'}</p>
-                  
+                // Payment Button Logic
+                if (app.status && app.status.toLowerCase() === 'for payment') {
+                    actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">
+                        Submit Payment
+                    </button>`;
+                }
+
+                if (!actionButtonsHtml) {
+                    actionButtonsHtml = '<span class="detail-info">Processing...</span>';
+                }
+
+                // Construct Row HTML
+                tr.innerHTML = `
+                    <td>
+                        <span class="ref-id">${app.id}</span>
+                        <div style="margin-top: 10px;">
+                            <span class="date-label">Date Filed:</span>
+                            <span class="date-filed">${dateFiled}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="detail-title">${appType}</span>
+                        ${businessName}
+                        ${ownerName}
+                    </td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        ${remarksBtn}
+                    </td>
+                    <td>
+                        <div class="action-btn-group">
+                            ${actionButtonsHtml}
+                            <a href="#" class="download-link" style="display:none;">Download PDF</a>
+                        </div>
+                    </td>
                 `;
 
-                container.appendChild(div);
+                tableBody.appendChild(tr);
 
-                const editButtonElement = div.querySelector('.edit-action-btn');
-                if (editButtonElement) {
-                    editButtonElement.addEventListener('click', (e) => {
+                // Re-attach event listeners for dynamic buttons
+                const editBtn = tr.querySelector('.edit-action-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
                         const appId = e.target.getAttribute('data-app-id');
                         const appType = e.target.getAttribute('data-app-type');
                         openEditModalFor(appId, appType);
                     });
                 }
 
-                const paymentButtonElement = div.querySelector('.payment-action-btn');
-                if (paymentButtonElement) {
-                    paymentButtonElement.addEventListener('click', (e) => {
+                const payBtn = tr.querySelector('.payment-action-btn');
+                if (payBtn) {
+                    payBtn.addEventListener('click', (e) => {
                         const appId = e.target.getAttribute('data-app-id');
-                        const appType = e.target.getAttribute('data-app-type'); // e.g., 'Business'
-                        const appPurpose = e.target.getAttribute('data-app-purpose'); // e.g., 'Business'
+                        const appType = e.target.getAttribute('data-app-type');
+                        const appPurpose = e.target.getAttribute('data-app-purpose');
                         openPaymentModalFor(appId, appType, appPurpose);
                     });
                 }
@@ -606,68 +649,79 @@ async function loadApplications() {
 
     } catch (err) {
         console.error('Error loading applications:', err);
-        document.getElementById('applicationStatus').innerText = 'Failed to load applications.';
+        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load applications.</td></tr>`;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadApplications();
-    loadPayments(); // Call the new loadPayments function
-});
-
 // =================================================================
-// LOAD PAYMENTS HISTORY
+// LOAD PAYMENTS HISTORY (Updated for Table Layout)
 // =================================================================
 async function loadPayments() {
+    const tableBody = document.getElementById('paymentTableBody');
+    if (!tableBody) return;
+
     try {
         const res = await fetch('/Banwa/server/api/resident/get_payment.php');
         const data = await res.json();
 
-        const container = document.getElementById('paymentHistoryList'); // Assuming this container exists in HTML
-        if (!container) {
-            console.warn('Payment history container #paymentHistoryList not found.');
-            return;
-        }
-        container.innerHTML = ''; // Clear previous content
+        tableBody.innerHTML = '';
 
         if (data.error) {
-            container.innerText = data.error;
+            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
             return;
         }
 
         if (!data.success || !Array.isArray(data.payments) || data.payments.length === 0) {
-            container.innerText = 'No payment history found.';
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No payment history found.</td></tr>`;
             return;
         }
 
         data.payments
-            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)) // newest first
+            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))
             .forEach(payment => {
-                const div = document.createElement('div');
-                div.className = 'payment-card'; // Use a new class for styling payments
+                const tr = document.createElement('tr');
 
                 const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
                 });
 
-                div.innerHTML = `
-                    <h3>Payment for ${payment.type || 'N/A'}</h3>
-                    <p>Amount: ₱${parseFloat(payment.amount).toFixed(2)}</p>
-                    <p>Date: ${paymentDate}</p>
-                    <p>Status: ${payment.status || 'Pending'}</p>
-                    <p>Reference No.: ${payment.reference_number || 'N/A'}</p>
-                    <p>Transaction ID: ${payment.id}</p>
+                // Status Logic
+                let statusClass = 'pending';
+                if (payment.status === 'Verified') statusClass = 'success';
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="ref-id">${payment.id}</span>
+                        <div style="margin-top: 10px;">
+                            <span class="date-label">Paid On:</span>
+                            <span class="date-filed">${paymentDate}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="detail-title">${payment.type || 'Payment'}</span>
+                        <div class="detail-info">Amount: ₱${parseFloat(payment.amount).toFixed(2)}</div>
+                        <div class="detail-info">Ref: ${payment.reference_number || 'N/A'}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge ${statusClass}">${payment.status || 'Pending'}</span>
+                    </td>
+                    <td>
+                        <div class="action-btn-group">
+                            <button class="main-action-btn" style="background-color: #17a2b8;">View Receipt</button>
+                        </div>
+                    </td>
                 `;
 
-                container.appendChild(div);
+                tableBody.appendChild(tr);
             });
 
     } catch (err) {
         console.error('Error loading payment history:', err);
-        const container = document.getElementById('paymentHistoryList');
-        if (container) {
-            container.innerText = 'Failed to load payment history.';
-        }
+        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load history.</td></tr>`;
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadApplications();
+    loadPayments();
+});
