@@ -530,25 +530,23 @@ async function handleSubmitPayment(event, appId) {
 
 
 // =================================================================
-// LOAD APPLICATIONS LIST (Updated for Table Layout)
+// LOAD APPLICATIONS LIST
 // =================================================================
 async function loadApplications() {
-    const tableBody = document.getElementById('applicationTableBody');
-    if (!tableBody) return;
-
     try {
         const res = await fetch('/Banwa/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        tableBody.innerHTML = ''; // Clear loading state
+        const container = document.getElementById('applicationStatus');
+        container.innerHTML = '';
 
         if (data.error) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
+            container.innerText = data.error;
             return;
         }
 
         if (!data.success || !Array.isArray(data.applications) || data.applications.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">You have no active applications.</td></tr>`;
+            container.innerText = 'No applications found.';
             return;
         }
 
@@ -582,9 +580,7 @@ async function loadApplications() {
 
                 // Edit Button Logic
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
-                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">
-                        Edit Application
-                    </button>`;
+                    actionButtons.push(`<button class="edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`);
                 }
 
                 // Payment Button Logic
@@ -636,12 +632,12 @@ async function loadApplications() {
                     });
                 }
 
-                const payBtn = tr.querySelector('.payment-action-btn');
-                if (payBtn) {
-                    payBtn.addEventListener('click', (e) => {
+                const paymentButtonElement = div.querySelector('.payment-action-btn');
+                if (paymentButtonElement) {
+                    paymentButtonElement.addEventListener('click', (e) => {
                         const appId = e.target.getAttribute('data-app-id');
-                        const appType = e.target.getAttribute('data-app-type');
-                        const appPurpose = e.target.getAttribute('data-app-purpose');
+                        const appType = e.target.getAttribute('data-app-type'); // e.g., 'Business'
+                        const appPurpose = e.target.getAttribute('data-app-purpose'); // e.g., 'Business'
                         openPaymentModalFor(appId, appType, appPurpose);
                     });
                 }
@@ -649,37 +645,45 @@ async function loadApplications() {
 
     } catch (err) {
         console.error('Error loading applications:', err);
-        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load applications.</td></tr>`;
+        document.getElementById('applicationStatus').innerText = 'Failed to load applications.';
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadApplications();
+    loadPayments(); // Call the new loadPayments function
+});
+
 // =================================================================
-// LOAD PAYMENTS HISTORY (Updated for Table Layout)
+// LOAD PAYMENTS HISTORY
 // =================================================================
 async function loadPayments() {
-    const tableBody = document.getElementById('paymentTableBody');
-    if (!tableBody) return;
-
     try {
         const res = await fetch('/Banwa/server/api/resident/get_payment.php');
         const data = await res.json();
 
-        tableBody.innerHTML = '';
+        const container = document.getElementById('paymentHistoryList'); // Assuming this container exists in HTML
+        if (!container) {
+            console.warn('Payment history container #paymentHistoryList not found.');
+            return;
+        }
+        container.innerHTML = ''; // Clear previous content
 
         if (data.error) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
+            container.innerText = data.error;
             return;
         }
 
         if (!data.success || !Array.isArray(data.payments) || data.payments.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No payment history found.</td></tr>`;
+            container.innerText = 'No payment history found.';
             return;
         }
 
         data.payments
-            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))
+            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date)) // newest first
             .forEach(payment => {
-                const tr = document.createElement('tr');
+                const div = document.createElement('div');
+                div.className = 'payment-card'; // Use a new class for styling payments
 
                 const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
@@ -717,11 +721,10 @@ async function loadPayments() {
 
     } catch (err) {
         console.error('Error loading payment history:', err);
-        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load history.</td></tr>`;
+        const container = document.getElementById('paymentHistoryList');
+        if (container) {
+            container.innerText = 'Failed to load payment history.';
+        }
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadApplications();
-    loadPayments();
-});

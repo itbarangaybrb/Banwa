@@ -346,9 +346,8 @@ body {
   /* border: 1px solid red !important; */
 }
 
-/* Add this to the bottom of signup1.css */
 .hidden {
-    display: none !important;
+  display: none;
 }
 
 @media screen and (min-width: 780px) {

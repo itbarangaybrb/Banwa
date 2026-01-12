@@ -4,18 +4,9 @@ import supabase from "../../../server/api/supabase.js";
 // 1. Navigation Logic
 // =========================
 function switchPanel(panelId) {
-    const panels = ['selectId', 'personalDetails', 'createAcc'];
-    panels.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-    });
-    
-    const target = document.getElementById(panelId);
-    if (target) {
-        target.classList.remove('hidden');
-    } else {
-        console.error(`Panel with ID "${panelId}" not found.`);
-    }
+    const panels = ['personalDetails', 'selectId', 'createAcc']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -232,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!validations.every(v => v === true)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
-        // 3. Prepare Data
         allData = {
             fullname: `${firstName.value} ${middleName.value || ''} ${lastName.value} ${suffix?.value || ''}`.trim(),
             sex: sex.value,
@@ -254,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 5. Sign Up with Supabase
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,

@@ -161,7 +161,6 @@ include '_layout/nav.php';
                             <li><strong>Facebook:</strong>
                                 <a href="https://www.facebook.com/BarangayBlueRidgeB" target="_blank">facebook.com/BarangayBlueRidgeB</a>
                             </li>
-                            <li><strong>Office Hours:</strong> Monday to Saturday, 8:00 AM - 5:00 PM</li>
                         </ul>
                     </div>
                     
