@@ -1,51 +1,57 @@
-
-// =================================================================
-// MODAL HANDLING
-// =================================================================
+// =========================
+// MODAL HANDLING 
+// =========================
 const editModal = document.getElementById('editModal');
-const paymentModal = document.getElementById('paymentModal'); // New payment modal
-const closeModalBtn = document.querySelector('.modal-close-btn'); // For edit modal
-const closePaymentModalBtn = document.querySelector('.payment-modal-close-btn'); // For payment modal
-const modalFormContent = document.getElementById('modal-form-content'); // For edit modal
-const paymentModalFormContent = document.getElementById('payment-modal-form-content'); // For payment modal
+const paymentModal = document.getElementById('paymentModal');
+const remarksModal = document.getElementById('remarksModal'); // New
 
-function openEditModal() {
-    if (editModal) editModal.style.display = 'block';
-}
+const closeModalBtn = document.querySelector('.modal-close-btn'); 
+const closePaymentModalBtn = document.querySelector('.payment-modal-close-btn'); 
+const closeRemarksModalBtn = document.querySelector('.remarks-modal-close-btn'); // New
+const closeRemarksSecondaryBtn = document.querySelector('.remarks-close-btn-secondary'); // New "Close" button inside modal
 
+const modalFormContent = document.getElementById('modal-form-content');
+const paymentModalFormContent = document.getElementById('payment-modal-form-content');
+const remarksContent = document.getElementById('remarks-content'); // New
+
+function openEditModal() { if (editModal) editModal.style.display = 'block'; }
 function closeEditModal() {
     if (editModal) {
         editModal.style.display = 'none';
-        if(modalFormContent) modalFormContent.innerHTML = ''; // Clear content
+        if(modalFormContent) modalFormContent.innerHTML = '';
     }
 }
 
-function openPaymentModal() {
-    if (paymentModal) paymentModal.style.display = 'block';
-}
-
+function openPaymentModal() { if (paymentModal) paymentModal.style.display = 'block'; }
 function closePaymentModal() {
     if (paymentModal) {
         paymentModal.style.display = 'none';
-        if(paymentModalFormContent) paymentModalFormContent.innerHTML = ''; // Clear content
+        if(paymentModalFormContent) paymentModalFormContent.innerHTML = '';
     }
 }
 
-// Close modal event listeners
-if(closeModalBtn) {
-    closeModalBtn.onclick = closeEditModal; // Changed to closeEditModal
+// NEW: Open Remarks Modal
+function openRemarksModal(text) {
+    if (remarksModal && remarksContent) {
+        remarksContent.innerText = text || "No remarks available.";
+        remarksModal.style.display = 'block';
+    }
+}
+// NEW: Close Remarks Modal
+function closeRemarksModal() {
+    if (remarksModal) remarksModal.style.display = 'none';
 }
 
-if(closePaymentModalBtn) {
-    closePaymentModalBtn.onclick = closePaymentModal;
-}
+// Event Listeners for Closing
+if(closeModalBtn) closeModalBtn.onclick = closeEditModal;
+if(closePaymentModalBtn) closePaymentModalBtn.onclick = closePaymentModal;
+if(closeRemarksModalBtn) closeRemarksModalBtn.onclick = closeRemarksModal;
+if(closeRemarksSecondaryBtn) closeRemarksSecondaryBtn.onclick = closeRemarksModal;
 
 window.onclick = function(event) {
-    if (event.target == editModal) {
-        closeEditModal();
-    } else if (event.target == paymentModal) { // Handle closing payment modal
-        closePaymentModal();
-    }
+    if (event.target == editModal) closeEditModal();
+    else if (event.target == paymentModal) closePaymentModal();
+    else if (event.target == remarksModal) closeRemarksModal(); // Handle outside click
 };
 
 // =================================================================
@@ -540,7 +546,7 @@ async function loadApplications() {
         const res = await fetch('/Banwa/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        tableBody.innerHTML = ''; // Clear loading state
+        tableBody.innerHTML = ''; 
 
         if (data.error) {
             tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
@@ -557,48 +563,40 @@ async function loadApplications() {
             .forEach(app => {
                 const tr = document.createElement('tr');
 
-                // 1. Format Reference Data
                 const dateFiled = app.request_date ? new Date(app.request_date).toLocaleString() : 'N/A';
-                
-                // 2. Format Details Data
                 const appType = app.type || "Application";
                 const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
                 const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
                 
-                // 3. Format Status Data
                 const statusText = app.status || 'Pending';
                 let statusClass = 'pending';
                 if(statusText.toLowerCase().includes('approved')) statusClass = 'success';
                 if(statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
                 
-                // Prepare remarks button if remarks exist
-                const remarksBtn = app.approval_comments 
-                    ? `<button class="validation-btn" onclick="alert('${app.approval_comments.replace(/'/g, "\\'")}')">View Remarks</button>
-                       <span class="validation-hint">Click to view staff comments</span>`
-                    : '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks yet</span>';
+                // Remarks Logic: Clean the string for the data attribute
+                let remarksBtn = '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks</span>';
+                
+                if (app.approval_comments && app.approval_comments.trim() !== '') {
+                    // We escape double quotes to safely put it in the data-remarks attribute
+                    const safeRemarks = app.approval_comments.replace(/"/g, '&quot;');
+                    
+                    remarksBtn = `
+                        <button class="validation-btn view-remarks-btn" data-remarks="${safeRemarks}">
+                            View Remarks
+                        </button>
+                        <span class="validation-hint">Click for details</span>
+                    `;
+                }
 
-                // 4. Format Action Buttons
                 let actionButtonsHtml = '';
-                
-                // Edit Button Logic
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
-                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">
-                        Edit Application
-                    </button>`;
+                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`;
                 }
-                
-                // Payment Button Logic
                 if (app.status && app.status.toLowerCase() === 'for payment') {
-                    actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">
-                        Submit Payment
-                    </button>`;
+                    actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`;
                 }
+                if (!actionButtonsHtml) actionButtonsHtml = '<span class="detail-info">Processing...</span>';
 
-                if (!actionButtonsHtml) {
-                    actionButtonsHtml = '<span class="detail-info">Processing...</span>';
-                }
-
-                // Construct Row HTML
                 tr.innerHTML = `
                     <td>
                         <span class="ref-id">${app.id}</span>
@@ -619,14 +617,24 @@ async function loadApplications() {
                     <td>
                         <div class="action-btn-group">
                             ${actionButtonsHtml}
-                            <a href="#" class="download-link" style="display:none;">Download PDF</a>
                         </div>
                     </td>
                 `;
                 
                 tableBody.appendChild(tr);
 
-                // Re-attach event listeners for dynamic buttons
+                // --- Event Listeners ---
+
+                // 1. View Remarks Button
+                const remarksButton = tr.querySelector('.view-remarks-btn');
+                if (remarksButton) {
+                    remarksButton.addEventListener('click', (e) => {
+                        const comments = e.target.getAttribute('data-remarks');
+                        openRemarksModal(comments);
+                    });
+                }
+
+                // 2. Edit Button
                 const editBtn = tr.querySelector('.edit-action-btn');
                 if (editBtn) {
                     editBtn.addEventListener('click', (e) => {
@@ -636,6 +644,7 @@ async function loadApplications() {
                     });
                 }
 
+                // 3. Payment Button
                 const payBtn = tr.querySelector('.payment-action-btn');
                 if (payBtn) {
                     payBtn.addEventListener('click', (e) => {

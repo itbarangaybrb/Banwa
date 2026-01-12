@@ -100,7 +100,18 @@ if ($_SESSION['role_id'] != 1) {
         </div>
     </div>
 
-
+    <div class="modal" id="remarksModal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <span class="modal-close-btn remarks-modal-close-btn">&times;</span>
+                    <h2 style="color: var(--color-blue-1); margin-top: 0;">Application Remarks</h2>
+                    <div id="remarks-content" style="padding: 20px 0; font-size: 16px; line-height: 1.6; color: #333;">
+                        </div>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button class="remarks-close-btn-secondary" style="padding: 8px 16px; cursor: pointer;">Close</button>
+                    </div>
+                </div>
+            </div>
+            
     <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 
