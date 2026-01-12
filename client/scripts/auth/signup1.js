@@ -342,28 +342,34 @@ async function resendVerificationEmail() {
     startResendCooldown();
 }
 
-function setupAccountSubmission() {
-    formElements.createAccForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        formElements.formMessage.style.display = 'none';
+formElements.resendBtn.addEventListener('click', resendVerificationEmail);
 
+function setupAccountSubmission() {
+    formElements.formMessage.style.display = 'none';
+    formElements.createAccForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formElements.formMessage.textContent = '';
         const stepFields = [formElements.password, formElements.reTypePassword, formElements.email, formElements.agreeCheckBox];
         if (!validateStep(stepFields)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
         allData = {
-            fullname: `${formElements.firstName.value} ${formElements.middleName.value || ''} ${formElements.lastName.value} ${formElements.suffix?.value || ''}`.trim(),
+            fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
             sex: formElements.sex.value,
             contactNo: formElements.contactNo.value,
             address: formElements.address.value,
             idType: formElements.idType.value,
             email: formElements.email.value,
-            password: formElements.password.value
+            password: formElements.password.value,
+            agreeCheckBox: formElements.agreeCheckBox.checked
         };
 
         try {
-            // Check if email exists (PHP backend)
-            const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
+            const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: allData.email })
+            });
             const dbCheck = await respCheck.json();
             if (dbCheck.exists) {
                 formElements.formMessage.style.display = 'block';
@@ -372,33 +378,44 @@ function setupAccountSubmission() {
                 return;
             }
 
-            const { error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
                 options: { data: allData, emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
             });
 
-            if (error) throw error;
+            if (error) {
+                formElements.formMessage.style.display = 'block';
+                formElements.formMessage.style.color = 'red';
+                if (error.message.toLowerCase().includes('already')) {
+                    formElements.formMessage.textContent = 'An account with this email already exists.';
+                } else {
+                    formElements.formMessage.textContent = 'An error occurred: ' + error.message;
+                }
+                return;
+            }
 
             formElements.formMessage.style.display = 'block';
             formElements.formMessage.style.color = 'green';
-            formElements.formMessage.innerHTML = `Account created successfully. Please verify your email.`;
+            formElements.formMessage.innerHTML = `
+                Account created successfully.<br>
+                Please verify your email to activate your account.<br><br>
+                If you don’t receive the email within 1–2 minutes:
+                <br>
+                1. Make sure the email address is correct<br>
+                2. Check your Spam / Promotions folder<br>
+                3. You can resend the verification email
+            `;
 
-            if (formElements.resendBtn) {
-                formElements.resendBtn.classList.add('show');
-                startResendCooldown();
-            }
-
-            if (formElements.createAccSubmitBtn) formElements.createAccSubmitBtn.style.display = 'none';
+            formElements.resendBtn.classList.add('show');
+            startResendCooldown();
 
         } catch (err) {
             formElements.formMessage.style.display = 'block';
             formElements.formMessage.style.color = 'red';
-            formElements.formMessage.textContent = 'Error: ' + (err.message || err);
+            formElements.formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
     });
-
-    formElements.resendBtn?.addEventListener('click', resendVerificationEmail);
 }
 
 // =========================
