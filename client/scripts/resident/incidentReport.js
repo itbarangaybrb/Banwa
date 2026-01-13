@@ -290,11 +290,30 @@ document.getElementById('incidentForm').addEventListener('submit', async functio
         const text = await response.text();
         const result = JSON.parse(text);
 
+
         if (result.status === 'success') {
-            alert("Report Submitted!");
-            window.location.reload();
+            // 1. Show the Success Popup
+            Swal.fire({
+                title: 'Report Submitted!',
+                text: 'Your incident report has been successfully recorded.',
+                icon: 'success',
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Back to Home'
+            }).then((result) => {
+                // 2. Redirect to home.php after the user clicks "Back to Home"
+                if (result.isConfirmed) {
+                    window.location.href = '/Banwa/client/pages/resident/home.php'; 
+                }
+            });
         } else {
-            alert("Error: " + result.message);
+            // Show an Error Popup if something goes wrong
+            Swal.fire({
+                title: 'Submission Failed',
+                text: 'Error: ' + result.message,
+                icon: 'error',
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Try Again'
+            });
         }
     } catch (error) {
         console.error("Submission failed:", error);

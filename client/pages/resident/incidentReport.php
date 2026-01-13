@@ -140,6 +140,7 @@ if ($_SESSION['role_id'] != 1) {
         </main>
 
         <?php include '_layout/end.php'; ?>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script type="module" src="../../scripts/resident/incidentReport.js"></script>
     </body>
 </html>
