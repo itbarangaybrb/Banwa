@@ -1,160 +1,290 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../../../../server/configs/database.php';
 
-$baseDir = __DIR__;
-$dataFile = $baseDir . '/data.json';
+ob_start();
+session_start();
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error.log');
 
-// Ensure data file exists
-if (!file_exists($dataFile)) {
-    file_put_contents($dataFile, json_encode([]));
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+
+if (!extension_loaded('pdo_pgsql')) {
+    ob_clean();
+    die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled."]));
 }
 
-$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : (isset($_POST['action']) ? $_POST['action'] : '');
+$action = $_REQUEST['action'] ?? null;
+ob_clean();
 
-function read_data($file) {
-    $json = file_get_contents($file);
-    $data = json_decode($json, true);
-    if (!is_array($data)) $data = [];
-    return $data;
-}
-
-function write_data($file, $data) {
-    $tmp = tempnam(sys_get_temp_dir(), 'data');
-    file_put_contents($tmp, json_encode($data, JSON_PRETTY_PRINT));
-    rename($tmp, $file);
-}
-
-if ($action === 'fetch') {
-    $applications = read_data($dataFile);
-    echo json_encode(['status' => 'success', 'data' => $applications]);
-    exit;
-}
-
-if ($action === 'create') {
-    // Map incoming fields to the schema expected by the front-end JS
-    $requestDate = isset($_POST['requestDate']) ? trim($_POST['requestDate']) : date('Y-m-d');
-    $dateOfWork = isset($_POST['dateOfWork']) ? trim($_POST['dateOfWork']) : '';
-    $fullname = isset($_POST['fullname']) ? trim($_POST['fullname']) : '';
-    $contactNo = isset($_POST['contactNo']) ? trim($_POST['contactNo']) : '';
-    $address = isset($_POST['address']) ? trim($_POST['address']) : '';
-    $provider = isset($_POST['provider']) ? trim($_POST['provider']) : '';
-    $natureOfWork = isset($_POST['natureOfWork']) ? trim($_POST['natureOfWork']) : '';
-
-    // split fullname into first/last (best effort)
-    $first_name = $fullname;
-    $middle_name = '';
-    $last_name = '';
-    if ($fullname !== '') {
-        $parts = preg_split('/\s+/', $fullname);
-        if (count($parts) === 1) {
-            $first_name = $parts[0];
-        } elseif (count($parts) === 2) {
-            $first_name = $parts[0];
-            $last_name = $parts[1];
-        } else {
-            $first_name = $parts[0];
-            $last_name = array_pop($parts);
-            $middle_name = implode(' ', array_slice($parts, 1, -0));
-        }
-    }
-
-    // Build application object matching what utilities.js expects
-    $applications = read_data($dataFile);
-    $maxId = 0;
-    foreach ($applications as $a) { if (isset($a['id']) && $a['id'] > $maxId) $maxId = $a['id']; }
-    $newId = $maxId + 1;
-
-    $app = [
-        'id' => $newId,
-        // use provider as business_name so UI shows it in the table
-        'business_name' => $provider ?: ($fullname ?: 'Utilities Application'),
-        'type_of_business' => $natureOfWork,
-        'nature_of_business' => $natureOfWork,
-        'address_of_business' => $address,
-        'business_status' => '',
-        'telephone_no_business' => $contactNo,
-        'email_address' => isset($_POST['emailAddress']) ? trim($_POST['emailAddress']) : '',
-
-        'first_name' => $first_name,
-        'middle_name' => $middle_name,
-        'last_name' => $last_name,
-        'telephone_no_owner' => $contactNo,
-        'address_owner' => $address,
-
-        'type_of_structure' => '',
-        'no_of_employees' => 0,
-
-        'requirements' => [],
-        'requirement_upload' => '',
-
-        'application_date' => $requestDate,
-        'status' => 'Pending',
-        'payment_status' => 'Unpaid',
-        'amount_due' => 0,
-        'approval_comments' => '',
-        'disapproval_reason' => ''
-    ];
-
-    // Optionally handle file upload (requirementUpload)
-    if (!empty($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-        $uploadsDir = $baseDir . '/uploads';
-        if (!is_dir($uploadsDir)) mkdir($uploadsDir, 0755, true);
-        $tmpName = $_FILES['requirementUpload']['tmp_name'];
-        $origName = basename($_FILES['requirementUpload']['name']);
-        $target = $uploadsDir . '/' . $newId . '_' . preg_replace('/[^A-Za-z0-9._-]/', '_', $origName);
-        if (move_uploaded_file($tmpName, $target)) {
-            $app['requirement_upload'] = basename($target);
-        }
-    }
-
-    $applications[] = $app;
-    write_data($dataFile, $applications);
-
-    echo json_encode(['status' => 'success', 'id' => $newId]);
-    exit;
-}
-
-if ($action === 'update_status') {
-    $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-    $newStatus = isset($_POST['newStatus']) ? trim($_POST['newStatus']) : '';
-    $assessmentAmount = isset($_POST['assessmentAmount']) ? floatval($_POST['assessmentAmount']) : 0;
-    $updateComments = isset($_POST['updateComments']) ? trim($_POST['updateComments']) : '';
-
-    $applications = read_data($dataFile);
-    $found = false;
-    foreach ($applications as &$app) {
-        if (isset($app['id']) && intval($app['id']) === $id) {
-            $found = true;
-            $app['status'] = $newStatus ?: $app['status'];
-            if ($assessmentAmount > 0) {
-                $app['amount_due'] = number_format($assessmentAmount, 2, '.', '');
-                $app['payment_status'] = 'Unpaid';
-            }
-            // store comments appropriately
-            if ($newStatus === 'Approved') {
-                $app['approval_comments'] = $updateComments;
-            } elseif ($newStatus === 'Disapproved') {
-                $app['disapproval_reason'] = $updateComments;
-            } else {
-                // generic remarks
-                $app['remarks'] = $updateComments;
-            }
+try {
+    switch ($action) {
+        case 'create':
+            handleCreateApplication($pdo);
             break;
-        }
+        case 'fetch':
+            handleFetchApplications($pdo);
+            break;
+        case 'update_status':
+            handleUpdateApplicationStatus($pdo);
+            break;
+        case 'update':
+            handleUpdateApplication($pdo);
+            break;
+        default:
+            echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
-    unset($app);
-
-    if (!$found) {
-        echo json_encode(['status' => 'error', 'message' => 'Application not found']);
-        exit;
-    }
-
-    write_data($dataFile, $applications);
-    echo json_encode(['status' => 'success']);
-    exit;
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
 }
-
-echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
 exit;
 
-?>
+// =========================
+// HELPER FUNCTION
+// =========================
+function get_input($key)
+{
+    return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
+}
+
+// =========================
+// CREATE APPLICATION
+// =========================
+function handleCreateApplication($pdo)
+{
+    try {
+        $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
+
+        // Basic Info
+        $firstName    = get_input('firstName');
+        $middleName   = get_input('middleName');
+        $lastName     = get_input('lastName');
+        $suffix       = get_input('suffix');
+        $ownerContact = get_input('contactNoOwner');
+        $ownerAddress = get_input('addressOwner');
+
+        // Utility Details
+        $requestDate  = get_input('requestDate');
+        $dateOfWork   = get_input('dateOfWork');
+        $natureOfWork = get_input('natureOfWork');
+        $provider     = get_input('provider');
+        
+        // Utility Location
+        $uLot         = get_input('utilityLotNo');
+        $uStreet      = get_input('utilityStreet');
+        $utilityAddr  = trim($uLot . ' ' . $uStreet);
+        
+        $latitude     = get_input('latitude2');
+        $longitude    = get_input('longitude2');
+        
+        // Status and Agreement
+        $status       = get_input('status') ?? 'Pending';
+        $agreed       = (int)get_input('agreed'); // Cast to integer for database boolean/int
+
+        $sql = "INSERT INTO utility_applications (
+            first_name, middle_name, last_name, suffix,
+            owner_contact_no, owner_address,
+            request_date, date_of_work, nature_of_work, provider,
+            address_of_utility, latitude, longitude,
+            status, agreed, supabase_user_id,
+            created_at, updated_at
+        ) VALUES (
+            :first_name, :middle_name, :last_name, :suffix,
+            :owner_contact_no, :owner_address,
+            :request_date, :date_of_work, :nature_of_work, :provider,
+            :address_of_utility, :latitude, :longitude,
+            :status, :agreed, :supabase_user_id,
+            NOW(), NOW()
+        ) RETURNING id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':first_name'         => $firstName,
+            ':middle_name'        => $middleName,
+            ':last_name'          => $lastName,
+            ':suffix'             => $suffix,
+            ':owner_contact_no'   => $ownerContact,
+            ':owner_address'      => $ownerAddress,
+            ':request_date'       => $requestDate,
+            ':date_of_work'       => $dateOfWork,
+            ':nature_of_work'     => $natureOfWork,
+            ':provider'           => $provider,
+            ':address_of_utility' => $utilityAddr,
+            ':latitude'           => $latitude,
+            ':longitude'          => $longitude,
+            ':status'             => $status,
+            ':agreed'             => $agreed,
+            ':supabase_user_id'   => $supabaseUserId
+        ]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            "status" => "success", 
+            "id" => $result['id'], 
+            "message" => "Application submitted successfully!"
+        ]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
+    }
+}
+
+// =========================
+// FETCH APPLICATIONS
+// =========================
+function handleFetchApplications($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT * FROM utility_applications ORDER BY created_at ASC");
+        $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(["status" => "success", "data" => $applications]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
+    }
+}
+
+// =========================
+// UPDATE STATUS
+// =========================
+function handleUpdateApplicationStatus($pdo)
+{
+    $id = $_POST['id'] ?? null;
+    $newStatus = $_POST['newStatus'] ?? null;
+    $comments = $_POST['approval_comments'] ?? '';
+    $reason = $_POST['disapproval_reason'] ?? '';
+
+    if (!$id || !$newStatus) {
+        echo json_encode(["status" => "error", "message" => "Missing ID or Status"]);
+        return;
+    }
+
+    try {
+        $sql = "UPDATE utility_applications SET
+            status = :status,
+            approval_comments = :comments,
+            disapproval_reason = :reason,
+            updated_at = NOW()
+            WHERE id = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => $newStatus,
+            ':comments' => $comments,
+            ':reason' => $reason,
+            ':id' => $id
+        ]);
+
+        echo json_encode(["status" => "success", "message" => "Status updated to " . $newStatus]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    }
+}
+
+// =========================
+// UPDATE APPLICATION
+// =========================
+// =========================
+// UPDATE APPLICATION
+// =========================
+function handleUpdateApplication($pdo)
+{
+    try {
+        $id = get_input('application_id');
+        if (!$id) {
+            throw new Exception("Application ID is required for update.");
+        }
+
+        // 1. Fetch existing data to preserve fields not present in the update request
+        $stmtCheck = $pdo->prepare("SELECT status FROM utility_applications WHERE id = :id");
+        $stmtCheck->execute([':id' => $id]);
+        $currentRecord = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if (!$currentRecord) {
+            http_response_code(404);
+            echo json_encode(["status" => "error", "message" => "Application not found."]);
+            return;
+        }
+
+        // 2. Collect Inputs
+        $firstName    = get_input('firstName');
+        $middleName   = get_input('middleName');
+        $lastName     = get_input('lastName');
+        $suffix       = get_input('suffix');
+        $ownerContact = get_input('contactNoOwner');
+        $ownerAddress = get_input('addressOwner');
+        
+        // Reconstruct utility address if components are sent separately, 
+        // or take the direct input
+        $uLot         = get_input('utilityLotNo');
+        $uStreet      = get_input('utilityStreet');
+        $utilityAddr  = ($uLot || $uStreet) ? trim($uLot . ' ' . $uStreet) : get_input('addressOfUtility');
+        
+        $latitude     = get_input('latitude');
+        $longitude    = get_input('longitude');
+        $dateOfWork   = get_input('dateOfWork');
+        
+        // Logic: Use provided status, otherwise keep current status, default to 'Pending'
+        $status       = get_input('status') ?? $currentRecord['status'] ?? 'Pending';
+
+        // 3. Prepare SQL
+        $sql = "UPDATE utility_applications SET
+            first_name = :first_name,
+            middle_name = :middle_name,
+            last_name = :last_name,
+            suffix = :suffix,
+            owner_contact_no = :owner_contact_no,
+            owner_address = :owner_address,
+            address_of_utility = :address_of_utility,
+            latitude = :latitude,
+            longitude = :longitude,
+            date_of_work = :date_of_work,
+            status = :status,
+            updated_at = NOW()
+            WHERE id = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $params = [
+            ':first_name'         => $firstName,
+            ':middle_name'        => $middleName,
+            ':last_name'          => $lastName,
+            ':suffix'             => $suffix,
+            ':owner_contact_no'   => $ownerContact,
+            ':owner_address'      => $ownerAddress,
+            ':address_of_utility' => $utilityAddr,
+            ':latitude'           => $latitude,
+            ':longitude'          => $longitude,
+            ':date_of_work'       => $dateOfWork,
+            ':status'             => $status,
+            ':id'                 => $id
+        ];
+
+        $stmt->execute($params);
+
+        // 4. Response
+        // Note: rowCount() might be 0 if the user clicked 'Save' without changing any values.
+        echo json_encode([
+            "status" => "success", 
+            "message" => "Application updated successfully.",
+            "updated_id" => $id
+        ]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+    }
+}

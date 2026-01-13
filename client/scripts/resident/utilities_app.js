@@ -1,4 +1,5 @@
 import { registerServiceWorker } from '../../../register_sw.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
 registerServiceWorker();
 
@@ -6,35 +7,310 @@ registerServiceWorker();
 // Function: Hide/Show Panels
 // =========================
 function switchPanel(panelId) {
-    const panels = ['utilities', 'waiver', 'summary'].map(id => document.getElementById(id))
+    const panels = ['owner', 'utilities', 'waiver', 'summary'].map(id => document.getElementById(id))
     panels.forEach(panel => { panel.classList.toggle('hidden', panel.id !== panelId) });
+    window.scrollTo(0, 0);
 }
 
-switchPanel('utilities');
+switchPanel('owner');
+
+// Owner form elements 
+const firstName = document.getElementById('firstName');
+const middleName = document.getElementById('middleName');
+const suffix = document.getElementById('suffix');
+const lastName = document.getElementById('lastName');
+const contactNoOwner = document.getElementById('contactNoOwner');
+const lotNo = document.getElementById('lotNo');
+const street = document.getElementById('street');
+
+// Utilities form elements 
+const requestDate = document.getElementById('requestDate');
+const dateOfWork = document.getElementById('dateOfWork');
+const natureOfWork = document.getElementById('natureOfWork');
+const provider = document.getElementById('provider');
+const utilityLotNo = document.getElementById('utilityLotNo');
+const utilityStreet = document.getElementById('utilityStreet');
+
+// Waiver form elements 
+const waiverFullname = document.getElementById('waiverFullname');
+const agreeCheckBox = document.getElementById('agreeCheckBox');
+
+// ===============================
+// Function: Validate single input
+// ===============================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    }
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+    }
+
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.pattern && !rules.pattern.test(value)) {
+            showError(input, rules.errorMessage || message);
+            return false;
+        }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+        clearError(input); return true;
+    }
+
+    function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
+
+    function validateAddress(lotInput, streetInput) {
+        const lot = lotInput.value.trim(), street = streetInput.value.trim();
+        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!match) {
+            const wrapper = streetInput.closest('.label-and-input');
+            const errorEl = wrapper.querySelector('.error-msg');
+            streetInput.classList.add('error');
+            errorEl.textContent = 'Street does not exist for this lot';
+            errorEl.classList.add('show');
+            return false;
+        }
+        clearError(streetInput);
+        const lat = document.getElementById('latitude2');
+        const lng = document.getElementById('longitude2');
+        if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
+        return true;
+    }
+
+    function validateDate(input, message, rules = {}) {
+        if (!input) return true;
+
+        const value = input.value;
+        if (!value) { showError(input, message); return false; }
+
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            showError(input, rules.errorMessage || 'Invalid date');
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (rules.pastOnly && date >= today) {
+            showError(input, rules.errorMessage || 'Date must be in the past');
+            return false;
+        }
+
+        if (rules.futureOnly && date <= today) {
+            showError(input, rules.errorMessage || 'Date must be in the future');
+            return false;
+        }
+
+        if (rules.todayOnly) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const inputDate = new Date(value);
+            inputDate.setHours(0, 0, 0, 0);
+
+            if (inputDate.getTime() !== today.getTime()) {
+                showError(input, rules.errorMessage || 'Date must be today');
+                return false;
+            }
+        }
+
+        if (rules.minDate && date < new Date(rules.minDate)) {
+            showError(input, rules.errorMessage || `Date must be after ${rules.minDate}`);
+            return false;
+        }
+
+        if (rules.maxDate && date > new Date(rules.maxDate)) {
+            showError(input, rules.errorMessage || `Date must be before ${rules.maxDate}`);
+            return false;
+        }
+
+        clearError(input);
+        return true;
+    }
+
+    return {
+        text: validateText,
+        select: validateSelect,
+        number: validateNumber,
+        checkbox: validateCheckbox,
+        address: validateAddress,
+        date: validateDate,
+        clear: clearError
+    };
+})();
+
+// ==============================
+// Configuration for all inputs
+// ==============================
+const validationConfig = [
+    { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: street, type: 'select', message: 'Street is required' },
+
+    { el: requestDate, type: 'date', message: 'Request date is required', rules: { todayOnly: true } },
+    { el: dateOfWork, type: 'date', message: 'Date of work is required', rules: { futureOnly: true } },
+    { el: natureOfWork, type: 'select', message: 'Nature of work is required' },
+    { el: provider, type: 'select', message: 'Provider is required' },
+    { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+    { el: utilityLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: utilityStreet, type: 'select', message: 'Street is required' },
+];
+
+// ==============================
+// Helper: validate a field by config
+// ==============================
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'select': return validator.select(el, message);
+        case 'date': return validator.date(el, message, rules);
+    }
+}
+
+// ==============================
+// Real-time validator
+// ==============================
+(() => {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
+        if (!el) return;
+
+        const targets = [el];
+
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
+        });
+    });
+
+    [lotNo, street].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (lotNo.value && street.value) validator.address(lotNo, street);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [utilityLotNo, utilityStreet].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (utilityLotNo.value && utilityStreet.value) validator.address(utilityLotNo, utilityStreet);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [contactNoOwner, lotNo, utilityLotNo].forEach(el => {
+        el.addEventListener('input', () => {
+            el.value = el.value.replace(/\D/g, '');
+            validator.clear(el);
+        });
+    });
+})();
+
+// ==============================
+// Button-triggered validation (for steps)
+// ==============================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+
+// =========================
+// Owner "Next" button click
+// =========================
+document.getElementById('nextToUtilities').addEventListener('click', () => {
+    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+
+    if (!validateStep(stepFields)) return;
+
+    if (!validator.address(lotNo, street)) return;
+
+    waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    switchPanel('utilities');
+});
+
 
 // =========================
 // Utilities "Next" button click
 // =========================
 document.getElementById('nextToWaiver').addEventListener('click', () => {
-    switchPanel('waiver');
+    const stepFields = [requestDate, dateOfWork, natureOfWork, provider]
+    if (validateStep(stepFields)) {
+        switchPanel('waiver');
+    }
 });
 
 // =========================
 // Waiver "Next" button click
 // =========================
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    switchPanel('summary');
+    const lat = document.getElementById('latitude2').value;
+    const lng = document.getElementById('longitude2').value;
+
+    if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
+        document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
+        document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
+        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
+        document.getElementById('sumReqDate').textContent = requestDate.value;
+        document.getElementById('sumDateOfWork').textContent = dateOfWork.value;
+        document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
+        document.getElementById('sumProvider').textContent = provider.value;
+        document.getElementById('sumAddressOfUtility').textContent = `${utilityLotNo.value} ${utilityStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+
+        switchPanel('summary');
+    }
 });
 
 // =========================
 // Back buttons
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('utilitiesBackBtn').addEventListener('click', () => {
+    document.getElementById('ownerBackBtn').addEventListener('click', () => {
         window.location.href = '/Banwa/client/pages/resident/services.php';
     });
 
-    // document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('ownder'));
+    document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('utilities'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
 });
@@ -43,38 +319,299 @@ document.addEventListener('DOMContentLoaded', () => {
 // =========================
 // Final form submit
 // =========================
-document.getElementById('summaryForm').addEventListener('submit', function (e) {
+const summaryForm = document.getElementById('summaryForm');
+
+// Remove existing listeners to prevent duplicates
+const newSummaryForm = summaryForm.cloneNode(true);
+summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
+
+newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    // TODO: Front-end developer, will change this into modal
-    // once the designs is fully completed.
+    if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+    }
+
+    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Application Submitted", {
+                body: "Click to view your application status",
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
+    }
+
     if (confirm('Are you sure you want to submit this application?')) {
-        const allData = {
-            requestDate: requestDate.value,
-            dateOfWork: dateOfWork.value,
-            fullname: fullnameUtilities.value,
-            contactNo: contactNo.value,
-            address: address.value,
-            provider: provider.value,
-            natureOfWork: natureOfWork.value,
-            agreed: agreeCheckBox.checked,
-        };
+        const formData = new FormData();
 
-        // TODO: Back-end developer, these are the data to be sent to db.
-        // add here if necessary...
+        // Add action type for backend
+        formData.append('action', 'create');
 
-        fetch('/Banwa/server/api/resident/submit_utilities.php', {
+        // Owner details
+        formData.append('firstName', firstName.value);
+        formData.append('middleName', middleName.value);
+        formData.append('lastName', lastName.value);
+        formData.append('suffix', suffix.value);
+        formData.append('contactNoOwner', contactNoOwner.value);
+        // FIX: Add this for owner_address
+        formData.append('addressOwner', `${lotNo.value} ${street.value}`);
+
+        // Utilities details
+        formData.append('requestDate', requestDate.value);
+        formData.append('dateOfWork', dateOfWork.value);
+        formData.append('natureOfWork', natureOfWork.value);
+        formData.append('provider', provider.value);
+
+        // FIX: Add these for address_of_utility
+        formData.append('utilityLotNo', utilityLotNo.value);
+        formData.append('utilityStreet', utilityStreet.value);
+
+        // Waiver
+        formData.append('agreed', agreeCheckBox.checked ? 1 : 0);
+
+        // Coordinates
+        const lat = document.getElementById('latitude2')?.value || '';
+        const lng = document.getElementById('longitude2')?.value || '';
+        formData.append('latitude2', lat);
+        formData.append('longitude2', lng);
+
+        // Application Date
+        const appDate = document.getElementById('applicationDate')?.value || '';
+        formData.append('applicationDate', appDate);
+
+        // Submit via fetch to backend
+        fetch('/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allData),
+            body: formData,
             credentials: 'include'
         })
             .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(err => console.error(err));
-
-        // I will remove this later, this is only for test. - jep
-        // console.log('Final Submission Data:', allData);
-        alert('Application submitted successfully!');
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Application submitted successfully! Reference ID: ' + data.id);
+                    window.location.href = '/Banwa/client/pages/resident/status.php';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Something went wrong. Check console for details.');
+            });
     }
-}, { once: true });
+});
+
+// =========================
+// FN: Map & Coordinate Functions
+// =========================
+function openMapPicker(target) {
+    const modal = document.createElement('div');
+    modal.className = 'map-modal';
+    modal.innerHTML = `
+        <div class="map-modal-content">
+            <div class="map-header">
+                <div class="map-modal-header">
+                    <h3>Select Location</h3>
+                    <button class="close-map">Close</button>
+                </div>
+            </div>
+            <div id="map-container"></div>
+        </div>
+    `;
+    modal.dataset.target = target;
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    modal.querySelector('.close-map').addEventListener('click', () => {
+        const preview = document.getElementById(`map-preview-${target}`);
+        if (preview) preview.style.display = 'none';
+        modal.remove();
+    });
+
+    initializeMapPicker(target);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
+});
+
+async function initializeMapPicker(target) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
+
+    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
+
+        document.getElementById(`latitude${target}`).value = lat;
+        document.getElementById(`longitude${target}`).value = lng;
+        document.getElementById(`map-preview-${target}`).style.display = 'block';
+    });
+
+    // Optional: Load barangay polygon
+    const blueRidgeGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "properties": { "name": "Barangay Blue Ridge B" },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [121.07278956348526, 14.61639406374255],
+                    [121.07392145567032, 14.61595803532421],
+                    [121.07419772320655, 14.616251316435923],
+                    [121.07617987565104, 14.616430399403944],
+                    [121.07651515177966, 14.617647640629082],
+                    [121.07800914220171, 14.617803363969443],
+                    [121.07872851395038, 14.617316502559932],
+                    [121.07891090415784, 14.617705811277993],
+                    [121.07449698388697, 14.62017411386342]
+                ]]
+            }
+        }]
+    };
+    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
+
+    // Load houses from server
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_houses');
+        const response = await fetch('../../pages/staff/map_handler.php', { method: 'POST', body: formData });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        if (data.success && data.houses) {
+            const houseLayer = L.layerGroup();
+
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        const coords = JSON.parse(house.coordinates);
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        latLngCoords.push(latLngCoords[0]); // close polygon
+
+                        const polygon = L.polygon(latLngCoords, {
+                            color: '#3388ff',
+                            weight: 1,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.1,
+                            interactive: true
+                        }).addTo(houseLayer);
+
+                        // Polygon click autofill
+                        polygon.on('click', function (e) {
+                            const lat = e.latlng.lat.toFixed(6);
+                            const lng = e.latlng.lng.toFixed(6);
+
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+
+                            // document.getElementById(`current-coords`).textContent = `${lat}, ${lng}`;
+                            document.getElementById(`latitude${target}`).value = lat;
+                            document.getElementById(`longitude${target}`).value = lng;
+                            document.getElementById(`map-preview-${target}`).style.display = 'block';
+
+                            // Only fill fields for the correct target
+                            if (target === '1') { // Owner
+                                const lotNo = document.getElementById('lotNo');
+                                const street = document.getElementById('street');
+                                lotNo.value = house.house_number || '';
+                                street.value = house.street_name || '';
+                                [lotNo, street].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
+
+                            if (target === '2') { // Utilities
+                                const utilityLot = document.getElementById('utilityLotNo');
+                                const utilityStreet = document.getElementById('utilityStreet');
+                                utilityLot.value = house.house_number || '';
+                                utilityStreet.value = house.street_name || '';
+                                document.getElementById(`latitude2`).value = lat;
+                                document.getElementById(`longitude2`).value = lng;
+
+                                [utilityLot, utilityStreet].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
+                        });
+
+
+                        // Add popup
+                        polygon.bindPopup(`
+                            <div class="house-popup">
+                                <h4>🏠 ${house.address}</h4>
+                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
+                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
+                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
+                            </div>
+                        `);
+
+                    } catch (err) {
+                        console.error('Error parsing house coordinates:', err);
+                    }
+                }
+            });
+
+            houseLayer.addTo(map);
+        }
+    } catch (err) {
+        console.error('Error loading houses:', err);
+    }
+}
+
+// =========================
+// FN: Auto format coordinates on blur
+// =========================
+function setupCoordinateAutoFormat(target) {
+    const latInput = document.getElementById(`latitude${target}`);
+    const lngInput = document.getElementById(`longitude${target}`);
+    if (!latInput || !lngInput) return;
+
+    [latInput, lngInput].forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6);
+        });
+    });
+}
+
+// Initialize both forms
+document.addEventListener('DOMContentLoaded', () => {
+    [1, 2].forEach(target => setupCoordinateAutoFormat(target));
+});
+
+// =========================
+// FN: Owner Autofilled Application
+// =========================
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const data = await resp.json();
+
+        if (data.error) {
+            console.log('Autofill error:', data.error);
+            return;
+        }
+
+        if (data.household_head_name) firstName.value = data.household_head_name;
+        if (data.contact_no) contactNoOwner.value = data.contact_no;
+    } catch (err) {
+        console.error('Failed to fetch user data for autofill:', err);
+    }
+});

@@ -3,11 +3,50 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../configs/database.php';
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM utility_doc ORDER BY id DESC");
-    $stmt->execute();
-    $utilities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+ $appId = $_GET['id'] ?? null;
 
-    echo json_encode(['success' => true, 'data' => $utilities]);
+    if (!$appId) {
+        ob_clean();
+        echo json_encode(["success" => false, "error" => "Application ID is required."]);
+        exit;
+    }
+
+    $stmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+    $stmt->execute([':id' => $appId]);
+    $app = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$app) {
+        ob_clean();
+        echo json_encode(["success" => false, "error" => "Application not found."]);
+        exit;
+    }
+
+    // Process JSON fields if they are stored as JSON strings in the DB
+    if (isset($app['business_status']) && is_string($app['business_status'])) {
+        $decoded = json_decode($app['business_status'], true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $app['business_status'] = $decoded;
+        }
+    }
+    if (isset($app['requirements']) && is_string($app['requirements'])) {
+        $decoded = json_decode($app['requirements'], true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $app['requirements'] = $decoded;
+        }
+    }
+
+    ob_clean();
+    echo json_encode(["success" => true, "data" => $app]);
+
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    ob_clean();
+    http_response_code(500);
+    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
+} catch (Exception $e) {
+    ob_clean();
+    http_response_code(500);
+    echo json_encode(["success" => false, "error" => "Server error: " . $e->getMessage()]);
 }
+exit;
+
+?>

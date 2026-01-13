@@ -47,7 +47,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="middleName">Middle Name</label>
+                        <label class="label" for="middleName">Middle Name <i>(Optional)</i></label>
                         <input type="text" id="middleName" name="middleName">
                         <div class="error-msg"></div>
                     </div>
@@ -57,7 +57,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="suffix">Suffix</label>
+                        <label class="label" for="suffix">Suffix <i>(Optional)</i></label>
                         <input type="text" id="suffix" name="suffix">
                         <div class="error-msg"></div>
                     </div>

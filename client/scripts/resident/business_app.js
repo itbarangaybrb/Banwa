@@ -22,455 +22,455 @@ function switchPanel(panelId) {
 // ==========================
 // Function: Validation
 // ==========================
-function validation() {
-    // Owner form elements 
-    const firstName = document.getElementById('firstName');
-    const middleName = document.getElementById('middleName');
-    const suffix = document.getElementById('suffix');
-    const lastName = document.getElementById('lastName');
-    const contactNoOwner = document.getElementById('contactNoOwner');
-    const lotNo = document.getElementById('lotNo');
-    const street = document.getElementById('street');
+// Owner form elements 
+const firstName = document.getElementById('firstName');
+const middleName = document.getElementById('middleName');
+const suffix = document.getElementById('suffix');
+const lastName = document.getElementById('lastName');
+const contactNoOwner = document.getElementById('contactNoOwner');
+const lotNo = document.getElementById('lotNo');
+const street = document.getElementById('street');
 
-    // Business form elements 
-    const businessName = document.getElementById('businessName');
-    const typeOfBusiness = document.getElementsByName('typeOfBusiness');
-    const natureOfBusinessSelect = document.getElementById('natureOfBusinessSelect');
-    const natureOfBusinessSpecify = document.getElementById('natureOfBusinessSpecify');
-    const businessStatus = document.getElementsByName('businessStatus');
-    const contactNoBusiness = document.getElementById('contactNoBusiness');
-    const emailAddress = document.getElementById('emailAddress');
-    const noOfEmployees = document.getElementById('noOfEmployees');
-    const businessLotNo = document.getElementById('businessLotNo');
-    const businessStreet = document.getElementById('businessStreet');
-    const typeOfStructureSelect = document.getElementById('typeOfStructureSelect');
-    const typeOfStructureSpecify = document.getElementById('typeOfStructureSpecify');
-    const natureOfApplication = document.getElementById('natureOfApplication');
-    const requirements = document.getElementsByName('requirements');
-    const requirementUpload = document.getElementById('requirementUpload');
-    const requirementsSection = document.getElementById('requirementsSection');
+// Business form elements 
+const businessName = document.getElementById('businessName');
+const typeOfBusiness = document.getElementsByName('typeOfBusiness');
+const natureOfBusinessSelect = document.getElementById('natureOfBusinessSelect');
+const natureOfBusinessSpecify = document.getElementById('natureOfBusinessSpecify');
+const businessStatus = document.getElementsByName('businessStatus');
+const contactNoBusiness = document.getElementById('contactNoBusiness');
+const emailAddress = document.getElementById('emailAddress');
+const noOfEmployees = document.getElementById('noOfEmployees');
+const businessLotNo = document.getElementById('businessLotNo');
+const businessStreet = document.getElementById('businessStreet');
+const typeOfStructureSelect = document.getElementById('typeOfStructureSelect');
+const typeOfStructureSpecify = document.getElementById('typeOfStructureSpecify');
+const natureOfApplication = document.getElementById('natureOfApplication');
+const requirements = document.getElementsByName('requirements');
+const requirementUpload = document.getElementById('requirementUpload');
+const requirementsSection = document.getElementById('requirementsSection');
 
-    // Waiver form elements
-    const agreeCheckBox = document.getElementById('agreeCheckBox');
+// Waiver form elements
+const agreeCheckBox = document.getElementById('agreeCheckBox');
 
-    // Show Owner panel by default
-    switchPanel('owner');
+// Show Owner panel by default
+switchPanel('owner');
 
-    typeOfStructureSpecify.closest('.label-and-input').style.display = 'none';
-    natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
-    requirementsSection.style.display = 'none';
+typeOfStructureSpecify.closest('.label-and-input').style.display = 'none';
+natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
+requirementsSection.style.display = 'none';
 
-    typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
-    natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
+typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
+natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 
-    natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
+natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
 
-    // ===============================
-    // Function: Validate single input
-    // ===============================
-    const validator = (() => {
-        function getWrapper(el) { return el.closest('.label-and-input'); }
-        function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
-        function showError(el, message) {
-            const errorEl = getErrorEl(el);
-            el.classList.add('error');
-            errorEl.textContent = message;
+// ===============================
+// Function: Validate single input
+// ===============================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    }
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+    }
+
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateEmail(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
+        clearError(input); return true;
+    }
+
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+        clearError(input); return true;
+    }
+
+    function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
+
+    function validateFile(input, message, options = {}) {
+        if (!input || input.files.length === 0) { showError(input, message); return false; }
+        const file = input.files[0];
+        if (options.accept?.length > 0) {
+            const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
+            if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
+        }
+        if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
+        clearError(input); return true;
+    }
+
+    function validateCheckboxGroup(checkboxes, message) {
+        const wrapper = checkboxes[0].closest('.label-and-input');
+        if (wrapper.style.display === 'none') return true;
+        if (!Array.from(checkboxes).some(c => c.checked)) { showError(checkboxes[0], message); return false; }
+        clearError(checkboxes[0]); return true;
+    }
+
+    function validateRadioGroup(radios, message) {
+        if (!Array.from(radios).some(r => r.checked)) { showError(radios[0], message); return false; }
+        clearError(radios[0]); return true;
+    }
+
+    function validateAddress(lotInput, streetInput) {
+        const lot = lotInput.value.trim(), street = streetInput.value.trim();
+        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!match) {
+            const wrapper = streetInput.closest('.label-and-input');
+            const errorEl = wrapper.querySelector('.error-msg');
+            streetInput.classList.add('error');
+            errorEl.textContent = 'Street does not exist for this lot';
             errorEl.classList.add('show');
+            return false;
         }
-        function clearError(el) {
-            const errorEl = getErrorEl(el);
-            el.classList.remove('error');
-            errorEl.textContent = '';
-            errorEl.classList.remove('show');
-        }
-
-        function validateText(input, message, rules = {}) {
-            if (!input) return true;
-            let value = input.value.trim();
-            if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
-            if (value === '' || value === 'select') { showError(input, message); return false; }
-            if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-                showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
-            }
-            if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
-            if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
-            clearError(input); return true;
-        }
-
-        function validateEmail(input, message) {
-            if (!input) return true;
-            const value = input.value.trim();
-            if (value === '') { showError(input, message); return false; }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
-            clearError(input); return true;
-        }
-
-        function validateSelect(input, message) {
-            if (!input) return true;
-            const value = input.value.trim();
-            if (value === '' || value === 'select') { showError(input, message); return false; }
-            clearError(input); return true;
-        }
-
-        function validateNumber(input, message, rules = {}) {
-            if (!input) return true;
-            const value = input.value.trim();
-            if (value === '') { showError(input, message); return false; }
-            if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-            if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
-            if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-            clearError(input); return true;
-        }
-
-        function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
-
-        function validateFile(input, message, options = {}) {
-            if (!input || input.files.length === 0) { showError(input, message); return false; }
-            const file = input.files[0];
-            if (options.accept?.length > 0) {
-                const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
-                if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
-            }
-            if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
-            clearError(input); return true;
-        }
-
-        function validateCheckboxGroup(checkboxes, message) {
-            const wrapper = checkboxes[0].closest('.label-and-input');
-            if (wrapper.style.display === 'none') return true;
-            if (!Array.from(checkboxes).some(c => c.checked)) { showError(checkboxes[0], message); return false; }
-            clearError(checkboxes[0]); return true;
-        }
-
-        function validateRadioGroup(radios, message) {
-            if (!Array.from(radios).some(r => r.checked)) { showError(radios[0], message); return false; }
-            clearError(radios[0]); return true;
-        }
-
-        function validateAddress(lotInput, streetInput) {
-            const lot = lotInput.value.trim(), street = streetInput.value.trim();
-            if (!lot) return validator.number(lotInput, 'Lot no. is required');
-            if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
-            const fullAddress = `${lot} ${street}`;
-            const match = addressCoordinates.find(a => a.address === fullAddress);
-            if (!match) {
-                const wrapper = streetInput.closest('.label-and-input');
-                const errorEl = wrapper.querySelector('.error-msg');
-                streetInput.classList.add('error');
-                errorEl.textContent = 'Street does not exist for this lot';
-                errorEl.classList.add('show');
-                return false;
-            }
-            clearError(streetInput);
-            const lat = document.getElementById('latitude2');
-            const lng = document.getElementById('longitude2');
-            if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
-            return true;
-        }
-
-        return {
-            text: validateText,
-            email: validateEmail,
-            file: validateFile,
-            select: validateSelect,
-            number: validateNumber,
-            checkbox: validateCheckbox,
-            checkboxGroup: validateCheckboxGroup,
-            radioGroup: validateRadioGroup,
-            address: validateAddress,
-            clear: clearError
-        };
-    })();
-
-    // ==============================
-    // Configuration for all inputs
-    // ==============================
-    const validationConfig = [
-        { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-        { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-        { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-        { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-        { el: street, type: 'select', message: 'Street is required' },
-        { el: businessName, type: 'text', message: 'Business Name is required' },
-        { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
-        { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
-        { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
-        { el: businessStatus, type: 'radio', message: 'Please select business status' },
-        { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-        { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
-        { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
-        { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-        { el: businessStreet, type: 'select', message: 'Street is required' },
-        { el: typeOfStructureSelect, type: 'select', message: 'Type of structure is required' },
-        { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
-        { el: natureOfApplication, type: 'select', message: 'Nature of application is required' },
-        { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
-        { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
-        { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } }
-    ];
-
-    // ==============================
-    // Helper: validate a field by config
-    // ==============================
-    function validateField(config) {
-        const { el, type, message, rules } = config;
-        if (!el) return true;
-
-        switch (type) {
-            case 'number': return validator.number(el, message, rules);
-            case 'text': return validator.text(el, message, rules);
-            case 'email': return validator.email(el, message, rules);
-            case 'file': return validator.file(el, message, rules);
-            case 'checkbox': return validator.checkbox(el, message);
-            case 'checkboxGroup': return validator.checkboxGroup(el, message);
-            case 'radio': return validator.radioGroup(el, message);
-            case 'select': return validator.select(el, message);
-        }
+        clearError(streetInput);
+        const lat = document.getElementById('latitude2');
+        const lng = document.getElementById('longitude2');
+        if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
+        return true;
     }
 
-    // ==============================
-    // Real-time validator
-    // ==============================
-    (() => {
-        validationConfig.forEach(config => {
-            const { el, type } = config;
-            if (!el) return;
+    return {
+        text: validateText,
+        email: validateEmail,
+        file: validateFile,
+        select: validateSelect,
+        number: validateNumber,
+        checkbox: validateCheckbox,
+        checkboxGroup: validateCheckboxGroup,
+        radioGroup: validateRadioGroup,
+        address: validateAddress,
+        clear: clearError
+    };
+})();
 
-            const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+// ==============================
+// Configuration for all inputs
+// ==============================
+const validationConfig = [
+    { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: street, type: 'select', message: 'Street is required' },
+    { el: businessName, type: 'text', message: 'Business Name is required' },
+    { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
+    { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
+    { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
+    { el: businessStatus, type: 'radio', message: 'Please select business status' },
+    { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
+    { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
+    { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: businessStreet, type: 'select', message: 'Street is required' },
+    { el: typeOfStructureSelect, type: 'select', message: 'Type of structure is required' },
+    { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
+    { el: natureOfApplication, type: 'select', message: 'Nature of application is required' },
+    { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+    { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
+    { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } }
+];
 
-            targets.forEach(target => {
-                target.addEventListener('blur', () => validateField(config));
-                target.addEventListener('input', () => validator.clear(target));
-            });
-        });
+// ==============================
+// Helper: validate a field by config
+// ==============================
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
 
-        [lotNo, street].forEach(el => {
-            el.addEventListener('blur', () => {
-                if (lotNo.value && street.value) validator.address(lotNo, street);
-            });
-            el.addEventListener('input', () => validator.clear(el));
-        });
-
-        [businessLotNo, businessStreet].forEach(el => {
-            el.addEventListener('blur', () => {
-                if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
-            });
-            el.addEventListener('input', () => validator.clear(el));
-        });
-
-        [contactNoOwner, contactNoBusiness, lotNo, businessLotNo, noOfEmployees].forEach(el => {
-            el.addEventListener('input', () => {
-                el.value = el.value.replace(/\D/g, '');
-                validator.clear(el);
-            });
-        });
-    })();
-
-    // ==============================
-    // Button-triggered validation (for steps)
-    // ==============================
-    function validateStep(fields) {
-        return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'email': return validator.email(el, message, rules);
+        case 'file': return validator.file(el, message, rules);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'checkboxGroup': return validator.checkboxGroup(el, message);
+        case 'radio': return validator.radioGroup(el, message);
+        case 'select': return validator.select(el, message);
     }
-
-    // =========================
-    // Owner "Next" button click
-    // =========================
-    document.getElementById('nextToBusiness').addEventListener('click', () => {
-        const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
-        if (validateStep(stepFields)) {
-            document.getElementById('waiverFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`;
-            switchPanel('business');
-        }
-    });
-
-    // ============================
-    // Business "Next" button click
-    // ============================
-    document.getElementById('nextToWaiver').addEventListener('click', () => {
-        const stepFields = [
-            businessName,
-            typeOfBusiness,
-            natureOfBusinessSelect,
-            natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
-            businessStatus,
-            contactNoBusiness,
-            emailAddress,
-            requirements,
-            requirementUpload,
-            noOfEmployees,
-            natureOfApplication,
-            typeOfStructureSelect,
-            typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify : null,
-            businessLotNo,
-            businessStreet,
-            noOfEmployees
-        ].filter(Boolean);
-
-        if (validateStep(stepFields)) {
-            document.getElementById('waiverFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value}`;
-            switchPanel('waiver');
-        }
-    });
-
-    // ==========================
-    // Waiver "Next" button click
-    // ==========================
-    document.getElementById('nextToSummary').addEventListener('click', () => {
-        const lat = document.getElementById('latitude2').value;
-        const lng = document.getElementById('longitude2').value;
-
-        if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
-            document.getElementById('sumBusinessName').textContent = businessName.value;
-            document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
-            document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
-            document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
-            document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
-            document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
-            document.getElementById('sumEmail').textContent = emailAddress.value;
-            document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
-            document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-            document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
-            document.getElementById('sumStructureType').textContent = (typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value).trim();
-            document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
-            document.getElementById('sumEmployees').textContent = noOfEmployees.value;
-            document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
-
-            switchPanel('summary');
-        }
-    });
-
-    // ==========================
-    // Back buttons
-    // ==========================
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('ownerBackBtn').addEventListener('click', () => {
-            window.location.href = '/Banwa/client/pages/resident/services.php';
-        });
-        
-        document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
-        document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
-        document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
-    });
-
-
-    // FINAL FORM SUBMISSION HANDLER
-    const summaryForm = document.getElementById('summaryForm');
-
-    // Remove existing listeners to prevent duplicates
-    const newSummaryForm = summaryForm.cloneNode(true);
-    summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
-
-    newSummaryForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (Notification.permission !== "granted") {
-            await Notification.requestPermission();
-        }
-
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Application Submitted", {
-                    body: "Click to view your application status",
-                    icon: "/Banwa/client/img/banwalogo.png",
-                    data: { url: "/Banwa/client/pages/resident/status.php" }
-                });
-            });
-        }
-
-
-        if (confirm('Are you sure you want to submit this application?')) {
-            const formData = new FormData();
-
-            // 1. ADD THE ACTION (Crucial for business_handler.php)
-            formData.append('action', 'create');
-
-            // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
-            formData.append('businessName', document.getElementById('businessName').value);
-            const { data: { user } } = await supabase.auth.getUser();
-            const supabaseUserId = user?.id;
-            formData.append('supabase_user_id', supabaseUserId);
-
-            // Radio Buttons: Type of Business
-            const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
-            formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
-
-            // Nature of Business (Split into Select and Specify for the DB)
-            formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
-            formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
-
-            // Address & Contacts
-            formData.append('businessLotNo', document.getElementById('businessLotNo').value);
-            formData.append('businessStreet', document.getElementById('businessStreet').value);
-            formData.append('contactNoBusiness', document.getElementById('contactNoBusiness').value);
-            formData.append('emailAddress', document.getElementById('emailAddress').value);
-
-            // Business Status (Radio Button)
-            const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
-            // The PHP handler expects this as an array/json, but implies a single string in your HTML structure. 
-            // We send it as a key that PHP will json_encode.
-            if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
-
-            // Owner Details
-            formData.append('firstName', document.getElementById('firstName').value);
-            formData.append('middleName', document.getElementById('middleName').value);
-            formData.append('suffix', document.getElementById('suffix').value);
-            formData.append('lastName', document.getElementById('lastName').value);
-            formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
-            formData.append('lotNo', document.getElementById('lotNo').value);
-            formData.append('street', document.getElementById('street').value);
-
-            // Structure (Split into Select and Specify)
-            formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
-            formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
-            formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
-
-            // Requirements (Checkbox Array)
-            const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
-            reqCheckboxes.forEach((checkbox) => {
-                formData.append('requirements[]', checkbox.value);
-            });
-
-            // File Upload
-            const fileInput = document.getElementById('requirementUpload');
-            if (fileInput.files.length > 0) {
-                formData.append('requirementUpload', fileInput.files[0]);
-            }
-
-            const latitudeEl = document.getElementById('latitude2');
-            const longitudeEl = document.getElementById('longitude2');
-            formData.append('latitude2', latitudeEl?.value || '');
-            formData.append('longitude2', longitudeEl?.value || '');
-
-            // Application Date
-            formData.append('applicationDate', document.getElementById('applicationDate').value);
-
-            // 3. SEND TO BACKEND
-            // Make sure this path points correctly to your business_handler.php
-            fetch('../../scripts/staff/business_staff/business_handler.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json()) // Parse JSON response
-                .then(data => {
-                    console.log('Server Response:', data);
-                    if (data.status === 'success') {
-                        alert('Application submitted successfully! Reference ID: ' + data.id);
-                        // location.reload(); // Refresh page
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Fetch Error:', error);
-                    alert('Something went wrong. Check console for details.');
-                });
-        }
-    });
 }
 
-validation();
+// ==============================
+// Real-time validator
+// ==============================
+(() => {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
+        if (!el) return;
+
+        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
+        });
+    });
+
+    [lotNo, street].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (lotNo.value && street.value) validator.address(lotNo, street);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [businessLotNo, businessStreet].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [contactNoOwner, contactNoBusiness, lotNo, businessLotNo, noOfEmployees].forEach(el => {
+        el.addEventListener('input', () => {
+            el.value = el.value.replace(/\D/g, '');
+            validator.clear(el);
+        });
+    });
+})();
+
+// ==============================
+// Button-triggered validation (for steps)
+// ==============================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+// =========================
+// Owner "Next" button click
+// =========================
+document.getElementById('nextToBusiness').addEventListener('click', () => {
+    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+    if (!validateStep(stepFields)) return;
+
+    if (!validator.address(lotNo, street)) return;
+
+    waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    switchPanel('business');
+});
+
+// ============================
+// Business "Next" button click
+// ============================
+document.getElementById('nextToWaiver').addEventListener('click', () => {
+    const stepFields = [
+        businessName,
+        typeOfBusiness,
+        natureOfBusinessSelect,
+        natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
+        businessStatus,
+        contactNoBusiness,
+        emailAddress,
+        requirements,
+        requirementUpload,
+        noOfEmployees,
+        natureOfApplication,
+        typeOfStructureSelect,
+        typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify : null,
+        businessLotNo,
+        businessStreet,
+        noOfEmployees
+    ].filter(Boolean);
+
+    if (!validator.address(businessLotNo, businessStreet)) return;
+
+    if (!validateStep(stepFields)) return;
+    
+    switchPanel('waiver');
+});
+
+// ==========================
+// Waiver "Next" button click
+// ==========================
+document.getElementById('nextToSummary').addEventListener('click', () => {
+    const lat = document.getElementById('latitude2').value;
+    const lng = document.getElementById('longitude2').value;
+
+    if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
+        document.getElementById('sumBusinessName').textContent = businessName.value;
+        document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
+        document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
+        document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
+        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
+        document.getElementById('sumEmail').textContent = emailAddress.value;
+        document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
+        document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
+        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumStructureType').textContent = (typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value).trim();
+        document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
+        document.getElementById('sumEmployees').textContent = noOfEmployees.value;
+        document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
+
+        switchPanel('summary');
+    }
+});
+
+// ==========================
+// Back buttons
+// ==========================
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('ownerBackBtn').addEventListener('click', () => {
+        window.location.href = '/Banwa/client/pages/resident/services.php';
+    });
+
+    document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
+    document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
+    document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
+});
+
+
+// FINAL FORM SUBMISSION HANDLER
+const summaryForm = document.getElementById('summaryForm');
+
+// Remove existing listeners to prevent duplicates
+const newSummaryForm = summaryForm.cloneNode(true);
+summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
+
+newSummaryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+    }
+
+    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Application Submitted", {
+                body: "Click to view your application status",
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
+    }
+
+
+    if (confirm('Are you sure you want to submit this application?')) {
+        const formData = new FormData();
+
+        // 1. ADD THE ACTION (Crucial for business_handler.php)
+        formData.append('action', 'create');
+
+        // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
+        formData.append('businessName', document.getElementById('businessName').value);
+        const { data: { user } } = await supabase.auth.getUser();
+        const supabaseUserId = user?.id;
+        formData.append('supabase_user_id', supabaseUserId);
+
+        // Radio Buttons: Type of Business
+        const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
+        formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
+
+        // Nature of Business (Split into Select and Specify for the DB)
+        formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
+        formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
+
+        // Address & Contacts
+        formData.append('businessLotNo', document.getElementById('businessLotNo').value);
+        formData.append('businessStreet', document.getElementById('businessStreet').value);
+        formData.append('contactNoBusiness', document.getElementById('contactNoBusiness').value);
+        formData.append('emailAddress', document.getElementById('emailAddress').value);
+
+        // Business Status (Radio Button)
+        const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
+        // The PHP handler expects this as an array/json, but implies a single string in your HTML structure. 
+        // We send it as a key that PHP will json_encode.
+        if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
+
+        // Owner Details
+        formData.append('firstName', document.getElementById('firstName').value);
+        formData.append('middleName', document.getElementById('middleName').value);
+        formData.append('suffix', document.getElementById('suffix').value);
+        formData.append('lastName', document.getElementById('lastName').value);
+        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
+        formData.append('lotNo', document.getElementById('lotNo').value);
+        formData.append('street', document.getElementById('street').value);
+
+        // Structure (Split into Select and Specify)
+        formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
+        formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
+        formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
+
+        // Requirements (Checkbox Array)
+        const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
+        reqCheckboxes.forEach((checkbox) => {
+            formData.append('requirements[]', checkbox.value);
+        });
+
+        // File Upload
+        const fileInput = document.getElementById('requirementUpload');
+        if (fileInput.files.length > 0) {
+            formData.append('requirementUpload', fileInput.files[0]);
+        }
+
+        const latitudeEl = document.getElementById('latitude2');
+        const longitudeEl = document.getElementById('longitude2');
+        formData.append('latitude2', latitudeEl?.value || '');
+        formData.append('longitude2', longitudeEl?.value || '');
+
+        // Application Date
+        formData.append('applicationDate', document.getElementById('applicationDate').value);
+
+        // 3. SEND TO BACKEND
+        // Make sure this path points correctly to your business_handler.php
+        fetch('../../scripts/staff/business_staff/business_handler.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json()) // Parse JSON response
+            .then(data => {
+                // console.log('Server Response:', data);
+                if (data.status === 'success') {
+                    alert('Application submitted successfully! Reference ID: ' + data.id);
+                    // location.reload(); // Refresh page
+                    window.location.href = '/Banwa/client/pages/resident/status.php';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                alert('Something went wrong. Check console for details.');
+            });
+    }
+});
+
 
 // ==============================
 // Function: Get current date
