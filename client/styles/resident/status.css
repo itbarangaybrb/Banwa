@@ -652,3 +652,16 @@ body {
 #payment-modal-form-content .form-actions .submit-btn:hover {
     background-color: var(--color-blue-2);
 }
+
+.remarks-close-btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.remarks-close-btn-secondary:hover {
+    background-color: #5a6268;
+}

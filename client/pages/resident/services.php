@@ -47,7 +47,7 @@ if ($_SESSION['role_id'] != 1) {
                         <p>Utilities</p>
                     </a>
 
-                    <a class="links" href="#">
+                    <a class="links" href="../resident/incidentReport.php">
                         <img src="../../img/file-icon.svg" alt="">
                         <p>Report</p>
                     </a>
