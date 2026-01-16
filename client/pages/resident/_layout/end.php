@@ -10,6 +10,7 @@
 
             document.addEventListener("click", (e) => {
                 const link = e.target.closest("a");
+                const submit = e.target.closest("button[type=submit]");
                 const loader = document.getElementById("page-loader");
 
                 if (
@@ -23,6 +24,11 @@
                 ) {
                     loader.style.display = "flex";
                 }
+            });
+
+            document.addEventListener("submit", () => {
+                const loader = document.getElementById("page-loader");
+                if (loader) loader.style.display = "flex";
             });
         </script>
     </body>
