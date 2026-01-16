@@ -545,6 +545,10 @@ body {
     /* border: 1px solid red !important; */
 }
 
+.hidden {
+    display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     /* .content {
@@ -575,24 +579,4 @@ body {
         width: 100%;
         margin: 10px 0;
     } */
-}
-
-.error-msg {
-    color: red;
-    font-size: 12px;
-    margin-top: 8px;
-    display: none;
-}
-
-.error-msg.show {
-    display: block;
-}
-
-.error {
-    outline: 1px solid red;
-    /* border: 1px solid red !important; */
-}
-
-.hidden {
-    display: none;
 }

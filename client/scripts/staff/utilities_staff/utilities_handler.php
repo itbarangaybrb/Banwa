@@ -83,7 +83,7 @@ function handleCreateApplication($pdo)
         
         // Status and Agreement
         $status       = get_input('status') ?? 'Pending';
-        $agreed       = (int)get_input('agreed'); // Cast to integer for database boolean/int
+        $agreed       = (int)get_input('agreed');
 
         $sql = "INSERT INTO utility_applications (
             first_name, middle_name, last_name, suffix,
@@ -192,9 +192,6 @@ function handleUpdateApplicationStatus($pdo)
     }
 }
 
-// =========================
-// UPDATE APPLICATION
-// =========================
 // =========================
 // UPDATE APPLICATION
 // =========================

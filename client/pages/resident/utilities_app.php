@@ -256,7 +256,7 @@ if ($_SESSION['role_id'] != 1) {
                             <div>
                                 <p>Provider:</p> <span id="sumProvider"></span>
                             </div>
-                             <div>
+                            <div>
                                 <p>Address:</p> <span id="sumAddressOfUtility"></span>
                             </div>
                         </div>
@@ -291,7 +291,8 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/utilities_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <?php include '_layout/end.php'; ?>
 </body>
 
 </html>
-<?php include '_layout/end.php'; ?>

@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
-include __DIR__ . '../../../../server/api/resident/submit_construction.php';
 
 if ($_SESSION['role_id'] != 1) {
     header("Location: /Banwa/client/pages/auth/signin.php");
@@ -53,170 +52,220 @@ if ($_SESSION['role_id'] != 1) {
             <p>This form authorizes personnel to perform the requested infrastructure service at your address. </p>
         </div>
 
-        <!-- ==================== Construction Form ==================== -->
-        <div class="construction-container containers" id="construction">
-
-            <form class="form" id="construction-form" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data">
+        <div class="containers construction-container" id="owner">
+            <form class="form" id="constructionForm">
+                <h6>Owner Information</h6>
                 <div class="inputs-container">
-                    <h6>Owner Information</h6>
                     <div class="label-and-input">
-                        <label for="permit_no" class="required-field">Permit No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="text" id="permit_no" name="permit_no" value="<?php echo isset($_POST['permit_no']) ? htmlspecialchars($_POST['permit_no']) : ''; ?>">
+                        <label class="label" for="firstName">First Name <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="firstName" name="firstName">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="homeowner_name" class="required-field">Homeowner Name <span style="color: #BB1B1B;">*</span></label>
-                        <input type="text" id="homeowner_name" name="homeowner_name" value="<?php echo isset($_POST['homeowner_name']) ? htmlspecialchars($_POST['homeowner_name']) : ''; ?>">
+                        <label class="label" for="middleName">Middle Name <i>(Optional)</i></label>
+                        <input type="text" id="middleName" name="middleName">
                         <div class="error-msg"></div>
                     </div>
-
                     <div class="label-and-input">
-                        <label for="contractor_name" class="required-field">Contractor Name <span style="color: #BB1B1B;">*</span></label>
-                        <input type="text" id="contractor_name" name="contractor_name" value="<?php echo isset($_POST['contractor_name']) ? htmlspecialchars($_POST['contractor_name']) : ''; ?>">
+                        <label class="label" for="lastName">Last Name <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="lastName" name="lastName">
                         <div class="error-msg"></div>
                     </div>
-
                     <div class="label-and-input">
-                        <label for="address_of_construction" class="required-field">Address of Construction <span style="color: #BB1B1B;">*</span></label>
-                        <textarea id="address_of_construction" name="address_of_construction" rows="3"><?php echo isset($_POST['address_of_construction']) ? htmlspecialchars($_POST['address_of_construction']) : ''; ?></textarea>
+                        <label class="label" for="suffix">Suffix <i>(Optional)</i></label>
+                        <input type="text" id="suffix" name="suffix">
                         <div class="error-msg"></div>
                     </div>
-
-
-                    <h6>Construction Location Coordinates</h6>
-                    <div class="label-and-input test">
-                        <label for="latitude" class="required-field">Latitude <span style="color: #BB1B1B;">*</span></label>
-                        <input type="text" id="latitude" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
-                            title="Enter latitude in decimal format (e.g., 14.617500)"
-                            placeholder="e.g., 14.617500"
-                            value="<?php echo isset($_POST['latitude']) ? htmlspecialchars($_POST['latitude']) : ''; ?>">
-                        <small class="coord-help">Format: 14.617500 (decimal degrees)</small>
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input test">
-                        <label for="longitude" class="required-field">Longitude *</label>
-                        <input type="text" id="longitude" name="longitude" pattern="-?\d{1,3}\.\d{6,8}"
-                            title="Enter longitude in decimal format (e.g., 121.075600)"
-                            placeholder="e.g., 121.075600"
-                            value="<?php echo isset($_POST['longitude']) ? htmlspecialchars($_POST['longitude']) : ''; ?>">
-                        <small class="coord-help">Format: 121.075600 (decimal degrees)</small>
-                        <div class="error-msg"></div>
-                    </div>
-
                     <div class="label-and-input">
-                        <button type="button" class="map-btn" onclick="openMapPicker()">Pick Location on Map</button>
-                        <div class="label-and-input" id="map-preview" style="margin-top: 10px; display: none;">
-                            <p>Selected Location: <span id="selected-location">None</span></p>
-                        </div>
-                    </div>
-
-
-
-                    <h6>Work Details</h6>
-                    <div class="label-and-input">
-                        <label for="nature_of_activity" class="required-field">Nature of Activity <span style="color: #BB1B1B;">*</span></label>
-                        <textarea id="nature_of_activity" name="nature_of_activity" rows="3"><?php echo isset($_POST['nature_of_activity']) ? htmlspecialchars($_POST['nature_of_activity']) : ''; ?></textarea>
+                        <label class="label" for="contactNoOwner">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
+                        <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
-
                     <div class="label-and-input">
-                        <label for="type_of_work" class="required-field">Type of Work <span style="color: #BB1B1B;">*</span></label>
-                        <select id="type_of_work" name="type_of_work">
-                            <option value="">Select Type of Work</option>
-                            <option value="residential" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'residential') ? 'selected' : ''; ?>>Residential Construction</option>
-                            <option value="commercial" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'commercial') ? 'selected' : ''; ?>>Commercial Construction</option>
-                            <option value="renovation" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'renovation') ? 'selected' : ''; ?>>Renovation</option>
-                            <option value="demolition" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'demolition') ? 'selected' : ''; ?>>Demolition</option>
-                            <option value="addition" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'addition') ? 'selected' : ''; ?>>Addition</option>
-                            <option value="repair" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'repair') ? 'selected' : ''; ?>>Repair</option>
-                            <option value="other" <?php echo (isset($_POST['type_of_work']) && $_POST['type_of_work'] == 'other') ? 'selected' : ''; ?>>Other</option>
+                        <label class="label" for="lotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label class="label" for="street">Street Name <span style="color: #BB1B1B;">*</span></label>
+                        <select name="street" id="street">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Milky Way Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
                         </select>
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="details_of_work" class="required-field">Details of Work <span style="color: #BB1B1B;">*</span></label>
-                        <textarea id="details_of_work" name="details_of_work" rows="3"><?php echo isset($_POST['details_of_work']) ? htmlspecialchars($_POST['details_of_work']) : ''; ?></textarea>
-                        <div class="error-msg"></div>
-                    </div>
-
-
-
-
-                    <h6>Project Timeline</h6>
-                    <div class="label-and-input">
-                        <label for="start_date" class="required-field">Start Date <span style="color: #BB1B1B;">*</span></label>
-                        <input type="date" id="start_date" name="start_date" value="<?php echo isset($_POST['start_date']) ? htmlspecialchars($_POST['start_date']) : ''; ?>">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="end_date" class="required-field">End Date <span style="color: #BB1B1B;">*</span></label>
-                        <input type="date" id="end_date" name="end_date" value="<?php echo isset($_POST['end_date']) ? htmlspecialchars($_POST['end_date']) : ''; ?>">
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="label-and-input">
-                        <label for="num_of_workers" class="required-field">Number of Workers <span style="color: #BB1B1B;">*</span></label>
-                        <input type="number" id="num_of_workers" name="num_of_workers" min="1" value="<?php echo isset($_POST['num_of_workers']) ? htmlspecialchars($_POST['num_of_workers']) : ''; ?>">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="num_of_working_days" class="required-field">Number of Working Days <span style="color: #BB1B1B;">*</span></label>
-                        <input type="number" id="num_of_working_days" name="num_of_working_days" min="1" value="<?php echo isset($_POST['num_of_working_days']) ? htmlspecialchars($_POST['num_of_working_days']) : ''; ?>">
-                        <div class="error-msg"></div>
-                    </div>
-
-
-
-                    <h6>Payment Information</h6>
-                    <div class="label-and-input">
-                        <label for="fee_paid" class="required-field">Fee Paid (₱) <span style="color: #BB1B1B;">*</span></label>
-                        <input type="number" id="fee_paid" name="fee_paid" step="0.01" min="0" value="<?php echo isset($_POST['fee_paid']) ? htmlspecialchars($_POST['fee_paid']) : ''; ?>">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="payment_type" class="required-field">Payment Type <span style="color: #BB1B1B;">*</span></label>
-                        <select id="payment_type" name="payment_type">
-                            <option value="">Select Payment Type</option>
-                            <option value="cash" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'cash') ? 'selected' : ''; ?>>Cash</option>
-                            <option value="check" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'check') ? 'selected' : ''; ?>>Check</option>
-                            <option value="bank_transfer" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'bank_transfer') ? 'selected' : ''; ?>>Bank Transfer</option>
-                            <option value="online" <?php echo (isset($_POST['payment_type']) && $_POST['payment_type'] == 'online') ? 'selected' : ''; ?>>Online Payment</option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="payment_status" class="required-field">Payment Status <span style="color: #BB1B1B;">*</span></label>
-                        <select id="payment_status" name="payment_status">
-                            <option value="">Select Payment Status</option>
-                            <option value="pending" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
-                            <option value="paid" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'paid') ? 'selected' : ''; ?>>Paid</option>
-                            <option value="partial" <?php echo (isset($_POST['payment_status']) && $_POST['payment_status'] == 'partial') ? 'selected' : ''; ?>>Partial Payment</option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-
-
-                    <h6>Document Uploads</h6>
-                    <div class="label-and-input">
-                        <label for="blueprint_image" class="required-field">Blueprint/Plan Image <span style="color: #BB1B1B;">*</span></label>
-                        <input type="file" id="blueprint_image" name="blueprint_image" accept="image/*,.pdf">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label for="additional_images">Additional Images/Documents</label>
-                        <input type="file" id="additional_images" name="additional_images[]" accept="image/*,.pdf,.doc,.docx" multiple>
                         <div class="error-msg"></div>
                     </div>
                 </div>
+                <div class="buttons-container">
+                    <button type="button" id="ownerBackBtn">Back</button>
+                    <button type="button" id="nextToConstruction">Next</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ==================== Construction Form ==================== -->
+        <div class="construction-container containers hidden" id="construction">
+            <form class="form" id="constructionForm">
+                <h6>Construction Information</h6>
+                <div class="inputs-container">
+                    <div class="label-and-input">
+                        <label class="label" for="natureOfWork">What kind of work will be done? <span style="color: #BB1B1B;">*</span></label>
+                        <select name="natureOfWork" id="natureOfWork">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Demolition">Demolition</option>
+                            <option value="Major Construction">Major Construction</option>
+                            <option value="Minor Construction">Minor Construction</option>
+                            <option value="Repairs">Repairs</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="typeOfWork" class="required-field">Type of Construction Work <span style="color: #BB1B1B;">*</span></label>
+                        <select id="typeOfWork" name="typeOfWork">
+                            <option value="">Select Type of Work</option>
+                            <option value="residential">Residential (House)</option>
+                            <option value="commercial">Commercial (Business)</option>
+                            <option value="renovation">Renovation / Remodeling</option>
+                            <option value="demolition">Demolition</option>
+                            <option value="addition">Extension / Additional Structure</option>
+                            <option value="repair">Repair</option>
+                            <option value="other">Other (Please specify)</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="natureOfActivity" class="required-field">Nature of Activity <span style="color: #BB1B1B;">*</span></label>
+                        <textarea id="natureOfActivity" name="natureOfActivity" rows="3"></textarea>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="detailsOfWork" class="required-field">Details of Work <span style="color: #BB1B1B;">*</span></label>
+                        <textarea id="detailsOfWork" name="detailsOfWork" rows="3"></textarea>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="startDate" class="required-field">Expected Start Date <span style="color: #BB1B1B;">*</span></label>
+                        <input type="date" id="startDate" name="startDate">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="endDate" class="required-field">Expected Completion Date <span style="color: #BB1B1B;">*</span></label>
+                        <input type="date" id="endDate" name="endDate">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="numberOfWorkingDays" class="required-field">Estimated Number of Working Days <i>(Read only)</i></label>
+                        <input type="tel" id="numberOfWorkingDays" name="numberOfWorkingDays" maxlength="2" pattern="[0-9]{1,2}" readonly>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="numberOfWorkers" class="required-field">How Many Workers Will Be Involved? <span style="color: #BB1B1B;">*</span></label>
+                        <input type="tel" id="numberOfWorkers" name="numberOfWorkers" maxlength="2" pattern="[0-9]{1,2}">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="contractorName">Name of Contractor <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="contractorName" name="contractorName">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="contractorContactNumber">Contractor’s Contact Number <span style="color: #BB1B1B;">*</span></label>
+                        <input type="tel" id="contractorContactNumber" name="contractorContactNumber" maxlength="11" pattern="[0-9]{1,11}">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="applicationMethod">How will you submit this application? <span style="color: #BB1B1B;">*</span></label>
+                        <select name="applicationMethod" id="applicationMethod">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Online">Online</option>
+                            <option value="In Person">In Person</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="constructionLotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <input type="tel" name="constructionLotNo" id="constructionLotNo" maxlength="2" pattern="[0-9]{1,2}">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="constructionStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
+                        <select name="constructionStreet" id="constructionStreet">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+                    <input type="hidden" id="latitude2" name="latitude2" pattern="-?\d{1,2}\.\d{6,8}"
+                        title="Enter latitude in decimal format (e.g., 14.617500)"
+                        placeholder="e.g., 14.617500"
+                        value="<?php echo isset($_POST['latitude2']) ? htmlspecialchars($_POST['latitude2']) : ''; ?>">
+                    <input type="hidden" id="longitude2" name="longitude2" pattern="-?\d{1,3}\.\d{6,8}"
+                        title="Enter longitude in decimal format (e.g., 121.075600)"
+                        placeholder="e.g., 121.075600"
+                        value="<?php echo isset($_POST['longitude2']) ? htmlspecialchars($_POST['longitude2']) : ''; ?>">
+                    <div class="label-and-input">
+                        <button type="button" class="map-btn" data-target="2">Pick Location on Map</button>
+                        <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="requirementUpload" class="required-field">Building Plan or Blueprint <span style="color: #BB1B1B;">*</span></label>
+                        <input type="file" id="requirementUpload" name="requirementUpload" accept="image/*,.pdf">
+                        <div class="error-msg"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label for="additionalFiles">Additional Images/Documents</label>
+                        <input type="file" id="additionalFiles" name="additionalFiles[]" accept="image/*,.pdf,.doc,.docx" multiple>
+                        <div class="error-msg"></div>
+                    </div>
+
+                </div>
 
                 <div class="buttons-container">
-                    <!-- <button type="reset" class="submit-btn reset-btn">Clear Form</button> -->
-                    <!-- <button type="submit" class="submit-btn">Submit Application</button> -->
                     <button type="button" id="constructionBackBtn">Back</button>
                     <button type="button" id="nextToWaiver">Next</button>
                 </div>
             </form>
         </div>
+
 
         <!-- ==================== Waiver Form ==================== -->
         <div class="containers waiver-container hidden" id="waiver">
@@ -258,25 +307,43 @@ if ($_SESSION['role_id'] != 1) {
                         <p>Construction Information</p>
                         <div class="summary-info">
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumNatureOfWork"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumTypeOfBusiness"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumNatureOfActivity"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumDetailsOfWork"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumStartDate"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumEndDate"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>lorem:</p> <span id="sumNumberOfWorkingDays"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumNumberOfWorkers"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumContractorName"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumContractorContactNumber"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumApplicationMethod"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumAddressConstruction"></span>
+                            </div>
+                            <div>
+                                <p>lorem:</p> <span id="sumRequirementUpload"></span>
                             </div>
                         </div>
                     </div>
@@ -285,25 +352,16 @@ if ($_SESSION['role_id'] != 1) {
                         <p>Owner Information</p>
                         <div class="summary-info">
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>Name:</p> <span id="sumFullname"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>Telephone:</p> <span id="sumContactNoOwner"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>Address:</p> <span id="sumAddressOwner"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="lorem"></span>
-                            </div>
-                            <div>
-                                <p>lorem:</p> <span id="lorem"></span>
-                            </div>
-                            <div>
-                                <p>lorem:</p> <span id="lorem"></span>
-                            </div>
-                            <div>
-                                <p>lorem:</p> <span id="lorem"></span>
+                                <p>Agreed to Terms:</p> <span id="sumAgreed"></span>
                             </div>
                         </div>
                     </div>
@@ -316,7 +374,8 @@ if ($_SESSION['role_id'] != 1) {
             </form>
         </div>
     </section>
+
+    <?php include '_layout/end.php'; ?>
 </body>
 
 </html>
-<?php include '_layout/end.php'; ?>
