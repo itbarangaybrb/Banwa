@@ -27,9 +27,15 @@ body {
     overflow: hidden;
 }
 
-.side_nav:hover {
+/* Changed from :hover to .expanded class */
+.side_nav.expanded {
     width: 325px;
     box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Optional: Add cursor pointer to the hamburger icon to show it's clickable */
+.nav_logo {
+    cursor: pointer;
 }
 
 .nav_header {
@@ -164,7 +170,7 @@ body {
     line-height: 1.4;
 }
 
-.side_nav:hover .nav_text {
+.side_nav.expanded .nav_text {
     opacity: 1;
 }
 
@@ -179,7 +185,7 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-.side_nav:hover ~ .main-wrapper {
+.side_nav.expanded ~ .main-wrapper {
     margin-left: 325px;
 }
 
@@ -203,7 +209,7 @@ body {
     transition: left 0.3s ease;
 }
 
-.side_nav:hover ~ .main-wrapper .top-header {
+.side_nav.expanded ~ .main-wrapper .top-header {
     left: 325px;
 }
 
@@ -826,7 +832,7 @@ h2 {
         align-items: center;
     }
 
-    .side_nav:hover {
+    .side_nav.expanded {
         width: 100%;
     }
 
@@ -867,7 +873,7 @@ h2 {
         display: none;
     }
 
-    .side_nav:hover .nav_text {
+    .side_nav.expanded .nav_text {
         opacity: 1;
     }
 

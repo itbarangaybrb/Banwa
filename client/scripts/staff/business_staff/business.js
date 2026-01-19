@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function initializeSidebarNav() {
     const navItems = document.querySelectorAll('.nav_select[data-tab]');
+    const navLogo = document.querySelector('.nav_logo'); // Select the hamburger icon
+    const sideNav = document.querySelector('.side_nav'); // Select the sidebar
+
+    // --- NEW CLICK TOGGLE LOGIC ---
+    if (navLogo && sideNav) {
+        navLogo.addEventListener('click', function () {
+            sideNav.classList.toggle('expanded');
+        });
+    }
+    // ------------------------------
+
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
             e.preventDefault();
@@ -18,16 +29,6 @@ function initializeSidebarNav() {
             switchTab(e, tabName);
         });
     });
-
-    // Placeholder for user profile button
-    const userProfileBtn = document.getElementById('userProfileBtn');
-    if (userProfileBtn) {
-        userProfileBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            // Placeholder function - add user profile functionality here
-            console.log('User profile button clicked - add functionality here');
-        });
-    }
 
     // Load initial tab
     loadAnalyticsTab();
@@ -492,22 +493,13 @@ function filterApplications() {
 // ARCHIVE APPLICATION
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${API_URL}?action=archive&id=${appId}`, {
-        method: 'GET'
-    })
+    fetch(`${API_URL}?action=archive&id=${appId}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                showAlert('Application archived successfully!', 'success');
+                alert('Archived successfully');
                 loadReviewTable();
-                loadProcessTable();
-            } else {
-                showAlert('Error: ' + data.message, 'danger');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Failed to archive application', 'danger');
         });
 }
 
