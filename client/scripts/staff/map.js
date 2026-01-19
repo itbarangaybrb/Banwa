@@ -700,8 +700,9 @@ function displayUtilityModal(utility) {
         </table>
     `;
 
-    openModal();
+    openModal('detail-modal');
 }
+
 
 function displayConstructionModal(construction) {
     const modalTitle = document.getElementById('modal-title');
@@ -842,8 +843,9 @@ function displayConstructionModal(construction) {
         </table>
     `;
 
-    openModal();
+    openModal('detail-modal');
 }
+
 
 
 function displayBusinessModal(business) {
@@ -938,8 +940,9 @@ function displayBusinessModal(business) {
         </table>
     `;
 
-    openModal();
+    openModal('detail-modal');
 }
+
 
 function displayHouseholdModal(household) {
     const modalTitle = document.getElementById('modal-title');
@@ -985,21 +988,22 @@ function displayHouseholdModal(household) {
         </table>
     `;
 
-    openModal();
+    openModal('detail-modal');
 }
 
-function openModal() {
-    const modal = document.getElementById('detail-modal');
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'block';
+        modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 }
 
-function closeModal() {
-    const modal = document.getElementById('detail-modal');
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
         document.body.style.overflow = 'auto';
         currentMarkerData = null;
     }
@@ -1308,14 +1312,14 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', function (e) {
         const modal = document.getElementById('detail-modal');
         if (e.target === modal) {
-            closeModal();
+            closeModal('detail-modal');
         }
     });
 
     // Close modal with Escape key
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            closeModal();
+            closeModal('detail-modal');
         }
     });
 });
@@ -1502,8 +1506,9 @@ function showMarkerForm(lat, lng, houseId, address) {
 
     document.getElementById('modal-title').textContent = 'Add New Marker';
     document.getElementById('modal-content').innerHTML = modalContent;
-    openModal();
+    openModal('detail-modal');
 }
+
 
 function submitMarker() {
     const markerData = {
@@ -1518,8 +1523,9 @@ function submitMarker() {
 
     console.log('Marker data to save:', markerData);
     alert('Marker save function needs to be implemented!');
-    closeModal();
+    closeModal('detail-modal');
 }
+
 
 function closeMarkerForm() {
     closeModal();

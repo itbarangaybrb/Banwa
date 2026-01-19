@@ -12,7 +12,7 @@ $supabase_user_id = $_SESSION['supabase_user_id'];
 
 try {
     // ================================================================================
-    // UTILITIES (Aligned with Business Structure)
+    // UTILITIES
     // ================================================================================
     $stmt1 = $pdo->prepare("SELECT id, 
                                    first_name, 
@@ -27,6 +27,23 @@ try {
                             WHERE supabase_user_id = ?");
     $stmt1->execute([$supabase_user_id]);
     $utilities = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    // ================================================================================
+    // CONSTRUCTION
+    // ================================================================================
+    $stmt2 = $pdo->prepare("SELECT id, 
+                                   first_name, 
+                                   middle_name, 
+                                   last_name, 
+                                   status, 
+                                   approval_comments, 
+                                   first_name || ' ' || middle_name || ' ' || last_name AS fullname,
+                                   application_date AS request_date, 
+                                   'Construction' AS type 
+                            FROM construction_applications
+                            WHERE supabase_user_id = ?");
+    $stmt2->execute([$supabase_user_id]);
+    $construction = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
     // ================================================================================
     // BUSINESS
@@ -46,7 +63,7 @@ try {
     $business = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
     // Merge results if you want to display both
-    $all_applications = array_merge($utilities, $business);
+    $all_applications = array_merge($utilities, $construction, $business);
 
     echo json_encode([
         'success' => true,

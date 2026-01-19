@@ -153,7 +153,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h3 id="modal-title">Marker Details</h3>
-                            <button class="close-modal" onclick="closeModal()">&times;</button>
+                            <button class="close-modal" onclick="closeModal('detail-modal')">&times;</button>
                         </div>
                         <div class="modal-body">
                             <div id="modal-content">

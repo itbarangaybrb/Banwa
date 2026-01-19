@@ -5,8 +5,8 @@ const editModal = document.getElementById('editModal');
 const paymentModal = document.getElementById('paymentModal');
 const remarksModal = document.getElementById('remarksModal'); // New
 
-const closeModalBtn = document.querySelector('.modal-close-btn'); 
-const closePaymentModalBtn = document.querySelector('.payment-modal-close-btn'); 
+const closeModalBtn = document.querySelector('.modal-close-btn');
+const closePaymentModalBtn = document.querySelector('.payment-modal-close-btn');
 const closeRemarksModalBtn = document.querySelector('.remarks-modal-close-btn'); // New
 const closeRemarksSecondaryBtn = document.querySelector('.remarks-close-btn-secondary'); // New "Close" button inside modal
 
@@ -18,7 +18,7 @@ function openEditModal() { if (editModal) editModal.style.display = 'block'; }
 function closeEditModal() {
     if (editModal) {
         editModal.style.display = 'none';
-        if(modalFormContent) modalFormContent.innerHTML = '';
+        if (modalFormContent) modalFormContent.innerHTML = '';
     }
 }
 
@@ -26,7 +26,7 @@ function openPaymentModal() { if (paymentModal) paymentModal.style.display = 'bl
 function closePaymentModal() {
     if (paymentModal) {
         paymentModal.style.display = 'none';
-        if(paymentModalFormContent) paymentModalFormContent.innerHTML = '';
+        if (paymentModalFormContent) paymentModalFormContent.innerHTML = '';
     }
 }
 
@@ -43,12 +43,12 @@ function closeRemarksModal() {
 }
 
 // Event Listeners for Closing
-if(closeModalBtn) closeModalBtn.onclick = closeEditModal;
-if(closePaymentModalBtn) closePaymentModalBtn.onclick = closePaymentModal;
-if(closeRemarksModalBtn) closeRemarksModalBtn.onclick = closeRemarksModal;
-if(closeRemarksSecondaryBtn) closeRemarksSecondaryBtn.onclick = closeRemarksModal;
+if (closeModalBtn) closeModalBtn.onclick = closeEditModal;
+if (closePaymentModalBtn) closePaymentModalBtn.onclick = closePaymentModal;
+if (closeRemarksModalBtn) closeRemarksModalBtn.onclick = closeRemarksModal;
+if (closeRemarksSecondaryBtn) closeRemarksSecondaryBtn.onclick = closeRemarksModal;
 
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (event.target == editModal) closeEditModal();
     else if (event.target == paymentModal) closePaymentModal();
     else if (event.target == remarksModal) closeRemarksModal(); // Handle outside click
@@ -67,42 +67,61 @@ async function openEditModalFor(appId, appType) {
     if (!modalFormContent) return;
 
     modalFormContent.innerHTML = '<p>Loading application data...</p>';
-    openEditModal(); // Use specific open function
+    openEditModal();
 
     try {
-        // We only have the business endpoint for now, so we hardcode it.
-        // In the future, this could be dynamic based on appType.
-        if (appType !== 'Business') {
-            throw new Error(`Editing for application type '${appType}' is not implemented yet.`);
+        let endpoint = '';
+        let formGenerator = null;
+
+        switch (appType) {
+            case 'Business':
+                endpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
+                formGenerator = generateBusinessFormHtml;
+                break;
+
+            case 'Construction':
+                endpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
+                formGenerator = generateConstructionFormHtml;
+                break;
+
+            case 'Utilities':
+                endpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
+                formGenerator = generateUtilitiesFormHtml;
+                break;
+
+            default:
+                throw new Error(`Editing for application type '${appType}' is not implemented.`);
         }
 
-        const response = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+        const response = await fetch(endpoint);
         const result = await response.json();
 
         if (!result.success) {
-            throw new Error(result.error);
+            throw new Error(result.error || 'Failed to fetch application data.');
         }
 
         const appData = result.data;
-        
-        // Use a function to generate the form HTML
-        modalFormContent.innerHTML = generateBusinessFormHtml(appData);
 
-        // Attach event listeners to the new form buttons
+        modalFormContent.innerHTML = formGenerator(appData);
+
         const editForm = document.getElementById('simple-edit-form');
         if (editForm) {
-            editForm.addEventListener('submit', (event) => handleSubmitChanges(event, appData.id));
+            editForm.addEventListener('submit', (event) =>
+                handleSubmitChanges(event, appData.id, appType)
+            );
         }
+
         const cancelBtn = document.getElementById('modal-cancel-btn');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', closeEditModal); // Changed to closeEditModal
+            cancelBtn.addEventListener('click', closeEditModal);
         }
 
     } catch (error) {
         console.error('Error opening edit modal:', error);
-        modalFormContent.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        modalFormContent.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
     }
 }
+
 
 // =================================================================
 // PAYMENT FORM HANDLING (NEW)
@@ -130,7 +149,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
             // Placeholder for other app types if they get payment functionality
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
-        
+
         const appDetailsResult = await appDetailsResponse.json();
 
         if (!appDetailsResult.success) {
@@ -138,7 +157,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
         }
 
         const appData = appDetailsResult.data;
-        
+
         // Use a function to generate the payment form HTML
         paymentModalFormContent.innerHTML = generatePaymentFormHtml(appData, appPurpose);
 
@@ -365,12 +384,116 @@ function generateBusinessFormHtml(data) {
 }
 
 /**
+ * Generates the HTML for the simplified business application edit form.
+ * @param {object} data The application data.
+ * @returns {string} The HTML string for the form.
+ */
+function generateConstructionFormHtml(data) {
+    const ownerName = `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim();
+
+    return `
+        <form id="simple-edit-form">
+            <h2>Edit Business Application</h2>
+            
+            <div class="form-group remarks">
+                <label>Remarks from Staff:</label>
+                <p>${data.approval_comments || 'No comments provided.'}</p>
+            </div>
+
+            <input type="hidden" name="application_id" value="${data.id}">
+
+            <div class="form-group">
+                <label for="ownerName">Owner Name</label>
+                <input type="text" id="ownerName" name="ownerName" value="${ownerName}" readonly disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="addressOfConstruction">Construction Address</label>
+                <textarea id="addressOfConstruction" name="addressOfConstruction">${data.construction_address || ''}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="requirementUpload">Upload New/Corrected Document</label>
+                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <small>If you upload a new file, it will replace the old one.</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="modal-cancel-btn" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Changes</button>
+            </div>
+        </form>
+    `;
+}
+
+/**
+ * Generates the HTML for the simplified utility application edit form.
+ * @param {object} data The application data.
+ * @returns {string} The HTML string for the form.
+ */
+function generateUtilitiesFormHtml(data) {
+    const ownerName = `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim();
+    document.getElementById('provider').value = data.provider || '';
+
+    return `
+        <form id="simple-edit-form">
+            <h2>Edit Utility Application</h2>
+            
+            <div class="form-group remarks">
+                <label>Remarks from Staff:</label>
+                <p>${data.approval_comments || 'No comments provided.'}</p>
+            </div>
+
+            <input type="hidden" name="application_id" value="${data.id}">
+
+            <div class="form-group">
+                <label for="ownerName">Owner Name</label>
+                <input type="text" id="ownerName" name="ownerName" value="${ownerName}" readonly disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="provider">Provider</label>
+                <select name="provider" id="provider">
+                    <option value="" disabled>Select</option>
+                    <option value="Meralco">Meralco</option>
+                    <option value="Manila Water">Manila Water</option>
+                    <option value="Globe">Globe</option>
+                    <option value="Smart">Smart</option>
+                    <option value="PLDT">PLDT</option>
+                    <option value="Bayantel">Bayantel</option>
+                    <option value="Sky Cable">Sky Cable</option>
+                    <option value="Destiny">Destiny</option>
+                    <option value="Cignal">Cignal</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="addressOfUtility">Utility Address</label>
+                <textarea id="addressOfUtility" name="addressOfUtility">${data.address_of_utility || ''}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="requirementUpload">Upload New/Corrected Document</label>
+                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <small>If you upload a new file, it will replace the old one.</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="modal-cancel-btn" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Changes</button>
+            </div>
+        </form>
+    `;
+}
+
+/**
  * Handles the submission of the simplified edit form.
  * @param {Event} event The form submission event.
  * @param {string} appId The ID of the application being updated.
  */
-async function handleSubmitChanges(event, appId) {
+async function handleSubmitChanges(event, appId, appType) {
     event.preventDefault();
+
     const form = event.target;
     const submitBtn = form.querySelector('.submit-btn');
     submitBtn.disabled = true;
@@ -378,114 +501,120 @@ async function handleSubmitChanges(event, appId) {
 
     try {
         const formData = new FormData(form);
-        
-        // We need to fetch the original record to get all fields for the update,
-        // as the simple form doesn't contain all of them.
-        const response = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+
+        let getEndpoint = '';
+        let updateEndpoint = '';
+        let keyMap = {};
+
+        switch (appType) {
+            case 'Business':
+                getEndpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
+                updateEndpoint = `/Banwa/client/scripts/staff/business_staff/business_handler.php`;
+                keyMap = {
+                    'type_of_business': 'typeOfBusiness',
+                    'nature_of_business': 'natureOfBusiness',
+                    'nature_of_business_specify': 'natureOfBusinessSpecify',
+                    'telephone_no_business': 'contactNoBusiness',
+                    'email_address': 'emailAddress',
+                    'first_name': 'firstName',
+                    'middle_name': 'middleName',
+                    'last_name': 'lastName',
+                    'telephone_no_owner': 'contactNoOwner',
+                    'type_of_structure': 'typeOfStructureSelect',
+                    'type_of_structure_specify': 'typeOfStructureSpecify',
+                    'no_of_employees': 'noOfEmployees',
+                    'application_date': 'applicationDate',
+                    'latitude': 'latitude2',
+                    'longitude': 'longitude2'
+                };
+                break;
+
+            case 'Construction':
+                getEndpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
+                updateEndpoint = `/Banwa/client/scripts/staff/construction_staff/construction_handler.php`;
+                keyMap = {
+                    'first_name': 'firstName',
+                    'middle_name': 'middleName',
+                    'last_name': 'lastName',
+                    'application_date': 'applicationDate',
+                    'latitude': 'latitude2',
+                    'longitude': 'longitude2'
+                };
+                break;
+
+            case 'Utilities':
+                getEndpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
+                updateEndpoint = `/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php`;
+                keyMap = {
+                    'first_name': 'firstName',
+                    'middle_name': 'middleName',
+                    'last_name': 'lastName',
+                    'application_date': 'applicationDate'
+                };
+                break;
+
+            default:
+                throw new Error(`Update for application type '${appType}' is not supported.`);
+        }
+
+        // Fetch original record
+        const response = await fetch(getEndpoint);
         const result = await response.json();
-        if (!result.success) throw new Error('Could not retrieve original data for update.');
+        if (!result.success) {
+            throw new Error('Could not retrieve original data for update.');
+        }
+
         const originalData = result.data;
-        
-        // Create a complete FormData object for the backend handler
         const finalFormData = new FormData();
 
-        // Map snake_case keys from originalData to camelCase keys for the backend
-        const keyMap = {
-            'type_of_business': 'typeOfBusiness',
-            'nature_of_business': 'natureOfBusiness',
-            'nature_of_business_specify': 'natureOfBusinessSpecify',
-            'telephone_no_business': 'contactNoBusiness',
-            'email_address': 'emailAddress',
-            'first_name': 'firstName',
-            'middle_name': 'middleName',
-            'last_name': 'lastName',
-            'telephone_no_owner': 'contactNoOwner',
-            'type_of_structure': 'typeOfStructureSelect',
-            'type_of_structure_specify': 'typeOfStructureSpecify',
-            'no_of_employees': 'noOfEmployees',
-            'application_date': 'applicationDate',
-            // Add latitude and longitude mapping for backend's expected 'latitude2', 'longitude2'
-            'latitude': 'latitude2',
-            'longitude': 'longitude2'
-        };
-
+        // Rebuild full payload from original data
         for (const key in originalData) {
             const mappedKey = keyMap[key] || key;
+
             if (originalData[key] !== null && originalData[key] !== undefined) {
-                // Special handling for array fields that should be JSON strings for PHP
-                if (mappedKey === 'businessStatus' || mappedKey === 'requirements') {
-                    if (Array.isArray(originalData[key])) {
-                        finalFormData.append(mappedKey, JSON.stringify(originalData[key]));
-                    } else if (typeof originalData[key] === 'string') {
-                        // If it's already a string, assume it's JSON and append as is
-                        finalFormData.append(mappedKey, originalData[key]);
-                    } else {
-                        // Fallback for other types
-                        finalFormData.append(mappedKey, originalData[key]);
-                    }
+                if (Array.isArray(originalData[key])) {
+                    finalFormData.append(mappedKey, JSON.stringify(originalData[key]));
                 } else {
                     finalFormData.append(mappedKey, originalData[key]);
                 }
             }
         }
-        
-        // Handle address_owner split
-        if (originalData.address_owner) {
-            const ownerAddressParts = (originalData.address_owner || '').split(' ');
-            const ownerLotNo = ownerAddressParts.shift() || '';
-            const ownerStreet = ownerAddressParts.join(' ') || '';
-            finalFormData.set('lotNo', ownerLotNo);
-            finalFormData.set('street', ownerStreet);
+
+        // Overwrite editable fields from the form
+        for (const [key, value] of formData.entries()) {
+            finalFormData.set(key, value);
         }
 
-        // Overwrite with the fields from our simple form
-        finalFormData.set('businessName', formData.get('businessName'));
-        
-        // The address needs to be split back into lot and street for the handler
-        const fullAddress = formData.get('addressOfBusiness');
-        const addressParts = (fullAddress || '').split(' ');
-        const lotNo = addressParts.shift() || '';
-        const street = addressParts.join(' ') || '';
-        finalFormData.set('businessLotNo', lotNo);
-        finalFormData.set('businessStreet', street);
-        
-        // Handle the file if it was changed
+        // Handle file upload (if present)
         const fileInput = form.querySelector('#requirementUpload');
-        if (fileInput.files.length > 0) {
+        if (fileInput && fileInput.files.length > 0) {
             finalFormData.set('requirementUpload', fileInput.files[0]);
         } else {
-            // The handler might expect the field to be present, so we remove it
-            // if no new file is there, to avoid overwriting with nothing.
-             finalFormData.delete('requirementUpload');
+            finalFormData.delete('requirementUpload');
         }
 
-        // Add the required action for the handler
+        // Required handler fields
         finalFormData.set('action', 'update');
         finalFormData.set('application_id', appId);
-        // Supabase ID is also required by the handler
-        // This is a bit of a workaround since we don't have it on the client
-        // We rely on the backend to re-verify ownership.
         finalFormData.set('supabase_user_id', originalData.supabase_user_id);
 
-
-        // Send to the backend
-        const updateResponse = await fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php', {
+        // Send update
+        const updateResponse = await fetch(updateEndpoint, {
             method: 'POST',
             body: finalFormData
         });
 
         const updateResult = await updateResponse.json();
-
         if (updateResult.status !== 'success') {
-            throw new Error(updateResult.message || 'Failed to update application.');
+            throw new Error(updateResult.message || 'Update failed.');
         }
 
-        alert('Application updated successfully!');
+        alert('Application updated successfully.');
         closeEditModal();
-        loadApplications(); // Refresh the list
+        loadApplications();
 
     } catch (error) {
-        console.error('Error submitting changes:', error);
+        console.error('Update error:', error);
         alert(`Error: ${error.message}`);
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Changes';
@@ -507,7 +636,7 @@ async function handleSubmitPayment(event, appId) {
 
     try {
         const formData = new FormData(form);
-        
+
         // Append application ID to form data
         formData.append('application_id', appId);
 
@@ -546,7 +675,7 @@ async function loadApplications() {
         const res = await fetch('/Banwa/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        tableBody.innerHTML = ''; 
+        tableBody.innerHTML = '';
 
         if (data.error) {
             tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
@@ -567,19 +696,19 @@ async function loadApplications() {
                 const appType = app.type || "Application";
                 const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
                 const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
-                
+
                 const statusText = app.status || 'Pending';
                 let statusClass = 'pending';
-                if(statusText.toLowerCase().includes('approved')) statusClass = 'success';
-                if(statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
-                
+                if (statusText.toLowerCase().includes('approved')) statusClass = 'success';
+                if (statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
+
                 // Remarks Logic: Clean the string for the data attribute
                 let remarksBtn = '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks</span>';
-                
+
                 if (app.approval_comments && app.approval_comments.trim() !== '') {
                     // We escape double quotes to safely put it in the data-remarks attribute
                     const safeRemarks = app.approval_comments.replace(/"/g, '&quot;');
-                    
+
                     remarksBtn = `
                         <button class="validation-btn view-remarks-btn" data-remarks="${safeRemarks}">
                             View Remarks
@@ -620,7 +749,7 @@ async function loadApplications() {
                         </div>
                     </td>
                 `;
-                
+
                 tableBody.appendChild(tr);
 
                 // --- Event Listeners ---
@@ -696,7 +825,7 @@ async function loadPayments() {
 
                 // Status Logic
                 let statusClass = 'pending';
-                if(payment.status === 'Verified') statusClass = 'success';
+                if (payment.status === 'Verified') statusClass = 'success';
 
                 tr.innerHTML = `
                     <td>
@@ -720,7 +849,7 @@ async function loadPayments() {
                         </div>
                     </td>
                 `;
-                
+
                 tableBody.appendChild(tr);
             });
 

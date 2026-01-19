@@ -435,11 +435,11 @@ newSummaryForm.addEventListener('submit', async (e) => {
         })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.status === 'success') {
                     alert('Application submitted successfully!');
                     window.location.href = '/Banwa/client/pages/resident/status.php';
                 } else {
-                    alert('Error: ' + (data.message || 'Unknown error'));
+                    alert('Error: ' + data.message);
                 }
             })
             .catch(error => {

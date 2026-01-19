@@ -362,6 +362,21 @@ function filterApplications() {
     });
 }
 
+function applyPrompt(text) {
+    const textarea = document.getElementById('updateComments');
+    if (textarea) {
+        // Option A: Replace everything
+        textarea.value = text;
+
+        // Option B: Append instead of replace (Uncomment below if preferred)
+        // textarea.value += (textarea.value ? ' ' : '') + text;
+
+        textarea.focus();
+    }
+}
+
+// add generateClearance too...
+
 // ================= MODALS & ALERT =================
 function openModal(id) { document.getElementById(id).classList.add('active'); }
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }

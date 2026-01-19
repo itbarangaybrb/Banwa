@@ -291,7 +291,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/utilities_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <?php include '_layout/end.php'; ?>
 </body>
 
