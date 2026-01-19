@@ -354,7 +354,6 @@ function setupAccountSubmission() {
         if (!confirm('Are you sure you want to submit this application?')) return;
 
         allData = {
-        allData = {
             fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
             sex: formElements.sex.value,
             contactNo: formElements.contactNo.value,
