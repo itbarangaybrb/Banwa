@@ -68,8 +68,8 @@
                             <h5>Personal Information</h5>
                             <div class="inputs-container">
                                 <div class="label-and-input">
-                                    <label for="firstName">First name</label>
-                                    <input id="firstName" name="firstName" type="text">
+                                    <label for="firstName">First name *</label>
+                                    <input id="firstName" name="firstName" type="text" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -78,8 +78,8 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="lastName">Last name</label>
-                                    <input id="lastName" name="lastName" type="text">
+                                    <label for="lastName">Last name *</label>
+                                    <input id="lastName" name="lastName" type="text" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -88,8 +88,8 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="sex">Sex</label>
-                                    <select id="sex" name="sex">
+                                    <label for="sex">Sex *</label>
+                                    <select id="sex" name="sex" required>
                                         <option value="">Select</option>
                                         <option value="female">Female</option>
                                         <option value="male">Male</option>
@@ -98,8 +98,8 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="contactNo">Contact no.</label>
-                                    <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}">
+                                    <label for="contactNo">Contact no. *</label>
+                                    <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
@@ -144,10 +144,10 @@
 
                                 <div class="label-and-input" id="idFileWrapper">
                                     <label for="idFile">
-                                        Upload ID File <br>
+                                        Upload ID File * <br>
                                         <i>(Accepted formats: .jpeg, .png, .pdf)</i>
                                     </label>
-                                    <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" />
+                                    <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" required />
                                     <div class="error-msg"></div>
                                 </div>
                             </div>
@@ -168,23 +168,23 @@
 
                             <div class="inputs-container">
                                 <div class="label-and-input">
-                                    <label for="createAccEmail">Email</label>
-                                    <input type="email" name="createAccEmail" id="createAccEmail" />
+                                    <label for="createAccEmail">Email *</label>
+                                    <input type="email" name="createAccEmail" id="createAccEmail" required />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="password">Password</label>
-                                    <input type="password" name="password" id="password" autocomplete="false" />
+                                    <label for="password">Password *</label>
+                                    <input type="password" name="password" id="password" autocomplete="false" required />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="reTypePassword">Re-type password</label>
-                                    <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" />
+                                    <label for="reTypePassword">Re-type password *</label>
+                                    <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" required />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
                                     <label>
-                                        <input type="checkbox" id="agreeCheckBox"> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
+                                        <input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
                                     </label>
                                     <div class="error-msg"></div>
                                 </div>
@@ -192,6 +192,8 @@
 
                             <div class="buttons-container">
                                 <button type="button" id="createAccBackBtn">Back</button>
+                                <button type="submit" id="createAccSubmitBtn">Submit</button>
+                                <button type="button" id="resendEmailBtn">Resend verification email</button>
                                 <button type="submit" id="createAccSubmitBtn">Submit</button>
                                 <button type="button" id="resendEmailBtn">Resend verification email</button>
                             </div>

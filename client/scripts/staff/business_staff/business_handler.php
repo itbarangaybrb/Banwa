@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../../../server/configs/database.php';
 // 1. Start Output Buffering (Prevents whitespace/warnings from breaking JSON)
 ob_start();
 
+session_start();
+
 // 2. Error Reporting (For debugging)
 ini_set('display_errors', 0); // Hide errors from output (log them instead)
 ini_set('display_startup_errors', 0);
@@ -58,6 +60,9 @@ try {
         case 'update_status': // NEW UNIFIED ACTION
             handleUpdateStatus($pdo);
             break;
+        case 'update':
+            handleUpdateApplication($pdo);
+            break;
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -72,15 +77,13 @@ exit;
 // HELPER FUNCTIONS
 
 
-function get_input($key)
-{
+function get_input($key){
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
-function handleCreateApplication($pdo)
-{
+function handleCreateApplication($pdo){
     try {
-        $supabaseUserId = get_input('supabase_user_id');
+        $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
         // Collect Data
         $businessName = get_input('businessName');
         $typeOfBusiness = get_input('typeOfBusiness');
@@ -181,7 +184,7 @@ function handleCreateApplication($pdo)
 function handleFetchApplications($pdo)
 {
     try {
-        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at DESC");
+        $stmt = $pdo->query("SELECT * FROM business_applications ORDER BY created_at ASC");
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Decode JSON fields for frontend
@@ -240,4 +243,139 @@ function handleUpdateStatus($pdo)
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 }
+
+function handleUpdateApplication($pdo){
+    try {
+        $applicationId = get_input('application_id');
+        // Basic validation
+        if (!$applicationId) {
+            throw new Exception("Application ID is required for update.");
+        }
+
+        // Collect all data, similar to handleCreateApplication but for update
+        $supabaseUserId = $_SESSION['supabase_user_id'] ?? null; // For security/ownership check if needed
+        $businessName = get_input('businessName');
+        $typeOfBusiness = get_input('typeOfBusiness');
+        $natureOfBusiness = get_input('natureOfBusiness');
+        $natureOfBusinessSpecify = get_input('natureOfBusinessSpecify');
+        $businessLotNo = get_input('businessLotNo');
+        $businessStreet = get_input('businessStreet');
+        $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
+        $contactNoBusiness = get_input('contactNoBusiness');
+        $emailAddress = get_input('emailAddress');
+
+        $firstName = get_input('firstName');
+        $middleName = get_input('middleName');
+        $lastName = get_input('lastName');
+        $contactNoOwner = get_input('contactNoOwner');
+        $lotNo = get_input('lotNo');
+        $street = get_input('street');
+        $addressOwner = trim($lotNo . ' ' . $street);
+
+        $typeOfStructure = get_input('typeOfStructureSelect');
+        $typeOfStructureSpecify = get_input('typeOfStructureSpecify');
+        $noOfEmployees = get_input('noOfEmployees');
+        $applicationDate = get_input('applicationDate');
+        $latitude = get_input('latitude2'); // Assuming latitude2, longitude2 are used
+        $longitude = get_input('longitude2');
+
+        // Handle JSON Fields - they might come as strings or arrays, ensure they are stored as JSON strings
+        $businessStatus = isset($_POST['businessStatus']) ? json_encode($_POST['businessStatus']) : '[]';
+        $requirements = isset($_POST['requirements']) ? json_encode($_POST['requirements']) : '[]';
+
+        // Initialize params array for the UPDATE statement
+        $params = [
+            ':business_name' => $businessName,
+            ':type_of_business' => $typeOfBusiness,
+            ':nature_of_business' => $natureOfBusiness,
+            ':nature_of_business_specify' => $natureOfBusinessSpecify,
+            ':address_of_business' => $addressOfBusiness,
+            ':latitude' => $latitude,
+            ':longitude' => $longitude,
+            ':business_status' => $businessStatus,
+            ':telephone_no_business' => $contactNoBusiness,
+            ':email_address' => $emailAddress,
+            ':first_name' => $firstName,
+            ':middle_name' => $middleName,
+            ':last_name' => $lastName,
+            ':telephone_no_owner' => $contactNoOwner,
+            ':address_owner' => $addressOwner,
+            ':type_of_structure' => $typeOfStructure,
+            ':type_of_structure_specify' => $typeOfStructureSpecify,
+            ':no_of_employees' => $noOfEmployees ?: 0,
+            ':requirements' => $requirements,
+            ':application_date' => $applicationDate,
+            ':id' => $applicationId // Condition for WHERE clause
+        ];
+
+        // SQL Query for Update
+        $sql = "UPDATE business_applications SET
+            business_name = :business_name,
+            type_of_business = :type_of_business,
+            nature_of_business = :nature_of_business,
+            nature_of_business_specify = :nature_of_business_specify,
+            address_of_business = :address_of_business,
+            latitude = :latitude,
+            longitude = :longitude,
+            business_status = :business_status::json,
+            telephone_no_business = :telephone_no_business,
+            email_address = :email_address,
+            first_name = :first_name,
+            middle_name = :middle_name,
+            last_name = :last_name,
+            telephone_no_owner = :telephone_no_owner,
+            address_owner = :address_owner,
+            type_of_structure = :type_of_structure,
+            type_of_structure_specify = :type_of_structure_specify,
+            no_of_employees = :no_of_employees,
+            requirements = :requirements::json,
+            application_date = :application_date,
+            updated_at = NOW(),
+            status = 'Complied' "; // Set status to Complied on update
+
+        // Handle File Upload - only update if a new file is provided
+        if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'uploads/'; // Relative to where business_handler.php is
+            // Ensure the directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $fileName = time() . '_' . basename($_FILES['requirementUpload']['name']);
+            if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
+                $sql .= ", requirement_upload = :requirement_upload ";
+                $params[':requirement_upload'] = $fileName;
+            } else {
+                throw new Exception("Failed to move uploaded file.");
+            }
+        }
+        
+        // Add a check for ownership for security
+        if ($supabaseUserId) {
+            $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
+            $params[':supabase_user_id'] = $supabaseUserId;
+        } else {
+            $sql .= " WHERE id = :id";
+        }
+
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(["status" => "success", "message" => "Application updated successfully!"]);
+        } else {
+            // This might happen if ID doesn't exist or user doesn't own it
+            http_response_code(404);
+            echo json_encode(["status" => "error", "message" => "Application not found or not authorized to update."]);
+        }
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
+    }
+}
+
 

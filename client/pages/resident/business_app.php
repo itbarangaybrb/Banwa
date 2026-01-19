@@ -57,7 +57,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Landline/Phone No.</label>
+                        <label class="label" for="contactNoOwner">Landline/Phone No. *</label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>

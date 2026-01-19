@@ -14,6 +14,7 @@ function validation() {
     // Form elements
     // =========================
     const idType = document.getElementById('idType');
+    const idType = document.getElementById('idType');
     const idFile = document.getElementById('idFile');
 
     const firstName = document.getElementById('firstName');
@@ -34,7 +35,9 @@ function validation() {
 
     // =========================
     // Validation inputs (text, select, checkbox, textarea)
+    // Validation inputs (text, select, checkbox, textarea)
     // =========================
+    function validateInput(input, message) {
     function validateInput(input, message) {
         const wrapper = input.closest('.label-and-input');
         const errorEl = wrapper?.querySelector('.error-msg');
@@ -135,8 +138,21 @@ function validation() {
                     return false;
                 }
             }
+        if (input.type === 'file') {
+            if (!input.files || input.files.length === 0) {
+                setError(message);
+                return false;
+            }
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            for (let file of input.files) {
+                if (!allowedTypes.includes(file.type)) {
+                    setError('Invalid file type. Only JPG, PNG, PDF allowed');
+                    return false;
+                }
+            }
         }
 
+        clearError();
         clearError();
         return true;
     }
@@ -177,6 +193,8 @@ function validation() {
 
 
 
+
+
     // =========================
     // Navigation buttons
     // =========================
@@ -197,6 +215,7 @@ function validation() {
             validateInput(lastName, 'Last name is required'),
             validateInput(sex, 'Sex is required'),
             validateInput(contactNo, 'Phone number is required'),
+            validateInput(contactNo, 'Phone number is required'),
             validateInput(address, 'Address is required')
         ];
 
@@ -213,16 +232,26 @@ function validation() {
         ];
         // const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
         // const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
+        const validations = [
+            validateInput(idType, 'Please select a type of ID'),
+            validateInput(idFile, 'Please upload your ID file')
+        ];
+        // const isValidRadio = validateRadioGroup(idType, 'Please select a type of ID');
+        // const isValidFile = validateFileInput(idFile, 'Please upload your ID file');
 
+        if (validations.every(v => v)) switchPanel('createAcc');
         if (validations.every(v => v)) switchPanel('createAcc');
     });
 
 
     // =========================
     // Create Account 'Submit' Button
+    // Create Account 'Submit' Button
     // =========================
     const formMessage = document.getElementById('formMessage');
     formMessage.style.display = 'none';
+    const resendBtn = document.getElementById('resendEmailBtn');
+    let allData = null;
     const resendBtn = document.getElementById('resendEmailBtn');
     let allData = null;
 
@@ -238,14 +267,17 @@ function validation() {
         ];
 
 
+
         if (!validations.every(v => v)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
+        allData = {
         allData = {
             fullname: `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim(),
             sex: sex.value,
             contactNo: contactNo.value,
             address: address.value,
+            idType: idType.value,
             idType: idType.value,
             email: email.value,
             password: password.value,
@@ -263,10 +295,22 @@ function validation() {
                 return;
             }
 
+            const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
+            const dbCheck = await respCheck.json();
+
+            if (dbCheck.exists) {
+                formMessage.style.display = 'block';
+                formMessage.style.color = 'red';
+                formMessage.textContent = 'An account with this email already exists.';
+                return;
+            }
+
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
                 options: {
+                    data: allData,
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php",
                     data: allData,
                     emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php",
                 },
@@ -275,13 +319,15 @@ function validation() {
             if (error) {
                 const msg = (error.message || '').toLowerCase();
                 if (msg.includes('already') || msg.includes('registered') || error.status === 400) {
+                const msg = (error.message || '').toLowerCase();
+                if (msg.includes('already') || msg.includes('registered') || error.status === 400) {
                     formMessage.style.display = 'block';
                     formMessage.style.color = 'red';
                     formMessage.textContent = 'An account with this email already exists.';
                     return;
                 }
                 throw error;
-            }
+            } 
 
             formMessage.style.display = 'block';
             formMessage.style.color = 'green';
@@ -298,13 +344,82 @@ function validation() {
 
             resendBtn.classList.add('show');
             startResendCooldown();
+            formMessage.innerHTML = `
+            Account created successfully.<br>
+            Please verify your email to activate your account.<br><br>
+            If you don’t receive the email within 1–2 minutes:
+            <br>
+            1. Make sure the email address is correct<br>
+            2. Check your Spam / Promotions folder<br>
+            3. You can resend the verification email<br>
+           
+        `;
+
+            resendBtn.classList.add('show');
+            startResendCooldown();
 
         } catch (err) {
+            // console.error('Error during signup:', err);
             // console.error('Error during signup:', err);
             formMessage.style.display = 'block';
             formMessage.style.color = 'red';
             formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
+    });
+
+
+    let resendCount = 0;
+    const MAX_RESENDS = 3;
+
+    function startResendCooldown() {
+        const submitBtn = document.getElementById('createAccSubmitBtn');
+        if (submitBtn) submitBtn.style.display = 'none';
+
+        const btn = resendBtn;
+        btn.disabled = true;
+        let countdown = 90;
+        btn.textContent = `Resend available in ${countdown}s`;
+
+        const interval = setInterval(() => {
+            countdown--;
+            btn.textContent = `Resend available in ${countdown}s`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                if (resendCount < MAX_RESENDS) {
+                    btn.disabled = false;
+                    btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
+                } else {
+                    btn.remove();
+                }
+            }
+        }, 1000);
+    }
+
+    resendBtn.addEventListener('click', async () => {
+        if (!allData || resendCount >= MAX_RESENDS) return;
+
+        resendBtn.disabled = true;
+
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: allData.email,
+            options: {
+                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+            }
+        });
+
+        if (error) {
+            formMessage.style.color = 'red';
+            formMessage.textContent = 'Failed to resend verification email. Please try again later.';
+            resendBtn.disabled = false;
+            return;
+        }
+
+        resendCount++;
+        formMessage.style.color = 'green';
+        formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
+
+        startResendCooldown();
     });
 
 
