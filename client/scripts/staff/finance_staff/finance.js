@@ -4,16 +4,36 @@ const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
 let pendingApps = [];
 let paidApps = [];
 
-// TAB SWITCHING
+// UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
 function switchTab(event, tabName) {
     event.preventDefault();
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
 
-    if (tabName === 'pending') loadPendingTable();
-    else if (tabName === 'history') loadHistoryTable();
+    // 1. Hide all tab panes (the content areas)
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    
+    // 2. Remove 'active' class from all sidebar links
+    // Change '.tab-button' to '.nav_select' to match the new sidebar structure
+    document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
+
+    // 3. Show the selected content area
+    const targetTab = document.getElementById(tabName);
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+
+    // 4. Add 'active' class to the clicked sidebar link
+    // We use .closest('a') to ensure the class is added to the link even if an icon was clicked
+    const clickedLink = event.target.closest('.nav_select');
+    if (clickedLink) {
+        clickedLink.classList.add('active');
+    }
+
+    // 5. Trigger your existing data loading logic
+    if (tabName === 'pending') {
+        loadPendingTable();
+    } else if (tabName === 'history') {
+        loadHistoryTable();
+    }
 }
 
 // LOAD TABLES
