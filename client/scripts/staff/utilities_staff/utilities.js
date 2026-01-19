@@ -40,14 +40,14 @@ function normalizeApp(a) {
 }
 
 // Initialize sidebar navigation
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeSidebarNav();
 });
 
 function initializeSidebarNav() {
     const navItems = document.querySelectorAll('.nav_select[data-tab]');
     navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             e.preventDefault();
             const tabName = this.getAttribute('data-tab');
             switchTab(e, tabName);
@@ -57,7 +57,7 @@ function initializeSidebarNav() {
     // Placeholder for user profile button
     const userProfileBtn = document.getElementById('userProfileBtn');
     if (userProfileBtn) {
-        userProfileBtn.addEventListener('click', function(e) {
+        userProfileBtn.addEventListener('click', function (e) {
             e.preventDefault();
             // Placeholder function - add user profile functionality here
             console.log('User profile button clicked - add functionality here');
@@ -65,7 +65,7 @@ function initializeSidebarNav() {
     }
 
     // Load initial tab
-    loadReviewTable();
+    loadAnalyticsTab();
 }
 
 // TAB SWITCHING
@@ -79,13 +79,14 @@ function switchTab(event, tabName) {
     if (tabName === 'review') loadReviewTable();
     else if (tabName === 'process') loadProcessTable();
     else if (tabName === 'summary') loadSummarySelect();
+    else if (tabName === 'analytics') loadAnalyticsTab();
 }
 
 function loadApplicationsFromDB() {
     return fetch(`${API_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if(data.status === 'success') applications = data.data.map(a => normalizeApp(a));
+            if (data.status === 'success') applications = data.data.map(a => normalizeApp(a));
             return applications;
         });
 }
@@ -97,10 +98,10 @@ function loadReviewTable() {
         applications.forEach(app => {
             // Status Badge Logic
             let badgeClass = 'pending';
-            if(app.status === 'Approved') badgeClass = 'approved';
-            if(app.status === 'Disapproved') badgeClass = 'disapproved';
-            if(app.status === 'Paid') badgeClass = 'paid';
-            if(app.status === 'For Payment') badgeClass = 'for-payment';
+            if (app.status === 'Approved') badgeClass = 'approved';
+            if (app.status === 'Disapproved') badgeClass = 'disapproved';
+            if (app.status === 'Paid') badgeClass = 'paid';
+            if (app.status === 'For Payment') badgeClass = 'for-payment';
 
             tbody.innerHTML += `
                 <tr>
@@ -130,8 +131,8 @@ function loadProcessTable() {
             let btnClass = "btn-secondary";
 
             // Highlight actions based on flow
-            if(app.status === 'Pending') { btnText = "Assess / Review"; btnClass = "btn-primary"; }
-            else if(app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
+            if (app.status === 'Pending') { btnText = "Assess / Review"; btnClass = "btn-primary"; }
+            else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
 
             tbody.innerHTML += `
                 <tr>
@@ -146,6 +147,81 @@ function loadProcessTable() {
             `;
         });
     });
+}
+
+let chart1Instance;
+let chart2Instance;
+
+function loadAnalyticsTab() {
+    fetch('/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php?action=chart_utilities_type')
+        .then(res => res.json())
+        .then(res => {
+            if (res.status !== 'success') return;
+
+            const labels1 = res.data_by_date.map(x => x.application_date);
+            const values1 = res.data_by_date.map(x => x.total);
+
+            const labels2 = res.data_by_type.map(x => x.provider);
+            const values2 = res.data_by_type.map(x => x.total);
+
+            // Your fixed colors
+            // Will change this later to dynamic colors based on number of utilities types
+            // - jep
+            const dateColors = [
+                '#4F46E5',
+                '#2563EB',
+                '#0284C7',
+                '#0891B2',
+                '#0D9488',
+                '#14B8A6'
+            ];
+
+            const typeColors = [
+                '#F59E0B',
+                '#F97316',
+                '#EF4444',
+                '#8B5CF6',
+                '#EC4899',
+                '#84CC16'
+            ];
+
+            if (chart1Instance) chart1Instance.destroy();
+            if (chart2Instance) chart2Instance.destroy();
+
+            chart1Instance = new Chart(document.getElementById('chart1'), {
+                type: 'line',
+                data: {
+                    labels: labels1,
+                    datasets: [{
+                        label: 'Utilities Dates',
+                        data: values1,
+                        backgroundColor: dateColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            chart2Instance = new Chart(document.getElementById('chart2'), {
+                type: 'bar',
+                data: {
+                    labels: labels2,
+                    datasets: [{
+                        label: 'Utilities Types',
+                        data: values2,
+                        backgroundColor: typeColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
 }
 
 // NEW: UPDATE / ASSESS LOGIC
@@ -186,17 +262,17 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeModal('updateModal');
-            alert('Application updated successfully!');
-            loadReviewTable();
-            loadProcessTable();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('updateModal');
+                alert('Application updated successfully!');
+                loadReviewTable();
+                loadProcessTable();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
 }
 
 // VIEW DETAILS (MODIFIED to include comments & file link)
@@ -222,14 +298,14 @@ function viewDetails(appId) {
     }
 
     // CONDITIONAL PAYMENT BLOCK
-    const paymentInfo = app.amount_due > 0 
-    ? `<div class="summary-card">
+    const paymentInfo = app.amount_due > 0
+        ? `<div class="summary-card">
         <h3>💰 Assessment & Payment</h3>
         <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
         <p><strong>Payment Status:</strong> ${app.payment_status}</p>
         <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
-       </div>` 
-    : '';
+       </div>`
+        : '';
 
     // COMBINE ALL HTML BLOCKS INTO ONE VARIABLE
     const fullModalContent = `
@@ -276,7 +352,7 @@ function viewDetails(appId) {
 
     // SET THE MODAL CONTENT
     document.getElementById('modalBody').innerHTML = fullModalContent;
-    
+
     // OPEN THE MODAL
     openModal('detailsModal');
 }
@@ -292,20 +368,20 @@ function createApplication(event) {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            document.getElementById('createForm').reset();
-            showAlert(`Utilities Application created successfully! ID: ${data.id}`, 'success');
-            loadApplicationsFromDB().then(()=>{ loadReviewTable(); loadProcessTable(); });
-        } else {
-            showAlert('Error: ' + data.message, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Failed to create application', 'danger');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('createForm').reset();
+                showAlert(`Utilities Application created successfully! ID: ${data.id}`, 'success');
+                loadApplicationsFromDB().then(() => { loadReviewTable(); loadProcessTable(); });
+            } else {
+                showAlert('Error: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Failed to create application', 'danger');
+        });
 }
 
 // LOAD SUMMARY SELECT OPTIONS
@@ -334,11 +410,11 @@ function updateSummary() {
     if (!app) return;
 
     const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
+    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
 
     // Build the uploaded file link HTML
-    const fileUploadHtml = app.requirement_upload 
-        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
+    const fileUploadHtml = app.requirement_upload
+        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>`
         : 'No file uploaded';
 
     // Build comments HTML
@@ -408,7 +484,7 @@ function filterApplications() {
 
     tbody.innerHTML = '';
 
-    const filtered = applications.filter(app => 
+    const filtered = applications.filter(app =>
         app.business_name.toLowerCase().includes(searchInput) ||
         (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
         app.id.toString().includes(searchInput)
@@ -422,10 +498,10 @@ function filterApplications() {
     filtered.forEach(app => {
         // Status Badge Logic
         let badgeClass = 'pending';
-        if(app.status === 'Approved') badgeClass = 'approved';
-        if(app.status === 'Disapproved') badgeClass = 'disapproved';
-        if(app.status === 'Paid') badgeClass = 'paid';
-        if(app.status === 'For Payment') badgeClass = 'for-payment';
+        if (app.status === 'Approved') badgeClass = 'approved';
+        if (app.status === 'Disapproved') badgeClass = 'disapproved';
+        if (app.status === 'Paid') badgeClass = 'paid';
+        if (app.status === 'For Payment') badgeClass = 'for-payment';
 
         const row = document.createElement('tr');
         const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
@@ -461,7 +537,7 @@ function showAlert(message, type) {
     alertDiv.textContent = message;
     alertContainer.innerHTML = '';
     alertContainer.appendChild(alertDiv);
-    
+
     setTimeout(() => {
         alertDiv.classList.remove('active');
     }, 4000);
@@ -480,10 +556,10 @@ function downloadSummary(appId) {
 
     // Prepare list data for HTML
     const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
+    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
 
     // Generate HTML for file upload link
-    const fileUploadText = app.requirement_upload 
+    const fileUploadText = app.requirement_upload
         ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
         : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
 
@@ -576,7 +652,7 @@ function downloadSummary(appId) {
                 `;
 
     // Use application/msword to force it to open in MS Word
-    const blob = new Blob([htmlContent], { type: 'application/msword' }); 
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -589,7 +665,7 @@ function downloadSummary(appId) {
 
 function getCurrentDateString() {
     const now = new Date();
-    
+
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -600,7 +676,7 @@ function getCurrentDateString() {
 //Updates the date input field with the current date.
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
-    
+
     if (dateInput) {
         dateInput.value = getCurrentDateString();
     }
@@ -609,12 +685,12 @@ function updateApplicationDate() {
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
-    setInterval(updateApplicationDate, 60000); 
+    setInterval(updateApplicationDate, 60000);
 });
 
 
 // CLOSE MODAL ON OUTSIDE CLICK
-window.onclick = function(event) {
+window.onclick = function (event) {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
         if (event.target == modal) {
@@ -624,8 +700,8 @@ window.onclick = function(event) {
 }
 
 // INITIALIZE ON LOAD
-window.addEventListener('load', function() {
-    loadReviewTable();
-});
+// window.addEventListener('load', function () {
+//     loadAnalyticsTab();
+// });
 
 document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`)

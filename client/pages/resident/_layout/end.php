@@ -1,6 +1,36 @@
         </main>
 
-    <script src="../../scripts/resident/nav.js" defer></script>
-    <script type="module" src="../../scripts/auth/signout.js"></script>
-    </body>
-</html>
+        <script src="../../scripts/resident/nav.js" defer></script>
+        <script type="module" src="../../scripts/auth/signout.js"></script>
+        <script>
+            window.addEventListener("load", () => {
+                const loader = document.getElementById("page-loader");
+                if (loader) loader.style.display = "none";
+            });
+
+            document.addEventListener("click", (e) => {
+                const link = e.target.closest("a");
+                const submit = e.target.closest("button[type=submit]");
+                const loader = document.getElementById("page-loader");
+
+                if (
+                    loader &&
+                    link &&
+                    link.href &&
+                    !link.target &&
+                    !link.href.startsWith("javascript:") &&
+                    link.href.includes("#") &&
+                    document.getElementById("page-loader")
+                ) {
+                    loader.style.display = "flex";
+                }
+            });
+
+            document.addEventListener("submit", () => {
+                const loader = document.getElementById("page-loader");
+                if (loader) loader.style.display = "flex";
+            });
+        </script>
+        </body>
+
+        </html>

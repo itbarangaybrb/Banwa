@@ -1,5 +1,10 @@
 <?php
-require_once __DIR__ . '/../../../server/api/resident/check_session.php';
+require_once __DIR__ . '/../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,40 +39,40 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <!-- ==================== Owner Form ==================== -->
         <div class="containers owner-container" id="owner">
             <form class="form" id="ownerform">
-                <h5>Owner Information</h5>
+                <h6>Owner Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label class="label" for="firstName">First Name*</label>
+                        <label class="label" for="firstName">First Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="firstName" name="firstName">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="middleName">Middle Name</label>
+                        <label class="label" for="middleName">Middle Name <i>(Optional)</i></label>
                         <input type="text" id="middleName" name="middleName">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lastName">Last Name*</label>
+                        <label class="label" for="lastName">Last Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="lastName" name="lastName">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="suffix">Suffix</label>
+                        <label class="label" for="suffix">Suffix <i>(Optional)</i></label>
                         <input type="text" id="suffix" name="suffix">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Landline/Phone No. *</label>
+                        <label class="label" for="contactNoOwner">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lotNo">Lot no.*</label>
+                        <label class="label" for="lotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="street">Street Name*</label>
+                        <label class="label" for="street">Street Name <span style="color: #BB1B1B;">*</span></label>
                         <select name="street" id="street">
                             <option value="" disabled selected>Select</option>
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -96,10 +101,11 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         placeholder="e.g., 121.075600"
                         value="<?php echo isset($_POST['longitude1']) ? htmlspecialchars($_POST['longitude']) : ''; ?>">
 
-                    <div class="label-and-input">
+                    <!-- <div class="label-and-input">
                         <button type="button" class="map-btn" data-target="1">Pick Location on Map</button>
                         <div class="map-preview" id="map-preview-1" style="margin-top: 10px; display: none;"></div>
-                    </div>
+                    </div> -->
+
                     <div class="label-and-input">
                         <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
                     </div>
@@ -116,21 +122,21 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <div class="containers business-container hidden" id="business">
             <form class="form" id="certificationForm">
                 <div class="inputs-container">
-                    <h5>Business Information</h5>
+                    <h6>Business Information</h6>
                     <div class="label-and-input">
-                        <label class="label" for="businessName">Business Name*</label>
+                        <label class="label" for="businessName">Business Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="businessName" name="businessName">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">Business Type*</label>
+                        <label class="label">Business Type <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship"> Single Proprietorship</label>
                         <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
                         <label><input type="radio" name="typeOfBusiness" value="Corporation"> Corporation</label>
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfBusinessSelect">Nature of Business*</label>
+                        <label class="label" for="natureOfBusinessSelect">Nature of Business <span style="color: #BB1B1B;">*</span></label>
                         <select name="natureOfBusiness" id="natureOfBusinessSelect">
                             <option value="" disabled selected>Select</option>
                             <option value="Manufacturing">Manufacturing</option>
@@ -143,12 +149,12 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfBusinessSpecify">Specify Details*</label>
+                        <label class="label" for="natureOfBusinessSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">Business Address Status*</label>
+                        <label class="label">Business Address Status <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
                         <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
                         <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
@@ -156,27 +162,27 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoBusiness">Landline/Phone No.*</label>
+                        <label class="label" for="contactNoBusiness">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="emailAddress">Email Address*</label>
+                        <label class="label" for="emailAddress">Email Address <span style="color: #BB1B1B;">*</span></label>
                         <input type="email" id="emailAddress" name="emailAddress">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="noOfEmployees">Number of Employees*</label>
+                        <label class="label" for="noOfEmployees">Number of Employees <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="businessLotNo">Lot no.*</label>
+                        <label class="label" for="businessLotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="businessLotNo" id="businessLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="businessStreet">Street Name*</label>
+                        <label class="label" for="businessStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
                         <select name="businessStreet" id="businessStreet">
                             <option value="" disabled selected>Select</option>
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -209,7 +215,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="typeOfStructureSelect">Structure Type*</label>
+                        <label class="label" for="typeOfStructureSelect">Structure Type <span style="color: #BB1B1B;">*</span></label>
                         <select id="typeOfStructureSelect" name="typeOfStructureSelect">
                             <option value="" disabled selected>Select Structure Type</option>
                             <option value="Residence">Residence</option>
@@ -222,12 +228,12 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="typeOfStructureSpecify">Specify Details*</label>
+                        <label class="label" for="typeOfStructureSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfApplication">Nature of application*</label>
+                        <label class="label" for="natureOfApplication">Nature of application <span style="color: #BB1B1B;">*</span></label>
                         <select name="natureOfApplication" id="natureOfApplication">
                             <option value="" disabled selected>Select</option>
                             <option value="New">New</option>
@@ -237,7 +243,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input" id="requirementsSection">
-                        <label class="label">Requirements (Photocopy Only)*</label>
+                        <label class="label">Requirements (Photocopy Only) <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
                         <label><input type="checkbox" name="requirements" value="DTI"> DTI</label>
                         <label><input type="checkbox" name="requirements" value="TCT"> TCT</label>
@@ -246,7 +252,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="requirementUpload">Attachment/s*</label>
+                        <label class="label" for="requirementUpload">Attachment/s <span style="color: #BB1B1B;">*</span></label>
                         <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
                         <div class="error-msg"></div>
                     </div>
@@ -262,7 +268,7 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <!-- ==================== Waiver Form ==================== -->
         <div class="containers waiver-container hidden" id="waiver">
             <form class="form" id="waiverUtilitiesForm">
-                <h5>Waiver</h5>
+                <h6>Waiver</h6>
 
                 <div id="waiverContent">
                     <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
@@ -292,32 +298,60 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
         <!-- ==================== Summary Form ==================== -->
         <div class="containers summary-container hidden" id="summary">
             <form class="form" id="summaryForm">
-                <h5>Summary</h5>
+                <h6>Summary</h6>
 
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
-                        <h6>Business Information</h6>
+                        <p>Business Information</p>
                         <div class="summary-info">
-                            <div><strong>Business Name:</strong> <span id="sumBusinessName"></span></div>
-                            <div><strong>Type of Business:</strong> <span id="sumTypeOfBusiness"></span></div>
-                            <div><strong>Nature of Business:</strong> <span id="sumNatureOfBusiness"></span></div>
-                            <div><strong>Business Status:</strong> <span id="sumBusinessStatus"></span></div>
-                            <div><strong>Address of Business:</strong> <span id="sumAddressOfBusiness"></span></div>
-                            <div><strong>Business Telephone:</strong> <span id="sumContactNoBusiness"></span></div>
-                            <div><strong>Email:</strong> <span id="sumEmail"></span></div>
+                            <div>
+                                <p>Business Name:</p> <span id="sumBusinessName"></span>
+                            </div>
+                            <div>
+                                <p>Type of Business:</p> <span id="sumTypeOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Nature of Business:</p> <span id="sumNatureOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Business Status:</p> <span id="sumBusinessStatus"></span>
+                            </div>
+                            <div>
+                                <p>Address of Business:</p> <span id="sumAddressOfBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Business Telephone:</p> <span id="sumContactNoBusiness"></span>
+                            </div>
+                            <div>
+                                <p>Email:</p> <span id="sumEmail"></span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="summary-header-and-info">
-                        <h6>Owner Information</h6>
+                        <p>Owner Information</p>
                         <div class="summary-info">
-                            <div><strong>Owner Name:</strong> <span id="sumFullname"></span></div>
-                            <div><strong>Owner Telephone:</strong> <span id="sumContactNoOwner"></span></div>
-                            <div><strong>Owner Address:</strong> <span id="sumAddressOwner"></span></div>
-                            <div><strong>Structure Type:</strong> <span id="sumStructureType"></span></div>
-                            <div><strong>Requirements:</strong> <span id="sumRequirements"></span></div>
-                            <div><strong>No. of Employees:</strong> <span id="sumEmployees"></span></div>
-                            <div><strong>Agreed to Terms:</strong> <span id="sumAgreed"></span></div>
+                            <div>
+                                <p>Owner Name:</p> <span id="sumFullname"></span>
+                            </div>
+                            <div>
+                                <p>Owner Telephone:</p> <span id="sumContactNoOwner"></span>
+                            </div>
+                            <div>
+                                <p>Owner Address:</p> <span id="sumAddressOwner"></span>
+                            </div>
+                            <div>
+                                <p>Structure Type:</p> <span id="sumStructureType"></span>
+                            </div>
+                            <div>
+                                <p>Requirements:</p> <span id="sumRequirements"></span>
+                            </div>
+                            <div>
+                                <p>No. of Employees:</p> <span id="sumEmployees"></span>
+                            </div>
+                            <div>
+                                <p>Agreed to Terms:</p> <span id="sumAgreed"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -333,8 +367,8 @@ require_once __DIR__ . '/../../../server/api/resident/check_session.php';
 
     <script type="module" src="../../scripts/resident/business_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <?php include '_layout/end.php'; ?>
 </body>
 
 </html>
-
-<?php include '_layout/end.php'; ?>

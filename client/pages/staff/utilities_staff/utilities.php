@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Utilities Application Management System</title>
 	<link rel="stylesheet" href="../../../styles/staff/utilities_staff/utilities.css">
+	<link rel="stylesheet" href="../../../styles/staff/analytics.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<link rel="stylesheet" href="../../../styles/staff/map1.css" />
 </head>
+
 <body>
 	<!-- Sidebar -->
 	<aside class="side_nav">
@@ -20,9 +26,17 @@
 		<ul class="nav_list">
 			<div>
 				<li>
-					<a href="#" class="nav_select active" data-tab="review">
+					<a href="#" class="nav_select active" data-tab="dashboard">
 						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+						<span class="nav_text">Dashboard</span>
+					</a>
+				</li>
+				<li>
+					<a href="#" class="nav_select" data-tab="review">
+						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 						<span class="nav_text">Review & Search</span>
 					</a>
@@ -30,7 +44,7 @@
 				<li>
 					<a href="#" class="nav_select" data-tab="create">
 						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 						<span class="nav_text">Create New</span>
 					</a>
@@ -38,7 +52,7 @@
 				<li>
 					<a href="#" class="nav_select" data-tab="process">
 						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white"/>
+							<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
 						</svg>
 						<span class="nav_text">Process & Assess</span>
 					</a>
@@ -46,8 +60,8 @@
 				<li>
 					<a href="#" class="nav_select" data-tab="summary">
 						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-							<polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							<polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 						<span class="nav_text">Generate Summary</span>
 					</a>
@@ -85,7 +99,83 @@
 		<div class="content">
 			<div id="alert-container"></div>
 
-			<div id="review" class="tab-pane active">
+			<div id="dashboard" class="tab-pane active">
+				<!-- Mobile Menu Button -->
+				<button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+					<i class="fas fa-bars"></i>
+				</button>
+
+				<div class="map-wrapper">
+					<div class="map-header">
+						<h2>Dashboard</h2>
+					</div>
+
+					<div class="map-controls">
+						<div class="search-container">
+							<div class="search-box">
+								<input type="text" id="search-input" placeholder="Search by name, address, or type...">
+								<button onclick="performSearch()">
+									<i class="fas fa-search"></i> Search
+								</button>
+								<button onclick="clearSearch()" class="clear-btn">
+									<i class="fas fa-times"></i> Clear
+								</button>
+							</div>
+						</div>
+
+						<div id="search-results" class="search-results"></div>
+					</div>
+
+					<div class="filter-controls">
+						<div class="filter-buttons">
+							<button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
+								<span class="filter-icon" style="background: #28a745;"></span>
+								<span>Households</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
+								<span class="filter-icon" style="background: #9C27B0;"></span>
+								<span>Businesses</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
+								<span class="filter-icon" style="background: #ffc107;"></span>
+								<span>Construction</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
+								<span class="filter-icon" style="background: #2196F3;"></span>
+								<span>Utilities</span>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div id="map"></div>
+
+				<div id="detail-modal" class="modal">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h3 id="modal-title">Marker Details</h3>
+							<button class="close-modal" onclick="closeModal()">&times;</button>
+						</div>
+						<div class="modal-body">
+							<div id="modal-content">
+								<!-- Content will be loaded here -->
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="analytics-container">
+					<div class="charts">
+						<canvas id="chart1"></canvas>
+					</div>
+					<div class="charts">
+						<canvas id="chart2"></canvas>
+					</div>
+
+				</div>
+			</div>
+
+			<div id="review" class="tab-pane">
 				<h2>Review Utilities Applications</h2>
 				<div class="search-box">
 					<input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
@@ -103,7 +193,11 @@
 							</tr>
 						</thead>
 						<tbody id="tableBody">
-							<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>
+							<tr>
+								<td colspan="6" class="loading">
+									<div class="spinner"></div>Loading...
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -193,7 +287,7 @@
 			<div id="process" class="tab-pane">
 				<h2>Process Applications</h2>
 				<p class="form-description">Assess fees, send for payment, or issue final approval.</p>
-                
+
 				<div class="table-responsive">
 					<table>
 						<thead>
@@ -206,7 +300,11 @@
 							</tr>
 						</thead>
 						<tbody id="processTableBody">
-							<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading...</td></tr>
+							<tr>
+								<td colspan="5" class="loading">
+									<div class="spinner"></div>Loading...
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -237,7 +335,7 @@
 					</div>
 					<form id="updateForm" onsubmit="submitUpdate(event)">
 						<input type="hidden" id="updateAppId" name="id">
-                        
+
 						<div class="form-group">
 							<label>Current Status:</label>
 							<input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
@@ -276,6 +374,11 @@
 			</div>
 		</div>
 	</div>
+
 	<script src="../../../scripts/staff/utilities_staff/utilities.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="../../../scripts/staff/map.js"></script>
 </body>
+
 </html>

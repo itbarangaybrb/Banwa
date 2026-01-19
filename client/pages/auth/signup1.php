@@ -63,12 +63,59 @@
 
                 <div class="panel right-panel">
                     <!-- ==================== Personal Details Form ==================== -->
-                    <div class="personal-details-container" id="personalDetails">
+                    <div class="select-id-container" id="selectId">
+                        <form class="form" id="selectIdForm">
+                            <h5>Identity Verification</h5>
+                            <p>Please upload a valid ID to autofill your information.</p>
+
+                            <div class="inputs-container">
+                                <div class="label-and-input" id="idTypeWrapper">
+                                    <label>Type of ID <span style="color: #BB1B1B;">*</span></label>
+                                    <select name="idType" id="idType" required>
+                                        <option value="" disabled selected>Select ID Type</option>
+                                        <option value="National">National ID (PhilSys)</option>
+                                        <option value="Quezon">Quezon City ID</option>
+                                        <option value="Postal">Postal ID</option>
+                                        <option value="Passport">Philippine Passport</option>
+                                    </select>
+                                    <div class="error-msg"></div>
+                                </div>
+
+                                <div class="label-and-input" id="idFileWrapper">
+                                    <label for="idFile">
+                                        Upload ID File <span style="color: #BB1B1B;">*</span><br>
+                                        <i>(Clear image of the front of your ID)</i>
+                                    </label>
+                                    <input id="idFile" name="idFile" type="file" accept="image/png, image/jpeg, image/jpg" required />
+                                    <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                                        <img id="idImagePreview" src="#" alt="ID Preview" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+
+                                <div id="ocrStatus" style="display:none; color: #00247C; font-weight: bold; font-size: 14px;">
+                                    Processing ID... Please wait.
+                                </div>
+                            </div>
+
+                            <div class="buttons-container">
+                                <button type="button" id="selectIdBackBtn">Back</button>
+                                <button type="button" id="selectIdNextBtn">Next</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="personal-details-container hidden" id="personalDetails">
                         <form class="form" id="personalDetailsForm">
                             <h5>Personal Information</h5>
                             <div class="inputs-container">
+                                <!-- <div class="label-and-input">
+                                        <label for="extractedText">Extracted ID Data (Reference)</label>
+                                        <textarea id="extractedText" rows="4" readonly style="color: #555; font-size: 12px;"></textarea>
+                                    </div> -->
+
                                 <div class="label-and-input">
-                                    <label for="firstName">First name *</label>
+                                    <label for="firstName">First name <span style="color: #BB1B1B;">*</span></label>
                                     <input id="firstName" name="firstName" type="text" required>
                                     <div class="error-msg"></div>
                                 </div>
@@ -78,17 +125,17 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="lastName">Last name *</label>
+                                    <label for="lastName">Last name <span style="color: #BB1B1B;">*</span></label>
                                     <input id="lastName" name="lastName" type="text" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="suffix">Suffix <i>(Optional)</i></label>
-                                    <input id="suffix" name="suffix" type="text">
+                                    <label for="suffix">Suffix <i>(Optional)</i></span></label>
+                                    <input id="suffix" name="suffix" type="text" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="sex">Sex *</label>
+                                    <label for="sex">Sex <span style="color: #BB1B1B;">*</span></label>
                                     <select id="sex" name="sex" required>
                                         <option value="">Select</option>
                                         <option value="female">Female</option>
@@ -98,16 +145,12 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="contactNo">Contact no. *</label>
+                                    <label for="contactNo">Contact no. <span style="color: #BB1B1B;">*</span></label>
                                     <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="address">
-                                        Address
-                                        <br>
-                                        <i>(Lot no. Street name ...)</i>
-                                    </label>
+                                    <label for="address">Address</label>
                                     <textarea id="address" name="address"></textarea>
                                     <div class="error-msg"></div>
                                 </div>
@@ -116,45 +159,6 @@
                             <div class="buttons-container">
                                 <button type="button" id="personalDetailsBackBtn">Back</button>
                                 <button type="button" id="personalDetailsNextBtn">Next</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- ==================== Select ID Form ==================== -->
-                    <div class="select-id-container hidden" id="selectId">
-                        <form class="form" id="selectIdForm">
-                            <h5>Selection ID</h5>
-                            <div class="inputs-container">
-                                <div class="label-and-input" id="idTypeWrapper">
-                                    <label>Types of ID</label>
-                                    <select name="idType" id="idType">
-                                        <option value="" disabled selected>Select ID Type</option>
-                                        <option value="National">National ID</option>
-                                        <option value="Quezon">Quezon City ID</option>
-                                        <option value="Postal">Postal ID</option>
-                                        <option value="Passport">Philippine Passport</option>
-                                    </select>
-
-                                    <!-- <label><input type="radio" name="idType" value="National"> National ID</label>
-                                    <label><input type="radio" name="idType" value="Quezon"> Quezon City ID</label>
-                                    <label><input type="radio" name="idType" value="Postal"> Postal ID</label>
-                                    <label><input type="radio" name="idType" value="Passport"> Philippine Passport</label> -->
-                                    <div class="error-msg"></div>
-                                </div>
-
-                                <div class="label-and-input" id="idFileWrapper">
-                                    <label for="idFile">
-                                        Upload ID File * <br>
-                                        <i>(Accepted formats: .jpeg, .png, .pdf)</i>
-                                    </label>
-                                    <input id="idFile" name="idFile" type="file" accept="image/*,application/pdf" required />
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="buttons-container">
-                                <button type="button" id="selectIdBackBtn">Back</button>
-                                <button type="button" id="selectIdNextBtn">Next</button>
                             </div>
                         </form>
                     </div>
@@ -168,17 +172,17 @@
 
                             <div class="inputs-container">
                                 <div class="label-and-input">
-                                    <label for="createAccEmail">Email *</label>
+                                    <label for="createAccEmail">Email <span style="color: #BB1B1B;">*</span></label>
                                     <input type="email" name="createAccEmail" id="createAccEmail" required />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="password">Password *</label>
+                                    <label for="password">Password <span style="color: #BB1B1B;">*</span></label>
                                     <input type="password" name="password" id="password" autocomplete="false" required />
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="reTypePassword">Re-type password *</label>
+                                    <label for="reTypePassword">Re-type password <span style="color: #BB1B1B;">*</span></label>
                                     <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" required />
                                     <div class="error-msg"></div>
                                 </div>

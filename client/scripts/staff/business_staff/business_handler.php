@@ -63,6 +63,10 @@ try {
         case 'update':
             handleUpdateApplication($pdo);
             break;
+        case 'chart_business_type':
+            handleChartBusinessType($pdo);
+            break;
+
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -77,11 +81,13 @@ exit;
 // HELPER FUNCTIONS
 
 
-function get_input($key){
+function get_input($key)
+{
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
-function handleCreateApplication($pdo){
+function handleCreateApplication($pdo)
+{
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
         // Collect Data
@@ -244,7 +250,8 @@ function handleUpdateStatus($pdo)
     }
 }
 
-function handleUpdateApplication($pdo){
+function handleUpdateApplication($pdo)
+{
     try {
         $applicationId = get_input('application_id');
         // Basic validation
@@ -348,7 +355,7 @@ function handleUpdateApplication($pdo){
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // Add a check for ownership for security
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
@@ -368,7 +375,6 @@ function handleUpdateApplication($pdo){
             http_response_code(404);
             echo json_encode(["status" => "error", "message" => "Application not found or not authorized to update."]);
         }
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -379,3 +385,33 @@ function handleUpdateApplication($pdo){
 }
 
 
+function handleChartBusinessType($pdo)
+{
+    // Data by Application Date
+    $sql1 = "
+        SELECT application_date, COUNT(*) AS total
+        FROM business_applications
+        GROUP BY application_date
+        ORDER BY application_date ASC
+    ";
+
+    $stmt1 = $pdo->query($sql1);
+    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    // Data by Application Type of Business
+    $sql2 = "
+        SELECT type_of_business, COUNT(*) AS total
+        FROM business_applications
+        GROUP BY type_of_business
+        ORDER BY type_of_business ASC
+    ";
+
+    $stmt2 = $pdo->query($sql2);
+    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "status" => "success",
+        "data_by_date" => $dataByDate,
+        "data_by_type" => $dataByType
+    ]);
+}
