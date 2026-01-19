@@ -5,35 +5,39 @@ let pendingApps = [];
 let paidApps = [];
 
 // UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
+document.addEventListener('DOMContentLoaded', function() {
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
+
+    // TOGGLE SIDEBAR ON CLICK
+    if (navLogo && sideNav) {
+        navLogo.addEventListener('click', function() {
+            sideNav.classList.toggle('expanded');
+        });
+    }
+});
+
+// UPDATED TAB SWITCHING
 function switchTab(event, tabName) {
-    event.preventDefault();
+    if (event) event.preventDefault();
 
-    // 1. Hide all tab panes (the content areas)
+    // 1. Switch Content
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(tabName);
+    if (target) target.classList.add('active');
+
+    // 2. Switch Sidebar Active State
+    document.querySelectorAll('.nav_select').forEach(link => link.classList.remove('active'));
     
-    // 2. Remove 'active' class from all sidebar links
-    // Change '.tab-button' to '.nav_select' to match the new sidebar structure
-    document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
-
-    // 3. Show the selected content area
-    const targetTab = document.getElementById(tabName);
-    if (targetTab) {
-        targetTab.classList.add('active');
+    // Find and highlight the clicked link
+    if (event) {
+        const clickedLink = event.target.closest('.nav_select');
+        if (clickedLink) clickedLink.classList.add('active');
     }
 
-    // 4. Add 'active' class to the clicked sidebar link
-    // We use .closest('a') to ensure the class is added to the link even if an icon was clicked
-    const clickedLink = event.target.closest('.nav_select');
-    if (clickedLink) {
-        clickedLink.classList.add('active');
-    }
-
-    // 5. Trigger your existing data loading logic
-    if (tabName === 'pending') {
-        loadPendingTable();
-    } else if (tabName === 'history') {
-        loadHistoryTable();
-    }
+    // 3. Load Data
+    if (tabName === 'pending') loadPendingTable();
+    else if (tabName === 'history') loadHistoryTable();
 }
 
 // LOAD TABLES
