@@ -3,31 +3,68 @@ include __DIR__ . "../../../../server/configs/database.php";
 
 // ==================== EXISTING MARKER FUNCTIONS ====================
 
-function getConstructionMarkers() {
+function getUtilitiesMarkers()
+{
     global $pdo;
     try {
         $sql = "SELECT 
-                    construction_id, 
-                    permit_no, 
-                    homeowner_name, 
-                    contractor_name,
-                    address_of_construction,
-                    nature_of_activity,
+                    id,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    suffix,
+                    owner_contact_no,
+                    owner_address,
+                    request_date,
+                    date_of_work,
+                    nature_of_work,
+                    provider,
+                    address_of_utility,
+                    latitude,
+                    longitude,
+                    status,
+                    agreed,
+                    supabase_user_id
+                FROM utility_applications 
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getUtilitiesMarkers: " . $e->getMessage());
+        return [];
+    }
+}
+
+function getConstructionMarkers()
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    id,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    suffix,
+                    contact_no_owner,
+                    construction_address,
+                    latitude,
+                    longitude,
+                    nature_of_work,
                     type_of_work,
+                    nature_of_activity,
                     details_of_work,
                     start_date,
                     end_date,
-                    num_of_workers,
-                    num_of_working_days,
-                    fee_paid,
-                    payment_type,
-                    payment_status,
-                    approved_by,
-                    noted_by,
-                    remarks,
-                    latitude, 
-                    longitude 
-                FROM construction_doc 
+                    number_of_working_days,
+                    number_of_workers,
+                    contractor_name,
+                    contractor_contact_number,
+                    application_method,
+                    requirement_upload,
+                    agreed,
+                    updated_at
+                FROM construction_applications 
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -38,7 +75,8 @@ function getConstructionMarkers() {
     }
 }
 
-function getBusinessMarkers() {
+function getBusinessMarkers()
+{
     global $pdo;
     try {
         $sql = "SELECT 
@@ -77,7 +115,8 @@ function getBusinessMarkers() {
     }
 }
 
-function getHouseholdMarkers() {
+function getHouseholdMarkers()
+{
     global $pdo;
     try {
         $sql = "SELECT 
@@ -101,10 +140,25 @@ function getHouseholdMarkers() {
     }
 }
 
-function getConstructionById($id) {
+function getUtilitiesById($id)
+{
     global $pdo;
     try {
-        $sql = "SELECT * FROM construction_doc WHERE construction_id = :id";
+        $sql = "SELECT * FROM utility_applications WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getUtilitiesById: " . $e->getMessage());
+        return null;
+    }
+}
+
+function getConstructionById($id)
+{
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM construction_applications WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -114,7 +168,8 @@ function getConstructionById($id) {
     }
 }
 
-function getBusinessById($id) {
+function getBusinessById($id)
+{
     global $pdo;
     try {
         $sql = "SELECT * FROM business_applications WHERE id = :id";
@@ -127,7 +182,8 @@ function getBusinessById($id) {
     }
 }
 
-function getHouseholdById($id) {
+function getHouseholdById($id)
+{
     global $pdo;
     try {
         $sql = "SELECT * FROM marker WHERE marker_id = :id";
@@ -143,7 +199,8 @@ function getHouseholdById($id) {
 // ==================== NEW HOUSE POLYGON FUNCTIONS ====================
 
 // Get all house polygons
-function getHousePolygons() {
+function getHousePolygons()
+{
     global $pdo;
     try {
         $sql = "SELECT 
@@ -169,7 +226,8 @@ function getHousePolygons() {
 }
 
 // Get single house by ID
-function getHouseById($houseId) {
+function getHouseById($houseId)
+{
     global $pdo;
     try {
         $sql = "SELECT * FROM house_polygons WHERE house_id = :id";
@@ -183,39 +241,41 @@ function getHouseById($houseId) {
 }
 
 // Check if point is inside polygon
-function isPointInPolygon($point, $polygon) {
+function isPointInPolygon($point, $polygon)
+{
     $x = $point['lng'];
     $y = $point['lat'];
-    
+
     $inside = false;
     $n = count($polygon);
-    
+
     for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
         $xi = $polygon[$i][0];
         $yi = $polygon[$i][1];
         $xj = $polygon[$j][0];
         $yj = $polygon[$j][1];
-        
+
         $intersect = (($yi > $y) != ($yj > $y))
             && ($x < ($xj - $xi) * ($y - $yi) / ($yj - $yi) + $xi);
-        
+
         if ($intersect) $inside = !$inside;
     }
-    
+
     return $inside;
 }
 
 // Check which house contains a point
-function checkPointInHouse($lat, $lng) {
+function checkPointInHouse($lat, $lng)
+{
     global $pdo;
-    
+
     try {
         $sql = "SELECT house_id, address, street_name, coordinates 
                 FROM house_polygons";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         foreach ($houses as $house) {
             if (!empty($house['coordinates'])) {
                 $polygon = json_decode($house['coordinates'], true);
@@ -224,9 +284,8 @@ function checkPointInHouse($lat, $lng) {
                 }
             }
         }
-        
+
         return null;
-        
     } catch (Exception $e) {
         error_log("Error in checkPointInHouse: " . $e->getMessage());
         return null;
@@ -234,19 +293,20 @@ function checkPointInHouse($lat, $lng) {
 }
 
 // Save house polygon (simplified for testing)
-function saveHousePolygon($data) {
+function saveHousePolygon($data)
+{
     global $pdo;
-    
+
     try {
         // Validate required fields
         if (empty($data['address'])) {
             return ['success' => false, 'message' => 'Address is required'];
         }
-        
+
         if (empty($data['coordinates']) || !is_array($data['coordinates']) || count($data['coordinates']) < 3) {
             return ['success' => false, 'message' => 'At least 3 coordinate points are required'];
         }
-        
+
         // Prepare data
         $address = trim($data['address']);
         $houseNumber = isset($data['house_number']) ? trim($data['house_number']) : '';
@@ -254,7 +314,7 @@ function saveHousePolygon($data) {
         $coordinates = json_encode($data['coordinates']);
         $centerLat = isset($data['center_lat']) ? floatval($data['center_lat']) : 0;
         $centerLng = isset($data['center_lng']) ? floatval($data['center_lng']) : 0;
-        
+
         // For area calculation - simplified
         $area = 0;
         $coords = $data['coordinates'];
@@ -268,10 +328,10 @@ function saveHousePolygon($data) {
             $area = abs($area) / 2;
             $area = round($area * 1000000, 2); // Simple conversion
         }
-        
+
         // Check if updating or inserting
         $houseId = isset($data['house_id']) ? intval($data['house_id']) : null;
-        
+
         if ($houseId) {
             // Update existing
             $sql = "UPDATE house_polygons SET 
@@ -285,7 +345,7 @@ function saveHousePolygon($data) {
                     updated_at = CURRENT_TIMESTAMP
                     WHERE house_id = :house_id
                     RETURNING house_id";
-            
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':house_id' => $houseId,
@@ -303,7 +363,7 @@ function saveHousePolygon($data) {
                     (address, house_number, street_name, coordinates, center_lat, center_lng, area_sqm) 
                     VALUES (:address, :house_number, :street_name, :coordinates, :center_lat, :center_lng, :area) 
                     RETURNING house_id";
-            
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':address' => $address,
@@ -315,15 +375,14 @@ function saveHousePolygon($data) {
                 ':area' => $area
             ]);
         }
-        
+
         $newHouseId = $stmt->fetchColumn();
-        
+
         return [
             'success' => true,
             'message' => $houseId ? 'House updated successfully' : 'House saved successfully',
             'house_id' => $newHouseId
         ];
-        
     } catch (Exception $e) {
         error_log("Error in saveHousePolygon: " . $e->getMessage());
         return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
@@ -331,9 +390,10 @@ function saveHousePolygon($data) {
 }
 
 // Delete house polygon
-function deleteHousePolygon($houseId) {
+function deleteHousePolygon($houseId)
+{
     global $pdo;
-    
+
     try {
         // Remove house_id from markers first (if your marker table has house_id)
         if (tableHasColumn('marker', 'house_id')) {
@@ -341,14 +401,13 @@ function deleteHousePolygon($houseId) {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':house_id' => $houseId]);
         }
-        
+
         // Then delete the house
         $sql = "DELETE FROM house_polygons WHERE house_id = :house_id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':house_id' => $houseId]);
-        
+
         return ['success' => true, 'message' => 'House deleted successfully'];
-        
     } catch (Exception $e) {
         error_log("Error in deleteHousePolygon: " . $e->getMessage());
         return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
@@ -356,47 +415,47 @@ function deleteHousePolygon($houseId) {
 }
 
 // Update house details
-function updateHouseDetails($data) {
+function updateHouseDetails($data)
+{
     global $pdo;
-    
+
     try {
         if (empty($data['house_id'])) {
             return ['success' => false, 'message' => 'House ID is required'];
         }
-        
+
         $houseId = intval($data['house_id']);
-        
+
         // Build dynamic update query
         $updates = [];
         $params = [':house_id' => $houseId];
-        
+
         if (isset($data['address'])) {
             $updates[] = "address = :address";
             $params[':address'] = trim($data['address']);
         }
-        
+
         if (isset($data['house_number'])) {
             $updates[] = "house_number = :house_number";
             $params[':house_number'] = trim($data['house_number']);
         }
-        
+
         if (isset($data['street_name'])) {
             $updates[] = "street_name = :street_name";
             $params[':street_name'] = trim($data['street_name']);
         }
-        
+
         if (empty($updates)) {
             return ['success' => false, 'message' => 'No fields to update'];
         }
-        
+
         $updates[] = "updated_at = CURRENT_TIMESTAMP";
-        
+
         $sql = "UPDATE house_polygons SET " . implode(', ', $updates) . " WHERE house_id = :house_id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        
+
         return ['success' => true, 'message' => 'House updated successfully'];
-        
     } catch (Exception $e) {
         error_log("Error in updateHouseDetails: " . $e->getMessage());
         return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
@@ -404,7 +463,8 @@ function updateHouseDetails($data) {
 }
 
 // Helper function to check if table has column
-function tableHasColumn($tableName, $columnName) {
+function tableHasColumn($tableName, $columnName)
+{
     global $pdo;
     try {
         $sql = "SELECT column_name FROM information_schema.columns 
@@ -424,26 +484,47 @@ function tableHasColumn($tableName, $columnName) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
-    
+
     // Existing marker actions
     if ($_POST['action'] === 'get_markers') {
         $constructions = getConstructionMarkers();
+        $utilities = getUtilitiesMarkers();
         $businesses = getBusinessMarkers();
         $households = getHouseholdMarkers();
-        
+
         echo json_encode([
             'success' => true,
             'constructions' => $constructions,
+            'utilities' => $utilities,
             'businesses' => $businesses,
             'households' => $households
         ]);
         exit;
     }
-    
+
+    if ($_POST['action'] === 'get_utilities_details') {
+        $id = $_POST['id'] ?? 0;
+        $data = getUtilitiesById($id);
+
+        if ($data) {
+            echo json_encode([
+                'success' => true,
+                'data' => $data,
+                'type' => 'utilities'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Utilities record not found'
+            ]);
+        }
+        exit;
+    }
+
     if ($_POST['action'] === 'get_construction_details') {
         $id = $_POST['id'] ?? 0;
         $data = getConstructionById($id);
-        
+
         if ($data) {
             echo json_encode([
                 'success' => true,
@@ -458,11 +539,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         exit;
     }
-    
+
     if ($_POST['action'] === 'get_business_details') {
         $id = $_POST['id'] ?? 0;
         $data = getBusinessById($id);
-        
+
         if ($data) {
             echo json_encode([
                 'success' => true,
@@ -477,11 +558,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         exit;
     }
-    
+
     if ($_POST['action'] === 'get_household_details') {
         $id = $_POST['id'] ?? 0;
         $data = getHouseholdById($id);
-        
+
         if ($data) {
             echo json_encode([
                 'success' => true,
@@ -496,7 +577,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         exit;
     }
-    
+
     // NEW: House polygon actions
     if ($_POST['action'] === 'get_houses') {
         $houses = getHousePolygons();
@@ -507,11 +588,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         ]);
         exit;
     }
-    
+
     if ($_POST['action'] === 'get_house_details') {
         $id = $_POST['id'] ?? 0;
         $data = getHouseById($id);
-        
+
         if ($data) {
             echo json_encode([
                 'success' => true,
@@ -525,39 +606,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         exit;
     }
-    
+
     if ($_POST['action'] === 'save_house') {
         // Get input data
         $input = $_POST;
-        
+
         // If coordinates is JSON string, decode it
         if (isset($input['coordinates']) && is_string($input['coordinates'])) {
             $input['coordinates'] = json_decode($input['coordinates'], true);
         }
-        
+
         $result = saveHousePolygon($input);
         echo json_encode($result);
         exit;
     }
-    
+
     if ($_POST['action'] === 'delete_house') {
         $houseId = $_POST['house_id'] ?? 0;
         $result = deleteHousePolygon($houseId);
         echo json_encode($result);
         exit;
     }
-    
+
     if ($_POST['action'] === 'update_house') {
         $result = updateHouseDetails($_POST);
         echo json_encode($result);
         exit;
     }
-    
+
     if ($_POST['action'] === 'check_location') {
         $lat = $_POST['lat'] ?? 0;
         $lng = $_POST['lng'] ?? 0;
         $house = checkPointInHouse($lat, $lng);
-        
+
         echo json_encode([
             'success' => true,
             'is_inside' => $house !== null,
@@ -565,7 +646,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         ]);
         exit;
     }
-    
+
     // Unknown action
     echo json_encode([
         'success' => false,
@@ -579,4 +660,3 @@ echo json_encode([
     'success' => false,
     'message' => 'Invalid request method'
 ]);
-?>

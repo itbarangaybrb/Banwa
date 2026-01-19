@@ -34,6 +34,9 @@ try {
         case 'update':
             handleUpdateApplication($pdo);
             break;
+        case 'chart_construction_type':
+            handleChartConstructionType($pdo);
+            break;
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -340,4 +343,35 @@ function handleUpdateApplication($pdo)
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
+}
+
+function handleChartConstructionType($pdo)
+{
+    // Data by Application Date
+    $sql1 = "
+        SELECT application_date, COUNT(*) AS total
+        FROM construction_applications
+        GROUP BY application_date
+        ORDER BY application_date ASC
+    ";
+
+    $stmt1 = $pdo->query($sql1);
+    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    // Data by Application Type of Business
+    $sql2 = "
+        SELECT nature_of_work, COUNT(*) AS total
+        FROM construction_applications
+        GROUP BY nature_of_work
+        ORDER BY nature_of_work ASC
+    ";
+
+    $stmt2 = $pdo->query($sql2);
+    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "status" => "success",
+        "data_by_date" => $dataByDate,
+        "data_by_type" => $dataByType
+    ]);
 }

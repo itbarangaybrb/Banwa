@@ -1,9 +1,11 @@
 // Map variables
 const map = L.map('map').setView([14.6175, 121.0756], 17);
+let utilityMarkers = [];
 let constructionMarkers = [];
 let businessMarkers = [];
 let householdMarkers = [];
 let visibleMarkers = {
+    utility: true,
     household: true,
     business: true,
     construction: true
@@ -22,46 +24,46 @@ let currentMarkerData = null;
 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxNativeZoom: 19,
-    maxZoom: 22         
+    maxZoom: 22
 });
 
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: '© Esri',
     maxNativeZoom: 19,
-    maxZoom: 22         
+    maxZoom: 22
 });
 
 osmLayer.addTo(map);
 
 // Icons
-const constructionIcon = L.divIcon({ 
-    className: 'construction-marker', 
-    iconSize: [15, 15] 
+const constructionIcon = L.divIcon({
+    className: 'construction-marker',
+    iconSize: [15, 15]
 });
 
-const businessIcon = L.divIcon({ 
-    className: 'business-marker', 
-    iconSize: [15, 15] 
+const businessIcon = L.divIcon({
+    className: 'business-marker',
+    iconSize: [15, 15]
 });
 
-const householdIcon = L.divIcon({ 
-    className: 'household-marker', 
-    iconSize: [12, 12] 
-});
-
-const utilityIcon = L.divIcon({ 
-    className: 'utility-marker', 
-    iconSize: [12, 12] 
-});
-
-const incidentIcon = L.divIcon({ 
-    className: 'incident-marker', 
-    iconSize: [15, 15] 
-});
-
-const defaultIcon = L.divIcon({ 
+const householdIcon = L.divIcon({
     className: 'household-marker',
-    iconSize: [12, 12] 
+    iconSize: [12, 12]
+});
+
+const utilityIcon = L.divIcon({
+    className: 'utility-marker',
+    iconSize: [12, 12]
+});
+
+const incidentIcon = L.divIcon({
+    className: 'incident-marker',
+    iconSize: [15, 15]
+});
+
+const defaultIcon = L.divIcon({
+    className: 'household-marker',
+    iconSize: [12, 12]
 });
 
 // Navigation active state management - SIMPLIFIED
@@ -70,14 +72,14 @@ function setActiveNav(element) {
     document.querySelectorAll('.nav_select, .nav_select_btn').forEach(item => {
         item.classList.remove('active');
     });
-    
+
     // Add active class to clicked element
     element.classList.add('active');
 }
 
 // Helper function to get icon based on marker type
 function getMarkerIcon(markerType) {
-    switch(markerType?.toLowerCase()) {
+    switch (markerType?.toLowerCase()) {
         case 'household': return householdIcon;
         case 'utility': return utilityIcon;
         case 'incident': return incidentIcon;
@@ -91,10 +93,10 @@ function getMarkerIcon(markerType) {
 function formatDate(dateString) {
     if (!dateString) return 'Not specified';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
     });
 }
 
@@ -109,10 +111,10 @@ function formatCurrency(amount) {
 
 // Toggle marker visibility
 function toggleMarkerType(type) {
-    if (type === 'household' || type === 'business' || type === 'construction') {
+    if (type === 'household' || type === 'business' || type === 'construction' || type === 'utility') {
         visibleMarkers[type] = !visibleMarkers[type];
     }
-    
+
     // Update button states
     document.querySelectorAll('.filter-btn').forEach(button => {
         const buttonType = button.dataset.type;
@@ -120,7 +122,7 @@ function toggleMarkerType(type) {
             button.classList.toggle('active', visibleMarkers[type]);
         }
     });
-    
+
     updateMarkerVisibility();
 }
 
@@ -128,11 +130,15 @@ function updateMarkerVisibility() {
     householdMarkers.forEach(marker => {
         visibleMarkers.household ? map.addLayer(marker) : map.removeLayer(marker);
     });
-    
+
+    utilityMarkers.forEach(marker => {
+        visibleMarkers.utility ? map.addLayer(marker) : map.removeLayer(marker);
+    });
+
     constructionMarkers.forEach(marker => {
         visibleMarkers.construction ? map.addLayer(marker) : map.removeLayer(marker);
     });
-    
+
     businessMarkers.forEach(marker => {
         visibleMarkers.business ? map.addLayer(marker) : map.removeLayer(marker);
     });
@@ -142,16 +148,16 @@ function updateMarkerVisibility() {
 function performSearch() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const resultsContainer = document.getElementById('search-results');
-    
+
     if (!searchTerm) {
         if (resultsContainer) resultsContainer.style.display = 'none';
         return;
     }
-    
+
     // Clear previous search results
     searchResults = [];
     if (resultsContainer) resultsContainer.innerHTML = '';
-    
+
     // Search in all markers data
     allMarkersData.forEach(marker => {
         const searchFields = [
@@ -165,13 +171,13 @@ function performSearch() {
             marker.address_of_construction || '',
             marker.address_of_business || ''
         ];
-        
+
         let matchScore = 0;
-        
+
         searchFields.forEach(field => {
             const fieldLower = field.toLowerCase();
             if (fieldLower === searchTerm) {
-                matchScore += 100; 
+                matchScore += 100;
             } else if (fieldLower.startsWith(searchTerm)) {
                 matchScore += 50;
             } else if (fieldLower.includes(searchTerm)) {
@@ -185,7 +191,7 @@ function performSearch() {
                 });
             }
         });
-        
+
         if (matchScore > 0) {
             searchResults.push({
                 marker: marker,
@@ -193,39 +199,39 @@ function performSearch() {
             });
         }
     });
-    
+
     // Sort by relevance score (highest first)
     searchResults.sort((a, b) => b.score - a.score);
-    
+
     // Display results
     if (resultsContainer) {
         if (searchResults.length > 0) {
             const topResults = searchResults.slice(0, 10);
-            
+
             topResults.forEach((result, index) => {
                 const marker = result.marker;
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
                 item.dataset.index = index;
-                
-                const type = marker.marker_type || 
-                            (marker.construction_id ? 'construction' : 
-                             marker.id ? 'business' : 'household');
-                
-                const title = marker.title || 
-                             marker.business_name || 
-                             marker.homeowner_name || 
-                             'Unnamed Marker';
-                
-                const subtitle = marker.description || 
-                               marker.address_of_construction || 
-                               marker.address_of_business || 
-                               marker.location || 
-                               '';
-                
+
+                const type = marker.marker_type ||
+                    (marker.construction_id ? 'construction' :
+                        marker.id ? 'business' : 'household');
+
+                const title = marker.title ||
+                    marker.business_name ||
+                    marker.homeowner_name ||
+                    'Unnamed Marker';
+
+                const subtitle = marker.description ||
+                    marker.address_of_construction ||
+                    marker.address_of_business ||
+                    marker.location ||
+                    '';
+
                 const highlightedTitle = highlightText(title, searchTerm);
                 const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
-                
+
                 item.innerHTML = `
                     <div class="result-icon ${type}-marker"></div>
                     <div class="result-details">
@@ -234,19 +240,19 @@ function performSearch() {
                     </div>
                     <span class="result-type ${type}">${type}</span>
                 `;
-                
+
                 item.addEventListener('click', () => {
                     highlightSearchResult(marker);
                 });
-                
+
                 resultsContainer.appendChild(item);
             });
-            
+
             const countElement = document.createElement('div');
             countElement.className = 'search-count';
             countElement.textContent = `Found ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`;
             resultsContainer.appendChild(countElement);
-            
+
             resultsContainer.style.display = 'block';
         } else {
             resultsContainer.innerHTML = '<div class="search-result-item">No results found</div>';
@@ -258,7 +264,7 @@ function performSearch() {
 // Highlight text in search results
 function highlightText(text, searchTerm) {
     if (!searchTerm || !text) return text;
-    
+
     const searchRegex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(searchRegex, '<span class="highlight">$1</span>');
 }
@@ -268,7 +274,7 @@ function handleSearchInput() {
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
-    
+
     searchTimeout = setTimeout(() => {
         performSearch();
     }, 300);
@@ -281,12 +287,12 @@ function clearSearch() {
         resultsContainer.style.display = 'none';
         resultsContainer.innerHTML = '';
     }
-    
+
     if (activeSearchMarker) {
         map.removeLayer(activeSearchMarker);
         activeSearchMarker = null;
     }
-    
+
     map.closePopup();
 }
 
@@ -294,10 +300,10 @@ function highlightSearchResult(markerData) {
     if (activeSearchMarker) {
         map.removeLayer(activeSearchMarker);
     }
-    
+
     const lat = parseFloat(markerData.latitude);
     const lng = parseFloat(markerData.longitude);
-    
+
     const highlightIcon = L.divIcon({
         className: 'highlighted-marker',
         html: `<div style="
@@ -311,30 +317,32 @@ function highlightSearchResult(markerData) {
         iconSize: [20, 20],
         iconAnchor: [10, 10]
     });
-    
+
     activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon }).addTo(map);
-    
+
     map.flyTo([lat, lng], 18, {
         duration: 1
     });
-    
+
     let popupContent = '';
-    const type = markerData.marker_type || 
-                (markerData.construction_id ? 'construction' : 
-                 markerData.id ? 'business' : 'household');
-    
-    if (type === 'construction') {
+    const type = markerData.marker_type ||
+        (markerData.construction_id ? 'construction' :
+            markerData.id ? 'business' : 'household');
+
+    if (type === 'utility') {
+        popupContent = createUtilityPopup(markerData);
+    } else if (type === 'construction') {
         popupContent = createConstructionPopup(markerData);
     } else if (type === 'business') {
         popupContent = createBusinessPopup(markerData);
     } else {
         popupContent = createHouseholdPopup(markerData);
     }
-    
+
     setTimeout(() => {
         activeSearchMarker.bindPopup(popupContent).openPopup();
     }, 500);
-    
+
     document.querySelectorAll('.search-result-item').forEach(item => {
         item.classList.remove('active');
         const resultIndex = searchResults.findIndex(result => result.marker === markerData);
@@ -342,7 +350,7 @@ function highlightSearchResult(markerData) {
             item.classList.add('active');
         }
     });
-    
+
     // Hide search results after selection
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) {
@@ -351,14 +359,42 @@ function highlightSearchResult(markerData) {
 }
 
 // Create construction popup with modal button
+function createUtilityPopup(utility) {
+    const ownerName = `${utility.first_name || ''} ${utility.middle_name || ''} ${utility.last_name || ''}`.trim();
+
+    return `
+        <div class="popup-content">
+            <h4>🔧 UTILITY <span class="utility-badge">Utility</span></h4>
+
+            <div class="popup-section">
+                <p><strong>Owner:</strong> ${ownerName || 'Not specified'}</p>
+                <p><strong>Provider:</strong> ${utility.provider || 'Not specified'}</p>
+                <p><strong>Address:</strong> ${utility.address_of_utility || 'Not specified'}</p>
+            </div>
+
+             <div class="popup-section">
+                <p><strong>Status:</strong> <span class="status-${utility.status?.toLowerCase() || 'pending'}">${utility.status || 'Pending'}</span></p>
+                <p><strong>Application Date:</strong> ${utility.request_date}</p>
+            </div>
+
+            <button class="view-details-btn"
+                onclick="showUtilitiesDetails(${utility.id})">
+                📋 View Full Details
+            </button>
+        </div>
+    `;
+}
+
 function createConstructionPopup(construction) {
+    const ownerName = `${construction.first_name || ''} ${construction.middle_name || ''} ${construction.last_name || ''}`.trim();
+
     return `
         <div class="popup-content">
             <h4>🏗️ CONSTRUCTION SITE <span class="construction-badge">Construction</span></h4>
             
             <div class="popup-section">
                 <p><strong>Permit No:</strong> ${construction.permit_no || 'Pending'}</p>
-                <p><strong>Homeowner:</strong> ${construction.homeowner_name || 'Not specified'}</p>
+                <p><strong>Homeowner:</strong> ${ownerName || 'Not specified'}</p>
                 <p><strong>Contractor:</strong> ${construction.contractor_name || 'Not specified'}</p>
                 <p><strong>Address:</strong> ${construction.address_of_construction || 'Not specified'}</p>
             </div>
@@ -369,7 +405,7 @@ function createConstructionPopup(construction) {
                 <p><strong>Payment Status:</strong> <span class="status-${construction.payment_status?.toLowerCase() || 'unknown'}">${construction.payment_status || 'Unknown'}</span></p>
             </div>
             
-            <button class="view-details-btn" onclick="showConstructionDetails(${construction.construction_id})">
+            <button class="view-details-btn" onclick="showConstructionDetails(${construction.id})">
                 📋 View Full Details
             </button>
         </div>
@@ -379,7 +415,7 @@ function createConstructionPopup(construction) {
 // Create business popup with modal button
 function createBusinessPopup(business) {
     const ownerName = `${business.first_name || ''} ${business.middle_name || ''} ${business.last_name || ''}`.trim();
-    
+
     return `
         <div class="popup-content">
             <h4>🏪 BUSINESS <span class="business-badge">Business</span></h4>
@@ -408,7 +444,7 @@ function createHouseholdPopup(household) {
     const markerType = household.marker_type || 'Household';
     const badgeClass = markerType.toLowerCase() + '-badge';
     const badgeName = markerType.charAt(0).toUpperCase() + markerType.slice(1);
-    
+
     return `
         <div class="popup-content">
             <h4>📍 ${household.title || 'Marker'} <span class="${badgeClass}">${badgeName}</span></h4>
@@ -433,28 +469,56 @@ function createHouseholdPopup(household) {
 }
 
 // MODAL FUNCTIONS
+async function showUtilitiesDetails(utilitiesId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_utilities_details');
+        formData.append('id', utilitiesId);
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load utilities details');
+        }
+
+        currentMarkerData = data.data;
+        displayUtilityModal(data.data);
+
+    } catch (error) {
+        console.error('ERROR LOADING UTILITY DETAILS:', error);
+        alert('Error loading utilty details. Please try again.');
+    }
+}
+
 async function showConstructionDetails(constructionId) {
     try {
         const formData = new FormData();
         formData.append('action', 'get_construction_details');
         formData.append('id', constructionId);
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error(data.message || 'Failed to load construction details');
         }
-        
+
         currentMarkerData = data.data;
         displayConstructionModal(data.data);
-        
+
     } catch (error) {
         console.error('ERROR LOADING CONSTRUCTION DETAILS:', error);
         alert('Error loading construction details. Please try again.');
@@ -466,23 +530,23 @@ async function showBusinessDetails(businessId) {
         const formData = new FormData();
         formData.append('action', 'get_business_details');
         formData.append('id', businessId);
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error(data.message || 'Failed to load business details');
         }
-        
+
         currentMarkerData = data.data;
         displayBusinessModal(data.data);
-        
+
     } catch (error) {
         console.error('ERROR LOADING BUSINESS DETAILS:', error);
         alert('Error loading business details. Please try again.');
@@ -494,23 +558,23 @@ async function showHouseholdDetails(markerId) {
         const formData = new FormData();
         formData.append('action', 'get_household_details');
         formData.append('id', markerId);
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error(data.message || 'Failed to load household details');
         }
-        
+
         currentMarkerData = data.data;
         displayHouseholdModal(data.data);
-        
+
     } catch (error) {
         console.error('ERROR LOADING HOUSEHOLD DETAILS:', error);
         alert('Error loading household details. Please try again.');
@@ -518,46 +582,216 @@ async function showHouseholdDetails(markerId) {
 }
 
 // Display modal functions
+function displayUtilityModal(utility) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+
+    modalTitle.textContent = `Utility Details - ${utility.utility_type || 'Unnamed Utility'}`;
+
+    modalContent.innerHTML = `
+        <table class="detail-table">
+
+            <!-- Basic Information -->
+            <tr>
+                <td>Utility ID</td>
+                <td>${utility.id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Utility Type</td>
+                <td>${utility.utility_type || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td>
+                    <span class="status-${utility.status?.toLowerCase() || 'unknown'}">
+                        ${utility.status || 'Unknown'}
+                    </span>
+                </td>
+            </tr>
+
+            <!-- Location -->
+            <tr>
+                <td>Utility Address</td>
+                <td>${utility.address_of_utility || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Owner Address</td>
+                <td>${utility.owner_address || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${utility.latitude || 'N/A'}, ${utility.longitude || 'N/A'}</td>
+            </tr>
+
+            <!-- Owner / Requestor -->
+            <tr>
+                <td>First Name</td>
+                <td>${utility.first_name || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Middle Name</td>
+                <td>${utility.middle_name || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>${utility.last_name || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Suffix</td>
+                <td>${utility.suffix || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Contact Number</td>
+                <td>${utility.owner_contact_no || 'N/A'}</td>
+            </tr>
+
+            <!-- Work Details -->
+            <tr>
+                <td>Nature of Work</td>
+                <td>${utility.nature_of_work || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Service Provider</td>
+                <td>${utility.provider || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Date of Work</td>
+                <td>${utility.date_of_work || 'N/A'}</td>
+            </tr>
+
+            <!-- Application Details -->
+            <tr>
+                <td>Request Date</td>
+                <td>${formatDate(utility.request_date)}</td>
+            </tr>
+            <tr>
+                <td>Application Date</td>
+                <td>${formatDate(utility.application_date)}</td>
+            </tr>
+            <tr>
+                <td>Agreed</td>
+                <td>${utility.agreed || 'N/A'}</td>
+            </tr>
+
+            <!-- Approval Details -->
+            <tr>
+                <td>Approval Comments</td>
+                <td>${utility.approval_comments || 'None'}</td>
+            </tr>
+            <tr>
+                <td>Disapproval Reason</td>
+                <td>${utility.disapproval_reason || 'None'}</td>
+            </tr>
+
+            <!-- System Info -->
+            <tr>
+                <td>Submitted By (User ID)</td>
+                <td>${utility.supabase_user_id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Date Created</td>
+                <td>${formatDate(utility.created_at)}</td>
+            </tr>
+            <tr>
+                <td>Last Updated</td>
+                <td>${formatDate(utility.updated_at)}</td>
+            </tr>
+
+        </table>
+    `;
+
+    openModal();
+}
+
 function displayConstructionModal(construction) {
     const modalTitle = document.getElementById('modal-title');
     const modalContent = document.getElementById('modal-content');
-    
+
     modalTitle.textContent = `Construction Site Details - ${construction.permit_no || 'No Permit'}`;
-    
+
     modalContent.innerHTML = `
         <table class="detail-table">
+
+            <!-- Basic Information -->
             <tr>
                 <td>Construction ID</td>
-                <td>${construction.construction_id || 'N/A'}</td>
+                <td>${construction.id || 'N/A'}</td>
             </tr>
             <tr>
                 <td>Permit Number</td>
                 <td>${construction.permit_no || 'Pending'}</td>
             </tr>
             <tr>
-                <td>Homeowner Name</td>
-                <td>${construction.homeowner_name || 'Not specified'}</td>
+                <td>Status</td>
+                <td>
+                    <span class="status-${construction.status?.toLowerCase() || 'unknown'}">
+                        ${construction.status || 'Unknown'}
+                    </span>
+                </td>
             </tr>
+
+            <!-- Homeowner -->
+            <tr>
+                <td>Homeowner Name</td>
+                <td>
+                    ${construction.first_name || ''} 
+                    ${construction.middle_name || ''} 
+                    ${construction.last_name || ''} 
+                    ${construction.suffix || ''}
+                </td>
+            </tr>
+            <tr>
+                <td>Homeowner Contact</td>
+                <td>${construction.contact_no_owner || 'N/A'}</td>
+            </tr>
+
+            <!-- Contractor -->
             <tr>
                 <td>Contractor Name</td>
-                <td>${construction.contractor_name || 'Not specified'}</td>
+                <td>${construction.contractor_name || 'N/A'}</td>
             </tr>
             <tr>
-                <td>Address</td>
-                <td>${construction.address_of_construction || 'Not specified'}</td>
+                <td>Contractor Contact</td>
+                <td>${construction.contractor_contact_number || 'N/A'}</td>
             </tr>
+
+            <!-- Location -->
+            <tr>
+                <td>Construction Address</td>
+                <td>${construction.construction_address || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${construction.latitude || 'N/A'}, ${construction.longitude || 'N/A'}</td>
+            </tr>
+
+            <!-- Work Details -->
             <tr>
                 <td>Nature of Activity</td>
-                <td>${construction.nature_of_activity || 'Not specified'}</td>
+                <td>${construction.nature_of_activity || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Nature of Work</td>
+                <td>${construction.nature_of_work || 'N/A'}</td>
             </tr>
             <tr>
                 <td>Type of Work</td>
-                <td>${construction.type_of_work || 'Not specified'}</td>
+                <td>${construction.type_of_work || 'N/A'}</td>
             </tr>
             <tr>
                 <td>Details of Work</td>
-                <td>${construction.details_of_work || 'Not specified'}</td>
+                <td>${construction.details_of_work || 'N/A'}</td>
             </tr>
+            <tr>
+                <td>Number of Workers</td>
+                <td>${construction.number_of_workers || '0'}</td>
+            </tr>
+            <tr>
+                <td>Working Days</td>
+                <td>${construction.number_of_working_days || '0'}</td>
+            </tr>
+
+            <!-- Schedule -->
             <tr>
                 <td>Start Date</td>
                 <td>${formatDate(construction.start_date)}</td>
@@ -566,55 +800,59 @@ function displayConstructionModal(construction) {
                 <td>End Date</td>
                 <td>${formatDate(construction.end_date)}</td>
             </tr>
-            <tr>
-                <td>Number of Workers</td>
-                <td>${construction.num_of_workers || '0'}</td>
-            </tr>
-            <tr>
-                <td>Working Days</td>
-                <td>${construction.num_of_working_days || '0'}</td>
-            </tr>
+
+            <!-- Payment -->
             <tr>
                 <td>Fee Paid</td>
                 <td>${formatCurrency(construction.fee_paid)}</td>
             </tr>
             <tr>
                 <td>Payment Type</td>
-                <td>${construction.payment_type || 'Not specified'}</td>
+                <td>${construction.payment_type || 'N/A'}</td>
             </tr>
             <tr>
                 <td>Payment Status</td>
-                <td><span class="status-${construction.payment_status?.toLowerCase() || 'unknown'}">${construction.payment_status || 'Unknown'}</span></td>
+                <td>
+                    <span class="status-${construction.payment_status?.toLowerCase() || 'unknown'}">
+                        ${construction.payment_status || 'Unknown'}
+                    </span>
+                </td>
+            </tr>
+
+            <!-- Application -->
+            <tr>
+                <td>Application Method</td>
+                <td>${construction.application_method || 'N/A'}</td>
             </tr>
             <tr>
-                <td>Approved By</td>
-                <td>${construction.approved_by || 'Not specified'}</td>
+                <td>Requirements Uploaded</td>
+                <td>${construction.requirement_upload || 'No'}</td>
             </tr>
             <tr>
-                <td>Noted By</td>
-                <td>${construction.noted_by || 'Not specified'}</td>
+                <td>Agreed to Terms</td>
+                <td>${construction.agreed || 'No'}</td>
             </tr>
+
+            <!-- System Info -->
             <tr>
-                <td>Remarks</td>
-                <td>${construction.remarks || 'None'}</td>
+                <td>Last Updated</td>
+                <td>${formatDate(construction.updated_at)}</td>
             </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${construction.latitude}, ${construction.longitude}</td>
-            </tr>
+
         </table>
     `;
-    
+
     openModal();
 }
+
 
 function displayBusinessModal(business) {
     const modalTitle = document.getElementById('modal-title');
     const modalContent = document.getElementById('modal-content');
     const ownerName = `${business.first_name || ''} ${business.middle_name || ''} ${business.last_name || ''}`.trim();
-    
+
     modalTitle.textContent = `Business Details - ${business.business_name || 'Unnamed Business'}`;
-    
+
     modalContent.innerHTML = `
         <table class="detail-table">
             <tr>
@@ -699,7 +937,7 @@ function displayBusinessModal(business) {
             </tr>
         </table>
     `;
-    
+
     openModal();
 }
 
@@ -707,9 +945,9 @@ function displayHouseholdModal(household) {
     const modalTitle = document.getElementById('modal-title');
     const modalContent = document.getElementById('modal-content');
     const markerType = household.marker_type || 'Household';
-    
+
     modalTitle.textContent = `${markerType} Details - ${household.title || 'Unnamed Marker'}`;
-    
+
     modalContent.innerHTML = `
         <table class="detail-table">
             <tr>
@@ -746,7 +984,7 @@ function displayHouseholdModal(household) {
             </tr>
         </table>
     `;
-    
+
     openModal();
 }
 
@@ -770,29 +1008,45 @@ function closeModal() {
 // Load all markers
 async function loadAllMarkers() {
     clearAllMarkers();
-    
+
     try {
         const formData = new FormData();
         formData.append('action', 'get_markers');
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error('Server returned error');
         }
 
-        allMarkersData = [...data.constructions, ...data.businesses, ...data.households];
+        allMarkersData = [
+            ...data.utilities,
+            ...data.constructions,
+            ...data.businesses,
+            ...data.households
+        ];
 
         // Process construction markers
+        data.utilities.forEach(utility => {
+            if (utility.latitude && utility.longitude) {
+                const popupContent = createUtilityPopup(utility);
+
+                const marker = L.marker([parseFloat(utility.latitude), parseFloat(utility.longitude)], { icon: utilityIcon })
+                    .bindPopup(popupContent)
+                    .addTo(map);
+                utilityMarkers.push(marker);
+            }
+        });
+
         data.constructions.forEach(construction => {
             if (construction.latitude && construction.longitude) {
                 const popupContent = createConstructionPopup(construction);
@@ -839,9 +1093,12 @@ async function loadAllMarkers() {
 }
 
 function clearAllMarkers() {
+    utilityMarkers.forEach(marker => map.removeLayer(marker));
     constructionMarkers.forEach(marker => map.removeLayer(marker));
     businessMarkers.forEach(marker => map.removeLayer(marker));
     householdMarkers.forEach(marker => map.removeLayer(marker));
+
+    utilityMarkers = [];
     constructionMarkers = [];
     businessMarkers = [];
     householdMarkers = [];
@@ -852,7 +1109,7 @@ const blueRidgeGeoJSON = {
     "type": "FeatureCollection",
     "features": [{
         "type": "Feature",
-        "properties": {"name": "Barangay Blue Ridge B"},
+        "properties": { "name": "Barangay Blue Ridge B" },
         "geometry": {
             "type": "Polygon",
             "coordinates": [[
@@ -876,30 +1133,30 @@ async function loadHousePolygons() {
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.houses) {
             // Create a layer group for houses
             const houseLayer = L.layerGroup();
-            
+
             data.houses.forEach(house => {
                 if (house.coordinates) {
                     try {
                         const coords = JSON.parse(house.coordinates);
                         // Convert [lng, lat] to [lat, lng] for Leaflet
                         const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                        
+
                         // Close the polygon
                         latLngCoords.push(latLngCoords[0]);
-                        
+
                         const polygon = L.polygon(latLngCoords, {
                             color: '#3388ff',
                             weight: 1,
@@ -907,7 +1164,7 @@ async function loadHousePolygons() {
                             fillOpacity: 0.1,
                             interactive: true
                         }).addTo(houseLayer);
-                        
+
                         // Add popup
                         polygon.bindPopup(`
                             <div class="house-popup">
@@ -917,15 +1174,15 @@ async function loadHousePolygons() {
                                 <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
                             </div>
                         `);
-                        
+
                         polygon.houseId = house.house_id;
-                        
+
                     } catch (e) {
                         console.error('Error parsing house coordinates:', e);
                     }
                 }
             });
-            
+
             houseLayer.addTo(map);
             console.log(`Loaded ${data.houses.length} house polygons`);
         }
@@ -941,21 +1198,21 @@ async function checkLocationInHouse(lat, lng) {
         formData.append('action', 'check_location');
         formData.append('lat', lat);
         formData.append('lng', lng);
-        
-        const response = await fetch('map_handler.php', {
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = await response.json();
-        
+
         return {
             isInside: data.is_inside,
             house: data.house
         };
-        
+
     } catch (error) {
         console.error('ERROR CHECKING LOCATION:', error);
         return { isInside: false, house: null };
@@ -964,13 +1221,13 @@ async function checkLocationInHouse(lat, lng) {
 
 // Add your GeoJSON
 const barangayLayer = L.geoJSON(blueRidgeGeoJSON, {
-    style: { 
-        color: "#ff7800", 
-        weight: 2, 
-        fillColor: "#3388ff", 
-        fillOpacity: 0.2 
+    style: {
+        color: "#ff7800",
+        weight: 2,
+        fillColor: "#3388ff",
+        fillOpacity: 0.2
     },
-    onEachFeature: function(feature, layer) {
+    onEachFeature: function (feature, layer) {
         layer.bindPopup(`<h3>${feature.properties.name}</h3>`);
     }
 }).addTo(map);
@@ -995,30 +1252,30 @@ map.setMaxBounds(maxBounds);
 
 // Map controls
 L.control.scale().addTo(map);
-L.control.layers({"Street Map": osmLayer, "Satellite": satelliteLayer}).addTo(map);
+L.control.layers({ "Street Map": osmLayer, "Satellite": satelliteLayer }).addTo(map);
 
-function resetView() { 
+function resetView() {
     map.fitBounds(bounds);
 }
 
-function toggleStreetMap() { 
+function toggleStreetMap() {
     // Remove satellite layer if it exists
     if (map.hasLayer(satelliteLayer)) {
         map.removeLayer(satelliteLayer);
     }
-    
+
     // Add OSM layer if it doesn't exist
     if (!map.hasLayer(osmLayer)) {
         osmLayer.addTo(map);
     }
 }
 
-function toggleSatellite() { 
+function toggleSatellite() {
     // Remove OSM layer if it exists
     if (map.hasLayer(osmLayer)) {
         map.removeLayer(osmLayer);
     }
-    
+
     // Add satellite layer if it doesn't exist
     if (!map.hasLayer(satelliteLayer)) {
         satelliteLayer.addTo(map);
@@ -1026,18 +1283,18 @@ function toggleSatellite() {
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', handleSearchInput);
-        
-        searchInput.addEventListener('keypress', function(e) {
+
+        searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 performSearch();
             }
         });
-        
-        document.addEventListener('click', function(e) {
+
+        document.addEventListener('click', function (e) {
             const resultsContainer = document.getElementById('search-results');
             if (resultsContainer && !resultsContainer.contains(e.target) && e.target !== searchInput) {
                 if (searchInput.value === '') {
@@ -1046,17 +1303,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Close modal when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const modal = document.getElementById('detail-modal');
         if (e.target === modal) {
             closeModal();
         }
     });
-    
+
     // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeModal();
         }
@@ -1064,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Update initialization
-map.whenReady(function() {
+map.whenReady(function () {
     loadAllMarkers();
     loadHousePolygons();
     setupMapClickHandler();
@@ -1076,7 +1333,7 @@ map.whenReady(function() {
 function toggleMobileMenu() {
     const sideNav = document.querySelector('.side_nav');
     sideNav.classList.toggle('active');
-    
+
     // Close search results when opening mobile menu
     const searchResults = document.getElementById('search-results');
     if (searchResults) {
@@ -1088,12 +1345,12 @@ function toggleMobileMenu() {
 function updateDateTime() {
     const dateTimeElement = document.getElementById('currentDateTime');
     if (!dateTimeElement) return;
-    
+
     const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -1110,14 +1367,14 @@ function initDateTime() {
 
 // Add mobile menu close when clicking outside on mobile
 function setupMobileMenuClose() {
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const sideNav = document.querySelector('.side_nav');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    
+
         if (window.getComputedStyle(mobileMenuBtn).display !== 'none') {
             // If clicking outside the nav while it's open, close it
-            if (sideNav.classList.contains('active') && 
-                !sideNav.contains(e.target) && 
+            if (sideNav.classList.contains('active') &&
+                !sideNav.contains(e.target) &&
                 !mobileMenuBtn.contains(e.target)) {
                 sideNav.classList.remove('active');
             }
@@ -1128,13 +1385,13 @@ function setupMobileMenuClose() {
 // ========== ADDITIONAL FUNCTIONS NEEDED ==========
 
 function setupMapClickHandler() {
-    map.on('click', async function(e) {
+    map.on('click', async function (e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
-        
+
         // Check if clicked location is inside a house
         const locationCheck = await checkLocationInHouse(lat, lng);
-        
+
         if (locationCheck.isInside && locationCheck.house) {
             // Show confirmation for placing marker inside house
             showMarkerPlacementDialog(lat, lng, locationCheck.house);
@@ -1148,7 +1405,7 @@ function setupMapClickHandler() {
 function zoomToHouse(houseId) {
     console.log('Zoom to house function called for ID:', houseId);
     // Find the house polygon by houseId and zoom to it
-    map.eachLayer(function(layer) {
+    map.eachLayer(function (layer) {
         if (layer.houseId === houseId) {
             map.fitBounds(layer.getBounds().pad(0.1));
             layer.openPopup();
@@ -1173,7 +1430,7 @@ function showMarkerPlacementDialog(lat, lng, house) {
             </div>
         </div>
     `;
-    
+
     L.popup()
         .setLatLng([lat, lng])
         .setContent(popupContent)
@@ -1196,7 +1453,7 @@ function showOutsideHouseWarning(lat, lng) {
             </div>
         </div>
     `;
-    
+
     L.popup()
         .setLatLng([lat, lng])
         .setContent(popupContent)
@@ -1242,7 +1499,7 @@ function showMarkerForm(lat, lng, houseId, address) {
             <button onclick="closeMarkerForm()" class="cancel-btn">Cancel</button>
         </div>
     `;
-    
+
     document.getElementById('modal-title').textContent = 'Add New Marker';
     document.getElementById('modal-content').innerHTML = modalContent;
     openModal();
@@ -1258,7 +1515,7 @@ function submitMarker() {
         longitude: parseFloat(document.getElementById('marker-coords').value.split(',')[1]),
         house_id: document.getElementById('marker-house-id').value || null
     };
-    
+
     console.log('Marker data to save:', markerData);
     alert('Marker save function needs to be implemented!');
     closeModal();

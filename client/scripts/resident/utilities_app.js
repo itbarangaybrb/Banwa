@@ -609,7 +609,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (data.household_head_name) firstName.value = data.household_head_name;
+        if (data.first_name) firstName.value = data.first_name;
+        if (data.middle_name) middleName.value = data.middle_name;
+        if (data.last_name) lastName.value = data.last_name;
+        if (data.suffix) suffix.value = data.suffix;
         if (data.contact_no) contactNoOwner.value = data.contact_no;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);

@@ -6,7 +6,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Utilities Application Management System</title>
 	<link rel="stylesheet" href="../../../styles/staff/utilities_staff/utilities.css">
+	<link rel="stylesheet" href="../../../styles/staff/analytics.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<link rel="stylesheet" href="../../../styles/staff/map1.css" />
 </head>
 
 <body>
@@ -22,7 +26,15 @@
 		<ul class="nav_list">
 			<div>
 				<li>
-					<a href="#" class="nav_select active" data-tab="review">
+					<a href="#" class="nav_select active" data-tab="dashboard">
+						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+						<span class="nav_text">Dashboard</span>
+					</a>
+				</li>
+				<li>
+					<a href="#" class="nav_select" data-tab="review">
 						<svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							<path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
@@ -87,7 +99,83 @@
 		<div class="content">
 			<div id="alert-container"></div>
 
-			<div id="review" class="tab-pane active">
+			<div id="dashboard" class="tab-pane active">
+				<!-- Mobile Menu Button -->
+				<button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+					<i class="fas fa-bars"></i>
+				</button>
+
+				<div class="map-wrapper">
+					<div class="map-header">
+						<h2>Dashboard</h2>
+					</div>
+
+					<div class="map-controls">
+						<div class="search-container">
+							<div class="search-box">
+								<input type="text" id="search-input" placeholder="Search by name, address, or type...">
+								<button onclick="performSearch()">
+									<i class="fas fa-search"></i> Search
+								</button>
+								<button onclick="clearSearch()" class="clear-btn">
+									<i class="fas fa-times"></i> Clear
+								</button>
+							</div>
+						</div>
+
+						<div id="search-results" class="search-results"></div>
+					</div>
+
+					<div class="filter-controls">
+						<div class="filter-buttons">
+							<button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
+								<span class="filter-icon" style="background: #28a745;"></span>
+								<span>Households</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
+								<span class="filter-icon" style="background: #9C27B0;"></span>
+								<span>Businesses</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
+								<span class="filter-icon" style="background: #ffc107;"></span>
+								<span>Construction</span>
+							</button>
+							<button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
+								<span class="filter-icon" style="background: #2196F3;"></span>
+								<span>Utilities</span>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div id="map"></div>
+
+				<div id="detail-modal" class="modal">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h3 id="modal-title">Marker Details</h3>
+							<button class="close-modal" onclick="closeModal()">&times;</button>
+						</div>
+						<div class="modal-body">
+							<div id="modal-content">
+								<!-- Content will be loaded here -->
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="analytics-container">
+					<div class="charts">
+						<canvas id="chart1"></canvas>
+					</div>
+					<div class="charts">
+						<canvas id="chart2"></canvas>
+					</div>
+
+				</div>
+			</div>
+
+			<div id="review" class="tab-pane">
 				<h2>Review Utilities Applications</h2>
 				<div class="search-box">
 					<input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
@@ -286,7 +374,11 @@
 			</div>
 		</div>
 	</div>
+
 	<script src="../../../scripts/staff/utilities_staff/utilities.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="../../../scripts/staff/map.js"></script>
 </body>
 
 </html>

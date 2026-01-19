@@ -1,7 +1,7 @@
         </main>
 
-    <script src="../../scripts/resident/nav.js" defer></script>
-    <script type="module" src="../../scripts/auth/signout.js"></script>
+        <script src="../../scripts/resident/nav.js" defer></script>
+        <script type="module" src="../../scripts/auth/signout.js"></script>
         <script>
             window.addEventListener("load", () => {
                 const loader = document.getElementById("page-loader");
@@ -31,5 +31,6 @@
                 if (loader) loader.style.display = "flex";
             });
         </script>
-    </body>
-</html>
+        </body>
+
+        </html>

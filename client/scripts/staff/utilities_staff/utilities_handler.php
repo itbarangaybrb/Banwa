@@ -34,6 +34,10 @@ try {
         case 'update':
             handleUpdateApplication($pdo);
             break;
+        case 'chart_utilities_type':
+            handleChartUtilityType($pdo);
+            break;
+
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
     }
@@ -72,15 +76,15 @@ function handleCreateApplication($pdo)
         $dateOfWork   = get_input('dateOfWork');
         $natureOfWork = get_input('natureOfWork');
         $provider     = get_input('provider');
-        
+
         // Utility Location
         $uLot         = get_input('utilityLotNo');
         $uStreet      = get_input('utilityStreet');
         $utilityAddr  = trim($uLot . ' ' . $uStreet);
-        
+
         $latitude     = get_input('latitude2');
         $longitude    = get_input('longitude2');
-        
+
         // Status and Agreement
         $status       = get_input('status') ?? 'Pending';
         $agreed       = (int)get_input('agreed');
@@ -124,11 +128,10 @@ function handleCreateApplication($pdo)
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         echo json_encode([
-            "status" => "success", 
-            "id" => $result['id'], 
+            "status" => "success",
+            "id" => $result['id'],
             "message" => "Application submitted successfully!"
         ]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
@@ -221,17 +224,17 @@ function handleUpdateApplication($pdo)
         $suffix       = get_input('suffix');
         $ownerContact = get_input('contactNoOwner');
         $ownerAddress = get_input('addressOwner');
-        
+
         // Reconstruct utility address if components are sent separately, 
         // or take the direct input
         $uLot         = get_input('utilityLotNo');
         $uStreet      = get_input('utilityStreet');
         $utilityAddr  = ($uLot || $uStreet) ? trim($uLot . ' ' . $uStreet) : get_input('addressOfUtility');
-        
+
         $latitude     = get_input('latitude');
         $longitude    = get_input('longitude');
         $dateOfWork   = get_input('dateOfWork');
-        
+
         // Logic: Use provided status, otherwise keep current status, default to 'Pending'
         $status       = get_input('status') ?? $currentRecord['status'] ?? 'Pending';
 
@@ -272,11 +275,10 @@ function handleUpdateApplication($pdo)
         // 4. Response
         // Note: rowCount() might be 0 if the user clicked 'Save' without changing any values.
         echo json_encode([
-            "status" => "success", 
+            "status" => "success",
             "message" => "Application updated successfully.",
             "updated_id" => $id
         ]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "Database Error: " . $e->getMessage()]);
@@ -284,4 +286,35 @@ function handleUpdateApplication($pdo)
         http_response_code(400);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
+}
+
+function handleChartUtilityType($pdo)
+{
+    // Data by Application Date
+    $sql1 = "
+        SELECT application_date, COUNT(*) AS total
+        FROM utility_applications
+        GROUP BY application_date
+        ORDER BY application_date ASC
+    ";
+
+    $stmt1 = $pdo->query($sql1);
+    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    // Data by Application Type of Business
+    $sql2 = "
+        SELECT provider, COUNT(*) AS total
+        FROM utility_applications
+        GROUP BY provider
+        ORDER BY provider ASC
+    ";
+
+    $stmt2 = $pdo->query($sql2);
+    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "status" => "success",
+        "data_by_date" => $dataByDate,
+        "data_by_type" => $dataByType
+    ]);
 }
