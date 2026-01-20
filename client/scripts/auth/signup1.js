@@ -350,7 +350,10 @@ function setupAccountSubmission() {
         e.preventDefault();
         formElements.formMessage.textContent = '';
         const stepFields = [formElements.password, formElements.reTypePassword, formElements.email, formElements.agreeCheckBox];
-        if (!validateStep(stepFields)) return;
+        if (!validateStep(stepFields) ||
+            !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
+            return;
+        }
         if (!confirm('Are you sure you want to submit this application?')) return;
 
         allData = {
