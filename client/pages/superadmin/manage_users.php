@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 $pageTitle = "Manage Users";
 
 include __DIR__ . '/../../layouts/superadmin_layout/header.php';

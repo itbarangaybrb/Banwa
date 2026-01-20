@@ -1,17 +1,20 @@
-const menuToggle = document.getElementById('menuToggle');
+const openMenu = document.getElementById('openMenu');
+const closeMenu = document.getElementById('closeMenu');
 const nav = document.getElementById('sideNav');
-const img = menuToggle.querySelector('img');
 
-const openIcon = '../../img/menu-icon.svg';
-const closeIcon = '../../img/close-icon.svg';
+// initial state: nav closed
+nav.classList.remove('open');
+openMenu.classList.add('active');   // show openMenu
+closeMenu.classList.remove('active'); // hide closeMenu
 
-menuToggle.addEventListener('click', () => {
-    nav.classList.toggle('open'); // toggle class directly
+openMenu.addEventListener('click', () => {
+    nav.classList.toggle('open');            // toggle nav
+    openMenu.classList.toggle('active');     // hide openMenu
+    closeMenu.classList.toggle('active');    // show closeMenu
+});
 
-    // toggle image src based on nav state
-    if (nav.classList.contains('open')) {
-        img.src = closeIcon;
-    } else {
-        img.src = openIcon;
-    }
+closeMenu.addEventListener('click', () => {
+    nav.classList.toggle('open');            // toggle nav
+    closeMenu.classList.toggle('active');    // hide closeMenu
+    openMenu.classList.toggle('active');     // show openMenu
 });

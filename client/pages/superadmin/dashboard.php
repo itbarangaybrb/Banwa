@@ -1,6 +1,4 @@
 <?php
-session_start();
-
 $pageTitle = "Dashboard";
 
 include __DIR__ . '/../../layouts/superadmin_layout/header.php';

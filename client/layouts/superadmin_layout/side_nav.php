@@ -4,8 +4,8 @@
     </div>
 
     <div id="closeMenu">
-        <img src="../../img/menu-icon.svg" alt="close menu" class="icon">
-    </di
+        <img src="../../img/close-icon.svg" alt="close menu" class="icon">
+    </div>
 
     <div class="divider"></div>
 
@@ -24,7 +24,7 @@
                 </a>
             </li>
             <li class="items">
-                <a class="links" id="signoutBtn" href="">
+                <a class="links" id="signoutBtn" href="#">
                     <img src="../../img/log-out-icon.svg" alt="Logout" class="icon">
                     <p class="links-name">Logout</p>
                 </a>
