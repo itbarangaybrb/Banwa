@@ -18,6 +18,7 @@ if ($_SESSION['role_id'] != 2) {
 	</title>
 
 	<link rel="stylesheet" href="../../layouts/superadmin_layout/main.css">
+	<link rel="stylesheet" href="../../styles/superadmin/manage_users.css">
 </head>
 
 <body>

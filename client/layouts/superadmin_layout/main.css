@@ -34,6 +34,13 @@ body {
     font-family: "Inter", sans-serif;
 }
 
+.sections {
+    max-width: 1440px;
+    width: 100%;
+    padding: 24px 24px;
+    margin-inline: auto;
+}
+
 .header {
     width: 100%;
     padding: 16px 24px;
@@ -75,6 +82,7 @@ body {
     width: max-content;
     display: flex;
     flex-direction: column;
+    row-gap: 8px;
 }
 
 .aside .nav .list .items {
