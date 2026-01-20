@@ -35,18 +35,138 @@ function initializeSidebarNav() {
 }
 
 // TAB SWITCHING
-function switchTab(event, tabName) {
-    event.preventDefault();
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    event.target.closest('.nav_select').classList.add('active');
+// function switchTab(event, tabName) {
+//     event.preventDefault();
+//     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+//     document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
+//     document.getElementById(tabName).classList.add('active');
+//     event.target.closest('.nav_select').classList.add('active');
 
-    if (tabName === 'review') loadReviewTable();
-    else if (tabName === 'process') loadProcessTable();
+//     if (tabName === 'review') loadReviewTable();
+//     else if (tabName === 'process') loadProcessTable();
+//     else if (tabName === 'summary') loadSummarySelect();
+//     else if (tabName === 'dashboard') loadAnalyticsTab();
+
+// }
+// 1. UPDATE TAB SWITCHING
+function switchTab(event, tabName) {
+    if(event) event.preventDefault();
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(tabName);
+    if(target) target.classList.add('active');
+
+    if(event) {
+        const link = event.target.closest('.nav_select');
+        if(link) link.classList.add('active');
+    }
+
+    // Load Data based on Tab
+    if (tabName === 'management') loadManagementTable(); 
     else if (tabName === 'summary') loadSummarySelect();
     else if (tabName === 'dashboard') loadAnalyticsTab();
+}
 
+// 2. THE NEW UNIFIED TABLE LOADER
+function loadManagementTable() {
+    loadApplicationsFromDB().finally(() => {
+        // Also trigger the filter function immediately to populate the table
+        filterApplications(); 
+    });
+}
+
+// 3. UPDATED FILTER FUNCTION (Serves as the main renderer)
+function filterApplications() {
+    // 1. SAFELY GET ELEMENTS (Checks if they exist first)
+    // We check for 'managementSearch' (from your PHP) OR 'searchInput' (fallback)
+    const searchEl = document.getElementById('managementSearch') || document.getElementById('searchInput'); 
+    const statusEl = document.getElementById('statusFilter'); // This was missing in your HTML
+    const tbody = document.getElementById('managementTableBody') || document.getElementById('tableBody');
+
+    // If the table body doesn't exist, stop immediately to prevent errors
+    if (!tbody) return; 
+
+    // 2. GET VALUES SAFELY
+    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+    const statusFilter = statusEl ? statusEl.value : ''; // Defaults to empty string if dropdown is missing
+
+    tbody.innerHTML = '';
+
+    // 3. FILTER LOGIC
+    // Check if 'applications' data exists before filtering
+    if (!applications || !Array.isArray(applications)) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading data...</td></tr>';
+        return;
+    }
+
+    const filtered = applications.filter(app => {
+        // Safe string access (handle nulls in DB)
+        const businessName = (app.business_name || '').toLowerCase();
+        const fullName = ((app.first_name || '') + ' ' + (app.last_name || '')).toLowerCase();
+        const id = (app.id || '').toString();
+
+        const matchesSearch = 
+            businessName.includes(searchTerm) ||
+            fullName.includes(searchTerm) ||
+            id.includes(searchTerm);
+        
+        // Only filter by status if a specific status is selected (not empty)
+        const matchesStatus = statusFilter === '' || app.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#999;">No matching applications found.</td></tr>';
+        return;
+    }
+
+    // 4. RENDER LOGIC
+    filtered.forEach(app => {
+        // A. Determine Status Color
+        let badgeClass = 'pending';
+        if (app.status === 'Approved') badgeClass = 'approved';
+        if (app.status === 'Disapproved') badgeClass = 'disapproved';
+        if (app.status === 'Paid') badgeClass = 'paid';
+        if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+        // B. Determine "Smart Action" Button
+        let actionBtn = '';
+        
+        if (app.status === 'Pending') {
+             actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+        } 
+        else if (app.status === 'For Payment') {
+             actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
+        }
+        else if (app.status === 'Paid') {
+             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+        }
+        else if (app.status === 'Approved') {
+             actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">🖨️ Clearance</button>`;
+        }
+        else {
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
+        }
+
+        // C. Build Row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${app.id}</td>
+            <td style="font-weight:600;">${app.business_name}</td>
+            <td>${app.first_name} ${app.last_name}</td>
+            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+            <td>${app.payment_status || 'Unpaid'}</td>
+            <td>
+                <div class="action-buttons">
+                    ${actionBtn} 
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">👁️</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 function loadApplicationsFromDB() {
@@ -217,34 +337,48 @@ function generateClearance(appId) {
         .catch(err => showAlert('Error generating clearance: ' + err, 'danger'));
 }
 
-// NEW: UPDATE / ASSESS LOGIC
-function openUpdateModal(id) {
-    const app = applications.find(a => a.id == id);
-    document.getElementById('updateAppId').value = id;
-    document.getElementById('displayCurrentStatus').value = app.status;
-    document.getElementById('updateForm').reset();
-    if (app.status === 'For Payment' && app.amount_due) {
-        document.getElementById('assessmentAmount').value = parseFloat(app.amount_due).toFixed(2);
+// A. OPEN THE MODAL AND FILL IN CURRENT DATA
+function openUpdateModal(appId) {
+    // Find the specific application from our global array
+    const app = applications.find(a => a.id == appId);
+    
+    if (!app) {
+        alert("Application data not found.");
+        return;
     }
-    toggleAmountField(); // Reset visibility
-    openModal('updateModal');
+
+    // Fill the hidden ID field and the visible "Current Status" text
+    document.getElementById('updateAppId').value = app.id;
+    document.getElementById('displayCurrentStatus').value = app.status;
+    
+    // Reset the form fields
+    document.getElementById('newStatus').value = "";
+    document.getElementById('updateComments').value = "";
+    document.getElementById('assessmentAmount').value = "";
+    document.getElementById('amountFieldGroup').classList.add('hidden');
+
+    // Show the modal
+    document.getElementById('updateModal').classList.add('active');
 }
 
+
+// B. SHOW/HIDE AMOUNT FIELD (Based on selection)
 function toggleAmountField() {
-    const status = document.getElementById('newStatus').value;
+    const statusSelect = document.getElementById('newStatus');
     const amountGroup = document.getElementById('amountFieldGroup');
     const amountInput = document.getElementById('assessmentAmount');
 
-    if (status === 'For Payment') {
+    // Only show the payment amount field if "For Payment" is selected
+    if (statusSelect.value === 'For Payment') {
         amountGroup.classList.remove('hidden');
-        amountInput.required = true;
+        amountInput.setAttribute('required', 'required');
     } else {
         amountGroup.classList.add('hidden');
-        amountInput.required = false;
-        amountInput.value = '';
+        amountInput.removeAttribute('required');
     }
 }
 
+// C. SUBMIT THE UPDATE TO THE DATABASE
 function submitUpdate(event) {
     event.preventDefault();
 
@@ -266,6 +400,11 @@ function submitUpdate(event) {
                 alert('Error: ' + data.message);
             }
         });
+}
+
+// Helper: Apply quick text prompts to the textarea
+function applyPrompt(text) {
+    document.getElementById('updateComments').value = text;
 }
 
 // VIEW DETAILS (MODIFIED to include comments & file link)
@@ -552,49 +691,50 @@ function updateSummary() {
 }
 
 // FILTER APPLICATIONS
-function filterApplications() {
-    const searchInput = document.getElementById('searchInput').value.toLowerCase();
-    const tbody = document.getElementById('tableBody');
+// function filterApplications() {
+//     const searchInput = document.getElementById('searchInput').value.toLowerCase();
+//     const tbody = document.getElementById('tableBody');
 
-    tbody.innerHTML = '';
+//     tbody.innerHTML = '';
 
-    const filtered = applications.filter(app =>
-        app.business_name.toLowerCase().includes(searchInput) ||
-        (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
-        app.id.toString().includes(searchInput)
-    );
+//     const filtered = applications.filter(app =>
+//         app.business_name.toLowerCase().includes(searchInput) ||
+//         (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
+//         app.id.toString().includes(searchInput)
+//     );
 
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
-        return;
-    }
+//     if (filtered.length === 0) {
+//         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
+//         return;
+//     }
 
-    filtered.forEach(app => {
-        // Status Badge Logic
-        let badgeClass = 'pending';
-        if (app.status === 'Approved') badgeClass = 'approved';
-        if (app.status === 'Disapproved') badgeClass = 'disapproved';
-        if (app.status === 'Paid') badgeClass = 'paid';
-        if (app.status === 'For Payment') badgeClass = 'for-payment';
+//     filtered.forEach(app => {
+//         // Status Badge Logic
+//         let badgeClass = 'pending';
+//         if (app.status === 'Approved') badgeClass = 'approved';
+//         if (app.status === 'Disapproved') badgeClass = 'disapproved';
+//         if (app.status === 'Paid') badgeClass = 'paid';
+//         if (app.status === 'For Payment') badgeClass = 'for-payment';
 
-        const row = document.createElement('tr');
-        const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
-        row.innerHTML = `
-                <td>${app.id}</td>
-                <td>${app.business_name}</td>
-                <td>${ownerName}</td>
-                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                <td>${app.payment_status || 'N/A'}</td>
-                <td>
-                    <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
-                </td>
-            `;
-        tbody.appendChild(row);
-    });
-}
+//         const row = document.createElement('tr');
+//         const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
+//         row.innerHTML = `
+//                 <td>${app.id}</td>
+//                 <td>${app.business_name}</td>
+//                 <td>${ownerName}</td>
+//                 <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+//                 <td>${app.payment_status || 'N/A'}</td>
+//                 <td>
+//                     <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
+//                     <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
+//                 </td>
+//             `;
+//         tbody.appendChild(row);
+//     });
+// }
 
 // ARCHIVE APPLICATION
+
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
     fetch(`${API_URL}?action=archive&id=${appId}`)

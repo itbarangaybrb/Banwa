@@ -1224,3 +1224,38 @@ h2 {
 @media (max-width: 768px) {
     .details-grid { grid-template-columns: 1fr; }
 }
+
+/* Compact Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Make the icon-only buttons smaller/circular */
+.action-buttons .btn-info, 
+.action-buttons .btn-delete {
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Ensure the main action button stands out */
+.action-buttons .btn-primary,
+.action-buttons .btn-warning,
+.action-buttons .btn-success {
+    font-weight: 600;
+    min-width: 100px; /* Ensure text fits */
+}
+.main-wrapper {
+    margin-left: 70px; /* Width of the collapsed sidebar */
+    width: calc(100% - 70px);
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+
+/* If sidebar is expanded, push content further */
+.side_nav.expanded + .main-wrapper {
+    margin-left: 325px;
+    width: calc(100% - 325px);
+}
