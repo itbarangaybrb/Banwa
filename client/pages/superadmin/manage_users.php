@@ -6,7 +6,92 @@ include __DIR__ . '/../../layouts/superadmin_layout/side_nav.php';
 ?>
 
 <section class="sections">
-    <div class="containers">h1 main</div>
+    <div class="containers registration-container">
+        <form class="registration-form" id="registrationForm">
+             <div class="header-and-parags">
+                <h1></h1>
+                <p></p>
+             </div>
+
+             <div class="inputs-container">
+                <div class="label-and-input">
+                    <label for="">Lorem</label>
+                    <select name="role" id="role">
+                        <option value="select" disabled>Select</option>
+                        <option value="3" disabled>Admin</option>
+                        <option value="4" disabled>Business staff</option>
+                        <option value="5" disabled>Construction staff</option>
+                        <option value="6" disabled>Utility staff</option>
+                        <option value="7" disabled>Finance staff</option>
+                    </select>
+                </div>
+                <div class="label-and-input">
+                    <label for="email">Email</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="label-and-input">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                </div>
+                <div class="label-and-input">
+                    <label for="retypePassword">Re-type password</label>
+                    <input type="password" id="retypePassword">
+                </div>
+                <div class="label-and-input">
+                    <label for="retypePassword">re-type password</label>
+                    <input type="password" id="retypePassword">
+                </div>
+             </div>
+
+             <div class="buttons-container">
+                <button type="button">Back</button>
+                <button type="submit">Submit</button>
+             </div>
+        </form>
+    </div>
+    <div class="containers suspend-container">
+        <form class="suspend-form" id="suspendForm">
+             <div class="header-and-parags">
+                <h1></h1>
+                <p></p>
+             </div>
+
+             <div class="inputs-container">
+                <div class="label-and-input">
+                    <label for="">Lorem</label>
+                    <select name="role" id="role">
+                        <option value="select" disabled>Select</option>
+                        <option value="3" disabled>Admin</option>
+                        <option value="4" disabled>Business staff</option>
+                        <option value="5" disabled>Construction staff</option>
+                        <option value="6" disabled>Utility staff</option>
+                        <option value="7" disabled>Finance staff</option>
+                    </select>
+                </div>
+                <div class="label-and-input">
+                    <label for="email">Email</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="label-and-input">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                </div>
+                <div class="label-and-input">
+                    <label for="retypePassword">Re-type password</label>
+                    <input type="password" id="retypePassword">
+                </div>
+                <div class="label-and-input">
+                    <label for="retypePassword">re-type password</label>
+                    <input type="password" id="retypePassword">
+                </div>
+             </div>
+
+             <div class="buttons-container">
+                <button type="button">Back</button>
+                <button type="submit">Submit</button>
+             </div>
+        </form>
+    </div>
 </section>
 
 <?php
