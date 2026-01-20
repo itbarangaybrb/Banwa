@@ -273,66 +273,125 @@ function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
+    // 1. Prepare Data
     const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
+    
+    // Parse requirements list safely
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+    }
+    const requirementsList = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<span class="badge-req">✓ ${r}</span>`).join(' ')
+        : '<span style="color:#999;">No requirements logged</span>';
 
-    // Build the uploaded file link HTML
-    const fileUploadHtml = app.requirement_upload
-        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>`
-        : 'No file uploaded';
-
-    // Build comments HTML
-    let commentsHtml = '';
-    if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
-    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
+    // 2. File Viewing Logic
+    let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
+    
+    if (app.requirement_upload) {
+        const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
+        const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
+        
+        // If image, show thumbnail + view button
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            fileHtml = `
+                <div class="file-viewer-box">
+                    <p style="margin-bottom:10px; font-weight:bold; color:#19316b;">Attached Document</p>
+                    <a href="${filePath}" target="_blank">
+                        <img src="${filePath}" alt="Document Preview" class="file-thumbnail" title="Click to enlarge">
+                    </a>
+                    <br>
+                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
+                </div>`;
+        } 
+        // If PDF or other, show generic icon + open button
+        else {
+            fileHtml = `
+                <div class="file-viewer-box">
+                    <i class="fas fa-file-pdf fa-3x" style="color:#dc3545; margin-bottom:10px;"></i>
+                    <p style="margin-bottom:10px; font-weight:bold;">${app.requirement_upload}</p>
+                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-external-link-alt"></i> Open Document</a>
+                </div>`;
+        }
     }
 
-    // CONDITIONAL PAYMENT BLOCK
-    const paymentInfo = app.amount_due > 0
-        ? `<div class="summary-card">
-        <h3>💰 Assessment & Payment</h3>
-        <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
-        <p><strong>Payment Status:</strong> ${app.payment_status}</p>
-        <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
-       </div>`
-        : '';
+    // 3. Status Colors
+    let statusColor = '#6c757d'; 
+    let statusBg = '#e2e3e5';
+    switch(app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
 
-    // COMBINE ALL HTML BLOCKS INTO ONE VARIABLE
-    const fullModalContent = `
-        <div class="summary-card">
-            <h3>📍 Business Information</h3>
-            <p><strong>Application ID:</strong> ${app.id}</p>
-            <p><strong>Business Name:</strong> ${app.business_name}</p>
-            <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
-            <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
-            <p><strong>Business Address:</strong> ${app.address_of_business}</p>
-            <p><strong>Business Status:</strong> ${businessStatus}</p>
-            <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
-            <p><strong>Email Address:</strong> ${app.email_address}</p>
-            <h3>👤 Owner Information</h3>
-            <p><strong>Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
-            <p><strong>Telephone:</strong> ${app.telephone_no_owner}</p>
-            <p><strong>Address:</strong> ${app.address_owner}</p>
-            <h3>🏢 Business Structure</h3>
-            <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
-            <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-            <h3>📋 Requirements</h3>
-            <p><strong>Submitted:</strong> ${requirementsList}</p>
-            <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-            <h3>📅 Application Details</h3>
-            <p><strong>Application Date:</strong> ${app.application_date}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
-            ${commentsHtml}
+    // 4. Build Professional HTML Structure
+    const content = `
+        <div class="details-container">
+            <div class="details-header-card">
+                <div class="details-title">
+                    <h2>${app.business_name}</h2>
+                    <div class="details-id">Application ID: #${app.id}</div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
+                        ${app.status}
+                    </span>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">Date: ${app.application_date}</div>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <div class="col-left">
+                    <div class="detail-card">
+                        <h3>📍 Business Information</h3>
+                        <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${app.type_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Nature</span> <span class="detail-value">${app.nature_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Premises</span> <span class="detail-value">${businessStatus}</span></div>
+                        <div class="detail-row"><span class="detail-label">Phone</span> <span class="detail-value">${app.telephone_no_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Email</span> <span class="detail-value" style="word-break:break-all;">${app.email_address}</span></div>
+                    </div>
+
+                    <div class="detail-card" style="margin-top:20px;">
+                        <h3>👤 Owner Details</h3>
+                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.telephone_no_owner}</span></div>
+                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_owner}</span></div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="detail-card">
+                        <h3>📋 Documents & Files</h3>
+                        <div style="margin-bottom:15px;">
+                            <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
+                            <div style="font-size:12px; line-height:1.6;">${requirementsList}</div>
+                        </div>
+                        ${fileHtml}
+                    </div>
+
+                    <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
+                        <h3>💰 Assessment</h3>
+                        ${ app.amount_due > 0 ? `
+                        <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
+                        <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
+                        <div class="detail-row"><span class="detail-label">OR Number</span> <span class="detail-value">${app.or_number || 'Pending'}</span></div>
+                        ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>' }
+                    </div>
+                </div>
+            </div>
+
+            ${ app.approval_comments || app.disapproval_reason ? `
+            <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
+                <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
+                <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
+            </div>
+            ` : '' }
         </div>
-        
-        ${paymentInfo} `;
+    `;
 
-    // SET THE MODAL CONTENT
-    document.getElementById('modalBody').innerHTML = fullModalContent;
-
-    // OPEN THE MODAL
+    document.getElementById('modalBody').innerHTML = content;
     openModal('detailsModal');
 }
 
@@ -374,77 +433,122 @@ function loadSummarySelect() {
         );
     });
 }
-// UPDATE SUMMARY (MODIFIED to include comments & file link)
+
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     const summaryOutput = document.getElementById('summaryOutput');
 
     if (!appId) {
-        summaryOutput.innerHTML = '';
+        summaryOutput.innerHTML = `
+            <div class="placeholder-state">
+                <i class="fas fa-file-invoice fa-3x"></i>
+                <p>Select a business from the list above to view the full report.</p>
+            </div>`;
         return;
     }
 
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
-
-    // Build the uploaded file link HTML
-    const fileUploadHtml = app.requirement_upload
-        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>`
-        : 'No file uploaded';
-
-    // Build comments HTML
-    let commentsHtml = '';
-    if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
-    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
+    // --- 1. Data Processing ---
+    
+    // Status Badge Color Logic
+    let statusColor = '#6c757d'; // Default Grey
+    let statusBg = '#e2e3e5';
+    
+    switch(app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
+    // Requirements Formatting
+    let reqs = app.requirements;
+    // Handle case where requirements might be a JSON string or already an object
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
+        : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+
+    // Formatted Dates & Money
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    const amountDue = app.amount_due 
+        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) 
+        : '₱0.00';
+        
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // --- 2. Build HTML Structure ---
 
     summaryOutput.innerHTML = `
-            <div class="summary-card">
-                <h3>📄 Business Application Summary Report</h3>
-                <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Application ID:</strong> ${app.id}</p>
+        <div class="report-header">
+            <div class="report-title">
+                <h1>Business Profile</h1>
+                <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+            </div>
+            <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                ${app.status}
+            </div>
+        </div>
 
-                <h3>📍 Business Information</h3>
-                <p><strong>Business Name:</strong> ${app.business_name}</p>
-                <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
-                <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
-                <p><strong>Business Address:</strong> ${app.address_of_business}</p>
-                <p><strong>Business Address Status:</strong> ${businessStatus}</p>
-                <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
-                <p><strong>Email Address:</strong> ${app.email_address}</p>
-
-                <h3>👤 Owner Information</h3>
-                <p><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
-                <p><strong>Owner Telephone:</strong> ${app.telephone_no_owner}</p>
-                <p><strong>Owner Address:</strong> ${app.address_owner}</p>
+        <div class="report-grid">
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>📍 Business Identity</h3>
+                    <div class="info-row"><span class="info-label">Business Name</span> <span class="info-value">${app.business_name}</span></div>
+                    <div class="info-row"><span class="info-label">Type</span> <span class="info-value">${app.type_of_business}</span></div>
+                    <div class="info-row"><span class="info-label">Nature</span> <span class="info-value">${app.nature_of_business}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_business}</span></div>
                 </div>
 
-                <div class="summary-card">
-                <h3>🏢 Business Structure & Operations</h3>
-                <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
-                <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-
-                <h3>📋 Requirements Submitted</h3>
-                <p><strong>Documents:</strong> ${requirementsList}</p>
-                <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-
-                <h3>📅 Application Status</h3>
-                <p><strong>Submission Date:</strong> ${app.application_date}</p>
-                <p><strong>Current Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
-                ${commentsHtml}
+                <div class="report-section">
+                    <h3>👤 Ownership</h3>
+                    <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.telephone_no_owner}</span></div>
+                    <div class="info-row"><span class="info-label">Email</span> <span class="info-value">${app.email_address || 'N/A'}</span></div>
+                </div>
             </div>
 
-            <div class="summary-actions">
-                <button class="btn-primary" onclick="printSummary()">🖨️ Print Summary</button>
-                <button class="btn-secondary" onclick="downloadSummary(${app.id})">📥 Download</button>
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>🏢 Operations & Docs</h3>
+                    <div class="info-row"><span class="info-label">Structure</span> <span class="info-value">${app.type_of_structure}</span></div>
+                    <div class="info-row"><span class="info-label">Employees</span> <span class="info-value">${app.no_of_employees}</span></div>
+                    <div style="margin-top:15px;">
+                        <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
+                        <ul class="doc-list">${requirementsHtml}</ul>
+                    </div>
+                </div>
+
+                <div class="financial-box">
+                    <h3 style="border:none; margin:0 0 10px 0;">💰 Financial Status</h3>
+                    <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
+                    <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
+                    <div class="financial-total">
+                        <span>Total Assessment</span>
+                        <span>${amountDue}</span>
+                    </div>
+                </div>
             </div>
-        `;
+        </div>
+
+        ${ app.approval_comments ? `
+        <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+            <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
+            <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+        </div>` : '' }
+
+        <div class="report-actions">
+            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+        </div>
+    `;
 }
 
 // FILTER APPLICATIONS
