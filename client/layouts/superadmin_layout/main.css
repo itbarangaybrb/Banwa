@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --h4: 36px;
+    --h4-lh: 44px;
+
+    --h5: 30px;
+    --h5-lh: 38px;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+
+    --txt1: 20px;
+    --txt1-lh: 30px;
+
+    --txt3: 16;
+    --txt3-lh: 24px;
+
+    --regular: 400;
+    --mediium: 500;
+    --semibold: 600;
+    --bold: 700;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+.header {
+    width: 100%;
+    padding: 16px 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    border-bottom: 1px solid grey;
+}
+
+.aside {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    height: 100vh;
+    z-index: 2;
+    padding: 24px 16px;
+    border-right: 1px solid grey;
+
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.aside .nav {
+    background: white;
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+.aside .nav.open {
+    width: 200px;
+}
+
+.aside .nav .list {
+    width: max-content;
+    display: flex;
+    flex-direction: column;
+}
+
+.aside .nav .list .items {
+    display: inline-flex;
+}
+
+.aside .nav .list .items .links {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    text-decoration: none;
+    color: black;
+    width: max-content;
+}
+
+.aside #menuToggle {
+    display: inline-flex;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.aside .divider {
+    width: 100%;
+    height: 1px;
+    background-color: grey;
+}
+
+.aside > .icon {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;  
+}
+
+.aside .nav .list .items .links .links-name {
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+}
+
+.aside .nav:not(.open) .list .items .links .links-name {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    margin-left: 0;
+}
+
+.aside .nav.open .list .items .links .links-name {
+    opacity: 1;
+    width: auto;
+    margin-left: 8px;
+}
