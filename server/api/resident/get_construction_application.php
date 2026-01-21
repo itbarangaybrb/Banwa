@@ -40,7 +40,7 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
     $stmt->execute([':id' => $appId]);
     $app = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -51,10 +51,10 @@ try {
     }
 
     // Process JSON fields if they are stored as JSON strings in the DB
-    if (isset($app['business_status']) && is_string($app['business_status'])) {
-        $decoded = json_decode($app['business_status'], true);
+    if (isset($app['construction_status']) && is_string($app['construction_status'])) {
+        $decoded = json_decode($app['construction_status'], true);
         if (json_last_error() === JSON_ERROR_NONE) {
-            $app['business_status'] = $decoded;
+            $app['construction_status'] = $decoded;
         }
     }
     if (isset($app['requirements']) && is_string($app['requirements'])) {

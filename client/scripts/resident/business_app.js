@@ -311,7 +311,7 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     if (!validator.address(businessLotNo, businessStreet)) return;
 
     if (!validateStep(stepFields)) return;
-    
+
     switchPanel('waiver');
 });
 
@@ -466,7 +466,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
             })
             .catch(error => {
                 console.error('Fetch Error:', error);
-                alert('Something went wrong. Check console for details.');
+                alert('An error occurred while submitting the application.');
             });
     }
 });

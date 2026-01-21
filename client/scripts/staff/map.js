@@ -33,9 +33,8 @@ const blueRidgeGeoJSON = {
     }]
 };
 
-// Filter state - only one can be active
-let activeFilter = 'household'; // 'household', 'business', 'construction', 'utility'
-let constructionSubFilter = 'all'; // 'all', 'major', 'minor', 'repair', 'demolition'
+let activeFilter = 'household';
+let constructionSubFilter = 'all';
 let markerVisibility = {
     household: true,
     business: false,
@@ -868,7 +867,7 @@ function createHouseholdPopup(household) {
     `;
 }
 
-// Load all markers - FIXED VERSION FOR YOUR DATABASE
+// Load all markers
 async function loadAllMarkers() {
     clearAllMarkers();
     
@@ -878,7 +877,7 @@ async function loadAllMarkers() {
         
         console.log('Fetching markers from map_handler.php...');
         
-        const response = await fetch('map_handler.php', {
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
@@ -975,11 +974,39 @@ async function loadAllMarkers() {
             console.warn('No business data found or data is not an array');
         }
 
-        // Process household markers - NOTE: marker table doesn't have lat/lng!
+        // Process household markers - NOW WITH LAT/LNG!
         if (data.households && Array.isArray(data.households)) {
             console.log(`Found ${data.households.length} household/marker records`);
-            console.warn('⚠️ Marker table does not have latitude/longitude columns! Household markers cannot be displayed on map.');
-            // You need to add latitude/longitude columns to the marker table
+            data.households.forEach(household => {
+                if (household.latitude && household.longitude) {
+                    try {
+                        const lat = parseFloat(household.latitude);
+                        const lng = parseFloat(household.longitude);
+                        
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            const popupContent = createHouseholdPopup(household);
+                            const marker = L.marker([lat, lng], { 
+                                icon: householdIcon,
+                                title: household.title || 'Household'
+                            }).bindPopup(popupContent);
+                            
+                            householdMarkers.push(marker);
+                            if (markerVisibility.household) {
+                                marker.addTo(map);
+                            }
+                            console.log('✅ Added household marker:', household.title || 'Unnamed');
+                        } else {
+                            console.warn('❌ Invalid coordinates for household:', household.latitude, household.longitude);
+                        }
+                    } catch (error) {
+                        console.error('Error processing household marker:', error, household);
+                    }
+                } else {
+                    console.warn('❌ Household missing coordinates:', household.title || 'Unnamed');
+                }
+            });
+        } else {
+            console.warn('No household data found or data is not an array');
         }
 
         // Process utility markers
@@ -1017,7 +1044,7 @@ async function loadAllMarkers() {
             console.warn('No utility data found or data is not an array');
         }
 
-        console.log(`Summary: ${constructionMarkers.length} construction, ${businessMarkers.length} business, ${utilityMarkers.length} utility markers loaded.`);
+        console.log(`Summary: ${constructionMarkers.length} construction, ${businessMarkers.length} business, ${householdMarkers.length} household, ${utilityMarkers.length} utility markers loaded.`);
 
         // Set initial visibility
         updateAllVisibility();
@@ -1025,6 +1052,470 @@ async function loadAllMarkers() {
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
         alert('Error loading markers. Please check browser console for details.');
+    }
+}
+
+async function showConstructionDetails(constructionId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_construction_details');
+        formData.append('id', constructionId);
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load construction details');
+        }
+
+        currentMarkerData = data.data;
+        displayConstructionModal(data.data);
+
+    } catch (error) {
+        console.error('ERROR LOADING CONSTRUCTION DETAILS:', error);
+        alert('Error loading construction details. Please try again.');
+    }
+}
+
+async function showBusinessDetails(businessId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_business_details');
+        formData.append('id', businessId);
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load business details');
+        }
+
+        currentMarkerData = data.data;
+        displayBusinessModal(data.data);
+
+    } catch (error) {
+        console.error('ERROR LOADING BUSINESS DETAILS:', error);
+        alert('Error loading business details. Please try again.');
+    }
+}
+
+async function showHouseholdDetails(markerId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_household_details');
+        formData.append('id', markerId);
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load household details');
+        }
+
+        currentMarkerData = data.data;
+        displayHouseholdModal(data.data);
+
+    } catch (error) {
+        console.error('ERROR LOADING HOUSEHOLD DETAILS:', error);
+        alert('Error loading household details. Please try again.');
+    }
+}
+
+async function showUtilityDetails(utilityId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_utility_details');
+        formData.append('id', utilityId);
+
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to load utility details');
+        }
+
+        currentMarkerData = data.data;
+        displayUtilityModal(data.data);
+
+    } catch (error) {
+        console.error('ERROR LOADING UTILITY DETAILS:', error);
+        alert('Error loading utility details. Please try again.');
+    }
+}
+
+// NEW: Check location in house
+async function checkLocationInHouse(lat, lng) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'check_location');
+        formData.append('lat', lat);
+        formData.append('lng', lng);
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        return data.success ? data : { isInside: false, house: null };
+    } catch (error) {
+        console.error('Error checking location:', error);
+        return { isInside: false, house: null };
+    }
+}
+
+// NEW: Save marker
+async function saveMarker(markerData) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'save_marker');
+        formData.append('title', markerData.title);
+        formData.append('description', markerData.description);
+        formData.append('location', markerData.location);
+        formData.append('marker_type', markerData.marker_type);
+        formData.append('latitude', markerData.latitude);
+        formData.append('longitude', markerData.longitude);
+        formData.append('house_id', markerData.house_id || '');
+        formData.append('created_by', 'Staff User'); // Update with actual user
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error saving marker:', error);
+        return { success: false, message: 'Network error' };
+    }
+}
+
+// Display modal functions
+function displayUtilityModal(utility) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+
+    modalTitle.textContent = `Utility Work Details - ${utility.applicant_name || 'Unnamed Utility'}`;
+
+    modalContent.innerHTML = `
+        <table class="detail-table">
+            <tr>
+                <td>Utility ID</td>
+                <td>${utility.utility_id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Applicant Name</td>
+                <td>${utility.applicant_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Applicant Address</td>
+                <td>${utility.applicant_address || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Contact Number</td>
+                <td>${utility.contact_no || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Nature of Work</td>
+                <td>${utility.nature_of_work || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Service Provider</td>
+                <td>${utility.service_provider || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Date of Request</td>
+                <td>${formatDate(utility.date_of_request)}</td>
+            </tr>
+            <tr>
+                <td>Date of Work</td>
+                <td>${formatDate(utility.date_of_work)}</td>
+            </tr>
+            <tr>
+                <td>Received By</td>
+                <td>${utility.received_by || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Approved By</td>
+                <td>${utility.approved_by || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Authorization</td>
+                <td>${utility.authorization_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Waiver</td>
+                <td>${utility.waiver_acknowledgement || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${utility.latitude || 'N/A'}, ${utility.longitude || 'N/A'}</td>
+            </tr>
+        </table>
+    `;
+
+    openModal('detail-modal');
+}
+
+function displayConstructionModal(construction) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+
+    modalTitle.textContent = `Construction Site Details - ${construction.permit_no || 'No Permit'}`;
+
+    modalContent.innerHTML = `
+        <table class="detail-table">
+            <tr>
+                <td>Construction ID</td>
+                <td>${construction.construction_id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Permit Number</td>
+                <td>${construction.permit_no || 'Pending'}</td>
+            </tr>
+            <tr>
+                <td>Homeowner Name</td>
+                <td>${construction.homeowner_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Contractor Name</td>
+                <td>${construction.contractor_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>${construction.address_of_construction || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Type of Work</td>
+                <td>${construction.type_of_work || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Nature of Activity</td>
+                <td>${construction.nature_of_activity || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Details of Work</td>
+                <td>${construction.details_of_work || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Start Date</td>
+                <td>${formatDate(construction.start_date)}</td>
+            </tr>
+            <tr>
+                <td>End Date</td>
+                <td>${formatDate(construction.end_date)}</td>
+            </tr>
+            <tr>
+                <td>Number of Workers</td>
+                <td>${construction.num_of_workers || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Working Days</td>
+                <td>${construction.num_of_working_days || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Fee Paid</td>
+                <td>${formatCurrency(construction.fee_paid)}</td>
+            </tr>
+            <tr>
+                <td>Payment Type</td>
+                <td>${construction.payment_type || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Payment Status</td>
+                <td>${construction.payment_status || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${construction.latitude || 'N/A'}, ${construction.longitude || 'N/A'}</td>
+            </tr>
+        </table>
+    `;
+
+    openModal('detail-modal');
+}
+
+function displayBusinessModal(business) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    const ownerName = `${business.first_name || ''} ${business.middle_name || ''} ${business.last_name || ''}`.trim();
+
+    modalTitle.textContent = `Business Details - ${business.business_name || 'Unnamed Business'}`;
+
+    modalContent.innerHTML = `
+        <table class="detail-table">
+            <tr>
+                <td>Business ID</td>
+                <td>${business.id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Business Name</td>
+                <td>${business.business_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Type of Business</td>
+                <td>${business.type_of_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Nature of Business</td>
+                <td>${business.nature_of_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Nature Details</td>
+                <td>${business.nature_of_business_specify || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Business Address</td>
+                <td>${business.address_of_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Business Telephone</td>
+                <td>${business.telephone_no_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Email Address</td>
+                <td>${business.email_address || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Owner Name</td>
+                <td>${ownerName || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Owner Telephone</td>
+                <td>${business.telephone_no_owner || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Owner Address</td>
+                <td>${business.address_owner || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Type of Structure</td>
+                <td>${business.type_of_structure || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Structure Details</td>
+                <td>${business.type_of_structure_specify || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Number of Employees</td>
+                <td>${business.no_of_employees || '0'}</td>
+            </tr>
+            <tr>
+                <td>Requirements</td>
+                <td>${business.requirements || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Application Date</td>
+                <td>${formatDate(business.application_date)}</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td><span class="status-${business.status?.toLowerCase() || 'pending'}">${business.status || 'Pending'}</span></td>
+            </tr>
+            <tr>
+                <td>Approval Comments</td>
+                <td>${business.approval_comments || 'None'}</td>
+            </tr>
+            <tr>
+                <td>Disapproval Reason</td>
+                <td>${business.disapproval_reason || 'None'}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${business.latitude || 'N/A'}, ${business.longitude || 'N/A'}</td>
+            </tr>
+        </table>
+    `;
+
+    openModal('detail-modal');
+}
+
+function displayHouseholdModal(household) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    const markerType = household.marker_type || 'Household';
+
+    modalTitle.textContent = `${markerType} Details - ${household.title || 'Unnamed Marker'}`;
+
+    modalContent.innerHTML = `
+        <table class="detail-table">
+            <tr>
+                <td>Marker ID</td>
+                <td>${household.marker_id || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Title</td>
+                <td>${household.title || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>${household.description || 'No description'}</td>
+            </tr>
+            <tr>
+                <td>Location</td>
+                <td>${household.location || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Marker Type</td>
+                <td>${markerType}</td>
+            </tr>
+            <tr>
+                <td>Created By</td>
+                <td>${household.created_by || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Created Date</td>
+                <td>${formatDate(household.created_at)}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${household.latitude || 'N/A'}, ${household.longitude || 'N/A'}</td>
+            </tr>
+        </table>
+    `;
+
+    openModal('detail-modal');
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        currentMarkerData = null;
     }
 }
 
@@ -1056,7 +1547,7 @@ async function loadHousePolygons() {
         const formData = new FormData();
         formData.append('action', 'get_houses');
         
-        const response = await fetch('map_handler.php', {
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
@@ -1130,7 +1621,7 @@ function renderHousePolygons() {
 function createHousePopup(house) {
     return `
         <div class="popup-content">
-            <h4>🏠 HOUSE <span class="house-badge">House</span></h4>
+            <h4>🏠 HOUSE <span class="household-badge">House</span></h4>
             
             <div class="popup-section">
                 <p><strong>Address:</strong> ${house.address || 'Not specified'}</p>
@@ -1149,87 +1640,6 @@ function createHousePopup(house) {
             </button>
         </div>
     `;
-}
-
-// Modal functions
-function openModal() {
-    const modal = document.getElementById('detail-modal');
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeModal() {
-    const modal = document.getElementById('detail-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        currentMarkerData = null;
-    }
-}
-
-// Detail viewing functions
-async function showConstructionDetails(constructionId) {
-    console.log('Show construction details:', constructionId);
-    // Implement AJAX call to get construction details
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_construction_details');
-        formData.append('id', constructionId);
-        
-        const response = await fetch('map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Display details in modal
-            const modalTitle = document.getElementById('modal-title');
-            const modalContent = document.getElementById('modal-content');
-            
-            modalTitle.textContent = `Construction Site: ${data.data.homeowner_name || 'Details'}`;
-            
-            // Create detailed HTML
-            const detailsHTML = `
-                <div class="detail-table">
-                    ${Object.entries(data.data).map(([key, value]) => `
-                        <tr>
-                            <td>${key.replace(/_/g, ' ').toUpperCase()}</td>
-                            <td>${value || 'N/A'}</td>
-                        </tr>
-                    `).join('')}
-                </div>
-            `;
-            
-            modalContent.innerHTML = detailsHTML;
-            openModal();
-        }
-    } catch (error) {
-        console.error('Error loading construction details:', error);
-    }
-}
-
-async function showBusinessDetails(businessId) {
-    console.log('Show business details:', businessId);
-    // Similar implementation for business details
-}
-
-async function showHouseholdDetails(markerId) {
-    console.log('Show household details:', markerId);
-    // Similar implementation for household details
-}
-
-async function showHouseDetails(houseId) {
-    console.log('Show house details:', houseId);
-    // Similar implementation for house details
-}
-
-async function showUtilityDetails(utilityId) {
-    console.log('Show utility details:', utilityId);
-    // Similar implementation for utility details
 }
 
 // Map view functions
@@ -1261,7 +1671,6 @@ function toggleFaultLine() {
         }
     }
 }
-
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
@@ -1313,14 +1722,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         const modal = document.getElementById('detail-modal');
         if (e.target === modal) {
-            closeModal();
+            closeModal('detail-modal');
         }
     });
     
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            closeModal();
+            closeModal('detail-modal');
         }
     });
     
@@ -1691,16 +2100,4 @@ function setupMobileMenuClose() {
             }
         }
     });
-}
-
-// Example to get location data (be respectful of their servers!)
-async function getHazardHunterData(lat, lng) {
-    try {
-        const response = await fetch(
-            `https://hazardhunter.georisk.gov.ph/geoserver/wms?service=WMS&version=1.1.0&request=GetMap&layers=georisk:flood_hazard&bbox=${lng-0.01},${lat-0.01},${lng+0.01},${lat+0.01}&width=768&height=768&srs=EPSG:4326&format=image/png`
-        );
-        // This gets a map tile, not structured data
-    } catch (error) {
-        console.error('Cannot access HazardHunter directly');
-    }
 }

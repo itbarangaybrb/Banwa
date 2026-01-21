@@ -262,7 +262,6 @@ document.getElementById('nextToUtilities').addEventListener('click', () => {
     const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
 
     if (!validateStep(stepFields)) return;
-
     if (!validator.address(lotNo, street)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
@@ -320,11 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Final form submit
 // =========================
 const summaryForm = document.getElementById('summaryForm');
-
-// Remove existing listeners to prevent duplicates
 const newSummaryForm = summaryForm.cloneNode(true);
 summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
-
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -345,42 +341,27 @@ newSummaryForm.addEventListener('submit', async function (e) {
     if (confirm('Are you sure you want to submit this application?')) {
         const formData = new FormData();
 
-        // Add action type for backend
         formData.append('action', 'create');
-
-        // Owner details
         formData.append('firstName', firstName.value);
         formData.append('middleName', middleName.value);
         formData.append('lastName', lastName.value);
         formData.append('suffix', suffix.value);
         formData.append('contactNoOwner', contactNoOwner.value);
-        // FIX: Add this for owner_address
         formData.append('addressOwner', `${lotNo.value} ${street.value}`);
-
-        // Utilities details
         formData.append('requestDate', requestDate.value);
         formData.append('dateOfWork', dateOfWork.value);
         formData.append('natureOfWork', natureOfWork.value);
         formData.append('provider', provider.value);
-
-        // FIX: Add these for address_of_utility
         formData.append('utilityLotNo', utilityLotNo.value);
         formData.append('utilityStreet', utilityStreet.value);
-
-        // Waiver
         formData.append('agreed', agreeCheckBox.checked ? 1 : 0);
-
-        // Coordinates
         const lat = document.getElementById('latitude2')?.value || '';
         const lng = document.getElementById('longitude2')?.value || '';
         formData.append('latitude2', lat);
         formData.append('longitude2', lng);
-
-        // Application Date
         const appDate = document.getElementById('applicationDate')?.value || '';
         formData.append('applicationDate', appDate);
 
-        // Submit via fetch to backend
         fetch('/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php', {
             method: 'POST',
             body: formData,

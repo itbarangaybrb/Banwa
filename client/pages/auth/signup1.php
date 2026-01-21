@@ -199,7 +199,6 @@
                                 <button type="submit" id="createAccSubmitBtn">Submit</button>
                                 <button type="button" id="resendEmailBtn">Resend verification email</button>
                             </div>
-
                         </form>
                     </div>
                 </div>

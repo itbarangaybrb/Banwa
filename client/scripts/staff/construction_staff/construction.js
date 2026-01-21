@@ -68,7 +68,7 @@ function loadReviewTable() {
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.nature_of_work}</td>
+                    <td>${app.nature_of_activity}</td>
                     <td>${app.first_name} ${app.last_name}</td>
                     <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
                     <td>${app.payment_status || 'N/A'}</td>
@@ -107,7 +107,8 @@ function loadProcessTable() {
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.nature_of_work}</td>
+                    <td>${app.nature_of_activity}</td>
+                     <td>${app.first_name} ${app.last_name}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
@@ -134,7 +135,7 @@ function loadAnalyticsTab() {
             const labels1 = res.data_by_date.map(x => x.application_date);
             const values1 = res.data_by_date.map(x => x.total);
 
-            const labels2 = res.data_by_type.map(x => x.type_of_construction);
+            const labels2 = res.data_by_type.map(x => x.nature_of_activity);
             const values2 = res.data_by_type.map(x => x.total);
 
             // Your fixed colors
@@ -264,7 +265,7 @@ function viewDetails(appId) {
             <p><strong>Construction Address:</strong> ${app.construction_address}</p>
 
             <h3>🛠 Work Information</h3>
-            <p><strong>Nature of Work:</strong> ${app.nature_of_work}</p>
+            <p><strong>Nature of Work:</strong> ${app.nature_of_activity}</p>
             <p><strong>Type of Work:</strong> ${app.type_of_work}</p>
             <p><strong>Activity:</strong> ${app.nature_of_activity}</p>
             <p><strong>Details:</strong> ${app.details_of_work}</p>
@@ -306,7 +307,7 @@ function loadSummarySelect() {
         const select = document.getElementById('summaryApplicationSelect');
         select.innerHTML = '<option value="">-- Select Application --</option>';
         applications.forEach(app => {
-            select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.nature_of_work}</option>`;
+            select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.nature_of_activity}</option>`;
         });
     });
 }
@@ -323,7 +324,7 @@ function updateSummary() {
             <h3>📄 Construction Application Summary</h3>
             <p><strong>ID:</strong> ${app.id}</p>
             <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Work:</strong> ${app.nature_of_work}</p>
+            <p><strong>Work:</strong> ${app.nature_of_activity}</p>
             <p><strong>Status:</strong> ${app.status}</p>
         </div>
     `;
@@ -336,7 +337,7 @@ function filterApplications() {
     tbody.innerHTML = '';
 
     const filtered = applications.filter(app =>
-        app.nature_of_work.toLowerCase().includes(search) ||
+        app.nature_of_activity.toLowerCase().includes(search) ||
         `${app.first_name} ${app.last_name}`.toLowerCase().includes(search) ||
         app.id.toString().includes(search)
     );
@@ -350,8 +351,8 @@ function filterApplications() {
         tbody.innerHTML += `
             <tr>
                 <td>${app.id}</td>
-                <td>${app.nature_of_work}</td>
                 <td>${app.first_name} ${app.last_name}</td>
+                <td>${app.nature_of_activity}</td>
                 <td>${app.status}</td>
                 <td>${app.payment_status || 'N/A'}</td>
                 <td>
@@ -361,6 +362,21 @@ function filterApplications() {
         `;
     });
 }
+
+function applyPrompt(text) {
+    const textarea = document.getElementById('updateComments');
+    if (textarea) {
+        // Option A: Replace everything
+        textarea.value = text;
+
+        // Option B: Append instead of replace (Uncomment below if preferred)
+        // textarea.value += (textarea.value ? ' ' : '') + text;
+
+        textarea.focus();
+    }
+}
+
+// add generateClearance too...
 
 // ================= MODALS & ALERT =================
 function openModal(id) { document.getElementById(id).classList.add('active'); }

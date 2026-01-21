@@ -129,7 +129,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">Business Type <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label">What type of business Type? <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship"> Single Proprietorship</label>
                         <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
                         <label><input type="radio" name="typeOfBusiness" value="Corporation"> Corporation</label>
@@ -154,7 +154,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">Business Address Status <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label">What is the status of the business address? <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
                         <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
                         <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
@@ -172,7 +172,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="noOfEmployees">Number of Employees <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="noOfEmployees">How many employees does the business have? <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>

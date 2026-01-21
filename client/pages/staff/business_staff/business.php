@@ -5,16 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Application Management System</title>
+
     <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../../../styles/staff/map1.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
-    <!-- Sidebar -->
+
     <aside class="side_nav">
         <div class="nav_header">
             <div class="nav_logo">☰</div>
@@ -23,65 +24,39 @@
                 <span class="company_name">BANWA</span>
             </div>
         </div>
+
         <ul class="nav_list">
             <div>
                 <li>
                     <a href="#" class="nav_select active" data-tab="dashboard">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-chart-line nav_icon"></i>
                         <span class="nav_text">Dashboard</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav_select" data-tab="review">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Review & Search</span>
+                    <a href="#" class="nav_select" data-tab="management">
+                        <i class="fas fa-tasks nav_icon"></i>
+                        <span class="nav_text">Manage Applications</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav_select" data-tab="create">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-plus-circle nav_icon"></i>
                         <span class="nav_text">Create New</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav_select" data-tab="process">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
-                        </svg>
-                        <span class="nav_text">Process & Assess</span>
-                    </a>
-                </li>
-                <li>
                     <a href="#" class="nav_select" data-tab="summary">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
                     </a>
-                </li>
-            </div>
-            <div>
-                <li>
-                    <button class="nav_select_btn" id="userProfileBtn">
-                        <div class="user_image_container">
-                            <span class="user_avatar_sidebar">A</span>
-                        </div>
-                        <span class="nav_text">Profile</span>
-                    </button>
                 </li>
             </div>
         </ul>
     </aside>
 
-    <!-- Main Content -->
     <div class="main-wrapper">
+
         <header class="top-header">
             <div class="header-left">
                 <h1>Business Application Management</h1>
@@ -100,7 +75,7 @@
             <div id="alert-container"></div>
 
             <div id="dashboard" class="tab-pane active">
-                <!-- Mobile Menu Button -->
+                
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -122,7 +97,6 @@
                                 </button>
                             </div>
                         </div>
-
                         <div id="search-results" class="search-results"></div>
                     </div>
 
@@ -154,12 +128,11 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h3 id="modal-title">Marker Details</h3>
-                            <button class="close-modal" onclick="closeModal()">&times;</button>
+                            <button class="close-modal" onclick="closeModal('detail-modal')">&times;</button>
                         </div>
                         <div class="modal-body">
                             <div id="modal-content">
-                                <!-- Content will be loaded here -->
-                            </div>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -171,15 +144,16 @@
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
-
                 </div>
             </div>
 
-            <div id="review" class="tab-pane">
+            <div id="management" class="tab-pane">
                 <h2>Review Business Applications</h2>
+                
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
+                    <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
+
                 <div class="table-responsive">
                     <table id="applicationsTable">
                         <thead>
@@ -192,7 +166,7 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody">
+                        <tbody id="managementTableBody">
                             <tr>
                                 <td colspan="6" class="loading">
                                     <div class="spinner"></div>Loading...
@@ -208,8 +182,8 @@
                 <p class="form-description">Fill in the details to create a new business application</p>
 
                 <form id="createForm" onsubmit="createApplication(event)">
+                    
                     <div class="section-title">Business Information</div>
-
                     <div class="form-row">
                         <div class="form-group">
                             <label for="businessName">Business Name*</label>
@@ -284,7 +258,6 @@
                     </div>
 
                     <div class="section-title">Owner Information</div>
-
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName">Owner First Name *</label>
@@ -322,7 +295,6 @@
                     </div>
 
                     <div class="section-title">Business Structure</div>
-
                     <div class="form-row">
                         <div class="form-group">
                             <label for="typeOfStructureSelect">Structure Type *</label>
@@ -354,7 +326,6 @@
                     </div>
 
                     <div class="section-title">Requirements (Photocopy Only)</div>
-
                     <div class="form-group">
                         <div class="checkbox-group">
                             <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
@@ -411,11 +382,22 @@
             </div>
 
             <div id="summary" class="tab-pane">
-                <h2>Generate Summary</h2>
-                <div class="form-group">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
+                <div class="summary-controls">
+                    <h2>📄 Generate Business Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Business Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">🔄</button>
+                    </div>
                 </div>
-                <div id="summaryOutput"></div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a business from the list above to view the full report.</p>
+                    </div>
+                </div>
             </div>
 
             <div id="detailsModal" class="modal">
@@ -480,12 +462,10 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
-    <script src="../../../scripts/staff/business_staff/business.js"></script>
+
+        </div> </div> <script src="../../../scripts/staff/business_staff/business.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
 </body>
-
 </html>

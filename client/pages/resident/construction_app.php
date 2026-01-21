@@ -121,8 +121,8 @@ if ($_SESSION['role_id'] != 1) {
                 <h6>Construction Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label class="label" for="natureOfWork">What kind of work will be done? <span style="color: #BB1B1B;">*</span></label>
-                        <select name="natureOfWork" id="natureOfWork">
+                        <label class="label" for="natureOfActivity">Nature of Activity (What kind of work will be done?) <span style="color: #BB1B1B;">*</span></label>
+                        <select name="natureOfActivity" id="natureOfActivity">
                             <option value="" disabled selected>Select</option>
                             <option value="Demolition">Demolition</option>
                             <option value="Major Construction">Major Construction</option>
@@ -147,11 +147,11 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
 
-                    <div class="label-and-input">
+                    <!-- <div class="label-and-input">
                         <label for="natureOfActivity" class="required-field">Nature of Activity <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="natureOfActivity" name="natureOfActivity" rows="3"></textarea>
                         <div class="error-msg"></div>
-                    </div>
+                    </div> -->
 
                     <div class="label-and-input">
                         <label for="detailsOfWork" class="required-field">Details of Work <span style="color: #BB1B1B;">*</span></label>
@@ -307,43 +307,40 @@ if ($_SESSION['role_id'] != 1) {
                         <p>Construction Information</p>
                         <div class="summary-info">
                             <div>
-                                <p>lorem:</p> <span id="sumNatureOfWork"></span>
+                                <p>type of Work:</p> <span id="sumTypeOfConstruction"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumTypeOfBusiness"></span>
+                                <p>Nature of Activity:</p> <span id="sumNatureOfActivity"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumNatureOfActivity"></span>
+                                <p>Details of Work:</p> <span id="sumDetailsOfWork"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumDetailsOfWork"></span>
+                                <p>Start Date:</p> <span id="sumStartDate"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumStartDate"></span>
+                                <p>End Date:</p> <span id="sumEndDate"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumEndDate"></span>
+                                <p>Number of Working Days:</p> <span id="sumNumberOfWorkingDays"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumNumberOfWorkingDays"></span>
+                                <p>Number of Workers:</p> <span id="sumNumberOfWorkers"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumNumberOfWorkers"></span>
+                                <p>Contractor Name:</p> <span id="sumContractorName"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumContractorName"></span>
+                                <p>Contractor Contact No.:</p> <span id="sumContractorContactNumber"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumContractorContactNumber"></span>
+                                <p>Application Method:</p> <span id="sumApplicationMethod"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumApplicationMethod"></span>
+                                <p>Address of Contruction:</p> <span id="sumAddressConstruction"></span>
                             </div>
                             <div>
-                                <p>lorem:</p> <span id="sumAddressConstruction"></span>
-                            </div>
-                            <div>
-                                <p>lorem:</p> <span id="sumRequirementUpload"></span>
+                                <p>Requirements Upload:</p> <span id="sumRequirementUpload"></span>
                             </div>
                         </div>
                     </div>
