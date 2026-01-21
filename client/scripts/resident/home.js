@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Background Carousel Functionality
+    // ======================
+    // 1. BACKGROUND CAROUSEL
+    // ======================
     const carouselImages = document.querySelectorAll('.carousel-image');
     const dots = document.querySelectorAll('.dot');
     let currentImageIndex = 0;
@@ -40,62 +42,185 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Optional: Pause carousel on hover
     const carouselContainer = document.querySelector('.hero-bg-carousel');
+    if (carouselContainer) {
+        carouselContainer.addEventListener('mouseenter', () => {
+            clearInterval(carouselInterval);
+        });
+        
+        carouselContainer.addEventListener('mouseleave', () => {
+            carouselInterval = setInterval(nextImage, 5000);
+        });
+    }
+    
+    // ======================
+    // 2. IMAGE CAROUSEL (Thumbnails)
+    // ======================
+    const mainImage = document.getElementById('mainCarouselImage');
+    const thumbs = document.querySelectorAll('.thumb');
+    
+    if (mainImage && thumbs.length > 0) {
+        thumbs.forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                const imageSrc = this.getAttribute('data-image');
+                mainImage.src = imageSrc;
+                
+                // Update active thumbnail
+                thumbs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Set first thumbnail as active by default
+        thumbs[0].classList.add('active');
+    }
+    
+    // ======================
+    // 3. SERVICES SECTION
+    // ======================
+    const serviceCards = document.querySelectorAll('.service-card');
+    const allDetails = document.querySelectorAll('.service-instructions');
+    
+    // Hide all service details initially except default
+    allDetails.forEach(detail => {
+        if (detail.id !== 'defaultDetails') {
+            detail.style.display = 'none';
+        }
+    });
+    
+    // Add click event to each service card
+    serviceCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const serviceType = this.getAttribute('data-service');
+            
+            // Hide all details
+            allDetails.forEach(detail => {
+                detail.style.display = 'none';
+            });
+            
+            // Show the selected service details
+            const selectedDetails = document.getElementById(serviceType + 'Details');
+            if (selectedDetails) {
+                selectedDetails.style.display = 'block';
+            }
+            
+            // Add active class to selected card
+            serviceCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+        });
+        
+        // Add keyboard support
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+        
+        // Make cards focusable
+        card.setAttribute('tabindex', '0');
+    });
+    
+    // ======================
+    // 4. SMOOTH SCROLLING (Global - only once)
+    // ======================
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            // Check if it's an internal anchor link
+            const href = this.getAttribute('href');
+            if (href !== '#') {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Optional: Add a function to show default service details
+    window.showDefaultService = function() {
+        allDetails.forEach(detail => {
+            detail.style.display = 'none';
+        });
+        const defaultDetails = document.getElementById('defaultDetails');
+        if (defaultDetails) {
+            defaultDetails.style.display = 'block';
+        }
+        serviceCards.forEach(card => {
+            card.classList.remove('active');
+        });
+    };
+});
+
+// Barangay Officials Carousel
+document.addEventListener('DOMContentLoaded', function() {
+    const carouselTrack = document.querySelector('.carousel-track');
+    const officialCards = document.querySelectorAll('.official-card');
+    const indicators = document.querySelectorAll('.indicator');
+    const prevBtn = document.querySelector('.carousel-nav.prev');
+    const nextBtn = document.querySelector('.carousel-nav.next');
+    
+    let currentIndex = 0;
+    const totalSlides = officialCards.length;
+    
+    // Function to update carousel
+    function updateCarousel() {
+        // Hide all cards
+        officialCards.forEach(card => {
+            card.classList.remove('active');
+        });
+        
+        // Show current card
+        officialCards[currentIndex].classList.add('active');
+        
+        // Update indicators
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle('active', index === currentIndex);
+        });
+    }
+    
+    // Next button click
+    nextBtn.addEventListener('click', function() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        updateCarousel();
+    });
+    
+    // Previous button click
+    prevBtn.addEventListener('click', function() {
+        currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+        updateCarousel();
+    });
+    
+    // Indicator click
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', function() {
+            currentIndex = index;
+            updateCarousel();
+        });
+    });
+    
+    // Auto-rotate carousel (optional)
+    let carouselInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        updateCarousel();
+    }, 4000); // Change every 4 seconds
+    
+    // Pause auto-rotate on hover
+    const carouselContainer = document.querySelector('.officials-carousel');
     carouselContainer.addEventListener('mouseenter', () => {
         clearInterval(carouselInterval);
     });
     
     carouselContainer.addEventListener('mouseleave', () => {
-        carouselInterval = setInterval(nextImage, 5000);
+        carouselInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % totalSlides;
+            updateCarousel();
+        }, 4000);
     });
     
-    // Smooth scrolling for anchor links (keep your existing code)
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-});
-
-// Image Carousel Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Image carousel functionality
-    const mainImage = document.getElementById('mainCarouselImage');
-    const thumbs = document.querySelectorAll('.thumb');
-    
-    thumbs.forEach(thumb => {
-        thumb.addEventListener('click', function() {
-            const imageSrc = this.getAttribute('data-image');
-            mainImage.src = imageSrc;
-            
-            // Update active thumbnail
-            thumbs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    
-    // Set first thumbnail as active by default
-    if (thumbs.length > 0) {
-        thumbs[0].classList.add('active');
-    }
-    
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
+    // Initialize carousel
+    updateCarousel();
 });

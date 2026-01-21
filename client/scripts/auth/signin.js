@@ -127,7 +127,7 @@ function showValidation() {
       return;
     }
 
-    const resp = await fetch('/Banwa/server/api/resident/signin_user.php', {
+    const resp = await fetch('/server/api/resident/signin_user.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -148,7 +148,7 @@ function showValidation() {
     formMessage.textContent = 'Login successful! Redirecting...';
 
     setTimeout(() => {
-      window.location.href = '/Banwa/client/pages/resident/home.php';
+      window.location.href = '/client/pages/resident/home.php';
     }, 1000);
   });
 }
