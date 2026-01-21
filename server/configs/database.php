@@ -7,7 +7,7 @@
 $host = 'localhost';
 $db   = 'capstone';
 $user = 'postgres';
-$pass = '080702';
+$pass = '$Xz_11182025';
 $port = '5432';
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -22,3 +22,4 @@ try {
     http_response_code(500);
     die(json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]));
 }
+?>

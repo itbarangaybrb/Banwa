@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../../styles/staff/map.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
 </head>
 
 <body>
@@ -22,7 +23,7 @@
                 <div class="company_name">Blue Ridge B</div>
             </div>
         </div>
-
+        
         <ul class="nav_list">
             <div class="nav_list1">
                 <li>
@@ -49,8 +50,14 @@
                         <span class="nav_text">Reset View</span>
                     </button>
                 </li>
+                <li>
+                    <button class="nav_select_btn" onclick="setActiveNav(this); toggleFaultLine()">
+                        <i class="nav_icon fas fa-exclamation-triangle"></i>
+                        <span class="nav_text">Toggle Fault Line</span>
+                    </button>
+                </li>
             </div>
-
+            
             <div class="nav_list2">
                 <li>
                     <a href="#" class="nav_select" onclick="setActiveNav(this)">
@@ -92,7 +99,7 @@
                     <h2>Barangay Blue Ridge B Map</h2>
                     <p>Interactive mapping system for households, businesses, and construction sites</p>
                 </div>
-
+                
                 <div class="map-controls">
                     <div class="search-container">
                         <div class="search-box">
@@ -107,34 +114,84 @@
                     </div>
 
                     <div id="search-results" class="search-results"></div>
-                </div>
-
-                <div class="filter-controls">
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
-                            <span class="filter-icon" style="background: #28a745;"></span>
-                            <span>Households</span>
-                        </button>
-                        <button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
-                            <span class="filter-icon" style="background: #9C27B0;"></span>
-                            <span>Businesses</span>
-                        </button>
-                        <button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
-                            <span class="filter-icon" style="background: #ffc107;"></span>
-                            <span>Construction</span>
-                        </button>
-                        <button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
-                            <span class="filter-icon" style="background: #2196F3;"></span>
-                            <span>Utilities</span>
-                        </button>
+                    
+                    <!-- filter-controls section -->
+                    <div class="filter-controls">
+                        <div class="filter-dropdown-container">
+                            <div class="dropdown">
+                                <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                    <i class="fas fa-filter"></i>
+                                    <span id="currentFilterText">Households</span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </button>
+                                <div class="dropdown-content" id="filterDropdown">
+                                    <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #28a745;"></span>
+                                            <span>Households</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #9C27B0;"></span>
+                                            <span>Businesses</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #ffc107;"></span>
+                                            <span>Construction</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #2196F3;"></span>
+                                            <span>Utilities</span>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Sub-filters for construction types (initially hidden) - MOVED OUTSIDE DROPDOWN -->
+                            <div class="sub-filters" id="constructionSubFilters" style="display: none;">
+                                <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                <div class="sub-filter-buttons">
+                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>All</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                        <i class="fas fa-building"></i>
+                                        <span>Major</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                        <i class="fas fa-home"></i>
+                                        <span>Minor</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                        <i class="fas fa-tools"></i>
+                                        <span>Repair</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Demolition</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-info" id="filterInfo">
+                            Showing households
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div id="map"></div>
-
-            <div class="map-info">
-                <p><strong>Note:</strong> Use the navigation buttons to switch between map views.</p>
+                
+                <div id="map"></div>
+                
+                <div class="map-info">
+                    <p><strong>⚠️ Earthquake Risk Area:</strong> Red dashed line indicates a fault line. Construction in this zone requires seismic-resistant design.</p>
+                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Only one filter can be active at a time.</p>
+                </div>
             </div>
         </div>
     </main>
@@ -146,7 +203,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../scripts/staff/map.js"></script>
-
+    
     <!-- Detail Modal -->
     <div id="detail-modal" class="modal">
         <div class="modal-content">
