@@ -311,6 +311,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Nature of Activity</th>
                                 <th>Owner</th>
                                 <th>Current Status</th>
                                 <th>Payment Status</th>

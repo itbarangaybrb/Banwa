@@ -73,7 +73,7 @@ function handleCreateApplication($pdo)
         $ownerAddress = trim("$lotNo $street");
 
         // Construction Info
-        $natureOfWork = get_input('natureOfWork');
+        // $natureOfWork = get_input('natureOfWork');
         $typeOfWork = get_input('typeOfWork');
         $natureOfActivity = get_input('natureOfActivity');
         $detailsOfWork = get_input('detailsOfWork');
@@ -110,8 +110,7 @@ function handleCreateApplication($pdo)
         $sql = "INSERT INTO construction_applications (
             supabase_user_id,
             first_name, middle_name, last_name, suffix,
-            contact_no_owner, owner_address,
-            nature_of_work, type_of_work, nature_of_activity, details_of_work,
+            contact_no_owner, owner_address, type_of_work, nature_of_activity, details_of_work,
             start_date, end_date, number_of_working_days, number_of_workers,
             contractor_name, contractor_contact_number, application_method,
             construction_address, latitude, longitude, requirement_upload,
@@ -119,8 +118,7 @@ function handleCreateApplication($pdo)
         ) VALUES (
             :supabase_user_id,
             :first_name, :middle_name, :last_name, :suffix,
-            :contact_no_owner, :owner_address,
-            :nature_of_work, :type_of_work, :nature_of_activity, :details_of_work,
+            :contact_no_owner, :owner_address, :type_of_work, :nature_of_activity, :details_of_work,
             :start_date, :end_date, :number_of_working_days, :number_of_workers,
             :contractor_name, :contractor_contact_number, :application_method,
             :construction_address, :latitude, :longitude, :requirement_upload,
@@ -136,7 +134,7 @@ function handleCreateApplication($pdo)
             ':suffix' => $suffix,
             ':contact_no_owner' => $contactNoOwner,
             ':owner_address' => $ownerAddress,
-            ':nature_of_work' => $natureOfWork,
+            // ':nature_of_work' => $natureOfWork,
             ':type_of_work' => $typeOfWork,
             ':nature_of_activity' => $natureOfActivity,
             ':details_of_work' => $detailsOfWork,
@@ -257,7 +255,7 @@ function handleUpdateApplication($pdo)
         $constructionAddress = trim($lotNo . ' ' . $street) ?: $currentRecord['construction_address'];
         $latitude     = get_input('latitude2') ?? $currentRecord['latitude'];
         $longitude    = get_input('longitude2') ?? $currentRecord['longitude'];
-        $natureOfWork = get_input('natureOfWork') ?? $currentRecord['nature_of_work'];
+        // $natureOfWork = get_input('natureOfWork') ?? $currentRecord['nature_of_work'];
         $typeOfWork   = get_input('typeOfWork') ?? $currentRecord['type_of_work'];
         $natureOfActivity = get_input('natureOfActivity') ?? $currentRecord['nature_of_activity'];
         $detailsOfWork   = get_input('detailsOfWork') ?? $currentRecord['details_of_work'];
@@ -289,7 +287,6 @@ function handleUpdateApplication($pdo)
             construction_address = :construction_address,
             latitude = :latitude,
             longitude = :longitude,
-            nature_of_work = :nature_of_work,
             type_of_work = :type_of_work,
             nature_of_activity = :nature_of_activity,
             details_of_work = :details_of_work,
@@ -315,7 +312,6 @@ function handleUpdateApplication($pdo)
             ':construction_address' => $constructionAddress,
             ':latitude' => $latitude,
             ':longitude' => $longitude,
-            ':nature_of_work' => $natureOfWork,
             ':type_of_work' => $typeOfWork,
             ':nature_of_activity' => $natureOfActivity,
             ':details_of_work' => $detailsOfWork,
@@ -360,10 +356,10 @@ function handleChartConstructionType($pdo)
 
     // Data by Application Type of Business
     $sql2 = "
-        SELECT nature_of_work, COUNT(*) AS total
+        SELECT nature_of_activity, COUNT(*) AS total
         FROM construction_applications
-        GROUP BY nature_of_work
-        ORDER BY nature_of_work ASC
+        GROUP BY nature_of_activity
+        ORDER BY nature_of_activity ASC
     ";
 
     $stmt2 = $pdo->query($sql2);

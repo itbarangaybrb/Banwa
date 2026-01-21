@@ -24,7 +24,7 @@ const street = document.getElementById('street');
 
 
 // Business form elements 
-const natureOfWork = document.getElementById('natureOfWork');
+// const natureOfWork = document.getElementById('natureOfWork');
 const typeOfWork = document.getElementById('typeOfWork');
 const natureOfActivity = document.getElementById('natureOfActivity');
 const detailsOfWork = document.getElementById('detailsOfWork');
@@ -200,9 +200,9 @@ const validationConfig = [
     { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
     { el: lotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
     { el: street, type: 'select', message: 'Please select the street' },
-    { el: natureOfWork, type: 'select', message: 'Please select what kind of work will be done' },
+    { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
-    { el: natureOfActivity, type: 'text', message: 'Please describe the nature of activity' },
+    // { el: natureOfActivity, type: 'text', message: 'Please describe the nature of activity' },
     { el: detailsOfWork, type: 'text', message: 'Please provide details of the work' },
     { el: startDate, type: 'date', message: 'Please select the expected start date' },
     { el: endDate, type: 'date', message: 'Please select the expected completion date' },
@@ -294,7 +294,7 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
 // ============================
 document.getElementById('nextToWaiver').addEventListener('click', () => {
     const stepFields = [
-        natureOfWork,
+        // natureOfWork,
         typeOfWork,
         natureOfActivity,
         detailsOfWork,
@@ -322,8 +322,8 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     const lng = document.getElementById('longitude2').value;
 
     if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
-        document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
-        document.getElementById('sumTypeOfBusiness').textContent = typeOfWork.value;
+        // document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
+        document.getElementById('sumTypeOfConstruction').textContent = typeOfWork.value;
         document.getElementById('sumNatureOfActivity').textContent = natureOfActivity.value;
         document.getElementById('sumDetailsOfWork').textContent = detailsOfWork.value;
         document.getElementById('sumStartDate').textContent = startDate.value;
@@ -400,7 +400,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('street', document.getElementById('street').value);
 
         // Construction Details
-        formData.append('natureOfWork', document.getElementById('natureOfWork').value);
+        // formData.append('natureOfWork', document.getElementById('natureOfWork').value);
         formData.append('typeOfWork', document.getElementById('typeOfWork').value);
         formData.append('natureOfActivity', document.getElementById('natureOfActivity').value);
         formData.append('detailsOfWork', document.getElementById('detailsOfWork').value);
