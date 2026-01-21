@@ -1,136 +1,140 @@
 import supabase from "../../../server/api/supabase.js";
 
-function validations() {
-    // =========================
-    // Form elements
-    // =========================
-    const email = document.getElementById('email');
+// =========================
+// Forgot Password Elements
+// =========================
+const forgotPassElements = {
+    form: document.getElementById('forgotPassForm'),
+    email: document.getElementById('email'),
+    formMessage: document.getElementById('formMessage'),
+    backBtn: document.getElementById('forgotPassBackBtn')
+};
 
-    // =========================
-    // Validation inputs (GENERIC)
-    // =========================
-    function validateInput(input, message = 'This field is required', rules = {}) {
-        const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper?.querySelector('.error-msg') || input.nextElementSibling;
-        const value = input.type === 'checkbox' ? input.checked : input.value.trim();
+// =========================
+// Validator Module
+// =========================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
 
-        if ((input.type === 'checkbox' && !value) ||
-            (!input.type.includes('checkbox') && (value === '' || value === 'select'))) {
-            input.classList.add('error');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-            return false;
-        }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    }
 
-        if (rules.pattern && !rules.pattern.test(value)) {
-            input.classList.add('error');
-            errorEl.textContent = rules.errorMessage || 'Invalid format';
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        if (rules.maxLength && value.length > rules.maxLength) {
-            input.classList.add('error');
-            errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        if (rules.minLength && value.length < rules.minLength) {
-            input.classList.add('error');
-            errorEl.textContent = `Minimum ${rules.minLength} characters required`;
-            errorEl.classList.add('show');
-            return false;
-        }
-
-        input.classList.remove('error');
-        errorEl.classList.remove('show');
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
         errorEl.textContent = '';
-        return true;
+        errorEl.classList.remove('show');
     }
 
-    // =========================
-    // Specialized Email Validations
-    // =========================
-    function emailValidation() {
-        const wrapper = email.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        const value = email.value.trim();
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (value === '') {
-            email.classList.add('error');
-            errorEl.textContent = 'Email is required';
-            errorEl.classList.add('show');
-        } else if (!emailPattern.test(value)) {
-            email.classList.add('error');
-            errorEl.textContent = 'Enter a valid email address';
-            errorEl.classList.add('show');
-        } else {
-            email.classList.remove('error');
-            errorEl.textContent = '';
-            errorEl.classList.remove('show');
-        }
+    function validateEmail(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, message); return false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
+        clearError(input); return true;
     }
 
-    // =========================
-    // Real-time validation setup (single IIFE)
-    // =========================
-    (() => {
-        if (!email) return;
-        email.addEventListener('input', emailValidation);
-    })();
+    return { email: validateEmail, clear: clearError };
+})();
 
-    // =========================
-    // Navigation buttons
-    // =========================
-    document.getElementById('forgotPassBackBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
-    });
+// =========================
+// Validation Config
+// =========================
+const validationConfig = [
+    { el: forgotPassElements.email, type: 'email', message: 'Email is required' }
+];
 
-    const formMessage = document.getElementById('formMessage');
-    formMessage.style.display = 'none';
-
-    document.getElementById('forgotPassForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        formMessage.textContent = '';
-
-        const validations = validateInput(
-            email,
-            'Email is required',
-            { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, errorMessage: 'Enter a valid email address' }
-        );
-
-        if (!validations) return;
-
-        try {
-            const { data, error } = await supabase.auth.resetPasswordForEmail(email.value,
-                {
-                    redirectTo: 'http://localhost:8080/Banwa/client/pages/auth/reset_pass1.php'
-                }
-            );
-
-            if (error) {
-                console.error('Supabase reset error:', error.message);
-                formMessage.style.display = 'block';
-                formMessage.style.color = 'red';
-                formMessage.textContent = `Reset failed: ${error.message}`;
-                return;
-            }
-
-            formMessage.style.display = 'block';
-            formMessage.style.color = 'green';
-            formMessage.textContent = 'Email submitted. Check your inbox for the reset link.';
-
-        } catch (err) {
-            console.error('Unexpected error:', err);
-            formMessage.style.display = 'block';
-            formMessage.style.color = 'red';
-            formMessage.textContent = 'An unexpected error occurred. Please try again.';
-        }
-    });
-
+// =========================
+// Validate Field Helper
+// =========================
+function validateField(config) {
+    const { el, type, message } = config;
+    if (!el) return true;
+    switch (type) {
+        case 'email': return validator.email(el, message);
+    }
 }
 
-validations();
+// =========================
+// Step Validation
+// =========================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+// =========================
+// Real-time Validation
+// =========================
+function setupRealtimeValidation() {
+    validationConfig.forEach(config => {
+        const { el } = config;
+        if (!el) return;
+        el.addEventListener('input', () => validator.clear(el));
+        el.addEventListener('blur', () => validateField(config));
+    });
+}
+
+// =========================
+// Handle Form Submission
+// =========================
+async function handleForgotPassSubmit(e) {
+    e.preventDefault();
+    forgotPassElements.formMessage.textContent = '';
+    forgotPassElements.formMessage.style.display = 'none';
+
+    if (!validateStep([forgotPassElements.email])) return;
+
+    try {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(
+            forgotPassElements.email.value.trim(),
+            { redirectTo: 'http://localhost:8080/Banwa/client/pages/auth/reset_pass1.php' }
+        );
+
+        if (error) {
+            forgotPassElements.formMessage.style.display = 'block';
+            forgotPassElements.formMessage.style.color = 'red';
+            forgotPassElements.formMessage.textContent = `Reset failed: ${error.message}`;
+            return;
+        }
+
+        forgotPassElements.formMessage.style.display = 'block';
+        forgotPassElements.formMessage.style.color = 'green';
+        forgotPassElements.formMessage.textContent = 'Email submitted. Check your inbox for the reset link.';
+    } catch (err) {
+        console.error(err);
+        forgotPassElements.formMessage.style.display = 'block';
+        forgotPassElements.formMessage.style.color = 'red';
+        forgotPassElements.formMessage.textContent = 'An unexpected error occurred. Please try again.';
+    }
+}
+
+// =========================
+// Navigation Buttons
+// =========================
+function setupNavigationButtons() {
+    if (forgotPassElements.backBtn) {
+        forgotPassElements.backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = '/Banwa/client/pages/auth/signin.php';
+        });
+    }
+}
+
+// =========================
+// Initialize All Functionality
+// =========================
+function initialize() {
+    setupRealtimeValidation();
+    setupNavigationButtons();
+    if (forgotPassElements.form) forgotPassElements.form.addEventListener('submit', handleForgotPassSubmit);
+}
+
+// =========================
+// DOM Ready
+// =========================
+document.addEventListener('DOMContentLoaded', initialize);

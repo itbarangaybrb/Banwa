@@ -10,10 +10,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!session) {
         window.location.href = "/Banwa/client/pages/auth/signin.php";
         return;
-    } else {
-        if (userStatus) userStatus.textContent = `${session.user.email}`;
-        if (signoutBtn) signoutBtn.style.display = "flex";
     }
+    
+    if (userStatus) userStatus.textContent = `${session.user.email}`;
+    // if (signoutBtn) signoutBtn.style.display = "flex";
+
 
     if (signoutBtn) {
         signoutBtn.addEventListener("click", async () => {
@@ -22,8 +23,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 console.error("Supabase sign-out error:", error.message);
             }
 
-            await fetch('/Banwa/server/api/resident/signout_user.php', {
-                method: 'POST'
+            await fetch('/Banwa/server/api/shared/signout_user.php', {
+                method: 'POST',
+                credentials: 'include'
             });
 
             window.location.href = "/Banwa/client/pages/auth/signin.php";

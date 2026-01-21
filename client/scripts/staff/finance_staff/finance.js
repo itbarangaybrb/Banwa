@@ -4,14 +4,38 @@ const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
 let pendingApps = [];
 let paidApps = [];
 
-// TAB SWITCHING
-function switchTab(event, tabName) {
-    event.preventDefault();
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+// UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
+document.addEventListener('DOMContentLoaded', function() {
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
 
+    // TOGGLE SIDEBAR ON CLICK
+    if (navLogo && sideNav) {
+        navLogo.addEventListener('click', function() {
+            sideNav.classList.toggle('expanded');
+        });
+    }
+});
+
+// UPDATED TAB SWITCHING
+function switchTab(event, tabName) {
+    if (event) event.preventDefault();
+
+    // 1. Switch Content
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(tabName);
+    if (target) target.classList.add('active');
+
+    // 2. Switch Sidebar Active State
+    document.querySelectorAll('.nav_select').forEach(link => link.classList.remove('active'));
+    
+    // Find and highlight the clicked link
+    if (event) {
+        const clickedLink = event.target.closest('.nav_select');
+        if (clickedLink) clickedLink.classList.add('active');
+    }
+
+    // 3. Load Data
     if (tabName === 'pending') loadPendingTable();
     else if (tabName === 'history') loadHistoryTable();
 }

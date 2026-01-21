@@ -2,7 +2,8 @@
 header("Content-Type: application/json");
 require_once __DIR__ . '/../../configs/database.php';
 
-$email = $_GET['email'] ?? '';
+$input = json_decode(file_get_contents("php://input"), true);
+$email = $input['email'] ?? '';
 
 if (!$email) {
     echo json_encode(['exists' => false]);
@@ -12,8 +13,6 @@ if (!$email) {
 $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
 $stmt->execute([$email]);
 
-if ($stmt->rowCount() > 0) {
-    echo json_encode(['exists' => true]);
-} else {
-    echo json_encode(['exists' => false]);
-}
+echo json_encode([
+    'exists' => $stmt->rowCount() > 0
+]);

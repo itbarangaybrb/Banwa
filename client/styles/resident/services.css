@@ -1,0 +1,137 @@
+/* TODO:
+      Front-end dev, later will move this in global.css,
+      not today because of global may affected some files that use global.css 
+      that is why it is isolated for now for safety.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --h4: 36px;
+    --h4-lh: 44px;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+
+    --txt2: 18px;
+    --txt2-lh: 28px;
+
+    --txt3: 16;
+    --txt3-lh: 24px;
+
+    --regular: 400;
+    --bold: 700;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+.sections {
+    width: 100%;
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+}
+
+/* .containers {
+  padding: 32px 16px;
+} */
+
+@media screen and (min-width: 780px) {
+    .sections {
+        width: 100%;
+        max-width: 1440px;
+        width: 100%;
+        padding: 96px 64px;
+        margin-inline: auto;
+    }
+}
+
+.header-and-parag {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.header-and-parag h4 {
+    font-size: var(--h4);
+    line-height: var(--h4-lh);
+    font-weight: var(--bold);
+    color: #262626;
+}
+
+.header-and-parag p {
+    margin-top: 8px;
+    font-size: var(--txt2);
+    line-height: var(--txt2-lh);
+    font-weight: var(--regular);
+    color: #363636;
+}
+
+.list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    list-style: none;
+    gap: 16px;
+    max-width: 822px;
+    margin-inline: auto;
+    flex-wrap: wrap
+}
+
+.list .links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    row-gap: 16px;
+    width: calc(25% - 12px);
+    padding: 24px 16px;
+    border-radius: 16px;
+    border: 1px solid #ebebeb;
+    background-color: #fbfbfb;
+    transition: background-color 200ms ease;
+    cursor: pointer;
+}
+
+.list .links:hover {
+    background-color: white;
+    filter: none;
+}
+
+.list:hover .links:not(:hover) {
+    filter: blur(2px);
+}
+
+.list .links {
+    color: black;
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+    font-weight: var(--regular);
+    text-decoration: none;
+}
+
+@media (max-width: 780px) {
+    .sections {
+        padding: 64px 16px;
+    }
+
+    .list .links {
+        width: calc(50% - 8px);
+    }
+}
+
+@media (max-width: 400px) {
+    /* .list .items {
+        width: 100%;
+    } */
+}

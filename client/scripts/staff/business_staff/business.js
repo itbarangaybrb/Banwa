@@ -1,57 +1,179 @@
+// Configuration
+const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
+// NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
+const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
+let applications = [];
 
+// Initialize sidebar navigation
+document.addEventListener('DOMContentLoaded', function () {
+    initializeSidebarNav();
+});
 
+function initializeSidebarNav() {
+    const navItems = document.querySelectorAll('.nav_select[data-tab]');
+    const navLogo = document.querySelector('.nav_logo'); // Select the hamburger icon
+    const sideNav = document.querySelector('.side_nav'); // Select the sidebar
 
-    // Configuration
-    const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
-    // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
-    const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
-    let applications = [];
-    
-    // Initialize sidebar navigation
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeSidebarNav();
+    // --- NEW CLICK TOGGLE LOGIC ---
+    if (navLogo && sideNav) {
+        navLogo.addEventListener('click', function () {
+            sideNav.classList.toggle('expanded');
+        });
+    }
+    // ------------------------------
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
+            switchTab(e, tabName);
+        });
     });
 
-    function initializeSidebarNav() {
-        const navItems = document.querySelectorAll('.nav_select[data-tab]');
-        navItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const tabName = this.getAttribute('data-tab');
-                switchTab(e, tabName);
-            });
-        });
-        
-        // Placeholder for user profile button
-        const userProfileBtn = document.getElementById('userProfileBtn');
-        if (userProfileBtn) {
-            userProfileBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                // Placeholder function - add user profile functionality here
-                console.log('User profile button clicked - add functionality here');
-            });
-        }
-        
-        // Load initial tab
-        loadReviewTable();
+    // Load initial tab
+    loadAnalyticsTab();
+}
+
+// TAB SWITCHING
+// function switchTab(event, tabName) {
+//     event.preventDefault();
+//     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+//     document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
+//     document.getElementById(tabName).classList.add('active');
+//     event.target.closest('.nav_select').classList.add('active');
+
+//     if (tabName === 'review') loadReviewTable();
+//     else if (tabName === 'process') loadProcessTable();
+//     else if (tabName === 'summary') loadSummarySelect();
+//     else if (tabName === 'dashboard') loadAnalyticsTab();
+
+// }
+// 1. UPDATE TAB SWITCHING
+function switchTab(event, tabName) {
+    if(event) event.preventDefault();
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(tabName);
+    if(target) target.classList.add('active');
+
+    if(event) {
+        const link = event.target.closest('.nav_select');
+        if(link) link.classList.add('active');
     }
 
-    // TAB SWITCHING
-function switchTab(event, tabName) {
-    event.preventDefault();
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
-    event.target.closest('.nav_select').classList.add('active');
-
-    if (tabName === 'review') loadReviewTable();
-    else if (tabName === 'process') loadProcessTable();
+    // Load Data based on Tab
+    if (tabName === 'management') loadManagementTable(); 
     else if (tabName === 'summary') loadSummarySelect();
-}function loadApplicationsFromDB() {
+    else if (tabName === 'dashboard') loadAnalyticsTab();
+}
+
+// 2. THE NEW UNIFIED TABLE LOADER
+function loadManagementTable() {
+    loadApplicationsFromDB().finally(() => {
+        // Also trigger the filter function immediately to populate the table
+        filterApplications(); 
+    });
+}
+
+// 3. UPDATED FILTER FUNCTION (Serves as the main renderer)
+function filterApplications() {
+    // 1. SAFELY GET ELEMENTS (Checks if they exist first)
+    // We check for 'managementSearch' (from your PHP) OR 'searchInput' (fallback)
+    const searchEl = document.getElementById('managementSearch') || document.getElementById('searchInput'); 
+    const statusEl = document.getElementById('statusFilter'); // This was missing in your HTML
+    const tbody = document.getElementById('managementTableBody') || document.getElementById('tableBody');
+
+    // If the table body doesn't exist, stop immediately to prevent errors
+    if (!tbody) return; 
+
+    // 2. GET VALUES SAFELY
+    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+    const statusFilter = statusEl ? statusEl.value : ''; // Defaults to empty string if dropdown is missing
+
+    tbody.innerHTML = '';
+
+    // 3. FILTER LOGIC
+    // Check if 'applications' data exists before filtering
+    if (!applications || !Array.isArray(applications)) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading data...</td></tr>';
+        return;
+    }
+
+    const filtered = applications.filter(app => {
+        // Safe string access (handle nulls in DB)
+        const businessName = (app.business_name || '').toLowerCase();
+        const fullName = ((app.first_name || '') + ' ' + (app.last_name || '')).toLowerCase();
+        const id = (app.id || '').toString();
+
+        const matchesSearch = 
+            businessName.includes(searchTerm) ||
+            fullName.includes(searchTerm) ||
+            id.includes(searchTerm);
+        
+        // Only filter by status if a specific status is selected (not empty)
+        const matchesStatus = statusFilter === '' || app.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#999;">No matching applications found.</td></tr>';
+        return;
+    }
+
+    // 4. RENDER LOGIC
+    filtered.forEach(app => {
+        // A. Determine Status Color
+        let badgeClass = 'pending';
+        if (app.status === 'Approved') badgeClass = 'approved';
+        if (app.status === 'Disapproved') badgeClass = 'disapproved';
+        if (app.status === 'Paid') badgeClass = 'paid';
+        if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+        // B. Determine "Smart Action" Button
+        let actionBtn = '';
+        
+        if (app.status === 'Pending') {
+             actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+        } 
+        else if (app.status === 'For Payment') {
+             actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
+        }
+        else if (app.status === 'Paid') {
+             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+        }
+        else if (app.status === 'Approved') {
+             actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">🖨️ Clearance</button>`;
+        }
+        else {
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
+        }
+
+        // C. Build Row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${app.id}</td>
+            <td style="font-weight:600;">${app.business_name}</td>
+            <td>${app.first_name} ${app.last_name}</td>
+            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+            <td>${app.payment_status || 'Unpaid'}</td>
+            <td>
+                <div class="action-buttons">
+                    ${actionBtn} 
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">👁️</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function loadApplicationsFromDB() {
     return fetch(`${API_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if(data.status === 'success') applications = data.data;
+            if (data.status === 'success') applications = data.data;
             return applications;
         });
 }
@@ -63,10 +185,10 @@ function loadReviewTable() {
         applications.forEach(app => {
             // Status Badge Logic
             let badgeClass = 'pending';
-            if(app.status === 'Approved') badgeClass = 'approved';
-            if(app.status === 'Disapproved') badgeClass = 'disapproved';
-            if(app.status === 'Paid') badgeClass = 'paid';
-            if(app.status === 'For Payment') badgeClass = 'for-payment';
+            if (app.status === 'Approved') badgeClass = 'approved';
+            if (app.status === 'Disapproved') badgeClass = 'disapproved';
+            if (app.status === 'Paid') badgeClass = 'paid';
+            if (app.status === 'For Payment') badgeClass = 'for-payment';
 
             tbody.innerHTML += `
                 <tr>
@@ -95,9 +217,9 @@ function loadProcessTable() {
             return !excludedStatuses.includes(app.status);
         });
 
-        if(actionable.length === 0) {
-             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications to process.</td></tr>';
-             return;
+        if (actionable.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications to process.</td></tr>';
+            return;
         }
 
         actionable.forEach(app => {
@@ -105,9 +227,9 @@ function loadProcessTable() {
             let btnClass = "btn-secondary";
 
             // Highlight actions based on flow
-            if(app.status === 'Pending') { btnText = "⚙️ Update"; btnClass = "btn-primary"; }
-            else if(app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "btn-warning"; }
-            else if(app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
+            if (app.status === 'Pending') { btnText = "⚙️ Update"; btnClass = "btn-primary"; }
+            else if (app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "btn-warning"; }
+            else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
 
             tbody.innerHTML += `
                 <tr>
@@ -117,10 +239,10 @@ function loadProcessTable() {
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
                         <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                        ${ (app.status === 'Approved') // CONDITION MODIFIED: Only checks for 'Approved'
-                            ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
-                            : ''
-                        }
+                        ${(app.status === 'Approved') // CONDITION MODIFIED: Only checks for 'Approved'
+                    ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
+                    : ''
+                }
                     </td>
                 </tr>
             `;
@@ -128,15 +250,74 @@ function loadProcessTable() {
     });
 }
 
+let chart1Instance;
+let chart2Instance;
+
+function loadAnalyticsTab() {
+    fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php?action=chart_business_type')
+        .then(res => res.json())
+        .then(res => {
+            if (res.status !== 'success') return;
+
+            const labels1 = res.data_by_date.map(x => x.application_date);
+            const values1 = res.data_by_date.map(x => x.total);
+
+            const labels2 = res.data_by_type.map(x => x.type_of_business);
+            const values2 = res.data_by_type.map(x => x.total);
+
+            const dateColors = ['#4F46E5', '#2563EB', '#0284C7', '#0891B2', '#0D9488', '#14B8A6'];
+            const typeColors = ['#F59E0B', '#F97316', '#EF4444', '#8B5CF6', '#EC4899', '#84CC16'];
+
+            if (chart1Instance) chart1Instance.destroy();
+            if (chart2Instance) chart2Instance.destroy();
+
+            chart1Instance = new Chart(document.getElementById('chart1'), {
+                type: 'line',
+                data: {
+                    labels: labels1,
+                    datasets: [{
+                        label: 'Business Dates',
+                        data: values1,
+                        backgroundColor: dateColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            chart2Instance = new Chart(document.getElementById('chart2'), {
+                type: 'bar',
+                data: {
+                    labels: labels2,
+                    datasets: [{
+                        label: 'Business Types',
+                        data: values2,
+                        backgroundColor: typeColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+}
+
+
+
 function applyPrompt(text) {
     const textarea = document.getElementById('updateComments');
     if (textarea) {
         // Option A: Replace everything
         textarea.value = text;
-        
+
         // Option B: Append instead of replace (Uncomment below if preferred)
         // textarea.value += (textarea.value ? ' ' : '') + text;
-        
+
         textarea.focus();
     }
 }
@@ -156,37 +337,51 @@ function generateClearance(appId) {
         .catch(err => showAlert('Error generating clearance: ' + err, 'danger'));
 }
 
-// NEW: UPDATE / ASSESS LOGIC
-function openUpdateModal(id) {
-    const app = applications.find(a => a.id == id);
-    document.getElementById('updateAppId').value = id;
-    document.getElementById('displayCurrentStatus').value = app.status;
-    document.getElementById('updateForm').reset();
-    if (app.status === 'For Payment' && app.amount_due) {
-        document.getElementById('assessmentAmount').value = parseFloat(app.amount_due).toFixed(2);
+// A. OPEN THE MODAL AND FILL IN CURRENT DATA
+function openUpdateModal(appId) {
+    // Find the specific application from our global array
+    const app = applications.find(a => a.id == appId);
+    
+    if (!app) {
+        alert("Application data not found.");
+        return;
     }
-    toggleAmountField(); // Reset visibility
-    openModal('updateModal');
+
+    // Fill the hidden ID field and the visible "Current Status" text
+    document.getElementById('updateAppId').value = app.id;
+    document.getElementById('displayCurrentStatus').value = app.status;
+    
+    // Reset the form fields
+    document.getElementById('newStatus').value = "";
+    document.getElementById('updateComments').value = "";
+    document.getElementById('assessmentAmount').value = "";
+    document.getElementById('amountFieldGroup').classList.add('hidden');
+
+    // Show the modal
+    document.getElementById('updateModal').classList.add('active');
 }
 
+
+// B. SHOW/HIDE AMOUNT FIELD (Based on selection)
 function toggleAmountField() {
-    const status = document.getElementById('newStatus').value;
+    const statusSelect = document.getElementById('newStatus');
     const amountGroup = document.getElementById('amountFieldGroup');
     const amountInput = document.getElementById('assessmentAmount');
 
-    if (status === 'For Payment') {
+    // Only show the payment amount field if "For Payment" is selected
+    if (statusSelect.value === 'For Payment') {
         amountGroup.classList.remove('hidden');
-        amountInput.required = true;
+        amountInput.setAttribute('required', 'required');
     } else {
         amountGroup.classList.add('hidden');
-        amountInput.required = false;
-        amountInput.value = '';
+        amountInput.removeAttribute('required');
     }
 }
 
+// C. SUBMIT THE UPDATE TO THE DATABASE
 function submitUpdate(event) {
     event.preventDefault();
-    
+
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
@@ -194,98 +389,162 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeModal('updateModal');
-            alert('Application updated successfully!');
-            loadReviewTable();
-            loadProcessTable();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('updateModal');
+                alert('Application updated successfully!');
+                loadReviewTable();
+                loadProcessTable();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
 }
 
-    // VIEW DETAILS (MODIFIED to include comments & file link)
-    function viewDetails(appId) {
+// Helper: Apply quick text prompts to the textarea
+function applyPrompt(text) {
+    document.getElementById('updateComments').value = text;
+}
+
+// VIEW DETAILS (MODIFIED to include comments & file link)
+function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
+    // 1. Prepare Data
     const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';   
+    
+    // Parse requirements list safely
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+    }
+    const requirementsList = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<span class="badge-req">✓ ${r}</span>`).join(' ')
+        : '<span style="color:#999;">No requirements logged</span>';
 
-    // Build the uploaded file link HTML
-    const fileUploadHtml = app.requirement_upload 
-        ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
-        : 'No file uploaded';
-
-    // Build comments HTML
-    let commentsHtml = '';
-    if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
-    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
+    // 2. File Viewing Logic
+    let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
+    
+    if (app.requirement_upload) {
+        const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
+        const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
+        
+        // If image, show thumbnail + view button
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            fileHtml = `
+                <div class="file-viewer-box">
+                    <p style="margin-bottom:10px; font-weight:bold; color:#19316b;">Attached Document</p>
+                    <a href="${filePath}" target="_blank">
+                        <img src="${filePath}" alt="Document Preview" class="file-thumbnail" title="Click to enlarge">
+                    </a>
+                    <br>
+                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
+                </div>`;
+        } 
+        // If PDF or other, show generic icon + open button
+        else {
+            fileHtml = `
+                <div class="file-viewer-box">
+                    <i class="fas fa-file-pdf fa-3x" style="color:#dc3545; margin-bottom:10px;"></i>
+                    <p style="margin-bottom:10px; font-weight:bold;">${app.requirement_upload}</p>
+                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-external-link-alt"></i> Open Document</a>
+                </div>`;
+        }
     }
 
-    // CONDITIONAL PAYMENT BLOCK
-    const paymentInfo = app.amount_due > 0 
-    ? `<div class="summary-card">
-        <h3>💰 Assessment & Payment</h3>
-        <p><strong>Amount Due:</strong> ₱${app.amount_due}</p>
-        <p><strong>Payment Status:</strong> ${app.payment_status}</p>
-        <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
-       </div>` 
-    : '';
+    // 3. Status Colors
+    let statusColor = '#6c757d'; 
+    let statusBg = '#e2e3e5';
+    switch(app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
 
-    // COMBINE ALL HTML BLOCKS INTO ONE VARIABLE
-    const fullModalContent = `
-        <div class="summary-card">
-            <h3>📍 Business Information</h3>
-            <p><strong>Application ID:</strong> ${app.id}</p>
-            <p><strong>Business Name:</strong> ${app.business_name}</p>
-            <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
-            <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
-            <p><strong>Business Address:</strong> ${app.address_of_business}</p>
-            <p><strong>Business Status:</strong> ${businessStatus}</p>
-            <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
-            <p><strong>Email Address:</strong> ${app.email_address}</p>
-            <h3>👤 Owner Information</h3>
-            <p><strong>Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
-            <p><strong>Telephone:</strong> ${app.telephone_no_owner}</p>
-            <p><strong>Address:</strong> ${app.address_owner}</p>
-            <h3>🏢 Business Structure</h3>
-            <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
-            <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-            <h3>📋 Requirements</h3>
-            <p><strong>Submitted:</strong> ${requirementsList}</p>
-            <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-            <h3>📅 Application Details</h3>
-            <p><strong>Application Date:</strong> ${app.application_date}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
-            ${commentsHtml}
+    // 4. Build Professional HTML Structure
+    const content = `
+        <div class="details-container">
+            <div class="details-header-card">
+                <div class="details-title">
+                    <h2>${app.business_name}</h2>
+                    <div class="details-id">Application ID: #${app.id}</div>
+                </div>
+                <div style="text-align:right;">
+                    <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
+                        ${app.status}
+                    </span>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">Date: ${app.application_date}</div>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <div class="col-left">
+                    <div class="detail-card">
+                        <h3>📍 Business Information</h3>
+                        <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${app.type_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Nature</span> <span class="detail-value">${app.nature_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_of_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Premises</span> <span class="detail-value">${businessStatus}</span></div>
+                        <div class="detail-row"><span class="detail-label">Phone</span> <span class="detail-value">${app.telephone_no_business}</span></div>
+                        <div class="detail-row"><span class="detail-label">Email</span> <span class="detail-value" style="word-break:break-all;">${app.email_address}</span></div>
+                    </div>
+
+                    <div class="detail-card" style="margin-top:20px;">
+                        <h3>👤 Owner Details</h3>
+                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.telephone_no_owner}</span></div>
+                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_owner}</span></div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="detail-card">
+                        <h3>📋 Documents & Files</h3>
+                        <div style="margin-bottom:15px;">
+                            <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
+                            <div style="font-size:12px; line-height:1.6;">${requirementsList}</div>
+                        </div>
+                        ${fileHtml}
+                    </div>
+
+                    <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
+                        <h3>💰 Assessment</h3>
+                        ${ app.amount_due > 0 ? `
+                        <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
+                        <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
+                        <div class="detail-row"><span class="detail-label">OR Number</span> <span class="detail-value">${app.or_number || 'Pending'}</span></div>
+                        ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>' }
+                    </div>
+                </div>
+            </div>
+
+            ${ app.approval_comments || app.disapproval_reason ? `
+            <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
+                <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
+                <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
+            </div>
+            ` : '' }
         </div>
-        
-        ${paymentInfo} `;
+    `;
 
-    // SET THE MODAL CONTENT
-    document.getElementById('modalBody').innerHTML = fullModalContent;
-    
-    // OPEN THE MODAL
+    document.getElementById('modalBody').innerHTML = content;
     openModal('detailsModal');
 }
 
-    // CREATE APPLICATION
-    function createApplication(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(document.getElementById('createForm'));
-        formData.append('action', 'create');
+// CREATE APPLICATION
+function createApplication(event) {
+    event.preventDefault();
 
-        fetch(API_URL, {
-            method: 'POST',
-            body: formData
-        })
+    const formData = new FormData(document.getElementById('createForm'));
+    formData.append('action', 'create');
+
+    fetch(API_URL, {
+        method: 'POST',
+        body: formData
+    })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
@@ -300,188 +559,233 @@ function submitUpdate(event) {
             console.error('Error:', error);
             showAlert('Failed to create application', 'danger');
         });
-    }
+}
 
-    // LOAD SUMMARY SELECT OPTIONS
-    function loadSummarySelect() {
-        loadApplicationsFromDB().finally(() => {
-            const select = document.getElementById('summaryApplicationSelect');
-            select.innerHTML = '<option value="">-- Select Application --</option>';
-            applications.forEach(app => {
-                select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name}</option>`;
-            }
-            );
-        });
-    }
-    // UPDATE SUMMARY (MODIFIED to include comments & file link)
-    function updateSummary() {
-        const appId = document.getElementById('summaryApplicationSelect').value;
-        const summaryOutput = document.getElementById('summaryOutput');
-        
-        if (!appId) {
-            summaryOutput.innerHTML = '';
-            return;
+// LOAD SUMMARY SELECT OPTIONS
+function loadSummarySelect() {
+    loadApplicationsFromDB().finally(() => {
+        const select = document.getElementById('summaryApplicationSelect');
+        select.innerHTML = '<option value="">-- Select Application --</option>';
+        applications.forEach(app => {
+            select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name}</option>`;
         }
-        
-        const app = applications.find(a => a.id == appId);
-        if (!app) return;
+        );
+    });
+}
 
-        const businessStatus = app.business_status || 'Not specified';
-        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
-        
-        // Build the uploaded file link HTML
-        const fileUploadHtml = app.requirement_upload 
-            ? `<a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" target="_blank">View Document (${app.requirement_upload})</a>` 
-            : 'No file uploaded';
-        
-        // Build comments HTML
-        let commentsHtml = '';
-        if (app.status === 'Approved' && app.approval_comments) {
-            commentsHtml = `<p><strong>Approval Comments:</strong> ${app.approval_comments}</p>`;
-        } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-            commentsHtml = `<p><strong>Disapproval Reason:</strong> ${app.disapproval_reason}</p>`;
-        }
+function updateSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    const summaryOutput = document.getElementById('summaryOutput');
 
-
+    if (!appId) {
         summaryOutput.innerHTML = `
-            <div class="summary-card">
-                <h3>📄 Business Application Summary Report</h3>
-                <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Application ID:</strong> ${app.id}</p>
+            <div class="placeholder-state">
+                <i class="fas fa-file-invoice fa-3x"></i>
+                <p>Select a business from the list above to view the full report.</p>
+            </div>`;
+        return;
+    }
 
-                <h3>📍 Business Information</h3>
-                <p><strong>Business Name:</strong> ${app.business_name}</p>
-                <p><strong>Type of Business:</strong> ${app.type_of_business}</p>
-                <p><strong>Nature of Business:</strong> ${app.nature_of_business}</p>
-                <p><strong>Business Address:</strong> ${app.address_of_business}</p>
-                <p><strong>Business Address Status:</strong> ${businessStatus}</p>
-                <p><strong>Business Telephone:</strong> ${app.telephone_no_business}</p>
-                <p><strong>Email Address:</strong> ${app.email_address}</p>
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
 
-                <h3>👤 Owner Information</h3>
-                <p><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</p>
-                <p><strong>Owner Telephone:</strong> ${app.telephone_no_owner}</p>
-                <p><strong>Owner Address:</strong> ${app.address_owner}</p>
+    // --- 1. Data Processing ---
+    
+    // Status Badge Color Logic
+    let statusColor = '#6c757d'; // Default Grey
+    let statusBg = '#e2e3e5';
+    
+    switch(app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Requirements Formatting
+    let reqs = app.requirements;
+    // Handle case where requirements might be a JSON string or already an object
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
+        : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+
+    // Formatted Dates & Money
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    const amountDue = app.amount_due 
+        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) 
+        : '₱0.00';
+        
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // --- 2. Build HTML Structure ---
+
+    summaryOutput.innerHTML = `
+        <div class="report-header">
+            <div class="report-title">
+                <h1>Business Profile</h1>
+                <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+            </div>
+            <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                ${app.status}
+            </div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>📍 Business Identity</h3>
+                    <div class="info-row"><span class="info-label">Business Name</span> <span class="info-value">${app.business_name}</span></div>
+                    <div class="info-row"><span class="info-label">Type</span> <span class="info-value">${app.type_of_business}</span></div>
+                    <div class="info-row"><span class="info-label">Nature</span> <span class="info-value">${app.nature_of_business}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_business}</span></div>
                 </div>
 
-                <div class="summary-card">
-                <h3>🏢 Business Structure & Operations</h3>
-                <p><strong>Structure Type:</strong> ${app.type_of_structure}</p>
-                <p><strong>Number of Employees:</strong> ${app.no_of_employees}</p>
-
-                <h3>📋 Requirements Submitted</h3>
-                <p><strong>Documents:</strong> ${requirementsList}</p>
-                <p><strong>Uploaded File:</strong> ${fileUploadHtml}</p>
-
-                <h3>📅 Application Status</h3>
-                <p><strong>Submission Date:</strong> ${app.application_date}</p>
-                <p><strong>Current Status:</strong> <span class="status-badge status-${app.status.toLowerCase()}">${app.status}</span></p>
-                ${commentsHtml}
+                <div class="report-section">
+                    <h3>👤 Ownership</h3>
+                    <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.telephone_no_owner}</span></div>
+                    <div class="info-row"><span class="info-label">Email</span> <span class="info-value">${app.email_address || 'N/A'}</span></div>
+                </div>
             </div>
 
-            <div class="summary-actions">
-                <button class="btn-primary" onclick="printSummary()">🖨️ Print Summary</button>
-                <button class="btn-secondary" onclick="downloadSummary(${app.id})">📥 Download</button>
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>🏢 Operations & Docs</h3>
+                    <div class="info-row"><span class="info-label">Structure</span> <span class="info-value">${app.type_of_structure}</span></div>
+                    <div class="info-row"><span class="info-label">Employees</span> <span class="info-value">${app.no_of_employees}</span></div>
+                    <div style="margin-top:15px;">
+                        <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
+                        <ul class="doc-list">${requirementsHtml}</ul>
+                    </div>
+                </div>
+
+                <div class="financial-box">
+                    <h3 style="border:none; margin:0 0 10px 0;">💰 Financial Status</h3>
+                    <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
+                    <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
+                    <div class="financial-total">
+                        <span>Total Assessment</span>
+                        <span>${amountDue}</span>
+                    </div>
+                </div>
             </div>
-        `;
-    }
+        </div>
 
-    // FILTER APPLICATIONS
-    function filterApplications() {
-        const searchInput = document.getElementById('searchInput').value.toLowerCase();
-        const tbody = document.getElementById('tableBody');
-        
-        tbody.innerHTML = '';
-        
-        const filtered = applications.filter(app => 
-            app.business_name.toLowerCase().includes(searchInput) ||
-            (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
-            app.id.toString().includes(searchInput)
-        );
-        
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
-            return;
-        }
+        ${ app.approval_comments ? `
+        <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+            <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
+            <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+        </div>` : '' }
 
-        filtered.forEach(app => {
-            // Status Badge Logic
-            let badgeClass = 'pending';
-            if(app.status === 'Approved') badgeClass = 'approved';
-            if(app.status === 'Disapproved') badgeClass = 'disapproved';
-            if(app.status === 'Paid') badgeClass = 'paid';
-            if(app.status === 'For Payment') badgeClass = 'for-payment';
+        <div class="report-actions">
+            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+        </div>
+    `;
+}
 
-            const row = document.createElement('tr');
-            const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
-            row.innerHTML = `
-                <td>${app.id}</td>
-                <td>${app.business_name}</td>
-                <td>${ownerName}</td>
-                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                <td>${app.payment_status || 'N/A'}</td>
-                <td>
-                    <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
+// FILTER APPLICATIONS
+// function filterApplications() {
+//     const searchInput = document.getElementById('searchInput').value.toLowerCase();
+//     const tbody = document.getElementById('tableBody');
 
-    // ARCHIVE APPLICATION
-    function archiveApplication(appId) {
-        if (!confirm('Are you sure you want to archive this application?')) return;
-        fetch(`${API_URL}?action=archive&id=${appId}`, {
-            method: 'GET'
-        })
+//     tbody.innerHTML = '';
+
+//     const filtered = applications.filter(app =>
+//         app.business_name.toLowerCase().includes(searchInput) ||
+//         (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
+//         app.id.toString().includes(searchInput)
+//     );
+
+//     if (filtered.length === 0) {
+//         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
+//         return;
+//     }
+
+//     filtered.forEach(app => {
+//         // Status Badge Logic
+//         let badgeClass = 'pending';
+//         if (app.status === 'Approved') badgeClass = 'approved';
+//         if (app.status === 'Disapproved') badgeClass = 'disapproved';
+//         if (app.status === 'Paid') badgeClass = 'paid';
+//         if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+//         const row = document.createElement('tr');
+//         const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
+//         row.innerHTML = `
+//                 <td>${app.id}</td>
+//                 <td>${app.business_name}</td>
+//                 <td>${ownerName}</td>
+//                 <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+//                 <td>${app.payment_status || 'N/A'}</td>
+//                 <td>
+//                     <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
+//                     <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
+//                 </td>
+//             `;
+//         tbody.appendChild(row);
+//     });
+// }
+
+// ARCHIVE APPLICATION
+
+function archiveApplication(appId) {
+    if (!confirm('Are you sure you want to archive this application?')) return;
+    fetch(`${API_URL}?action=archive&id=${appId}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                showAlert('Application archived successfully!', 'success');
+                alert('Archived successfully');
                 loadReviewTable();
-                loadProcessTable();
-            } else {
-                showAlert('Error: ' + data.message, 'danger');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Failed to archive application', 'danger');
         });
+}
+
+// MODAL FUNCTIONS
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-    
-    // MODAL FUNCTIONS
-    function openModal(modalId) {
-        document.getElementById(modalId).classList.add('active');
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
     }
+}
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-    }
+// ALERT FUNCTION
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alert-container');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} active`;
+    alertDiv.textContent = message;
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alertDiv);
 
-    // ALERT FUNCTION
-    function showAlert(message, type) {
-        const alertContainer = document.getElementById('alert-container');
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} active`;
-        alertDiv.textContent = message;
-        alertContainer.innerHTML = '';
-        alertContainer.appendChild(alertDiv);
-        
-        setTimeout(() => {
-            alertDiv.classList.remove('active');
-        }, 4000);
-    }
+    setTimeout(() => {
+        alertDiv.classList.remove('active');
+    }, 4000);
+}
 
 
-    // PRINT & DOWNLOAD (MODIFIED for Styled HTML/DOC)
+// PRINT & DOWNLOAD (MODIFIED for Styled HTML/DOC)
 
-    function printSummary() {
-        // 1. Get the main content area of the entire page (e.g., body or main container)
+function printSummary() {
+    // 1. Get the main content area of the entire page (e.g., body or main container)
     // You may need to replace 'document.body' with the ID of your main content wrapper
-    const mainContent = document.body; 
-    
+    const mainContent = document.body;
+
     // 2. Get the element you want to print (the summary)
     const summaryToPrint = document.getElementById('summaryOutput'); // Assuming summaryOutput is the ID of the container element
 
@@ -489,13 +793,13 @@ function submitUpdate(event) {
     // This uses a clever technique by moving the summary content to a new window/tab,
     // or by applying styles. The simplest approach for most web layouts is to 
     // dynamically change the print media CSS.
-    
+
     // Create a new print-only window
     const printWindow = window.open('', '', 'height=600,width=800');
-    
+
     // Write the content you want to print into the new window
     printWindow.document.write('<html><head><title>Application Summary</title>');
-    
+
     // Copy necessary styles (optional, but highly recommended for formatting)
     // You may need to adjust this to include your specific CSS files or <style> tags
     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
@@ -507,7 +811,7 @@ function submitUpdate(event) {
     printWindow.document.write('');
     printWindow.document.write('</body></html>');
     printWindow.document.close();
-    
+
     // Initiate printing in the new window
     printWindow.focus();
 
@@ -523,31 +827,31 @@ function submitUpdate(event) {
     document.body.innerHTML = originalBody;
     window.location.reload(); // Might be necessary to restore full functionality
     */
+}
+
+function downloadSummary(appId) {
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
+
+    // Prepare list data for HTML
+    const businessStatus = app.business_status || 'Not specified';
+    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
+
+    // Generate HTML for file upload link
+    const fileUploadText = app.requirement_upload
+        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
+        : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
+
+    // Generate HTML for comments
+    let commentsHtml = '';
+    if (app.status === 'Approved' && app.approval_comments) {
+        commentsHtml = `<div class="comment-box approval"><h3>✅ Approval Comments</h3><p>${app.approval_comments}</p></div>`;
+    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
+        commentsHtml = `<div class="comment-box disapproval"><h3>❌ Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
-    function downloadSummary(appId) {
-        const app = applications.find(a => a.id == appId);
-        if (!app) return;
-
-        // Prepare list data for HTML
-        const businessStatus = app.business_status || 'Not specified';
-        const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';    
-        
-        // Generate HTML for file upload link
-        const fileUploadText = app.requirement_upload 
-            ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
-            : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
-        
-        // Generate HTML for comments
-        let commentsHtml = '';
-        if (app.status === 'Approved' && app.approval_comments) {
-            commentsHtml = `<div class="comment-box approval"><h3>✅ Approval Comments</h3><p>${app.approval_comments}</p></div>`;
-        } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-            commentsHtml = `<div class="comment-box disapproval"><h3>❌ Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
-        }
-
-        // Generate the full HTML content with embedded CSS for styling
-        const htmlContent = `
+    // Generate the full HTML content with embedded CSS for styling
+    const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -626,36 +930,36 @@ function submitUpdate(event) {
         </html>
                     `;
 
-        // Use application/msword to force it to open in MS Word
-        const blob = new Blob([htmlContent], { type: 'application/msword' }); 
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Business_Application_${app.id}_Summary.doc`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+    // Use application/msword to force it to open in MS Word
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Business_Application_${app.id}_Summary.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
+
+function getCurrentDateString() {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+//Updates the date input field with the current date.
+function updateApplicationDate() {
+    const dateInput = document.getElementById('applicationDate');
+
+    if (dateInput) {
+        dateInput.value = getCurrentDateString();
     }
-
-    function getCurrentDateString() {
-            const now = new Date();
-            
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        }
-
-        //Updates the date input field with the current date.
-        function updateApplicationDate() {
-            const dateInput = document.getElementById('applicationDate');
-            
-            if (dateInput) {
-                dateInput.value = getCurrentDateString();
-            }
-        }
+}
 
 // MODIFIED: Function now fetches application data and generates HTML client-side
 function generateClearance(appId) {
@@ -671,10 +975,10 @@ function generateClearance(appId) {
     const businessName = app.business_name;
     const or_number = app.or_number || 'N/A';
     // Use application date or current date if OR number is N/A
-    const date_issued = app.payment_date || app.application_date || getCurrentDateString(); 
-    
+    const date_issued = app.payment_date || app.application_date || getCurrentDateString();
+
     // NEW: Get the nature of the application for dynamic checking
-    const natureOfApplication = app.nature_of_application ? app.nature_of_application.toLowerCase() : 'new'; 
+    const natureOfApplication = app.nature_of_application ? app.nature_of_application.toLowerCase() : 'new';
 
     const date = new Date(date_issued);
     const day = date.getDate().toString().padStart(2, '0');
@@ -682,7 +986,7 @@ function generateClearance(appId) {
     const year = date.getFullYear().toString().slice(-2); // Get last two digits of the year
 
     // Placeholder names (NOTE: Replace bracketed names with actual values for production.)
-    const CAPTAIN_NAME = "MARIA DELA CRUZ"; 
+    const CAPTAIN_NAME = "MARIA DELA CRUZ";
     const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
 
     // Helper function to check if an option should be marked as checked
@@ -981,36 +1285,36 @@ function generateClearance(appId) {
 </body>
 </html>
     `;
-    
+
     // 4. Open and print the generated HTML
     const w = window.open('', '_blank', 'height=800,width=1000');
     w.document.write(html);
     w.document.close();
     w.onload = () => {
         w.print();
-        w.onafterprint = () => w.close(); 
+        w.onafterprint = () => w.close();
     };
 }
-        // Wait for the DOM content to fully load before running the script
-        document.addEventListener('DOMContentLoaded', () => {
-            updateApplicationDate();
-            setInterval(updateApplicationDate, 60000); 
-        });
+// Wait for the DOM content to fully load before running the script
+document.addEventListener('DOMContentLoaded', () => {
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+});
 
 
-    // CLOSE MODAL ON OUTSIDE CLICK
-    window.onclick = function(event) {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            if (event.target == modal) {
-                modal.classList.remove('active');
-            }
-        });
-    }
-
-    // INITIALIZE ON LOAD
-    window.addEventListener('load', function() {
-        loadReviewTable();
+// CLOSE MODAL ON OUTSIDE CLICK
+window.onclick = function (event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target == modal) {
+            modal.classList.remove('active');
+        }
     });
+}
 
-    document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`)
+// INITIALIZE ON LOAD
+// window.addEventListener('load', function () {
+//     loadAnalyticsTab();
+// });
+
+document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);

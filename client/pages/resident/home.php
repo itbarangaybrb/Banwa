@@ -1,3 +1,38 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
+    <title>Home page</title>
+</head>
+<body>
+    <h1>Home page</h1>
+    <p id="userStatus"></p>
+    <a href="../resident/about_us.php">About Us</a><br>
+    <a href="../resident/contact_us.php">Contact Us</a><br>
+    <a href="../resident/profile.php">Profile</a><br>
+    <a href="../resident/status.php">status</a><br>
+    <a href="../resident/construction_app.php">Construction Application</a><br>
+    <a href="../resident/utilities_app.php">Utilities Application</a><br>
+    <a href="../resident/business_app.php">Business Application</a><br>
+    <button id="signoutBtn">Logout</button>
+
+    <script type="module" src="../../scripts/auth/signout.js"></script>
+</body>
+</html> -->
+
+<?php
+require_once __DIR__ . '/../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,6 +40,7 @@
     <title>Home</title>
     <link rel="stylesheet" href="../../styles/resident/home.css">
 </head>
+
 
 <body>
 <?php 
@@ -86,7 +122,7 @@ include '../../pages/resident/_layout/nav.php';
                         <h2>Contact Us</h2>
                         <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
                         <ul class="contact-info">
-                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4,  Quezon City, Metro Manila</li>
+                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
                             <li><strong>Phone:</strong> +63 946 456 6986</li>
                         </ul>
                     </div>

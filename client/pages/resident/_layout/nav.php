@@ -55,4 +55,9 @@
         </div>
     </header>
 
+    <div id="page-loader">
+        <div class="spinner"></div>
+        <p>Loading…</p>
+    </div>
+
     <main>

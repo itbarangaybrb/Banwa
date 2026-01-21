@@ -7,16 +7,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 :root {
+    --h4: 36px;
+    --h4-lh: 44px;
+
     --h5: 30px;
     --h5-lh: 38px;
 
     --h6: 24px;
     --h6-lh: 32px;
 
+    --txt1: 20px;
+    --txt1-lh: 30px;
+
     --txt3: 16;
     --txt3-lh: 24px;
 
     --regular: 400;
+    --mediium: 500;
+    --semibold: 600;
     --bold: 700;
 }
 
@@ -55,6 +63,29 @@ body {
 
 }
 
+.containers {
+    max-width: 927px;
+    margin-inline: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    /* border: 1px solid gray; */
+    /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); */
+}
+
+.sections .header-and-parag {
+    max-width: 927px;
+    margin-inline: auto;
+    margin-bottom: 40px;
+}
+
+.sections .header-and-parag h4 {
+    margin-bottom: 8px;
+    font-size: var(--h4);
+    line-height: var(--h4-lh);
+    font-weight: var(--bold);
+}
+
 /* ==================== Construction Form ==================== */
 .construction-container .form {
     margin-inline: auto;
@@ -63,9 +94,9 @@ body {
     row-gap: 32px;
 }
 
-.construction-container .form h5 {
-    font-size: var(--h5);
-    line-height: var(--h5-lh);
+.construction-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
     font-weight: var(--bold);
 }
 
@@ -81,15 +112,15 @@ body {
     font-weight: var(--bold);
 }
 
-.construction-container .form .inputs-container h6:not(:first-child) {
+/* .construction-container .form .inputs-container h6:not(:first-child) {
     margin-top: 12px;
     margin-bottom: 8px;
-}
+} */
 
 .construction-container .form .inputs-container .label-and-input {
     display: flex;
     flex-direction: column;
-    row-gap: 4px;
+    row-gap: 8px;
 }
 
 /* .construction-container .form .inputs-container .test {
@@ -301,6 +332,223 @@ body {
     padding: 0;
 }
 
+/* ==================== Waiver Form ==================== */
+.waiver-container .form {
+    /* border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px; */
+
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.waiver-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
+    font-weight: var(--bold);
+}
+
+.waiver-container .form p:first-child {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+/* .waiver-container .form #waiverContent {
+  border-radius: 8px;
+  border: 1px solid gray;
+  padding: 12px;
+} */
+
+.waiver-container .form .label-and-input {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.waiver-container .form .label-and-input label {
+    display: flex;
+    align-items: center;
+    column-gap: 4px;
+}
+
+.waiver-container .form .buttons-container {
+    margin-left: auto;
+    width: max-content;
+    margin-top: 24px;
+}
+
+.waiver-container .form .buttons-container button {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+}
+
+.waiver-container .form .buttons-container button:nth-child(1) {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.waiver-container .form .buttons-container button:nth-child(2) {
+    background-color: #00247C;
+    color: white;
+    margin-left: 4px;
+}
+
+.waiver-container .form .buttons-container button:nth-child(1):hover {
+    background-color: #c9c9c9;
+}
+
+.waiver-container .form .buttons-container button:nth-child(2):hover {
+    background-color: #00164d;
+}
+
+/* ==================== Summary ==================== */
+.summary-container .form {
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.summary-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
+    font-weight: var(--bold);
+}
+
+.summary-container .form p:first-child {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.summary-container .form #summaryContent {
+    display: flex;
+    flex-direction: column;
+    row-gap: 28px;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 18px;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info p {
+    font-size: var(--txt1);
+    line-height: var(--txt1-lh);
+    font-weight: var(--bold);
+}
+
+.summary-container .form #summaryContent .summary-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.summary-container .form #summaryContent .summary-info div {
+    display: flex;
+    gap: 8px;
+}
+
+.summary-container .form #summaryContent .summary-info div p,
+.summary-container .form #summaryContent .summary-info div span {
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+}
+
+.summary-container .form #summaryContent .summary-info div p {
+    font-weight: var(--bold);
+}
+
+.summary-container .form #summaryContent .summary-info div span {
+    font-weight: var(--regular);
+}
+
+.summary-container .form #summaryContent .divider {
+    margin-block: 8px;
+    height: 1px;
+    background-color: gray;
+    width: 100%;
+}
+
+.summary-container .form p:first-child {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.summary-container .form #summaryContent .row {
+    display: flex;
+    row-gap: 8px;
+}
+
+.summary-container .form #summaryContent .row div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.summary-container .form .buttons-container {
+    margin-left: auto;
+    width: max-content;
+}
+
+.summary-container .form .buttons-container button {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+}
+
+.summary-container .form .buttons-container button:nth-child(1) {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.summary-container .form .buttons-container button:nth-child(2) {
+    background-color: #00247C;
+    color: white;
+    margin-left: 4px;
+}
+
+.summary-container .form .buttons-container button:nth-child(1):hover {
+    background-color: #c9c9c9;
+}
+
+.summary-container .form .buttons-container button:nth-child(2):hover {
+    background-color: #00164d;
+}
+
+.error-msg {
+    color: red;
+    font-size: 12px;
+    display: none;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+.error {
+    outline: 1px solid red;
+    /* border: 1px solid red !important; */
+}
+
+.hidden {
+    display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     /* .content {
@@ -331,24 +579,4 @@ body {
         width: 100%;
         margin: 10px 0;
     } */
-}
-
-.error-msg {
-    color: red;
-    font-size: 12px;
-    margin-top: 8px;
-    display: none;
-}
-
-.error-msg.show {
-    display: block;
-}
-
-.error {
-    outline: 1px solid red;
-    /* border: 1px solid red !important; */
-}
-
-.hidden {
-  display: none;
 }

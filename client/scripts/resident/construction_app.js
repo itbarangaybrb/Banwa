@@ -1,227 +1,516 @@
-// function updateDateTime() {
-//     const now = new Date();
-//     const options = { 
-//         weekday: 'long', 
-//         year: 'numeric', 
-//         month: 'long',
-//         day: 'numeric',
-//         hour: '2-digit',
-//         minute: '2-digit',
-//         second: '2-digit'
-//     };
-//     document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
-// }
+import supabase from '../../../server/api/supabase.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { registerServiceWorker } from '../../../register_sw.js';
+registerServiceWorker();
 
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('.nav_select');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function () {
-            navLinks.forEach(nav => nav.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+// ==========================
+// Function: Hide/Show Panels
+// ==========================
+function switchPanel(panelId) {
+    const panels = ['owner', 'construction', 'waiver', 'summary']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    window.scrollTo(0, 0);
 }
 
-function setupDateValidation() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('start_date').min = today;
+// Owner form elements 
+const firstName = document.getElementById('firstName');
+const middleName = document.getElementById('middleName');
+const suffix = document.getElementById('suffix');
+const lastName = document.getElementById('lastName');
+const contactNoOwner = document.getElementById('contactNoOwner');
+const lotNo = document.getElementById('lotNo');
+const street = document.getElementById('street');
 
-    document.getElementById('start_date').addEventListener('change', function () {
-        document.getElementById('end_date').min = this.value;
-    });
-}
 
-// =========================
-// Input Validation
-// =========================
-function validateInput(input, rules = {}) {
-    const wrapper = input.closest('.label-and-input');
-    const errorEl = wrapper.querySelector('.error-msg');
-    const value = input.type === 'checkbox' ? input.checked : input.value.trim();
+// Business form elements 
+// const natureOfWork = document.getElementById('natureOfWork');
+const typeOfWork = document.getElementById('typeOfWork');
+const natureOfActivity = document.getElementById('natureOfActivity');
+const detailsOfWork = document.getElementById('detailsOfWork');
+const startDate = document.getElementById('startDate');
+const endDate = document.getElementById('endDate');
+const numberOfWorkingDays = document.getElementById('numberOfWorkingDays');
+const numberOfWorkers = document.getElementById('numberOfWorkers');
+const contractorName = document.getElementById('contractorName');
+const contractorContactNumber = document.getElementById('contractorContactNumber');
+const applicationMethod = document.getElementById('applicationMethod');
+const constructionLotNo = document.getElementById('constructionLotNo');
+const constructionStreet = document.getElementById('constructionStreet');
+const requirementUpload = document.getElementById('requirementUpload');
 
-    if (rules.required && ((input.type === 'checkbox' && !value) || (!input.type.includes('checkbox') && value === ''))) {
-        input.classList.add('error');
-        errorEl.textContent = rules.message || 'This field is required';
+// Waiver form elements
+const agreeCheckBox = document.getElementById('agreeCheckBox');
+
+const waiverFullname = document.getElementById('waiverFullname');
+
+// Show Owner panel by default
+switchPanel('owner');
+
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
         errorEl.classList.add('show');
-        return false;
+    }
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
     }
 
-    if (rules.pattern && value && !rules.pattern.test(value)) {
-        input.classList.add('error');
-        errorEl.textContent = rules.errorMessage || 'Invalid format';
-        errorEl.classList.add('show');
-        return false;
-    }
-
-    if (rules.min !== undefined && value && parseFloat(value) < rules.min) {
-        input.classList.add('error');
-        errorEl.textContent = `Minimum value is ${rules.min}`;
-        errorEl.classList.add('show');
-        return false;
-    }
-    if (rules.max !== undefined && value && parseFloat(value) > rules.max) {
-        input.classList.add('error');
-        errorEl.textContent = `Maximum value is ${rules.max}`;
-        errorEl.classList.add('show');
-        return false;
-    }
-
-    if (input.type === 'file' && value) {
-        const files = input.files;
-        const allowedTypes = rules.allowedTypes || [];
-        const maxSize = rules.maxSize || 5 * 1024 * 1024;
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const fileExt = file.name.split('.').pop().toLowerCase();
-            if (allowedTypes.length && !allowedTypes.includes(fileExt)) {
-                input.classList.add('error');
-                errorEl.textContent = `Invalid file type: ${file.name}`;
-                errorEl.classList.add('show');
-                return false;
-            }
-            if (file.size > maxSize) {
-                input.classList.add('error');
-                errorEl.textContent = `File too large: ${file.name}`;
-                errorEl.classList.add('show');
-                return false;
-            }
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
         }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+        clearError(input); return true;
     }
 
-    input.classList.remove('error');
-    errorEl.textContent = '';
-    errorEl.classList.remove('show');
-    return true;
-}
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
 
-function setupFormValidation() {
-    const form = document.getElementById('construction-form');
-    if (!form) return;
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+        clearError(input); return true;
+    }
 
-    const fields = {
-        permit_no: { required: true },
-        homeowner_name: { required: true },
-        contractor_name: { required: true },
-        address_of_construction: { required: true },
-        latitude: { required: true, pattern: /^-?\d{1,2}\.\d{6,8}$/, errorMessage: 'Enter valid latitude (decimal)' },
-        longitude: { required: true, pattern: /^-?\d{1,3}\.\d{6,8}$/, errorMessage: 'Enter valid longitude (decimal)' },
-        nature_of_activity: { required: true },
-        type_of_work: { required: true },
-        details_of_work: { required: true },
-        start_date: { required: true },
-        end_date: { required: true },
-        num_of_workers: { required: true, min: 1 },
-        num_of_working_days: { required: true, min: 1 },
-        fee_paid: { required: true, min: 0 },
-        payment_type: { required: true },
-        payment_status: { required: true },
-        blueprint_image: { required: true, allowedTypes: ['jpg', 'jpeg', 'png', 'pdf'], maxSize: 5 * 1024 * 1024 },
-        additional_images: { allowedTypes: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'], maxSize: 5 * 1024 * 1024 }
-    };
+    function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
 
-    Object.keys(fields).forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener(input.tagName === 'SELECT' ? 'change' : 'input', () => validateInput(input, fields[id]));
-            if (input.type === 'file') input.addEventListener('change', () => validateInput(input, fields[id]));
+    function validateFile(input, message, options = {}) {
+        if (!input || input.files.length === 0) { showError(input, message); return false; }
+        const file = input.files[0];
+        if (options.accept?.length > 0) {
+            const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
+            if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
         }
-    });
+        if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
+        clearError(input); return true;
+    }
 
-    form.addEventListener('submit', function (e) {
-        // e.preventDefault();
-
-        let isValid = true;
-        Object.keys(fields).forEach(id => {
-            const input = document.getElementById(id);
-            if (input && !validateInput(input, fields[id])) isValid = false;
-        });
-
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
-            const wrapper = document.getElementById('end_date').closest('.label-and-input');
-            wrapper.querySelector('.error-msg').textContent = 'End date cannot be before start date';
+    function validateAddress(lotInput, streetInput) {
+        const lot = lotInput.value.trim(), street = streetInput.value.trim();
+        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!match) {
+            const wrapper = streetInput.closest('.label-and-input');
+            const errorEl = wrapper.querySelector('.error-msg');
+            streetInput.classList.add('error');
+            errorEl.textContent = 'Street does not exist for this lot';
             errorEl.classList.add('show');
-            isValid = false;
+            return false;
+        }
+        clearError(streetInput);
+        const lat = document.getElementById('latitude2');
+        const lng = document.getElementById('longitude2');
+        if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
+        return true;
+    }
+
+    function validateDate(input, message, rules = {}) {
+        if (!input) return true;
+
+        const value = input.value;
+        if (!value) { showError(input, message); return false; }
+
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            showError(input, rules.errorMessage || 'Invalid date');
+            return false;
         }
 
-        if (!isValid) {
-            e.preventDefault(); // block only if invalid
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (rules.pastOnly && date >= today) {
+            showError(input, rules.errorMessage || 'Date must be in the past');
+            return false;
         }
-    }, { once: true });
+
+        if (rules.futureOnly && date <= today) {
+            showError(input, rules.errorMessage || 'Date must be in the future');
+            return false;
+        }
+
+        if (rules.todayOnly) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const inputDate = new Date(value);
+            inputDate.setHours(0, 0, 0, 0);
+
+            if (inputDate.getTime() !== today.getTime()) {
+                showError(input, rules.errorMessage || 'Date must be today');
+                return false;
+            }
+        }
+
+        if (rules.minDate && date < new Date(rules.minDate)) {
+            showError(input, rules.errorMessage || `Date must be after ${rules.minDate}`);
+            return false;
+        }
+
+        if (rules.maxDate && date > new Date(rules.maxDate)) {
+            showError(input, rules.errorMessage || `Date must be before ${rules.maxDate}`);
+            return false;
+        }
+
+        clearError(input);
+        return true;
+    }
+
+    return {
+        text: validateText,
+        file: validateFile,
+        select: validateSelect,
+        number: validateNumber,
+        checkbox: validateCheckbox,
+        address: validateAddress,
+        date: validateDate,
+        clear: clearError
+    };
+})();
+
+// ==============================
+// Configuration for all inputs
+// ==============================
+const validationConfig = [
+    { el: firstName, type: 'text', message: 'Please enter your first name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: lastName, type: 'text', message: 'Please enter your last name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: lotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
+    { el: street, type: 'select', message: 'Please select the street' },
+    { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
+    { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
+    // { el: natureOfActivity, type: 'text', message: 'Please describe the nature of activity' },
+    { el: detailsOfWork, type: 'text', message: 'Please provide details of the work' },
+    { el: startDate, type: 'date', message: 'Please select the expected start date' },
+    { el: endDate, type: 'date', message: 'Please select the expected completion date' },
+    { el: numberOfWorkers, type: 'number', message: 'Please enter the number of workers', rules: { minLength: 1, maxLength: 2, errorMessage: 'Number of workers must be at least 1' } },
+    { el: contractorName, type: 'text', message: 'Please enter the contractor’s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor’s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: applicationMethod, type: 'select', message: 'Please select how you will submit the application' },
+    { el: constructionLotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
+    { el: constructionStreet, type: 'select', message: 'Please select the street' },
+    { el: requirementUpload, type: 'file', message: 'Please select at least one required document' },
+    { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+];
+
+// ==============================
+// Helper: validate a field by config
+// ==============================
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'file': return validator.file(el, message, rules);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'select': return validator.select(el, message);
+        case 'date': return validator.date(el, message);
+    }
 }
 
+// ==============================
+// Real-time validator
+// ==============================
+(() => {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
+        if (!el) return;
+
+        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
+        });
+    });
+
+    [lotNo, street].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (lotNo.value && street.value) validator.address(lotNo, street);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [constructionLotNo, constructionStreet].forEach(el => {
+        el.addEventListener('blur', () => {
+            if (constructionLotNo.value && constructionStreet.value) validator.address(constructionLotNo, constructionStreet);
+        });
+        el.addEventListener('input', () => validator.clear(el));
+    });
+
+    [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers].forEach(el => {
+        el.addEventListener('input', () => {
+            el.value = el.value.replace(/\D/g, '');
+            validator.clear(el);
+        });
+    });
+})();
+
+// ==============================
+// Button-triggered validation (for steps)
+// ==============================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+// ============================
+// Business "Next" button click
+// ============================
+document.getElementById('nextToConstruction').addEventListener('click', () => {
+    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+    if (!validateStep(stepFields)) return;
+    if (!validator.address(lotNo, street)) return;
+    waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    switchPanel('construction');
+});
+
+// ============================
+// Business "Next" button click
+// ============================
+document.getElementById('nextToWaiver').addEventListener('click', () => {
+    const stepFields = [
+        // natureOfWork,
+        typeOfWork,
+        natureOfActivity,
+        detailsOfWork,
+        startDate,
+        endDate,
+        numberOfWorkers,
+        contractorName,
+        contractorContactNumber,
+        applicationMethod,
+        constructionLotNo,
+        constructionStreet,
+        requirementUpload
+    ];
+
+    if (!validateStep(stepFields)) return;
+    if (!validator.address(constructionLotNo, constructionStreet)) return;
+    switchPanel('waiver');
+});
+
+// ============================
+// Waiver "Next" button click
+// ============================
+document.getElementById('nextToSummary').addEventListener('click', () => {
+    const lat = document.getElementById('latitude2').value;
+    const lng = document.getElementById('longitude2').value;
+
+    if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
+        // document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
+        document.getElementById('sumTypeOfConstruction').textContent = typeOfWork.value;
+        document.getElementById('sumNatureOfActivity').textContent = natureOfActivity.value;
+        document.getElementById('sumDetailsOfWork').textContent = detailsOfWork.value;
+        document.getElementById('sumStartDate').textContent = startDate.value;
+        document.getElementById('sumEndDate').textContent = endDate.value;
+        document.getElementById('sumNumberOfWorkingDays').textContent = numberOfWorkingDays.value;
+        document.getElementById('sumNumberOfWorkers').textContent = numberOfWorkers.value;
+        document.getElementById('sumContractorName').textContent = contractorName.value;
+        document.getElementById('sumContractorContactNumber').textContent = contractorContactNumber.value;
+        document.getElementById('sumApplicationMethod').textContent = applicationMethod.value;
+        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumRequirementUpload').textContent = requirementUpload.value;
+        document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
+        document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
+        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
+
+        switchPanel('summary');
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('ownerBackBtn').addEventListener('click', () => {
+        window.location.href = '/Banwa/client/pages/resident/services.php';
+    });
+
+    document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));
+    document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('construction'));
+    document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
+});
+
+
+// FINAL FORM SUBMISSION HANDLER
+const summaryForm = document.getElementById('summaryForm');
+
+// Remove existing listeners to prevent duplicates
+const newSummaryForm = summaryForm.cloneNode(true);
+summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
+
+newSummaryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+    }
+
+    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification('Application Submitted', {
+                body: "Click to view your application status",
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
+    }
+
+    if (confirm('Are you sure you want to submit this application?')) {
+        const formData = new FormData();
+
+        // 1. ADD THE ACTION (Crucial for construction_handler.php)
+        formData.append('action', 'create');
+
+        // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
+        const { data: { user } } = await supabase.auth.getUser();
+        const supabaseUserId = user?.id;
+        formData.append('supabase_user_id', supabaseUserId);
+
+        // Owner Details
+        formData.append('firstName', document.getElementById('firstName').value);
+        formData.append('middleName', document.getElementById('middleName').value);
+        formData.append('suffix', document.getElementById('suffix').value);
+        formData.append('lastName', document.getElementById('lastName').value);
+        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
+        formData.append('lotNo', document.getElementById('lotNo').value);
+        formData.append('street', document.getElementById('street').value);
+
+        // Construction Details
+        // formData.append('natureOfWork', document.getElementById('natureOfWork').value);
+        formData.append('typeOfWork', document.getElementById('typeOfWork').value);
+        formData.append('natureOfActivity', document.getElementById('natureOfActivity').value);
+        formData.append('detailsOfWork', document.getElementById('detailsOfWork').value);
+        formData.append('startDate', document.getElementById('startDate').value);
+        formData.append('endDate', document.getElementById('endDate').value);
+        formData.append('numberOfWorkingDays', document.getElementById('numberOfWorkingDays').value);
+        formData.append('numberOfWorkers', document.getElementById('numberOfWorkers').value);
+        formData.append('contractorName', document.getElementById('contractorName').value);
+        formData.append('contractorContactNumber', document.getElementById('contractorContactNumber').value);
+        formData.append('applicationMethod', document.getElementById('applicationMethod').value);
+        formData.append('constructionLotNo', document.getElementById('constructionLotNo').value);
+        formData.append('constructionStreet', document.getElementById('constructionStreet').value);
+
+        // File Upload
+        const fileInput = document.getElementById('requirementUpload');
+        if (fileInput.files.length > 0) {
+            formData.append('requirementUpload', fileInput.files[0]);
+        }
+
+        const latitudeEl = document.getElementById('latitude2');
+        const longitudeEl = document.getElementById('longitude2');
+        formData.append('latitude2', latitudeEl?.value || '');
+        formData.append('longitude2', longitudeEl?.value || '');
+
+        // Application Date
+        formData.append('applicationDate', getCurrentDateString());
+
+        // 3. SEND TO BACKEND
+        fetch('../../scripts/staff/construction_staff/construction_handler.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Application submitted successfully!');
+                    window.location.href = '/Banwa/client/pages/resident/status.php';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the application.');
+            });
+    }
+});
+
+
 // =========================
-// Map & Coordinate Functions
+// FN: Map & Coordinate Functions
 // =========================
-function openMapPicker() {
+function openMapPicker(target) {
     const modal = document.createElement('div');
     modal.className = 'map-modal';
     modal.innerHTML = `
         <div class="map-modal-content">
             <div class="map-header">
                 <div class="map-modal-header">
-                    <h3>Select Construction Location</h3>
-                    <button class="close-map" onclick="closeMapPicker()">Close</button>
-                </div>
-                <div class="coordinate-display">
-                    Click on the map to select location: <span id="current-coords">Not selected</span>
+                    <h3>Select Location</h3>
+                    <button class="close-map">Close</button>
                 </div>
             </div>
             <div id="map-container"></div>
         </div>
     `;
+    modal.dataset.target = target;
     document.body.appendChild(modal);
     modal.style.display = 'block';
-    initializeMapPicker();
+
+    modal.querySelector('.close-map').addEventListener('click', () => {
+        const preview = document.getElementById(`map-preview-${target}`);
+        if (preview) preview.style.display = 'none';
+        modal.remove();
+    });
+
+    initializeMapPicker(target);
 }
 
-function closeMapPicker() {
-    const modal = document.querySelector('.map-modal');
-    if (modal) modal.remove();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
+});
 
-async function initializeMapPicker() {
+async function initializeMapPicker(target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
     let marker = null;
 
     map.on('click', function (e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
 
-        // Update visible coords
-        document.getElementById('current-coords').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-
-        // Remove existing marker
         if (marker) map.removeLayer(marker);
-
-        // Add new marker
         marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
 
-        // Update form fields
-        const latInput = document.getElementById('latitude');
-        const lngInput = document.getElementById('longitude');
-
-        latInput.value = lat.toFixed(6);
-        lngInput.value = lng.toFixed(6);
-
-        // Dispatch events so validators react to programmatic changes
-        latInput.dispatchEvent(new Event('input', { bubbles: true }));
-        latInput.dispatchEvent(new Event('change', { bubbles: true }));
-        lngInput.dispatchEvent(new Event('input', { bubbles: true }));
-        lngInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-        // Show preview
-        document.getElementById('map-preview').style.display = 'block';
-        document.getElementById('selected-location').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-
+        document.getElementById(`latitude${target}`).value = lat;
+        document.getElementById(`longitude${target}`).value = lng;
+        document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
+    // Optional: Load barangay polygon
     const blueRidgeGeoJSON = {
         "type": "FeatureCollection",
         "features": [{
@@ -245,32 +534,23 @@ async function initializeMapPicker() {
     };
     L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
 
+    // Load houses from server
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
-
-        const response = await fetch('../../pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-
+        const response = await fetch('../../pages/staff/map_handler.php', { method: 'POST', body: formData });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
         const data = await response.json();
 
         if (data.success && data.houses) {
-            // Create a layer group for houses
             const houseLayer = L.layerGroup();
 
             data.houses.forEach(house => {
                 if (house.coordinates) {
                     try {
                         const coords = JSON.parse(house.coordinates);
-                        // Convert [lng, lat] to [lat, lng] for Leaflet
                         const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-
-                        // Close the polygon
-                        latLngCoords.push(latLngCoords[0]);
+                        latLngCoords.push(latLngCoords[0]); // close polygon
 
                         const polygon = L.polygon(latLngCoords, {
                             color: '#3388ff',
@@ -280,32 +560,46 @@ async function initializeMapPicker() {
                             interactive: true
                         }).addTo(houseLayer);
 
-                        // ADD THIS
+                        // Polygon click autofill
                         polygon.on('click', function (e) {
-                            const lat = e.latlng.lat;
-                            const lng = e.latlng.lng;
+                            const lat = e.latlng.lat.toFixed(6);
+                            const lng = e.latlng.lng.toFixed(6);
 
                             if (marker) map.removeLayer(marker);
                             marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
 
-                            document.getElementById('current-coords').textContent =
-                                `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            // document.getElementById(`current-coords`).textContent = `${lat}, ${lng}`;
+                            document.getElementById(`latitude${target}`).value = lat;
+                            document.getElementById(`longitude${target}`).value = lng;
+                            document.getElementById(`map-preview-${target}`).style.display = 'block';
 
-                            const latInput = document.getElementById('latitude');
-                            const lngInput = document.getElementById('longitude');
+                            // Only fill fields for the correct target
+                            if (target === '1') { // Owner
+                                const lotNo = document.getElementById('lotNo');
+                                const street = document.getElementById('street');
+                                lotNo.value = house.house_number || '';
+                                street.value = house.street_name || '';
+                                [lotNo, street].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
 
-                            latInput.value = lat.toFixed(6);
-                            lngInput.value = lng.toFixed(6);
+                            if (target === '2') { // Utilities
+                                const constructionLotNo = document.getElementById('constructionLotNo');
+                                const constructionStreet = document.getElementById('constructionStreet');
+                                constructionLotNo.value = house.house_number || '';
+                                constructionStreet.value = house.street_name || '';
+                                document.getElementById(`latitude2`).value = lat;
+                                document.getElementById(`longitude2`).value = lng;
 
-                            latInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            latInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            lngInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            lngInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-                            document.getElementById('map-preview').style.display = 'block';
-                            document.getElementById('selected-location').textContent =
-                                `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                                [constructionLotNo, constructionStreet].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
                         });
+
 
                         // Add popup
                         polygon.bindPopup(`
@@ -317,107 +611,108 @@ async function initializeMapPicker() {
                             </div>
                         `);
 
-                        polygon.houseId = house.house_id;
-
-                    } catch (e) {
-                        console.error('Error parsing house coordinates:', e);
+                    } catch (err) {
+                        console.error('Error parsing house coordinates:', err);
                     }
                 }
             });
 
             houseLayer.addTo(map);
-            console.log(`Loaded ${data.houses.length} house polygons`);
         }
-    } catch (error) {
-        console.error('ERROR LOADING HOUSE POLYGONS:', error);
+    } catch (err) {
+        console.error('Error loading houses:', err);
     }
 }
 
-function validateCoordinates() {
-    const latInput = document.getElementById('latitude');
-    const lngInput = document.getElementById('longitude');
-    const lat = latInput.value.trim();
-    const lng = lngInput.value.trim();
+// =========================
+// FN: Auto format coordinates on blur
+// =========================
+function setupCoordinateAutoFormat(target) {
+    const latInput = document.getElementById(`latitude${target}`);
+    const lngInput = document.getElementById(`longitude${target}`);
+    if (!latInput || !lngInput) return;
 
-    // Regex for manual validation
-    const latRegex = /^-?\d{1,2}\.\d{6,8}$/;
-    const lngRegex = /^-?\d{1,3}\.\d{6,8}$/;
-
-    // If both have non-empty values and both match the regex -> clear errors and return true
-    if (lat && lng && latRegex.test(lat) && lngRegex.test(lng)) {
-        latInput.classList.remove('error');
-        lngInput.classList.remove('error');
-        const latWrapper = latInput.closest('.label-and-input');
-        const lngWrapper = lngInput.closest('.label-and-input');
-        if (latWrapper) latWrapper.querySelector('.error-msg').textContent = '';
-        if (lngWrapper) lngWrapper.querySelector('.error-msg').textContent = '';
-        return true;
-    }
-
-    // If both are empty, show required error (consistent with other fields)
-    if (!lat && !lng) {
-        latInput.classList.add('error');
-        lngInput.classList.add('error');
-        const latWrapper = latInput.closest('.label-and-input');
-        const lngWrapper = lngInput.closest('.label-and-input');
-        if (latWrapper) latWrapper.querySelector('.error-msg').textContent = 'Latitude is required';
-        if (lngWrapper) lngWrapper.querySelector('.error-msg').textContent = 'Longitude is required';
-        return false;
-    }
-
-    // If one or both present but invalid, show specific messages
-    let valid = true;
-
-    if (!lat || !latRegex.test(lat)) {
-        latInput.classList.add('error');
-        const wrapper = latInput.closest('.label-and-input');
-        if (wrapper) wrapper.querySelector('.error-msg').textContent = lat ? 'Enter valid latitude (decimal)' : 'Latitude is required';
-        valid = false;
-    } else {
-        latInput.classList.remove('error');
-        const wrapper = latInput.closest('.label-and-input');
-        if (wrapper) wrapper.querySelector('.error-msg').textContent = '';
-    }
-
-    if (!lng || !lngRegex.test(lng)) {
-        lngInput.classList.add('error');
-        const wrapper = lngInput.closest('.label-and-input');
-        if (wrapper) wrapper.querySelector('.error-msg').textContent = lng ? 'Enter valid longitude (decimal)' : 'Longitude is required';
-        valid = false;
-    } else {
-        lngInput.classList.remove('error');
-        const wrapper = lngInput.closest('.label-and-input');
-        if (wrapper) wrapper.querySelector('.error-msg').textContent = '';
-    }
-
-    return valid;
-}
-
-function setupCoordinateValidation() {
-    const form = document.getElementById('construction-form');
-    if (form) form.addEventListener('submit', function (e) {
-        if (!validateCoordinates()) e.preventDefault();
+    [latInput, lngInput].forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6);
+        });
     });
 }
 
-function setupCoordinateAutoFormat() {
-    const latInput = document.getElementById('latitude');
-    const lngInput = document.getElementById('longitude');
-    if (latInput && lngInput) {
-        latInput.addEventListener('blur', function () { if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6); });
-        lngInput.addEventListener('blur', function () { if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6); });
+// Initialize both forms
+document.addEventListener('DOMContentLoaded', () => {
+    [1, 2].forEach(target => setupCoordinateAutoFormat(target));
+});
+
+// ==============================
+// Function: Get current date
+// ==============================
+function getCurrentDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// ==============================
+// Function: update the application date
+// ==============================
+function updateApplicationDate() {
+    const dateInput = document.getElementById('applicationDate');
+    if (dateInput) {
+        dateInput.value = getCurrentDateString();
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+});
+
 // =========================
-// Initialize everything
+// FN: Owner Autofilled Application
 // =========================
-document.addEventListener('DOMContentLoaded', function () {
-    // updateDateTime();
-    // setInterval(updateDateTime, 1000);
-    setupNavigation();
-    setupDateValidation();
-    setupCoordinateValidation();
-    setupCoordinateAutoFormat();
-    setupFormValidation();
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const data = await resp.json();
+
+        if (data.error) {
+            console.log('Autofill error:', data.error);
+            return;
+        }
+
+        if (data.first_name) firstName.value = data.first_name;
+        if (data.middle_name) middleName.value = data.middle_name;
+        if (data.last_name) lastName.value = data.last_name;
+        if (data.suffix) suffix.value = data.suffix;
+        if (data.contact_no) contactNoOwner.value = data.contact_no;
+    } catch (err) {
+        console.error('Failed to fetch user data for autofill:', err);
+    }
+});
+
+// ==============================
+// Function: Calculate total days between two dates
+// ==============================
+function calculateTotalDays(startEl, endEl, outputEl) {
+    const start = new Date(startEl.value);
+    const end = new Date(endEl.value);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        outputEl.value = '';
+        return;
+    }
+
+    const diffTime = end - start;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    outputEl.value = diffDays > 0 ? diffDays : 0;
+}
+
+// ==============================
+// Auto-update numberOfWorkingDays
+// ==============================
+[startDate, endDate].forEach(el => {
+    el.addEventListener('change', () => calculateTotalDays(startDate, endDate, numberOfWorkingDays));
 });
