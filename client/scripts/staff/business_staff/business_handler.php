@@ -115,8 +115,6 @@ function handleCreateApplication($pdo)
         $applicationDate = get_input('applicationDate');
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
-        $latitude = get_input('latitude2');
-        $longitude = get_input('longitude2');
 
         // Handle JSON Fields
         $rawStatus = $_POST['businessStatus'] ?? [];
