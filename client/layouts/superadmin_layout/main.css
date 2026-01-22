@@ -98,17 +98,21 @@ body {
     width: max-content;
 }
 
-.aside #openMenu,
-.aside #closeMenu {
+.aside #openMenu, .aside #closeMenu {
     cursor: pointer;
-    display: none;
+    display: inline-flex;
     width: max-content;
     padding: 8px;
 }
 
-.aside #openMenu.active,
-.aside #closeMenu.active {
-    display: inline-flex;
+.aside #closeMenu {
+    display: none; /* hidden initially */
+}
+
+
+.aside #menuToggle {
+    padding: 8px;
+    cursor: pointer;
 }
 
 .aside .divider {

@@ -26,9 +26,7 @@
                 }
             });
 
-            document.addEventListener("submit", (e) => {
-                if (e.defaultPrevented) return;
-
+            document.addEventListener("submit", () => {
                 const loader = document.getElementById("page-loader");
                 if (loader) loader.style.display = "flex";
             });
