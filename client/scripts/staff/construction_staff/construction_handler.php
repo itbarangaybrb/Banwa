@@ -299,8 +299,7 @@ function handleUpdateApplication($pdo)
             application_method = :application_method,
             requirement_upload = :requirement_upload,
             agreed = :agreed,
-            updated_at = NOW(),
-            status = 'Complied'
+            updated_at = NOW()
             WHERE id = :id";
 
         $stmt = $pdo->prepare($sql);

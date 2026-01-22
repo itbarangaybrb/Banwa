@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../../styles/staff/map.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+
 </head>
 
 <body>
@@ -48,6 +49,12 @@
                     <button class="nav_select_btn" onclick="setActiveNav(this); resetView()">
                         <i class="nav_icon fas fa-sync-alt"></i>
                         <span class="nav_text">Reset View</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="nav_select_btn" onclick="setActiveNav(this); toggleFaultLine()">
+                        <i class="nav_icon fas fa-exclamation-triangle"></i>
+                        <span class="nav_text">Toggle Fault Line</span>
                     </button>
                 </li>
                 <li>
@@ -203,6 +210,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../scripts/staff/map.js"></script>
+    
     
     <!-- Detail Modal -->
     <div id="detail-modal" class="modal">
