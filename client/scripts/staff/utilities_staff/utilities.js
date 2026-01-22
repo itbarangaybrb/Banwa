@@ -196,8 +196,7 @@ function loadAnalyticsTab() {
                         label: 'Utilities Dates',
                         data: values1,
                         backgroundColor: dateColors,
-                        borderWidth: 1,
-                        tension: 0.4
+                        borderWidth: 1
                     }]
                 },
                 options: {
