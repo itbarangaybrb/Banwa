@@ -297,16 +297,19 @@ header {
     margin-bottom: 25px;
     box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
     border: 1px solid #e9ecef;
+    position: relative;
 }
 
 .search-container {
     margin-bottom: 20px;
+    position: relative;
 }
 
 .search-box {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    position: relative;
 }
 
 .search-box input {
@@ -358,11 +361,12 @@ header {
     background: #e0e0e0;
 }
 
-/* Add to map.css - Search highlight styles */
+/* Search highlight styles */
 .highlight {
-    background-color: #ffffff;
+    background-color: #ffff00;
     border-radius: 3px;
     font-weight: bold;
+    padding: 1px 2px;
 }
 
 .search-count {
@@ -374,55 +378,219 @@ header {
     text-align: center;
 }
 
-/* Filter Controls */
+/* =================== FILTER DROPDOWN STYLES =================== */
 .filter-controls {
     margin-top: 15px;
-}
-
-.filter-buttons {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.filter-btn {
+.filter-dropdown-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    width: 220px;
+}
+
+.dropdown-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    color: #333;
-    cursor: pointer;
-    font-size: 0.95em;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    font-family: "Inter", sans-serif;
-}
-
-.filter-btn:hover {
-    background: white;
-    border-color: #667eea;
-    transform: translateY(-2px);
-}
-
-.filter-btn.active {
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
     background: linear-gradient(135deg, #667eea 0%, #00247C 100%);
     color: white;
-    border-color: #667eea;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: "Inter", sans-serif;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.dropdown-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.dropdown-btn:active {
+    transform: translateY(0);
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9em;
+    margin-left: auto;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    width: 100%;
+    max-width: 280px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+    border: 1px solid #e9ecef;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-content a {
+    color: #333;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9em;
+}
+
+.dropdown-content a:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+}
+
+.dropdown-content a:last-child {
+    border-bottom: none;
+}
+
+.dropdown-content a.active {
+    background-color: #e8f4fc;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .filter-icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     border: 2px solid white;
-    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
-.filter-btn.active .filter-icon {
-    border-color: rgba(255, 255, 255, 0.5);
+/* Sub-filters */
+.sub-filters {
+    margin-top: 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.sub-filters h4 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sub-filters h4 i {
+    color: #667eea;
+}
+
+.sub-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sub-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: #555;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.sub-filter-btn:hover {
+    background: #f0f0f0;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.sub-filter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #00247C 100%);
+    color: white;
+    border-color: #667eea;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.sub-filter-btn i {
+    font-size: 0.8em;
+}
+
+/* Filter info */
+.filter-info {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #e8f4fc;
+    border-left: 4px solid #667eea;
+    border-radius: 6px;
+    font-size: 0.9em;
+    color: #2c5282;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.filter-info::before {
+    content: "ℹ️";
+    font-size: 12px;
 }
 
 /* Map Styling */
@@ -888,6 +1056,12 @@ header {
     background: white;
     display: none;
     box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
 }
 
 .search-result-item {
@@ -996,6 +1170,15 @@ header {
 .btn-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-family: "Inter", sans-serif;
 }
 
 .btn-primary:hover {
@@ -1031,6 +1214,49 @@ header {
 .btn-info:hover {
     background: #138496;
     transform: translateY(-2px);
+}
+
+/* Fault Line Animations */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+        transform: scale(1);
+    }
+}
+
+/* Boundary Notification */
+#boundary-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 193, 7, 0.95);
+    color: #333;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 300px;
+    text-align: center;
+    border-left: 4px solid #ffc107;
+    pointer-events: none;
+}
+
+#boundary-notification.visible {
+    transform: translateY(0);
+    opacity: 1;
 }
 
 /* Responsive Design */
@@ -1079,12 +1305,28 @@ header {
         height: 400px;
     }
     
-    .filter-buttons {
-        flex-direction: column;
+    .dropdown {
+        width: 100%;
     }
     
-    .filter-btn {
-        width: 100%;
+    .dropdown-content {
+        position: fixed;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 300px;
+        bottom: 20px;
+        margin-top: 0;
+    }
+    
+    .sub-filter-buttons {
+        justify-content: center;
+    }
+    
+    .sub-filter-btn {
+        flex: 1;
+        min-width: 100px;
         justify-content: center;
     }
     
@@ -1106,6 +1348,14 @@ header {
     .detail-table td:first-child,
     .detail-table td:last-child {
         width: 50%;
+    }
+    
+    .search-results {
+        position: fixed;
+        width: calc(100% - 40px);
+        left: 20px;
+        top: 150px;
+        max-height: 300px;
     }
 }
 
@@ -1129,6 +1379,25 @@ header {
     
     .geocoding-actions {
         flex-direction: column;
+    }
+    
+    .sub-filter-buttons {
+        flex-direction: column;
+    }
+    
+    .sub-filter-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .dropdown-btn {
+        padding: 10px 14px;
+        font-size: 0.9em;
+    }
+    
+    .dropdown-content a {
+        padding: 10px 14px;
+        font-size: 0.85em;
     }
 }
 

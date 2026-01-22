@@ -106,7 +106,7 @@ function getBusinessMarkers()
                     longitude 
                 FROM business_applications 
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -127,16 +127,94 @@ function getHouseholdMarkers()
                     marker_type,
                     created_by,
                     created_at,
-                    latitude, 
-                    longitude 
+                    updated_at,
+                    latitude,  -- Now available after schema update
+                    longitude  -- Now available after schema update
                 FROM marker 
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
-        $stmt = $pdo->prepare($sql);
+                WHERE marker_type = 'Household' 
+                AND latitude IS NOT NULL 
+                AND longitude IS NOT NULL";  // Only show markers with coordinates
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         error_log("Database error in getHouseholdMarkers: " . $e->getMessage());
         return [];
+    }
+}
+
+function getUtilityMarkers() {
+    global $pdo; 
+    try {
+        $sql = "SELECT 
+                    ud.utility_id, 
+                    ud.document_id,
+                    ud.applicant_name,
+                    ud.applicant_address,
+                    ud.contact_no,
+                    ud.date_of_request,
+                    ud.date_of_work,
+                    ud.service_provider,
+                    ud.nature_of_work,
+                    ud.authorization_name,
+                    ud.waiver_acknowledgement,
+                    ud.received_by,
+                    ud.approved_by,
+                    ud.received_date,
+                    ud.approved_date,
+                    ud.work_completed_by,
+                    ud.work_completed_date,
+                    ud.notes,
+                    m.latitude,
+                    m.longitude
+                FROM utility_doc ud
+                LEFT JOIN marker m ON ud.document_id = m.document_id
+                WHERE m.latitude IS NOT NULL AND m.longitude IS NOT NULL
+                AND m.marker_type = 'Utility'";
+        $stmt = $pdo->prepare($sql); 
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getUtilityMarkers: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Get utility by ID (NEW FUNCTION)
+function getUtilityById($id) {
+    global $pdo; 
+    try {
+        $sql = "SELECT 
+                    ud.utility_id, 
+                    ud.document_id,
+                    ud.applicant_name,
+                    ud.applicant_address,
+                    ud.contact_no,
+                    ud.date_of_request,
+                    ud.date_of_work,
+                    ud.service_provider,
+                    ud.nature_of_work,
+                    ud.authorization_name,
+                    ud.waiver_acknowledgement,
+                    ud.received_by,
+                    ud.approved_by,
+                    ud.received_date,
+                    ud.approved_date,
+                    ud.work_completed_by,
+                    ud.work_completed_date,
+                    ud.notes,
+                    m.latitude,
+                    m.longitude
+                FROM utility_doc ud
+                LEFT JOIN marker m ON ud.document_id = m.document_id
+                WHERE ud.utility_id = :id
+                AND m.latitude IS NOT NULL AND m.longitude IS NOT NULL";
+        $stmt = $pdo->prepare($sql); 
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getUtilityById: " . $e->getMessage());
+        return null;
     }
 }
 
@@ -173,7 +251,7 @@ function getBusinessById($id)
     global $pdo;
     try {
         $sql = "SELECT * FROM business_applications WHERE id = :id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -187,7 +265,7 @@ function getHouseholdById($id)
     global $pdo;
     try {
         $sql = "SELECT * FROM marker WHERE marker_id = :id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -195,8 +273,6 @@ function getHouseholdById($id)
         return null;
     }
 }
-
-// ==================== NEW HOUSE POLYGON FUNCTIONS ====================
 
 // Get all house polygons
 function getHousePolygons()
@@ -216,7 +292,7 @@ function getHousePolygons()
                     updated_at
                 FROM house_polygons 
                 ORDER BY address, house_number";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -231,7 +307,7 @@ function getHouseById($houseId)
     global $pdo;
     try {
         $sql = "SELECT * FROM house_polygons WHERE house_id = :id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute([':id' => $houseId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -272,7 +348,7 @@ function checkPointInHouse($lat, $lng)
     try {
         $sql = "SELECT house_id, address, street_name, coordinates 
                 FROM house_polygons";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute();
         $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -398,13 +474,13 @@ function deleteHousePolygon($houseId)
         // Remove house_id from markers first (if your marker table has house_id)
         if (tableHasColumn('marker', 'house_id')) {
             $sql = "UPDATE marker SET house_id = NULL WHERE house_id = :house_id";
-            $stmt = $pdo->prepare($sql);
+            $stmt = $pdo->prepare($sql); 
             $stmt->execute([':house_id' => $houseId]);
         }
 
         // Then delete the house
         $sql = "DELETE FROM house_polygons WHERE house_id = :house_id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute([':house_id' => $houseId]);
 
         return ['success' => true, 'message' => 'House deleted successfully'];
@@ -452,7 +528,7 @@ function updateHouseDetails($data)
         $updates[] = "updated_at = CURRENT_TIMESTAMP";
 
         $sql = "UPDATE house_polygons SET " . implode(', ', $updates) . " WHERE house_id = :house_id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute($params);
 
         return ['success' => true, 'message' => 'House updated successfully'];
@@ -469,7 +545,7 @@ function tableHasColumn($tableName, $columnName)
     try {
         $sql = "SELECT column_name FROM information_schema.columns 
                 WHERE table_name = :table_name AND column_name = :column_name";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql); 
         $stmt->execute([
             ':table_name' => $tableName,
             ':column_name' => $columnName
@@ -497,7 +573,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             'constructions' => $constructions,
             'utilities' => $utilities,
             'businesses' => $businesses,
-            'households' => $households
+            'households' => $households,
+            'utilities' => $utilities
         ]);
         exit;
     }
@@ -653,6 +730,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         'message' => 'Unknown action'
     ]);
     exit;
+}
+
+// Function to save new marker (to be implemented)
+function saveNewMarker($data) {
+    global $pdo; 
+    
+    try {
+        // Validate required fields
+        $required = ['title', 'latitude', 'longitude', 'marker_type'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                return ['success' => false, 'message' => "$field is required"];
+            }
+        }
+        
+        $sql = "INSERT INTO marker 
+                (title, description, location, marker_type, latitude, longitude, house_id, created_by, created_at) 
+                VALUES (:title, :description, :location, :marker_type, :latitude, :longitude, :house_id, :created_by, CURRENT_TIMESTAMP) 
+                RETURNING marker_id";
+        
+        $stmt = $pdo->prepare($sql); 
+        $stmt->execute([
+            ':title' => $data['title'],
+            ':description' => $data['description'] ?? '',
+            ':location' => $data['location'] ?? '',
+            ':marker_type' => $data['marker_type'],
+            ':latitude' => floatval($data['latitude']),
+            ':longitude' => floatval($data['longitude']),
+            ':house_id' => !empty($data['house_id']) ? intval($data['house_id']) : null,
+            ':created_by' => $data['created_by'] ?? 'System'
+        ]);
+        
+        $markerId = $stmt->fetchColumn();
+        
+        return [
+            'success' => true,
+            'message' => 'Marker saved successfully',
+            'marker_id' => $markerId
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in saveNewMarker: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    }
 }
 
 http_response_code(400);
