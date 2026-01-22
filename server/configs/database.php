@@ -8,7 +8,7 @@ $host = 'localhost';
 $db   = 'capstone';
 $user = 'postgres';
 $pass = '080702';
-$port = '5432';
+$port = '$Xz_1181025';
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean(); // Clear any previous junk
