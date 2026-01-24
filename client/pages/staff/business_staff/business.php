@@ -144,6 +144,9 @@
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -166,7 +169,7 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="managementTableBody">
+                        <tbody id="tableBody">
                             <tr>
                                 <td colspan="6" class="loading">
                                     <div class="spinner"></div>Loading...
@@ -413,7 +416,7 @@
             <div id="updateModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>⚙️ Update Application Status</h2>
+                        <h2>Update Application Status</h2>
                         <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">

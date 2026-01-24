@@ -512,3 +512,76 @@
 [14-Dec-2025 17:05:58 UTC] DEBUG: Memory usage after processing: 2 MB
 [14-Dec-2025 17:05:59 UTC] DEBUG: Rows fetched from DB: 7
 [14-Dec-2025 17:05:59 UTC] DEBUG: Memory usage after processing: 2 MB
+[23-Jan-2026 07:47:21 UTC] PHP Warning:  move_uploaded_file(../../../uploads/localhost_8080_Banwa_client_pages_resident_construction_app.php (2).png): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 07:47:21 UTC] PHP Warning:  move_uploaded_file(): Unable to move &quot;C:\Users\jeffm\AppData\Local\Temp\php8594.tmp&quot; to &quot;../../../uploads/localhost_8080_Banwa_client_pages_resident_construction_app.php (2).png&quot; in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 07:47:21 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on string in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php:168
+Stack trace:
+#0 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 168
+[23-Jan-2026 07:50:59 UTC] PHP Warning:  move_uploaded_file(../../../uploads/localhost_8080_Banwa_client_pages_staff_business_staff_business.php.png): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 07:50:59 UTC] PHP Warning:  move_uploaded_file(): Unable to move &quot;C:\Users\jeffm\AppData\Local\Temp\phpDB58.tmp&quot; to &quot;../../../uploads/localhost_8080_Banwa_client_pages_staff_business_staff_business.php.png&quot; in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 07:51:05 UTC] PHP Warning:  move_uploaded_file(../../../uploads/localhost_8080_Banwa_client_pages_staff_business_staff_business.php.png): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 07:51:05 UTC] PHP Warning:  move_uploaded_file(): Unable to move &quot;C:\Users\jeffm\AppData\Local\Temp\phpF20D.tmp&quot; to &quot;../../../uploads/localhost_8080_Banwa_client_pages_staff_business_staff_business.php.png&quot; in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 156
+[23-Jan-2026 09:24:57 UTC] Failed to create initial DSS evaluation: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_evaluations" does not exist
+LINE 1: INSERT INTO business_evaluations 
+                    ^
+[23-Jan-2026 10:03:55 UTC] DSS Evaluation Error: SQLSTATE[42P08]: Ambiguous parameter: 7 ERROR:  inconsistent types deduced for parameter $1
+LINE 3:             SET dss_status = $1, 
+                                     ^
+DETAIL:  text versus character varying
+Trace: #0 C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php(654): PDOStatement->execute(Array)
+#1 C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php(72): handleEvaluateApplication(Object(PDO))
+#2 {main}
+[24-Jan-2026 10:07:36 UTC] PHP Warning:  require_once(C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:07:36 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php' (include_path='.;C:\php\pear') in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php:2
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php(47): require_once()
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:12:56 UTC] PHP Warning:  require_once(C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:12:56 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php' (include_path='.;C:\php\pear') in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php:2
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php(47): require_once()
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:13:10 UTC] PHP Warning:  require_once(C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:13:10 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\jeffm\Desktop\Banwa\server\api/../../configs/database.php' (include_path='.;C:\php\pear') in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php:2
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php(47): require_once()
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\api\dss_rule_engine.php on line 2
+[24-Jan-2026 10:15:19 UTC] PHP Warning:  require_once(C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff/../../../../server/api/businessdss_rule_engine.php): Failed to open stream: No such file or directory in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 47
+[24-Jan-2026 10:15:19 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff/../../../../server/api/businessdss_rule_engine.php' (include_path='.;C:\php\pear') in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php:47
+Stack trace:
+#0 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\client\scripts\staff\business_staff\business_handler.php on line 47
+[24-Jan-2026 11:19:55 UTC] R1 Check - Required: ["Photocopy of Valid ID of Business Owner"]
+[24-Jan-2026 11:19:55 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[24-Jan-2026 11:19:55 UTC] R1 Check - Missing: ["Photocopy of Valid ID of Business Owner"]
+[24-Jan-2026 11:19:55 UTC] R1 Check - Required: ["Photocopy of Valid ID of Business Owner"]
+[24-Jan-2026 11:19:55 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[24-Jan-2026 11:19:55 UTC] R1 Check - Missing: ["Photocopy of Valid ID of Business Owner"]
+[24-Jan-2026 11:22:20 UTC] R1 Check - Required: []
+[24-Jan-2026 11:22:20 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[24-Jan-2026 11:22:20 UTC] R1 Check - Missing: []
+[24-Jan-2026 11:22:20 UTC] R1 Check - Required: []
+[24-Jan-2026 11:22:20 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[24-Jan-2026 11:22:20 UTC] R1 Check - Missing: []
+[24-Jan-2026 12:46:18 UTC] R1 Check - Required: []
+[24-Jan-2026 12:46:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 12:46:18 UTC] R1 Check - Missing: []
+[24-Jan-2026 12:46:18 UTC] R1 Check - Required: []
+[24-Jan-2026 12:46:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 12:46:18 UTC] R1 Check - Missing: []
+[24-Jan-2026 13:11:22 UTC] R1 Check - Required: ["Partnership Agreement"]
+[24-Jan-2026 13:11:22 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 13:11:22 UTC] R1 Check - Missing: ["Partnership Agreement"]
+[24-Jan-2026 13:11:22 UTC] R1 Check - Required: ["Partnership Agreement"]
+[24-Jan-2026 13:11:22 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 13:11:22 UTC] R1 Check - Missing: ["Partnership Agreement"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[24-Jan-2026 13:39:13 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]

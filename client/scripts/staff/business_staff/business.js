@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeSidebarNav();
 });
 
+/**
+ * Initializes the sidebar navigation with tab switching functionality
+ * and adds hamburger menu toggle for mobile responsiveness
+ */
 function initializeSidebarNav() {
     const navItems = document.querySelectorAll('.nav_select[data-tab]');
     const navLogo = document.querySelector('.nav_logo'); // Select the hamburger icon
@@ -20,7 +24,6 @@ function initializeSidebarNav() {
             sideNav.classList.toggle('expanded');
         });
     }
-    // ------------------------------
 
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
@@ -48,44 +51,58 @@ function initializeSidebarNav() {
 //     else if (tabName === 'dashboard') loadAnalyticsTab();
 
 // }
-// 1. UPDATE TAB SWITCHING
+
+/**
+ * Switches between different application tabs and loads appropriate data
+ * Handles tab activation and deactivation while maintaining UI state
+ * 
+ * @param {Event} event - The click event triggering tab switch
+ * @param {string} tabName - Name of the tab to switch to
+ */
 function switchTab(event, tabName) {
-    if(event) event.preventDefault();
+    if (event) event.preventDefault();
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
 
     const target = document.getElementById(tabName);
-    if(target) target.classList.add('active');
+    if (target) target.classList.add('active');
 
-    if(event) {
+    if (event) {
         const link = event.target.closest('.nav_select');
-        if(link) link.classList.add('active');
+        if (link) link.classList.add('active');
     }
 
     // Load Data based on Tab
-    if (tabName === 'management') loadManagementTable(); 
+    if (tabName === 'management') loadManagementTable();
     else if (tabName === 'summary') loadSummarySelect();
     else if (tabName === 'dashboard') loadAnalyticsTab();
 }
 
-// 2. THE NEW UNIFIED TABLE LOADER
+/**
+ * Loads the management table with applications from database
+ * Serves as the main entry point for the management tab functionality
+ */
 function loadManagementTable() {
     loadApplicationsFromDB().finally(() => {
         // Also trigger the filter function immediately to populate the table
-        filterApplications(); 
+        filterApplications();
     });
 }
 
-// 3. UPDATED FILTER FUNCTION (Serves as the main renderer)
+/**
+ * Filters and renders applications in the management table based on search criteria
+ * Handles search term filtering, status filtering, and smart action button generation
+ * Displays appropriate status badges and action buttons based on application state
+ */
 function filterApplications() {
     // 1. SAFELY GET ELEMENTS (Checks if they exist first)
     // We check for 'managementSearch' (from your PHP) OR 'searchInput' (fallback)
-    const searchEl = document.getElementById('managementSearch') || document.getElementById('searchInput'); 
+    const searchEl = document.getElementById('managementSearch') || document.getElementById('searchInput');
     const statusEl = document.getElementById('statusFilter'); // This was missing in your HTML
     const tbody = document.getElementById('managementTableBody') || document.getElementById('tableBody');
 
     // If the table body doesn't exist, stop immediately to prevent errors
-    if (!tbody) return; 
+    if (!tbody) return;
 
     // 2. GET VALUES SAFELY
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
@@ -106,11 +123,11 @@ function filterApplications() {
         const fullName = ((app.first_name || '') + ' ' + (app.last_name || '')).toLowerCase();
         const id = (app.id || '').toString();
 
-        const matchesSearch = 
+        const matchesSearch =
             businessName.includes(searchTerm) ||
             fullName.includes(searchTerm) ||
             id.includes(searchTerm);
-        
+
         // Only filter by status if a specific status is selected (not empty)
         const matchesStatus = statusFilter === '' || app.status === statusFilter;
 
@@ -133,18 +150,18 @@ function filterApplications() {
 
         // B. Determine "Smart Action" Button
         let actionBtn = '';
-        
+
         if (app.status === 'Pending') {
-             actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
-        } 
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+        }
         else if (app.status === 'For Payment') {
-             actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
         }
         else if (app.status === 'Paid') {
-             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
         }
         else if (app.status === 'Approved') {
-             actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">🖨️ Clearance</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">🖨️ Clearance</button>`;
         }
         else {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
@@ -169,6 +186,12 @@ function filterApplications() {
     });
 }
 
+/**
+ * Fetches business applications from the server API
+ * Updates the global applications array with retrieved data
+ * 
+ * @returns {Promise} Promise resolving to the applications array
+ */
 function loadApplicationsFromDB() {
     return fetch(`${API_URL}?action=fetch`)
         .then(res => res.json())
@@ -178,6 +201,10 @@ function loadApplicationsFromDB() {
         });
 }
 
+/**
+ * Loads applications into the review table with view and archive functionality
+ * Displays applications with status badges and appropriate action buttons
+ */
 function loadReviewTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('tableBody');
@@ -205,6 +232,10 @@ function loadReviewTable() {
     });
 }
 
+/**
+ * Loads applications into the process table with actionable statuses
+ * Filters out excluded statuses and shows appropriate action buttons based on current status
+ */
 function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
@@ -252,7 +283,13 @@ function loadProcessTable() {
 
 let chart1Instance;
 let chart2Instance;
+let chart3Instance;
 
+/**
+ * Loads analytics data and renders charts for business application statistics
+ * Creates three charts: timeline chart, business type distribution, and DSS status distribution
+ * Handles chart initialization and updates when switching tabs
+ */
 function loadAnalyticsTab() {
     fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php?action=chart_business_type')
         .then(res => res.json())
@@ -265,11 +302,17 @@ function loadAnalyticsTab() {
             const labels2 = res.data_by_type.map(x => x.type_of_business);
             const values2 = res.data_by_type.map(x => x.total);
 
+            // Add DSS status data
+            const labels3 = res.data_by_dss.map(x => x.dss_status);
+            const values3 = res.data_by_dss.map(x => x.total);
+
             const dateColors = ['#4F46E5', '#2563EB', '#0284C7', '#0891B2', '#0D9488', '#14B8A6'];
             const typeColors = ['#F59E0B', '#F97316', '#EF4444', '#8B5CF6', '#EC4899', '#84CC16'];
+            const dssColors = ['#10B981', '#EF4444', '#F59E0B', '#6366F1', '#8B5CF6', '#EC4899'];
 
             if (chart1Instance) chart1Instance.destroy();
             if (chart2Instance) chart2Instance.destroy();
+            if (chart3Instance) chart3Instance.destroy(); // Add this line
 
             chart1Instance = new Chart(document.getElementById('chart1'), {
                 type: 'line',
@@ -279,7 +322,8 @@ function loadAnalyticsTab() {
                         label: 'Business Dates',
                         data: values1,
                         backgroundColor: dateColors,
-                        borderWidth: 1
+                        borderWidth: 2,
+                        tension: 0.4,
                     }]
                 },
                 options: {
@@ -296,7 +340,8 @@ function loadAnalyticsTab() {
                         label: 'Business Types',
                         data: values2,
                         backgroundColor: typeColors,
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: '4',
                     }]
                 },
                 options: {
@@ -304,11 +349,45 @@ function loadAnalyticsTab() {
                     maintainAspectRatio: false
                 }
             });
+
+            // Add the third chart for DSS status
+            chart3Instance = new Chart(document.getElementById('chart3'), {
+                type: 'doughnut', // or 'pie' if you prefer
+                data: {
+                    labels: labels3,
+                    datasets: [{
+                        label: 'DSS Status Distribution',
+                        data: values3,
+                        backgroundColor: dssColors,
+                        borderWidth: 1,
+                        borderRadius: '4'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'left',
+                            labels: {
+                                textAlign: 'left',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
         });
 }
 
-
-
+/**
+ * Applies pre-defined text prompts to the update comments textarea
+ * Used for quick insertion of common status update messages
+ * 
+ * @param {string} text - The text prompt to insert into the comments field
+ */
 function applyPrompt(text) {
     const textarea = document.getElementById('updateComments');
     if (textarea) {
@@ -322,6 +401,12 @@ function applyPrompt(text) {
     }
 }
 
+/**
+ * Generates and opens a printable business clearance document in a new window
+ * Fetches clearance HTML from server and triggers print dialog
+ * 
+ * @param {number} appId - The application ID to generate clearance for
+ */
 function generateClearance(appId) {
     fetch(`${API_URL}?action=generateclearance&id=${appId}`)
         .then(res => res.text())
@@ -337,11 +422,16 @@ function generateClearance(appId) {
         .catch(err => showAlert('Error generating clearance: ' + err, 'danger'));
 }
 
-// A. OPEN THE MODAL AND FILL IN CURRENT DATA
+/**
+ * Opens the update modal for a specific application and loads current data
+ * Includes DSS evaluation results display and status tracking
+ * 
+ * @param {number} appId - The application ID to open in the update modal
+ */
 function openUpdateModal(appId) {
     // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
-    
+
     if (!app) {
         alert("Application data not found.");
         return;
@@ -350,19 +440,217 @@ function openUpdateModal(appId) {
     // Fill the hidden ID field and the visible "Current Status" text
     document.getElementById('updateAppId').value = app.id;
     document.getElementById('displayCurrentStatus').value = app.status;
-    
+
     // Reset the form fields
     document.getElementById('newStatus').value = "";
     document.getElementById('updateComments').value = "";
     document.getElementById('assessmentAmount').value = "";
     document.getElementById('amountFieldGroup').classList.add('hidden');
 
+    // Clear previous DSS content
+    const existingDSSSection = document.getElementById('dssEvaluationSection');
+    if (existingDSSSection) {
+        existingDSSSection.remove();
+    }
+
+    // Fetch DSS evaluation details and add to modal
+    fetchDSSEvaluation(appId, app);
+
     // Show the modal
     document.getElementById('updateModal').classList.add('active');
 }
 
+/**
+ * Fetches DSS evaluation details from the server for a specific application
+ * Handles both successful and failed fetch scenarios
+ * 
+ * @param {number} appId - The application ID to fetch evaluation for
+ * @param {Object} app - The application object containing basic application data
+ */
+function fetchDSSEvaluation(appId, app) {
+    fetch(`${API_URL}?action=get_evaluation&application_id=${appId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                addDSSSectionToModal(data.evaluation, app);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching DSS evaluation:', error);
+            // Still add a basic DSS section even if fetch fails
+            addBasicDSSSection(app);
+        });
+}
 
-// B. SHOW/HIDE AMOUNT FIELD (Based on selection)
+/**
+ * Creates and inserts a detailed DSS evaluation section into the update modal
+ * Displays evaluation scores, status, rule results, and recommendations
+ * 
+ * @param {Object} evaluation - The DSS evaluation data object
+ * @param {Object} app - The application object for context
+ */
+function addDSSSectionToModal(evaluation, app) {
+    const updateForm = document.getElementById('updateForm');
+
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
+
+    const details = evaluation.evaluation_details || {};
+    const dssStatus = evaluation.dss_status || 'Pending Evaluation';
+    const score = details.score || 0;
+    const maxScore = details.max_score || 6;
+    const probability = details.approval_probability || 0;
+    const passedRules = details.passed_rules || [];
+    const failedRules = details.failed_rules || [];
+    const recommendations = details.recommendations || [];
+
+    let statusColor, statusBg, statusIcon;
+    switch (dssStatus) {
+        case 'Pre-Approved':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            statusIcon = '✅';
+            break;
+        case 'Additional Requirements Needed':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            statusIcon = '⚠️';
+            break;
+        case 'Rejected':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            statusIcon = '❌';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+    }
+
+
+    dssSection.innerHTML = `
+    <div class="dss-evaluation-section">
+        <div class="dss-header">
+            <h3>DSS Evaluation Result</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${dssStatus}
+            </span>
+        </div>
+        
+        <div class="dss-score-summary">
+            <div class="dss-score">
+                <strong>Score</strong>
+                <span>${score}/${maxScore}</span>
+            </div>
+            <div class="dss-probability">
+                <strong>Approval Probability</strong>
+                <span>${probability}%</span>
+            </div>
+        </div>
+        
+        <div class="dss-progress-container">
+            <div class="dss-progress-label">
+                <span>Approval Progress</span>
+                <span class="dss-progress-percentage">${probability}%</span>
+            </div>
+            <div class="dss-progress-bar">
+                <div class="dss-progress-fill" style="width: ${probability}%"></div>
+            </div>
+        </div>
+        
+        <div class="dss-rules-summary">
+            <div class="dss-rules-column">
+                <h4>Passed Rules (${passedRules.length})</h4>
+                ${passedRules.length > 0 ?
+            `<ul class="dss-rules-list passed">${passedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
+        }
+            </div>
+            
+            <div class="dss-rules-column">
+                <h4>Failed Rules (${failedRules.length})</h4>
+                ${failedRules.length > 0 ?
+            `<ul class="dss-rules-list failed">${failedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules failed</p>`
+        }
+            </div>
+        </div>
+        
+        ${recommendations.length > 0 ? `
+            <div class="dss-recommendations">
+                <h4>Recommendations</h4>
+                <ul class="dss-recommendations-list">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
+        
+        ${evaluation.evaluated_at ? `
+            <div class="dss-timestamp">
+                Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+            </div>
+        ` : ''}
+    </div>
+`;
+
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
+}
+
+/**
+ * Creates a basic DSS section when detailed evaluation data is unavailable
+ * Provides minimal DSS status display as fallback
+ * 
+ * @param {Object} app - The application object containing basic DSS status
+ */
+function addBasicDSSSection(app) {
+    const updateForm = document.getElementById('updateForm');
+
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
+
+    const dssStatus = app.dss_status || 'Pending Evaluation';
+    let statusColor, statusBg, statusIcon;
+
+    switch (dssStatus) {
+        case 'Pre-Approved':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            statusIcon = '✅';
+            break;
+        case 'Additional Requirements Needed':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            statusIcon = '⚠️';
+            break;
+        case 'Rejected':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            statusIcon = '❌';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+            statusIcon = '⏳';
+    }
+
+    dssSection.innerHTML = `
+        <div class="dss-header">
+            <h3>📊 DSS Evaluation</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                ${statusIcon} ${dssStatus}
+            </span>
+        </div>
+        <p class="dss-loading">Loading detailed evaluation...</p>
+    `;
+
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
+}
+
+/**
+ * Toggles visibility of the payment amount field based on status selection
+ * Only shows amount field when "For Payment" status is selected
+ */
 function toggleAmountField() {
     const statusSelect = document.getElementById('newStatus');
     const amountGroup = document.getElementById('amountFieldGroup');
@@ -378,7 +666,12 @@ function toggleAmountField() {
     }
 }
 
-// C. SUBMIT THE UPDATE TO THE DATABASE
+/**
+ * Submits application status update to the server via API
+ * Handles form data submission and displays success/error messages
+ * 
+ * @param {Event} event - The form submission event
+ */
 function submitUpdate(event) {
     event.preventDefault();
 
@@ -407,18 +700,24 @@ function applyPrompt(text) {
     document.getElementById('updateComments').value = text;
 }
 
-// VIEW DETAILS (MODIFIED to include comments & file link)
+/**
+ * Displays detailed application information in a modal view
+ * Shows business details, owner information, documents, and assessment data
+ * Handles file previews for uploaded documents
+ * 
+ * @param {number} appId - The application ID to view details for
+ */
 function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
     // 1. Prepare Data
     const businessStatus = app.business_status || 'Not specified';
-    
+
     // Parse requirements list safely
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
-        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
     }
     const requirementsList = (Array.isArray(reqs) && reqs.length > 0)
         ? reqs.map(r => `<span class="badge-req">✓ ${r}</span>`).join(' ')
@@ -426,11 +725,11 @@ function viewDetails(appId) {
 
     // 2. File Viewing Logic
     let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
-    
+
     if (app.requirement_upload) {
         const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
         const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
-        
+
         // If image, show thumbnail + view button
         if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
             fileHtml = `
@@ -442,7 +741,7 @@ function viewDetails(appId) {
                     <br>
                     <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
                 </div>`;
-        } 
+        }
         // If PDF or other, show generic icon + open button
         else {
             fileHtml = `
@@ -455,9 +754,9 @@ function viewDetails(appId) {
     }
 
     // 3. Status Colors
-    let statusColor = '#6c757d'; 
+    let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
-    switch(app.status) {
+    switch (app.status) {
         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
         case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
@@ -512,21 +811,21 @@ function viewDetails(appId) {
 
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
                         <h3>💰 Assessment</h3>
-                        ${ app.amount_due > 0 ? `
+                        ${app.amount_due > 0 ? `
                         <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
                         <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
                         <div class="detail-row"><span class="detail-label">OR Number</span> <span class="detail-value">${app.or_number || 'Pending'}</span></div>
-                        ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>' }
+                        ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>'}
                     </div>
                 </div>
             </div>
 
-            ${ app.approval_comments || app.disapproval_reason ? `
+            ${app.approval_comments || app.disapproval_reason ? `
             <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
                 <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
                 <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
             </div>
-            ` : '' }
+            ` : ''}
         </div>
     `;
 
@@ -534,7 +833,12 @@ function viewDetails(appId) {
     openModal('detailsModal');
 }
 
-// CREATE APPLICATION
+/**
+ * Submits a new business application creation form to the server
+ * Handles form validation, submission, and success/error feedback
+ * 
+ * @param {Event} event - The form submission event
+ */
 function createApplication(event) {
     event.preventDefault();
 
@@ -561,7 +865,10 @@ function createApplication(event) {
         });
 }
 
-// LOAD SUMMARY SELECT OPTIONS
+/**
+ * Loads application options into the summary select dropdown
+ * Populates the dropdown with application IDs and business names
+ */
 function loadSummarySelect() {
     loadApplicationsFromDB().finally(() => {
         const select = document.getElementById('summaryApplicationSelect');
@@ -573,6 +880,10 @@ function loadSummarySelect() {
     });
 }
 
+/**
+ * Updates the summary display with detailed application information
+ * Generates a professional report view with formatted data
+ */
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     const summaryOutput = document.getElementById('summaryOutput');
@@ -590,12 +901,12 @@ function updateSummary() {
     if (!app) return;
 
     // --- 1. Data Processing ---
-    
+
     // Status Badge Color Logic
     let statusColor = '#6c757d'; // Default Grey
     let statusBg = '#e2e3e5';
-    
-    switch(app.status) {
+
+    switch (app.status) {
         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
         case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
@@ -606,7 +917,7 @@ function updateSummary() {
     let reqs = app.requirements;
     // Handle case where requirements might be a JSON string or already an object
     if (typeof reqs === 'string') {
-        try { reqs = JSON.parse(reqs); } catch(e) { reqs = []; }
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
     }
     const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
@@ -616,11 +927,11 @@ function updateSummary() {
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
-    
-    const amountDue = app.amount_due 
-        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) 
+
+    const amountDue = app.amount_due
+        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
         : '₱0.00';
-        
+
     const paymentStatus = app.payment_status || 'Unpaid';
 
     // --- 2. Build HTML Structure ---
@@ -677,11 +988,11 @@ function updateSummary() {
             </div>
         </div>
 
-        ${ app.approval_comments ? `
+        ${app.approval_comments ? `
         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
             <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
-        </div>` : '' }
+        </div>` : ''}
 
         <div class="report-actions">
             <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
@@ -733,8 +1044,12 @@ function updateSummary() {
 //     });
 // }
 
-// ARCHIVE APPLICATION
-
+/**
+ * Archives an application by sending a request to the server
+ * Requires user confirmation before proceeding with archival
+ * 
+ * @param {number} appId - The application ID to archive
+ */
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
     fetch(`${API_URL}?action=archive&id=${appId}`)
@@ -747,7 +1062,12 @@ function archiveApplication(appId) {
         });
 }
 
-// MODAL FUNCTIONS
+/**
+ * Opens a modal dialog by adding the 'active' class
+ * Disables body scrolling to prevent background interaction
+ * 
+ * @param {string} modalId - The ID of the modal element to open
+ */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -756,6 +1076,12 @@ function openModal(modalId) {
     }
 }
 
+/**
+ * Closes a modal dialog by removing the 'active' class
+ * Restores body scrolling to enable normal page interaction
+ * 
+ * @param {string} modalId - The ID of the modal element to close
+ */
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -764,7 +1090,13 @@ function closeModal(modalId) {
     }
 }
 
-// ALERT FUNCTION
+/**
+ * Displays a temporary alert message to the user
+ * Supports different alert types (success, danger, etc.) with automatic dismissal
+ * 
+ * @param {string} message - The alert message to display
+ * @param {string} type - The alert type (success, danger, warning, info)
+ */
 function showAlert(message, type) {
     const alertContainer = document.getElementById('alert-container');
     const alertDiv = document.createElement('div');
@@ -778,9 +1110,10 @@ function showAlert(message, type) {
     }, 4000);
 }
 
-
-// PRINT & DOWNLOAD (MODIFIED for Styled HTML/DOC)
-
+/**
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content
+ */
 function printSummary() {
     // 1. Get the main content area of the entire page (e.g., body or main container)
     // You may need to replace 'document.body' with the ID of your main content wrapper
@@ -829,6 +1162,12 @@ function printSummary() {
     */
 }
 
+/**
+ * Downloads a summary report as a Word document
+ * Generates HTML content with embedded styles and triggers file download
+ * 
+ * @param {number} appId - The application ID to download summary for
+ */
 function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
@@ -942,6 +1281,12 @@ function downloadSummary(appId) {
     window.URL.revokeObjectURL(url);
 }
 
+/**
+ * Returns the current date as a formatted string (YYYY-MM-DD)
+ * Used for date input field population
+ * 
+ * @returns {string} Current date in YYYY-MM-DD format
+ */
 function getCurrentDateString() {
     const now = new Date();
 
@@ -952,7 +1297,10 @@ function getCurrentDateString() {
     return `${year}-${month}-${day}`;
 }
 
-//Updates the date input field with the current date.
+/**
+ * Updates the application date input field with the current date
+ * Called on page load and periodically to keep date current
+ */
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
 
@@ -961,7 +1309,12 @@ function updateApplicationDate() {
     }
 }
 
-// MODIFIED: Function now fetches application data and generates HTML client-side
+/**
+ * Generates a business clearance document client-side using application data
+ * Creates a professional HTML document with dynamic content and opens print dialog
+ * 
+ * @param {number} appId - The application ID to generate clearance for
+ */
 function generateClearance(appId) {
     // 1. Find the application data locally first (assuming loadApplicationsFromDB has run)
     const app = applications.find(a => a.id == appId);
