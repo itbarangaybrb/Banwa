@@ -52,9 +52,6 @@ try {
         case 'get_rules':
             handleGetRules();
             break;
-        case 'test_dss':
-            handleTestDSS();
-            break;
         case 'get_application_with_dss':
             handleGetApplicationWithDSS($pdo);
             break;
@@ -63,9 +60,6 @@ try {
             break;
         case 'evaluate_all_pending':
             handleEvaluateAllPending($pdo);
-            break;
-        case 'debug_application':
-            handleDebugApplication($pdo);
             break;
         case 'get_application_details':
             handleGetApplicationDetails($pdo);
@@ -1081,121 +1075,6 @@ function handleGetRules()
 }
 
 /**
- * Tests the DSS rule engine with sample application data
- * Provides validation of DSS functionality with expected outcomes
- * Returns detailed test results for each test case
- */
-function handleTestDSS()
-{
-    try {
-        $dss = new DSSRuleEngine();
-
-        $testCases = [
-            [
-                'name' => 'Perfect Application',
-                'data' => [
-                    'business_name' => 'Perfect Business',
-                    'type_of_business' => 'Single Proprietorship',
-                    'nature_of_business' => 'Retailing',
-                    'nature_of_business_specify' => '',
-                    'address_of_business' => '123 Test Street',
-                    'latitude' => 14.6175,
-                    'longitude' => 121.0756,
-                    'business_status' => ['Owned'],
-                    'telephone_no_business' => '09123456789',
-                    'email_address' => 'perfect@example.com',
-                    'first_name' => 'Juan',
-                    'middle_name' => 'Dela',
-                    'last_name' => 'Cruz',
-                    'telephone_no_owner' => '09123456789',
-                    'address_owner' => '123 Test Street',
-                    'type_of_structure' => 'Store',
-                    'type_of_structure_specify' => '',
-                    'no_of_employees' => 3,
-                    'requirements' => ['SEC', 'DTI', 'TCT', 'Lease Contract'],
-                    'nature_of_application' => 'New'
-                ],
-                'expected' => 'Pre-Approved'
-            ],
-            [
-                'name' => 'Application with Missing Requirements',
-                'data' => [
-                    'business_name' => 'Incomplete Business',
-                    'type_of_business' => 'Corporation',
-                    'nature_of_business' => 'Services',
-                    'nature_of_business_specify' => '',
-                    'address_of_business' => '456 Test Ave',
-                    'latitude' => 14.6175,
-                    'longitude' => 121.0756,
-                    'business_status' => ['Leased'],
-                    'telephone_no_business' => '09123456789',
-                    'email_address' => 'incomplete@example.com',
-                    'first_name' => 'Maria',
-                    'middle_name' => 'Santos',
-                    'last_name' => 'Reyes',
-                    'telephone_no_owner' => '09123456789',
-                    'address_owner' => '456 Test Ave',
-                    'type_of_structure' => 'Office',
-                    'type_of_structure_specify' => '',
-                    'no_of_employees' => 15,
-                    'requirements' => ['SEC'],
-                    'nature_of_application' => 'New'
-                ],
-                'expected' => 'Additional Requirements Needed'
-            ],
-            [
-                'name' => 'Restricted Business',
-                'data' => [
-                    'business_name' => 'Gambling Den',
-                    'type_of_business' => 'Single Proprietorship',
-                    'nature_of_business' => 'Gambling',
-                    'nature_of_business_specify' => '',
-                    'address_of_business' => '789 Test Blvd',
-                    'latitude' => 14.6175,
-                    'longitude' => 121.0756,
-                    'business_status' => ['Owned'],
-                    'telephone_no_business' => '09123456789',
-                    'email_address' => 'gambling@example.com',
-                    'first_name' => 'Pedro',
-                    'middle_name' => '',
-                    'last_name' => 'Gomez',
-                    'telephone_no_owner' => '09123456789',
-                    'address_owner' => '789 Test Blvd',
-                    'type_of_structure' => 'Store',
-                    'type_of_structure_specify' => '',
-                    'no_of_employees' => 5,
-                    'requirements' => ['SEC', 'DTI', 'TCT'],
-                    'nature_of_application' => 'New'
-                ],
-                'expected' => 'Rejected'
-            ]
-        ];
-
-        $results = [];
-        foreach ($testCases as $testCase) {
-            $result = $dss->evaluateApplication($testCase['data']);
-            $results[] = [
-                'test_name' => $testCase['name'],
-                'expected' => $testCase['expected'],
-                'actual' => $result['status'],
-                'passed' => $result['status'] === $testCase['expected'],
-                'score' => $result['evaluation_details']['score'] ?? 0,
-                'probability' => $result['evaluation_details']['approval_probability'] ?? 0
-            ];
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "test_results" => $results,
-            "message" => "DSS Test completed with " . count(array_filter($results, fn($r) => $r['passed'])) . "/" . count($results) . " passed"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Test Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Manually triggers DSS evaluation for a specific application
  * 
  * @param PDO $pdo Database connection object
@@ -1267,67 +1146,6 @@ function handleEvaluateAllPending($pdo)
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Debug endpoint to check application details
- * 
- * @param PDO $pdo Database connection object
- */
-function handleDebugApplication($pdo)
-{
-    try {
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            echo "ID required";
-            return;
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT ba.id, ba.business_name, ba.dss_status as app_dss_status,
-                   be.id as eval_id, be.dss_status, be.evaluation_details,
-                   be.evaluated_at
-            FROM business_applications ba
-            LEFT JOIN business_evaluations be ON ba.id = be.application_id
-            WHERE ba.id = ?
-        ");
-        $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        echo "<pre>";
-        echo "=== Application Debug Info ===\n";
-        print_r($result);
-        echo "</pre>";
-
-        if ($result['evaluation_details']) {
-            echo "<h3>Evaluation Details:</h3>";
-            echo "<pre>";
-            print_r(json_decode($result['evaluation_details'], true));
-            echo "</pre>";
-        }
-
-        echo "<h3>Test DSS Evaluation:</h3>";
-        try {
-            $dss = new DSSRuleEngine();
-            $appStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = ?");
-            $appStmt->execute([$id]);
-            $application = $appStmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($application) {
-                $evalResult = $dss->evaluateApplication($application);
-                echo "<pre>";
-                print_r($evalResult);
-                echo "</pre>";
-            }
-        } catch (Exception $e) {
-            echo "DSS Test Error: " . $e->getMessage();
-        }
-
-        exit;
-    } catch (Exception $e) {
-        echo "Debug Error: " . $e->getMessage();
-        exit;
     }
 }
 

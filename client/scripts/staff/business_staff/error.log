@@ -672,3 +672,24 @@ LINE 1: INSERT INTO business_status_history
 [26-Jan-2026 12:36:50 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
                     ^
+[26-Jan-2026 18:02:47 UTC] R1 Check - Required: []
+[26-Jan-2026 18:02:47 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[26-Jan-2026 18:02:47 UTC] R1 Check - Missing: []
+[26-Jan-2026 18:02:47 UTC] R1 Check - Required: []
+[26-Jan-2026 18:02:47 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[26-Jan-2026 18:02:47 UTC] R1 Check - Missing: []
+[26-Jan-2026 18:05:16 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[26-Jan-2026 18:06:03 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[26-Jan-2026 18:06:48 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[26-Jan-2026 18:08:10 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[26-Jan-2026 18:09:02 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^

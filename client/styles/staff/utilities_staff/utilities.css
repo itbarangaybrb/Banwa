@@ -932,6 +932,41 @@ h2 {
         padding: 12px 10px;
     }
 }
+/* PROMPT TAG STYLES */
+.prompt-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.prompt-suggestions {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+
+.prompt-tag {
+    background: #f0f2f5;
+    border: 1px solid #d1d9e0;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #444;
+}
+
+.prompt-tag:hover {
+    background: #826EEA;
+    color: white;
+    border-color: #5B479B;
+}
+
+/* Optional: Make them look like they are floating inside the top of the box */
+#updateComments {
+    padding-top: 10px;
+}
 
 
 /* Container for the details */
@@ -1066,3 +1101,4 @@ h2 {
     margin-left: 325px;
     width: calc(100% - 325px);
 }
+

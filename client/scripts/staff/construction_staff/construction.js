@@ -64,10 +64,17 @@ function switchTab(event, tabName) {
         if (link) link.classList.add('active');
     }
 
-    // Load Data based on Tab
-    if (tabName === 'management') loadManagementTable();
-    else if (tabName === 'summary') loadSummarySelect();
-    else if (tabName === 'dashboard') loadAnalyticsTab();
+    // Update this to match your actual tab names
+    if (tabName === 'management') {
+        loadManagementTable();
+    } else if (tabName === 'process') {
+        loadProcessTable();
+    } else if (tabName === 'summary') {
+        loadSummarySelect();
+    } else if (tabName === 'dashboard') {
+        loadAnalyticsTab();
+    }
+    // Add 'create' tab handling if needed
 }
 
 /**
@@ -201,7 +208,7 @@ function loadApplicationsFromDB() {
  * Loads applications into the review table with view and archive functionality
  * Displays applications with status badges and appropriate action buttons
  */
-function loadReviewTable() {
+function loadManagementTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -216,10 +223,13 @@ function loadReviewTable() {
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
+                    <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
                     <td>${app.nature_of_activity}</td>
-                    <td>${app.first_name} ${app.last_name}</td>
+                    <td>${app.contractor_name}</td>
+                    <td>${app.contractor_contact_number}</td>
+                    <td>${app.construction_address}</td>
                     <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                    <td>${app.payment_status || 'N/A'}</td>
+                    <td>${app.payment_status || 'Unpaid'}</td>
                     <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
                     <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button></td>
                 </tr>
@@ -645,7 +655,7 @@ function submitUpdate(event) {
             if (data.status === 'success') {
                 closeModal('updateModal');
                 alert('Application updated successfully!');
-                loadReviewTable();
+                loadManagementTable();
                 loadProcessTable();
             } else {
                 alert('Error: ' + data.message);
@@ -941,7 +951,7 @@ function archiveApplication(appId) {
         .then(data => {
             if (data.status === 'success') {
                 showAlert('Archived successfully', 'success');
-                loadReviewTable();
+                loadManagementTable();
             }
         });
 }
@@ -1124,6 +1134,28 @@ function downloadSummary(appId) {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Creates a new utility application
+ */
+function createApplication(event) {
+    event.preventDefault();
+    alert('Create functionality not implemented yet');
+    // You'll need to implement this based on your form fields
+}
+
+/**
+ * Filters applications in review table
+ */
+function filterReviewApplications() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
 }
 
 /**

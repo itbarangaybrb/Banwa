@@ -53,9 +53,6 @@ try {
         case 'get_rules':
             handleGetRules();
             break;
-        case 'test_dss':
-            handleTestDSS();
-            break;
         case 'get_application_with_dss':
             handleGetApplicationWithDSS($pdo);
             break;
@@ -64,9 +61,6 @@ try {
             break;
         case 'evaluate_all_pending':
             handleEvaluateAllPending($pdo);
-            break;
-        case 'debug_application':
-            handleDebugApplication($pdo);
             break;
         case 'get_application_details':
             handleGetApplicationDetails($pdo);
@@ -1178,80 +1172,6 @@ function handleGetRules()
 }
 
 /**
- * Tests the DSS rule engine with sample construction data
- */
-function handleTestDSS()
-{
-    try {
-        $dss = new ConstructionDSSRuleEngine();
-
-        $testCases = [
-            [
-                'name' => 'Perfect Construction Application',
-                'data' => [
-                    'nature_of_activity' => 'Residential Construction',
-                    'type_of_work' => 'New Construction',
-                    'details_of_work' => 'Single-family home',
-                    'start_date' => date('Y-m-d', strtotime('+7 days')),
-                    'end_date' => date('Y-m-d', strtotime('+90 days')),
-                    'number_of_working_days' => 60,
-                    'number_of_workers' => 5,
-                    'contractor_name' => 'ABC Construction',
-                    'contractor_contact_number' => '09123456789',
-                    'construction_address' => '123 Main Street',
-                    'latitude' => 14.6175,
-                    'longitude' => 121.0756,
-                    'agreed' => 1
-                ],
-                'expected' => 'Pre-Approved'
-            ],
-            [
-                'name' => 'Construction with Missing Requirements',
-                'data' => [
-                    'nature_of_activity' => 'Commercial Renovation',
-                    'type_of_work' => 'Renovation',
-                    'details_of_work' => 'Store facade renovation',
-                    'start_date' => date('Y-m-d', strtotime('+3 days')),
-                    'end_date' => date('Y-m-d', strtotime('+30 days')),
-                    'number_of_working_days' => 20,
-                    'number_of_workers' => 3,
-                    'contractor_name' => 'XYZ Builders',
-                    'contractor_contact_number' => '09123456789',
-                    'construction_address' => '456 Commercial Ave',
-                    'latitude' => 14.6175,
-                    'longitude' => 121.0756,
-                    'agreed' => 1
-                ],
-                'expected' => 'Additional Requirements Needed'
-            ]
-        ];
-
-        $results = [];
-        foreach ($testCases as $testCase) {
-            $result = $dss->evaluateApplication($testCase['data']);
-            $results[] = [
-                'test_name' => $testCase['name'],
-                'expected' => $testCase['expected'],
-                'actual' => $result['status'],
-                'passed' => $result['status'] === $testCase['expected'],
-                'score' => $result['evaluation_details']['score'] ?? 0,
-                'probability' => $result['evaluation_details']['approval_probability'] ?? 0
-            ];
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "test_results" => $results,
-            "message" => "DSS Test completed with " . count(array_filter($results, fn($r) => $r['passed'])) . "/" . count($results) . " passed"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Test Error in handleTestDSS: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Test Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Manually triggers DSS evaluation for a specific construction application
  * 
  * @param PDO $pdo Database connection object
@@ -1325,67 +1245,6 @@ function handleEvaluateAllPending($pdo)
         http_response_code(500);
         error_log("Error in handleEvaluateAllPending: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Debug endpoint to check application details
- * 
- * @param PDO $pdo Database connection object
- */
-function handleDebugApplication($pdo)
-{
-    try {
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            echo "ID required";
-            return;
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT ca.id, ca.first_name, ca.last_name, ca.dss_status as app_dss_status,
-                   ce.id as eval_id, ce.dss_status, ce.evaluation_details,
-                   ce.evaluated_at
-            FROM construction_applications ca
-            LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
-            WHERE ca.id = ?
-        ");
-        $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        echo "<pre>";
-        echo "=== Construction Application Debug Info ===\n";
-        print_r($result);
-        echo "</pre>";
-
-        if ($result['evaluation_details']) {
-            echo "<h3>Evaluation Details:</h3>";
-            echo "<pre>";
-            print_r(json_decode($result['evaluation_details'], true));
-            echo "</pre>";
-        }
-
-        echo "<h3>Test DSS Evaluation:</h3>";
-        try {
-            $dss = new ConstructionDSSRuleEngine();
-            $appStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = ?");
-            $appStmt->execute([$id]);
-            $application = $appStmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($application) {
-                $evalResult = $dss->evaluateApplication($application);
-                echo "<pre>";
-                print_r($evalResult);
-                echo "</pre>";
-            }
-        } catch (Exception $e) {
-            echo "DSS Test Error: " . $e->getMessage();
-        }
-
-        exit;
-    } catch (Exception $e) {
-        echo "Debug Error: " . $e->getMessage();
-        exit;
     }
 }
 

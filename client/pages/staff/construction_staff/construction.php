@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Application Management System</title>
+    
     <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
@@ -190,8 +191,9 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Owner</th>
-                                <th>Contractor</th>
-                                <th>Contractor No.</th>
+                                <th>Nature of Act</th>
+                                <th>C. name</th>
+                                <th>C. no.</th>
                                 <th>Address</th>
                                 <th>Status</th>
                                 <th>Payment</th>
@@ -335,11 +337,22 @@
 
             <!-- Summary Tab -->
             <div id="summary" class="tab-pane">
-                <h2>Generate Summary</h2>
-                <div class="form-group">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
+                <div class="summary-controls">
+                    <h2>📄 Generate Business Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Business Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">🔄</button>
+                    </div>
                 </div>
-                <div id="summaryOutput"></div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a business from the list above to view the full report.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Modals -->
