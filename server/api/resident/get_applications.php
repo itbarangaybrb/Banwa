@@ -21,7 +21,9 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Utilities' AS type 
                             FROM utility_applications
                             WHERE supabase_user_id = ?");
@@ -38,7 +40,9 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Construction' AS type 
                             FROM construction_applications
                             WHERE supabase_user_id = ?");
@@ -55,7 +59,9 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Business' AS type
                             FROM business_applications
                             WHERE supabase_user_id = ?");

@@ -272,64 +272,18 @@ function createInitialDSSEvaluation($pdo, $applicationId)
 function handleFetchApplications($pdo)
 {
     try {
-        $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        $isStaff = $_SESSION['is_staff'] ?? false;
-
-        if ($isStaff) {
-            $sql = "SELECT ba.*, 
-                        COALESCE(be.dss_status, 'Pending Evaluation') as dss_status,
-                        COALESCE(be.evaluation_details, '{}') as evaluation_details,
-                        be.evaluated_at as dss_evaluated_at
-                    FROM business_applications ba
-                    LEFT JOIN business_evaluations be ON ba.id = be.application_id
-                    ORDER BY ba.created_at DESC";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute();
-        } else {
-            $sql = "SELECT ba.*, 
-                        COALESCE(be.dss_status, 'Pending Evaluation') as dss_status,
-                        COALESCE(be.evaluation_details, '{}') as evaluation_details,
-                        be.evaluated_at as dss_evaluated_at
-                    FROM business_applications ba
-                    LEFT JOIN business_evaluations be ON ba.id = be.application_id
-                    WHERE ba.supabase_user_id = :user_id
-                    ORDER BY ba.created_at DESC";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([':user_id' => $supabaseUserId]);
-        }
-
+        $sql = "SELECT ba.* 
+                FROM business_applications ba
+                ORDER BY ba.created_at DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($applications as &$app) {
-            if (is_string($app['business_status'])) {
-                $app['business_status'] = json_decode($app['business_status'], true);
-            }
-            if (is_string($app['requirements'])) {
-                $app['requirements'] = json_decode($app['requirements'], true);
-            }
-
-            if (is_string($app['evaluation_details'])) {
-                $app['evaluation_details'] = json_decode($app['evaluation_details'], true);
-            }
-
-            $app['evaluation_summary'] = getEvaluationSummary($app['dss_status']);
-
-            if (isset($app['evaluation_details']) && is_array($app['evaluation_details'])) {
-                $app['dss_summary'] = getDSSSummary($app['evaluation_details']);
-            } else {
-                $app['dss_summary'] = [
-                    'score' => 0,
-                    'max_score' => 6,
-                    'probability' => 0,
-                    'passed_count' => 0,
-                    'failed_count' => 0
-                ];
-            }
-        }
-
+        
         echo json_encode(["status" => "success", "data" => $applications]);
+        
     } catch (PDOException $e) {
-        http_response_code(500);
+        error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
     }
 }

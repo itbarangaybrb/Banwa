@@ -693,14 +693,22 @@ async function loadApplications() {
 
         data.applications
             .sort((a, b) => {
-                const dateA = a.updated_at ? new Date(a.updated_at) : new Date(a.request_date);
-                const dateB = b.updated_at ? new Date(b.updated_at) : new Date(b.request_date);
+                const dateA = new Date(a.application_date || a.created_at || a.updated_at);
+                const dateB = new Date(b.application_date || b.created_at || b.updated_at);
                 return dateB - dateA;
             })
             .forEach(app => {
                 const tr = document.createElement('tr');
 
-                const dateFiled = app.request_date ? new Date(app.request_date).toLocaleString() : 'N/A';
+                let displayDate = 'N/A';
+                if (app.updated_at) {
+                    displayDate = new Date(app.updated_at).toLocaleString();
+                } else if (app.created_at) {
+                    displayDate = new Date(app.created_at).toLocaleString();
+                } else if (app.request_date) {
+                    displayDate = new Date(app.request_date).toLocaleString();
+                }
+
                 const appType = app.type || "Application";
                 const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
                 const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
@@ -737,7 +745,7 @@ async function loadApplications() {
                         <span class="ref-id">${app.id}</span>
                         <div style="margin-top: 10px;">
                             <span class="date-label">Date Filed:</span>
-                            <span class="date-filed">${dateFiled}</span>
+                            <span class="date-filed">${displayDate}</span>
                         </div>
                     </td>
                     <td>

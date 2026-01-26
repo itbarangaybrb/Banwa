@@ -7,6 +7,8 @@
     <title>Construction Application Management System</title>
     <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+    <link rel="stylesheet" href="../../../styles/staff/dss.css" />
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../../../styles/staff/map1.css" />
@@ -33,7 +35,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav_select" data-tab="review">
+                    <a href="#" class="nav_select" data-tab="management">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
                             <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
@@ -170,15 +172,17 @@
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
-
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
                 </div>
             </div>
 
             <!-- Review Tab -->
-            <div id="review" class="tab-pane">
+            <div id="management" class="tab-pane">
                 <h2>Review Construction Applications</h2>
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
+                    <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
                 <div class="table-responsive">
                     <table id="applicationsTable">
