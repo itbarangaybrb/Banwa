@@ -104,6 +104,8 @@ body {
     border-left: 3px solid transparent;
     gap: 15px;
     white-space: nowrap;
+    cursor: pointer;
+    position: relative;
 }
 
 .nav_select:hover {
@@ -116,6 +118,19 @@ body {
     background-color: rgba(52, 152, 219, 0.2);
     border-left-color: #3498db;
     color: white;
+    animation: navPulse 2s infinite;
+}
+
+@keyframes navPulse {
+    0% {
+        background-color: rgba(52, 152, 219, 0.2);
+    }
+    50% {
+        background-color: rgba(52, 152, 219, 0.3);
+    }
+    100% {
+        background-color: rgba(52, 152, 219, 0.2);
+    }
 }
 
 .nav_select_btn {
@@ -133,6 +148,8 @@ body {
     cursor: pointer;
     font-size: inherit;
     font-family: inherit;
+    white-space: nowrap;
+    position: relative;
 }
 
 .nav_select_btn:hover {
@@ -146,6 +163,7 @@ body {
     border-left-color: #3498db;
     color: white;
     font-weight: 600;
+    animation: navPulse 2s infinite;
 }
 
 .nav_icon {
@@ -153,6 +171,7 @@ body {
     width: 24px;
     text-align: center;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 }
 
 .nav_text {
@@ -162,6 +181,36 @@ body {
 }
 
 .side_nav:hover .nav_text {
+    opacity: 1;
+}
+
+/* Navigation Separator */
+.nav-separator {
+    padding: 15px 16px 5px 16px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
+}
+
+.nav-separator .nav_text {
+    opacity: 1 !important;
+}
+
+/* Navigation Badges */
+.nav_badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.side_nav:hover .nav_badge {
     opacity: 1;
 }
 
@@ -423,14 +472,14 @@ header {
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-.dropdown-btn:active {
-    transform: translateY(0);
-}
-
 .dropdown-arrow {
     transition: transform 0.3s ease;
     font-size: 0.9em;
     margin-left: auto;
+}
+
+.dropdown-btn.active .dropdown-arrow {
+    transform: rotate(180deg);
 }
 
 .dropdown-content {
@@ -573,24 +622,80 @@ header {
     font-size: 0.8em;
 }
 
-/* Filter info */
-.filter-info {
-    margin-top: 10px;
-    padding: 10px 14px;
-    background: #e8f4fc;
-    border-left: 4px solid #667eea;
-    border-radius: 6px;
-    font-size: 0.9em;
-    color: #2c5282;
+/* =================== HAZARD TOGGLE STYLES =================== */
+.hazard-toggles {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.hazard-toggle-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hazard-toggle-btn {
     display: flex;
     align-items: center;
     gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: #555;
+    cursor: pointer;
+    font-size: 0.9em;
     font-weight: 500;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 140px;
+    justify-content: space-between;
 }
 
-.filter-info::before {
-    content: "ℹ️";
-    font-size: 12px;
+.hazard-toggle-btn:hover {
+    background: #f0f0f0;
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.hazard-toggle-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #00247C 100%);
+    color: white;
+    border-color: #667eea;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.hazard-toggle-btn.active .toggle-indicator {
+    background: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.hazard-toggle-btn.active.flood-active {
+    background: linear-gradient(135deg, #ff0000 0%, #ff9900 100%);
+}
+
+.hazard-toggle-btn.active.fault-active {
+    background: linear-gradient(135deg, #ff0000 0%, #8b0000 100%);
+}
+
+.toggle-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ddd;
+    transition: all 0.3s ease;
+}
+
+/* Filter info - Hidden as requested */
+.filter-info {
+    display: none;
 }
 
 /* Map Styling */
@@ -739,6 +844,16 @@ header {
     background: #f44336;
 }
 
+.flood-risk-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Button Styles */
 .view-details-btn {
     display: inline-block;
@@ -801,42 +916,6 @@ header {
 .update-location-btn:hover {
     background: #e0a800;
     transform: translateY(-2px);
-}
-
-/* Location Quality */
-.location-quality.exact {
-    color: #28a745;
-    font-weight: bold;
-}
-
-.location-quality.approximate {
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.location-quality.fallback {
-    color: #f44336;
-    font-weight: bold;
-}
-
-.location-quality.unknown {
-    color: #6c757d;
-    font-weight: bold;
-}
-
-/* Location Warning */
-.location-warning {
-    background: #fff8e1;
-    border-left: 4px solid #ffc107;
-    padding: 15px;
-    margin: 15px 0;
-    border-radius: 5px;
-}
-
-.warning-text {
-    color: #856404;
-    font-size: 0.9em;
-    margin-bottom: 10px;
 }
 
 /* Modal Styles */
@@ -985,27 +1064,6 @@ header {
     color: #0c5460;
 }
 
-/* Loading Modal */
-#loading-modal .modal-content {
-    width: 300px;
-    text-align: center;
-}
-
-.loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* Status Badges */
 .status-badge {
     display: inline-block;
@@ -1121,6 +1179,14 @@ header {
     background: #667eea;
 }
 
+.result-type.flood {
+    background: linear-gradient(135deg, #ff0000, #ff9900);
+}
+
+.result-type.fault {
+    background: linear-gradient(135deg, #ff0000, #8b0000);
+}
+
 /* Animation for highlighted markers */
 .highlighted-marker {
     animation: bounce 1s infinite alternate;
@@ -1217,46 +1283,143 @@ header {
 }
 
 /* Fault Line Animations */
-@keyframes pulse {
+@keyframes faultPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
-        transform: scale(1);
+        stroke-opacity: 0.7;
+        stroke-width: 4;
     }
-    70% {
-        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
-        transform: scale(1.05);
+    50% {
+        stroke-opacity: 1;
+        stroke-width: 5;
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
-        transform: scale(1);
+        stroke-opacity: 0.7;
+        stroke-width: 4;
     }
 }
 
-/* Boundary Notification */
-#boundary-notification {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(255, 193, 7, 0.95);
-    color: #333;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-family: "Inter", sans-serif;
-    font-weight: 600;
-    z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s ease;
-    max-width: 300px;
-    text-align: center;
-    border-left: 4px solid #ffc107;
-    pointer-events: none;
+.fault-line-active {
+    animation: faultPulse 2s infinite;
 }
 
-#boundary-notification.visible {
-    transform: translateY(0);
-    opacity: 1;
+/* Flood Area Legend */
+.flood-legend {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    font-family: "Inter", sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 180px;
+}
+
+.flood-legend h4 {
+    margin: 0 0 10px 0;
+    color: #0066cc;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.flood-legend-item {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+}
+
+.flood-legend-color {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.flood-legend-text {
+    font-size: 11px;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Flood area result icon */
+.result-icon.flood-area {
+    background: linear-gradient(135deg, #ff0000, #ff9900, #ffff00);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+/* Flood popup specific styles */
+.flood-popup-section {
+    background: #f0f8ff;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    border-left: 4px solid #0066cc;
+}
+
+/* Flood risk badges in popups */
+.flood-risk-high {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.flood-risk-medium {
+    color: #ff9900;
+    font-weight: bold;
+}
+
+.flood-risk-low {
+    color: #ffff00;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.flood-risk-very-low {
+    color: #0066cc;
+    font-weight: bold;
+}
+
+/* Flood area animation */
+@keyframes floodPulse {
+    0% {
+        fill-opacity: 0.3;
+        stroke-opacity: 0.8;
+    }
+    50% {
+        fill-opacity: 0.5;
+        stroke-opacity: 1;
+    }
+    100% {
+        fill-opacity: 0.3;
+        stroke-opacity: 0.8;
+    }
+}
+
+.flood-highlight {
+    animation: floodPulse 2s infinite;
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 2001;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 1.2em;
 }
 
 /* Responsive Design */
@@ -1273,6 +1436,10 @@ header {
 }
 
 @media (max-width: 768px) {
+    .mobile-menu-btn {
+        display: block;
+    }
+    
     header {
         left: 0;
         padding: 0 20px;
@@ -1334,6 +1501,16 @@ header {
         flex-direction: column;
     }
     
+    .hazard-toggle-container {
+        flex-direction: column;
+    }
+    
+    .hazard-toggle-btn {
+        width: 100%;
+        min-width: auto;
+        justify-content: space-between;
+    }
+    
     .modal-content {
         margin: 10px;
         width: calc(100% - 20px);
@@ -1356,6 +1533,21 @@ header {
         left: 20px;
         top: 150px;
         max-height: 300px;
+    }
+    
+    .flood-legend {
+        padding: 8px;
+        max-width: 150px;
+        font-size: 11px;
+    }
+    
+    .flood-legend h4 {
+        font-size: 12px;
+    }
+    
+    .flood-legend-color {
+        width: 15px;
+        height: 15px;
     }
 }
 
@@ -1399,34 +1591,9 @@ header {
         padding: 10px 14px;
         font-size: 0.85em;
     }
-}
-
-/* Mobile menu button */
-.mobile-menu-btn {
-    display: none;
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 2001;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px;
-    cursor: pointer;
-    font-size: 1.2em;
-}
-
-@media (max-width: 768px) {
-    .mobile-menu-btn {
-        display: block;
-    }
     
-    .side_nav {
-        transform: translateX(-100%);
-    }
-    
-    .side_nav.active {
-        transform: translateX(0);
+    .hazard-toggle-btn {
+        padding: 8px 14px;
+        font-size: 0.85em;
     }
 }

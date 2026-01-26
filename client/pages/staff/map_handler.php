@@ -196,7 +196,97 @@ function getHouseholdById($id)
     }
 }
 
-// ==================== NEW HOUSE POLYGON FUNCTIONS ====================
+// ==================== FLOOD HAZARD AREA FUNCTIONS ====================
+
+// Get all flood hazard areas with geometry
+function getFloodHazardAreas()
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hazard_id,
+                    hazard_type,
+                    hazard_name,
+                    description,
+                    risk_level,
+                    ST_AsGeoJSON(geom) as geojson,
+                    last_flood_date,
+                    reported_by,
+                    date_identified,
+                    date_updated,
+                    created_at,
+                    updated_at
+                FROM barangay_hazards 
+                WHERE hazard_type = 'flood'
+                AND (status IS NULL OR status != 'archived')
+                AND geom IS NOT NULL
+                ORDER BY risk_level DESC, hazard_name";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getFloodHazardAreas: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Get flood hazard data for search (with centroid coordinates)
+function getFloodHazardDataForSearch()
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hazard_id,
+                    hazard_name,
+                    hazard_type,
+                    risk_level,
+                    description,
+                    ST_X(ST_Centroid(geom)) as longitude,
+                    ST_Y(ST_Centroid(geom)) as latitude
+                FROM barangay_hazards 
+                WHERE hazard_type = 'flood'
+                AND (status IS NULL OR status != 'archived')
+                AND geom IS NOT NULL";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getFloodHazardDataForSearch: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Get single flood hazard by ID
+function getFloodDetails($id)
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hazard_id,
+                    hazard_type,
+                    hazard_name,
+                    description,
+                    risk_level,
+                    ST_AsGeoJSON(geom) as geojson,
+                    last_flood_date,
+                    reported_by,
+                    date_identified,
+                    date_updated,
+                    created_at,
+                    updated_at
+                FROM barangay_hazards 
+                WHERE hazard_id = :id 
+                AND hazard_type = 'flood'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getFloodDetails: " . $e->getMessage());
+        return null;
+    }
+}
+
+// ==================== HOUSE POLYGON FUNCTIONS ====================
 
 // Get all house polygons
 function getHousePolygons()
@@ -578,7 +668,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // NEW: House polygon actions
+    // FLOOD HAZARD AREA actions
+    if ($_POST['action'] === 'get_flood_hazards') {
+        $hazards = getFloodHazardAreas();
+        echo json_encode([
+            'success' => true,
+            'hazards' => $hazards
+        ]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_flood_data_for_search') {
+        $hazards = getFloodHazardDataForSearch();
+        echo json_encode([
+            'success' => true,
+            'hazards' => $hazards
+        ]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_flood_details') {
+        $id = $_POST['id'] ?? 0;
+        $data = getFloodDetails($id);
+        
+        if ($data) {
+            echo json_encode([
+                'success' => true,
+                'data' => $data
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Flood hazard not found'
+            ]);
+        }
+        exit;
+    }
+
+    // HOUSE POLYGON actions
     if ($_POST['action'] === 'get_houses') {
         $houses = getHousePolygons();
         echo json_encode([
@@ -660,3 +787,4 @@ echo json_encode([
     'success' => false,
     'message' => 'Invalid request method'
 ]);
+?>

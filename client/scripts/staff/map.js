@@ -9,6 +9,25 @@ let housePolygonsData = [];
 let faultLine = null;
 let warningMarker = null;
 
+// Hazard layer states
+let floodLayerActive = false;
+let faultLineActive = false;
+let floodLayer = null;
+let floodLegend = null;
+
+// Filter state
+let activeFilter = 'household';
+let constructionSubFilter = 'all';
+
+// Search variables
+let allMarkersData = [];
+let searchResults = [];
+let activeSearchMarker = null;
+let searchTimeout = null;
+
+// Modal state
+let currentMarkerData = null;
+
 // Barangay boundary
 const blueRidgeGeoJSON = {
     "type": "FeatureCollection",
@@ -32,25 +51,6 @@ const blueRidgeGeoJSON = {
         }
     }]
 };
-
-let activeFilter = 'household';
-let constructionSubFilter = 'all';
-let markerVisibility = {
-    household: true,
-    business: false,
-    construction: false,
-    utility: false
-};
-let housePolygonsVisible = true;
-
-// Search variables
-let allMarkersData = [];
-let searchResults = [];
-let activeSearchMarker = null;
-let searchTimeout = null;
-
-// Modal state
-let currentMarkerData = null;
 
 // Tile layers
 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -93,55 +93,128 @@ const incidentIcon = L.divIcon({
     iconSize: [15, 15] 
 });
 
-const defaultIcon = L.divIcon({ 
-    className: 'household-marker',
-    iconSize: [12, 12] 
-});
+// ==================== MODAL FUNCTIONS ====================
 
-// Navigation active state management
-function setActiveNav(element) {
-    document.querySelectorAll('.nav_select, .nav_select_btn').forEach(item => {
-        item.classList.remove('active');
-    });
-    element.classList.add('active');
-}
-
-// Helper function to get icon based on marker type
-function getMarkerIcon(markerType) {
-    switch(markerType?.toLowerCase()) {
-        case 'household': return householdIcon;
-        case 'utility': return utilityIcon;
-        case 'incident': return incidentIcon;
-        case 'business': return businessIcon;
-        case 'construction': return constructionIcon;
-        default: return householdIcon;
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
 }
 
-// Format date function
-function formatDate(dateString) {
-    if (!dateString) return 'Not specified';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-    });
+function closeModal(modalId = 'detail-modal') {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
 }
 
-// Format currency function
-function formatCurrency(amount) {
-    if (!amount) return 'Not specified';
-    return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP'
-    }).format(amount);
+// ==================== HAZARD LAYER TOGGLES ====================
+
+// Toggle flood layer
+function toggleFloodLayer() {
+    floodLayerActive = !floodLayerActive;
+    
+    // Update button style
+    const floodToggleBtn = document.getElementById('floodToggleBtn');
+    if (floodToggleBtn) {
+        if (floodLayerActive) {
+            floodToggleBtn.classList.add('active');
+            floodToggleBtn.classList.add('flood-active');
+        } else {
+            floodToggleBtn.classList.remove('active');
+            floodToggleBtn.classList.remove('flood-active');
+        }
+    }
+    
+    if (floodLayerActive) {
+        // Show flood layer
+        if (!floodLayer) {
+            loadFloodData();
+        } else {
+            // Check if already on map
+            if (!map.hasLayer(floodLayer)) {
+                floodLayer.addTo(map);
+            }
+        }
+        
+        // Show flood legend
+        if (floodLegend && !map.hasControl(floodLegend)) {
+            floodLegend.addTo(map);
+        }
+    } else {
+        // Hide flood layer
+        if (floodLayer && map.hasLayer(floodLayer)) {
+            map.removeLayer(floodLayer);
+        }
+        
+        // Hide flood legend
+        removeFloodLegend();
+    }
 }
 
-// FIXED: Dropdown toggle function
+// Improved function to remove flood legend
+function removeFloodLegend() {
+    if (floodLegend) {
+        try {
+            // Try to remove the control from map
+            if (map.hasControl(floodLegend)) {
+                map.removeControl(floodLegend);
+            }
+        } catch (e) {
+            console.log('Error removing flood legend via map.removeControl:', e);
+            // Alternative method: remove by DOM element
+            const legendElement = document.querySelector('.flood-legend');
+            if (legendElement && legendElement.parentNode) {
+                legendElement.parentNode.removeChild(legendElement);
+            }
+        }
+        // Don't set floodLegend to null here - keep the object for reuse
+    }
+}
+
+// Toggle fault line
+function toggleFaultLine() {
+    faultLineActive = !faultLineActive;
+    
+    // Update button style
+    const faultToggleBtn = document.getElementById('faultToggleBtn');
+    if (faultToggleBtn) {
+        if (faultLineActive) {
+            faultToggleBtn.classList.add('active');
+            faultToggleBtn.classList.add('fault-active');
+        } else {
+            faultToggleBtn.classList.remove('active');
+            faultToggleBtn.classList.remove('fault-active');
+        }
+    }
+    
+    if (faultLineActive) {
+        // Show fault line
+        if (faultLine && !map.hasLayer(faultLine)) {
+            faultLine.addTo(map);
+        }
+        if (warningMarker && !map.hasLayer(warningMarker)) {
+            warningMarker.addTo(map);
+        }
+    } else {
+        // Hide fault line
+        if (faultLine && map.hasLayer(faultLine)) {
+            map.removeLayer(faultLine);
+        }
+        if (warningMarker && map.hasLayer(warningMarker)) {
+            map.removeLayer(warningMarker);
+        }
+    }
+}
+
+// ==================== REGULAR FILTER DROPDOWN FUNCTIONS ====================
+
 function toggleFilterDropdown(event) {
     if (event) {
-        event.stopPropagation(); // Prevent event bubbling
+        event.stopPropagation();
     }
     
     const dropdown = document.getElementById('filterDropdown');
@@ -151,7 +224,6 @@ function toggleFilterDropdown(event) {
         dropdown.classList.remove('show');
         dropdownBtn.classList.remove('active');
     } else {
-        // Close any other open dropdowns
         document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
             dropdown.classList.remove('show');
         });
@@ -164,20 +236,17 @@ function toggleFilterDropdown(event) {
     }
 }
 
-// FIXED: selectFilterType function
 function selectFilterType(type, event) {
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
     
-    // Close dropdown
     const dropdown = document.getElementById('filterDropdown');
     const dropdownBtn = document.getElementById('filterDropdownBtn');
     dropdown.classList.remove('show');
     dropdownBtn.classList.remove('active');
     
-    // Update current filter text
     const filterTextMap = {
         'household': 'Households',
         'business': 'Businesses',
@@ -187,7 +256,6 @@ function selectFilterType(type, event) {
     
     document.getElementById('currentFilterText').textContent = filterTextMap[type] || 'Filter';
     
-    // Show/hide construction sub-filters
     const subFilters = document.getElementById('constructionSubFilters');
     if (subFilters) {
         if (type === 'construction') {
@@ -197,7 +265,6 @@ function selectFilterType(type, event) {
         }
     }
     
-    // Update active state in dropdown
     document.querySelectorAll('.dropdown-content a').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.type === type) {
@@ -205,25 +272,92 @@ function selectFilterType(type, event) {
         }
     });
     
-    // Activate the filter
     activateFilter(type);
 }
 
-// FIXED: Construction sub-filter function
+function activateFilter(type) {
+    activeFilter = type;
+    updateAllVisibility();
+}
+
+function updateAllVisibility() {
+    updateMarkerVisibility();
+    updateHousePolygonVisibility();
+}
+
+function updateMarkerVisibility() {
+    householdMarkers.forEach(marker => {
+        if (activeFilter === 'household') {
+            if (!map.hasLayer(marker)) {
+                marker.addTo(map);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+    
+    constructionMarkers.forEach(marker => {
+        if (activeFilter === 'construction') {
+            if (!map.hasLayer(marker)) {
+                marker.addTo(map);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+    
+    businessMarkers.forEach(marker => {
+        if (activeFilter === 'business') {
+            if (!map.hasLayer(marker)) {
+                marker.addTo(map);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+    
+    utilityMarkers.forEach(marker => {
+        if (activeFilter === 'utility') {
+            if (!map.hasLayer(marker)) {
+                marker.addTo(map);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+}
+
+function updateHousePolygonVisibility() {
+    if (housePolygonsLayer) {
+        if (activeFilter === 'household') {
+            housePolygonsLayer.addTo(map);
+        } else {
+            map.removeLayer(housePolygonsLayer);
+        }
+    }
+}
+
+// ==================== CONSTRUCTION SUB-FILTER ====================
+
 function filterConstructionByType(subtype, event) {
     if (event) {
         event.stopPropagation();
     }
     
-    // Update construction sub-filter
     constructionSubFilter = subtype;
     
-    // Update active state of sub-filter buttons
     document.querySelectorAll('.sub-filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Find and activate the clicked button
     const clickedBtn = event ? event.currentTarget : 
         document.querySelector(`.sub-filter-btn[data-subtype="${subtype}"]`);
     
@@ -231,178 +365,43 @@ function filterConstructionByType(subtype, event) {
         clickedBtn.classList.add('active');
     }
     
-    // Update filter info
-    const filterText = subtype === 'all' ? 'Showing all construction sites' : `Showing ${subtype} construction sites`;
-    document.getElementById('filterInfo').textContent = filterText;
-    
-    // If construction is the active filter, update the visibility
     if (activeFilter === 'construction') {
-        updateConstructionMarkersBySubtype();
+        updateMarkerVisibility();
     }
 }
 
-// NEW: Function to filter construction markers by subtype
-function updateConstructionMarkersBySubtype() {
-    // First, hide all construction markers
-    constructionMarkers.forEach(marker => {
-        if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-        }
+// ==================== NAVIGATION ACTIVE STATE ====================
+
+function setActiveNav(element) {
+    document.querySelectorAll('.nav_select, .nav_select_btn').forEach(item => {
+        item.classList.remove('active');
     });
-    
-    // Then show only the ones matching the subtype
-    // Note: You need to implement actual filtering based on your data structure
-    // For now, we'll show all construction markers
-    if (markerVisibility.construction) {
-        constructionMarkers.forEach(marker => {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        });
-    }
+    element.classList.add('active');
 }
 
-// Activate a single filter (only one can be active)
-function activateFilter(type) {
-    // Update active filter
-    activeFilter = type;
-    
-    // Reset construction sub-filter when switching away from construction
-    if (type !== 'construction') {
-        constructionSubFilter = 'all';
-        
-        // Reset sub-filter buttons
-        document.querySelectorAll('.sub-filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.subtype === 'all') {
-                btn.classList.add('active');
-            }
-        });
-    }
-    
-    // Update filter info
-    updateFilterInfo();
-    
-    // Update visibility based on active filter
-    updateAllVisibility();
+// ==================== MAP VIEW FUNCTIONS ====================
+
+function toggleStreetMap() {
+    map.removeLayer(satelliteLayer);
+    osmLayer.addTo(map);
+    setActiveNav(event.currentTarget);
 }
 
-// Update filter info display
-function updateFilterInfo() {
-    const filterInfo = document.getElementById('filterInfo');
-    let infoText = '';
-    
-    switch(activeFilter) {
-        case 'household':
-            infoText = 'Showing households';
-            break;
-        case 'business':
-            infoText = 'Showing businesses';
-            break;
-        case 'construction':
-            if (constructionSubFilter === 'all') {
-                infoText = 'Showing all construction sites';
-            } else {
-                infoText = `Showing ${constructionSubFilter} construction sites`;
-            }
-            break;
-        case 'utility':
-            infoText = 'Showing utilities';
-            break;
-    }
-    
-    filterInfo.textContent = infoText;
+function toggleSatellite() {
+    map.removeLayer(osmLayer);
+    satelliteLayer.addTo(map);
+    setActiveNav(event.currentTarget);
 }
 
-// Update all visibility based on active filter
-function updateAllVisibility() {
-    // Reset all to false first
-    markerVisibility.household = false;
-    markerVisibility.business = false;
-    markerVisibility.construction = false;
-    markerVisibility.utility = false;
-    housePolygonsVisible = false;
-    
-    // Enable only the active filter
-    switch(activeFilter) {
-        case 'household':
-            markerVisibility.household = true;
-            housePolygonsVisible = true;
-            break;
-        case 'business':
-            markerVisibility.business = true;
-            break;
-        case 'construction':
-            markerVisibility.construction = true;
-            break;
-        case 'utility':
-            markerVisibility.utility = true;
-            break;
-    }
-    
-    // Update marker visibility
-    updateMarkerVisibility();
-    
-    // Update house polygon visibility
-    updateHousePolygonVisibility();
+function resetView() {
+    map.setView([14.6175, 121.0756], 17);
+    map.removeLayer(satelliteLayer);
+    osmLayer.addTo(map);
+    setActiveNav(event.currentTarget);
 }
 
-// Update marker visibility
-function updateMarkerVisibility() {
-    // Handle household markers
-    householdMarkers.forEach(marker => {
-        if (markerVisibility.household) {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
-    
-    // Handle construction markers
-    constructionMarkers.forEach(marker => {
-        if (markerVisibility.construction) {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
-    
-    // Handle business markers
-    businessMarkers.forEach(marker => {
-        if (markerVisibility.business) {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
-    
-    // Handle utility markers
-    utilityMarkers.forEach(marker => {
-        if (markerVisibility.utility) {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
-}
+// ==================== SEARCH FUNCTIONS ====================
 
-// REAL-TIME SEARCH FUNCTIONS
 function performSearch() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const resultsContainer = document.getElementById('search-results');
@@ -412,11 +411,9 @@ function performSearch() {
         return;
     }
     
-    // Clear previous search results
     searchResults = [];
     if (resultsContainer) resultsContainer.innerHTML = '';
     
-    // Search in all markers data
     allMarkersData.forEach(marker => {
         const searchFields = [
             marker.title || '',
@@ -429,7 +426,9 @@ function performSearch() {
             marker.address_of_construction || '',
             marker.address_of_business || '',
             marker.applicant_name || '',
-            marker.applicant_address || ''
+            marker.applicant_address || '',
+            marker.hazard_name || '',
+            marker.risk_level || ''
         ];
         
         let matchScore = 0;
@@ -460,10 +459,8 @@ function performSearch() {
         }
     });
     
-    // Sort by relevance score (highest first)
     searchResults.sort((a, b) => b.score - a.score);
     
-    // Display results
     if (resultsContainer) {
         if (searchResults.length > 0) {
             const topResults = searchResults.slice(0, 10);
@@ -477,12 +474,14 @@ function performSearch() {
                 const type = marker.marker_type || 
                             (marker.construction_id ? 'construction' : 
                              marker.id ? 'business' : 
-                             marker.utility_id ? 'utility' : 'household');
+                             marker.utility_id ? 'utility' : 
+                             marker.hazard_id ? 'flood' : 'household');
                 
                 const title = marker.title || 
                              marker.business_name || 
                              marker.homeowner_name || 
                              marker.applicant_name ||
+                             marker.hazard_name ||
                              'Unnamed Marker';
                 
                 const subtitle = marker.description || 
@@ -490,13 +489,14 @@ function performSearch() {
                                marker.address_of_business || 
                                marker.applicant_address ||
                                marker.location || 
+                               (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
                                '';
                 
                 const highlightedTitle = highlightText(title, searchTerm);
                 const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
                 
                 item.innerHTML = `
-                    <div class="result-icon ${type}-marker"></div>
+                    <div class="result-icon ${type === 'flood' ? 'flood-area' : type + '-marker'}"></div>
                     <div class="result-details">
                         <div class="result-title">${highlightedTitle}</div>
                         <div class="result-subtitle">${highlightedSubtitle}${subtitle.length > 60 ? '...' : ''}</div>
@@ -524,7 +524,6 @@ function performSearch() {
     }
 }
 
-// Highlight text in search results
 function highlightText(text, searchTerm) {
     if (!searchTerm || !text) return text;
     
@@ -532,7 +531,6 @@ function highlightText(text, searchTerm) {
     return text.replace(searchRegex, '<span class="highlight">$1</span>');
 }
 
-// Debounced search function (search as you type)
 function handleSearchInput() {
     if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -556,11 +554,30 @@ function clearSearch() {
         activeSearchMarker = null;
     }
     
-    // Restore all markers based on current filter
+    // Restore visibility based on current states
     updateAllVisibility();
     
-    // Also show house polygons if they should be visible
-    if (housePolygonsVisible && housePolygonsLayer) {
+    // Restore flood layer if active
+    if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
+        floodLayer.addTo(map);
+        // Also add legend
+        if (floodLegend && !map.hasControl(floodLegend)) {
+            floodLegend.addTo(map);
+        }
+    }
+    
+    // Restore fault line if active
+    if (faultLineActive) {
+        if (faultLine && !map.hasLayer(faultLine)) {
+            faultLine.addTo(map);
+        }
+        if (warningMarker && !map.hasLayer(warningMarker)) {
+            warningMarker.addTo(map);
+        }
+    }
+    
+    // Restore house polygons if needed
+    if (activeFilter === 'household' && housePolygonsLayer) {
         if (!map.hasLayer(housePolygonsLayer)) {
             housePolygonsLayer.addTo(map);
         }
@@ -570,16 +587,11 @@ function clearSearch() {
 }
 
 function highlightSearchResult(markerData) {
-    // First, hide all markers
     hideAllMarkers();
-    
-    // Then show only the searched marker
     showOnlySearchedMarker(markerData);
 }
 
-// Function to hide all markers
 function hideAllMarkers() {
-    // Hide all marker layers
     constructionMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
@@ -604,29 +616,44 @@ function hideAllMarkers() {
         }
     });
     
-    // Also hide house polygons
+    if (floodLayer && map.hasLayer(floodLayer)) {
+        map.removeLayer(floodLayer);
+    }
+    
+    // Remove flood legend if it exists
+    removeFloodLegend();
+    
+    if (faultLine && map.hasLayer(faultLine)) {
+        map.removeLayer(faultLine);
+    }
+    if (warningMarker && map.hasLayer(warningMarker)) {
+        map.removeLayer(warningMarker);
+    }
+    
     if (housePolygonsLayer && map.hasLayer(housePolygonsLayer)) {
         map.removeLayer(housePolygonsLayer);
     }
 }
 
-// Function to show only the searched marker
 function showOnlySearchedMarker(markerData) {
-    // Remove previous search marker if exists
     if (activeSearchMarker) {
         map.removeLayer(activeSearchMarker);
+    }
+    
+    const type = markerData.marker_type || 
+                (markerData.construction_id ? 'construction' : 
+                 markerData.id ? 'business' : 
+                 markerData.utility_id ? 'utility' : 
+                 markerData.hazard_id ? 'flood' : 'household');
+    
+    if (type === 'flood') {
+        showFloodAreaHighlight(markerData);
+        return;
     }
     
     const lat = parseFloat(markerData.latitude);
     const lng = parseFloat(markerData.longitude);
     
-    // Determine the marker type and get the correct icon
-    const type = markerData.marker_type || 
-                (markerData.construction_id ? 'construction' : 
-                 markerData.id ? 'business' : 
-                 markerData.utility_id ? 'utility' : 'household');
-    
-    // Create a highlight icon
     const highlightIcon = L.divIcon({
         className: 'highlighted-marker',
         html: `
@@ -666,15 +693,12 @@ function showOnlySearchedMarker(markerData) {
         iconAnchor: [15, 15]
     });
     
-    // Create the searched marker with highlight
     activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon }).addTo(map);
     
-    // Fly to the marker
     map.flyTo([lat, lng], 18, {
         duration: 1
     });
     
-    // Create popup content based on marker type
     let popupContent = '';
     
     if (type === 'construction') {
@@ -687,12 +711,10 @@ function showOnlySearchedMarker(markerData) {
         popupContent = createHouseholdPopup(markerData);
     }
     
-    // Open popup after animation
     setTimeout(() => {
         activeSearchMarker.bindPopup(popupContent).openPopup();
     }, 500);
     
-    // Highlight the search result item
     document.querySelectorAll('.search-result-item').forEach(item => {
         item.classList.remove('active');
         const resultIndex = searchResults.findIndex(result => result.marker === markerData);
@@ -701,181 +723,592 @@ function showOnlySearchedMarker(markerData) {
         }
     });
     
-    // Hide search results after selection
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) {
         resultsContainer.style.display = 'none';
     }
-    
-    // Update filter info to show we're viewing a search result
-    document.getElementById('filterInfo').textContent = 'Showing searched marker';
 }
 
-// Create construction popup
-function createConstructionPopup(construction) {
-    const paymentStatus = construction.payment_status ? 
-        construction.payment_status.toLowerCase() : 'unknown';
-    
-    // Format the fee paid
-    const feePaid = construction.fee_paid ? 
-        formatCurrency(construction.fee_paid) : 'Not specified';
-    
+function showFloodAreaHighlight(hazardData) {
+    try {
+        loadFullFloodDetailsForHighlight(hazardData.hazard_id);
+    } catch (e) {
+        console.error('Error highlighting flood area:', e);
+        alert('Error displaying flood hazard area');
+    }
+}
+
+async function loadFullFloodDetailsForHighlight(hazardId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_flood_details');
+        formData.append('id', hazardId);
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            const hazard = data.data;
+            
+            if (hazard.geojson) {
+                const geoJson = JSON.parse(hazard.geojson);
+                
+                const highlightStyle = getFloodAreaStyle(hazard.risk_level);
+                highlightStyle.fillOpacity += 0.2;
+                highlightStyle.weight += 3;
+                highlightStyle.color = '#000000';
+                
+                activeSearchMarker = L.geoJSON(geoJson, {
+                    style: highlightStyle
+                }).addTo(map);
+                
+                const bounds = activeSearchMarker.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, {
+                        padding: [50, 50],
+                        maxZoom: 18
+                    });
+                }
+                
+                const popupContent = createFloodPopup(hazard);
+                activeSearchMarker.bindPopup(popupContent).openPopup();
+                
+                document.querySelectorAll('.search-result-item').forEach(item => {
+                    item.classList.remove('active');
+                    const resultIndex = searchResults.findIndex(result => result.marker.hazard_id == hazardId);
+                    if (parseInt(item.dataset.index) === resultIndex) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                const resultsContainer = document.getElementById('search-results');
+                if (resultsContainer) {
+                    resultsContainer.style.display = 'none';
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error loading flood details:', e);
+    }
+}
+
+// ==================== POPUP CREATION FUNCTIONS ====================
+
+function createConstructionPopup(data) {
     return `
         <div class="popup-content">
-            <h4>🏗️ CONSTRUCTION SITE <span class="construction-badge">Construction</span></h4>
-            
+            <h4>
+                <span>Construction Site</span>
+                <span class="construction-badge">Construction</span>
+            </h4>
             <div class="popup-section">
-                <p><strong>Permit No:</strong> ${construction.permit_no || 'Pending'}</p>
-                <p><strong>Homeowner:</strong> ${construction.homeowner_name || 'Not specified'}</p>
-                <p><strong>Contractor:</strong> ${construction.contractor_name || 'Not specified'}</p>
-                <p><strong>Address:</strong> ${construction.address_of_construction || 'Not specified'}</p>
+                <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
+                <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
             </div>
-            
             <div class="popup-section">
-                <p><strong>Type of Work:</strong> ${construction.type_of_work || 'Not specified'}</p>
-                <p><strong>Nature of Activity:</strong> ${construction.nature_of_activity || 'Not specified'}</p>
-                <p><strong>Details:</strong> ${construction.details_of_work || 'Not specified'}</p>
+                <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
+                <p><strong>Nature:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
             </div>
-            
-            <div class="popup-section">
-                <p><strong>Start Date:</strong> ${formatDate(construction.start_date)}</p>
-                <p><strong>End Date:</strong> ${formatDate(construction.end_date)}</p>
-                <p><strong>Workers:</strong> ${construction.num_of_workers || 'Not specified'}</p>
-                <p><strong>Working Days:</strong> ${construction.num_of_working_days || 'Not specified'}</p>
-            </div>
-            
-            <div class="popup-section">
-                <p><strong>Fee Paid:</strong> ${feePaid}</p>
-                <p><strong>Payment Type:</strong> ${construction.payment_type || 'Not specified'}</p>
-                <p><strong>Payment Status:</strong> <span class="status-${paymentStatus}">${construction.payment_status || 'Unknown'}</span></p>
-            </div>
-            
-            <button class="view-details-btn" onclick="showConstructionDetails(${construction.construction_id})">
-                📋 View Full Details
+            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'construction')">
+                View Full Details
             </button>
         </div>
     `;
 }
 
-// Create business popup
-function createBusinessPopup(business) {
-    const ownerName = `${business.first_name || ''} ${business.middle_name || ''} ${business.last_name || ''}`.trim();
-    const status = business.status ? business.status.toLowerCase() : 'pending';
+function createBusinessPopup(data) {
+    return `
+        <div class="popup-content">
+            <h4>
+                <span>${data.business_name || 'Business'}</span>
+                <span class="business-badge">Business</span>
+            </h4>
+            <div class="popup-section">
+                <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
+                <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
+                <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+            </div>
+            <div class="popup-section">
+                <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
+                <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'business')">
+                View Full Details
+            </button>
+        </div>
+    `;
+}
+
+function createUtilityPopup(data) {
+    return `
+        <div class="popup-content">
+            <h4>
+                <span>Utility Work</span>
+                <span class="utility-badge">Utility</span>
+            </h4>
+            <div class="popup-section">
+                <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
+                <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
+            </div>
+            <div class="popup-section">
+                <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'utility')">
+                View Full Details
+            </button>
+        </div>
+    `;
+}
+
+function createHouseholdPopup(data) {
+    return `
+        <div class="popup-content">
+            <h4>
+                <span>${data.title || 'Household'}</span>
+                <span class="household-badge">Household</span>
+            </h4>
+            <div class="popup-section">
+                <p><strong>Description:</strong> ${data.description || 'Not specified'}</p>
+                <p><strong>Location:</strong> ${data.location || 'Not specified'}</p>
+            </div>
+            <div class="popup-section">
+                <p><strong>Type:</strong> ${data.marker_type || 'household'}</p>
+                <p><strong>Created:</strong> ${formatDate(data.created_at)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewDetails(${data.marker_id}, 'household')">
+                View Full Details
+            </button>
+        </div>
+    `;
+}
+
+function createFloodPopup(data) {
+    const riskColor = getFloodRiskColor(data.risk_level);
+    const riskClass = `flood-risk-${data.risk_level || 'medium'}`;
     
     return `
         <div class="popup-content">
-            <h4>🏪 BUSINESS <span class="business-badge">Business</span></h4>
-            
-            <div class="popup-section">
-                <p><strong>Business Name:</strong> ${business.business_name || 'Not specified'}</p>
-                <p><strong>Owner:</strong> ${ownerName || 'Not specified'}</p>
-                <p><strong>Business Type:</strong> ${business.type_of_business || 'Not specified'}</p>
-                <p><strong>Nature:</strong> ${business.nature_of_business || business.nature_of_business_specify || 'Not specified'}</p>
+            <h4>
+                <span>${data.hazard_name || 'Flood Hazard Area'}</span>
+                <span class="flood-risk-badge" style="background: ${riskColor}; color: white;">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
+            </h4>
+            <div class="popup-section flood-popup-section">
+                <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
+                <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
+                <p><strong>Last Flood:</strong> ${formatDate(data.last_flood_date) || 'Not recorded'}</p>
             </div>
-            
             <div class="popup-section">
-                <p><strong>Address:</strong> ${business.address_of_business || 'Not specified'}</p>
-                <p><strong>Telephone:</strong> ${business.telephone_no_business || 'Not specified'}</p>
-                <p><strong>Email:</strong> ${business.email_address || 'Not specified'}</p>
+                <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
+                <p><strong>Reported By:</strong> ${data.reported_by || 'Barangay Office'}</p>
+                <p><strong>Identified:</strong> ${formatDate(data.date_identified)}</p>
             </div>
-            
-            <div class="popup-section">
-                <p><strong>Owner Address:</strong> ${business.address_owner || 'Not specified'}</p>
-                <p><strong>Owner Tel:</strong> ${business.telephone_no_owner || 'Not specified'}</p>
-            </div>
-            
-            <div class="popup-section">
-                <p><strong>Structure Type:</strong> ${business.type_of_structure || business.type_of_structure_specify || 'Not specified'}</p>
-                <p><strong>Employees:</strong> ${business.no_of_employees || 'Not specified'}</p>
-                <p><strong>Status:</strong> <span class="status-${status}">${business.status || 'Pending'}</span></p>
-                <p><strong>Application Date:</strong> ${formatDate(business.application_date)}</p>
-            </div>
-            
-            <button class="view-details-btn" onclick="showBusinessDetails(${business.id})">
-                📋 View Full Details
+            <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
+                View Flood Details
             </button>
         </div>
     `;
 }
 
-// Create utility popup
-function createUtilityPopup(utility) {
+function createHousePopup(data) {
     return `
         <div class="popup-content">
-            <h4>🔧 UTILITY WORK <span class="utility-badge">Utility</span></h4>
-            
+            <h4>
+                <span>House ${data.house_number || ''}</span>
+                <span class="household-badge">House</span>
+            </h4>
             <div class="popup-section">
-                <p><strong>Applicant:</strong> ${utility.applicant_name || 'Not specified'}</p>
-                <p><strong>Applicant Address:</strong> ${utility.applicant_address || 'Not specified'}</p>
-                <p><strong>Contact No:</strong> ${utility.contact_no || 'Not specified'}</p>
-                <p><strong>Service Provider:</strong> ${utility.service_provider || 'Not specified'}</p>
+                <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
+                <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
             </div>
-            
             <div class="popup-section">
-                <p><strong>Nature of Work:</strong> ${utility.nature_of_work || 'Not specified'}</p>
-                <p><strong>Authorization:</strong> ${utility.authorization_name || 'Not specified'}</p>
-                <p><strong>Waiver:</strong> ${utility.waiver_acknowledgement || 'Not specified'}</p>
+                <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
+                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
             </div>
-            
-            <div class="popup-section">
-                <p><strong>Request Date:</strong> ${formatDate(utility.date_of_request)}</p>
-                <p><strong>Work Date:</strong> ${formatDate(utility.date_of_work)}</p>
-                <p><strong>Received By:</strong> ${utility.received_by || 'Not specified'}</p>
-                <p><strong>Approved By:</strong> ${utility.approved_by || 'Not specified'}</p>
-            </div>
-            
-            ${utility.work_completed_by ? `
-            <div class="popup-section">
-                <p><strong>Completed By:</strong> ${utility.work_completed_by}</p>
-                <p><strong>Completion Date:</strong> ${formatDate(utility.work_completed_date)}</p>
-            </div>
-            ` : ''}
-            
-            <button class="view-details-btn" onclick="showUtilityDetails(${utility.utility_id})">
-                📋 View Full Details
+            <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
+                View House Details
             </button>
         </div>
     `;
 }
 
-// Create household popup
-function createHouseholdPopup(household) {
-    const markerType = household.marker_type || 'Household';
-    const badgeClass = markerType.toLowerCase() + '-badge';
-    const badgeName = markerType.charAt(0).toUpperCase() + markerType.slice(1);
+// View details functions
+async function viewDetails(id, type) {
+    try {
+        const formData = new FormData();
+        formData.append('action', `get_${type}_details`);
+        formData.append('id', id);
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayDetailsInModal(data.data, type);
+        }
+    } catch (error) {
+        console.error('Error loading details:', error);
+    }
+}
+
+async function viewFloodDetails(id) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_flood_details');
+        formData.append('id', id);
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayFloodDetailsInModal(data.data);
+        }
+    } catch (error) {
+        console.error('Error loading flood details:', error);
+    }
+}
+
+async function viewHouseDetails(id) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_house_details');
+        formData.append('id', id);
+        
+        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayHouseDetailsInModal(data.data);
+        }
+    } catch (error) {
+        console.error('Error loading house details:', error);
+    }
+}
+
+function displayDetailsInModal(data, type) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
     
+    let title = '';
+    let content = '';
+    
+    switch(type) {
+        case 'construction':
+            title = `Construction Site - ${data.first_name || ''} ${data.last_name || ''}`;
+            content = createConstructionModalContent(data);
+            break;
+        case 'business':
+            title = `Business - ${data.business_name || 'Unnamed'}`;
+            content = createBusinessModalContent(data);
+            break;
+        case 'utility':
+            title = `Utility Work - ${data.first_name || ''} ${data.last_name || ''}`;
+            content = createUtilityModalContent(data);
+            break;
+        case 'household':
+            title = `Household - ${data.title || 'Marker'}`;
+            content = createHouseholdModalContent(data);
+            break;
+    }
+    
+    modalTitle.textContent = title;
+    modalContent.innerHTML = content;
+    showModal('detail-modal');
+}
+
+function displayFloodDetailsInModal(data) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    
+    modalTitle.textContent = `Flood Hazard - ${data.hazard_name || 'Unnamed'}`;
+    modalContent.innerHTML = createFloodModalContent(data);
+    showModal('detail-modal');
+}
+
+function displayHouseDetailsInModal(data) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalContent = document.getElementById('modal-content');
+    
+    modalTitle.textContent = `House ${data.house_number || ''} - ${data.address || ''}`;
+    modalContent.innerHTML = createHouseModalContent(data);
+    showModal('detail-modal');
+}
+
+// Create modal content functions
+function createConstructionModalContent(data) {
     return `
-        <div class="popup-content">
-            <h4>📍 ${household.title || 'Marker'} <span class="${badgeClass}">${badgeName}</span></h4>
-            
-            <div class="popup-section">
-                <p><strong>Description:</strong> ${household.description || 'No description'}</p>
-                <p><strong>Location:</strong> ${household.location || 'Not specified'}</p>
-                <p><strong>Type:</strong> ${markerType}</p>
-            </div>
-            
-            ${household.created_at ? `
-            <div class="popup-section">
-                <p><strong>Created:</strong> ${formatDate(household.created_at)}</p>
-            </div>
-            ` : ''}
-            
-            <button class="view-details-btn" onclick="showHouseholdDetails(${household.marker_id})">
-                📋 View Full Details
-            </button>
-        </div>
+        <table class="detail-table">
+            <tr>
+                <td>Homeowner Name</td>
+                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
+            </tr>
+            <tr>
+                <td>Contact Number</td>
+                <td>${data.contact_no_owner || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Construction Address</td>
+                <td>${data.construction_address || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Type of Work</td>
+                <td>${data.type_of_work || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Contractor</td>
+                <td>${data.contractor_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Work Period</td>
+                <td>${formatDate(data.start_date)} to ${formatDate(data.end_date)} (${data.number_of_working_days || 0} days)</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td><span class="status-${data.agreed === '1' ? 'approved' : 'pending'}">${data.agreed === '1' ? 'Approved' : 'Pending'}</span></td>
+            </tr>
+        </table>
     `;
 }
 
-// Load all markers
+function createBusinessModalContent(data) {
+    return `
+        <table class="detail-table">
+            <tr>
+                <td>Business Name</td>
+                <td>${data.business_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Business Address</td>
+                <td>${data.address_of_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Business Type</td>
+                <td>${data.type_of_business || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Owner Name</td>
+                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''}</td>
+            </tr>
+            <tr>
+                <td>Contact Number</td>
+                <td>${data.telephone_no_business || data.telephone_no_owner || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Number of Employees</td>
+                <td>${data.no_of_employees || '0'}</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td><span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></td>
+            </tr>
+        </table>
+    `;
+}
+
+function createUtilityModalContent(data) {
+    return `
+        <table class="detail-table">
+            <tr>
+                <td>Applicant Name</td>
+                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
+            </tr>
+            <tr>
+                <td>Contact Number</td>
+                <td>${data.owner_contact_no || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Utility Address</td>
+                <td>${data.address_of_utility || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Provider</td>
+                <td>${data.provider || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Nature of Work</td>
+                <td>${data.nature_of_work || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Work Date</td>
+                <td>${formatDate(data.date_of_work)}</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td><span class="status-${data.agreed === '1' ? 'approved' : 'pending'}">${data.agreed === '1' ? 'Approved' : 'Pending'}</span></td>
+            </tr>
+        </table>
+    `;
+}
+
+function createHouseholdModalContent(data) {
+    return `
+        <table class="detail-table">
+            <tr>
+                <td>Title</td>
+                <td>${data.title || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>${data.description || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Location</td>
+                <td>${data.location || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Marker Type</td>
+                <td>${data.marker_type || 'household'}</td>
+            </tr>
+            <tr>
+                <td>Created By</td>
+                <td>${data.created_by || 'Unknown'}</td>
+            </tr>
+            <tr>
+                <td>Created Date</td>
+                <td>${formatDate(data.created_at)}</td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td>${data.latitude || ''}, ${data.longitude || ''}</td>
+            </tr>
+        </table>
+    `;
+}
+
+function createFloodModalContent(data) {
+    const riskColor = getFloodRiskColor(data.risk_level);
+    return `
+        <table class="detail-table">
+            <tr>
+                <td>Hazard Name</td>
+                <td>${data.hazard_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Risk Level</td>
+                <td><span style="color: ${riskColor}; font-weight: bold;">${(data.risk_level || 'medium').toUpperCase()}</span></td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>${data.description || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Last Flood Date</td>
+                <td>${formatDate(data.last_flood_date) || 'Not recorded'}</td>
+            </tr>
+            <tr>
+                <td>Reported By</td>
+                <td>${data.reported_by || 'Barangay Office'}</td>
+            </tr>
+            <tr>
+                <td>Date Identified</td>
+                <td>${formatDate(data.date_identified)}</td>
+            </tr>
+            <tr>
+                <td>Safety Advice</td>
+                <td>${getFloodSafetyAdvice(data.risk_level)}</td>
+            </tr>
+            <tr>
+                <td>Last Updated</td>
+                <td>${formatDate(data.updated_at)}</td>
+            </tr>
+        </table>
+    `;
+}
+
+function createHouseModalContent(data) {
+    return `
+        <table class="detail-table">
+            <tr>
+                <td>Address</td>
+                <td>${data.address || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>House Number</td>
+                <td>${data.house_number || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Street Name</td>
+                <td>${data.street_name || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Area</td>
+                <td>${data.area_sqm || '0'} square meters</td>
+            </tr>
+            <tr>
+                <td>Center Coordinates</td>
+                <td>${data.center_lat || ''}, ${data.center_lng || ''}</td>
+            </tr>
+            <tr>
+                <td>Created</td>
+                <td>${formatDate(data.created_at)}</td>
+            </tr>
+            <tr>
+                <td>Last Updated</td>
+                <td>${formatDate(data.updated_at)}</td>
+            </tr>
+        </table>
+    `;
+}
+
+// ==================== HELPER FUNCTIONS ====================
+
+function formatDate(dateString) {
+    if (!dateString) return 'Not specified';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+function getFloodSafetyAdvice(riskLevel) {
+    const advice = {
+        'high': 'High flood risk. Consider elevation, flood barriers, and evacuation plan.',
+        'medium': 'Moderate flood risk. Install check valves and keep drains clear.',
+        'low': 'Low flood risk. Monitor weather alerts and prepare emergency kit.',
+        'very-low': 'Minimal flood risk. Stay informed during heavy rainfall.'
+    };
+    
+    return advice[riskLevel] || 'Take necessary precautions during heavy rainfall.';
+}
+
+function getFloodRiskColor(riskLevel) {
+    const colors = {
+        'high': '#ff0000',
+        'medium': '#ff9900',
+        'low': '#ffff00',
+        'very-low': '#0066cc'
+    };
+    return colors[riskLevel] || '#666666';
+}
+
+// ==================== DATA LOADING FUNCTIONS ====================
+
 async function loadAllMarkers() {
     clearAllMarkers();
     
     try {
         const formData = new FormData();
         formData.append('action', 'get_markers');
-        
-        console.log('Fetching markers from map_handler.php...');
         
         const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
@@ -888,25 +1321,29 @@ async function loadAllMarkers() {
         
         const data = await response.json();
         
-        console.log('Data received from server:', data);
-        
         if (!data.success) {
             throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         }
 
-        // Combine all markers data for search
+        const floodFormData = new FormData();
+        floodFormData.append('action', 'get_flood_data_for_search');
+        
+        const floodResponse = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+            method: 'POST',
+            body: floodFormData
+        });
+        
+        const floodData = await floodResponse.json();
+        
         allMarkersData = [
             ...(data.constructions || []).map(c => ({...c, type: 'construction'})),
             ...(data.businesses || []).map(b => ({...b, type: 'business'})),
             ...(data.households || []).map(h => ({...h, type: 'household'})),
-            ...(data.utilities || []).map(u => ({...u, type: 'utility'}))
+            ...(data.utilities || []).map(u => ({...u, type: 'utility'})),
+            ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
         ];
 
-        console.log(`Total markers data: ${allMarkersData.length} records`);
-
-        // Process construction markers
         if (data.constructions && Array.isArray(data.constructions)) {
-            console.log(`Found ${data.constructions.length} construction records`);
             data.constructions.forEach(construction => {
                 if (construction.latitude && construction.longitude) {
                     try {
@@ -921,27 +1358,18 @@ async function loadAllMarkers() {
                             }).bindPopup(popupContent);
                             
                             constructionMarkers.push(marker);
-                            if (markerVisibility.construction) {
+                            if (activeFilter === 'construction') {
                                 marker.addTo(map);
                             }
-                            console.log('✅ Added construction marker:', construction.homeowner_name || 'Unnamed');
-                        } else {
-                            console.warn('❌ Invalid coordinates for construction:', construction.latitude, construction.longitude);
                         }
                     } catch (error) {
-                        console.error('Error processing construction marker:', error, construction);
+                        console.error('Error processing construction marker:', error);
                     }
-                } else {
-                    console.warn('❌ Construction missing coordinates:', construction.homeowner_name || 'Unnamed');
                 }
             });
-        } else {
-            console.warn('No construction data found or data is not an array');
         }
 
-        // Process business markers
         if (data.businesses && Array.isArray(data.businesses)) {
-            console.log(`Found ${data.businesses.length} business records`);
             data.businesses.forEach(business => {
                 if (business.latitude && business.longitude) {
                     try {
@@ -956,27 +1384,18 @@ async function loadAllMarkers() {
                             }).bindPopup(popupContent);
                             
                             businessMarkers.push(marker);
-                            if (markerVisibility.business) {
+                            if (activeFilter === 'business') {
                                 marker.addTo(map);
                             }
-                            console.log('✅ Added business marker:', business.business_name || 'Unnamed');
-                        } else {
-                            console.warn('❌ Invalid coordinates for business:', business.latitude, business.longitude);
                         }
                     } catch (error) {
-                        console.error('Error processing business marker:', error, business);
+                        console.error('Error processing business marker:', error);
                     }
-                } else {
-                    console.warn('❌ Business missing coordinates:', business.business_name || 'Unnamed');
                 }
             });
-        } else {
-            console.warn('No business data found or data is not an array');
         }
 
-        // Process household markers - NOW WITH LAT/LNG!
         if (data.households && Array.isArray(data.households)) {
-            console.log(`Found ${data.households.length} household/marker records`);
             data.households.forEach(household => {
                 if (household.latitude && household.longitude) {
                     try {
@@ -991,27 +1410,18 @@ async function loadAllMarkers() {
                             }).bindPopup(popupContent);
                             
                             householdMarkers.push(marker);
-                            if (markerVisibility.household) {
+                            if (activeFilter === 'household') {
                                 marker.addTo(map);
                             }
-                            console.log('✅ Added household marker:', household.title || 'Unnamed');
-                        } else {
-                            console.warn('❌ Invalid coordinates for household:', household.latitude, household.longitude);
                         }
                     } catch (error) {
-                        console.error('Error processing household marker:', error, household);
+                        console.error('Error processing household marker:', error);
                     }
-                } else {
-                    console.warn('❌ Household missing coordinates:', household.title || 'Unnamed');
                 }
             });
-        } else {
-            console.warn('No household data found or data is not an array');
         }
 
-        // Process utility markers
         if (data.utilities && Array.isArray(data.utilities)) {
-            console.log(`Found ${data.utilities.length} utility records`);
             data.utilities.forEach(utility => {
                 if (utility.latitude && utility.longitude) {
                     try {
@@ -1026,28 +1436,22 @@ async function loadAllMarkers() {
                             }).bindPopup(popupContent);
                             
                             utilityMarkers.push(marker);
-                            if (markerVisibility.utility) {
+                            if (activeFilter === 'utility') {
                                 marker.addTo(map);
                             }
-                            console.log('✅ Added utility marker:', utility.applicant_name || 'Unnamed');
-                        } else {
-                            console.warn('❌ Invalid coordinates for utility:', utility.latitude, utility.longitude);
                         }
                     } catch (error) {
-                        console.error('Error processing utility marker:', error, utility);
+                        console.error('Error processing utility marker:', error);
                     }
-                } else {
-                    console.warn('❌ Utility missing coordinates:', utility.applicant_name || 'Unnamed');
                 }
             });
-        } else {
-            console.warn('No utility data found or data is not an array');
         }
 
-        console.log(`Summary: ${constructionMarkers.length} construction, ${businessMarkers.length} business, ${householdMarkers.length} household, ${utilityMarkers.length} utility markers loaded.`);
+        if (floodLayerActive) {
+            loadFloodData();
+        }
 
-        // Set initial visibility
-        updateAllVisibility();
+        loadHousePolygons();
 
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
@@ -1055,493 +1459,173 @@ async function loadAllMarkers() {
     }
 }
 
-async function showConstructionDetails(constructionId) {
+async function loadFloodData() {
     try {
         const formData = new FormData();
-        formData.append('action', 'get_construction_details');
-        formData.append('id', constructionId);
-
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load construction details');
-        }
-
-        currentMarkerData = data.data;
-        displayConstructionModal(data.data);
-
-    } catch (error) {
-        console.error('ERROR LOADING CONSTRUCTION DETAILS:', error);
-        alert('Error loading construction details. Please try again.');
-    }
-}
-
-async function showBusinessDetails(businessId) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_business_details');
-        formData.append('id', businessId);
-
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load business details');
-        }
-
-        currentMarkerData = data.data;
-        displayBusinessModal(data.data);
-
-    } catch (error) {
-        console.error('ERROR LOADING BUSINESS DETAILS:', error);
-        alert('Error loading business details. Please try again.');
-    }
-}
-
-async function showHouseholdDetails(markerId) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_household_details');
-        formData.append('id', markerId);
-
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load household details');
-        }
-
-        currentMarkerData = data.data;
-        displayHouseholdModal(data.data);
-
-    } catch (error) {
-        console.error('ERROR LOADING HOUSEHOLD DETAILS:', error);
-        alert('Error loading household details. Please try again.');
-    }
-}
-
-async function showUtilityDetails(utilityId) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_utility_details');
-        formData.append('id', utilityId);
-
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load utility details');
-        }
-
-        currentMarkerData = data.data;
-        displayUtilityModal(data.data);
-
-    } catch (error) {
-        console.error('ERROR LOADING UTILITY DETAILS:', error);
-        alert('Error loading utility details. Please try again.');
-    }
-}
-
-// NEW: Check location in house
-async function checkLocationInHouse(lat, lng) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'check_location');
-        formData.append('lat', lat);
-        formData.append('lng', lng);
+        formData.append('action', 'get_flood_hazards');
         
         const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
             method: 'POST',
             body: formData
         });
         
-        const data = await response.json();
-        return data.success ? data : { isInside: false, house: null };
-    } catch (error) {
-        console.error('Error checking location:', error);
-        return { isInside: false, house: null };
-    }
-}
-
-// NEW: Save marker
-async function saveMarker(markerData) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'save_marker');
-        formData.append('title', markerData.title);
-        formData.append('description', markerData.description);
-        formData.append('location', markerData.location);
-        formData.append('marker_type', markerData.marker_type);
-        formData.append('latitude', markerData.latitude);
-        formData.append('longitude', markerData.longitude);
-        formData.append('house_id', markerData.house_id || '');
-        formData.append('created_by', 'Staff User'); // Update with actual user
-        
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
-            method: 'POST',
-            body: formData
-        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error saving marker:', error);
-        return { success: false, message: 'Network error' };
-    }
-}
-
-// Display modal functions
-function displayUtilityModal(utility) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-
-    modalTitle.textContent = `Utility Work Details - ${utility.applicant_name || 'Unnamed Utility'}`;
-
-    modalContent.innerHTML = `
-        <table class="detail-table">
-            <tr>
-                <td>Utility ID</td>
-                <td>${utility.utility_id || 'N/A'}</td>
-            </tr>
-            <tr>
-                <td>Applicant Name</td>
-                <td>${utility.applicant_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Applicant Address</td>
-                <td>${utility.applicant_address || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Contact Number</td>
-                <td>${utility.contact_no || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Nature of Work</td>
-                <td>${utility.nature_of_work || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Service Provider</td>
-                <td>${utility.service_provider || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Date of Request</td>
-                <td>${formatDate(utility.date_of_request)}</td>
-            </tr>
-            <tr>
-                <td>Date of Work</td>
-                <td>${formatDate(utility.date_of_work)}</td>
-            </tr>
-            <tr>
-                <td>Received By</td>
-                <td>${utility.received_by || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Approved By</td>
-                <td>${utility.approved_by || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Authorization</td>
-                <td>${utility.authorization_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Waiver</td>
-                <td>${utility.waiver_acknowledgement || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${utility.latitude || 'N/A'}, ${utility.longitude || 'N/A'}</td>
-            </tr>
-        </table>
-    `;
-
-    openModal('detail-modal');
-}
-
-function displayConstructionModal(construction) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-
-    modalTitle.textContent = `Construction Site Details - ${construction.permit_no || 'No Permit'}`;
-
-    modalContent.innerHTML = `
-        <table class="detail-table">
-            <tr>
-                <td>Construction ID</td>
-                <td>${construction.construction_id || 'N/A'}</td>
-            </tr>
-            <tr>
-                <td>Permit Number</td>
-                <td>${construction.permit_no || 'Pending'}</td>
-            </tr>
-            <tr>
-                <td>Homeowner Name</td>
-                <td>${construction.homeowner_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Contractor Name</td>
-                <td>${construction.contractor_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Address</td>
-                <td>${construction.address_of_construction || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Type of Work</td>
-                <td>${construction.type_of_work || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Nature of Activity</td>
-                <td>${construction.nature_of_activity || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Details of Work</td>
-                <td>${construction.details_of_work || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Start Date</td>
-                <td>${formatDate(construction.start_date)}</td>
-            </tr>
-            <tr>
-                <td>End Date</td>
-                <td>${formatDate(construction.end_date)}</td>
-            </tr>
-            <tr>
-                <td>Number of Workers</td>
-                <td>${construction.num_of_workers || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Working Days</td>
-                <td>${construction.num_of_working_days || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Fee Paid</td>
-                <td>${formatCurrency(construction.fee_paid)}</td>
-            </tr>
-            <tr>
-                <td>Payment Type</td>
-                <td>${construction.payment_type || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Payment Status</td>
-                <td>${construction.payment_status || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${construction.latitude || 'N/A'}, ${construction.longitude || 'N/A'}</td>
-            </tr>
-        </table>
-    `;
-
-    openModal('detail-modal');
-}
-
-function displayBusinessModal(business) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    const ownerName = `${business.first_name || ''} ${business.middle_name || ''} ${business.last_name || ''}`.trim();
-
-    modalTitle.textContent = `Business Details - ${business.business_name || 'Unnamed Business'}`;
-
-    modalContent.innerHTML = `
-        <table class="detail-table">
-            <tr>
-                <td>Business ID</td>
-                <td>${business.id || 'N/A'}</td>
-            </tr>
-            <tr>
-                <td>Business Name</td>
-                <td>${business.business_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Type of Business</td>
-                <td>${business.type_of_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Nature of Business</td>
-                <td>${business.nature_of_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Nature Details</td>
-                <td>${business.nature_of_business_specify || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Business Address</td>
-                <td>${business.address_of_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Business Telephone</td>
-                <td>${business.telephone_no_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Email Address</td>
-                <td>${business.email_address || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Owner Name</td>
-                <td>${ownerName || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Owner Telephone</td>
-                <td>${business.telephone_no_owner || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Owner Address</td>
-                <td>${business.address_owner || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Type of Structure</td>
-                <td>${business.type_of_structure || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Structure Details</td>
-                <td>${business.type_of_structure_specify || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Number of Employees</td>
-                <td>${business.no_of_employees || '0'}</td>
-            </tr>
-            <tr>
-                <td>Requirements</td>
-                <td>${business.requirements || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Application Date</td>
-                <td>${formatDate(business.application_date)}</td>
-            </tr>
-            <tr>
-                <td>Status</td>
-                <td><span class="status-${business.status?.toLowerCase() || 'pending'}">${business.status || 'Pending'}</span></td>
-            </tr>
-            <tr>
-                <td>Approval Comments</td>
-                <td>${business.approval_comments || 'None'}</td>
-            </tr>
-            <tr>
-                <td>Disapproval Reason</td>
-                <td>${business.disapproval_reason || 'None'}</td>
-            </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${business.latitude || 'N/A'}, ${business.longitude || 'N/A'}</td>
-            </tr>
-        </table>
-    `;
-
-    openModal('detail-modal');
-}
-
-function displayHouseholdModal(household) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    const markerType = household.marker_type || 'Household';
-
-    modalTitle.textContent = `${markerType} Details - ${household.title || 'Unnamed Marker'}`;
-
-    modalContent.innerHTML = `
-        <table class="detail-table">
-            <tr>
-                <td>Marker ID</td>
-                <td>${household.marker_id || 'N/A'}</td>
-            </tr>
-            <tr>
-                <td>Title</td>
-                <td>${household.title || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Description</td>
-                <td>${household.description || 'No description'}</td>
-            </tr>
-            <tr>
-                <td>Location</td>
-                <td>${household.location || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Marker Type</td>
-                <td>${markerType}</td>
-            </tr>
-            <tr>
-                <td>Created By</td>
-                <td>${household.created_by || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Created Date</td>
-                <td>${formatDate(household.created_at)}</td>
-            </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${household.latitude || 'N/A'}, ${household.longitude || 'N/A'}</td>
-            </tr>
-        </table>
-    `;
-
-    openModal('detail-modal');
-}
-
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-        currentMarkerData = null;
-    }
-}
-
-function clearAllMarkers() {
-    constructionMarkers.forEach(marker => map.removeLayer(marker));
-    businessMarkers.forEach(marker => map.removeLayer(marker));
-    householdMarkers.forEach(marker => map.removeLayer(marker));
-    utilityMarkers.forEach(marker => map.removeLayer(marker));
-    constructionMarkers = [];
-    businessMarkers = [];
-    householdMarkers = [];
-    utilityMarkers = [];
-}
-
-// Update house polygon visibility
-function updateHousePolygonVisibility() {
-    if (housePolygonsLayer) {
-        if (housePolygonsVisible) {
-            housePolygonsLayer.addTo(map);
+        
+        if (data.success && data.hazards) {
+            renderFloodAreas(data.hazards);
+            addFloodLegend();
+            
+            // Add to map if flood layer is active
+            if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
+                floodLayer.addTo(map);
+            }
+            
+            // Ensure legend is also added if active
+            if (floodLayerActive && floodLegend && !map.hasControl(floodLegend)) {
+                floodLegend.addTo(map);
+            }
         } else {
-            map.removeLayer(housePolygonsLayer);
+            console.warn('No flood data found:', data.message);
+            floodLayer = L.layerGroup();
+            floodLegend = null; // Reset legend if no data
         }
+    } catch (error) {
+        console.error('ERROR LOADING FLOOD DATA:', error);
+        floodLayer = L.layerGroup();
+        floodLegend = null; // Reset legend on error
     }
 }
 
-// Load house polygons
+function renderFloodAreas(hazards) {
+    // Clear existing flood layer
+    if (floodLayer) {
+        map.removeLayer(floodLayer);
+    }
+    
+    // Create new layer group
+    floodLayer = L.layerGroup();
+    
+    hazards.forEach(hazard => {
+        try {
+            if (!hazard.geojson) {
+                console.warn('Flood hazard missing GeoJSON:', hazard.hazard_id);
+                return;
+            }
+            
+            const geoJson = JSON.parse(hazard.geojson);
+            const style = getFloodAreaStyle(hazard.risk_level);
+            
+            const layer = L.geoJSON(geoJson, {
+                style: style,
+                onEachFeature: function(feature, layer) {
+                    const popupContent = createFloodPopup(hazard);
+                    layer.bindPopup(popupContent);
+                    
+                    layer.on('mouseover', function() {
+                        this.setStyle({
+                            fillOpacity: style.fillOpacity + 0.2,
+                            weight: style.weight + 2
+                        });
+                        this.bringToFront();
+                    });
+                    
+                    layer.on('mouseout', function() {
+                        this.setStyle(style);
+                    });
+                    
+                    layer.hazardData = hazard;
+                }
+            });
+            
+            layer.addTo(floodLayer);
+            
+        } catch (e) {
+            console.error('Error rendering flood hazard:', e, hazard);
+        }
+    });
+}
+
+function getFloodAreaStyle(riskLevel) {
+    const styles = {
+        'high': {
+            fillColor: '#ff0000',
+            color: '#cc0000',
+            fillOpacity: 0.3,
+            weight: 2,
+            opacity: 0.8,
+            dashArray: null
+        },
+        'medium': {
+            fillColor: '#ff9900',
+            color: '#cc6600',
+            fillOpacity: 0.25,
+            weight: 2,
+            opacity: 0.7,
+            dashArray: '5, 3'
+        },
+        'low': {
+            fillColor: '#ffff00',
+            color: '#cccc00',
+            fillOpacity: 0.2,
+            weight: 1,
+            opacity: 0.6,
+            dashArray: '3, 3'
+        },
+        'very-low': {
+            fillColor: '#cce6ff',
+            color: '#99ccff',
+            fillOpacity: 0.15,
+            weight: 1,
+            opacity: 0.5,
+            dashArray: '2, 2'
+        }
+    };
+    
+    return styles[riskLevel] || styles.medium;
+}
+
+function addFloodLegend() {
+    // Remove existing legend if any
+    if (floodLegend) {
+        removeFloodLegend();
+    }
+    
+    floodLegend = L.control({ position: 'bottomright' });
+    
+    floodLegend.onAdd = function(map) {
+        const div = L.DomUtil.create('div', 'info legend flood-legend');
+        div.innerHTML = `
+            <h4>Flood Risk Levels</h4>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ff0000; opacity: 0.3;"></div>
+                <span class="flood-legend-text">High Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ff9900; opacity: 0.25;"></div>
+                <span class="flood-legend-text">Medium Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ffff00; opacity: 0.2;"></div>
+                <span class="flood-legend-text">Low Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #cce6ff; opacity: 0.15;"></div>
+                <span class="flood-legend-text">Very Low Risk</span>
+            </div>
+        `;
+        return div;
+    };
+    
+    // Only add to map if flood layer is active
+    if (floodLayerActive) {
+        floodLegend.addTo(map);
+    }
+}
+
 async function loadHousePolygons() {
     try {
         const formData = new FormData();
@@ -1559,34 +1643,26 @@ async function loadHousePolygons() {
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
             renderHousePolygons();
-            console.log(`Loaded ${data.houses.length} house polygons`);
         }
     } catch (error) {
         console.error('ERROR LOADING HOUSE POLYGONS:', error);
     }
 }
 
-// Render house polygons
 function renderHousePolygons() {
-    // Clear existing house polygons layer
     if (housePolygonsLayer) {
         map.removeLayer(housePolygonsLayer);
     }
     
-    // Create new layer group
     housePolygonsLayer = L.layerGroup();
     
     housePolygonsData.forEach(house => {
         if (house.coordinates) {
             try {
                 const coords = JSON.parse(house.coordinates);
-                // Convert [lng, lat] to [lat, lng] for Leaflet
                 const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                
-                // Close the polygon
                 latLngCoords.push(latLngCoords[0]);
                 
-                // Create polygon with styling
                 const polygon = L.polygon(latLngCoords, {
                     color: '#3388ff',
                     weight: 2,
@@ -1595,14 +1671,9 @@ function renderHousePolygons() {
                     interactive: true
                 });
                 
-                // Add to layer group
                 polygon.addTo(housePolygonsLayer);
-                
-                // Create popup content
                 const popupContent = createHousePopup(house);
                 polygon.bindPopup(popupContent);
-                
-                // Store house data with polygon
                 polygon.houseData = house;
                 
             } catch (e) {
@@ -1611,67 +1682,41 @@ function renderHousePolygons() {
         }
     });
     
-    // Add to map if enabled
-    if (housePolygonsVisible) {
+    if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
 }
 
-// Create house popup
-function createHousePopup(house) {
-    return `
-        <div class="popup-content">
-            <h4>🏠 HOUSE <span class="household-badge">House</span></h4>
-            
-            <div class="popup-section">
-                <p><strong>Address:</strong> ${house.address || 'Not specified'}</p>
-                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
-                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
-                ${house.area_sqm ? `<p><strong>Area:</strong> ${house.area_sqm} m²</p>` : ''}
-            </div>
-            
-            <div class="popup-section">
-                <p><strong>Created:</strong> ${formatDate(house.created_at)}</p>
-                ${house.updated_at ? `<p><strong>Updated:</strong> ${formatDate(house.updated_at)}</p>` : ''}
-            </div>
-            
-            <button class="view-details-btn" onclick="showHouseDetails(${house.house_id})">
-                📋 View Full Details
-            </button>
-        </div>
-    `;
-}
-
-// Map view functions
-function toggleStreetMap() {
-    map.removeLayer(satelliteLayer);
-    osmLayer.addTo(map);
-}
-
-function toggleSatellite() {
-    map.removeLayer(osmLayer);
-    satelliteLayer.addTo(map);
-}
-
-function resetView() {
-    map.setView([14.6175, 121.0756], 17);
-    map.removeLayer(satelliteLayer);
-    osmLayer.addTo(map);
-}
-
-// Toggle fault line visibility
-function toggleFaultLine() {
-    if (faultLine && warningMarker) {
-        if (map.hasLayer(faultLine)) {
-            map.removeLayer(faultLine);
-            map.removeLayer(warningMarker);
-        } else {
-            faultLine.addTo(map);
-            warningMarker.addTo(map);
-        }
+function clearAllMarkers() {
+    constructionMarkers.forEach(marker => map.removeLayer(marker));
+    businessMarkers.forEach(marker => map.removeLayer(marker));
+    householdMarkers.forEach(marker => map.removeLayer(marker));
+    utilityMarkers.forEach(marker => map.removeLayer(marker));
+    
+    if (floodLayer) {
+        map.removeLayer(floodLayer);
     }
+    
+    // Remove flood legend if it exists
+    removeFloodLegend();
+    
+    if (faultLine && map.hasLayer(faultLine)) {
+        map.removeLayer(faultLine);
+    }
+    if (warningMarker && map.hasLayer(warningMarker)) {
+        map.removeLayer(warningMarker);
+    }
+    
+    constructionMarkers = [];
+    businessMarkers = [];
+    householdMarkers = [];
+    utilityMarkers = [];
+    floodLayer = null;
+    floodLegend = null; // Reset the legend variable
 }
-// Event Listeners
+
+// ==================== EVENT LISTENERS ====================
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
@@ -1683,7 +1728,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Hide results when clicking outside
         document.addEventListener('click', function(e) {
             const resultsContainer = document.getElementById('search-results');
             const searchBox = document.querySelector('.search-box');
@@ -1697,7 +1741,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Show results when focusing on input (if there's text)
         searchInput.addEventListener('focus', function() {
             if (this.value.trim() !== '') {
                 performSearch();
@@ -1705,7 +1748,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // FIXED: Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('filterDropdown');
         const dropdownBtn = document.getElementById('filterDropdownBtn');
@@ -1718,7 +1760,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Close modal when clicking outside
     document.addEventListener('click', function(e) {
         const modal = document.getElementById('detail-modal');
         if (e.target === modal) {
@@ -1726,21 +1767,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeModal('detail-modal');
         }
     });
     
-    // Initialize with "Households" active by default
-    updateFilterInfo();
-    
-    // Set active state for dropdown
-    document.querySelector('.dropdown-content a[data-type="household"]').classList.add('active');
+    const householdLink = document.querySelector('.dropdown-content a[data-type="household"]');
+    if (householdLink) {
+        householdLink.classList.add('active');
+    }
 });
 
-// Update initialization - Add barangay boundary with soft constraints and fault line
+// ==================== MAP INITIALIZATION ====================
+
 map.whenReady(function() {
     // Add barangay boundary polygon
     const barangayBoundary = L.geoJSON(blueRidgeGeoJSON, {
@@ -1779,7 +1819,7 @@ map.whenReady(function() {
         ]
     };
     
-    // Add fault line to map with earthquake-themed styling
+    // Create fault line but don't add to map yet
     faultLine = L.geoJSON(faultLineGeoJSON, {
         style: {
             color: '#ff0000',
@@ -1790,7 +1830,6 @@ map.whenReady(function() {
             lineJoin: 'round'
         },
         onEachFeature: function(feature, layer) {
-            // Add popup with warning
             layer.bindPopup(`
                 <div style="max-width: 300px;">
                     <h4 style="color: #ff0000; margin-bottom: 10px;">
@@ -1805,7 +1844,6 @@ map.whenReady(function() {
                 </div>
             `);
             
-            // Add hover effect
             layer.on('mouseover', function() {
                 this.setStyle({
                     weight: 6,
@@ -1822,14 +1860,13 @@ map.whenReady(function() {
                 });
             });
         }
-    }).addTo(map);
+    });
     
-    // Create a fault line warning marker at the midpoint
+    // Create warning marker but don't add to map yet
     const faultCoords = faultLineGeoJSON.features[0].geometry.coordinates;
     const midIndex = Math.floor(faultCoords.length / 2);
     const warningPoint = faultCoords[midIndex];
     
-    // Add warning marker
     const warningIcon = L.divIcon({
         className: 'incident-marker',
         html: `<div style="
@@ -1854,7 +1891,7 @@ map.whenReady(function() {
     warningMarker = L.marker([warningPoint[1], warningPoint[0]], {
         icon: warningIcon,
         title: 'Fault Line Warning'
-    }).addTo(map);
+    });
     
     warningMarker.bindPopup(`
         <div style="max-width: 250px;">
@@ -1875,38 +1912,20 @@ map.whenReady(function() {
     
     // Load all data
     loadAllMarkers();
-    loadHousePolygons();
     initDateTime();
     setupMobileMenuClose();
 });
 
-// Set up soft boundary (allows some movement but gently pulls back)
+// ==================== BOUNDARY FUNCTIONS ====================
+
 function setupSoftBoundary() {
-    // Get bounds from GeoJSON
     const bounds = L.geoJSON(blueRidgeGeoJSON).getBounds();
+    const softBounds = bounds.pad(0.15);
+    const warningBounds = bounds.pad(0.05);
+    const maxBounds = bounds.pad(0.25);
     
-    // Create expanded bounds for the "soft boundary" (15% larger)
-    const softBounds = L.latLngBounds(
-        bounds.getSouthWest(),
-        bounds.getNorthEast()
-    ).pad(0.15); // 15% padding around the boundary
-    
-    // Create "warning bounds" (5% larger than actual boundary)
-    const warningBounds = L.latLngBounds(
-        bounds.getSouthWest(),
-        bounds.getNorthEast()
-    ).pad(0.05);
-    
-    // Set maximum bounds to prevent going too far
-    const maxBounds = L.latLngBounds(
-        bounds.getSouthWest(),
-        bounds.getNorthEast()
-    ).pad(0.25); // 25% maximum padding
-    
-    // Set the max bounds on the map
     map.setMaxBounds(maxBounds);
     
-    // Set up event listeners for boundary checking
     let boundaryTimeout;
     
     map.on('move', function() {
@@ -1914,19 +1933,14 @@ function setupSoftBoundary() {
         
         const currentCenter = map.getCenter();
         
-        // Check if we're outside the warning bounds
         if (!warningBounds.contains(currentCenter)) {
-            // Show warning message if not already showing
             showBoundaryMessage("You're leaving Barangay Blue Ridge B");
             
-            // If we're outside the soft bounds, gently pull back when movement stops
             if (!softBounds.contains(currentCenter)) {
                 boundaryTimeout = setTimeout(function() {
-                    // Calculate the closest point inside the warning bounds
                     let snappedLat = currentCenter.lat;
                     let snappedLng = currentCenter.lng;
                     
-                    // Snap to the nearest edge of warning bounds
                     if (snappedLat > warningBounds.getNorth()) snappedLat = warningBounds.getNorth();
                     if (snappedLat < warningBounds.getSouth()) snappedLat = warningBounds.getSouth();
                     if (snappedLng > warningBounds.getEast()) snappedLng = warningBounds.getEast();
@@ -1934,26 +1948,22 @@ function setupSoftBoundary() {
                     
                     const snappedCenter = L.latLng(snappedLat, snappedLng);
                     
-                    // Smoothly pan back to boundary area
                     map.flyTo(snappedCenter, map.getZoom(), {
                         duration: 1,
                         easeLinearity: 0.25
                     });
-                }, 1000); // 1 second delay before pulling back
+                }, 1000);
             }
         }
     });
     
-    // Also check on moveend for immediate correction
     map.on('moveend', function() {
         const currentCenter = map.getCenter();
         
-        // Immediate correction if way outside bounds
         if (!softBounds.contains(currentCenter)) {
             let snappedLat = currentCenter.lat;
             let snappedLng = currentCenter.lng;
             
-            // Snap to the nearest edge of soft bounds
             if (snappedLat > softBounds.getNorth()) snappedLat = softBounds.getNorth();
             if (snappedLat < softBounds.getSouth()) snappedLat = softBounds.getSouth();
             if (snappedLng > softBounds.getEast()) snappedLng = softBounds.getEast();
@@ -1961,7 +1971,6 @@ function setupSoftBoundary() {
             
             const snappedCenter = L.latLng(snappedLat, snappedLng);
             
-            // Immediate correction (no animation for extreme cases)
             if (!bounds.contains(currentCenter)) {
                 map.panTo(snappedCenter, {
                     animate: true,
@@ -1971,7 +1980,6 @@ function setupSoftBoundary() {
         }
     });
     
-    // Add boundary info to map
     L.geoJSON(blueRidgeGeoJSON, {
         style: {
             color: '#00247C',
@@ -1985,31 +1993,25 @@ function setupSoftBoundary() {
         }
     }).addTo(map);
     
-    // Set zoom limits
     map.setMinZoom(15);
     map.setMaxZoom(20);
     
-    // Add boundary notification element
     addBoundaryNotification();
 }
 
-// Show boundary message
 function showBoundaryMessage(message = "Returning to Barangay Blue Ridge B") {
     const notification = document.getElementById('boundary-notification');
     if (notification) {
         notification.textContent = message;
         notification.classList.add('visible');
         
-        // Auto-hide after 3 seconds
         setTimeout(() => {
             notification.classList.remove('visible');
         }, 3000);
     }
 }
 
-// Add boundary notification element to DOM
 function addBoundaryNotification() {
-    // Remove existing notification if any
     const existing = document.getElementById('boundary-notification');
     if (existing) existing.remove();
     
@@ -2038,7 +2040,6 @@ function addBoundaryNotification() {
     
     document.body.appendChild(notification);
     
-    // Add CSS for the visible state
     const style = document.createElement('style');
     style.textContent = `
         #boundary-notification.visible {
@@ -2049,19 +2050,18 @@ function addBoundaryNotification() {
     document.head.appendChild(style);
 }
 
-// Mobile menu functionality
+// ==================== MOBILE MENU FUNCTIONS ====================
+
 function toggleMobileMenu() {
     const sideNav = document.querySelector('.side_nav');
     sideNav.classList.toggle('active');
     
-    // Close search results when opening mobile menu
     const searchResults = document.getElementById('search-results');
     if (searchResults) {
         searchResults.style.display = 'none';
     }
 }
 
-// Date/time functionality
 function updateDateTime() {
     const dateTimeElement = document.getElementById('currentDateTime');
     if (!dateTimeElement) return;
@@ -2079,20 +2079,17 @@ function updateDateTime() {
     dateTimeElement.textContent = now.toLocaleDateString('en-US', options);
 }
 
-// Initialize date/time and set up interval
 function initDateTime() {
     updateDateTime();
     setInterval(updateDateTime, 1000);
 }
 
-// Add mobile menu close when clicking outside on mobile
 function setupMobileMenuClose() {
     document.addEventListener('click', function(e) {
         const sideNav = document.querySelector('.side_nav');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     
         if (window.getComputedStyle(mobileMenuBtn).display !== 'none') {
-            // If clicking outside the nav while it's open, close it
             if (sideNav.classList.contains('active') && 
                 !sideNav.contains(e.target) && 
                 !mobileMenuBtn.contains(e.target)) {
@@ -2100,4 +2097,18 @@ function setupMobileMenuClose() {
             }
         }
     });
+}
+
+// ==================== DEBUG FUNCTION ====================
+
+function debugFloodState() {
+    console.log('Flood Layer Active:', floodLayerActive);
+    console.log('Flood Layer exists:', !!floodLayer);
+    console.log('Flood Layer on map:', floodLayer ? map.hasLayer(floodLayer) : false);
+    console.log('Flood Legend exists:', !!floodLegend);
+    console.log('Flood Legend on map:', floodLegend ? map.hasControl(floodLegend) : false);
+    
+    // Check DOM for legend
+    const legendElement = document.querySelector('.flood-legend');
+    console.log('Flood Legend in DOM:', !!legendElement);
 }

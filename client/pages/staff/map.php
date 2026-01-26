@@ -50,12 +50,6 @@
                         <span class="nav_text">Reset View</span>
                     </button>
                 </li>
-                <li>
-                    <button class="nav_select_btn" onclick="setActiveNav(this); toggleFaultLine()">
-                        <i class="nav_icon fas fa-exclamation-triangle"></i>
-                        <span class="nav_text">Toggle Fault Line</span>
-                    </button>
-                </li>
             </div>
             
             <div class="nav_list2">
@@ -79,7 +73,7 @@
         <div class="logo_container">
             <div class="head_space">
                 <div class="time_date" id="currentDateTime">
-                    <!-- Will be filled by JavaScript -->
+                    <!-- Will be filled by JS -->
                 </div>
             </div>
             <div class="user_profile">
@@ -97,13 +91,13 @@
             <div class="map-container">
                 <div class="map-header">
                     <h2>Barangay Blue Ridge B Map</h2>
-                    <p>Interactive mapping system for households, businesses, and construction sites</p>
+                    <p>Interactive Map for households, businesses, construction, utilities, and hazard areas</p>
                 </div>
                 
                 <div class="map-controls">
                     <div class="search-container">
                         <div class="search-box">
-                            <input type="text" id="search-input" placeholder="Search by name, address, or type...">
+                            <input type="text" id="search-input" placeholder="Search by name, address, type, or hazard...">
                             <button onclick="performSearch()">
                                 <i class="fas fa-search"></i> Search
                             </button>
@@ -152,7 +146,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Sub-filters for construction types (initially hidden) - MOVED OUTSIDE DROPDOWN -->
+                            <!-- Sub-filters for construction types -->
                             <div class="sub-filters" id="constructionSubFilters" style="display: none;">
                                 <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
                                 <div class="sub-filter-buttons">
@@ -178,19 +172,32 @@
                                     </button>
                                 </div>
                             </div>
+                            
+                            <!-- Hazard Layer Toggles -->
+                            <div class="hazard-toggles">
+                                <div class="hazard-toggle-container">
+                                    <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                        <i class="fas fa-water"></i>
+                                        <span>Flood Hazards</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                    <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Fault Line</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="filter-info" id="filterInfo">
-                            Showing households
-                        </div>
+                        <!-- Filter info removed as requested -->
                     </div>
                 </div>
                 
                 <div id="map"></div>
                 
                 <div class="map-info">
-                    <p><strong>⚠️ Earthquake Risk Area:</strong> Red dashed line indicates a fault line. Construction in this zone requires seismic-resistant design.</p>
-                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Only one filter can be active at a time.</p>
+                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
                 </div>
             </div>
         </div>
@@ -198,7 +205,10 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2024 Barangay Blue Ridge B. All rights reserved.</p>
+        <div class="footer-content">
+            <p>Barangay Blue Ridge B Map System &copy; 2024. All rights reserved.</p>
+            <p>For emergency assistance, contact Barangay Hall: 8911-1111</p>
+        </div>
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -209,7 +219,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title">Marker Details</h3>
-                <button class="close-modal" onclick="closeModal('detail-modal')">&times;</button>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="modal-content">
@@ -218,6 +228,7 @@
             </div>
         </div>
     </div>
+
 </body>
 
 </html>
