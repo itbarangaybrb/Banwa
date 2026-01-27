@@ -20,6 +20,22 @@ try {
         exit;
     }
 
+    // Try to fetch account info from users table (full_name, created_at) if available
+    try {
+        $stmt2 = $pdo->prepare("SELECT full_name, created_at FROM users WHERE supabase_user_id = ? LIMIT 1");
+        $stmt2->execute([$supabase_user_id]);
+        $u = $stmt2->fetch(PDO::FETCH_ASSOC);
+        if ($u) {
+            if (!empty($u['full_name'])) $user['full_name'] = $u['full_name'];
+            if (!empty($u['created_at'])) {
+                $ts = strtotime($u['created_at']);
+                if ($ts !== false) $user['member_since'] = date('F Y', $ts);
+            }
+        }
+    } catch (PDOException $inner) {
+        // ignore if users table missing columns or query fails
+    }
+
     echo json_encode($user);
 
 } catch (PDOException $e) {

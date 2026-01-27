@@ -582,8 +582,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // =========================
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const resp = await fetch('/Banwa/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
+        console.debug('utilities_app autofill response:', data);
+
+        // fallback: if first_name missing but full_name present, split it
+        if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
+            const parts = data.full_name.trim().split(/\s+/);
+            data.first_name = parts[0] || '';
+            data.last_name = parts.length > 1 ? parts[parts.length-1] : '';
+            data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
+        }
 
         if (data.error) {
             console.log('Autofill error:', data.error);

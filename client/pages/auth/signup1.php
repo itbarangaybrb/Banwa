@@ -221,19 +221,7 @@
         </div>
     </div>
 
-    <style>
-    /* Modal theme aligned with site colors */
-    #submitConfirmModal.modal-hidden { display: none; }
-    #submitConfirmModal .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999}
-    #submitConfirmModal .modal-box{background:#fff;border-radius:8px;padding:20px;max-width:520px;width:92%;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(8px);opacity:0;animation:modal-fade-in 180ms ease-out forwards}
-    #submitConfirmModal .modal-title{font-weight:700;margin-bottom:8px;color:#00247C}
-    #submitConfirmModal .modal-body{margin-bottom:16px;color:#333}
-    #submitConfirmModal .modal-actions{display:flex;gap:8px;justify-content:flex-end}
-    #submitConfirmModal .btn{padding:8px 14px;border-radius:6px;border:0;cursor:pointer}
-    #submitConfirmModal .btn-cancel{background:#f2f2f2}
-    #submitConfirmModal .btn-confirm{background:#00247C;color:#fff}
-    @keyframes modal-fade-in{to{transform:translateY(0);opacity:1}}
-    </style>
+    <!-- Modal styles moved to ../../styles/auth/signup1.css -->
 
     <script type="module" src="../../scripts/auth/signup1.js"></script>
 </body>
