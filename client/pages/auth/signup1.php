@@ -207,6 +207,34 @@
         </section>
     </main>
 
+    <!-- Submit Confirmation Modal (moved here so designers can style it) -->
+    <div id="submitConfirmModal" aria-hidden="true" class="modal-hidden">
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+            <div class="modal-box" role="document">
+                <div class="modal-title">Submit Application</div>
+                <div class="modal-body">Are you sure you want to submit this application? This will create your account and send a verification email.</div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel">Cancel</button>
+                    <button class="btn btn-confirm">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* Modal theme aligned with site colors */
+    #submitConfirmModal.modal-hidden { display: none; }
+    #submitConfirmModal .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999}
+    #submitConfirmModal .modal-box{background:#fff;border-radius:8px;padding:20px;max-width:520px;width:92%;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(8px);opacity:0;animation:modal-fade-in 180ms ease-out forwards}
+    #submitConfirmModal .modal-title{font-weight:700;margin-bottom:8px;color:#00247C}
+    #submitConfirmModal .modal-body{margin-bottom:16px;color:#333}
+    #submitConfirmModal .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+    #submitConfirmModal .btn{padding:8px 14px;border-radius:6px;border:0;cursor:pointer}
+    #submitConfirmModal .btn-cancel{background:#f2f2f2}
+    #submitConfirmModal .btn-confirm{background:#00247C;color:#fff}
+    @keyframes modal-fade-in{to{transform:translateY(0);opacity:1}}
+    </style>
+
     <script type="module" src="../../scripts/auth/signup1.js"></script>
 </body>
 
