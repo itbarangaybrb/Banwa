@@ -1664,6 +1664,49 @@ window.onclick = function (event) {
         }
     });
 }
+function updateWarningUI(status) {
+    const warningDiv = document.getElementById('statusWarning');
+    warningDiv.style.display = 'block';
+    
+    if (status === 'Disapproved') {
+        warningDiv.style.backgroundColor = '#fff2f2';
+        warningDiv.style.color = '#d93025';
+        warningDiv.innerHTML = '<strong>Warning:</strong> Disapproving will stop the application process.';
+    } else if (status === 'For Payment') {
+        warningDiv.style.backgroundColor = '#e8f0fe';
+        warningDiv.style.color = '#1967d2';
+        warningDiv.innerHTML = '<strong>Action:</strong> Please ensure the Assessment Amount is correct.';
+    } else {
+        warningDiv.style.display = 'none';
+    }
+}
+
+// 1. Define Professional Templates
+const statusTemplates = {
+    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
+    'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
+    'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
+    'Approved': "Your Business Permit is now ready for pick-up/download."
+};
+
+// 2. Logic to auto-fill the textarea
+document.getElementById('newStatus').addEventListener('change', function() {
+    const status = this.value;
+    const commentBox = document.getElementById('updateComments');
+    const amountGroup = document.getElementById('amountInputGroup'); // Your div containing the amount input
+
+    // Show/Hide amount field
+    if(status === 'For Payment') {
+        amountGroup.style.display = 'block';
+    } else {
+        amountGroup.style.display = 'none';
+    }
+
+    // Auto-fill template if it exists
+    if(statusTemplates[status]) {
+        commentBox.value = statusTemplates[status];
+    }
+});
 
 // INITIALIZE ON LOAD
 // window.addEventListener('load', function () {

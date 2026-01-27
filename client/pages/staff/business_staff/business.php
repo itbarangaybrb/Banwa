@@ -428,9 +428,16 @@
                             <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
                         </div>
 
+                        <div class="info-banner" style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px;">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified. 
+                            Use <em>"Missing Docs"</em> to trigger a notification to the applicant.
+                        </div>
+
                         <div class="form-group">
                             <label for="newStatus">New Status *</label>
-                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
+                            <div id="statusWarning" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; display: none; font-size: 13px;"></div>
+                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()" required onchange="updateWarningUI(this.value)">
                                 <option value="" disabled selected>Select Action...</option>
                                 <option value="Pre-Approved">Pre-Approved</option>
                                 <option value="Additional Requirements">Additional Requirements</option>
@@ -447,17 +454,14 @@
                             <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
                         </div>
 
-                        <div class="form-group">
                             <label for="updateComments">Remarks / Comments *</label>
-                            <div class="prompt-container">
-                                <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
-                                </div>
+                                            <label>Quick Responses:</label>
+                                            <div class="prompt-suggestions">
+                                                <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
+                                                <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid Government ID or DTI Certificate. Please re-upload.')">📂 Missing Docs</button>
+                                            </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>
-                        </div>
 
                         <div class="button-group">
                             <button type="submit" class="btn-primary">💾 Update Status</button>

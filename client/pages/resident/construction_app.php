@@ -300,7 +300,7 @@ if ($_SESSION['role_id'] != 1) {
         <!-- ==================== Summary Form ==================== -->
         <div class="containers summary-container hidden" id="summary">
             <form class="form" id="summaryForm">
-                <h6>Summary</h6>
+                <h6>Summary of Application</h6>
 
                 <div id="summaryContent">
                     <div class="summary-header-and-info">

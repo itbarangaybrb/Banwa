@@ -244,9 +244,9 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input" id="requirementsSection">
                         <label class="label">Requirements (Photocopy Only) <span style="color: #BB1B1B;">*</span></label>
-                        <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
-                        <label><input type="checkbox" name="requirements" value="DTI"> DTI</label>
-                        <label><input type="checkbox" name="requirements" value="TCT"> TCT</label>
+                            <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
+                            <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
+                            <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
                         <div class="error-msg"></div>
@@ -298,7 +298,7 @@ if ($_SESSION['role_id'] != 1) {
         <!-- ==================== Summary Form ==================== -->
         <div class="containers summary-container hidden" id="summary">
             <form class="form" id="summaryForm">
-                <h6>Summary</h6>
+                <h6>Summary of Application</h6>
 
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
