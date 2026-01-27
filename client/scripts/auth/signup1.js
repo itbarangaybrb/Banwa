@@ -225,15 +225,20 @@ formElements.idFile.addEventListener('change', function () {
 });
 
 async function processOCR() {
-    if (!formElements.idFile.files[0] || !formElements.idType.value) return;
+    // 1. Initial Validation
+    if (!formElements.idFile.files[0] || !formElements.idType.value) {
+        formElements.ocrStatus.textContent = "Please select an ID type and upload a photo.";
+        formElements.ocrStatus.className = 'ocr-status-error';
+        formElements.ocrStatus.style.display = 'block';
+        return;
+    }
 
+    // 2. Loading State
     formElements.selectIdNextBtn.disabled = true;
-    formElements.selectIdNextBtn.classList.add('scanning-btn');
-    formElements.selectIdNextBtn.textContent = "Scanning...";
-
+    formElements.selectIdNextBtn.textContent = "Verifying...";
+    formElements.ocrStatus.className = 'ocr-status-processing';
     formElements.ocrStatus.style.display = 'block';
-    formElements.ocrStatus.style.color = '#00247C';
-    formElements.ocrStatus.textContent = "Analyzing ID... please wait.";
+    formElements.ocrStatus.textContent = "Checking ID fingerprints...";
 
     const formData = new FormData();
     formData.append('file', formElements.idFile.files[0]);
@@ -243,28 +248,56 @@ async function processOCR() {
         const response = await fetch('http://127.0.0.1:5000/process_ocr', { method: 'POST', body: formData });
         const result = await response.json();
 
-        if (result.success && result.data) {
+        if (result.success) {
             const d = result.data;
-            if (d.firstName) formElements.firstName.value = d.firstName;
-            if (d.lastName) formElements.lastName.value = d.lastName;
-            if (d.middleName) formElements.middleName.value = d.middleName;
-            if (d.address) formElements.address.value = d.address;
+            // Populate the next panel's fields
+            formElements.firstName.value = d.firstName || "";
+            formElements.lastName.value = d.lastName || "";
+            formElements.address.value = d.address || "";
 
-            formElements.ocrStatus.style.color = 'green';
-            formElements.ocrStatus.textContent = "Scan complete! Details auto-filled.";
+            // Show Success UI
+            const detected = result.meta?.detected_type || "Document";
+            formElements.ocrStatus.className = 'ocr-status-success';
+            formElements.ocrStatus.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Verified: <strong>${detected}</strong></span>
+                </div>
+            `;
+
+            // THE FIX: Transition the button to "Next Step" mode
+            formElements.selectIdNextBtn.disabled = false;
+            formElements.selectIdNextBtn.textContent = "Next: Personal Details";
+            
+            // Change the click event so it switches panels instead of running OCR again
+            formElements.selectIdNextBtn.onclick = () => {
+                switchPanel('personalDetails');
+                // Reset button for next time (in case they come back)
+                resetVerifyButton(); 
+            };
         } else {
-            formElements.ocrStatus.style.color = 'red';
-            formElements.ocrStatus.textContent = "Could not read ID automatically.";
+            // Error handling (mismatch, blur, etc.)
+            formElements.ocrStatus.className = 'ocr-status-error';
+            formElements.ocrStatus.textContent = result.error || "Verification failed.";
+            formElements.selectIdNextBtn.disabled = false;
+            formElements.selectIdNextBtn.textContent = "Retry Verification";
         }
     } catch (error) {
         console.error("OCR Error:", error);
-        formElements.ocrStatus.style.color = 'red';
-        formElements.ocrStatus.textContent = "Scanner offline. Please enter manually.";
-    } finally {
+        formElements.ocrStatus.className = 'ocr-status-error';
+        formElements.ocrStatus.textContent = "Server offline. You can proceed manually.";
         formElements.selectIdNextBtn.disabled = false;
-        formElements.selectIdNextBtn.classList.remove('scanning-btn');
-        formElements.selectIdNextBtn.textContent = "Next";
+        formElements.selectIdNextBtn.textContent = "Proceed Manually";
+        formElements.selectIdNextBtn.onclick = () => switchPanel('personalDetails');
     }
+
+    console.log("Full Backend Response:", result); // Look at 'meta' and 'data' here
+}
+
+// Helper to reset the button back to OCR mode if the user changes their selection
+function resetVerifyButton() {
+    formElements.selectIdNextBtn.textContent = "Verify ID";
+    formElements.selectIdNextBtn.onclick = processOCR;
 }
 
 // =========================

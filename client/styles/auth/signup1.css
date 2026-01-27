@@ -379,3 +379,38 @@ body {
 
 
 }
+/* --- OCR Status Indicators --- */
+#ocrStatus {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.ocr-status-processing {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #bbdefb;
+}
+
+.ocr-status-success {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+}
+
+.ocr-status-error {
+    background-color: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+}
+
+/* Pulse Animation for Button */
+.scanning-btn {
+    position: relative;
+    overflow: hidden;
+    cursor: wait !important;
+    background-color: #5c6bc0 !important; /* Lighter blue to indicate active state */
+}
