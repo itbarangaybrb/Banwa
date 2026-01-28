@@ -272,7 +272,7 @@
                 </div>
             </div>
 
-        </div> </div> <script src="../../../scripts/staff/filter_dropdown.js"></script>
+        </div> </div>
     <script src="../../../scripts/staff/finance_staff/finance.js"></script>
     
     <script>

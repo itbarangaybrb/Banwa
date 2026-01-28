@@ -631,7 +631,7 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-.side_nav:hover~.footer {
+.side_nav.expanded~.footer {
     margin-left: 325px;
 }
 

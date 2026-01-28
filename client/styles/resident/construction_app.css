@@ -560,7 +560,7 @@ body {
         transform: translateX(-100%);
     }
 
-    .side_nav:hover {
+    .side_nav.expanded {
         transform: translateX(0);
         width: 280px;
     }

@@ -532,7 +532,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
-    <script src="../../../scripts/staff/filter_dropdown.js"></script>
 </body>
 
 </html>
