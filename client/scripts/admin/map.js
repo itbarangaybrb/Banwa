@@ -73,6 +73,11 @@ function toggleMarkerType(type) {
     
     // Update marker visibility
     updateMarkerVisibility();
+    // Dispatch a global event so other staff pages can react to map filter changes
+    try {
+        const activeFilters = Object.keys(visibleMarkers).filter(k => !!visibleMarkers[k]);
+        window.dispatchEvent(new CustomEvent('staffMapFilterChanged', { detail: { activeFilters } }));
+    } catch (e) { console.warn('Failed to dispatch staffMapFilterChanged', e); }
 }
 
 function updateMarkerVisibility() {

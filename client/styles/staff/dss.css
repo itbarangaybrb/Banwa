@@ -1,60 +1,76 @@
+.dss-evaluation-section {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1f2d3d;
+}
+
 .dss-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .dss-header h3 {
     margin: 0;
-    color: #2c3e50;
-    font-size: 16px;
-    font-weight: 600;
+    color: #132032;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
 }
 
 .dss-status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f3f6f9;
+    color: #1f2d3d;
+    border: 1px solid #e6edf3;
 }
+
+/* status variants */
+.dss-status-badge.approved { background:#e9f9ee; color:#0b6a2b; border-color:#cfeedd; }
+.dss-status-badge.rejected { background:#fff0f0; color:#9b1f1f; border-color:#f6cfcf; }
+.dss-status-badge.pending { background:#fff9ec; color:#7a5a00; border-color:#f3e3b8; }
 
 /* Score & Probability - Side by side */
 .dss-score-summary {
     display: flex;
-    gap: 20px;
-    margin-bottom: 16px;
-    background: white;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #dfdfdf;
+    gap: 16px;
+    margin-bottom: 14px;
+    background: #ffffff;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #e6edf3;
+    box-shadow: 0 1px 0 rgba(19,32,50,0.02);
 }
 
 .dss-score, .dss-probability {
     flex: 1;
-    padding: 8px 0;
+    padding: 6px 0;
 }
 
 .dss-score strong, .dss-probability strong {
     display: block;
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 4px;
+    font-size: 12px;
+    color: #6b7a86;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 
 .dss-score span, .dss-probability span {
-    font-size: 18px;
-    font-weight: 600;
-    color: #2c3e50;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f2540;
 }
 
 /* Progress Bar - Clean & Simple */
 .dss-progress-container {
-    margin: 20px 0;
+    margin: 18px 0;
     padding: 12px;
-    background: white;
-    border-radius: 6px;
-    border: 1px solid #dfdfdf;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e9eef5;
 }
 
 .dss-progress-label {
@@ -62,26 +78,27 @@
     justify-content: space-between;
     margin-bottom: 8px;
     font-size: 13px;
-    color: #666;
+    color: #6b7a86;
 }
 
 .dss-progress-percentage {
-    font-weight: 600;
-    color: #2c3e50;
+    font-weight: 700;
+    color: #0f2540;
 }
 
 .dss-progress-bar {
     width: 100%;
-    height: 10px;
-    background: #e9ecef;
-    border-radius: 5px;
+    height: 12px;
+    background: #f1f4f7;
+    border-radius: 8px;
     overflow: hidden;
+    box-shadow: inset 0 -1px 0 rgba(19,32,50,0.03);
 }
 
 .dss-progress-fill {
     height: 100%;
-    border-radius: 5px;
-    background: linear-gradient(90deg, #3498db, #2ecc71);
+    border-radius: 8px;
+    background: linear-gradient(90deg, #2b9af3 0%, #2ecd6b 70%);
     transition: width 0.5s ease;
     min-width: 2px; /* Ensures visibility */
 }
@@ -90,24 +107,24 @@
 .dss-rules-summary {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 20px 0;
+    gap: 14px;
+    margin: 18px 0;
 }
 
 .dss-rules-column {
-    background: white;
-    padding: 14px;
-    border-radius: 6px;
-    border: 1px solid #dfdfdf;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #eef4f9;
 }
 
 .dss-rules-column h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    color: #2c3e50;
-    font-weight: 600;
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #132032;
+    font-weight: 700;
     padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f3f6f9;
 }
 
 .dss-rules-list {
@@ -117,31 +134,35 @@
 }
 
 .dss-rules-list li {
-    padding: 8px 0;
+    padding: 10px 0;
     font-size: 13px;
-    color: #555;
-    line-height: 1.4;
-    border-bottom: 1px solid #f8f9fa;
+    color: #3b4a57;
+    line-height: 1.45;
+    border-bottom: 1px solid #f6f9fb;
 }
 
 .dss-rules-list li:last-child {
     border-bottom: none;
 }
 
+/* rule result indicators */
+.dss-rule-pass { border-left: 4px solid #2ecc71; padding-left: 10px; }
+.dss-rule-fail { border-left: 4px solid #e74c3c; padding-left: 10px; }
+
 /* Recommendations Section */
 .dss-recommendations {
-    background: #fff8e1;
-    padding: 16px;
-    border-radius: 6px;
+    background: #fffdf4;
+    padding: 14px;
+    border-radius: 8px;
     margin: 16px 0;
-    border: 1px solid #f1c40f;
+    border: 1px solid #ffecb5;
 }
 
 .dss-recommendations h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    color: #856404;
-    font-weight: 600;
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #6b4b00;
+    font-weight: 700;
 }
 
 .dss-recommendations-list {
@@ -151,33 +172,27 @@
 }
 
 .dss-recommendations-list li {
-    padding: 6px 0;
+    padding: 8px 0;
     font-size: 13px;
-    color: #856404;
-    line-height: 1.4;
+    color: #6b4b00;
+    line-height: 1.45;
 }
 
 .dss-recommendations-list li::before {
     content: "• ";
-    margin-right: 6px;
+    margin-right: 8px;
 }
 
 /* Timestamp */
 .dss-timestamp {
     text-align: right;
-    font-size: 11px;
-    color: #95a5a6;
+    font-size: 12px;
+    color: #98a6b0;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .dss-rules-summary {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .dss-score-summary {
-        flex-direction: column;
-        gap: 10px;
-    }
+    .dss-rules-summary { grid-template-columns: 1fr; gap: 12px; }
+    .dss-score-summary { flex-direction: column; gap: 10px; }
+    .dss-progress-bar { height: 10px; }
 }

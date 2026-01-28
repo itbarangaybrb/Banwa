@@ -3,6 +3,27 @@ const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
+// Map filter visibility flag for this management page
+const PAGE_CATEGORY = 'business';
+let mapFilterVisible = true;
+
+window.addEventListener('staffMapFilterChanged', (e) => {
+    try {
+        const detail = e && e.detail && e.detail.activeFilters;
+        if (!detail) return;
+        if (Array.isArray(detail)) {
+            mapFilterVisible = detail.includes(PAGE_CATEGORY);
+        } else {
+            mapFilterVisible = !!detail[PAGE_CATEGORY];
+        }
+        // Refresh currently visible table
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab && activeTab.id === 'pending') loadPendingTable();
+        if (activeTab && activeTab.id === 'history') loadHistoryTable();
+    } catch (err) {
+        console.warn('Error handling staffMapFilterChanged in finance:', err);
+    }
+});
 
 // UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
 document.addEventListener('DOMContentLoaded', function() {
@@ -47,6 +68,10 @@ function loadPendingTable() {
         .then(data => {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = '';
+            if (!mapFilterVisible) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:#999;">Hidden by map filters.</td></tr>';
+                return;
+            }
             if (data.status === 'success') {
                 pendingApps = data.data;
                 if (pendingApps.length === 0) {
@@ -97,6 +122,10 @@ function loadHistoryTable() {
         .then(data => {
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
+            if (!mapFilterVisible) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:#999;">Hidden by map filters.</td></tr>';
+                return;
+            }
             if (data.status === 'success') {
                 paidApps = data.data;
                 if (paidApps.length === 0) {
