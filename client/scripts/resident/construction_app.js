@@ -473,8 +473,8 @@ newSummaryForm.addEventListener('submit', async (e) => {
         title: 'Submit Application?',
         text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
         confirmButtonText: 'Yes, submit it!',
         cancelButtonText: 'Cancel'
     });
