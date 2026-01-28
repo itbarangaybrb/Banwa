@@ -76,7 +76,7 @@
             <div id="alert-container"></div>
 
             <div id="dashboard" class="tab-pane active">
-                
+
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -133,7 +133,7 @@
                         </div>
                         <div class="modal-body">
                             <div id="modal-content">
-                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,7 +153,7 @@
 
             <div id="management" class="tab-pane">
                 <h2>Review Business Applications</h2>
-                
+
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
@@ -186,7 +186,7 @@
                 <p class="form-description">Fill in the details to create a new business application</p>
 
                 <form id="createForm" onsubmit="createApplication(event)">
-                    
+
                     <div class="section-title">Business Information</div>
                     <div class="form-row">
                         <div class="form-group">
@@ -429,8 +429,8 @@
                         </div>
 
                         <div class="info-banner" style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px;">
-                            <i class="fas fa-info-circle"></i> 
-                            <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified. 
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified.
                             Use <em>"Missing Docs"</em> to trigger a notification to the applicant.
                         </div>
 
@@ -454,15 +454,13 @@
                             <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
                         </div>
 
-                            <label for="updateComments">Remarks / Comments *</label>
-                                            <label>Quick Responses:</label>
-                                            <div class="prompt-suggestions">
-                                                <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                                <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid Government ID or DTI Certificate. Please re-upload.')">📂 Missing Docs</button>
-                                            </div>
-                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
-                            </div>
-
+                        <label for="updateComments">Remarks / Comments *</label>
+                        <label>Quick Responses:</label>
+                        <div class="prompt-suggestions">
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid Government ID or DTI Certificate. Please re-upload.')">📂 Missing Docs</button>
+                        </div>
+                        <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                         <div class="button-group">
                             <button type="submit" class="btn-primary">💾 Update Status</button>
                             <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
@@ -470,10 +468,12 @@
                     </form>
                 </div>
             </div>
-
-        </div> </div> <script src="../../../scripts/staff/business_staff/business.js"></script>
+        </div>
+    </div>
+    <script src="../../../scripts/staff/business_staff/business.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
 </body>
+
 </html>

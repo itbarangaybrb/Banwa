@@ -538,7 +538,17 @@ newSummaryForm.addEventListener('submit', async (e) => {
         await Notification.requestPermission();
     }
 
-    if (confirm('Are you sure you want to submit this application?')) {
+    const confirmResult = await Swal.fire({
+        title: 'Submit Application?',
+        text: 'Are you sure you want to submit this application?',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, submit it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (confirmResult.isConfirmed) {
         const formData = new FormData();
 
         // 1. ADD THE ACTION (Crucial for business_handler.php)
@@ -631,8 +641,12 @@ newSummaryForm.addEventListener('submit', async (e) => {
                     });
                 }
 
-                // Show simple success message
-                alert(`Application submitted successfully! Reference ID: ${data.id}\n\nYou will be redirected to your status page.`);
+                // Show success message
+                await Swal.fire({
+                    title: 'Success!',
+                    html: `Application submitted successfully! Reference ID: ${data.id}<br><br>You will be redirected to your status page.`,
+                    confirmButtonText: 'OK'
+                });
 
                 // Redirect to status page after 2 seconds
                 setTimeout(() => {
@@ -640,13 +654,21 @@ newSummaryForm.addEventListener('submit', async (e) => {
                 }, 2000);
 
             } else {
-                alert('Error: ' + data.message);
+                await Swal.fire({
+                    title: 'Error!',
+                    text: 'Error: ' + data.message,
+                    confirmButtonText: 'OK'
+                });
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }
         } catch (error) {
             console.error('Fetch Error:', error);
-            alert('An error occurred while submitting the application.');
+            await Swal.fire({
+                title: 'Error!',
+                text: 'An error occurred while submitting the application.',
+                confirmButtonText: 'OK'
+            });
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }

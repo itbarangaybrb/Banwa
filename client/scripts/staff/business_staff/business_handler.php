@@ -687,7 +687,7 @@ function handleChartBusinessType($pdo)
         SELECT application_date, COUNT(*) AS total
         FROM business_applications
         GROUP BY application_date
-        ORDER BY application_date ASC
+        ORDER BY total ASC
     ";
 
     $stmt1 = $pdo->query($sql1);
@@ -697,7 +697,7 @@ function handleChartBusinessType($pdo)
         SELECT type_of_business, COUNT(*) AS total
         FROM business_applications
         GROUP BY type_of_business
-        ORDER BY type_of_business ASC
+        ORDER BY total ASC
     ";
 
     $stmt2 = $pdo->query($sql2);
@@ -708,7 +708,7 @@ function handleChartBusinessType($pdo)
         FROM business_applications ba
         LEFT JOIN business_evaluations be ON ba.id = be.application_id
         GROUP BY COALESCE(be.dss_status, 'Pending Evaluation')
-        ORDER BY total DESC
+        ORDER BY total ASC
     ";
 
     $stmt3 = $pdo->query($sql3);
