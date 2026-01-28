@@ -35,10 +35,8 @@
                 </li>
                 <li>
                     <a href="#" class="nav_select" data-tab="management">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Review & Search</span>
+                        <i class="fas fa-tasks nav_icon"></i>
+                        <span class="nav_text">Manage Applications</span>
                     </a>
                 </li>
                 <li>
@@ -49,14 +47,7 @@
                         <span class="nav_text">Create New</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#" class="nav_select" data-tab="process">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
-                        </svg>
-                        <span class="nav_text">Process & Assess</span>
-                    </a>
-                </li>
+                <!-- Process functionality remains in the #process tab; removed duplicate nav link -->
                 <li>
                     <a href="#" class="nav_select" data-tab="summary">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">

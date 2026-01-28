@@ -236,32 +236,9 @@ function loadApplicationsFromDB() {
  * Displays applications with status badges and appropriate action buttons
  */
 function loadManagementTable() {
+    // Use the unified filter-based renderer so management rows include the process/action buttons
     loadApplicationsFromDB().finally(() => {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        applications.forEach(app => {
-            // Status Badge Logic
-            let badgeClass = 'pending';
-            if (app.status === 'Approved') badgeClass = 'approved';
-            if (app.status === 'Disapproved') badgeClass = 'disapproved';
-            if (app.status === 'Paid') badgeClass = 'paid';
-            if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${app.id}</td>
-                    <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
-                    <td>${app.nature_of_activity}</td>
-                    <td>${app.contractor_name}</td>
-                    <td>${app.contractor_contact_number}</td>
-                    <td>${app.construction_address}</td>
-                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                    <td>${app.payment_status || 'Unpaid'}</td>
-                    <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button></td>
-                </tr>
-            `;
-        });
+        filterApplications();
     });
 }
 

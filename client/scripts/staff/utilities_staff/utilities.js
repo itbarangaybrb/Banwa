@@ -237,33 +237,9 @@ function loadApplicationsFromDB() {
  * Displays applications with status badges and appropriate action buttons
  */
 function loadManagementTable() {
+    // Delegate to the filter-based renderer so management rows include process/action buttons
     loadApplicationsFromDB().finally(() => {
-        const tbody = document.getElementById('tableBody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
-        applications.forEach(app => {
-            // Status Badge Logic
-            let badgeClass = 'pending';
-            if (app.status === 'Approved') badgeClass = 'approved';
-            if (app.status === 'Disapproved') badgeClass = 'disapproved';
-            if (app.status === 'Complied') badgeClass = 'complied';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${app.id}</td>
-                    <td>${app.nature_of_work || 'N/A'}</td>
-                    <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
-                    <td>${app.provider}</td>
-                    <td>${app.address_of_utility}</td>
-                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                    <td>
-                        <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                        <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
-                    </td>
-                </tr>
-            `;
-        });
+        filterApplications();
     });
 }
 
