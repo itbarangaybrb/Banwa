@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Services JS Loaded");
+    // console.log("Services JS Loaded");
 
     const modal = document.getElementById('guidelinesModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Force display using class
                 modal.classList.add('active-modal');
-                console.log("Applied active-modal class to:", serviceKey);
+                // console.log("Applied active-modal class to:", serviceKey);
             }
         });
     });

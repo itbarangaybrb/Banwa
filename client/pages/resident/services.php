@@ -71,7 +71,7 @@ if ($_SESSION['role_id'] != 1) {
         font-weight: bold;
     }
     .btn-cancel { background: #ccc; }
-    .btn-proceed { background: #007bff; color: white; }
+    .btn-proceed { background: #00247C; color: white; }
 </style>
 </head>
 
