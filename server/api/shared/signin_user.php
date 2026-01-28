@@ -26,7 +26,7 @@ try {
         $_SESSION['role_id'] = $user['role_id'];
         // Mark staff status for handlers that check `is_staff` (non-resident roles)
         // role_id == 1 => resident; others are considered staff/admin
-        $_SESSION['is_staff'] = ($user['role_id'] != 1);
+        // $_SESSION['is_staff'] = ($user['role_id'] != 1);
 
         // Redirect based on role
         switch ($user['role_id']) {
