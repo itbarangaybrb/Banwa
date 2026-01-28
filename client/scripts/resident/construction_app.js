@@ -1,11 +1,13 @@
+// Configuration imports for Supabase, address data, and service worker registration
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 registerServiceWorker();
 
-// ==========================
-// Function: Hide/Show Panels
-// ==========================
+/**
+ * Switches the visible panel in the multi-step form interface
+ * @param {string} panelId - The ID of the panel to display ('owner', 'construction', 'waiver', or 'summary')
+ */
 function switchPanel(panelId) {
     const panels = ['owner', 'construction', 'waiver', 'summary']
         .map(id => document.getElementById(id));
@@ -13,7 +15,7 @@ function switchPanel(panelId) {
     window.scrollTo(0, 0);
 }
 
-// Owner form elements 
+// Form element references for owner information section
 const firstName = document.getElementById('firstName');
 const middleName = document.getElementById('middleName');
 const suffix = document.getElementById('suffix');
@@ -22,9 +24,7 @@ const contactNoOwner = document.getElementById('contactNoOwner');
 const lotNo = document.getElementById('lotNo');
 const street = document.getElementById('street');
 
-
-// Business form elements 
-// const natureOfWork = document.getElementById('natureOfWork');
+// Form element references for construction information section
 const typeOfWork = document.getElementById('typeOfWork');
 const natureOfActivity = document.getElementById('natureOfActivity');
 const detailsOfWork = document.getElementById('detailsOfWork');
@@ -39,23 +39,48 @@ const constructionLotNo = document.getElementById('constructionLotNo');
 const constructionStreet = document.getElementById('constructionStreet');
 const requirementUpload = document.getElementById('requirementUpload');
 
-// Waiver form elements
+// Form element reference for waiver agreement
 const agreeCheckBox = document.getElementById('agreeCheckBox');
-
 const waiverFullname = document.getElementById('waiverFullname');
 
-// Show Owner panel by default
+// Initialize the form with owner panel visible
 switchPanel('owner');
 
+/**
+ * Comprehensive validation utility for form input fields
+ * Provides methods to validate different input types and display error messages
+ */
 const validator = (() => {
+    /**
+     * Gets the wrapper element containing the input and error message
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The parent wrapper element
+     */
     function getWrapper(el) { return el.closest('.label-and-input'); }
+
+    /**
+     * Gets the error message element associated with an input
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The error message span element
+     */
     function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+
+    /**
+     * Displays an error message for an invalid input field
+     * @param {HTMLElement} el - The input element with validation error
+     * @param {string} message - The error message to display
+     */
     function showError(el, message) {
         const errorEl = getErrorEl(el);
         el.classList.add('error');
         errorEl.textContent = message;
         errorEl.classList.add('show');
     }
+
+    /**
+     * Clears any error state from a validated input field
+     * @param {HTMLElement} el - The input element to clear
+     */
     function clearError(el) {
         const errorEl = getErrorEl(el);
         el.classList.remove('error');
@@ -63,6 +88,13 @@ const validator = (() => {
         errorEl.classList.remove('show');
     }
 
+    /**
+     * Validates text input fields with optional normalization and pattern rules
+     * @param {HTMLInputElement} input - The text input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules configuration
+     * @returns {boolean} - Whether the input is valid
+     */
     function validateText(input, message, rules = {}) {
         if (!input) return true;
         let value = input.value.trim();
@@ -76,6 +108,12 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    /**
+     * Validates select/dropdown elements for required selection
+     * @param {HTMLSelectElement} input - The select element
+     * @param {string} message - Required field error message
+     * @returns {boolean} - Whether a valid option is selected
+     */
     function validateSelect(input, message) {
         if (!input) return true;
         const value = input.value.trim();
@@ -83,6 +121,13 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    /**
+     * Validates numeric input fields with digit and length constraints
+     * @param {HTMLInputElement} input - The number input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for numeric input
+     * @returns {boolean} - Whether the number is valid
+     */
     function validateNumber(input, message, rules = {}) {
         if (!input) return true;
         const value = input.value.trim();
@@ -93,8 +138,21 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    /**
+     * Validates checkbox elements for required agreement/selection
+     * @param {HTMLInputElement} input - The checkbox element
+     * @param {string} message - Required field error message
+     * @returns {boolean} - Whether the checkbox is checked
+     */
     function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
 
+    /**
+     * Validates file upload inputs for presence, type, and size constraints
+     * @param {HTMLInputElement} input - The file input element
+     * @param {string} message - Required field error message
+     * @param {Object} options - File validation options (accept types, size limit)
+     * @returns {boolean} - Whether the file is valid
+     */
     function validateFile(input, message, options = {}) {
         if (!input || input.files.length === 0) { showError(input, message); return false; }
         const file = input.files[0];
@@ -106,6 +164,13 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    /**
+     * Validates address fields and verifies existence in addressCoordinates database
+     * Also automatically populates latitude/longitude if address is valid
+     * @param {HTMLInputElement} lotInput - Lot number input element
+     * @param {HTMLSelectElement} streetInput - Street selection element
+     * @returns {boolean} - Whether the address is valid and exists
+     */
     function validateAddress(lotInput, streetInput) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
         if (!lot) return validator.number(lotInput, 'Lot no. is required');
@@ -127,6 +192,13 @@ const validator = (() => {
         return true;
     }
 
+    /**
+     * Validates date input fields with various constraints (past/future/today only, min/max dates)
+     * @param {HTMLInputElement} input - The date input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for date input
+     * @returns {boolean} - Whether the date is valid
+     */
     function validateDate(input, message, rules = {}) {
         if (!input) return true;
 
@@ -179,6 +251,7 @@ const validator = (() => {
         return true;
     }
 
+    // Public API of the validator module
     return {
         text: validateText,
         file: validateFile,
@@ -191,9 +264,10 @@ const validator = (() => {
     };
 })();
 
-// ==============================
-// Configuration for all inputs
-// ==============================
+/**
+ * Configuration array defining validation rules for all form fields
+ * Each object specifies element, validation type, error message, and any additional rules
+ */
 const validationConfig = [
     { el: firstName, type: 'text', message: 'Please enter your first name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Please enter your last name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
@@ -202,13 +276,12 @@ const validationConfig = [
     { el: street, type: 'select', message: 'Please select the street' },
     { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
-    // { el: natureOfActivity, type: 'text', message: 'Please describe the nature of activity' },
     { el: detailsOfWork, type: 'text', message: 'Please provide details of the work' },
     { el: startDate, type: 'date', message: 'Please select the expected start date' },
     { el: endDate, type: 'date', message: 'Please select the expected completion date' },
     { el: numberOfWorkers, type: 'number', message: 'Please enter the number of workers', rules: { minLength: 1, maxLength: 2, errorMessage: 'Number of workers must be at least 1' } },
-    { el: contractorName, type: 'text', message: 'Please enter the contractor’s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor’s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contractorName, type: 'text', message: 'Please enter the contractor\'s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor\'s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
     { el: applicationMethod, type: 'select', message: 'Please select how you will submit the application' },
     { el: constructionLotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
     { el: constructionStreet, type: 'select', message: 'Please select the street' },
@@ -216,9 +289,11 @@ const validationConfig = [
     { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
 ];
 
-// ==============================
-// Helper: validate a field by config
-// ==============================
+/**
+ * Validates a single form field based on its configuration
+ * @param {Object} config - Validation configuration object
+ * @returns {boolean} - Whether the field passed validation
+ */
 function validateField(config) {
     const { el, type, message, rules } = config;
     if (!el) return true;
@@ -233,9 +308,10 @@ function validateField(config) {
     }
 }
 
-// ==============================
-// Real-time validator
-// ==============================
+/**
+ * Sets up real-time validation on form field interactions
+ * Validates on blur and clears errors on input for immediate feedback
+ */
 (() => {
     validationConfig.forEach(config => {
         const { el, type } = config;
@@ -249,6 +325,7 @@ function validateField(config) {
         });
     });
 
+    // Address validation for owner address
     [lotNo, street].forEach(el => {
         el.addEventListener('blur', () => {
             if (lotNo.value && street.value) validator.address(lotNo, street);
@@ -256,6 +333,7 @@ function validateField(config) {
         el.addEventListener('input', () => validator.clear(el));
     });
 
+    // Address validation for construction address
     [constructionLotNo, constructionStreet].forEach(el => {
         el.addEventListener('blur', () => {
             if (constructionLotNo.value && constructionStreet.value) validator.address(constructionLotNo, constructionStreet);
@@ -263,6 +341,7 @@ function validateField(config) {
         el.addEventListener('input', () => validator.clear(el));
     });
 
+    // Input sanitization for numeric fields (remove non-digit characters)
     [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
@@ -271,16 +350,19 @@ function validateField(config) {
     });
 })();
 
-// ==============================
-// Button-triggered validation (for steps)
-// ==============================
+/**
+ * Validates a group of fields for a specific form step
+ * @param {Array} fields - Array of form elements to validate
+ * @returns {boolean} - Whether all fields in the step are valid
+ */
 function validateStep(fields) {
     return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
 }
 
-// ============================
-// Business "Next" button click
-// ============================
+/**
+ * Handles navigation from owner information panel to construction information panel
+ * Validates all owner fields and updates waiver display before proceeding
+ */
 document.getElementById('nextToConstruction').addEventListener('click', () => {
     const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
     if (!validateStep(stepFields)) return;
@@ -289,12 +371,12 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
     switchPanel('construction');
 });
 
-// ============================
-// Business "Next" button click
-// ============================
+/**
+ * Handles navigation from construction information panel to waiver panel
+ * Validates all construction fields before proceeding
+ */
 document.getElementById('nextToWaiver').addEventListener('click', () => {
     const stepFields = [
-        // natureOfWork,
         typeOfWork,
         natureOfActivity,
         detailsOfWork,
@@ -314,15 +396,15 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     switchPanel('waiver');
 });
 
-// ============================
-// Waiver "Next" button click
-// ============================
+/**
+ * Handles navigation from waiver panel to summary panel
+ * Validates agreement checkbox and populates summary display with all form data
+ */
 document.getElementById('nextToSummary').addEventListener('click', () => {
     const lat = document.getElementById('latitude2').value;
     const lng = document.getElementById('longitude2').value;
 
     if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
-        // document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
         document.getElementById('sumTypeOfConstruction').textContent = typeOfWork.value;
         document.getElementById('sumNatureOfActivity').textContent = natureOfActivity.value;
         document.getElementById('sumDetailsOfWork').textContent = detailsOfWork.value;
@@ -344,6 +426,10 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     }
 });
 
+/**
+ * Sets up navigation between form panels with back button functionality
+ * First back button returns to services page, others navigate to previous panel
+ */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
         window.location.href = '/Banwa/client/pages/resident/services.php';
@@ -354,17 +440,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
 });
 
-
-// FINAL FORM SUBMISSION HANDLER
+/**
+ * Handles final form submission with Supabase integration
+ * Collects all form data, validates, sends to backend, and handles response
+ * Includes notification permission request and success/error handling
+ */
 const summaryForm = document.getElementById('summaryForm');
 
-// Remove existing listeners to prevent duplicates
+// Clone form to prevent duplicate event listeners on page refresh
 const newSummaryForm = summaryForm.cloneNode(true);
 summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
         await Notification.requestPermission();
     }
@@ -379,7 +469,17 @@ newSummaryForm.addEventListener('submit', async (e) => {
         });
     }
 
-    if (confirm('Are you sure you want to submit this application?')) {
+    const confirmResult = await Swal.fire({
+        title: 'Submit Application?',
+        text: 'Are you sure you want to submit this application?',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, submit it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (confirmResult.isConfirmed) {
         const formData = new FormData();
 
         // 1. ADD THE ACTION (Crucial for construction_handler.php)
@@ -400,7 +500,6 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('street', document.getElementById('street').value);
 
         // Construction Details
-        // formData.append('natureOfWork', document.getElementById('natureOfWork').value);
         formData.append('typeOfWork', document.getElementById('typeOfWork').value);
         formData.append('natureOfActivity', document.getElementById('natureOfActivity').value);
         formData.append('detailsOfWork', document.getElementById('detailsOfWork').value);
@@ -436,23 +535,36 @@ newSummaryForm.addEventListener('submit', async (e) => {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Application submitted successfully!');
-                    window.location.href = '/Banwa/client/pages/resident/status.php';
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Application submitted successfully!',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                    });
                 } else {
-                    alert('Error: ' + data.message);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Error: ' + data.message,
+                        confirmButtonText: 'OK'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while submitting the application.');
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'An error occurred while submitting the application.',
+                    confirmButtonText: 'OK'
+                });
             });
     }
 });
 
-
-// =========================
-// FN: Map & Coordinate Functions
-// =========================
+/**
+ * Opens an interactive map modal for location selection
+ * @param {string} target - Identifier for which address field is being mapped ('1' for owner, '2' for construction)
+ */
 function openMapPicker(target) {
     const modal = document.createElement('div');
     modal.className = 'map-modal';
@@ -480,12 +592,10 @@ function openMapPicker(target) {
     initializeMapPicker(target);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.map-btn').forEach(btn => {
-        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
-    });
-});
-
+/**
+ * Initializes Leaflet map for location selection with house polygons and interactivity
+ * @param {string} target - Identifier for which address field is being mapped
+ */
 async function initializeMapPicker(target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
@@ -498,6 +608,7 @@ async function initializeMapPicker(target) {
 
     let marker = null;
 
+    // Handle map clicks to set location marker and populate coordinates
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
@@ -510,7 +621,7 @@ async function initializeMapPicker(target) {
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
-    // Optional: Load barangay polygon
+    // Optional: Load barangay polygon for visual reference
     const blueRidgeGeoJSON = {
         "type": "FeatureCollection",
         "features": [{
@@ -534,7 +645,7 @@ async function initializeMapPicker(target) {
     };
     L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
 
-    // Load houses from server
+    // Load houses from server database for selection
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
@@ -560,7 +671,7 @@ async function initializeMapPicker(target) {
                             interactive: true
                         }).addTo(houseLayer);
 
-                        // Polygon click autofill
+                        // Polygon click autofill - populate form fields when house is selected
                         polygon.on('click', function (e) {
                             const lat = e.latlng.lat.toFixed(6);
                             const lng = e.latlng.lng.toFixed(6);
@@ -568,7 +679,6 @@ async function initializeMapPicker(target) {
                             if (marker) map.removeLayer(marker);
                             marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
 
-                            // document.getElementById(`current-coords`).textContent = `${lat}, ${lng}`;
                             document.getElementById(`latitude${target}`).value = lat;
                             document.getElementById(`longitude${target}`).value = lng;
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
@@ -585,7 +695,7 @@ async function initializeMapPicker(target) {
                                 });
                             }
 
-                            if (target === '2') { // Utilities
+                            if (target === '2') { // Construction
                                 const constructionLotNo = document.getElementById('constructionLotNo');
                                 const constructionStreet = document.getElementById('constructionStreet');
                                 constructionLotNo.value = house.house_number || '';
@@ -600,8 +710,7 @@ async function initializeMapPicker(target) {
                             }
                         });
 
-
-                        // Add popup
+                        // Add popup with house information
                         polygon.bindPopup(`
                             <div class="house-popup">
                                 <h4>🏠 ${house.address}</h4>
@@ -624,9 +733,10 @@ async function initializeMapPicker(target) {
     }
 }
 
-// =========================
-// FN: Auto format coordinates on blur
-// =========================
+/**
+ * Sets up coordinate field formatting to ensure proper decimal precision
+ * @param {string} target - Identifier for which coordinate set to format ('1' or '2')
+ */
 function setupCoordinateAutoFormat(target) {
     const latInput = document.getElementById(`latitude${target}`);
     const lngInput = document.getElementById(`longitude${target}`);
@@ -639,14 +749,22 @@ function setupCoordinateAutoFormat(target) {
     });
 }
 
-// Initialize both forms
+// Initialize coordinate formatting for both address sections
 document.addEventListener('DOMContentLoaded', () => {
     [1, 2].forEach(target => setupCoordinateAutoFormat(target));
 });
 
-// ==============================
-// Function: Get current date
-// ==============================
+// Initialize map buttons when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
+});
+
+/**
+ * Generates current date in YYYY-MM-DD format for application timestamp
+ * @returns {string} - Current date formatted as YYYY-MM-DD
+ */
 function getCurrentDateString() {
     const now = new Date();
     const year = now.getFullYear();
@@ -655,9 +773,10 @@ function getCurrentDateString() {
     return `${year}-${month}-${day}`;
 }
 
-// ==============================
-// Function: update the application date
-// ==============================
+/**
+ * Updates the application date field with current date and maintains freshness
+ * Runs on page load and refreshes every minute while form is open
+ */
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
     if (dateInput) {
@@ -665,14 +784,16 @@ function updateApplicationDate() {
     }
 }
 
+// Update application date on load and keep it current
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 });
 
-// =========================
-// FN: Owner Autofilled Application
-// =========================
+/**
+ * Automatically populates owner information fields with user data from session
+ * Fetches resident profile data to pre-fill the form for convenience
+ */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const resp = await fetch('/Banwa/server/api/resident/get_user.php');
@@ -693,9 +814,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// ==============================
-// Function: Calculate total days between two dates
-// ==============================
+/**
+ * Calculates total working days between start and end dates
+ * Updates the numberOfWorkingDays field automatically when dates change
+ * @param {HTMLInputElement} startEl - Start date input element
+ * @param {HTMLInputElement} endEl - End date input element
+ * @param {HTMLInputElement} outputEl - Output field for calculated days
+ */
 function calculateTotalDays(startEl, endEl, outputEl) {
     const start = new Date(startEl.value);
     const end = new Date(endEl.value);
@@ -710,9 +835,7 @@ function calculateTotalDays(startEl, endEl, outputEl) {
     outputEl.value = diffDays > 0 ? diffDays : 0;
 }
 
-// ==============================
-// Auto-update numberOfWorkingDays
-// ==============================
+// Set up automatic calculation of working days when dates change
 [startDate, endDate].forEach(el => {
     el.addEventListener('change', () => calculateTotalDays(startDate, endDate, numberOfWorkingDays));
 });

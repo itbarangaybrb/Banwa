@@ -779,7 +779,7 @@ function handleChartConstructionType($pdo)
             SELECT application_date, COUNT(*) AS total
             FROM construction_applications
             GROUP BY application_date
-            ORDER BY application_date ASC
+            ORDER BY total ASC
         ";
 
         $stmt1 = $pdo->query($sql1);
@@ -789,7 +789,7 @@ function handleChartConstructionType($pdo)
             SELECT nature_of_activity, COUNT(*) AS total
             FROM construction_applications
             GROUP BY nature_of_activity
-            ORDER BY nature_of_activity ASC
+            ORDER BY total ASC
         ";
 
         $stmt2 = $pdo->query($sql2);
