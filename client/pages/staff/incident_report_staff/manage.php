@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../../../styles/staff/map1.css" />
+    <link rel="stylesheet" href="../../../styles/staff/map.css" />
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 </head>
@@ -130,31 +130,81 @@
                     </div>
 
                     <div class="filter-controls">
-                        <div class="filter-buttons">
-                            <button class="filter-btn active" onclick="toggleIncidentType('property')" data-type="property">
-                                <span class="filter-icon" style="background: #28a745;"></span>
-                                <span>Property/Civil</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleIncidentType('minor_person')" data-type="minor_person">
-                                <span class="filter-icon" style="background: #9C27B0;"></span>
-                                <span>Minor Offenses (Persons)</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleIncidentType('minor_honor')" data-type="minor_honor">
-                                <span class="filter-icon" style="background: #ffc107;"></span>
-                                <span>Minor Offenses (Honor)</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleIncidentType('violence')" data-type="violence">
-                                <span class="filter-icon" style="background: #dc3545;"></span>
-                                <span>Violence</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleIncidentType('serious')" data-type="serious">
-                                <span class="filter-icon" style="background: #343a40;"></span>
-                                <span>Serious Crime</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleIncidentType('public_safety')" data-type="public_safety">
-                                <span class="filter-icon" style="background: #2196F3;"></span>
-                                <span>Public Safety</span>
-                            </button>
+                        <div class="filter-dropdown-container">
+                            <div class="dropdown">
+                                <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                    <i class="fas fa-filter"></i>
+                                    <span id="currentFilterText">Households</span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </button>
+                                <div class="dropdown-content" id="filterDropdown">
+                                    <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #28a745;"></span>
+                                            <span>Households</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #9C27B0;"></span>
+                                            <span>Businesses</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #ffc107;"></span>
+                                            <span>Construction</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #2196F3;"></span>
+                                            <span>Utilities</span>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="sub-filters" id="constructionSubFilters" style="display: none;">
+                                <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                <div class="sub-filter-buttons">
+                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>All</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                        <i class="fas fa-building"></i>
+                                        <span>Major</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                        <i class="fas fa-home"></i>
+                                        <span>Minor</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                        <i class="fas fa-tools"></i>
+                                        <span>Repair</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Demolition</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="hazard-toggles">
+                                <div class="hazard-toggle-container">
+                                    <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                        <i class="fas fa-water"></i>
+                                        <span>Flood Hazards</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                    <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Fault Line</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -557,6 +607,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
+    <script src="../../../scripts/staff/filter_dropdown.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 

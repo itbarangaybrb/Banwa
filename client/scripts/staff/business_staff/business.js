@@ -3,6 +3,26 @@ const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
 // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
 const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
 let applications = [];
+// Map filter visibility flag for this management page
+const PAGE_CATEGORY = 'business';
+let mapFilterVisible = true;
+
+// React to global map filter changes so the management table can hide/show
+window.addEventListener('staffMapFilterChanged', (e) => {
+    try {
+        const detail = e && e.detail && e.detail.activeFilters;
+        if (!detail) return;
+        if (Array.isArray(detail)) {
+            mapFilterVisible = detail.includes(PAGE_CATEGORY);
+        } else {
+            mapFilterVisible = !!detail[PAGE_CATEGORY];
+        }
+        // Re-run filter to update UI
+        filterApplications();
+    } catch (err) {
+        console.warn('Error handling staffMapFilterChanged in business:', err);
+    }
+});
 
 // Initialize sidebar navigation
 document.addEventListener('DOMContentLoaded', function () {
@@ -103,6 +123,12 @@ function filterApplications() {
 
     // If the table body doesn't exist, stop immediately to prevent errors
     if (!tbody) return;
+
+    // If the map filter currently hides this category, show a message and stop
+    if (!mapFilterVisible) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td></tr>';
+        return;
+    }
 
     // 2. GET VALUES SAFELY
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';

@@ -2,6 +2,24 @@
 const API_URL = '../../../scripts/staff/utilities_staff/utilities_handler.php';
 const UPLOADS_BASE_PATH = '../../../scripts/staff/utilities_staff/uploads/';
 let applications = [];
+// Map filter visibility flag for this management page
+const PAGE_CATEGORY = 'utility';
+let mapFilterVisible = true;
+
+window.addEventListener('staffMapFilterChanged', (e) => {
+    try {
+        const detail = e && e.detail && e.detail.activeFilters;
+        if (!detail) return;
+        if (Array.isArray(detail)) {
+            mapFilterVisible = detail.includes(PAGE_CATEGORY);
+        } else {
+            mapFilterVisible = !!detail[PAGE_CATEGORY];
+        }
+        filterApplications();
+    } catch (err) {
+        console.warn('Error handling staffMapFilterChanged in utilities:', err);
+    }
+});
 
 // Initialize sidebar navigation
 document.addEventListener('DOMContentLoaded', function () {
@@ -101,6 +119,15 @@ function filterApplications() {
     // If the table body doesn't exist, stop immediately
     if (!tbody) {
         console.error('Table body not found');
+        return;
+    }
+
+    // If map filter hides this category, show message and do not render
+    if (!mapFilterVisible) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
+            </tr>`;
         return;
     }
 

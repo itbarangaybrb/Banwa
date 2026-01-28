@@ -272,7 +272,8 @@
                 </div>
             </div>
 
-        </div> </div> <script src="../../../scripts/staff/finance_staff/finance.js"></script>
+        </div> </div> <script src="../../../scripts/staff/filter_dropdown.js"></script>
+    <script src="../../../scripts/staff/finance_staff/finance.js"></script>
     
     <script>
         // Simple script to handle active class on sidebar items

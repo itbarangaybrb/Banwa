@@ -278,6 +278,18 @@ function selectFilterType(type, event) {
 function activateFilter(type) {
     activeFilter = type;
     updateAllVisibility();
+    // Broadcast filter state for application management pages
+    try {
+        const activeFilters = {
+            construction: activeFilter === 'construction',
+            business: activeFilter === 'business',
+            utilities: activeFilter === 'utility',
+            household: activeFilter === 'household'
+        };
+        window.dispatchEvent(new CustomEvent('staffMapFilterChanged', { detail: { activeFilters } }));
+    } catch (e) {
+        console.warn('Failed to dispatch staffMapFilterChanged', e);
+    }
 }
 
 function updateAllVisibility() {

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../../../styles/staff/map1.css" />
+    <link rel="stylesheet" href="../../../styles/staff/map.css" />
 </head>
 
 <body>
@@ -127,23 +127,81 @@
                     </div>
 
                     <div class="filter-controls">
-                        <div class="filter-buttons">
-                            <button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
-                                <span class="filter-icon" style="background: #28a745;"></span>
-                                <span>Households</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
-                                <span class="filter-icon" style="background: #9C27B0;"></span>
-                                <span>Businesses</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
-                                <span class="filter-icon" style="background: #ffc107;"></span>
-                                <span>Construction</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
-                                <span class="filter-icon" style="background: #2196F3;"></span>
-                                <span>Utilities</span>
-                            </button>
+                        <div class="filter-dropdown-container">
+                            <div class="dropdown">
+                                <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                    <i class="fas fa-filter"></i>
+                                    <span id="currentFilterText">Households</span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </button>
+                                <div class="dropdown-content" id="filterDropdown">
+                                    <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #28a745;"></span>
+                                            <span>Households</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #9C27B0;"></span>
+                                            <span>Businesses</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #ffc107;"></span>
+                                            <span>Construction</span>
+                                        </span>
+                                    </a>
+                                    <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                        <span class="filter-option">
+                                            <span class="filter-icon" style="background: #2196F3;"></span>
+                                            <span>Utilities</span>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="sub-filters" id="constructionSubFilters" style="display: none;">
+                                <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                <div class="sub-filter-buttons">
+                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>All</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                        <i class="fas fa-building"></i>
+                                        <span>Major</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                        <i class="fas fa-home"></i>
+                                        <span>Minor</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                        <i class="fas fa-tools"></i>
+                                        <span>Repair</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Demolition</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="hazard-toggles">
+                                <div class="hazard-toggle-container">
+                                    <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                        <i class="fas fa-water"></i>
+                                        <span>Flood Hazards</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                    <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Fault Line</span>
+                                        <span class="toggle-indicator"></span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -374,6 +432,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
+    <script src="../../../scripts/staff/filter_dropdown.js"></script>
 </body>
 
 </html>
