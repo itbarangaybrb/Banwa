@@ -89,7 +89,7 @@
             </div>
         </header>
 
-        <div class="content">
+        <div class="staff-content">
             <div id="alert-container"></div>
 
             <!-- Dashboard Tab -->

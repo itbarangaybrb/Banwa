@@ -39,6 +39,18 @@ try {
             case 3: // admin
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/admin/dashboard.php"]);
                 break;
+            case 4: // business staff
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/business_staff/business.php"]);
+                break;
+            case 5: // construction staff
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/construction_staff/construction.php"]);
+                break;
+            case 6: // utilities staff
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/utilities_staff/utilities.php"]);
+                break;
+            case 7: // incident report staff
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/incident_report_staff/manage.php"]);
+                break;
             default:
                 echo json_encode(["success" => false, "message" => "Unknown role. Contact support."]);
                 break;
