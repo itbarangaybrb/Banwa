@@ -597,10 +597,10 @@ function triggerDSSevaluation($pdo, $applicationId)
 function handleChartUtilityType($pdo)
 {
     $sql1 = "
-        SELECT request_date, COUNT(*) AS total
+        SELECT application_date, COUNT(*) AS total
         FROM utility_applications
-        GROUP BY request_date
-        ORDER BY request_date ASC
+        GROUP BY application_date
+        ORDER BY total ASC
     ";
 
     $stmt1 = $pdo->query($sql1);
@@ -610,7 +610,7 @@ function handleChartUtilityType($pdo)
         SELECT provider, COUNT(*) AS total
         FROM utility_applications
         GROUP BY provider
-        ORDER BY provider ASC
+        ORDER BY total ASC
     ";
 
     $stmt2 = $pdo->query($sql2);
@@ -621,7 +621,7 @@ function handleChartUtilityType($pdo)
         FROM utility_applications ua
         LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
         GROUP BY COALESCE(ue.dss_status, 'Pending Evaluation')
-        ORDER BY total DESC
+        ORDER BY total ASC
     ";
 
     $stmt3 = $pdo->query($sql3);

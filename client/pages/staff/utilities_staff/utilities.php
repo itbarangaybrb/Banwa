@@ -211,7 +211,7 @@
             <div id="create" class="tab-pane">
                 <h2>Create New Utilities Application</h2>
                 <p class="form-description">Fill in the details to create a new utilities application</p>
-                
+
                 <form id="createForm" onsubmit="createApplication(event)">
                     <!-- Applicant Information -->
                     <div class="section-title">Applicant Information</div>
