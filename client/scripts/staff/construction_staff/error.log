@@ -372,3 +372,6 @@ LINE 1: INSERT INTO construction_status_history
 [26-Jan-2026 18:07:36 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
 LINE 1: INSERT INTO construction_status_history 
                     ^
+[28-Jan-2026 14:45:40 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^

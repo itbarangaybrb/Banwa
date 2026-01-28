@@ -24,6 +24,9 @@ try {
         $_SESSION['supabase_user_id'] = $supabase_user_id;
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role_id'] = $user['role_id'];
+        // Mark staff status for handlers that check `is_staff` (non-resident roles)
+        // role_id == 1 => resident; others are considered staff/admin
+        $_SESSION['is_staff'] = ($user['role_id'] != 1);
 
         // Redirect based on role
         switch ($user['role_id']) {

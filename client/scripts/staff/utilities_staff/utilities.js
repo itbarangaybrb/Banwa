@@ -432,11 +432,12 @@ function openUpdateModal(appId) {
 
     // Clear previous DSS content
     const existingDSSSection = document.getElementById('dssEvaluationSection');
-    if (existingDSSSection) {
-        existingDSSSection.remove();
-    }
+    if (existingDSSSection) existingDSSSection.remove();
 
-    // Fetch DSS evaluation details and add to modal
+    // Insert a basic/loading DSS section immediately
+    addBasicDSSSection(app);
+
+    // Fetch DSS evaluation details and replace basic section when available
     fetchDSSEvaluation(appId, app);
 
     // Show the modal
@@ -451,19 +452,58 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    fetch(`${API_URL}?action=get_evaluation&application_id=${appId}`)
-        .then(res => res.json())
+    console.debug('fetchDSSEvaluation ->', API_URL, appId);
+    fetch(`${API_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
+            return res.json();
+        })
         .then(data => {
-            if (data.status === 'success') {
+            console.debug('DSS response for', appId, data);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (data && data.status === 'success' && data.evaluation) {
+                if (existing) existing.remove();
                 addDSSSectionToModal(data.evaluation, app);
             } else {
-                addBasicDSSSection(app);
+                if (existing) existing.querySelector('.dss-loading')?.remove();
+                const msg = (data && data.message) ? data.message : 'Detailed evaluation not available.';
+                if (existing) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = msg;
+                    existing.appendChild(note);
+                } else {
+                    addBasicDSSSection(app);
+                    const created = document.getElementById('dssEvaluationSection');
+                    if (created) {
+                        const note = document.createElement('div');
+                        note.className = 'dss-error-msg';
+                        note.textContent = msg;
+                        created.appendChild(note);
+                    }
+                }
             }
         })
         .catch(error => {
             console.error('Error fetching DSS evaluation:', error);
-            // Still add a basic DSS section even if fetch fails
-            addBasicDSSSection(app);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (existing) existing.querySelector('.dss-loading')?.remove();
+            const errMsg = error && error.message ? error.message : 'Failed to load evaluation.';
+            if (existing) {
+                const note = document.createElement('div');
+                note.className = 'dss-error-msg';
+                note.textContent = errMsg;
+                existing.appendChild(note);
+            } else {
+                addBasicDSSSection(app);
+                const created = document.getElementById('dssEvaluationSection');
+                if (created) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = errMsg;
+                    created.appendChild(note);
+                }
+            }
         });
 }
 
@@ -491,7 +531,7 @@ function addDSSSectionToModal(evaluation, app) {
     const dssStatus = evaluation.dss_status || 'Pending Evaluation';
     const score = details.score || 0;
     const maxScore = details.max_score || 5;
-    const probability = details.approval_probability || 0;
+    const probability = typeof details.approval_probability === 'number' ? details.approval_probability : (parseFloat(details.approval_probability) || 0);
     const passedRules = details.passed_rules || [];
     const failedRules = details.failed_rules || [];
     const recommendations = details.recommendations || [];
@@ -531,7 +571,7 @@ function addDSSSectionToModal(evaluation, app) {
             </div>
             <div class="dss-probability">
                 <strong>Approval Probability</strong>
-                <span>${probability}%</span>
+                <span>${probability.toFixed(2)}%</span>
             </div>
         </div>
         
@@ -541,7 +581,7 @@ function addDSSSectionToModal(evaluation, app) {
                 <span class="dss-progress-percentage">${probability}%</span>
             </div>
             <div class="dss-progress-bar">
-                <div class="dss-progress-fill" style="width: ${probability}%"></div>
+                <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, probability))}%"></div>
             </div>
         </div>
         
