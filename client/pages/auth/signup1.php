@@ -207,6 +207,22 @@
         </section>
     </main>
 
+    <!-- Submit Confirmation Modal (moved here so designers can style it) -->
+    <div id="submitConfirmModal" aria-hidden="true" class="modal-hidden">
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+            <div class="modal-box" role="document">
+                <div class="modal-title">Submit Application</div>
+                <div class="modal-body">Are you sure you want to submit this application? This will create your account and send a verification email.</div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel">Cancel</button>
+                    <button class="btn btn-confirm">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal styles moved to ../../styles/auth/signup1.css -->
+
     <script type="module" src="../../scripts/auth/signup1.js"></script>
 </body>
 

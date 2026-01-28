@@ -1,26 +1,24 @@
 import supabase from '../../../server/api/supabase.js'
 
-// =========================
-// Function: Hide/Show Panels
-// =========================
-function switchPanel(panelId) {
-    // =========================
-    // Panels elements
-    // =========================
-    const changePass = document.getElementById('changePass');
-    const manageAcc = document.getElementById('manageAcc');
-
-    const panels = [changePass, manageAcc];
-    panels.forEach(panel => {
-        panel.classList.toggle('hidden', panel.id !== panelId);
-    });
-}
-
 
 function validation() {
     // =========================
     // Change password form elements
     // =========================
+    // Panel switch helper (used by other resident scripts) - map logical ids to actual DOM ids
+    function switchPanel(panelId) {
+        const mapping = {
+            changePass: 'changePasswordForm',
+            manageAcc: 'manageAccountForm'
+        };
+        const targetId = mapping[panelId] || panelId;
+        const panels = Array.from(document.querySelectorAll('.form-card'));
+        panels.forEach(p => {
+            if (p.id === targetId) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+        window.scrollTo(0, 0);
+    }
     const currentPassword = document.getElementById('currentPassword');
     const newPassword = document.getElementById('newPassword');
     const reTypeNewPassword = document.getElementById('reTypeNewPassword');
@@ -42,17 +40,28 @@ function validation() {
     // =========================
     // Function: Validate single input
     // =========================
+    function getWrapper(el) {
+        if (!el) return null;
+        return el.closest('.label-and-input') || el.closest('.form-group') || el.closest('.input-with-icon') || el.parentElement || null;
+    }
+
+    function getErrorElFrom(el) {
+        const wrapper = getWrapper(el);
+        if (!wrapper) return null;
+        return wrapper.querySelector('.error-msg');
+    }
+
     function validateInput(input, message = 'This field is required', rules = {}) {
-        const wrapper = input.closest('.label-and-input');
-        const errorEl = wrapper.querySelector('.error-msg');
-        const value = input.value.trim();
+        const wrapper = getWrapper(input);
+        const errorEl = getErrorElFrom(input);
+        const value = (input && input.value) ? input.value.trim() : '';
 
         if (value === '') {
-            input.classList.add('error');
-            errorEl.textContent = message;
+            if (input) input.classList.add('error');
+            if (errorEl) errorEl.textContent = message;
             return false;
         } else {
-            errorEl.textContent = '';
+            if (errorEl) errorEl.textContent = '';
         }
 
         if (rules.pattern && !rules.pattern.test(value)) {
@@ -67,8 +76,8 @@ function validation() {
             return false;
         }
 
-        input.classList.remove('error');
-        errorEl.textContent = '';
+        if (input) input.classList.remove('error');
+        if (errorEl) errorEl.textContent = '';
         return true;
     }
 
@@ -77,17 +86,17 @@ function validation() {
     // =========================
     (() => {
         const inputs = [currentPassword, newPassword, reTypeNewPassword];
-        const reTypeWrapper = reTypeNewPassword.closest('.label-and-input');
-        const reTypeErrorEl = reTypeWrapper.querySelector('.error-msg');
+        const reTypeWrapper = getWrapper(reTypeNewPassword);
+        const reTypeErrorEl = getErrorElFrom(reTypeNewPassword);
 
-        inputs.forEach(input => {
+        inputs.filter(Boolean).forEach(input => {
             input.addEventListener('input', () => {
                 validateInput(input);
 
                 // New password rules
                 if (input === newPassword) {
-                    const wrapper = newPassword.closest('.label-and-input');
-                    const errorEl = wrapper.querySelector('.error-msg');
+                    const wrapper = getWrapper(newPassword);
+                    const errorEl = getErrorElFrom(newPassword);
 
                     if (input.value.length < 8 || input.value.length > 16) {
                         input.classList.add('error');
@@ -111,8 +120,8 @@ function validation() {
                 }
 
                 if (input === currentPassword) {
-                    const wrapper = currentPassword.closest('.label-and-input');
-                    const errorEl = wrapper.querySelector('.error-msg');
+                    const wrapper = getWrapper(currentPassword);
+                    const errorEl = getErrorElFrom(currentPassword);
 
                     if (input.value === '') {
                         input.classList.add('error');
@@ -132,14 +141,14 @@ function validation() {
     (() => {
         const manageInputs = [firstName, middleName, lastName, suffix, contactNo, address];
 
-        manageInputs.forEach(input => {
+        manageInputs.filter(Boolean).forEach(input => {
             input.addEventListener('input', () => {
                 validateInput(input);
 
                 // Extra validation for contact number
                 if (input === contactNo) {
-                    const wrapper = contactNo.closest('.label-and-input');
-                    const errorEl = wrapper.querySelector('.error-msg');
+                    const wrapper = getWrapper(contactNo);
+                    const errorEl = getErrorElFrom(contactNo);
                     const value = input.value.trim();
 
                     contactNo.value = value.replace(/[^0-9]/g, '');
@@ -195,6 +204,100 @@ function validation() {
     // Call after validation() has initialized inputs
     // loadUserData();
 
+    // Injected: working loadUserData and application summary functions
+    async function loadUserData() {
+        try {
+            const res = await fetch('/Banwa/server/api/resident/get_user.php', { credentials: 'include' });
+            const data = await res.json();
+            if (data.error) { console.error(data.error); return; }
+
+            firstName.value = data.first_name || '';
+            middleName.value = data.middle_name || '';
+            lastName.value = data.last_name || '';
+            suffix.value = data.suffix || '';
+            contactNo.value = data.contact_no || '';
+            address.value = data.address || '';
+            const emailEl = document.getElementById('email');
+            if (emailEl) emailEl.value = data.email || '';
+
+            const avatar = document.getElementById('profileAvatar');
+            // Update visible full name in profile header (prefer separate fields, fallback to full_name)
+            const fullNameEl = document.getElementById('userFullName');
+            let full = '';
+            const parts = [data.first_name, data.middle_name, data.last_name].filter(Boolean);
+            if (parts.length) full = parts.join(' ').trim();
+            else if (data.full_name) full = (data.full_name || '').trim();
+
+            if (fullNameEl) fullNameEl.textContent = full || fullNameEl.textContent;
+
+            // Member since
+            const memberSinceEl = document.getElementById('memberSince');
+            if (memberSinceEl) {
+                if (data.member_since) memberSinceEl.textContent = data.member_since;
+            }
+
+            if (avatar) {
+                // derive two-letter initials: prefer First + Last, else first two letters of first, else fallback from full_name
+                function getInitialsFromParts(first, middle, last, fullNameFallback) {
+                    if (first && last) return (first[0] + last[0]).toUpperCase();
+                    if (first && first.length >= 2) return first.slice(0,2).toUpperCase();
+                    if (fullNameFallback) {
+                        const toks = fullNameFallback.split(/\s+/).filter(Boolean);
+                        if (toks.length >= 2) return (toks[0][0] + toks[1][0]).toUpperCase();
+                        if (toks.length === 1 && toks[0].length >= 2) return toks[0].slice(0,2).toUpperCase();
+                    }
+                    return 'U';
+                }
+
+                const initials = getInitialsFromParts(data.first_name, data.middle_name, data.last_name, data.full_name);
+                avatar.textContent = initials;
+
+                // compute color hash for background based on the visible full name or fallback
+                try {
+                    const nameForColor = full || data.full_name || data.first_name || data.last_name || 'User';
+                    let hash = 0;
+                    for (let i = 0; i < nameForColor.length; i++) hash = nameForColor.charCodeAt(i) + ((hash << 5) - hash);
+                    const hue = Math.abs(hash) % 360;
+                    const bg = `hsl(${hue} 70% 45%)`;
+                    avatar.style.background = bg;
+                    avatar.classList.add('colored', 'avatar-animated');
+                    // ensure text contrast: light text for dark bg
+                    avatar.style.color = '#ffffff';
+                    // remove animation class after it ends
+                    setTimeout(() => avatar.classList.remove('avatar-animated'), 500);
+                } catch (e) { console.warn('avatar color calc failed', e); }
+            }
+
+            captureOriginalData();
+        } catch (err) { console.error('Failed to load user data:', err); }
+    }
+
+    async function loadApplicationSummary() {
+        try {
+            const res = await fetch('/Banwa/server/api/resident/get_applications.php', { credentials: 'include' });
+            const json = await res.json();
+            if (json.error) return;
+            const apps = json.applications || [];
+            const total = apps.length;
+            const approved = apps.filter(a => a.status && a.status.toLowerCase() === 'approved').length;
+            const pending = apps.filter(a => a.status && ['pending','in progress','new'].includes(a.status.toLowerCase())).length;
+            const rejected = apps.filter(a => a.status && a.status.toLowerCase() === 'rejected').length;
+
+            const elTotal = document.querySelector('.stat-item[data-key="applications"] .stat-number');
+            const elApproved = document.querySelector('.stat-item[data-key="approved"] .stat-number');
+            const elPending = document.querySelector('.stat-item[data-key="pending"] .stat-number');
+            const elRejected = document.querySelector('.stat-item[data-key="rejected"] .stat-number');
+            if (elTotal) elTotal.textContent = total;
+            if (elApproved) elApproved.textContent = approved;
+            if (elPending) elPending.textContent = pending;
+            if (elRejected) elRejected.textContent = rejected;
+        } catch (err) { console.error('Failed to load applications summary', err); }
+    }
+
+    // Run after init
+    loadUserData();
+    loadApplicationSummary();
+
     // =========================
     // Change Password: Read only the input
     // =========================
@@ -215,13 +318,17 @@ function validation() {
         if (mode === "view") {
             btnEdit.style.display = "block";
             btnSave.style.display = "none";
+            if (btnSave) btnSave.disabled = true;
             btnCancel.style.display = "none";
+            if (btnCancel) btnCancel.disabled = true;
         }
 
         if (mode === "edit") {
             btnEdit.style.display = "none";
             btnSave.style.display = "block";
+            if (btnSave) btnSave.disabled = false;
             btnCancel.style.display = "block";
+            if (btnCancel) btnCancel.disabled = false;
         }
     }
 
@@ -246,8 +353,10 @@ function validation() {
     // =========================
     function clearChangePassErrors() {
         [currentPassword, newPassword, reTypeNewPassword].forEach(input => {
+            if (!input) return;
             input.classList.remove('error');
-            input.closest('.label-and-input').querySelector('.error-msg').textContent = "";
+            const err = getErrorElFrom(input);
+            if (err) err.textContent = "";
         });
     }
 
@@ -305,8 +414,8 @@ function validation() {
             validateInput(reTypeNewPassword, 'Re-type password is required')
         ];
 
-        const newPassWrapper = newPassword.closest('.label-and-input');
-        const newPassError = newPassWrapper.querySelector('.error-msg');
+        const newPassWrapper = getWrapper(newPassword);
+        const newPassError = getErrorElFrom(newPassword);
 
         if (newPassword.value.length < 8 || newPassword.value.length > 16) {
             newPassword.classList.add('error');
@@ -318,8 +427,8 @@ function validation() {
             validations.push(false);
         }
 
-        const reTypeWrapper = reTypeNewPassword.closest('.label-and-input');
-        const reTypeError = reTypeWrapper.querySelector('.error-msg');
+        const reTypeWrapper = getWrapper(reTypeNewPassword);
+        const reTypeError = getErrorElFrom(reTypeNewPassword);
         if (reTypeNewPassword.value !== newPassword.value) {
             reTypeNewPassword.classList.add('error');
             reTypeError.textContent = 'Passwords do not match';
@@ -378,13 +487,17 @@ function validation() {
         if (mode === "view") {
             btnEdit.style.display = "inline-block";
             btnSave.style.display = "none";
+            if (btnSave) btnSave.disabled = true;
             btnCancel.style.display = "none";
+            if (btnCancel) btnCancel.disabled = true;
         }
 
         if (mode === "edit") {
             btnEdit.style.display = "none";
             btnSave.style.display = "inline-block";
+            if (btnSave) btnSave.disabled = false;
             btnCancel.style.display = "inline-block";
+            if (btnCancel) btnCancel.disabled = false;
         }
     }
 
@@ -440,10 +553,10 @@ function validation() {
         const inputs = [firstName, middleName, lastName, suffix, contactNo, address];
 
         inputs.forEach(input => {
+            if (!input) return;
             input.classList.remove('error');
-            const wrapper = input.closest('.label-and-input');
-            const errorEl = wrapper.querySelector('.error-msg');
-            errorEl.textContent = '';
+            const errorEl = getErrorElFrom(input);
+            if (errorEl) errorEl.textContent = '';
         });
     }
 
@@ -499,7 +612,6 @@ function validation() {
         ];
 
         if (!validations.every(v => v)) return;
-
         if (!confirm('Save changes?')) return;
 
         const manageAccAllData = {
@@ -511,37 +623,47 @@ function validation() {
             address: address.value,
         };
 
-        fetch('submit.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(manageAccAllData)
-        })
-            .then(res => res.json())
-            .then(data => console.log(data))
-            .catch(err => console.error(err));
-
-        alert('Account details updated.');
-
-        setManageAccReadonly(true);
-        captureOriginalData();
-        toggleManageButtons("view");
-        disablePanelSwitch(false);
+        (async () => {
+            try {
+                const resp = await fetch('/Banwa/server/api/resident/update_user.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(manageAccAllData)
+                });
+                const json = await resp.json();
+                if (json.success) {
+                    const saveBtn = document.getElementById('saveNewAccDetails');
+                    saveBtn.textContent = 'Saved';
+                    setTimeout(() => saveBtn.textContent = 'Save Changes', 1500);
+                    setManageAccReadonly(true);
+                    captureOriginalData();
+                    toggleManageButtons("view");
+                    disablePanelSwitch(false);
+                    // refresh overview if needed
+                    loadApplicationSummary();
+                } else {
+                    alert('Failed to save: ' + (json.error || 'Unknown'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to save account details.');
+            }
+        })();
     });
 
 
     // =========================
     // Change Password Panel Button
     // =========================
-    document.getElementById('changePasswordBtn').addEventListener('click', () => {
-        switchPanel('changePass')
-    });
+    const changePasswordBtnEl = document.getElementById('changePasswordBtn');
+    if (changePasswordBtnEl) changePasswordBtnEl.addEventListener('click', () => switchPanel('changePass'));
 
     // =========================
     // Manage Account Panel Button
     // =========================
-    document.getElementById('manageAccountBtn').addEventListener('click', () => {
-        switchPanel('manageAcc')
-    });
+    const manageAccountBtnEl = document.getElementById('manageAccountBtn');
+    if (manageAccountBtnEl) manageAccountBtnEl.addEventListener('click', () => switchPanel('manageAcc'));
 
     // =========================
     // Disable panesl if "Edit" click

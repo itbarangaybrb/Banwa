@@ -85,6 +85,36 @@
     object-fit: cover;
 }
 
+/* Initial-letter avatar */
+.initial-avatar {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(135deg,#e9eef8,#cfe0ff);
+    color: #19316b;
+    font-weight:700;
+    font-size:48px;
+    text-transform:uppercase;
+}
+
+/* Colored initial avatar with pop animation */
+.initial-avatar.colored {
+    color: #fff; /* default; JS may override for contrast */
+    transition: transform 220ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease;
+    transform-origin: center center;
+    opacity: 0;
+}
+
+@keyframes avatar-pop {
+    0% { transform: scale(0.88); opacity: 0; }
+    60% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.initial-avatar.avatar-animated {
+    animation: avatar-pop 320ms ease-out both;
+}
+
 .profile-actions {
     display: flex;
     gap: 10px;

@@ -49,6 +49,10 @@ const formElements = {
     createAccSubmitBtn: document.getElementById('createAccSubmitBtn')
 };
 
+// Last OCR results (populated after successful OCR call)
+let lastOcrMeta = null;
+let lastOcrData = null;
+
 // =========================
 // 3. Validator Module
 // =========================
@@ -243,17 +247,44 @@ async function processOCR() {
     const formData = new FormData();
     formData.append('file', formElements.idFile.files[0]);
     formData.append('idType', formElements.idType.value);
+    // include debug flag when running locally to get per-type hits and raw text
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) formData.append('debug', '1');
 
+    let result = null;
     try {
         const response = await fetch('http://127.0.0.1:5000/process_ocr', { method: 'POST', body: formData });
-        const result = await response.json();
+        result = await response.json();
 
-        if (result.success) {
-            const d = result.data;
+        if (result && result.success) {
+            const d = result.data || {};
+            // Prefer provider meta but fall back to counting extracted fields when legacy response lacks meta
+            const hitsMap = result.meta?.hits_map || {};
+            let fieldsCount = (typeof result.meta?.fields_count === 'number') ? result.meta.fields_count : 0;
+            if (!fieldsCount) {
+                fieldsCount = Object.values(d).filter(v => v && String(v).trim().length > 0).length;
+            }
+            const selectedType = formElements.idType.value;
+            const selectedHits = hitsMap[selectedType] || 0;
+
+            // If selected ID type has no fingerprint hits and extracted fields are minimal, treat as failed verification
+            if (selectedHits < 1 && fieldsCount < 2) {
+                formElements.ocrStatus.className = 'ocr-status-error';
+                formElements.ocrStatus.textContent = `Selected ID type (${selectedType}) not confidently detected. Please upload the correct ID or proceed manually.`;
+                formElements.selectIdNextBtn.disabled = false;
+                formElements.selectIdNextBtn.textContent = "Retry Verification";
+                // Make Retry explicitly refresh the page so user can re-upload/clear state
+                formElements.selectIdNextBtn.onclick = () => window.location.reload();
+                return; // stop successful branch
+            }
             // Populate the next panel's fields
             formElements.firstName.value = d.firstName || "";
+            formElements.middleName.value = d.middleName || "";
             formElements.lastName.value = d.lastName || "";
             formElements.address.value = d.address || "";
+
+            // Store OCR results for later submission / verification
+            lastOcrData = d;
+            lastOcrMeta = result.meta || null;
 
             // Show Success UI
             const detected = result.meta?.detected_type || "Document";
@@ -291,7 +322,10 @@ async function processOCR() {
         formElements.selectIdNextBtn.onclick = () => switchPanel('personalDetails');
     }
 
-    console.log("Full Backend Response:", result); // Look at 'meta' and 'data' here
+        // Safe log: only print if backend responded
+        if (typeof result !== 'undefined' && result !== null) {
+            console.log("Full Backend Response:", result); // Look at 'meta' and 'data' here
+        }
 }
 
 // Helper to reset the button back to OCR mode if the user changes their selection
@@ -310,11 +344,10 @@ function setupNavigationButtons() {
 
     formElements.selectIdNextBtn?.addEventListener('click', async () => {
         const stepFields = [formElements.idType, formElements.idFile];
-        if (validateStep(stepFields)) {
-            await processOCR();
-            switchPanel('personalDetails');
-        }
-
+        if (!validateStep(stepFields)) return;
+        // Only run verification here. Do not auto-navigate; `processOCR` will enable
+        // and set the button's onclick to proceed when verification succeeds.
+        await processOCR();
     });
 
     formElements.personalDetailsNextBtn?.addEventListener('click', () => {
@@ -387,7 +420,9 @@ function setupAccountSubmission() {
             !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
             return;
         }
-        if (!confirm('Are you sure you want to submit this application?')) return;
+        // Confirm with modal instead of native confirm()
+        const confirmed = await showSubmitConfirmation();
+        if (!confirmed) return;
 
         allData = {
             fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
@@ -398,6 +433,10 @@ function setupAccountSubmission() {
             email: formElements.email.value,
             password: formElements.password.value,
             agreeCheckBox: formElements.agreeCheckBox.checked
+            ,
+            // attach OCR metadata and extracted fields (if available)
+            ocrMeta: lastOcrMeta,
+            ocrData: lastOcrData
         };
 
         try {
@@ -446,12 +485,106 @@ function setupAccountSubmission() {
             formElements.resendBtn.classList.add('show');
             startResendCooldown();
 
+            // Fire-and-forget: send OCR meta to server-side verifier to apply DB updates
+            (async () => {
+                try {
+                    const supabaseUserId = data?.user?.id || data?.user?.user_metadata?.id || null;
+                    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                    const payload = {
+                        supabase_user_id: supabaseUserId,
+                        email: allData.email,
+                        ocrMeta: allData.ocrMeta,
+                        ocrData: allData.ocrData,
+                        debug: isLocal // request debug info only on local dev
+                    };
+                    const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const verifyResult = await resp.json();
+                    console.log('verify_ocr result', verifyResult);
+                    if (verifyResult.debug_info) console.error('verify_ocr debug:', verifyResult.debug_info);
+                    if (verifyResult.success && verifyResult.verified) {
+                        formElements.formMessage.innerHTML += '<br><small>Identity verification applied automatically.</small>';
+                    } else if (verifyResult.success && !verifyResult.verified) {
+                        formElements.formMessage.innerHTML += `<br><small>OCR verification recorded (issues: ${verifyResult.reasons.join(', ') || 'none'}).</small>`;
+                    }
+                } catch (err) {
+                    console.warn('verify_ocr call failed', err);
+                }
+            })();
+
         } catch (err) {
             formElements.formMessage.style.display = 'block';
             formElements.formMessage.style.color = 'red';
             formElements.formMessage.textContent = 'An error occurred. ' + (err.message || err);
         }
     });
+}
+
+// =========================
+// Submit Confirmation Modal
+// =========================
+// Use modal provided in PHP template. This function shows it and returns a Promise.
+function showSubmitConfirmation() {
+    const modal = document.getElementById('submitConfirmModal');
+    if (!modal) {
+        // Fallback to native confirm if template missing
+        return Promise.resolve(confirm('Are you sure you want to submit this application?'));
+    }
+
+    const backdrop = modal.querySelector('.modal-backdrop');
+    const btnCancel = modal.querySelector('.btn-cancel');
+    const btnConfirm = modal.querySelector('.btn-confirm');
+
+    let resolvePromise;
+    const p = new Promise(res => { resolvePromise = res; });
+
+    // Show modal (remove hidden class)
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Fade-in handled by CSS animation on modal-box; set focus
+    const firstFocusable = btnCancel || btnConfirm;
+    firstFocusable && firstFocusable.focus();
+
+    // Focus trap
+    function handleKey(e) {
+        if (e.key === 'Escape') {
+            close(false);
+        } else if (e.key === 'Tab') {
+            const focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+            if (focusable.length === 0) return;
+            const idx = focusable.indexOf(document.activeElement);
+            if (e.shiftKey) {
+                if (idx === 0) { focusable[focusable.length - 1].focus(); e.preventDefault(); }
+            } else {
+                if (idx === focusable.length - 1) { focusable[0].focus(); e.preventDefault(); }
+            }
+        }
+    }
+
+    function close(val) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        document.removeEventListener('keydown', handleKey);
+        backdrop.removeEventListener('click', backdropClick);
+        btnCancel.removeEventListener('click', onCancel);
+        btnConfirm.removeEventListener('click', onConfirm);
+        resolvePromise(val);
+    }
+
+    function onCancel() { close(false); }
+    function onConfirm() { close(true); }
+    function backdropClick(e) { if (e.target === backdrop) close(false); }
+
+    document.addEventListener('keydown', handleKey);
+    backdrop.addEventListener('click', backdropClick);
+    btnCancel.addEventListener('click', onCancel);
+    btnConfirm.addEventListener('click', onConfirm);
+
+    return p;
 }
 
 // =========================
