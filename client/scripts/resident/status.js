@@ -77,7 +77,7 @@ window.onclick = function (event) {
 
 /**
  * Fetches application data and opens the edit modal with a simplified form
- * Supports Business, Construction, and Utilities application types
+ * Supports Business, Construction, Utilities, and Incident Reports application types
  * 
  * @param {string} appId The ID of the application to edit
  * @param {string} appType The type of application (e.g., 'Business')
@@ -106,6 +106,11 @@ async function openEditModalFor(appId, appType) {
             case 'Utilities':
                 endpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
                 formGenerator = generateUtilitiesFormHtml;
+                break;
+
+            case 'Incident Reports':
+                endpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
+                formGenerator = generateIncidentReportFormHtml;
                 break;
 
             default:
@@ -494,6 +499,64 @@ function generateUtilitiesFormHtml(data) {
 }
 
 /**
+ * Generates the HTML for the simplified incident report edit form
+ * 
+ * @param {object} data The incident report data
+ * @returns {string} The HTML string for the form
+ */
+function generateIncidentReportFormHtml(data) {
+    // Use the actual field names from your database
+    const reporterName = data.rp_full_name || '';
+    const incidentType = data.incident_type || '';
+    const incidentLocation = data.incident_location || '';
+    const incidentDescription = data.description || '';
+    
+    return `
+        <form id="simple-edit-form">
+            <h2>Edit Incident Report</h2>
+            
+            <div class="form-group remarks">
+                <label>Remarks from Staff:</label>
+                <p>${data.approval_comments || 'No comments provided.'}</p>
+            </div>
+
+            <input type="hidden" name="application_id" value="${data.id}">
+
+            <div class="form-group">
+                <label for="reporterName">Reporter Name</label>
+                <input type="text" id="reporterName" name="reporterName" value="${reporterName}" readonly disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="incidentType">Incident Type</label>
+                <input type="text" id="incidentType" name="incidentType" value="${incidentType}">
+            </div>
+            
+            <div class="form-group">
+                <label for="incidentLocation">Incident Location</label>
+                <textarea id="incidentLocation" name="incidentLocation">${incidentLocation}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="incidentDescription">Incident Description</label>
+                <textarea id="incidentDescription" name="incidentDescription">${incidentDescription}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="requirementUpload">Upload New/Corrected Document/Photo</label>
+                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <small>If you upload a new file, it will replace the old one.</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="modal-cancel-btn" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Changes</button>
+            </div>
+        </form>
+    `;
+}
+
+/**
  * Handles the submission of the simplified edit form
  * Reconstructs full application data with updated fields for server submission
  * 
@@ -559,6 +622,15 @@ async function handleSubmitChanges(event, appId, appType) {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
                     'last_name': 'lastName',
+                    'application_date': 'applicationDate'
+                };
+                break;
+
+            case 'Incident Reports':
+                getEndpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
+                updateEndpoint = `/Banwa/server/api/incident_report_staff/ir_handler.php`;
+                keyMap = {
+                    'rp_full_name': 'rpFullName',
                     'application_date': 'applicationDate'
                 };
                 break;
