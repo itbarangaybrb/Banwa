@@ -1,119 +1,519 @@
-        /* --- 1. BASE STYLES AND LAYOUT --- */
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #eef2f7;
-            min-height: 100vh;
-        }
-        header {
-            text-align: center;
-            padding: 20px;
-            background-color: #2c3e50;
-            color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        main {
-            /* Main content container for the form */
-            padding: 20px;
-            max-width: 900px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-        }
-        h1, h2, h3 { 
-            color: #2c3e50;
-        }
-        hr {
-            /* Separator between form sections */
-            border: 0;
-            height: 1px;
-            background-color: #bdc3c7;
-            margin: 30px 0;
-        }
-        
-        /* --- 2. INPUT AND GRID STYLES --- */
-        label { margin-top: 10px; font-weight: 600; color: #34495e; display: block; }
-        input, select, textarea {
-            margin-top: 5px; padding: 10px; font-size: 1em; border: 1px solid #ccc;
-            border-radius: 8px; width: 100%; box-sizing: border-box; transition: border-color 0.3s;
-        }
-        input:focus, select:focus, textarea:focus { border-color: #3498db; outline: none; }
-        
-        /* Responsive grid for detail sections */
-        .details-container {
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 15px 20px; 
-            margin-top: 15px;
-        }
-        @media (min-width: 600px) {
-            .details-container { grid-template-columns: repeat(4, 1fr); }
-        }
-        .full-span { grid-column: 1 / -1; }
-        .read-only-field { background-color: #ecf0f1; cursor: not-allowed; }
-        
-        /* --- 3. WITNESS STYLES (DYNAMIC) --- */
-        .witness-entry { 
-            border: 1px solid #cce5ff; 
-            background-color: #f8f9fa; 
-            padding: 15px; 
-            margin-top: 10px; 
-            border-radius: 8px; 
-        }
-        .witness-header {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 5px;
-        }
-        .remove-witness { 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            font-size: 0.9em; 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            transition: background-color 0.3s; 
-        }
-        
-        /* --- 4. CHECKBOX STYLES --- */
-        .checkbox-group { display: flex; align-items: center; margin-top: 15px; margin-bottom: 5px; }
-        .checkbox-group label { margin-top: 0; margin-bottom: 0; font-weight: 500; color: #34495e; cursor: pointer; }
-        .checkbox-group input[type="checkbox"] { margin-left: 10px; margin-top: 0; width: auto; cursor: pointer; padding: 0; border-radius: 4px; min-width: 15px; height: 15px; box-sizing: content-box; }
-        
-        /* --- 5. BUTTON STYLES --- */
-        button { margin-top: 25px; padding: 12px; font-weight: bold; border-radius: 8px; transition: background-color 0.3s; }
-        button[type="submit"] { background-color: #2ecc71; color: white; border: none; }
-        button[type="submit"]:hover { background-color: #27ae60; }
-        #addWitnessBtn { background-color: #3498db; color: white; border: none; }
-        #addWitnessBtn:hover { background-color: #2980b9; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
-        /* --- 6. REPORT OUTPUT STYLES --- */
-        #reportOutput {
-            margin-top: 40px;
-            padding: 20px;
-            border: 1px solid #bdc3c7;
-            border-radius: 8px;
-            background-color: #fcfcfc;
-            text-align: center;
-        }
-        #downloadBtn {
-            /* Styles for the main download action button */
-            margin-top: 20px;
-            padding: 15px 30px;
-            background-color: #e67e22; 
-            color: white;
-            border: none;
-            font-size: 1.1em;
-            cursor: pointer;
-            box-shadow: 0 4px #d35400;
-            transition: all 0.1s;
-        }
+:root {
+    --h4: 36px;
+    --h4-lh: 44px;
 
-        /* --- 7. UTILITY STYLES --- */
-        .hidden {
-            display: none !important;
-        }
+    --h5: 30px;
+    --h5-lh: 38px;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+
+    --txt1: 20px;
+    --txt1-lh: 30px;
+
+    --txt3: 16;
+    --txt3-lh: 24px;
+
+    --regular: 400;
+    --mediium: 500;
+    --semibold: 600;
+    --bold: 700;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+.sections {
+    width: 100%;
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+}
+
+/* .containers {
+  padding: 32px 16px;
+} */
+
+@media screen and (min-width: 780px) {
+    .sections {
+        width: 100%;
+        max-width: 1440px;
+        width: 100%;
+        padding: 96px 64px;
+        margin-inline: auto;
+    }
+
+}
+
+.containers {
+    max-width: 927px;
+    margin-inline: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    /* border: 1px solid gray; */
+    /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); */
+}
+
+.sections .header-and-parag {
+    max-width: 927px;
+    margin-inline: auto;
+    margin-bottom: 40px;
+}
+
+.sections .header-and-parag h4 {
+    margin-bottom: 8px;
+    font-size: var(--h4);
+    line-height: var(--h4-lh);
+    font-weight: var(--bold);
+}
+
+/* ==================== Incident Form ==================== */
+.incident-container .form {
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.incident-container .form .inputs-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+}
+
+.incident-container .form .inputs-container .label-and-input {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+h1,
+h2,
+h3 {
+    color: #2c3e50;
+}
+
+hr {
+    /* Separator between form sections */
+    border: 0;
+    height: 1px;
+    background-color: #bdc3c7;
+    margin: 30px 0;
+}
+
+/* --- 2. INPUT AND GRID STYLES --- */
+label {
+    margin-top: 10px;
+    font-weight: 600;
+    color: #34495e;
+    display: block;
+}
+
+input,
+select,
+textarea {
+    margin-top: 5px;
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+/* Responsive grid for detail sections */
+.details-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px 20px;
+    margin-top: 15px;
+}
+
+@media (min-width: 600px) {
+    .details-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.full-span {
+    grid-column: 1 / -1;
+}
+
+.read-only-field {
+    background-color: #ecf0f1;
+    cursor: not-allowed;
+}
+
+/* --- 3. WITNESS STYLES (DYNAMIC) --- */
+.witness-entry {
+    border: 1px solid #cce5ff;
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 8px;
+}
+
+.witness-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.remove-witness {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+/* --- 4. CHECKBOX STYLES --- */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.checkbox-group label {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-weight: 500;
+    color: #34495e;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-left: 10px;
+    margin-top: 0;
+    width: auto;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 4px;
+    min-width: 15px;
+    height: 15px;
+    box-sizing: content-box;
+}
+
+/* --- 5. BUTTON STYLES --- */
+button {
+    margin-top: 25px;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"] {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+}
+
+button[type="submit"]:hover {
+    background-color: #27ae60;
+}
+
+#addWitnessBtn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+}
+
+#addWitnessBtn:hover {
+    background-color: #2980b9;
+}
+
+/* --- 6. REPORT OUTPUT STYLES --- */
+#reportOutput {
+    margin-top: 40px;
+    padding: 20px;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+    text-align: center;
+}
+
+#downloadBtn {
+    /* Styles for the main download action button */
+    margin-top: 20px;
+    padding: 15px 30px;
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    font-size: 1.1em;
+    cursor: pointer;
+    box-shadow: 0 4px #d35400;
+    transition: all 0.1s;
+}
+
+.incident-container .form {
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.incident-container .form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
+    font-weight: var(--bold);
+}
+
+.incident-container .form p:first-child {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.incident-container .form #summaryContent {
+    display: flex;
+    flex-direction: column;
+    row-gap: 28px;
+}
+
+.incident-container .form #summaryContent .summary-header-and-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 18px;
+}
+
+.incident-container .form #summaryContent .summary-header-and-info p {
+    font-size: var(--txt1);
+    line-height: var(--txt1-lh);
+    font-weight: var(--bold);
+}
+
+.incident-container .form #summaryContent .summary-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.incident-container .form #summaryContent .summary-info div {
+    display: flex;
+    gap: 8px;
+}
+
+.incident-container .form #summaryContent .summary-info div p,
+.incident-container .form #summaryContent .summary-info div span {
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+}
+
+.incident-container .form #summaryContent .summary-info div p {
+    font-weight: var(--bold);
+}
+
+.incident-container .form #summaryContent .summary-info div span {
+    font-weight: var(--regular);
+}
+
+.incident-container .form #summaryContent .divider {
+    margin-block: 8px;
+    height: 1px;
+    background-color: gray;
+    width: 100%;
+}
+
+.incident-container .form p:first-child {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.incident-container .form #summaryContent .row {
+    display: flex;
+    row-gap: 8px;
+}
+
+.incident-container .form #summaryContent .row div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.incident-container .form .buttons-container {
+    margin-left: auto;
+    width: max-content;
+}
+
+.incident-container .form .buttons-container button {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+}
+
+.incident-container .form .buttons-container button:nth-child(1) {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.incident-container .form .buttons-container button:nth-child(2) {
+    background-color: #00247C;
+    color: white;
+    margin-left: 4px;
+}
+
+.incident-container .form .buttons-container button:nth-child(1):hover {
+    background-color: #c9c9c9;
+}
+
+.incident-container .form .buttons-container button:nth-child(2):hover {
+    background-color: #00164d;
+}
+
+.map-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 3000;
+}
+
+.map-modal-content {
+    /* position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    height: 80%;
+    max-width: 1000px; */
+
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    height: 80%;
+    max-width: 1000px;
+}
+
+.map-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.map-modal-header h3 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+.close-map {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.close-map:hover {
+    background: #c0392b;
+}
+
+#map-container {
+    /* width: 100%;
+    height: calc(100% - 60px);
+    border-radius: 8px;
+    overflow: hidden; */
+
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    margin: 20px;
+    outline-style: none;
+    top: calc(94.5938px + 20px);
+}
+
+.coordinate-display {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    font-family: monospace;
+    border: 1px solid #e9ecef;
+}
+
+/* ===== MESSAGE STYLES ===== */
+.message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* --- 7. UTILITY STYLES --- */
+.error-msg {
+    color: red;
+    font-size: 12px;
+    display: none;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+.error {
+    outline: 1px solid red;
+    /* border: 1px solid red !important; */
+}
+
+.hidden {
+    display: none;
+}

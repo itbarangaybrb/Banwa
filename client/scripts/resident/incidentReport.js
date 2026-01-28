@@ -1,355 +1,1072 @@
-// --- Incident Report Form Script ---
-    // --- Initial Setup and Utility Variables ---
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-populate the Date Reported field upon page load.
-        const now = new Date();
-        const formattedDate = now.toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
-        document.getElementById('dateReported').value = formattedDate;
-        
-        // Add one empty witness field when the form initially loads.
-        createWitnessFields(); 
-    });
+// Configuration imports for service worker registration, address data, and Supabase authentication
+import { registerServiceWorker } from '../../../register_sw.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import supabase from '../../../server/api/supabase.js';
 
-    const witnessesContainer = document.getElementById('witnessesContainer');
-    const addWitnessBtn = document.getElementById('addWitnessBtn');
-    let witnessCount = 0;
-    let generatedReportHTML = ''; // Stores the final generated HTML report string
+registerServiceWorker();
+
+/**
+ * Switches the visible panel in the multi-step incident report form interface
+ * @param {string} panelId - The ID of the panel to display ('reportingPerson', 'victimDetails', 'suspectDetails', 'witnessesSection', 'incidentDetails', or 'summary')
+ */
+function switchPanel(panelId) {
+    const panels = ['reportingPerson', 'victimDetails', 'suspectDetails', 'witnessesSection', 'incidentDetails', 'summary']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    window.scrollTo(0, 0);
+}
+
+// Initialize the form with reporting person panel visible
+switchPanel('reportingPerson');
+
+// Form element references for reporting person section
+const rpFullName = document.getElementById('rpFullName');
+const rpLotNo = document.getElementById('rpLotNo');
+const rpStreet = document.getElementById('rpStreet');
+const rpContact = document.getElementById('rpContact');
+const rpRelationship = document.getElementById('rpRelationship');
+const victimSameAsRP = document.getElementById('victimSameAsRP');
+
+// Form element references for victim details section
+const vicFullName = document.getElementById('vicFullName');
+const vicLotNo = document.getElementById('vicLotNo');
+const vicStreet = document.getElementById('vicStreet');
+const vicContact = document.getElementById('vicContact');
+const vicCitizenship = document.getElementById('vicCitizenship');
+const vicGender = document.getElementById('vicGender');
+const vicDOB = document.getElementById('vicDOB');
+const vicOccupation = document.getElementById('vicOccupation');
+
+// Form element references for suspect details section
+const susFullName = document.getElementById('susFullName');
+const susLotNo = document.getElementById('susLotNo');
+const susStreet = document.getElementById('susStreet');
+const susContact = document.getElementById('susContact');
+const susGender = document.getElementById('susGender');
+const susDescription = document.getElementById('susDescription');
+
+// Form element references for incident details section
+const incidentType = document.getElementById('incidentType');
+const otherIncidentType = document.getElementById('otherIncidentType');
+const incidentTimestamp = document.getElementById('incidentTimestamp');
+const incidentLotNo = document.getElementById('incidentLotNo');
+const incidentStreet = document.getElementById('incidentStreet');
+const incidentLatitude = document.getElementById('incidentLatitude');
+const incidentLongitude = document.getElementById('incidentLongitude');
+const description = document.getElementById('description');
+
+// Witness management variables and container reference
+let witnessCount = 0;
+const witnessesContainer = document.getElementById('witnessesContainer');
+
+/**
+ * Comprehensive validation utility for incident report form input fields
+ * Provides methods to validate different input types and display error messages
+ */
+const validator = (() => {
+    /**
+     * Gets the wrapper element containing the input and error message
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The parent wrapper element
+     */
+    function getWrapper(el) { return el.closest('.label-and-input'); }
 
     /**
-     * Converts the Markdown report into a compact HTML string with a full document 
-     * structure, necessary for MSO (Microsoft Office) to correctly render it
-     * instead of displaying the raw code.
-     * @param {string} markdown - The Markdown formatted string from data collection.
-     * @returns {string} The compact HTML formatted string with full MSO structure.
+     * Gets the error message element associated with an input
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The error message span element
      */
-    function markdownToHtml(markdown) {
-        let htmlContent = markdown;
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
 
-        // 1. Convert lists first: Markdown list item `- ` to HTML `<li>`
-        htmlContent = htmlContent.replace(/^- (.*)$/gm, '<li>$1</li>');
-        
-        // Wrap blocks of list items in <ul>
-        const listRegex = /((\s*<li>.*?<\/li>)+)/g;
-        htmlContent = htmlContent.replace(listRegex, function(match) {
-            return `<ul style="margin-left: 20px; padding-left: 0; list-style-type: disc;">${match.trim()}</ul>`;
-        });
-
-        // 2. Convert Headers (using specific styles for Word)
-        htmlContent = htmlContent.replace(/^\s*###\s*(.*)$/gm, '<h3 style="color:#34495e; margin-top: 15px;">$1</h3>'); 
-        htmlContent = htmlContent.replace(/^\s*##\s*(.*)$/gm, '<h2 style="color:#34495e; margin-top: 25px;">$1</h2>'); 
-        htmlContent = htmlContent.replace(/^\s*#\s*(.*)$/gm, '<h1 style="color:#2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px;">$1</h1>'); 
-        
-        // 3. Convert Horizontal Rule
-        htmlContent = htmlContent.replace(/---/g, '<hr style="border: none; height: 1px; background-color: #ccc; margin: 20px 0;">');
-        
-        // 4. Convert Bold Text
-        htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // 5. Convert text blocks to <p> tags
-        htmlContent = htmlContent.replace(/\n\s*\n/g, '\n\n'); // Normalize multiple newlines
-        htmlContent = htmlContent.replace(/([^\n])\n([^\n])/g, '$1 $2'); // Replace single newlines within a block with a space
-        
-        // Wrap final blocks (separated by \n\n) into paragraphs
-        htmlContent = htmlContent.split('\n\n').map(p => {
-            // Do not wrap if it's empty or already a block element (h1, hr, ul)
-            if (p.trim() === '' || p.startsWith('<h') || p.startsWith('<hr') || p.startsWith('<ul')) {
-                return p;
-            }
-            return `<p style="margin-bottom: 10px; text-indent: 0;">${p.trim().replace(/\n/g, '<br>')}</p>`;
-        }).join('');
-
-        // 6. FINAL HTML WRAPPER (Full Document Structure for Word Compatibility)
-        const finalHtml = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.6; }
-                    h1 { color:#2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }
-                    h2 { color:#34495e; margin-top: 25px; }
-                    h3 { color:#34495e; margin-top: 15px; }
-                    hr { border: none; height: 1px; background-color: #ccc; margin: 20px 0; }
-                    ul { margin-left: 20px; padding-left: 0; list-style-type: disc; }
-                    p { margin-bottom: 10px; }
-                    strong { font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-                    ${htmlContent}
-                </div>
-            </body>
-            </html>
-        `;
-        
-        // 7. COMPACTION (CRITICAL FIX): Aggressively remove all newlines and excess spaces 
-        // to prevent Word from misinterpreting the file as raw text.
-        return finalHtml.trim()
-            .replace(/>\s+</g, '><') 
-            .replace(/\n/g, '') 
-            .replace(/\s\s+/g, ' '); 
+    /**
+     * Displays an error message for an invalid input field
+     * @param {HTMLElement} el - The input element with validation error
+     * @param {string} message - The error message to display
+     */
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
     }
 
     /**
-     * Maps form input data into a structured Markdown string.
-     * @param {object} data - The structured report data.
-     * @returns {string} The Markdown formatted string.
+     * Clears any error state from a validated input field
+     * @param {HTMLElement} el - The input element to clear
      */
-    function generateMarkdownReport(data) {
-        let md = `# Incident Report Summary\n\n`;
-        md += `**Date Reported:** ${data.incident.dateReported}\n\n`; 
-        md += `**Incident Date/Time:** ${data.incident.timestamp}\n\n`;
-        md += `---\n\n`;
-        
-        // 1. Reporting Person Data
-        md += `## 1. Reporting Person\n\n`;
-        md += `- **Full Name:** ${data.rp.fullName}\n`;
-        md += `- **Address:** ${data.rp.address}\n`;
-        md += `- **Contact:** ${data.rp.contact}\n`;
-        md += `- **Relationship to Victim:** ${data.rp.relationship || 'N/A'}\n\n`;
-        
-        // 2. Victim Details Data
-        md += `## 2. Victim / Complainant Details\n\n`;
-        if (data.victim === 'Same as Reporting Person') {
-            md += `- **Victim Status:** ${data.victim}\n\n`;
-        } else {
-            md += `- **Full Name:** ${data.victim.fullName || 'N/A'}\n`;
-            md += `- **Address:** ${data.victim.address || 'N/A'}\n`;
-            md += `- **Contact:** ${data.victim.contact || 'N/A'}\n`;
-            md += `- **Citizenship:** ${data.victim.citizenship || 'N/A'}\n`;
-            md += `- **Gender:** ${data.victim.gender || 'N/A'}\n`;
-            md += `- **Date of Birth:** ${data.victim.dob || 'N/A'}\n`;
-            md += `- **Occupation:** ${data.victim.occupation || 'N/A'}\n\n`;
-        }
-
-        // 3. Suspect Details Data
-        md += `## 3. Suspect / Respondent Details\n\n`;
-        md += `- **Full Name:** ${data.suspect.fullName || 'Unknown'}\n`;
-        md += `- **Address:** ${data.suspect.address || 'Unknown'}\n`;
-        md += `- **Contact:** ${data.suspect.contact || 'N/A'}\n`;
-        md += `- **Gender:** ${data.suspect.gender || 'N/A'}\n`;
-        md += `- **Physical Description:**\n${data.suspect.description || 'None provided.'}\n\n`;
-        
-        // 4. Witnesses Data
-        md += `## 4. Witnesses\n\n`;
-        if (data.witnesses.length > 0) {
-            data.witnesses.forEach((w, index) => {
-                md += `### Witness #${index + 1}\n\n`;
-                md += `- **Full Name:** ${w.fullName}\n`;
-                md += `- **Contact:** ${w.contact}\n`;
-                md += `- **Address:** ${w.address}\n\n`;
-            });
-        } else {
-            md += `No witnesses recorded.\n\n`;
-        }
-
-        // 5. Incident Details Data
-        md += `## 5. Incident Details\n\n`;
-        md += `- **Incident Type:** ${data.incident.type}\n\n`;
-        md += `### Narrative/Description\n\n`;
-        md += data.incident.description + '\n\n';
-        
-        return md;
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
     }
 
-    // --- Dynamic Witness Functions ---
-    function createWitnessFields() {
-        witnessCount++;
-        const container = document.createElement('div');
-        container.classList.add('witness-entry');
-        container.dataset.id = witnessCount;
-        
-        container.innerHTML = `
-            <div class="witness-header">
-                <h4 class="witness-title">Witness #${witnessCount}</h4>
-                <button type="button" class="remove-witness" data-id="${witnessCount}">Remove</button>
-            </div>
-            <div class="details-container">
-                <div class="form-group"><label for="witFullName_${witnessCount}">Full Name:</label><input type="text" id="witFullName_${witnessCount}" name="witnesses[${witnessCount}][fullName]" placeholder="Full Name" required></div>
-                <div class="form-group"><label for="witContact_${witnessCount}">Contact Number:</label><input type="text" id="witContact_${witnessCount}" name="witnesses[${witnessCount}][contact]" placeholder="Contact Number" required></div>
-                <div class="form-group full-span"><label for="witAddress_${witnessCount}">Current Address:</label><input type="text" id="witAddress_${witnessCount}" name="witnesses[${witnessCount}][address]" placeholder="Address" required></div>
-            </div>
-        `;
-        witnessesContainer.appendChild(container);
+    /**
+     * Validates text input fields with optional normalization and pattern rules
+     * @param {HTMLInputElement} input - The text input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules configuration
+     * @returns {boolean} - Whether the input is valid
+     */
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z\s]+$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+        clearError(input); return true;
     }
-    // Event listener to add new witness fields
-    addWitnessBtn.addEventListener('click', createWitnessFields);
-    
-    // Event listener to remove a witness field using delegation
-    witnessesContainer.addEventListener('click', function(e) {
-        let target = e.target.closest('.remove-witness');
-        if (target) {
-            const idToRemove = target.dataset.id;
-            const entry = document.querySelector(`.witness-entry[data-id="${idToRemove}"]`);
-            if (entry) {
-                entry.remove();
-            }
+
+    /**
+     * Validates select/dropdown elements for required selection
+     * @param {HTMLSelectElement} input - The select element
+     * @param {string} message - Required field error message
+     * @returns {boolean} - Whether a valid option is selected
+     */
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '' || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
+
+    /**
+     * Validates numeric input fields with digit and length constraints
+     * @param {HTMLInputElement} input - The number input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for numeric input
+     * @returns {boolean} - Whether the number is valid
+     */
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.pattern && !rules.pattern.test(value)) {
+            showError(input, rules.errorMessage || message);
+            return false;
         }
-    });
-
-    // --- Input Logic and Toggles ---
-
-    // Incident Type "Other" Toggle
-    const incidentTypeSelect = document.getElementById('incidentType');
-    const otherSpecifyContainer = document.getElementById('otherSpecifyContainer');
-    const otherIncidentTypeInput = document.getElementById('otherIncidentType'); 
-
-    incidentTypeSelect.addEventListener('change', function() {
-        // Show/hide the "Please specify" field based on selection
-        if (incidentTypeSelect.value === 'other') {
-            otherSpecifyContainer.classList.remove('hidden');
-            otherIncidentTypeInput.required = true;
-        } else {
-            otherSpecifyContainer.classList.add('hidden');
-            otherIncidentTypeInput.required = false;
-            otherIncidentTypeInput.value = '';
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
+        if (rules.exactLength && value.length !== rules.exactLength) { 
+            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false; 
         }
-    });
+        clearError(input); return true;
+    }
 
-    // Victim Same as RP Toggle
-    const victimSameAsRP = document.getElementById('victimSameAsRP');
-    const victimDetailsContainer = document.getElementById('victimDetailsContainer');
-    const victimInputs = victimDetailsContainer.querySelectorAll('input, select');
-    
-    victimSameAsRP.addEventListener('change', function() {
-        if (this.checked) {
-            // Hide victim fields and disable/clear inputs
-            victimDetailsContainer.classList.add('hidden'); 
-            victimInputs.forEach(input => { input.required = false; input.disabled = true; input.value = ''; });
-        } else {
-            // Show victim fields and re-enable inputs
-            victimDetailsContainer.classList.remove('hidden'); 
-            victimInputs.forEach(input => { input.disabled = false; });
+    /**
+     * Validates date input fields with various constraints (past/future only)
+     * @param {HTMLInputElement} input - The date input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for date input
+     * @returns {boolean} - Whether the date is valid
+     */
+    function validateDate(input, message, rules = {}) {
+        if (!input) return true;
+
+        const value = input.value;
+        if (!value) { showError(input, message); return false; }
+
+        const date = new Date(value);
+        if (isNaN(date.getTime())) {
+            showError(input, rules.errorMessage || 'Invalid date');
+            return false;
         }
-    });
 
-    // --- Form Submission Handler ---
-// client/scripts/resident/incidentReport.js
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-document.getElementById('incidentForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+        if (rules.pastOnly && date > today) {
+            showError(input, rules.errorMessage || 'Date cannot be in the future');
+            return false;
+        }
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Submitting...';
+        if (rules.futureOnly && date < today) {
+            showError(input, rules.errorMessage || 'Date cannot be in the past');
+            return false;
+        }
 
-    const form = e.target;
-    const formData = new FormData(form);
-    const victimSameAsRP = document.getElementById('victimSameAsRP').checked;
+        clearError(input);
+        return true;
+    }
 
-    // 1. Gather Witnesses with "Not Specified" fallbacks
-    const witnessesArray = [];
-    document.querySelectorAll('.witness-entry').forEach(entry => {
-        const id = entry.dataset.id;
-        witnessesArray.push({
-            full_name: document.getElementById(`witFullName_${id}`)?.value || "Not Specified",
-            contact: document.getElementById(`witContact_${id}`)?.value || "Not Specified",
-            address: document.getElementById(`witAddress_${id}`)?.value || "Not Specified"
-        });
-    });
+    /**
+     * Validates textarea input fields for required content and minimum length
+     * @param {HTMLTextAreaElement} input - The textarea element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for textarea input
+     * @returns {boolean} - Whether the textarea content is valid
+     */
+    function validateTextarea(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (value === '') { showError(input, message); return false; }
+        if (rules.minLength && value.length < rules.minLength) { 
+            showError(input, rules.errorMessage || `Must be at least ${rules.minLength} characters`); return false; 
+        }
+        clearError(input); return true;
+    }
 
-    // 2. Build Payload with "Not Specified" Defaults
-    const payload = {
-        rp_full_name: formData.get('rpFullName') || "Not Specified",
-        rp_address: formData.get('rpAddress') || "Not Specified",
-        rp_contact: formData.get('rpContact') || "Not Specified",
-        rp_relationship: formData.get('rpRelationship') || "Not Specified",
+    /**
+     * Validates address fields with optional validation for existence in addressCoordinates database
+     * @param {HTMLInputElement} lotInput - Lot number input element
+     * @param {HTMLSelectElement} streetInput - Street selection element
+     * @param {Object} options - Validation options (optional fields, existence validation)
+     * @returns {boolean} - Whether the address is valid
+     */
+    function validateAddress(lotInput, streetInput, options = {}) {
+        const lot = lotInput.value.trim(), street = streetInput.value.trim();
+        if (!lot && !options.optional) return validator.number(lotInput, 'Lot no. is required');
+        if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
+        
+        if (!lot || !street || street === 'select') return true;
+        
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!match && options.validateExistence !== false) {
+            const wrapper = streetInput.closest('.label-and-input');
+            const errorEl = wrapper.querySelector('.error-msg');
+            streetInput.classList.add('error');
+            errorEl.textContent = 'Street does not exist for this lot';
+            errorEl.classList.add('show');
+            return false;
+        }
+        clearError(streetInput);
+        return true;
+    }
 
-        vic_full_name: (victimSameAsRP ? formData.get('rpFullName') : formData.get('vicFullName')) || "Not Specified",
-        vic_address: (victimSameAsRP ? formData.get('rpAddress') : formData.get('vicAddress')) || "Not Specified",
-        vic_contact: (victimSameAsRP ? formData.get('rpContact') : formData.get('vicContact')) || "Not Specified",
-        vic_citizenship: victimSameAsRP ? 'Filipino' : (formData.get('vicCitizenship') || "Not Specified"),
-        vic_gender: (victimSameAsRP ? "Not Specified" : formData.get('vicGender')) || "Not Specified",
-        // NOTE: Keeping null for DOB to avoid Postgres DATE type errors
-        vic_dob: (!victimSameAsRP && formData.get('vicDOB')) ? formData.get('vicDOB') : null,
-        vic_occupation: (victimSameAsRP ? "Not Specified" : formData.get('vicOccupation')) || "Not Specified",
-
-        sus_full_name: formData.get('susFullName') || "Not Specified",
-        sus_address: formData.get('susAddress') || "Not Specified",
-        sus_contact: formData.get('susContact') || "Not Specified",
-        sus_gender: formData.get('susGender') || "Not Specified",
-        sus_description: formData.get('susDescription') || "Not Specified",
-
-        incident_type: formData.get('incidentType') === 'other' ? formData.get('otherIncidentType') : formData.get('incidentType'),
-        incident_timestamp: formData.get('incidentTimestamp'),
-        description: formData.get('description') || "Not Specified",
-        witness_data_json: JSON.stringify(witnessesArray)
+    // Public API of the validator module
+    return {
+        text: validateText,
+        select: validateSelect,
+        number: validateNumber,
+        date: validateDate,
+        textarea: validateTextarea,
+        address: validateAddress,
+        clear: clearError
     };
+})();
 
-    try {
-        const response = await fetch('../../../server/api/resident/submit_incident.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+/**
+ * Configuration array defining validation rules for all incident report form fields
+ * Each object specifies element, validation type, error message, and any additional rules
+ */
+const validationConfig = [
+    // Reporting Person validation rules
+    { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
+    { el: rpLotNo, type: 'number', message: 'Please enter lot number', rules: { maxLength: 2 } },
+    { el: rpStreet, type: 'select', message: 'Please select street' },
+    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
+    
+    // Victim Details validation rules
+    { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
+    { el: vicLotNo, type: 'number', message: 'Please enter victim lot number', rules: { maxLength: 2 } },
+    { el: vicStreet, type: 'select', message: 'Please select victim street' },
+    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
+    { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
+    { el: vicGender, type: 'select', message: 'Please select victim gender' },
+    { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
+    { el: vicOccupation, type: 'text', message: 'Please enter victim occupation', rules: { minLength: 2 } },
+    
+    // Suspect Details validation rules
+    { el: susDescription, type: 'textarea', message: 'Please describe the suspect', rules: { minLength: 10 } },
+    
+    // Incident Details validation rules
+    { el: incidentType, type: 'select', message: 'Please select incident type' },
+    { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
+    { el: incidentLotNo, type: 'number', message: 'Please enter incident lot number', rules: { maxLength: 2 } },
+    { el: incidentStreet, type: 'select', message: 'Please select incident street' },
+    { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
+];
+
+/**
+ * Validates a single form field based on its configuration
+ * @param {Object} config - Validation configuration object
+ * @returns {boolean} - Whether the field passed validation
+ */
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'textarea': return validator.textarea(el, message, rules);
+        case 'select': return validator.select(el, message);
+        case 'date': return validator.date(el, message, rules);
+        default: return true;
+    }
+}
+
+/**
+ * Sets up real-time validation on form field interactions
+ * Validates on blur and clears errors on input for immediate feedback
+ */
+(() => {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
+        if (!el) return;
+
+        const targets = [el];
+
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
         });
+    });
 
-        const text = await response.text();
-        const result = JSON.parse(text);
+    // Address validation setup for different sections with varying requirements
+    const addressPairs = [
+        { lot: rpLotNo, street: rpStreet, validateExistence: false },
+        { lot: vicLotNo, street: vicStreet, validateExistence: false },
+        { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
+        { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
+    ];
 
-
-        if (result.status === 'success') {
-            // 1. Show the Success Popup
-            Swal.fire({
-                title: 'Report Submitted!',
-                text: 'Your incident report has been successfully recorded.',
-                icon: 'success',
-                confirmButtonColor: '#2ecc71',
-                confirmButtonText: 'Back to Home'
-            }).then((result) => {
-                // 2. Redirect to home.php after the user clicks "Back to Home"
-                if (result.isConfirmed) {
-                    window.location.href = '/Banwa/client/pages/resident/home.php'; 
+    addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
+        if (!lot || !street) return;
+        
+        [lot, street].forEach(el => {
+            el.addEventListener('blur', () => {
+                if (lot.value && street.value) {
+                    validator.address(lot, street, { optional, validateExistence });
                 }
             });
+            el.addEventListener('input', () => validator.clear(el));
+        });
+    });
+
+    // Special handling for "Other" incident type selection
+    incidentType.addEventListener('change', function() {
+        const otherContainer = document.getElementById('otherSpecifyContainer');
+        if (this.value === 'other') {
+            otherContainer.classList.remove('hidden');
         } else {
-            // Show an Error Popup if something goes wrong
-            Swal.fire({
-                title: 'Submission Failed',
-                text: 'Error: ' + result.message,
-                icon: 'error',
-                confirmButtonColor: '#e74c3c',
-                confirmButtonText: 'Try Again'
+            otherContainer.classList.add('hidden');
+            validator.clear(otherIncidentType);
+        }
+    });
+
+    // Input sanitization for contact number fields (remove non-digit characters)
+    [rpContact, vicContact, susContact].forEach(el => {
+        if (el) {
+            el.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                validator.clear(this);
             });
         }
-    } catch (error) {
-        console.error("Submission failed:", error);
-        alert("Check console for error details.");
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Submit Report';
+    });
+
+    // Input sanitization for lot number fields (remove non-digit characters)
+    [rpLotNo, vicLotNo, susLotNo, incidentLotNo].forEach(el => {
+        if (el) {
+            el.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '');
+                validator.clear(this);
+            });
+        }
+    });
+})();
+
+/**
+ * Validates a group of fields for a specific form step
+ * @param {Array} fields - Array of form elements to validate
+ * @returns {boolean} - Whether all fields in the step are valid
+ */
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+/**
+ * Handles navigation from reporting person panel to victim details panel
+ * Validates all reporting person fields before proceeding
+ */
+document.getElementById('nextToVictim').addEventListener('click', () => {
+    const stepFields = [rpFullName, rpLotNo, rpStreet, rpContact];
+
+    if (!validateStep(stepFields)) return;
+    if (!validator.address(rpLotNo, rpStreet, { validateExistence: false })) return;
+
+    switchPanel('victimDetails');
+});
+
+/**
+ * Handles navigation from victim details panel to suspect details panel
+ * Validates victim fields or copies reporting person data if "same as RP" is checked
+ */
+document.getElementById('nextToSuspect').addEventListener('click', () => {
+    if (victimSameAsRP.checked) {
+        // Copy reporting person data to victim
+        vicFullName.value = rpFullName.value;
+        vicLotNo.value = rpLotNo.value;
+        vicStreet.value = rpStreet.value;
+        vicContact.value = rpContact.value;
+        switchPanel('suspectDetails');
+    } else {
+        const stepFields = [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
+        if (!validateStep(stepFields)) return;
+        if (!validator.address(vicLotNo, vicStreet, { validateExistence: false })) return;
+        switchPanel('suspectDetails');
     }
 });
 
+/**
+ * Handles navigation from suspect details panel to witnesses section panel
+ * Validates suspect description and adds default witness if none exists
+ */
+document.getElementById('nextToWitnesses').addEventListener('click', () => {
+    const stepFields = [susDescription];
+    if (!validateStep(stepFields)) return;
+    if (susLotNo.value || susStreet.value) {
+        validator.address(susLotNo, susStreet, { optional: true, validateExistence: false });
+    }
+    
+    // Add default witness if none exists
+    if (witnessCount === 0) {
+        addWitness();
+    }
+    switchPanel('witnessesSection');
+});
 
-    // --- Download Handler ---
-    // document.getElementById('reportOutput').addEventListener('click', function(e) {
-    //     if (e.target.id === 'downloadBtn') {
-    //         if (!generatedReportHTML) {
-    //             console.error("No report content generated yet.");
-    //             return;
-    //         }
+/**
+ * Handles navigation from witnesses section panel to incident details panel
+ */
+document.getElementById('nextToIncident').addEventListener('click', () => {
+    switchPanel('incidentDetails');
+});
+
+/**
+ * Handles navigation from incident details panel to summary panel
+ * Validates all incident fields and populates summary display with all form data
+ */
+document.getElementById('nextToSummary').addEventListener('click', () => {
+    const stepFields = [incidentType, incidentTimestamp, incidentLotNo, incidentStreet, description];
+    
+    // Handle "other" incident type with custom specification
+    if (incidentType.value === 'other') {
+        if (!otherIncidentType.value.trim()) {
+            validator.text(otherIncidentType, 'Please specify the incident type');
+            return;
+        }
+    }
+    
+    if (!validateStep(stepFields)) return;
+    if (!validator.address(incidentLotNo, incidentStreet, { validateExistence: true })) return;
+
+    // Populate summary display with all collected data
+    document.getElementById('sumRpFullName').textContent = rpFullName.value;
+    document.getElementById('sumRpAddress').textContent = `${rpLotNo.value} ${rpStreet.value}`;
+    document.getElementById('sumRpContact').textContent = rpContact.value;
+    document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
+    
+    if (victimSameAsRP.checked) {
+        document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicContact').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicCitizenship').textContent = 'N/A';
+        document.getElementById('sumVicGender').textContent = 'N/A';
+        document.getElementById('sumVicDOB').textContent = 'N/A';
+        document.getElementById('sumVicOccupation').textContent = 'N/A';
+    } else {
+        document.getElementById('sumVicFullName').textContent = vicFullName.value;
+        document.getElementById('sumVicAddress').textContent = `${vicLotNo.value} ${vicStreet.value}`;
+        document.getElementById('sumVicContact').textContent = vicContact.value;
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value;
+        document.getElementById('sumVicGender').textContent = vicGender.value;
+        document.getElementById('sumVicDOB').textContent = vicDOB.value;
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value;
+    }
+    
+    document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
+    document.getElementById('sumSusAddress').textContent = susLotNo.value && susStreet.value ? 
+        `${susLotNo.value} ${susStreet.value}` : 'Not specified';
+    document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
+    document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
+    document.getElementById('sumSusDescription').textContent = susDescription.value;
+    
+    document.getElementById('sumIncidentType').textContent = 
+        incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
+    document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
+    document.getElementById('sumIncidentLocation').textContent = `${incidentLotNo.value} ${incidentStreet.value}`;
+    document.getElementById('sumIncidentCoordinates').textContent = 
+        incidentLatitude.value && incidentLongitude.value ? 
+        `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
+    document.getElementById('sumDescription').textContent = description.value;
+
+    switchPanel('summary');
+});
+
+/**
+ * Sets up navigation between form panels with back button functionality
+ * First back button returns to services page, others navigate to previous panel
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
+        window.location.href = '/Banwa/client/pages/resident/services.php';
+    });
+
+    document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
+    document.getElementById('suspectBackBtn').addEventListener('click', () => switchPanel('victimDetails'));
+    document.getElementById('witnessesBackBtn').addEventListener('click', () => switchPanel('suspectDetails'));
+    document.getElementById('incidentBackBtn').addEventListener('click', () => switchPanel('witnessesSection'));
+    document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('incidentDetails'));
+});
+
+/**
+ * Handles toggling of "Victim same as reporting person" checkbox
+ * Shows/hides victim details fields and clears validation errors accordingly
+ */
+victimSameAsRP.addEventListener('change', function() {
+    const victimContainer = document.getElementById('victimDetailsContainer');
+    if (this.checked) {
+        victimContainer.style.display = 'none';
+        // Clear validation errors for victim fields
+        [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation].forEach(el => {
+            validator.clear(el);
+        });
+    } else {
+        victimContainer.style.display = 'block';
+    }
+});
+
+/**
+ * Adds a new witness entry with input fields for name, address, and contact information
+ * Each witness is dynamically added to the form with remove functionality
+ */
+function addWitness() {
+    witnessCount++;
+    const witnessDiv = document.createElement('div');
+    witnessDiv.className = 'witness-group';
+    witnessDiv.innerHTML = `
+        <h7>Witness ${witnessCount}</h7>
+        <div class="label-and-input">
+            <label class="label" for="witnessName${witnessCount}">Full Name</label>
+            <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessLotNo${witnessCount}">Lot No.</label>
+            <input type="tel" class="witness-lotNo" id="witnessLotNo${witnessCount}" maxlength="2" pattern="[0-9]{1,2}">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessStreet${witnessCount}">Street Name</label>
+            <select class="witness-street" id="witnessStreet${witnessCount}">
+                <option value="" selected>Select</option>
+                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
+                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
+                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
+                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
+                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
+                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
+                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
+                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
+                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
+                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
+                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
+                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
+                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
+            </select>
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
+            <input type="text" class="witness-contact" id="witnessContact${witnessCount}" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+        </div>
+        <button type="button" class="remove-witness-btn" style="margin-top: 10px;">Remove Witness</button>
+    `;
+    
+    witnessesContainer.appendChild(witnessDiv);
+    
+    // Add remove functionality for witness entry
+    witnessDiv.querySelector('.remove-witness-btn').addEventListener('click', () => {
+        witnessDiv.remove();
+        witnessCount--;
+    });
+}
+
+// Set up witness addition button when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addWitnessBtn').addEventListener('click', addWitness);
+});
+
+/**
+ * Handles final incident report submission with server integration
+ * Collects all form data, validates, sends to backend, and handles response
+ * Includes notification permission request, report generation, and success/error handling
+ */
+const summaryForm = document.getElementById('summaryForm');
+
+// Clone form to prevent duplicate event listeners on page refresh
+const newSummaryForm = summaryForm.cloneNode(true);
+summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
+
+newSummaryForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    // Request notification permission for submission alerts
+    if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+    }
+
+    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Incident Report Submitted", {
+                body: "Click to view your report status",
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
+    }
+
+    const confirmResult = await Swal.fire({
+        title: 'Submit Report?',
+        text: 'Are you sure you want to submit this incident report?',
+        showCancelButton: true,
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
+        confirmButtonText: 'Yes, submit it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (confirmResult.isConfirmed) {
+        const formData = new FormData();
+
+        formData.append('action', 'create');
+        
+        // Get Supabase user ID for authentication
+        const { data: { user } } = await supabase.auth.getUser();
+        const supabaseUserId = user?.id;
+        formData.append('supabase_user_id', supabaseUserId);
+
+        // Reporting Person data
+        formData.append('rpFullName', rpFullName.value);
+        formData.append('rpLotNo', rpLotNo.value);
+        formData.append('rpStreet', rpStreet.value);
+        formData.append('rpContact', rpContact.value);
+        formData.append('rpRelationship', rpRelationship.value);
+
+        // Victim Details data (conditionally included if different from RP)
+        formData.append('victimSameAsRP', victimSameAsRP.checked ? '1' : '0');
+        if (!victimSameAsRP.checked) {
+            formData.append('vicFullName', vicFullName.value);
+            formData.append('vicLotNo', vicLotNo.value);
+            formData.append('vicStreet', vicStreet.value);
+            formData.append('vicContact', vicContact.value);
+            formData.append('vicCitizenship', vicCitizenship.value);
+            formData.append('vicGender', vicGender.value);
+            formData.append('vicDOB', vicDOB.value);
+            formData.append('vicOccupation', vicOccupation.value);
+        }
+
+        // Suspect Details data
+        formData.append('susFullName', susFullName.value);
+        formData.append('susLotNo', susLotNo.value);
+        formData.append('susStreet', susStreet.value);
+        formData.append('susContact', susContact.value);
+        formData.append('susGender', susGender.value);
+        formData.append('susDescription', susDescription.value);
+
+        // Witnesses data collected as JSON array
+        const witnesses = [];
+        document.querySelectorAll('.witness-group').forEach((group, index) => {
+            const name = group.querySelector('.witness-name').value;
+            const lotNo = group.querySelector('.witness-lotNo').value;
+            const street = group.querySelector('.witness-street').value;
+            const contact = group.querySelector('.witness-contact').value;
             
-    //         // Create a Blob with application/msword type to force Word to open it
-    //         const blob = new Blob([generatedReportHTML], {
-    //             type: "application/msword;charset=utf-8"
-    //         });
+            if (name || lotNo || street || contact) {
+                witnesses.push({ 
+                    name, 
+                    lotNo, 
+                    street, 
+                    contact 
+                });
+            }
+        });
+        formData.append('witnesses', JSON.stringify(witnesses));
+
+        // Incident Details data (only this section includes coordinates)
+        const incidentTypeVal = incidentType.value;
+        formData.append('incidentType', incidentTypeVal === 'other' ? 
+            otherIncidentType.value : incidentTypeVal);
+        formData.append('incidentTimestamp', incidentTimestamp.value);
+        formData.append('incidentLotNo', incidentLotNo.value);
+        formData.append('incidentStreet', incidentStreet.value);
+        formData.append('incidentLatitude', incidentLatitude.value);
+        formData.append('incidentLongitude', incidentLongitude.value);
+        formData.append('description', description.value);
+        formData.append('dateReported', new Date().toISOString());
+
+        // Send data to backend handler
+        fetch('/Banwa/server/api/incident_report_staff/ir_handler.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Incident report submitted successfully! Reference ID: ' + data.id,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        // Generate report document for download
+                        generateReportDocument();
+                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Error: ' + data.message,
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Something went wrong. Check console for details.',
+                    confirmButtonText: 'OK'
+                });
+            });
+    }
+});
+
+/**
+ * Generates a downloadable incident report document in HTML format
+ * Creates a formatted report with all incident details for printing/saving
+ */
+function generateReportDocument() {
+    const reportOutput = document.getElementById('reportOutput');
+    const downloadBtn = document.getElementById('downloadBtn');
+    
+    if (reportOutput && downloadBtn) {
+        reportOutput.classList.remove('hidden');
+        
+        downloadBtn.addEventListener('click', () => {
+            // Create a simple HTML document for the report
+            const reportHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Incident Report - ${new Date().toLocaleDateString()}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; }
+                        h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        .section { margin: 20px 0; }
+                        .section h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+                        .field { margin: 5px 0; }
+                        .label { font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Incident Report</h1>
+                    <div class="section">
+                        <h2>Reporting Person</h2>
+                        <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
+                        <div class="field"><span class="label">Address:</span> Lot ${rpLotNo.value}, ${rpStreet.value}</div>
+                        <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
+                        <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
+                    </div>
+                    <div class="section">
+                        <h2>Victim Details</h2>
+                        ${victimSameAsRP.checked ? 
+                            '<div class="field">Same as Reporting Person</div>' :
+                            `
+                            <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
+                            <div class="field"><span class="label">Address:</span> Lot ${vicLotNo.value}, ${vicStreet.value}</div>
+                            <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
+                            <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
+                            <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
+                            <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
+                            <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
+                            `
+                        }
+                    </div>
+                    <div class="section">
+                        <h2>Suspect Details</h2>
+                        <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
+                        <div class="field"><span class="label">Address:</span> ${susLotNo.value && susStreet.value ? `Lot ${susLotNo.value}, ${susStreet.value}` : 'Not specified'}</div>
+                        <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
+                        <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
+                        <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
+                    </div>
+                    <div class="section">
+                        <h2>Incident Details</h2>
+                        <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
+                        <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
+                        <div class="field"><span class="label">Location:</span> Lot ${incidentLotNo.value}, ${incidentStreet.value}</div>
+                        <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
+                        <div class="field"><span class="label">Description:</span> ${description.value}</div>
+                    </div>
+                    <div class="section">
+                        <h2>Report Information</h2>
+                        <div class="field"><span class="label">Date Reported:</span> ${new Date().toLocaleString()}</div>
+                    </div>
+                </body>
+                </html>
+            `;
             
-    //         // Create a temporary link element to trigger the download
-    //         const url = URL.createObjectURL(blob);
-    //         const a = document.createElement('a');
-            
-    //         // Set the filename with the .doc extension for maximum compatibility
-    //         a.href = url;
-    //         a.download = "Incident_Report_" + Date.now() + ".doc"; 
-            
-    //         // Trigger download and cleanup
-    //         document.body.appendChild(a);
-    //         a.click();
-    //         document.body.removeChild(a);
-    //         URL.revokeObjectURL(url); 
-    //     }
-    // });
+            // Create and download the file as a Word document
+            const blob = new Blob([reportHTML], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Incident_Report_${new Date().toISOString().split('T')[0]}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+}
+
+/**
+ * Opens an interactive map modal specifically for incident location selection
+ * @param {string} target - Identifier for which address field is being mapped (only 'incident' is supported)
+ */
+function openMapPicker(target) {
+    // Only open map picker for incident location (restricted functionality)
+    if (target !== 'incident') {
+        alert('Map picker is only available for incident location');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'map-modal';
+    modal.innerHTML = `
+        <div class="map-modal-content">
+            <div class="map-header">
+                <div class="map-modal-header">
+                    <h3>Select Incident Location</h3>
+                    <button class="close-map">Close</button>
+                </div>
+            </div>
+            <div id="map-container"></div>
+        </div>
+    `;
+    modal.dataset.target = target;
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+
+    modal.querySelector('.close-map').addEventListener('click', () => {
+        const preview = document.getElementById(`map-preview-${target}`);
+        if (preview) preview.style.display = 'none';
+        modal.remove();
+    });
+
+    initializeMapPicker(target);
+}
+
+/**
+ * Initializes Leaflet map specifically for incident location selection
+ * @param {string} target - Identifier for which address field is being mapped (only 'incident' is supported)
+ */
+async function initializeMapPicker(target) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
+
+    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    // Handle map clicks to set incident location marker and populate coordinates
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
+
+        // ONLY set coordinates for incident location
+        if (target === 'incident') {
+            incidentLatitude.value = lat;
+            incidentLongitude.value = lng;
+        }
+        
+        document.getElementById(`map-preview-${target}`).style.display = 'block';
+    });
+
+    // Barangay polygon for visual reference
+    const blueRidgeGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "properties": { "name": "Barangay Blue Ridge B" },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [121.07278956348526, 14.61639406374255],
+                    [121.07392145567032, 14.61595803532421],
+                    [121.07419772320655, 14.616251316435923],
+                    [121.07617987565104, 14.616430399403944],
+                    [121.07651515177966, 14.617647640629082],
+                    [121.07800914220171, 14.617803363969443],
+                    [121.07872851395038, 14.617316502559932],
+                    [121.07891090415784, 14.617705811277993],
+                    [121.07449698388697, 14.62017411386342]
+                ]]
+            }
+        }]
+    };
+    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
+
+    // Load houses from server database for selection
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_houses');
+        const response = await fetch('../../pages/staff/map_handler.php', { method: 'POST', body: formData });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        if (data.success && data.houses) {
+            const houseLayer = L.layerGroup();
+
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        const coords = JSON.parse(house.coordinates);
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        latLngCoords.push(latLngCoords[0]); // close polygon
+
+                        const polygon = L.polygon(latLngCoords, {
+                            color: '#3388ff',
+                            weight: 1,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.1,
+                            interactive: true
+                        }).addTo(houseLayer);
+
+                        // Polygon click autofill - populate incident fields when house is selected
+                        polygon.on('click', function (e) {
+                            const lat = e.latlng.lat.toFixed(6);
+                            const lng = e.latlng.lng.toFixed(6);
+
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+
+                            // ONLY set coordinates for incident location
+                            if (target === 'incident') {
+                                incidentLatitude.value = lat;
+                                incidentLongitude.value = lng;
+                                
+                                // Fill lot and street fields for incident location
+                                incidentLotNo.value = house.house_number || '';
+                                incidentStreet.value = house.street_name || '';
+                                [incidentLotNo, incidentStreet].forEach(el => {
+                                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                                });
+                            }
+                            
+                            document.getElementById(`map-preview-${target}`).style.display = 'block';
+                        });
+
+                        polygon.bindPopup(`
+                            <div class="house-popup">
+                                <h4>🏠 ${house.address}</h4>
+                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
+                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
+                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
+                            </div>
+                        `);
+
+                    } catch (err) {
+                        console.error('Error parsing house coordinates:', err);
+                    }
+                }
+            });
+
+            houseLayer.addTo(map);
+        }
+    } catch (err) {
+        console.error('Error loading houses:', err);
+    }
+}
+
+/**
+ * Sets up coordinate field formatting to ensure proper decimal precision for incident coordinates
+ * @param {string} target - Identifier for which coordinate set to format ('incident' only)
+ */
+function setupCoordinateAutoFormat(target) {
+    const latInput = document.getElementById(`${target}Latitude`);
+    const lngInput = document.getElementById(`${target}Longitude`);
+    if (!latInput || !lngInput) return;
+
+    [latInput, lngInput].forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value && !this.value.includes('.')) {
+                this.value = parseFloat(this.value).toFixed(6);
+            }
+        });
+    });
+}
+
+// Initialize coordinate formatting only for incident location when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    setupCoordinateAutoFormat('incident');
+});
+
+// Initialize map buttons when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
+});
+
+/**
+ * Automatically populates reporting person information fields with user data from session
+ * Fetches resident profile data to pre-fill the form for convenience
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const data = await resp.json();
+
+        if (data.error) {
+            console.log('Autofill error:', data.error);
+            return;
+        }
+
+        // Populate reporting person fields with user data
+        if (data.first_name && data.last_name) {
+            rpFullName.value = `${data.last_name}, ${data.first_name}${data.middle_name ? ' ' + data.middle_name : ''}`;
+        }
+
+        if (data.contact_no) {
+            rpContact.value = data.contact_no;
+        }
+
+        // Populate address fields if available
+        if (data.lot_no) {
+            rpLotNo.value = data.lot_no;
+        }
+
+        if (data.street_name) {
+            // Find matching street in dropdown
+            const streetSelect = document.getElementById('rpStreet');
+            for (let option of streetSelect.options) {
+                if (option.value === data.street_name) {
+                    streetSelect.value = data.street_name;
+                    break;
+                }
+            }
+        }
+
+        // Set default citizenship for victim
+        vicCitizenship.value = 'Filipino';
+
+    } catch (err) {
+        console.error('Failed to fetch user data:', err);
+    }
+});
