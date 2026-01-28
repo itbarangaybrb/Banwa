@@ -404,9 +404,9 @@
                 </div>
             </div>
 
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="detailsModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
                         <h2>Application Details</h2>
                         <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
                     </div>
@@ -414,9 +414,9 @@
                 </div>
             </div>
 
-            <div id="updateModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="updateModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
                         <h2>Update Application Status</h2>
                         <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                     </div>

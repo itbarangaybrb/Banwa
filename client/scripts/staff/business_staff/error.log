@@ -699,3 +699,15 @@ LINE 1: INSERT INTO business_status_history
 [28-Jan-2026 07:54:09 UTC] R1 Check - Required: []
 [28-Jan-2026 07:54:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
 [28-Jan-2026 07:54:09 UTC] R1 Check - Missing: []
+[28-Jan-2026 09:31:36 UTC] R1 Check - Required: []
+[28-Jan-2026 09:31:36 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[28-Jan-2026 09:31:36 UTC] R1 Check - Missing: []
+[28-Jan-2026 09:31:36 UTC] R1 Check - Required: []
+[28-Jan-2026 09:31:36 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[28-Jan-2026 09:31:36 UTC] R1 Check - Missing: []
+[28-Jan-2026 10:42:06 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[28-Jan-2026 12:18:44 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^

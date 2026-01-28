@@ -815,7 +815,7 @@ function createConstructionPopup(data) {
                 <p><strong>Nature:</strong> ${data.nature_of_work || 'Not specified'}</p>
                 <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
             </div>
-            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'construction')">
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
                 View Full Details
             </button>
         </div>
@@ -838,7 +838,7 @@ function createBusinessPopup(data) {
                 <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
                 <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
             </div>
-            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'business')">
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
                 View Full Details
             </button>
         </div>
@@ -861,7 +861,7 @@ function createUtilityPopup(data) {
                 <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
                 <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
             </div>
-            <button class="view-details-btn" onclick="viewDetails(${data.id}, 'utility')">
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
                 View Full Details
             </button>
         </div>
@@ -883,7 +883,7 @@ function createHouseholdPopup(data) {
                 <p><strong>Type:</strong> ${data.marker_type || 'household'}</p>
                 <p><strong>Created:</strong> ${formatDate(data.created_at)}</p>
             </div>
-            <button class="view-details-btn" onclick="viewDetails(${data.marker_id}, 'household')">
+            <button class="view-details-btn" onclick="viewMapDetails(${data.marker_id}, 'household')">
                 View Full Details
             </button>
         </div>
@@ -940,7 +940,7 @@ function createHousePopup(data) {
 }
 
 // View details functions
-async function viewDetails(id, type) {
+async function viewMapDetails(id, type) {
     try {
         const formData = new FormData();
         formData.append('action', `get_${type}_details`);

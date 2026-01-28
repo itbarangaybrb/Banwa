@@ -1657,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // CLOSE MODAL ON OUTSIDE CLICK
 window.onclick = function (event) {
-    const modals = document.querySelectorAll('.modal');
+    const modals = document.querySelectorAll('.staff-modal');
     modals.forEach(modal => {
         if (event.target == modal) {
             modal.classList.remove('active');

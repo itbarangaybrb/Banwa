@@ -617,10 +617,10 @@ tr:hover {
 
 
 /* MODAL STYLES */
-.modal {
+.staff-modal {
     display: none;
     position: fixed;
-    z-index: 2000;
+    z-index: 9999;
     left: 0;
     top: 0;
     width: 100%;
@@ -629,11 +629,11 @@ tr:hover {
     overflow-y: auto;
 }
 
-.modal.active {
+.staff-modal.active {
     display: block;
 }
 
-.modal-content {
+.staff-modal .staff-modal-content {
     background-color: white;
     margin: 5% auto;
     padding: 30px;
@@ -645,7 +645,7 @@ tr:hover {
     overflow-y: auto;
 }
 
-.modal-header {
+.staff-modal .staff-modal-header {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 2px solid #eee;
@@ -654,7 +654,7 @@ tr:hover {
     align-items: center;
 }
 
-.modal-header h2 {
+.staff-modal .staff-modal-header h2 {
     color: #333;
     margin: 0;
 }
