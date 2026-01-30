@@ -510,7 +510,7 @@ function generateIncidentReportFormHtml(data) {
     const incidentType = data.incident_type || '';
     const incidentLocation = data.incident_location || '';
     const incidentDescription = data.description || '';
-    
+
     return `
         <form id="simple-edit-form">
             <h2>Edit Incident Report</h2>
@@ -945,3 +945,61 @@ document.addEventListener('DOMContentLoaded', () => {
     loadApplications();
     loadPayments();
 });
+
+
+
+/**
+ * Checks for updates on resident applications by fetching data from the server
+ * Compares the current status of each application with the last known status
+ * Triggers notifications and updates the UI if a status change is detected
+*/
+let lastStatuses = {};
+async function checkStatusUpdates() {
+    try {
+        const res = await fetch('/Banwa/server/api/resident/get_applications.php');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.applications)) {
+            data.applications.forEach(app => {
+                const key = `${app.type}_${app.id}`;
+                const prevStatus = lastStatuses[key];
+                const currentStatus = app.status || 'Pending';
+
+                if (prevStatus && prevStatus !== currentStatus) {
+                    showStatusNotification(app.id, app.type, currentStatus);
+                    loadApplications();
+                }
+
+                lastStatuses[key] = currentStatus;
+            });
+        }
+    } catch (err) {
+        console.error('Error checking status updates:', err);
+    }
+}
+
+/**
+ * Displays a browser notification when an application's status changes
+ * Requests notification permission if not already granted
+ * Uses a service worker to show the notification with relevant application details
+ */
+function showStatusNotification(appId, appType, newStatus) {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+        return;
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Application Status Updated", {
+                body: `${appType} application ID ${appId} is now "${newStatus}"`,
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
+    }
+}
+
+// Start polling every 30s
+checkStatusUpdates();
+setInterval(checkStatusUpdates, 30000);
