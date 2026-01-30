@@ -2,6 +2,7 @@
 const API_URL = '../../../scripts/staff/utilities_staff/utilities_handler.php';
 const UPLOADS_BASE_PATH = '../../../scripts/staff/utilities_staff/uploads/';
 let applications = [];
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'utility';
 let mapFilterVisible = true;
@@ -50,15 +51,6 @@ function initializeSidebarNav() {
         });
     });
 
-    const userProfileBtn = document.getElementById('userProfileBtn');
-    if (userProfileBtn) {
-        userProfileBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            console.log('User profile button clicked');
-        });
-    }
-
-    // Load initial tab
     loadAnalyticsTab();
 }
 
@@ -112,9 +104,9 @@ function loadManagementTable() {
  * Displays appropriate status badges and action buttons based on application state
  */
 function filterApplications() {
-    // 1. GET ELEMENTS - Fixed IDs
+    // 1. GET ELEMENTS
     const searchEl = document.getElementById('managementSearch');
-    const tbody = document.getElementById('tableBody'); // Direct ID
+    const tbody = document.getElementById('tableBody');
 
     // If the table body doesn't exist, stop immediately
     if (!tbody) {
@@ -156,9 +148,9 @@ function filterApplications() {
         const address = (app.address_of_utility || '').toLowerCase();
 
         return natureOfWork.includes(searchTerm) ||
-               fullName.includes(searchTerm) ||
-               id.includes(searchTerm) ||
-               address.includes(searchTerm);
+            fullName.includes(searchTerm) ||
+            id.includes(searchTerm) ||
+            address.includes(searchTerm);
     });
 
     // 5. RENDER LOGIC
@@ -183,28 +175,29 @@ function filterApplications() {
         let actionBtn = '';
 
         if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'Complied') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
         // C. Build Row - Match your table headers
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.last_name}</td>
+            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
             <td>${app.owner_contact_no || 'N/A'}</td>
             <td>${app.provider || 'N/A'}</td>
+            <td>${app.nature_of_work || 'N/A'}</td>
             <td>${app.address_of_utility || 'N/A'}</td>
             <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
             <td>
                 <div class="action-buttons">
                     ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">👁️ View</button>
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
                 </div>
             </td>
         `;
@@ -233,17 +226,6 @@ function loadApplicationsFromDB() {
 }
 
 /**
- * Loads applications into the review table with view and archive functionality
- * Displays applications with status badges and appropriate action buttons
- */
-function loadManagementTable() {
-    // Delegate to the filter-based renderer so management rows include process/action buttons
-    loadApplicationsFromDB().finally(() => {
-        filterApplications();
-    });
-}
-
-/**
  * Loads applications into the process table with actionable statuses
  * Filters out excluded statuses and shows appropriate action buttons based on current status
  */
@@ -251,7 +233,7 @@ function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
         if (!tbody) return;
-        
+
         tbody.innerHTML = '';
 
         const excludedStatuses = ['Cancelled', 'Archived'];
@@ -266,7 +248,7 @@ function loadProcessTable() {
         }
 
         actionable.forEach(app => {
-            let btnText = "⚙️ Update";
+            let btnText = "Update";
             let btnClass = "secondary";
 
             if (app.status === 'Pending') { btnClass = "primary"; }
@@ -750,7 +732,7 @@ function viewDetails(appId) {
             <div class="details-grid">
                 <div class="col-left">
                     <div class="detail-card">
-                        <h3>📍 Utility Information</h3>
+                        <h3>Utility Information</h3>
                         <div class="detail-row"><span class="detail-label">Nature of Work</span> <span class="detail-value">${app.nature_of_work || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Provider</span> <span class="detail-value">${app.provider || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${utilityAddress}</span></div>
@@ -758,7 +740,7 @@ function viewDetails(appId) {
                     </div>
 
                     <div class="detail-card" style="margin-top:20px;">
-                        <h3>👤 Owner Details</h3>
+                        <h3>Owner Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.owner_contact_no || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.owner_address || 'N/A'}</span></div>
@@ -767,14 +749,14 @@ function viewDetails(appId) {
 
                 <div class="col-right">
                     <div class="detail-card">
-                        <h3>📅 Schedule & Agreement</h3>
+                        <h3>Schedule & Agreement</h3>
                         <div class="detail-row"><span class="detail-label">Request Date</span> <span class="detail-value">${app.request_date || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Date of Work</span> <span class="detail-value">${app.date_of_work || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Agreement</span> <span class="detail-value">${app.agreed == 1 ? '✅ Agreed' : '❌ Not Agreed'}</span></div>
+                        <div class="detail-row"><span class="detail-label">Agreement</span> <span class="detail-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
                     </div>
 
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-                        <h3>📊 Evaluation Status</h3>
+                        <h3>Evaluation Status</h3>
                         <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${app.dss_status || 'Pending Evaluation'}</span></div>
                     </div>
                 </div>
@@ -782,7 +764,7 @@ function viewDetails(appId) {
 
             ${app.approval_comments || app.disapproval_reason ? `
             <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
+                <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
                 <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
             </div>
             ` : ''}
@@ -860,7 +842,7 @@ function updateSummary() {
         <div class="report-grid">
             <div class="report-column">
                 <div class="report-section">
-                    <h3>📍 Utility Details</h3>
+                    <h3>Utility Details</h3>
                     <div class="info-row"><span class="info-label">Nature of Work</span> <span class="info-value">${app.nature_of_work || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Provider</span> <span class="info-value">${app.provider || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_utility || 'N/A'}</span></div>
@@ -868,7 +850,7 @@ function updateSummary() {
                 </div>
 
                 <div class="report-section">
-                    <h3>👤 Ownership</h3>
+                    <h3>Ownership</h3>
                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.owner_contact_no || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.owner_address || 'N/A'}</span></div>
@@ -877,14 +859,14 @@ function updateSummary() {
 
             <div class="report-column">
                 <div class="report-section">
-                    <h3>📅 Schedule & Agreement</h3>
+                    <h3>Schedule & Agreement</h3>
                     <div class="info-row"><span class="info-label">Request Date</span> <span class="info-value">${app.request_date || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Date of Work</span> <span class="info-value">${app.date_of_work || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Agreement</span> <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
                 </div>
 
                 <div class="financial-box">
-                    <h3 style="border:none; margin:0 0 10px 0;">📊 DSS Evaluation</h3>
+                    <h3 style="border:none; margin:0 0 10px 0;">DSS Evaluation</h3>
                     <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value">${app.dss_status || 'Pending Evaluation'}</span></div>
                 </div>
             </div>
@@ -892,7 +874,7 @@ function updateSummary() {
 
         ${app.approval_comments ? `
         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
-            <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
+            <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
         </div>` : ''}
 
@@ -1004,9 +986,9 @@ function downloadSummary(appId) {
     // Generate HTML for comments
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div class="comment-box approval"><h3>✅ Approval Comments</h3><p>${app.approval_comments}</p></div>`;
+        commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
     } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div class="comment-box disapproval"><h3>❌ Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
+        commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
     // Generate the full HTML content with embedded CSS for styling
@@ -1038,7 +1020,7 @@ function downloadSummary(appId) {
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
 
-                <h2>📍 Utility Information</h2>
+                <h2>Utility Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Nature of Work:</strong> ${app.nature_of_work}</li>
@@ -1051,7 +1033,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>👤 Owner Information</h2>
+                <h2>Owner Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</li>
@@ -1060,7 +1042,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>📅 Application Status</h2>
+                <h2>Application Status</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Submission Date:</strong> ${app.request_date}</li>
@@ -1100,7 +1082,7 @@ function createApplication(event) {
 function filterReviewApplications() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('#tableBody tr');
-    
+
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';

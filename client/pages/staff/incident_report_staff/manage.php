@@ -198,7 +198,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div id="map"></div>
@@ -240,9 +239,11 @@
                     <table id="incidentsTable">
                         <thead>
                             <tr>
-                                <th>Report ID</th>
-                                <th>Incident Type</th>
+                                <th>ID</th>
+                                <th>Reporter</th>
                                 <th>Victim</th>
+                                <th>Suspect</th>
+                                <th>Incident Type</th>
                                 <th>Location</th>
                                 <th>Date & Time</th>
                                 <th>Status</th>
@@ -550,9 +551,9 @@
                             <label for="updateComments">Remarks / Comments *</label>
                             <div class="prompt-container">
                                 <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Report is complete. Ready for processing.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Requires further investigation.')">🔍 Needs Investigation</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Forwarded to appropriate authorities.')">📋 Forwarded</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Report is complete. Ready for processing.')">Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Requires further investigation.')">Needs Investigation</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Forwarded to appropriate authorities.')">Forwarded</button>
                                 </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>

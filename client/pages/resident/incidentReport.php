@@ -26,7 +26,6 @@ if ($_SESSION['role_id'] != 1) {
     include '_layout/nav.php';
     ?>
 
-    <main>
         <section class="sections" id="permits">
             <div class="header-and-parag">
                 <h4>Incident Report</h4>
@@ -459,7 +458,6 @@ if ($_SESSION['role_id'] != 1) {
             <p>Click the button below to download the report file.</p>
             <button id="downloadBtn">Download Report (.doc)</button>
         </section>
-    </main>
 
     <?php include '_layout/end.php'; ?>
     <script type="module" src="../../scripts/resident/incidentReport.js"></script>

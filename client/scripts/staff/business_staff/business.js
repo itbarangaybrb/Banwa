@@ -1,8 +1,10 @@
 // Configuration
 const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
+
 // NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
 const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
 let applications = [];
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'business';
 let mapFilterVisible = true;
@@ -178,19 +180,19 @@ function filterApplications() {
         let actionBtn = '';
 
         if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
         }
         else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">🖨️ Clearance</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
         }
         else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
         // C. Build Row
@@ -198,13 +200,13 @@ function filterApplications() {
         row.innerHTML = `
             <td>${app.id}</td>
             <td style="font-weight:600;">${app.business_name}</td>
-            <td>${app.first_name} ${app.last_name}</td>
+            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
             <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
             <td>${app.payment_status || 'Unpaid'}</td>
             <td>
                 <div class="action-buttons">
                     ${actionBtn} 
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">👁️</button>
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
                 </div>
             </td>
         `;
@@ -250,8 +252,8 @@ function loadReviewTable() {
                     <td>${app.first_name} ${app.last_name}</td>
                     <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
                     <td>${app.payment_status || 'N/A'}</td>
-                    <td><button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-                    <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button></td>
+                    <td><button class="btn-info" onclick="viewDetails(${app.id})">View</button>
+                    <button class="btn-delete" onclick="archiveApplication(${app.id})">Archive</button></td>
                 </tr>
             `;
         });
@@ -280,11 +282,11 @@ function loadProcessTable() {
         }
 
         actionable.forEach(app => {
-            let btnText = "⚙️ Update";
+            let btnText = "Update";
             let btnClass = "btn-secondary";
 
             // Highlight actions based on flow
-            if (app.status === 'Pending') { btnText = "⚙️ Update"; btnClass = "btn-primary"; }
+            if (app.status === 'Pending') { btnText = "Update"; btnClass = "btn-primary"; }
             else if (app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "btn-warning"; }
             else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
 
@@ -576,22 +578,19 @@ function addDSSSectionToModal(evaluation, app) {
     const failedRules = details.failed_rules || [];
     const recommendations = details.recommendations || [];
 
-    let statusColor, statusBg, statusIcon;
+    let statusColor, statusBg;
     switch (dssStatus) {
         case 'Pre-Approved':
             statusColor = '#155724';
             statusBg = '#d4edda';
-            statusIcon = '✅';
             break;
         case 'Additional Requirements Needed':
             statusColor = '#856404';
             statusBg = '#fff3cd';
-            statusIcon = '⚠️';
             break;
         case 'Rejected':
             statusColor = '#721c24';
             statusBg = '#f8d7da';
-            statusIcon = '❌';
             break;
         default:
             statusColor = '#0c5460';
@@ -681,35 +680,31 @@ function addBasicDSSSection(app) {
     dssSection.className = 'dss-evaluation-section';
 
     const dssStatus = app.dss_status || 'Pending Evaluation';
-    let statusColor, statusBg, statusIcon;
+    let statusColor, statusBg;
 
     switch (dssStatus) {
         case 'Pre-Approved':
             statusColor = '#155724';
             statusBg = '#d4edda';
-            statusIcon = '✅';
             break;
         case 'Additional Requirements Needed':
             statusColor = '#856404';
             statusBg = '#fff3cd';
-            statusIcon = '⚠️';
             break;
         case 'Rejected':
             statusColor = '#721c24';
             statusBg = '#f8d7da';
-            statusIcon = '❌';
             break;
         default:
             statusColor = '#0c5460';
             statusBg = '#d1ecf1';
-            statusIcon = '⏳';
     }
 
     dssSection.innerHTML = `
         <div class="dss-header">
-            <h3>📊 DSS Evaluation</h3>
+            <h3>DSS Evaluation</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg};">
-                ${statusIcon} ${dssStatus}
+                ${dssStatus}
             </span>
         </div>
         <p class="dss-loading">Loading detailed evaluation...</p>
@@ -853,7 +848,7 @@ function viewDetails(appId) {
             <div class="details-grid">
                 <div class="col-left">
                     <div class="detail-card">
-                        <h3>📍 Business Information</h3>
+                        <h3>Business Information</h3>
                         <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${app.type_of_business}</span></div>
                         <div class="detail-row"><span class="detail-label">Nature</span> <span class="detail-value">${app.nature_of_business}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_of_business}</span></div>
@@ -863,7 +858,7 @@ function viewDetails(appId) {
                     </div>
 
                     <div class="detail-card" style="margin-top:20px;">
-                        <h3>👤 Owner Details</h3>
+                        <h3>Owner Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.telephone_no_owner}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_owner}</span></div>
@@ -872,7 +867,7 @@ function viewDetails(appId) {
 
                 <div class="col-right">
                     <div class="detail-card">
-                        <h3>📋 Documents & Files</h3>
+                        <h3>Documents & Files</h3>
                         <div style="margin-bottom:15px;">
                             <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
                             <div style="font-size:12px; line-height:1.6;">${requirementsList}</div>
@@ -881,7 +876,7 @@ function viewDetails(appId) {
                     </div>
 
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-                        <h3>💰 Assessment</h3>
+                        <h3>Assessment</h3>
                         ${app.amount_due > 0 ? `
                         <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
                         <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
@@ -893,7 +888,7 @@ function viewDetails(appId) {
 
             ${app.approval_comments || app.disapproval_reason ? `
             <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
+                <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
                 <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
             </div>
             ` : ''}
@@ -1021,7 +1016,7 @@ function updateSummary() {
         <div class="report-grid">
             <div class="report-column">
                 <div class="report-section">
-                    <h3>📍 Business Identity</h3>
+                    <h3>Business Identity</h3>
                     <div class="info-row"><span class="info-label">Business Name</span> <span class="info-value">${app.business_name}</span></div>
                     <div class="info-row"><span class="info-label">Type</span> <span class="info-value">${app.type_of_business}</span></div>
                     <div class="info-row"><span class="info-label">Nature</span> <span class="info-value">${app.nature_of_business}</span></div>
@@ -1029,7 +1024,7 @@ function updateSummary() {
                 </div>
 
                 <div class="report-section">
-                    <h3>👤 Ownership</h3>
+                    <h3>Ownership</h3>
                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.telephone_no_owner}</span></div>
                     <div class="info-row"><span class="info-label">Email</span> <span class="info-value">${app.email_address || 'N/A'}</span></div>
@@ -1038,7 +1033,7 @@ function updateSummary() {
 
             <div class="report-column">
                 <div class="report-section">
-                    <h3>🏢 Operations & Docs</h3>
+                    <h3>Operations & Docs</h3>
                     <div class="info-row"><span class="info-label">Structure</span> <span class="info-value">${app.type_of_structure}</span></div>
                     <div class="info-row"><span class="info-label">Employees</span> <span class="info-value">${app.no_of_employees}</span></div>
                     <div style="margin-top:15px;">
@@ -1048,7 +1043,7 @@ function updateSummary() {
                 </div>
 
                 <div class="financial-box">
-                    <h3 style="border:none; margin:0 0 10px 0;">💰 Financial Status</h3>
+                    <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
                     <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
                     <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
                     <div class="financial-total">
@@ -1061,7 +1056,7 @@ function updateSummary() {
 
         ${app.approval_comments ? `
         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
-            <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
+            <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
         </div>` : ''}
 
@@ -1255,9 +1250,9 @@ function downloadSummary(appId) {
     // Generate HTML for comments
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div class="comment-box approval"><h3>✅ Approval Comments</h3><p>${app.approval_comments}</p></div>`;
+        commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
     } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div class="comment-box disapproval"><h3>❌ Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
+        commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
     // Generate the full HTML content with embedded CSS for styling
@@ -1293,7 +1288,7 @@ function downloadSummary(appId) {
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
 
-                <h2>📍 Business Information</h2>
+                <h2>Business Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Business Name:</strong> ${app.business_name}</li>
@@ -1306,7 +1301,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>👤 Owner Information</h2>
+                <h2>Owner Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</li>
@@ -1315,7 +1310,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>🏢 Structure & Requirements</h2>
+                <h2>Structure & Requirements</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Structure Type:</strong> ${app.type_of_structure}</li>
@@ -1327,7 +1322,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>📅 Application Status</h2>
+                <h2>Application Status</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Submission Date:</strong> ${app.application_date}</li>
@@ -1738,7 +1733,7 @@ window.onclick = function (event) {
 function updateWarningUI(status) {
     const warningDiv = document.getElementById('statusWarning');
     warningDiv.style.display = 'block';
-    
+
     if (status === 'Disapproved') {
         warningDiv.style.backgroundColor = '#fff2f2';
         warningDiv.style.color = '#d93025';
@@ -1761,20 +1756,20 @@ const statusTemplates = {
 };
 
 // 2. Logic to auto-fill the textarea
-document.getElementById('newStatus').addEventListener('change', function() {
+document.getElementById('newStatus').addEventListener('change', function () {
     const status = this.value;
     const commentBox = document.getElementById('updateComments');
     const amountGroup = document.getElementById('amountInputGroup'); // Your div containing the amount input
 
     // Show/Hide amount field
-    if(status === 'For Payment') {
+    if (status === 'For Payment') {
         amountGroup.style.display = 'block';
     } else {
         amountGroup.style.display = 'none';
     }
 
     // Auto-fill template if it exists
-    if(statusTemplates[status]) {
+    if (statusTemplates[status]) {
         commentBox.value = statusTemplates[status];
     }
 });

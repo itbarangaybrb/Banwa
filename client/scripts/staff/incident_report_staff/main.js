@@ -170,27 +170,29 @@ function filterIncidents() {
 
         let actionBtn = '';
         if (incident.status === 'Reported') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">⚙️ Process</button>`;
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Process</button>`;
         }
         else if (incident.status === 'Under Investigation') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">🔍 Investigate</button>`;
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Investigate</button>`;
         }
         else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">⚙️ Update</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">Update</button>`;
         }
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>INC-${incident.id}</td>
-            <td>${incident.incident_type || 'N/A'}</td>
+            <td>${incident.id}</td>
+            <td>${incident.rp_full_name || 'N/A'}</td>
             <td>${incident.vic_full_name || 'N/A'}</td>
-            <td>${incident.incident_location || 'N/A'}</td>
+            <td>${incident.sus_full_name || 'N/A'}</td>
+            <td>${incident.incident_type || 'N/A'}</td>
+            <td>${incident.rp_address || 'N/A'}</td>
             <td>${formatDateTime(incident.incident_timestamp)}</td>
             <td><span class="status-badge status-${badgeClass}">${incident.status}</span></td>
             <td>
                 <div class="action-buttons">
                     ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">👁️ View</button>
+                    <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
                 </div>
             </td>
         `;
@@ -256,7 +258,7 @@ function loadProcessTable() {
         }
 
         actionable.forEach(incident => {
-            let btnText = "⚙️ Update";
+            let btnText = "Update";
             let btnClass = "secondary";
 
             if (incident.status === 'Reported') {
@@ -274,7 +276,7 @@ function loadProcessTable() {
 
             tbody.innerHTML += `
                 <tr>
-                    <td>INC-${incident.id}</td>
+                    <td>${incident.id}</td>
                     <td>${incident.incident_type || 'N/A'}</td>
                     <td>${incident.vic_full_name || 'N/A'}</td>
                     <td>${formatDate(incident.reported_at)}</td>
@@ -572,7 +574,7 @@ function viewDetails(incidentId) {
             <div class="details-header-card">
                 <div class="details-title">
                     <h2>${incident.incident_type || 'Incident Report'}</h2>
-                    <div class="details-id">Report ID: INC-${incident.id}</div>
+                    <div class="details-id">Report ID: ${incident.id}</div>
                 </div>
                 <div style="text-align:right;">
                     <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
@@ -585,7 +587,7 @@ function viewDetails(incidentId) {
             <div class="details-grid">
                 <div class="col-left">
                     <div class="detail-card">
-                        <h3>📍 Incident Information</h3>
+                        <h3>Incident Information</h3>
                         <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${incident.incident_type || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Date & Time</span> <span class="detail-value">${formatDateTime(incident.incident_timestamp)}</span></div>
                         <div class="detail-row"><span class="detail-label">Location</span> <span class="detail-value">${incident.incident_location || 'N/A'}</span></div>
@@ -594,7 +596,7 @@ function viewDetails(incidentId) {
                     </div>
 
                     <div class="detail-card" style="margin-top:20px;">
-                        <h3>👤 Victim Details</h3>
+                        <h3>Victim Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.vic_full_name || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.vic_contact || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.vic_address || 'N/A'}</span></div>
@@ -604,7 +606,7 @@ function viewDetails(incidentId) {
 
                 <div class="col-right">
                     <div class="detail-card">
-                        <h3>👤 Reporting Person</h3>
+                        <h3>Reporting Person</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.rp_full_name || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.rp_contact || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Relationship</span> <span class="detail-value">${incident.rp_relationship || 'N/A'}</span></div>
@@ -612,7 +614,7 @@ function viewDetails(incidentId) {
 
                     ${incident.sus_full_name ? `
                     <div class="detail-card" style="margin-top:20px; border-color: #f5c6cb;">
-                        <h3>⚠️ Suspect Details</h3>
+                        <h3>Suspect Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.sus_full_name || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.sus_contact || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.sus_address || 'N/A'}</span></div>
@@ -623,13 +625,13 @@ function viewDetails(incidentId) {
             </div>
 
             <div class="detail-card">
-                <h3>📝 Narrative Description</h3>
+                <h3>Narrative Description</h3>
                 <p style="margin:0; color:#555; line-height:1.6;">${incident.description || 'No description provided.'}</p>
             </div>
 
             ${incident.investigation_notes ? `
             <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">🔍 Investigation Notes</h3>
+                <h3 style="color:#856404; border-color:#ffeeba;">Investigation Notes</h3>
                 <p style="margin:0; color:#555;">${incident.investigation_notes}</p>
                 <div style="font-size:12px; color:#666; margin-top:5px;">Updated: ${formatDateTime(incident.updated_at)}</div>
             </div>
@@ -654,7 +656,7 @@ function loadSummarySelect() {
 
         select.innerHTML = '<option value="">-- Select Incident Report --</option>';
         incidents.forEach(incident => {
-            select.innerHTML += `<option value="${incident.id}">INC-${incident.id} - ${incident.incident_type} (${formatDate(incident.incident_timestamp)})</option>`;
+            select.innerHTML += `<option value="${incident.id}"> ${incident.id} - ${incident.incident_type} (${formatDate(incident.incident_timestamp)})</option>`;
         });
     });
 }
@@ -698,7 +700,7 @@ function updateIncidentSummary() {
         <div class="report-header">
             <div class="report-title">
                 <h1>Incident Report Summary</h1>
-                <div class="report-meta">Report ID: INC-${incident.id} &bull; Reported: ${reportedDate}</div>
+                <div class="report-meta">Report ID: ${incident.id} &bull; Reported: ${reportedDate}</div>
             </div>
             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
                 ${incident.status}
@@ -708,7 +710,7 @@ function updateIncidentSummary() {
         <div class="report-grid">
             <div class="report-column">
                 <div class="report-section">
-                    <h3>📍 Incident Details</h3>
+                    <h3>Incident Details</h3>
                     <div class="info-row"><span class="info-label">Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${incidentDate}</span></div>
                     <div class="info-row"><span class="info-label">Location</span> <span class="info-value">${incident.incident_location || 'N/A'}</span></div>
@@ -717,7 +719,7 @@ function updateIncidentSummary() {
                 </div>
 
                 <div class="report-section">
-                    <h3>👤 Victim Information</h3>
+                    <h3>Victim Information</h3>
                     <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.vic_full_name || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.vic_contact || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.vic_address || 'N/A'}</span></div>
@@ -728,7 +730,7 @@ function updateIncidentSummary() {
 
             <div class="report-column">
                 <div class="report-section">
-                    <h3>👤 Reporting Person</h3>
+                    <h3>Reporting Person</h3>
                     <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.rp_full_name || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.rp_contact || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.rp_address || 'N/A'}</span></div>
@@ -737,7 +739,7 @@ function updateIncidentSummary() {
 
                 ${incident.sus_full_name ? `
                 <div class="report-section">
-                    <h3>⚠️ Suspect Information</h3>
+                    <h3>Suspect Information</h3>
                     <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
@@ -749,7 +751,7 @@ function updateIncidentSummary() {
         </div>
 
         <div class="report-section">
-            <h3>📝 Incident Narrative</h3>
+            <h3>Incident Narrative</h3>
             <div style="background:#f8f9fa; padding:15px; border-radius:5px; border-left:4px solid #6366F1;">
                 ${incident.description || 'No description provided.'}
             </div>
@@ -757,7 +759,7 @@ function updateIncidentSummary() {
 
         ${incident.investigation_notes ? `
         <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
-            <h3 style="border:none; margin-bottom:5px;">🔍 Investigation Notes</h3>
+            <h3 style="border:none; margin-bottom:5px;">Investigation Notes</h3>
             <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
             <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
         </div>` : ''}
@@ -781,7 +783,7 @@ function downloadIncidentSummary(incidentId) {
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Incident Report Summary - INC-${incident.id}</title>
+            <title>Incident Report Summary - ${incident.id}</title>
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
                 .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -799,10 +801,10 @@ function downloadIncidentSummary(incidentId) {
             <div class="container">
                 <h1>Incident Report Summary</h1>
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Report ID:</strong> INC-${incident.id}</p>
+                <p><strong>Report ID:</strong> ${incident.id}</p>
                 <p><strong>Status:</strong> ${incident.status}</p>
 
-                <h2>📍 Incident Information</h2>
+                <h2>Incident Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Incident Type:</strong> ${incident.incident_type}</li>
@@ -813,7 +815,7 @@ function downloadIncidentSummary(incidentId) {
                     </ul>
                 </div>
 
-                <h2>👤 Victim Information</h2>
+                <h2>Victim Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Full Name:</strong> ${incident.vic_full_name}</li>
@@ -824,7 +826,7 @@ function downloadIncidentSummary(incidentId) {
                     </ul>
                 </div>
 
-                <h2>👤 Reporting Person</h2>
+                <h2>Reporting Person</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Full Name:</strong> ${incident.rp_full_name}</li>
@@ -835,7 +837,7 @@ function downloadIncidentSummary(incidentId) {
                 </div>
 
                 ${incident.sus_full_name ? `
-                <h2>⚠️ Suspect Information</h2>
+                <h2>Suspect Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Full Name:</strong> ${incident.sus_full_name}</li>
@@ -847,13 +849,13 @@ function downloadIncidentSummary(incidentId) {
                 </div>
                 ` : ''}
 
-                <h2>📝 Incident Narrative</h2>
+                <h2>Incident Narrative</h2>
                 <div class="narrative-box">
                     ${incident.description || 'No description provided.'}
                 </div>
 
                 ${incident.investigation_notes ? `
-                <h2>🔍 Investigation Notes</h2>
+                <h2>Investigation Notes</h2>
                 <div class="card">
                     <p><strong>Notes:</strong> ${incident.investigation_notes}</p>
                     <p><strong>Last Updated:</strong> ${formatDateTime(incident.updated_at)}</p>

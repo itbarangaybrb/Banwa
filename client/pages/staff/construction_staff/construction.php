@@ -197,7 +197,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div id="map"></div>
@@ -240,10 +239,10 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Owner</th>
-                                <th>Nature of Act</th>
-                                <th>C. name</th>
-                                <th>C. no.</th>
+                                <th>Applicant</th>
+                                <th>N. of Act.</th>
+                                <th>Con. name</th>
+                                <th>Con. no.</th>
                                 <th>Address</th>
                                 <th>Status</th>
                                 <th>Payment</th>
@@ -388,12 +387,12 @@
             <!-- Summary Tab -->
             <div id="summary" class="tab-pane">
                 <div class="summary-controls">
-                    <h2>📄 Generate Business Summary</h2>
+                    <h2>Generate Business Summary</h2>
                     <div class="control-row">
                         <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                             <option value="">-- Select Business Application --</option>
                         </select>
-                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">🔄</button>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
                     </div>
                 </div>
 
@@ -419,7 +418,7 @@
             <div id="updateModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>⚙️ Update Application Status</h2>
+                        <h2>Update Application Status</h2>
                         <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
@@ -451,16 +450,16 @@
                             <label for="updateComments">Remarks / Comments *</label>
                             <div class="prompt-container">
                                 <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
                                 </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>
                         </div>
 
                         <div class="button-group">
-                            <button type="submit" class="btn-primary">💾 Update Status</button>
+                            <button type="submit" class="btn-primary">Update Status</button>
                             <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
                         </div>
                     </form>

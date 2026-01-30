@@ -195,7 +195,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div id="map"></div>
@@ -238,9 +237,10 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Nature of Work</th>
                                 <th>Applicant</th>
+                                <th>Contact no.</th>
                                 <th>Provider</th>
+                                <th>N. of Work</th>
                                 <th>Address</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -402,9 +402,9 @@
                             <label for="updateComments">Remarks / Comments *</label>
                             <div class="prompt-container">
                                 <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Ready for processing.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing required documents. Please submit.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please coordinate with utility provider.')">⚡ Coordinate Provider</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Ready for processing.')">Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing required documents. Please submit.')">Missing Docs</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please coordinate with utility provider.')">Coordinate Provider</button>
                                 </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>

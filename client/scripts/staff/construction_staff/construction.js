@@ -2,6 +2,7 @@
 const API_URL = '../../../scripts/staff/construction_staff/construction_handler.php';
 const UPLOADS_BASE_PATH = '../../../scripts/staff/construction_staff/uploads/';
 let applications = [];
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'construction';
 let mapFilterVisible = true;
@@ -49,14 +50,6 @@ function initializeSidebarNav() {
             switchTab(e, tabName);
         });
     });
-
-    const userProfileBtn = document.getElementById('userProfileBtn');
-    if (userProfileBtn) {
-        userProfileBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            console.log('User profile button clicked');
-        });
-    }
 
     // Load initial tab
     loadAnalyticsTab();
@@ -184,23 +177,24 @@ function filterApplications() {
         let actionBtn = '';
 
         if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">⚙️ Process</button>`;
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">💰 Verify Pay</button>`;
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
         }
         else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">✅ Finalize</button>`;
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">⚙️ Update</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
         // C. Build Row - Match your table headers
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.last_name}</td>
+            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+            <td>${app.nature_of_activity || 'N/A'}</td>
             <td>${app.contractor_name || 'N/A'}</td>
             <td>${app.contractor_contact_number || 'N/A'}</td>
             <td>${app.construction_address || 'N/A'}</td>
@@ -209,7 +203,7 @@ function filterApplications() {
             <td>
                 <div class="action-buttons">
                     ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">👁️ View</button>
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
                 </div>
             </td>
         `;
@@ -229,17 +223,6 @@ function loadApplicationsFromDB() {
             if (data.status === 'success') applications = data.data;
             return applications;
         });
-}
-
-/**
- * Loads applications into the review table with view and archive functionality
- * Displays applications with status badges and appropriate action buttons
- */
-function loadManagementTable() {
-    // Use the unified filter-based renderer so management rows include the process/action buttons
-    loadApplicationsFromDB().finally(() => {
-        filterApplications();
-    });
 }
 
 /**
@@ -263,7 +246,7 @@ function loadProcessTable() {
         }
 
         actionable.forEach(app => {
-            let btnText = "⚙️ Update";
+            let btnText = "Update";
             let btnClass = "secondary";
 
             if (app.status === 'Pending') { btnClass = "primary"; }
@@ -650,7 +633,7 @@ function addBasicDSSSection(app) {
 
     dssSection.innerHTML = `
         <div class="dss-header">
-            <h3>📊 DSS Evaluation</h3>
+            <h3>DSS Evaluation</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg};">
                 ${dssStatus}
             </span>
@@ -791,32 +774,34 @@ function viewDetails(appId) {
             <div class="details-grid">
                 <div class="col-left">
                     <div class="detail-card">
-                        <h3>📍 Construction Information</h3>
+                        <h3>Construction Information</h3>
                         <div class="detail-row"><span class="detail-label">Nature</span> <span class="detail-value">${app.nature_of_activity}</span></div>
+                        <div class="detail-row"><span class="detail-label">Contractor</span> <span class="detail-value">${app.contractor_name}</span></div>
+                        <div class="detail-row"><span class="detail-label">Contractor Contact</span> <span class="detail-value">${app.contractor_contact_number}</span></div>
                         <div class="detail-row"><span class="detail-label">Type of Work</span> <span class="detail-value">${app.type_of_work}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${constructionAddress}</span></div>
                         <div class="detail-row"><span class="detail-label">Details</span> <span class="detail-value">${app.details_of_work || 'N/A'}</span></div>
                     </div>
 
                     <div class="detail-card" style="margin-top:20px;">
-                        <h3>👤 Owner Details</h3>
+                        <h3>Owner Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.contact_no_owner}</span></div>
-                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_owner}</span></div>
+                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.owner_address}</span></div>
                     </div>
                 </div>
 
                 <div class="col-right">
                     <div class="detail-card">
-                        <h3>📅 Schedule & Workforce</h3>
+                        <h3>Schedule & Workforce</h3>
                         <div class="detail-row"><span class="detail-label">Start Date</span> <span class="detail-value">${app.start_date}</span></div>
                         <div class="detail-row"><span class="detail-label">End Date</span> <span class="detail-value">${app.end_date}</span></div>
                         <div class="detail-row"><span class="detail-label">Working Days</span> <span class="detail-value">${app.number_of_working_days}</span></div>
                         <div class="detail-row"><span class="detail-label">Workers</span> <span class="detail-value">${app.number_of_workers}</span></div>
                     </div>
 
-                    <div class="detail-card">
-                        <h3>📋 Documents & Files</h3>
+                    <div class="detail-card" style="margin-top:20px;">
+                        <h3>Documents & Files</h3>
                         <div style="margin-bottom:15px;">
                             <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
                             <div style="font-size:12px; line-height:1.6;">${requirementsList}</div>
@@ -825,7 +810,7 @@ function viewDetails(appId) {
                     </div>
 
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-                        <h3>💰 Assessment</h3>
+                        <h3>Assessment</h3>
                         ${app.amount_due > 0 ? `
                         <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
                         <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
@@ -837,7 +822,7 @@ function viewDetails(appId) {
 
             ${app.approval_comments || app.disapproval_reason ? `
             <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">📝 Official Remarks</h3>
+                <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
                 <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
             </div>
             ` : ''}
@@ -931,7 +916,7 @@ function updateSummary() {
         <div class="report-grid">
             <div class="report-column">
                 <div class="report-section">
-                    <h3>📍 Construction Details</h3>
+                    <h3>Construction Details</h3>
                     <div class="info-row"><span class="info-label">Activity</span> <span class="info-value">${app.nature_of_activity}</span></div>
                     <div class="info-row"><span class="info-label">Type of Work</span> <span class="info-value">${app.type_of_work}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.construction_address}</span></div>
@@ -939,7 +924,7 @@ function updateSummary() {
                 </div>
 
                 <div class="report-section">
-                    <h3>👤 Ownership</h3>
+                    <h3>Ownership</h3>
                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.contact_no_owner}</span></div>
                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.address_owner}</span></div>
@@ -948,7 +933,7 @@ function updateSummary() {
 
             <div class="report-column">
                 <div class="report-section">
-                    <h3>🏗 Schedule & Workforce</h3>
+                    <h3>Schedule & Workforce</h3>
                     <div class="info-row"><span class="info-label">Start Date</span> <span class="info-value">${app.start_date}</span></div>
                     <div class="info-row"><span class="info-label">End Date</span> <span class="info-value">${app.end_date}</span></div>
                     <div class="info-row"><span class="info-label">Working Days</span> <span class="info-value">${app.number_of_working_days}</span></div>
@@ -960,7 +945,7 @@ function updateSummary() {
                 </div>
 
                 <div class="financial-box">
-                    <h3 style="border:none; margin:0 0 10px 0;">💰 Financial Status</h3>
+                    <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
                     <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
                     <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
                     <div class="financial-total">
@@ -973,7 +958,7 @@ function updateSummary() {
 
         ${app.approval_comments ? `
         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
-            <h3 style="border:none; margin-bottom:5px;">📝 Official Remarks</h3>
+            <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
         </div>` : ''}
 
@@ -1091,9 +1076,9 @@ function downloadSummary(appId) {
     // Generate HTML for comments
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div class="comment-box approval"><h3>✅ Approval Comments</h3><p>${app.approval_comments}</p></div>`;
+        commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
     } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div class="comment-box disapproval"><h3>❌ Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
+        commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
     // Generate the full HTML content with embedded CSS for styling
@@ -1125,7 +1110,7 @@ function downloadSummary(appId) {
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
 
-                <h2>📍 Construction Information</h2>
+                <h2>Construction Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Nature of Activity:</strong> ${app.nature_of_activity}</li>
@@ -1139,7 +1124,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>👤 Owner Information</h2>
+                <h2>Owner Information</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</li>
@@ -1148,7 +1133,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>📋 Requirements & Documents</h2>
+                <h2>Requirements & Documents</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Required Documents:</strong> 
@@ -1158,7 +1143,7 @@ function downloadSummary(appId) {
                     </ul>
                 </div>
 
-                <h2>📅 Application Status</h2>
+                <h2>Application Status</h2>
                 <div class="card">
                     <ul class="info-list">
                         <li><strong>Submission Date:</strong> ${app.application_date}</li>
