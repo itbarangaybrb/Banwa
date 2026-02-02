@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = '../../../scripts/staff/finance_staff/finance_handler.php';
+const API_URL = '/Banwa/server/handlers/staff/finance/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
@@ -142,8 +142,8 @@ function loadHistoryTable() {
                         <td>₱${parseFloat(app.amount_paid).toFixed(2)}</td>
                         <td>${app.payment_date}</td>
                         <td>
-                            <button class="btn-info" onclick="viewSummary(${app.id}, 'paid')">👁️ View</button>
-                            <button class="btn-secondary" onclick="generateReceipt(${app.id})">🖨️ Receipt</button>
+                            <button class="btn-info" onclick="viewSummary(${app.id}, 'paid')">View</button>
+                            <button class="btn-secondary" onclick="generateReceipt(${app.id})">Receipt</button>
                         </td>
                     </tr>`;
                     tbody.innerHTML += row;

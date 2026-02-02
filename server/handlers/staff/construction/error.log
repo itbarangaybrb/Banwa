@@ -1,0 +1,72 @@
+[31-Jan-2026 10:50:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function handleChartConstructionType() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php:44
+Stack trace:
+#0 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 44
+[31-Jan-2026 10:52:19 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function handleChartConstructionType() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php:44
+Stack trace:
+#0 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 44
+[31-Jan-2026 15:51:48 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[31-Jan-2026 15:54:01 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[31-Jan-2026 16:03:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[31-Jan-2026 16:03:44 UTC] CR1 Check - Has file upload: Yes
+[31-Jan-2026 16:03:44 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:06:03 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 11:06:56 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:06:56 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:07:37 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 11:11:49 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:11:49 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:16:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 11:16:34 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:16:34 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:20:14 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 11:20:29 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:20:29 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:22:53 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 11:24:10 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 11:24:10 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:02:53 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 14:04:11 UTC] SQL Error in handleUpdateApplication: SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "first_name" of relation "construction_applications" violates not-null constraint
+DETAIL:  Failing row contains (10, db1d1ed3-3042-48ce-8b1e-b371402836f5, null, null, null, , null, , null, null, null, null, null, null, null, null, null, null, null, , null, null, 1769954651_697f5d5b2d8b1.jpg, 0, 2026-01-26, null, Complied, Missing valid ID or DTI. Please re-upload., null, 2026-01-26 19:50:43.369237, 2026-02-01 22:04:11.191624, null, null, null, null, null, null, Additional Requirements Needed).
+[01-Feb-2026 14:13:00 UTC] SQL Error in handleUpdateApplication: SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "first_name" of relation "construction_applications" violates not-null constraint
+DETAIL:  Failing row contains (10, db1d1ed3-3042-48ce-8b1e-b371402836f5, null, null, null, , null, , null, null, null, null, null, null, null, null, null, null, null, , null, null, 1769955180_697f5f6ccd7fe.jpg, 0, 2026-01-26, null, Complied, Missing valid ID or DTI. Please re-upload., null, 2026-01-26 19:50:43.369237, 2026-02-01 22:13:00.850298, null, null, null, null, null, null, Additional Requirements Needed).
+[01-Feb-2026 14:16:46 UTC] SQL Error in handleUpdateApplication: SQLSTATE[23502]: Not null violation: 7 ERROR:  null value in column "first_name" of relation "construction_applications" violates not-null constraint
+DETAIL:  Failing row contains (10, db1d1ed3-3042-48ce-8b1e-b371402836f5, null, null, null, Jr, null, , null, null, null, null, null, null, null, null, null, null, null, , null, null, 1769955406_697f604edc455.jpg, 0, 2026-01-26, null, Complied, Missing valid ID or DTI. Please re-upload., null, 2026-01-26 19:50:43.369237, 2026-02-01 22:16:46.916193, null, null, null, null, null, null, Additional Requirements Needed).
+[01-Feb-2026 14:24:03 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:24:03 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:25:05 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 14:25:37 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:25:37 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:28:01 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[01-Feb-2026 14:28:19 UTC] CR1 Check - Has file upload: Yes
+[01-Feb-2026 14:28:19 UTC] CR1 Check - Has file upload: Yes
+[02-Feb-2026 06:17:34 UTC] CR1 Check - Has file upload: No
+[02-Feb-2026 06:17:34 UTC] CR1 Check - Has file upload: No
+[02-Feb-2026 07:50:08 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[02-Feb-2026 07:50:54 UTC] CR1 Check - Has file upload: Yes
+[02-Feb-2026 07:50:54 UTC] CR1 Check - Has file upload: Yes

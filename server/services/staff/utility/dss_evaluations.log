@@ -1,0 +1,2 @@
+{"timestamp":"2026-02-01 12:01:06","application_id":"17","dss_status":"Rejected","score":2,"max_score":4,"probability":50,"passed_rules":2,"failed_rules":2}
+{"timestamp":"2026-02-02 06:18:24","application_id":18,"dss_status":"Rejected","score":3,"max_score":4,"probability":75,"passed_rules":3,"failed_rules":1}

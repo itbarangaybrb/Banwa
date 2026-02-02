@@ -404,7 +404,7 @@ function generateConstructionFormHtml(data) {
 
     return `
         <form id="simple-edit-form">
-            <h2>Edit Business Application</h2>
+            <h2>Edit Construction Application</h2>
             
             <div class="form-group remarks">
                 <label>Remarks from Staff:</label>
@@ -558,7 +558,7 @@ function generateIncidentReportFormHtml(data) {
 
 /**
  * Handles the submission of the simplified edit form
- * Reconstructs full application data with updated fields for server submission
+ * Only submits fields that were actually changed to avoid overwriting with null values
  * 
  * @param {Event} event The form submission event
  * @param {string} appId The ID of the application being updated
@@ -582,7 +582,7 @@ async function handleSubmitChanges(event, appId, appType) {
         switch (appType) {
             case 'Business':
                 getEndpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/client/scripts/staff/business_staff/business_handler.php`;
+                updateEndpoint = `/Banwa/server/handlers/staff/business/business_handler.php`;
                 keyMap = {
                     'type_of_business': 'typeOfBusiness',
                     'nature_of_business': 'natureOfBusiness',
@@ -604,7 +604,7 @@ async function handleSubmitChanges(event, appId, appType) {
 
             case 'Construction':
                 getEndpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/client/scripts/staff/construction_staff/construction_handler.php`;
+                updateEndpoint = `/Banwa/server/handlers/staff/construction/construction_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -617,7 +617,7 @@ async function handleSubmitChanges(event, appId, appType) {
 
             case 'Utilities':
                 getEndpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php`;
+                updateEndpoint = `/Banwa/server/handlers/staff/utility/utility_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -628,7 +628,7 @@ async function handleSubmitChanges(event, appId, appType) {
 
             case 'Incident Reports':
                 getEndpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/api/incident_report_staff/ir_handler.php`;
+                updateEndpoint = `/Banwa/server/handlers/staff/incident_report/ir_handler.php`;
                 keyMap = {
                     'rp_full_name': 'rpFullName',
                     'application_date': 'applicationDate'
@@ -639,6 +639,7 @@ async function handleSubmitChanges(event, appId, appType) {
                 throw new Error(`Update for application type '${appType}' is not supported.`);
         }
 
+        // Get original data
         const response = await fetch(getEndpoint);
         const result = await response.json();
         if (!result.success) {
@@ -647,33 +648,53 @@ async function handleSubmitChanges(event, appId, appType) {
 
         const originalData = result.data;
         const finalFormData = new FormData();
-
-        for (const key in originalData) {
-            const mappedKey = keyMap[key] || key;
-
-            if (originalData[key] !== null && originalData[key] !== undefined) {
-                if (Array.isArray(originalData[key])) {
-                    finalFormData.append(mappedKey, JSON.stringify(originalData[key]));
-                } else {
-                    finalFormData.append(mappedKey, originalData[key]);
+        
+        // Track what fields were actually changed
+        const changedFields = new Set();
+        
+        // Compare form data with original data to find changes
+        for (const [key, value] of formData.entries()) {
+            const originalKey = getOriginalKey(key, keyMap);
+            if (originalKey && originalData.hasOwnProperty(originalKey)) {
+                const originalValue = originalData[originalKey];
+                const newValue = value.toString().trim();
+                
+                // Check if value has changed
+                if (originalValue !== newValue && 
+                    (!originalValue || originalValue.toString().trim() !== newValue)) {
+                    changedFields.add(key);
+                    finalFormData.append(key, value);
                 }
+            } else {
+                // Field doesn't exist in original data or doesn't need mapping
+                changedFields.add(key);
+                finalFormData.append(key, value);
             }
         }
 
-        for (const [key, value] of formData.entries()) {
-            finalFormData.set(key, value);
-        }
-
-        const fileInput = form.querySelector('#requirementUpload');
-        if (fileInput && fileInput.files.length > 0) {
-            finalFormData.set('requirementUpload', fileInput.files[0]);
-        } else {
-            finalFormData.delete('requirementUpload');
-        }
-
+        // Always include essential fields
         finalFormData.set('action', 'update');
         finalFormData.set('application_id', appId);
         finalFormData.set('supabase_user_id', originalData.supabase_user_id);
+
+        // Handle file uploads
+        const fileInput = form.querySelector('#requirementUpload');
+        if (fileInput && fileInput.files.length > 0) {
+            changedFields.add('requirementUpload');
+            finalFormData.set('requirementUpload', fileInput.files[0]);
+        }
+
+        // // If nothing changed, inform the user
+        // if (changedFields.size === 0) {
+        //     throw new Error('No changes detected. Please modify at least one field before submitting.');
+        // }
+
+        // // Debug: Log what's being sent
+        // console.log('Changed fields:', Array.from(changedFields));
+        // console.log('FormData entries:');
+        // for (const [key, value] of finalFormData.entries()) {
+        //     console.log(`${key}:`, value);
+        // }
 
         const updateResponse = await fetch(updateEndpoint, {
             method: 'POST',
@@ -695,6 +716,29 @@ async function handleSubmitChanges(event, appId, appType) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Changes';
     }
+}
+
+/**
+ * Helper function to get original database key from form field name
+ * @param {string} formKey - Form field name
+ * @param {Object} keyMap - Mapping object
+ * @returns {string|null} Original database key
+ */
+function getOriginalKey(formKey, keyMap) {
+    // Check if formKey maps directly to an original key
+    for (const [originalKey, mappedKey] of Object.entries(keyMap)) {
+        if (mappedKey === formKey) {
+            return originalKey;
+        }
+    }
+    
+    // Check if formKey exists as-is in the keyMap values
+    if (Object.values(keyMap).includes(formKey)) {
+        // Find the corresponding key
+        return Object.keys(keyMap).find(key => keyMap[key] === formKey);
+    }
+    
+    return formKey; // Return as-is if no mapping found
 }
 
 /**
@@ -788,7 +832,7 @@ async function loadApplications() {
                 const statusText = app.status || 'Pending';
                 let statusClass = 'pending';
                 if (statusText.toLowerCase().includes('approved')) statusClass = 'success';
-                if (statusText.toLowerCase().includes('reject')) statusClass = 'rejected';
+                if (statusText.toLowerCase().includes('disapproved')) statusClass = 'rejected';
 
                 let remarksBtn = '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks</span>';
 

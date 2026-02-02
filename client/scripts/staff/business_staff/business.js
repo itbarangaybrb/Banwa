@@ -1,15 +1,12 @@
 // Configuration
-const API_URL = '../../../scripts/staff/business_staff/business_handler.php';
-
-// NOTE: Adjust this path to where your 'uploads' folder is located relative to this 'business.php' file.
-const UPLOADS_BASE_PATH = '../../../scripts/staff/business_staff/uploads/'; // <--- This must be correct for file links to work
+const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_handler.php';
+const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/business/uploads/';
 let applications = [];
 
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'business';
 let mapFilterVisible = true;
 
-// React to global map filter changes so the management table can hide/show
 window.addEventListener('staffMapFilterChanged', (e) => {
     try {
         const detail = e && e.detail && e.detail.activeFilters;
@@ -19,7 +16,6 @@ window.addEventListener('staffMapFilterChanged', (e) => {
         } else {
             mapFilterVisible = !!detail[PAGE_CATEGORY];
         }
-        // Re-run filter to update UI
         filterApplications();
     } catch (err) {
         console.warn('Error handling staffMapFilterChanged in business:', err);
@@ -37,10 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function initializeSidebarNav() {
     const navItems = document.querySelectorAll('.nav_select[data-tab]');
-    const navLogo = document.querySelector('.nav_logo'); // Select the hamburger icon
-    const sideNav = document.querySelector('.side_nav'); // Select the sidebar
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
 
-    // --- NEW CLICK TOGGLE LOGIC ---
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
@@ -55,24 +50,8 @@ function initializeSidebarNav() {
         });
     });
 
-    // Load initial tab
     loadAnalyticsTab();
 }
-
-// TAB SWITCHING
-// function switchTab(event, tabName) {
-//     event.preventDefault();
-//     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-//     document.querySelectorAll('.nav_select[data-tab]').forEach(item => item.classList.remove('active'));
-//     document.getElementById(tabName).classList.add('active');
-//     event.target.closest('.nav_select').classList.add('active');
-
-//     if (tabName === 'review') loadReviewTable();
-//     else if (tabName === 'process') loadProcessTable();
-//     else if (tabName === 'summary') loadSummarySelect();
-//     else if (tabName === 'dashboard') loadAnalyticsTab();
-
-// }
 
 /**
  * Switches between different application tabs and loads appropriate data
@@ -94,10 +73,15 @@ function switchTab(event, tabName) {
         if (link) link.classList.add('active');
     }
 
-    // Load Data based on Tab
-    if (tabName === 'management') loadManagementTable();
-    else if (tabName === 'summary') loadSummarySelect();
-    else if (tabName === 'dashboard') loadAnalyticsTab();
+    if (tabName === 'management') {
+        loadManagementTable();
+    } else if (tabName === 'process') {
+        loadProcessTable();
+    } else if (tabName === 'summary') {
+        loadSummarySelect();
+    } else if (tabName === 'dashboard') {
+        loadAnalyticsTab();
+    }
 }
 
 /**
@@ -106,7 +90,6 @@ function switchTab(event, tabName) {
  */
 function loadManagementTable() {
     loadApplicationsFromDB().finally(() => {
-        // Also trigger the filter function immediately to populate the table
         filterApplications();
     });
 }
@@ -117,73 +100,70 @@ function loadManagementTable() {
  * Displays appropriate status badges and action buttons based on application state
  */
 function filterApplications() {
-    // 1. SAFELY GET ELEMENTS (Checks if they exist first)
-    // We check for 'managementSearch' (from your PHP) OR 'searchInput' (fallback)
-    const searchEl = document.getElementById('managementSearch') || document.getElementById('searchInput');
-    const statusEl = document.getElementById('statusFilter'); // This was missing in your HTML
-    const tbody = document.getElementById('managementTableBody') || document.getElementById('tableBody');
+    const searchEl = document.getElementById('managementSearch');
+    const tbody = document.getElementById('tableBody');
 
-    // If the table body doesn't exist, stop immediately to prevent errors
-    if (!tbody) return;
-
-    // If the map filter currently hides this category, show a message and stop
-    if (!mapFilterVisible) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td></tr>';
+    if (!tbody) {
+        console.error('Table body not found');
         return;
     }
 
-    // 2. GET VALUES SAFELY
+    if (!mapFilterVisible) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
+            </tr>`;
+        return;
+    }
+
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-    const statusFilter = statusEl ? statusEl.value : ''; // Defaults to empty string if dropdown is missing
 
     tbody.innerHTML = '';
 
-    // 3. FILTER LOGIC
-    // Check if 'applications' data exists before filtering
-    if (!applications || !Array.isArray(applications)) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading data...</td></tr>';
+    if (!applications || !Array.isArray(applications) || applications.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">
+                    <div class="spinner"></div>Loading applications...
+                </td>
+            </tr>`;
         return;
     }
 
     const filtered = applications.filter(app => {
-        // Safe string access (handle nulls in DB)
         const businessName = (app.business_name || '').toLowerCase();
-        const fullName = ((app.first_name || '') + ' ' + (app.last_name || '')).toLowerCase();
+        const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
         const id = (app.id || '').toString();
 
-        const matchesSearch =
-            businessName.includes(searchTerm) ||
+        return businessName.includes(searchTerm) ||
             fullName.includes(searchTerm) ||
             id.includes(searchTerm);
-
-        // Only filter by status if a specific status is selected (not empty)
-        const matchesStatus = statusFilter === '' || app.status === statusFilter;
-
-        return matchesSearch && matchesStatus;
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color:#999;">No matching applications found.</td></tr>';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">
+                    No matching applications found.
+                </td>
+            </tr>`;
         return;
     }
 
-    // 4. RENDER LOGIC
     filtered.forEach(app => {
-        // A. Determine Status Color
         let badgeClass = 'pending';
         if (app.status === 'Approved') badgeClass = 'approved';
         if (app.status === 'Disapproved') badgeClass = 'disapproved';
         if (app.status === 'Paid') badgeClass = 'paid';
         if (app.status === 'For Payment') badgeClass = 'for-payment';
 
-        // B. Determine "Smart Action" Button
         let actionBtn = '';
 
         if (app.status === 'Pending') {
             actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
         }
         else if (app.status === 'Paid') {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
@@ -195,7 +175,6 @@ function filterApplications() {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
-        // C. Build Row
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
@@ -205,7 +184,7 @@ function filterApplications() {
             <td>${app.payment_status || 'Unpaid'}</td>
             <td>
                 <div class="action-buttons">
-                    ${actionBtn} 
+                    ${actionBtn}
                     <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
                 </div>
             </td>
@@ -221,43 +200,17 @@ function filterApplications() {
  * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
-    return fetch(`${API_URL}?action=fetch`)
+    return fetch(`${BUSINESS_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') applications = data.data;
             return applications;
+        })
+        .catch(error => {
+            console.error('Error fetching applications:', error);
+            applications = [];
+            return applications;
         });
-}
-
-/**
- * Loads applications into the review table with view and archive functionality
- * Displays applications with status badges and appropriate action buttons
- */
-function loadReviewTable() {
-    loadApplicationsFromDB().finally(() => {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        applications.forEach(app => {
-            // Status Badge Logic
-            let badgeClass = 'pending';
-            if (app.status === 'Approved') badgeClass = 'approved';
-            if (app.status === 'Disapproved') badgeClass = 'disapproved';
-            if (app.status === 'Paid') badgeClass = 'paid';
-            if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${app.id}</td>
-                    <td>${app.business_name}</td>
-                    <td>${app.first_name} ${app.last_name}</td>
-                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                    <td>${app.payment_status || 'N/A'}</td>
-                    <td><button class="btn-info" onclick="viewDetails(${app.id})">View</button>
-                    <button class="btn-delete" onclick="archiveApplication(${app.id})">Archive</button></td>
-                </tr>
-            `;
-        });
-    });
 }
 
 /**
@@ -267,12 +220,13 @@ function loadReviewTable() {
 function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
+        if (!tbody) return;
+
         tbody.innerHTML = '';
 
-        const excludedStatuses = ['Cancelled', 'Archived']; // Add more if needed
+        const excludedStatuses = ['Cancelled', 'Archived'];
 
         const actionable = applications.filter(app => {
-            // Include the application IF its status is NOT in the excludedStatuses list
             return !excludedStatuses.includes(app.status);
         });
 
@@ -283,25 +237,24 @@ function loadProcessTable() {
 
         actionable.forEach(app => {
             let btnText = "Update";
-            let btnClass = "btn-secondary";
+            let btnClass = "secondary";
 
-            // Highlight actions based on flow
-            if (app.status === 'Pending') { btnText = "Update"; btnClass = "btn-primary"; }
-            else if (app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "btn-warning"; }
-            else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "btn-success"; }
+            if (app.status === 'Pending') { btnClass = "primary"; }
+            else if (app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "warning"; }
+            else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "success"; }
 
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.business_name}</td> 
+                    <td>${app.business_name}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
                         <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                        ${(app.status === 'Approved') // CONDITION MODIFIED: Only checks for 'Approved'
-                    ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
-                    : ''
-                }
+                        ${app.status === 'Approved' 
+                            ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
+                            : ''
+                        }
                     </td>
                 </tr>
             `;
@@ -316,10 +269,9 @@ let chart3Instance;
 /**
  * Loads analytics data and renders charts for business application statistics
  * Creates three charts: timeline chart, business type distribution, and DSS status distribution
- * Handles chart initialization and updates when switching tabs
  */
 function loadAnalyticsTab() {
-    fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php?action=chart_business_type')
+    fetch(`${BUSINESS_HANDLER_URL}?action=chart_business_type`)
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -330,7 +282,6 @@ function loadAnalyticsTab() {
             const labels2 = res.data_by_type.map(x => x.type_of_business);
             const values2 = res.data_by_type.map(x => x.total);
 
-            // Add DSS status data
             const labels3 = res.data_by_dss.map(x => x.dss_status);
             const values3 = res.data_by_dss.map(x => x.total);
 
@@ -340,14 +291,14 @@ function loadAnalyticsTab() {
 
             if (chart1Instance) chart1Instance.destroy();
             if (chart2Instance) chart2Instance.destroy();
-            if (chart3Instance) chart3Instance.destroy(); // Add this line
+            if (chart3Instance) chart3Instance.destroy();
 
             chart1Instance = new Chart(document.getElementById('chart1'), {
                 type: 'line',
                 data: {
                     labels: labels1,
                     datasets: [{
-                        label: 'Business Dates',
+                        label: 'Business Applications',
                         data: values1,
                         backgroundColor: dateColors,
                         borderWidth: 2,
@@ -378,9 +329,8 @@ function loadAnalyticsTab() {
                 }
             });
 
-            // Add the third chart for DSS status
             chart3Instance = new Chart(document.getElementById('chart3'), {
-                type: 'doughnut', // or 'pie' if you prefer
+                type: 'doughnut',
                 data: {
                     labels: labels3,
                     datasets: [{
@@ -407,6 +357,9 @@ function loadAnalyticsTab() {
                     }
                 }
             });
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
         });
 }
 
@@ -419,35 +372,9 @@ function loadAnalyticsTab() {
 function applyPrompt(text) {
     const textarea = document.getElementById('updateComments');
     if (textarea) {
-        // Option A: Replace everything
         textarea.value = text;
-
-        // Option B: Append instead of replace (Uncomment below if preferred)
-        // textarea.value += (textarea.value ? ' ' : '') + text;
-
         textarea.focus();
     }
-}
-
-/**
- * Generates and opens a printable business clearance document in a new window
- * Fetches clearance HTML from server and triggers print dialog
- * 
- * @param {number} appId - The application ID to generate clearance for
- */
-function generateClearance(appId) {
-    fetch(`${API_URL}?action=generateclearance&id=${appId}`)
-        .then(res => res.text())
-        .then(html => {
-            const w = window.open('', '_blank', 'height=800,width=1000');
-            w.document.write(html);
-            w.document.close();
-            w.onload = () => {
-                w.print();
-                w.onafterprint = () => w.close();
-            };
-        })
-        .catch(err => showAlert('Error generating clearance: ' + err, 'danger'));
 }
 
 /**
@@ -457,7 +384,6 @@ function generateClearance(appId) {
  * @param {number} appId - The application ID to open in the update modal
  */
 function openUpdateModal(appId) {
-    // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
 
     if (!app) {
@@ -465,27 +391,21 @@ function openUpdateModal(appId) {
         return;
     }
 
-    // Fill the hidden ID field and the visible "Current Status" text
     document.getElementById('updateAppId').value = app.id;
     document.getElementById('displayCurrentStatus').value = app.status;
 
-    // Reset the form fields
     document.getElementById('newStatus').value = "";
     document.getElementById('updateComments').value = "";
     document.getElementById('assessmentAmount').value = "";
     document.getElementById('amountFieldGroup').classList.add('hidden');
 
-    // Clear previous DSS content
     const existingDSSSection = document.getElementById('dssEvaluationSection');
     if (existingDSSSection) existingDSSSection.remove();
 
-    // Insert a basic/loading DSS section immediately so the user sees something
     addBasicDSSSection(app);
 
-    // Fetch DSS evaluation details and replace the basic section when available
     fetchDSSEvaluation(appId, app);
 
-    // Show the modal
     document.getElementById('updateModal').classList.add('active');
 }
 
@@ -497,12 +417,10 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', API_URL, appId);
-    fetch(`${API_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    console.debug('fetchDSSEvaluation ->', BUSINESS_HANDLER_URL, appId);
+    fetch(`${BUSINESS_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
-            if (!res.ok) {
-                throw new Error('Network response was not ok: ' + res.status);
-            }
+            if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
         })
         .then(data => {
@@ -512,7 +430,6 @@ function fetchDSSEvaluation(appId, app) {
                 if (existing) existing.remove();
                 addDSSSectionToModal(data.evaluation, app);
             } else {
-                // show server message if present
                 if (existing) existing.querySelector('.dss-loading')?.remove();
                 const msg = (data && data.message) ? data.message : 'Detailed evaluation not available.';
                 if (existing) {
@@ -539,9 +456,9 @@ function fetchDSSEvaluation(appId, app) {
             const errMsg = error && error.message ? error.message : 'Failed to load evaluation.';
             if (existing) {
                 const note = document.createElement('div');
-                note.className = 'dss-error-msg';
-                note.textContent = errMsg;
-                existing.appendChild(note);
+                    note.className = 'dss-error-msg';
+                    note.textContent = errMsg;
+                    existing.appendChild(note);
             } else {
                 addBasicDSSSection(app);
                 const created = document.getElementById('dssEvaluationSection');
@@ -564,6 +481,12 @@ function fetchDSSEvaluation(appId, app) {
  */
 function addDSSSectionToModal(evaluation, app) {
     const updateForm = document.getElementById('updateForm');
+    if (!updateForm) return;
+
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
+    }
 
     const dssSection = document.createElement('div');
     dssSection.id = 'dssEvaluationSection';
@@ -596,7 +519,6 @@ function addDSSSectionToModal(evaluation, app) {
             statusColor = '#0c5460';
             statusBg = '#d1ecf1';
     }
-
 
     dssSection.innerHTML = `
     <div class="dss-evaluation-section">
@@ -674,6 +596,12 @@ function addDSSSectionToModal(evaluation, app) {
  */
 function addBasicDSSSection(app) {
     const updateForm = document.getElementById('updateForm');
+    if (!updateForm) return;
+
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
+    }
 
     const dssSection = document.createElement('div');
     dssSection.id = 'dssEvaluationSection';
@@ -702,8 +630,8 @@ function addBasicDSSSection(app) {
 
     dssSection.innerHTML = `
         <div class="dss-header">
-            <h3>DSS Evaluation</h3>
-            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+            <h3>📊 DSS Evaluation</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
         </div>
@@ -722,7 +650,6 @@ function toggleAmountField() {
     const amountGroup = document.getElementById('amountFieldGroup');
     const amountInput = document.getElementById('assessmentAmount');
 
-    // Only show the payment amount field if "For Payment" is selected
     if (statusSelect.value === 'For Payment') {
         amountGroup.classList.remove('hidden');
         amountInput.setAttribute('required', 'required');
@@ -744,7 +671,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(API_URL, {
+    fetch(`${BUSINESS_HANDLER_URL}`, {
         method: 'POST',
         body: formData
     })
@@ -753,23 +680,21 @@ function submitUpdate(event) {
             if (data.status === 'success') {
                 closeModal('updateModal');
                 alert('Application updated successfully!');
-                loadReviewTable();
+                loadManagementTable();
                 loadProcessTable();
             } else {
                 alert('Error: ' + data.message);
             }
+        })
+        .catch(error => {
+            console.error('Error updating application:', error);
+            alert('Error updating application. Please try again.');
         });
-}
-
-// Helper: Apply quick text prompts to the textarea
-function applyPrompt(text) {
-    document.getElementById('updateComments').value = text;
 }
 
 /**
  * Displays detailed application information in a modal view
  * Shows business details, owner information, documents, and assessment data
- * Handles file previews for uploaded documents
  * 
  * @param {number} appId - The application ID to view details for
  */
@@ -777,10 +702,8 @@ function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // 1. Prepare Data
     const businessStatus = app.business_status || 'Not specified';
 
-    // Parse requirements list safely
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
@@ -789,14 +712,12 @@ function viewDetails(appId) {
         ? reqs.map(r => `<span class="badge-req">✓ ${r}</span>`).join(' ')
         : '<span style="color:#999;">No requirements logged</span>';
 
-    // 2. File Viewing Logic
     let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
 
     if (app.requirement_upload) {
         const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
         const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
 
-        // If image, show thumbnail + view button
         if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
             fileHtml = `
                 <div class="file-viewer-box">
@@ -808,7 +729,6 @@ function viewDetails(appId) {
                     <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
                 </div>`;
         }
-        // If PDF or other, show generic icon + open button
         else {
             fileHtml = `
                 <div class="file-viewer-box">
@@ -819,7 +739,6 @@ function viewDetails(appId) {
         }
     }
 
-    // 3. Status Colors
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
     switch (app.status) {
@@ -829,7 +748,6 @@ function viewDetails(appId) {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // 4. Build Professional HTML Structure
     const content = `
         <div class="details-container">
             <div class="details-header-card">
@@ -900,38 +818,6 @@ function viewDetails(appId) {
 }
 
 /**
- * Submits a new business application creation form to the server
- * Handles form validation, submission, and success/error feedback
- * 
- * @param {Event} event - The form submission event
- */
-function createApplication(event) {
-    event.preventDefault();
-
-    const formData = new FormData(document.getElementById('createForm'));
-    formData.append('action', 'create');
-
-    fetch(API_URL, {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                document.getElementById('createForm').reset();
-                showAlert(`Business Application created successfully! ID: ${data.id}`, 'success');
-                loadApplicationsFromDB();
-            } else {
-                showAlert('Error: ' + data.message, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Failed to create application', 'danger');
-        });
-}
-
-/**
  * Loads application options into the summary select dropdown
  * Populates the dropdown with application IDs and business names
  */
@@ -940,9 +826,8 @@ function loadSummarySelect() {
         const select = document.getElementById('summaryApplicationSelect');
         select.innerHTML = '<option value="">-- Select Application --</option>';
         applications.forEach(app => {
-            select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name}</option>`;
-        }
-        );
+            select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name || 'Business Application'}</option>`;
+        });
     });
 }
 
@@ -958,7 +843,7 @@ function updateSummary() {
         summaryOutput.innerHTML = `
             <div class="placeholder-state">
                 <i class="fas fa-file-invoice fa-3x"></i>
-                <p>Select a business from the list above to view the full report.</p>
+                <p>Select a business application from the list above to view the full report.</p>
             </div>`;
         return;
     }
@@ -966,10 +851,7 @@ function updateSummary() {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // --- 1. Data Processing ---
-
-    // Status Badge Color Logic
-    let statusColor = '#6c757d'; // Default Grey
+    let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
 
     switch (app.status) {
@@ -979,9 +861,7 @@ function updateSummary() {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // Requirements Formatting
     let reqs = app.requirements;
-    // Handle case where requirements might be a JSON string or already an object
     if (typeof reqs === 'string') {
         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
     }
@@ -989,7 +869,6 @@ function updateSummary() {
         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
         : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
 
-    // Formatted Dates & Money
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -999,8 +878,6 @@ function updateSummary() {
         : '₱0.00';
 
     const paymentStatus = app.payment_status || 'Unpaid';
-
-    // --- 2. Build HTML Structure ---
 
     summaryOutput.innerHTML = `
         <div class="report-header">
@@ -1067,49 +944,6 @@ function updateSummary() {
     `;
 }
 
-// FILTER APPLICATIONS
-// function filterApplications() {
-//     const searchInput = document.getElementById('searchInput').value.toLowerCase();
-//     const tbody = document.getElementById('tableBody');
-
-//     tbody.innerHTML = '';
-
-//     const filtered = applications.filter(app =>
-//         app.business_name.toLowerCase().includes(searchInput) ||
-//         (app.first_name + ' ' + app.last_name).toLowerCase().includes(searchInput) ||
-//         app.id.toString().includes(searchInput)
-//     );
-
-//     if (filtered.length === 0) {
-//         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px;">No applications found</td></tr>';
-//         return;
-//     }
-
-//     filtered.forEach(app => {
-//         // Status Badge Logic
-//         let badgeClass = 'pending';
-//         if (app.status === 'Approved') badgeClass = 'approved';
-//         if (app.status === 'Disapproved') badgeClass = 'disapproved';
-//         if (app.status === 'Paid') badgeClass = 'paid';
-//         if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-//         const row = document.createElement('tr');
-//         const ownerName = app.first_name + (app.middle_name ? ' ' + app.middle_name : '') + ' ' + app.last_name;
-//         row.innerHTML = `
-//                 <td>${app.id}</td>
-//                 <td>${app.business_name}</td>
-//                 <td>${ownerName}</td>
-//                 <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-//                 <td>${app.payment_status || 'N/A'}</td>
-//                 <td>
-//                     <button class="btn-info" onclick="viewDetails(${app.id})">👁️ View</button>
-//                     <button class="btn-delete" onclick="archiveApplication(${app.id})">🗄️ Archive</button>
-//                 </td>
-//             `;
-//         tbody.appendChild(row);
-//     });
-// }
-
 /**
  * Archives an application by sending a request to the server
  * Requires user confirmation before proceeding with archival
@@ -1118,12 +952,12 @@ function updateSummary() {
  */
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${API_URL}?action=archive&id=${appId}`)
+    fetch(`${BUSINESS_HANDLER_URL}?action=archive&id=${appId}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                alert('Archived successfully');
-                loadReviewTable();
+                showAlert('Archived successfully', 'success');
+                loadManagementTable();
             }
         });
 }
@@ -1132,7 +966,7 @@ function archiveApplication(appId) {
  * Opens a modal dialog by adding the 'active' class
  * Disables body scrolling to prevent background interaction
  * 
- * @param {string} modalId - The ID of the modal element to open
+ * @param {string} modalId - The ID of the modal element to open    
  */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -1181,51 +1015,18 @@ function showAlert(message, type) {
  * Creates a print-friendly version of the summary content
  */
 function printSummary() {
-    // 1. Get the main content area of the entire page (e.g., body or main container)
-    // You may need to replace 'document.body' with the ID of your main content wrapper
-    const mainContent = document.body;
+    const summaryToPrint = document.getElementById('summaryOutput');
 
-    // 2. Get the element you want to print (the summary)
-    const summaryToPrint = document.getElementById('summaryOutput'); // Assuming summaryOutput is the ID of the container element
-
-    // 3. Temporarily hide everything except the summary content
-    // This uses a clever technique by moving the summary content to a new window/tab,
-    // or by applying styles. The simplest approach for most web layouts is to 
-    // dynamically change the print media CSS.
-
-    // Create a new print-only window
     const printWindow = window.open('', '', 'height=600,width=800');
-
-    // Write the content you want to print into the new window
-    printWindow.document.write('<html><head><title>Application Summary</title>');
-
-    // Copy necessary styles (optional, but highly recommended for formatting)
-    // You may need to adjust this to include your specific CSS files or <style> tags
+    printWindow.document.write('<html><head><title>Business Application Summary</title>');
     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">');
-
-
     printWindow.document.write('</head><body>');
-    printWindow.document.write(summaryToPrint.innerHTML); // Write only the summary HTML
+    printWindow.document.write(summaryToPrint.innerHTML);
     printWindow.document.write('');
     printWindow.document.write('</body></html>');
     printWindow.document.close();
-
-    // Initiate printing in the new window
     printWindow.focus();
-
-    // Close the window after printing (or immediately after print is called, depending on browser)
-    // printWindow.close(); // Uncomment this if you want the new window to close automatically
-
-    // Alternatively, a simpler but less robust method:
-    /*
-    const originalBody = document.body.innerHTML;
-    const printContent = summaryToPrint.innerHTML;
-    document.body.innerHTML = printContent;
-    window.print();
-    document.body.innerHTML = originalBody;
-    window.location.reload(); // Might be necessary to restore full functionality
-    */
 }
 
 /**
@@ -1238,16 +1039,13 @@ function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // Prepare list data for HTML
     const businessStatus = app.business_status || 'Not specified';
     const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
 
-    // Generate HTML for file upload link
     const fileUploadText = app.requirement_upload
         ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
         : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
 
-    // Generate HTML for comments
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
         commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
@@ -1255,7 +1053,6 @@ function downloadSummary(appId) {
         commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
-    // Generate the full HTML content with embedded CSS for styling
     const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -1263,19 +1060,15 @@ function downloadSummary(appId) {
             <meta charset="UTF-8">
             <title>Business Application Summary Report - ${app.id}</title>
             <style>
-                /* Define professional styles for Word to render */
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
                 .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
                 h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
                 h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
                 .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
                 .info-list { list-style-type: none; padding: 0; }
-                /* Creates alignment for key/value pairs */
                 .info-list li { margin-bottom: 8px; }
                 .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
-                /* Status badge styling */
                 .status-badge { background-color: ${app.status === 'Approved' ? '#d4edda' : app.status === 'Disapproved' ? '#f8d7da' : '#fff3cd'}; color: ${app.status === 'Approved' ? '#155724' : app.status === 'Disapproved' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-                /* Comments Box Styling */
                 .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
                 .comment-box h3 { font-size: 12pt; }
                 .comment-box.approval { border: 1px solid #c3e6cb; background-color: #d4edda; }
@@ -1333,9 +1126,8 @@ function downloadSummary(appId) {
             </div>
         </body>
         </html>
-                    `;
+    `;
 
-    // Use application/msword to force it to open in MS Word
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1348,70 +1140,35 @@ function downloadSummary(appId) {
 }
 
 /**
- * Returns the current date as a formatted string (YYYY-MM-DD)
- * Used for date input field population
- * 
- * @returns {string} Current date in YYYY-MM-DD format
- */
-function getCurrentDateString() {
-    const now = new Date();
-
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-}
-
-/**
- * Updates the application date input field with the current date
- * Called on page load and periodically to keep date current
- */
-function updateApplicationDate() {
-    const dateInput = document.getElementById('applicationDate');
-
-    if (dateInput) {
-        dateInput.value = getCurrentDateString();
-    }
-}
-
-/**
  * Generates a business clearance document client-side using application data
  * Creates a professional HTML document with dynamic content and opens print dialog
  * 
  * @param {number} appId - The application ID to generate clearance for
  */
 function generateClearance(appId) {
-    // 1. Find the application data locally first (assuming loadApplicationsFromDB has run)
     const app = applications.find(a => a.id == appId);
     if (!app) {
         showAlert('Application data not found for ID: ' + appId, 'danger');
         return;
     }
 
-    // 2. Prepare dynamic content variables
     const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`;
     const businessName = app.business_name;
     const or_number = app.or_number || 'N/A';
-    // Use application date or current date if OR number is N/A
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
-    // NEW: Get the nature of the application for dynamic checking
     const natureOfApplication = app.nature_of_application ? app.nature_of_application.toLowerCase() : 'new';
 
     const date = new Date(date_issued);
     const day = date.getDate().toString().padStart(2, '0');
     const month = date.toLocaleString('en-US', { month: 'long' });
-    const year = date.getFullYear().toString().slice(-2); // Get last two digits of the year
+    const year = date.getFullYear().toString().slice(-2);
 
-    // Placeholder names (NOTE: Replace bracketed names with actual values for production.)
     const CAPTAIN_NAME = "MARIA DELA CRUZ";
     const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
 
-    // Helper function to check if an option should be marked as checked
     const isChecked = (type) => natureOfApplication === type ? 'checked' : '';
 
-    // 3. Construct the HTML String (based on clearance.html)
     const html = `
 <!DOCTYPE html>
 <html>
@@ -1421,10 +1178,8 @@ function generateClearance(appId) {
     <title>Barangay Blue Ridge B - Business Clearance</title>
     <style>
         :root {
-            /* Light green theme from original reference. */
             --sidebar-bg: #eef7e3; 
             --text-color: #000;
-            /* NOTE: Adjust the logo path for your environment if needed */
             --logo-url: url('../../../scripts/staff/business_staff/assets/logo.png'); 
         }
 
@@ -1449,7 +1204,6 @@ function generateClearance(appId) {
             overflow: hidden;
         }
 
-        /* --- Header Section --- */
         header {
             display: flex;
             align-items: center;
@@ -1479,7 +1233,6 @@ function generateClearance(appId) {
         .header-text h1 { margin: 10px 0 5px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;}
         .header-text h2 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
 
-        /* --- Document Titles --- */
         .doc-title {
             text-align: center;
             text-transform: uppercase;
@@ -1491,7 +1244,6 @@ function generateClearance(appId) {
             text-shadow: 2px 2px 0px white;
         }
 
-        /* --- Main Content Grid Layout --- */
         .content-wrapper {
             display: grid;
             grid-template-columns: 220px 1fr;
@@ -1500,7 +1252,6 @@ function generateClearance(appId) {
             z-index: 2;
         }
 
-        /* --- Watermark background --- */
         .content-wrapper::before {
             content: "";
             position: absolute;
@@ -1517,7 +1268,6 @@ function generateClearance(appId) {
             z-index: -1;
         }
 
-        /* --- Sidebar (Officials) --- */
         .sidebar {
             background-color: var(--sidebar-bg);
             padding: 20px 15px;
@@ -1531,7 +1281,6 @@ function generateClearance(appId) {
         .sidebar .title { font-style: italic; display: block; font-size: 12px; }
         .sidebar .main-title { text-align: center; font-weight: bold; margin-bottom: 20px; display: block;}
 
-        /* --- Main Body Text --- */
         .main-body {
             font-size: 15px;
             line-height: 1.6;
@@ -1558,14 +1307,12 @@ function generateClearance(appId) {
         .checkbox-group { margin-left: 40px; font-weight: bold; }
         .checkbox-option { display: block; margin: 5px 0; }
         .checkbox-option::before { content: "☐ "; font-weight: normal;}
-        /* Use this class for the selected option */
         .checkbox-option.checked::before { content: "☑ "; font-weight: normal; }
 
         .issue-date { margin-top: 30px; text-align: right; }
         .or-details { margin-top: 30px; font-size: 14px;}
         .or-details div { margin-bottom: 5px; }
 
-        /* --- Footer (Signatures) --- */
         footer {
             margin-top: 60px;
             display: flex;
@@ -1588,7 +1335,6 @@ function generateClearance(appId) {
             text-transform: uppercase;
         }
 
-        /* --- Print Specific Styles --- */
         @media print {
             body { background-color: white; padding: 0; }
             .document-container {
@@ -1705,7 +1451,6 @@ function generateClearance(appId) {
 </html>
     `;
 
-    // 4. Open and print the generated HTML
     const w = window.open('', '_blank', 'height=800,width=1000');
     w.document.write(html);
     w.document.close();
@@ -1714,40 +1459,57 @@ function generateClearance(appId) {
         w.onafterprint = () => w.close();
     };
 }
+
+/**
+ * Creates a new business application
+ */
+function createApplication(event) {
+    event.preventDefault();
+    alert('Create functionality not implemented yet');
+}
+
+/**
+ * Returns the current date as a formatted string (YYYY-MM-DD)
+ * Used for date input field population
+ * 
+ * @returns {string} Current date in YYYY-MM-DD format
+ */
+function getCurrentDateString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Updates the application date input field with the current date
+ * Called on page load and periodically to keep date current
+ */
+function updateApplicationDate() {
+    const dateInput = document.getElementById('applicationDate');
+    if (dateInput) {
+        dateInput.value = getCurrentDateString();
+    }
+}
+
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 });
 
-
 // CLOSE MODAL ON OUTSIDE CLICK
 window.onclick = function (event) {
-    const modals = document.querySelectorAll('.staff-modal');
+    const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
         if (event.target == modal) {
             modal.classList.remove('active');
         }
     });
 }
-function updateWarningUI(status) {
-    const warningDiv = document.getElementById('statusWarning');
-    warningDiv.style.display = 'block';
 
-    if (status === 'Disapproved') {
-        warningDiv.style.backgroundColor = '#fff2f2';
-        warningDiv.style.color = '#d93025';
-        warningDiv.innerHTML = '<strong>Warning:</strong> Disapproving will stop the application process.';
-    } else if (status === 'For Payment') {
-        warningDiv.style.backgroundColor = '#e8f0fe';
-        warningDiv.style.color = '#1967d2';
-        warningDiv.innerHTML = '<strong>Action:</strong> Please ensure the Assessment Amount is correct.';
-    } else {
-        warningDiv.style.display = 'none';
-    }
-}
-
-// 1. Define Professional Templates
+// Status templates for quick text insertion
 const statusTemplates = {
     'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
     'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
@@ -1755,28 +1517,26 @@ const statusTemplates = {
     'Approved': "Your Business Permit is now ready for pick-up/download."
 };
 
-// 2. Logic to auto-fill the textarea
-document.getElementById('newStatus').addEventListener('change', function () {
-    const status = this.value;
-    const commentBox = document.getElementById('updateComments');
-    const amountGroup = document.getElementById('amountInputGroup'); // Your div containing the amount input
+// Event listener for status change to update textarea with templates
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('newStatus');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function () {
+            const status = this.value;
+            const commentBox = document.getElementById('updateComments');
+            const amountGroup = document.getElementById('amountFieldGroup');
 
-    // Show/Hide amount field
-    if (status === 'For Payment') {
-        amountGroup.style.display = 'block';
-    } else {
-        amountGroup.style.display = 'none';
-    }
+            if (status === 'For Payment') {
+                amountGroup.classList.remove('hidden');
+            } else {
+                amountGroup.classList.add('hidden');
+            }
 
-    // Auto-fill template if it exists
-    if (statusTemplates[status]) {
-        commentBox.value = statusTemplates[status];
+            if (statusTemplates[status]) {
+                commentBox.value = statusTemplates[status];
+            }
+        });
     }
 });
-
-// INITIALIZE ON LOAD
-// window.addEventListener('load', function () {
-//     loadAnalyticsTab();
-// });
 
 document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);

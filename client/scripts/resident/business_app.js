@@ -1,4 +1,6 @@
 // Configuration imports for Supabase, address data, and service worker registration
+const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_handler.php';
+
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
@@ -622,7 +624,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
 
         // 3. SEND TO BACKEND
         try {
-            const response = await fetch('/Banwa/client/scripts/staff/business_staff/business_handler.php', {
+            const response = await fetch(`${BUSINESS_HANDLER_URL}`, {
                 method: 'POST',
                 body: formData
             });

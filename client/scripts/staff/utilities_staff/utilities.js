@@ -1,6 +1,6 @@
 // Configuration
-const API_URL = '../../../scripts/staff/utilities_staff/utilities_handler.php';
-const UPLOADS_BASE_PATH = '../../../scripts/staff/utilities_staff/uploads/';
+const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
+const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/utility/uploads/';
 let applications = [];
 
 // Map filter visibility flag for this management page
@@ -212,7 +212,7 @@ function filterApplications() {
  * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
-    return fetch(`${API_URL}?action=fetch`)
+    return fetch(`${UTILITY_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') applications = data.data;
@@ -279,7 +279,7 @@ let chart3Instance;
  * Creates three charts: timeline chart, provider distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
-    fetch(`${API_URL}?action=chart_utilities_type`)
+    fetch(`${UTILITY_HANDLER_URL}?action=chart_utilities_type`)
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -434,8 +434,8 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', API_URL, appId);
-    fetch(`${API_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    console.debug('fetchDSSEvaluation ->', UTILITY_HANDLER_URL, appId);
+    fetch(`${UTILITY_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
@@ -670,7 +670,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(API_URL, {
+    fetch(`${UTILITY_HANDLER_URL}`, {
         method: 'POST',
         body: formData
     })
@@ -893,7 +893,7 @@ function updateSummary() {
  */
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${API_URL}?action=archive&id=${appId}`)
+    fetch(`${UTILITY_HANDLER_URL}?action=archive&id=${appId}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
@@ -907,7 +907,7 @@ function archiveApplication(appId) {
  * Opens a modal dialog by adding the 'active' class
  * Disables body scrolling to prevent background interaction
  * 
- * @param {string} modalId - The ID of the modal element to open
+ * @param {string} modalId - The ID of the modal element to open    
  */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);

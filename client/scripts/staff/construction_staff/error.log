@@ -375,3 +375,10 @@ LINE 1: INSERT INTO construction_status_history
 [28-Jan-2026 14:45:40 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
 LINE 1: INSERT INTO construction_status_history 
                     ^
+[30-Jan-2026 10:26:35 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[31-Jan-2026 15:51:31 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:51:31 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:52:25 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:52:25 UTC] CR1 Check - Has file upload: No

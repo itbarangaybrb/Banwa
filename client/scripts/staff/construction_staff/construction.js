@@ -1,6 +1,6 @@
 // Configuration
-const API_URL = '../../../scripts/staff/construction_staff/construction_handler.php';
-const UPLOADS_BASE_PATH = '../../../scripts/staff/construction_staff/uploads/';
+const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/construction_handler.php';
+const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
 let applications = [];
 
 // Map filter visibility flag for this management page
@@ -217,7 +217,7 @@ function filterApplications() {
  * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
-    return fetch(`${API_URL}?action=fetch`)
+    return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') applications = data.data;
@@ -278,7 +278,7 @@ let chart3Instance;
  * Creates three charts: timeline chart, construction type distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
-    fetch(`${API_URL}?action=chart_construction_type`)
+    fetch(`${CONSTRUCTION_HANDLER_URL}?action=chart_construction_type`)
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -432,8 +432,8 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', API_URL, appId);
-    fetch(`${API_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    console.debug('fetchDSSEvaluation ->', CONSTRUCTION_HANDLER_URL, appId);
+    fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
@@ -675,7 +675,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(API_URL, {
+    fetch(`${CONSTRUCTION_HANDLER_URL}`, {
         method: 'POST',
         body: formData
     })
@@ -977,7 +977,7 @@ function updateSummary() {
  */
 function archiveApplication(appId) {
     if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${API_URL}?action=archive&id=${appId}`)
+    fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {

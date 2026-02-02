@@ -1,4 +1,6 @@
 // Configuration imports for service worker registration and address data
+const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
+
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
@@ -455,7 +457,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         const appDate = document.getElementById('applicationDate')?.value || '';
         formData.append('applicationDate', appDate);
 
-        fetch('/Banwa/client/scripts/staff/utilities_staff/utilities_handler.php', {
+        fetch(`${UTILITY_HANDLER_URL}`, {
             method: 'POST',
             body: formData,
             credentials: 'include'

@@ -1,3 +1,5 @@
+const MAP_HANDLER_URL = '/Banwa/server/handlers/map/map_handler.php';
+
 // Map variables
 const map = L.map('map').setView([14.6175, 121.0756], 17);
 let constructionMarkers = [];
@@ -756,7 +758,7 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
         formData.append('action', 'get_flood_details');
         formData.append('id', hazardId);
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -958,7 +960,7 @@ async function viewMapDetails(id, type) {
         formData.append('action', `get_${type}_details`);
         formData.append('id', id);
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -979,7 +981,7 @@ async function viewFloodDetails(id) {
         formData.append('action', 'get_flood_details');
         formData.append('id', id);
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -1000,7 +1002,7 @@ async function viewHouseDetails(id) {
         formData.append('action', 'get_house_details');
         formData.append('id', id);
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -1322,7 +1324,7 @@ async function loadAllMarkers() {
         const formData = new FormData();
         formData.append('action', 'get_markers');
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -1340,7 +1342,7 @@ async function loadAllMarkers() {
         const floodFormData = new FormData();
         floodFormData.append('action', 'get_flood_data_for_search');
         
-        const floodResponse = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const floodResponse = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: floodFormData
         });
@@ -1476,7 +1478,7 @@ async function loadFloodData() {
         const formData = new FormData();
         formData.append('action', 'get_flood_hazards');
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -1643,7 +1645,7 @@ async function loadHousePolygons() {
         const formData = new FormData();
         formData.append('action', 'get_houses');
         
-        const response = await fetch('/Banwa/client/pages/staff/map_handler.php', {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });

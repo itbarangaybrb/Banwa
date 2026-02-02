@@ -1245,7 +1245,6 @@ h2 {
 .action-buttons .btn-warning,
 .action-buttons .btn-success {
     font-weight: 600;
-    min-width: 100px; /* Ensure text fits */
 }
 .main-wrapper {
     margin-left: 70px; /* Width of the collapsed sidebar */

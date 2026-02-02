@@ -1,4 +1,6 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
+const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
+
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import supabase from '../../../server/api/supabase.js';
@@ -701,7 +703,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('dateReported', new Date().toISOString());
 
         // Send data to backend handler
-        fetch('/Banwa/server/api/incident_report_staff/ir_handler.php', {
+        fetch(`${IR_HANDLER_URL}`, {
             method: 'POST',
             body: formData,
             credentials: 'include'

@@ -1,0 +1,93 @@
+[31-Jan-2026 10:13:05 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[31-Jan-2026 10:33:45 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[31-Jan-2026 10:34:25 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:21:35 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:39:26 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:45:02 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:15:01 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:21:56 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:49:14 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:57:28 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:20:32 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:31:04 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:33:21 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:57:34 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 06:16:06 UTC] R1 Check - Required: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 06:16:06 UTC] R1 Check - Missing: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Required: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 06:16:06 UTC] R1 Check - Missing: []
+[02-Feb-2026 07:53:00 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:54:37 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:55:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:55:34 UTC] R1 Check - Required: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 07:55:34 UTC] R1 Check - Missing: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Required: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 07:55:34 UTC] R1 Check - Missing: []

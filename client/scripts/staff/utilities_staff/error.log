@@ -13,3 +13,60 @@ LINE 1: INSERT INTO utility_status_history
 [26-Jan-2026 18:12:30 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
 LINE 1: INSERT INTO utility_status_history 
                     ^
+[30-Jan-2026 05:35:53 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 05:37:53 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 05:46:11 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 05:47:36 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 05:52:35 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 05:53:25 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 06:13:49 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 06:16:03 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 06:16:26 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:08:57 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:12:00 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:14:41 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:16:49 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:17:14 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[30-Jan-2026 08:18:29 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[31-Jan-2026 15:49:50 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[01-Feb-2026 11:53:43 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[01-Feb-2026 12:02:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
+[02-Feb-2026 06:21:48 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "utility_status_history" does not exist
+LINE 1: INSERT INTO utility_status_history 
+                    ^
