@@ -1,395 +1,600 @@
-// Helper: hide all panels and show only the requested one (use .visible class)
-function showOnly(panelId) {
-    const panels = ['signupForm', 'verificationPanel', 'createAccountPanel', 'idVerificationPanel', 'personalDetailsPanel'];
-    panels.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('visible', id === panelId);
-    });
+import supabase from "../../../server/api/supabase.js";
+
+// =========================
+// 1. Navigation Logic
+// =========================
+function switchPanel(panelId) {
+    const panels = ['personalDetails', 'selectId', 'createAcc']
+        .map(id => document.getElementById(id));
+    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
 }
 
-// Switch from signup form to verification panel (validates first)
-function showVerification() {
-    const mobile = document.getElementById('mobile');
-    const agree = document.getElementById('agree');
-    if (!mobile.checkValidity()) { mobile.reportValidity(); return; }
-    if (!agree.checked) { agree.focus(); return; }
-    showOnly('verificationPanel');
-    // hide the small sub-header when on verification panel
-    const sub = document.querySelector('.sub-header');
-    if (sub) sub.style.display = 'none';
-    setTimeout(() => { const first = document.querySelectorAll('#codeInputs input')[0]; if (first) first.focus(); }, 50);
-}
+// =========================
+// 2. Form Elements
+// =========================
+const formElements = {
+    // Panel 1: Select ID
+    selectIdNextBtn: document.getElementById('selectIdNextBtn'),
+    idType: document.getElementById('idType'),
+    idFile: document.getElementById('idFile'),
+    ocrStatus: document.getElementById('ocrStatus'),
+    idImagePreview: document.getElementById('idImagePreview'),
+    imagePreviewContainer: document.getElementById('imagePreviewContainer'),
 
-function showSignup() {
-    // show only signup and reset verification inputs
-    showOnly('signupForm');
-    document.querySelectorAll('#codeInputs input').forEach(i => i.value = '');
-    // restore the sub-header on signup
-    const sub2 = document.querySelector('.sub-header');
-    if (sub2) sub2.style.display = '';
-    setTimeout(() => { const m = document.getElementById('mobile'); if (m) m.focus(); }, 50);
-}
+    // Panel 2: Personal Details
+    firstName: document.getElementById('firstName'),
+    middleName: document.getElementById('middleName'),
+    lastName: document.getElementById('lastName'),
+    suffix: document.getElementById('suffix'),
+    sex: document.getElementById('sex'),
+    contactNo: document.getElementById('contactNo'),
+    address: document.getElementById('address'),
+    personalDetailsNextBtn: document.getElementById('personalDetailsNextBtn'),
 
-// wire up code input behavior and confirm button
-(function () {
-    const inputs = () => Array.from(document.querySelectorAll('#codeInputs input'));
-    const confirmBtn = document.getElementById('confirmBtn');
-    if (!confirmBtn) return; // nothing to wire if panel not added
+    // Panel 3: Create Account
+    createAccForm: document.getElementById('createAccForm'),
+    email: document.getElementById('createAccEmail'),
+    password: document.getElementById('password'),
+    reTypePassword: document.getElementById('reTypePassword'),
+    agreeCheckBox: document.getElementById('agreeCheckBox'),
+    formMessage: document.getElementById('formMessage'),
+    resendBtn: document.getElementById('resendEmailBtn'),
 
-    function updateConfirm() {
-        const filled = inputs().every(i => i.value.trim() !== '');
-        confirmBtn.disabled = !filled;
-        confirmBtn.style.opacity = filled ? '1' : '0.7';
+    // Navigation Back Buttons
+    personalDetailsBackBtn: document.getElementById('personalDetailsBackBtn'),
+    selectIdBackBtn: document.getElementById('selectIdBackBtn'),
+    createAccBackBtn: document.getElementById('createAccBackBtn'),
+
+    // Submit Button
+    createAccSubmitBtn: document.getElementById('createAccSubmitBtn')
+};
+
+// Last OCR results (populated after successful OCR call)
+let lastOcrMeta = null;
+let lastOcrData = null;
+
+// =========================
+// 3. Validator Module
+// =========================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        if (errorEl) { errorEl.textContent = message; errorEl.classList.add('show'); }
+    }
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('show'); }
     }
 
-    // delegate events since inputs may be hidden initially
-    document.addEventListener('input', (e) => {
-        if (e.target.matches('#codeInputs input')) {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
-            const all = inputs();
-            const idx = all.indexOf(e.target);
-            if (e.target.value && idx < all.length - 1) all[idx + 1].focus();
-            updateConfirm();
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (!value || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters allowed'); return false;
         }
-    });
+        clearError(input); return true;
+    }
 
-    document.addEventListener('keydown', (e) => {
-        if (!e.target.matches('#codeInputs input')) return;
-        const all = inputs();
-        const idx = all.indexOf(e.target);
-        if (e.key === 'Backspace' && !e.target.value && idx > 0) { all[idx - 1].focus(); }
-        if (e.key === 'ArrowLeft' && idx > 0) { all[idx - 1].focus(); }
-        if (e.key === 'ArrowRight' && idx < all.length - 1) { all[idx + 1].focus(); }
-    });
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, message); return false; }
+        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numbers allowed'); return false; }
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `At least ${rules.minLength} digits required`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Max ${rules.maxLength} digits`); return false; }
+        clearError(input); return true;
+    }
 
-    confirmBtn.addEventListener('click', () => {
-        if (confirmBtn.disabled) return;
-        const code = inputs().map(i => i.value).join('');
-        // For now we'll treat any 6-digit code as valid and proceed to Create Account panel
-        if (inputs().length === 6 && code.length === 6) {
-            showCreateAccount();
-        } else {
-            alert('Please enter the 6-digit verification code');
+    function validateEmail(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, message); return false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Invalid email'); return false; }
+        clearError(input); return true;
+    }
+
+    function validatePassword(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, message); return false; }
+        if (value.length < 8 || value.length > 16) { showError(input, 'Password 8–16 chars'); return false; }
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must have letters & numbers'); return false; }
+        clearError(input); return true;
+    }
+
+    function validatePasswordMatches(passwordInput, reTypeInput) {
+        const password = passwordInput.value.trim();
+        const reType = reTypeInput.value.trim();
+        if (!reType) { showError(reTypeInput, 'Re-type password'); return false; }
+        if (password !== reType) { showError(reTypeInput, 'Passwords do not match'); return false; }
+        clearError(reTypeInput); return true;
+    }
+
+    function validateSelect(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value || value === 'select') { showError(input, message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateCheckbox(input, message) {
+        if (!input.checked) { showError(input, message); return false; }
+        clearError(input); return true;
+    }
+
+    function validateFile(input, message, options = {}) {
+        if (!input || input.files.length === 0) { showError(input, message); return false; }
+        const file = input.files[0];
+        if (options.accept?.length && !options.accept.some(a => file.name.toLowerCase().endsWith(a.toLowerCase()))) {
+            showError(input, options.errorMessage || `Allowed: ${options.accept.join(', ')}`); return false;
         }
-    });
+        if (file.size > 5 * 1024 * 1024) { showError(input, 'File > 5MB'); return false; }
+        clearError(input); return true;
+    }
 
-    // initialize state
-    updateConfirm();
+    return {
+        text: validateText,
+        number: validateNumber,
+        email: validateEmail,
+        password: validatePassword,
+        matchPassword: validatePasswordMatches,
+        select: validateSelect,
+        checkbox: validateCheckbox,
+        file: validateFile,
+        clear: clearError
+    };
 })();
 
-function showCreateAccount() {
-    showOnly('createAccountPanel');
-    setTimeout(() => { const u = document.getElementById('username'); if (u) u.focus(); }, 50);
+// =========================
+// 4. Validation Config
+// =========================
+const validationConfig = [
+    { el: formElements.firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: formElements.lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: formElements.sex, type: 'select', message: 'Please select sex' },
+    { el: formElements.contactNo, type: 'number', message: 'Contact no. is required', rules: { minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: formElements.email, type: 'email', message: 'Email is required' },
+    { el: formElements.address, type: 'text', message: 'Address is required' },
+    { el: formElements.agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
+    { el: formElements.idType, type: 'select', message: 'Please select type of ID' },
+    { el: formElements.idFile, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
+    { el: formElements.password, type: 'password', message: 'Please enter a password' },
+    { el: formElements.reTypePassword, type: 'password', message: 'Please re-type your password' }
+];
+
+// =========================
+// 5. Validate Field Helper
+// =========================
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'email': return validator.email(el, message);
+        case 'file': return validator.file(el, message, rules);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'select': return validator.select(el, message);
+        case 'password': return validator.password(el, message);
+    }
 }
 
-function showIDPanel() {
-    showOnly('idVerificationPanel');
-    setTimeout(() => { const f = document.getElementById('idFile'); if (f) f.focus(); }, 50);
-}
-
-// handle ID panel next
-// document.addEventListener('DOMContentLoaded', () => {
-//     const idNext = document.getElementById('idNextBtn');
-//     if (!idNext) return;
-//     idNext.addEventListener('click', () => {
-//         const chosen = document.querySelector('input[name="idtype"]:checked');
-//         const file = document.getElementById('idFile');
-//         if (!chosen) { alert('Please select an ID type'); return; }
-//         if (!file.files || file.files.length === 0) { alert('Please upload a proof of identification'); file.focus(); return; }
-//         // proceed to personal details step
-//         showPersonalDetails();
-//     });
-// });
-
-document.addEventListener('DOMContentLoaded', () => {
-    const idNext = document.getElementById('idNextBtn');
-    const idFile = document.getElementById('idFile');
-    const idErrorType = document.getElementById('idTypeErr');
-    const idErrorFile = document.getElementById('idFileErr');
-    const idRadios = document.querySelectorAll('input[name="idtype"]');
-
-    if (!idNext) return;
-
-    idRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (idErrorType && document.querySelector('input[name="idtype"]:checked')) {
-                idErrorType.textContent = '';
-            }
-        });
-    });
-
-    idFile.addEventListener('change', () => {
-        if (idErrorFile && idFile.files.length > 0) {
-            idErrorFile.textContent = '';
-        }
-    });
-
-    idNext.addEventListener('click', () => {
-        const chosen = document.querySelector('input[name="idtype"]:checked');
-
-        // Clear previous errors
-        if (idErrorType) idErrorType.textContent = '';
-        if (idErrorFile) idErrorFile.textContent = '';
-
-        let isValid = true;
-
-        // Validate ID type selection
-        if (!chosen) {
-            if (idErrorType) idErrorType.textContent = 'Please select an ID type';
-            isValid = false;
-        }
-
-        // Validate file upload
-        if (!idFile.files || idFile.files.length === 0) {
-            if (idErrorFile) idErrorFile.textContent = 'Please upload a proof of identification';
-            isValid = false;
-        }
-
-        if (!isValid) return;
-
-        // Proceed to personal details step
-        showPersonalDetails();
-    });
-});
-
-
-// add scroll shadow handlers for all panel-scrollable elements
-document.addEventListener('DOMContentLoaded', () => {
-    const scrollables = Array.from(document.querySelectorAll('.panel-scrollable'));
-    function updateShadows(el) {
+// =========================
+// 6. Real-time Validation
+// =========================
+function setupRealtimeValidation() {
+    validationConfig.forEach(config => {
+        const { el, type } = config;
         if (!el) return;
-        const top = el.scrollTop > 4;
-        const bottom = (el.scrollHeight - el.clientHeight - el.scrollTop) > 4;
-        el.classList.toggle('shadow-top', top);
-        el.classList.toggle('shadow-bottom', bottom);
-    }
-    scrollables.forEach(el => {
-        // initialize when visible
-        el.addEventListener('scroll', () => updateShadows(el));
-        // also update after transitions: when element becomes visible, ensure shadows correct
-        const obs = new MutationObserver(() => updateShadows(el));
-        obs.observe(el, { attributes: true, attributeFilter: ['class'] });
-        // initial call
-        updateShadows(el);
-    });
-});
-
-// handle create account next button (basic client-side validation)
-// document.addEventListener('DOMContentLoaded', () => {
-//     const createNext = document.getElementById('createNextBtn');
-//     if (!createNext) return;
-//     createNext.addEventListener('click', () => {
-//         const user = document.getElementById('username');
-//         const pass = document.getElementById('password');
-//         const confirm = document.getElementById('confirmPassword');
-//         if (!user.value.trim()) { user.focus(); return; }
-//         if (pass.value.length < 8 || pass.value.length > 16) { alert('Password must be 8-16 characters'); pass.focus(); return; }
-//         if (!/[A-Za-z]/.test(pass.value) || !/[0-9]/.test(pass.value)) { alert('Password must contain letters and numbers'); pass.focus(); return; }
-//         if (pass.value !== confirm.value) { alert('Passwords do not match'); confirm.focus(); return; }
-//         // proceed to ID selection panel
-//         showIDPanel();
-//     });
-// });
-
-document.addEventListener('DOMContentLoaded', () => {
-    const createNextBtn = document.getElementById('createNextBtn');
-    const username = document.getElementById('username');
-    const password = document.getElementById('password');
-    const confirmPassword = document.getElementById('confirmPassword');
-
-    if (!createNextBtn) return;
-
-    function validateInput(input, message) {
-        const errorEl = input.parentElement.querySelector('.err-msg');
-        if (!input.value.trim()) {
-            input.classList.add('error');
-            if (errorEl) errorEl.textContent = message;
-            return false;
-        } else {
-            input.classList.remove('error');
-            if (errorEl) errorEl.textContent = '';
-            return true;
-        }
-    }
-
-    // Real-time validation for all fields
-    [username, password, confirmPassword].forEach(input => {
-        input.addEventListener('input', () => {
-            validateInput(input, 'This field is required');
-
-            // Real-time password rules
-            if (input === password && input.value) {
-                const errorEl = input.parentElement.querySelector('.err-msg');
-                if (input.value.length < 8 || input.value.length > 16) {
-                    input.classList.add('error');
-                    if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
-                } else if (!/[A-Za-z]/.test(input.value) || !/[0-9]/.test(input.value)) {
-                    input.classList.add('error');
-                    if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
-                } else {
-                    input.classList.remove('error');
-                    if (errorEl) errorEl.textContent = '';
-                }
-            }
-
-            // Real-time confirm password match
-            if (input === confirmPassword || input === password) {
-                const errorEl = confirmPassword.parentElement.querySelector('.err-msg');
-                if (confirmPassword.value && confirmPassword.value !== password.value) {
-                    confirmPassword.classList.add('error');
-                    if (errorEl) errorEl.textContent = 'Passwords do not match';
-                } else if (confirmPassword.value === password.value) {
-                    confirmPassword.classList.remove('error');
-                    if (errorEl) errorEl.textContent = '';
-                }
-            }
+        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
         });
     });
 
-    createNextBtn.addEventListener('click', () => {
-        const usernameValid = validateInput(username, 'Username is required');
-        const passwordValid = validateInput(password, 'Password is required');
-        const confirmPasswordValid = validateInput(confirmPassword, 'Please confirm your password');
+    formElements.reTypePassword?.addEventListener('blur', () => validator.matchPassword(formElements.password, formElements.reTypePassword));
+    formElements.reTypePassword?.addEventListener('input', () => validator.clear(formElements.reTypePassword));
 
-        let isValid = usernameValid && passwordValid && confirmPasswordValid;
-
-        // Check password rules
-        if (password.value) {
-            if (password.value.length < 8 || password.value.length > 16) {
-                const errorEl = password.parentElement.querySelector('.err-msg');
-                password.classList.add('error');
-                if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
-                isValid = false;
-            } else if (!/[A-Za-z]/.test(password.value) || !/[0-9]/.test(password.value)) {
-                const errorEl = password.parentElement.querySelector('.err-msg');
-                password.classList.add('error');
-                if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
-                isValid = false;
-            } else {
-                const errorEl = password.parentElement.querySelector('.err-msg');
-                password.classList.remove('error');
-                if (errorEl) errorEl.textContent = '';
-            }
-        }
-
-        // Check password match
-        if (password.value && confirmPassword.value && password.value !== confirmPassword.value) {
-            const errorEl = confirmPassword.parentElement.querySelector('.err-msg');
-            confirmPassword.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Passwords do not match';
-            isValid = false;
-        }
-
-        if (!isValid) return;
-
-        sessionStorage.setItem('reg_username', username.value.trim());
-        sessionStorage.setItem('reg_password', password.value); // Do NOT store plaintext in production!
-        console.log('Current registration data in sessionStorage:', {
-            username: sessionStorage.getItem('reg_username'),
-            password: sessionStorage.getItem('reg_password')
-        });
-
-        // All valid: proceed
-        showIDPanel();
+    formElements.contactNo?.addEventListener('input', () => {
+        formElements.contactNo.value = formElements.contactNo.value.replace(/\D/g, '');
+        validator.clear(formElements.contactNo);
     });
-});
-
-
-// show personal details panel (final step)
-function showPersonalDetails() {
-    showOnly('personalDetailsPanel');
-    setTimeout(() => { const f = document.getElementById('firstName'); if (f) f.focus(); }, 50);
 }
 
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
 
-
-// wire personal details form submit
-document.addEventListener('DOMContentLoaded', () => {
-    // const personalForm = document.getElementById('personalDetailsForm');
-    // if(!personalForm) return;
-    // personalForm.addEventListener('submit', (e)=>{
-    //     e.preventDefault();
-    //     // basic validation
-    //     const first = document.getElementById('firstName');
-    //     const last = document.getElementById('lastName');
-    //     const sex = document.getElementById('sex');
-    //     if(!first.value.trim()){ first.focus(); return; }
-    //     if(!last.value.trim()){ last.focus(); return; }
-    //     if(!sex.value){ sex.focus(); return; }
-    //     // All good for now — replace with server upload/submit
-    //     alert('Registration submitted.\nName: ' + first.value + ' ' + (document.getElementById('middleName').value||'') + ' ' + last.value + '\nID submitted previously.');
-    //     // Optionally redirect to login page
-    //     // location.href = 'loginform.html';
-    // });
-
-
-    const personalDetailsForm = document.getElementById('personalDetailsForm');
-    const firstName = document.getElementById('firstName');
-    const lastName = document.getElementById('lastName');
-    const sex = document.getElementById('sex');
-    const address = document.getElementById('address');
-
-    // Helper function for validation
-    function validateInput(input, message = 'This field is required') {
-        const errorEl = input.parentElement.querySelector('.err-msg');
-        if (input.value.trim() === '' || input.value === 'select') {
-            input.classList.add('error');
-            if (errorEl) errorEl.textContent = message;
-            return false;
-        } else {
-            input.classList.remove('error');
-            if (errorEl) errorEl.textContent = '';
-            return true;
+// =========================
+// 7. OCR / ID Preview Logic
+// =========================
+formElements.idFile.addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            if (formElements.idImagePreview) formElements.idImagePreview.src = e.target.result;
+            if (formElements.imagePreviewContainer) formElements.imagePreviewContainer.style.display = 'block';
         }
+        reader.readAsDataURL(file);
+        processOCR(); // <-- triggers OCR immediately
+    }
+});
+
+async function processOCR() {
+    // 1. Initial Validation
+    if (!formElements.idFile.files[0] || !formElements.idType.value) {
+        formElements.ocrStatus.textContent = "Please select an ID type and upload a photo.";
+        formElements.ocrStatus.className = 'ocr-status-error';
+        formElements.ocrStatus.style.display = 'block';
+        return;
     }
 
-    // Real-time validation
-    [firstName, lastName, suffix, sex, address].forEach((input) => {
-        input.addEventListener('input', () => validateInput(input));
+    // 2. Loading State
+    formElements.selectIdNextBtn.disabled = true;
+    formElements.selectIdNextBtn.textContent = "Verifying...";
+    formElements.ocrStatus.className = 'ocr-status-processing';
+    formElements.ocrStatus.style.display = 'block';
+    formElements.ocrStatus.textContent = "Checking ID fingerprints...";
+
+    const formData = new FormData();
+    formData.append('file', formElements.idFile.files[0]);
+    formData.append('idType', formElements.idType.value);
+    // include debug flag when running locally to get per-type hits and raw text
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) formData.append('debug', '1');
+
+    let result = null;
+    try {
+        const response = await fetch('http://127.0.0.1:5000/process_ocr', { method: 'POST', body: formData });
+        result = await response.json();
+
+        if (result && result.success) {
+            const d = result.data || {};
+            // Prefer provider meta but fall back to counting extracted fields when legacy response lacks meta
+            const hitsMap = result.meta?.hits_map || {};
+            let fieldsCount = (typeof result.meta?.fields_count === 'number') ? result.meta.fields_count : 0;
+            if (!fieldsCount) {
+                fieldsCount = Object.values(d).filter(v => v && String(v).trim().length > 0).length;
+            }
+            const selectedType = formElements.idType.value;
+            const selectedHits = hitsMap[selectedType] || 0;
+
+            // If selected ID type has no fingerprint hits and extracted fields are minimal, treat as failed verification
+            if (selectedHits < 1 && fieldsCount < 2) {
+                formElements.ocrStatus.className = 'ocr-status-error';
+                formElements.ocrStatus.textContent = `Selected ID type (${selectedType}) not confidently detected. Please upload the correct ID or proceed manually.`;
+                formElements.selectIdNextBtn.disabled = false;
+                formElements.selectIdNextBtn.textContent = "Retry Verification";
+                // Make Retry explicitly refresh the page so user can re-upload/clear state
+                formElements.selectIdNextBtn.onclick = () => window.location.reload();
+                return; // stop successful branch
+            }
+            // Populate the next panel's fields
+            formElements.firstName.value = d.firstName || "";
+            formElements.middleName.value = d.middleName || "";
+            formElements.lastName.value = d.lastName || "";
+            formElements.address.value = d.address || "";
+
+            // Store OCR results for later submission / verification
+            lastOcrData = d;
+            lastOcrMeta = result.meta || null;
+
+            // Show Success UI
+            const detected = result.meta?.detected_type || "Document";
+            formElements.ocrStatus.className = 'ocr-status-success';
+            formElements.ocrStatus.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa fa-check-circle"></i>
+                    <span>Verified: <strong>${detected}</strong></span>
+                </div>
+            `;
+
+            // THE FIX: Transition the button to "Next Step" mode
+            formElements.selectIdNextBtn.disabled = false;
+            formElements.selectIdNextBtn.textContent = "Next: Personal Details";
+            
+            // Change the click event so it switches panels instead of running OCR again
+            formElements.selectIdNextBtn.onclick = () => {
+                switchPanel('personalDetails');
+                // Reset button for next time (in case they come back)
+                resetVerifyButton(); 
+            };
+        } else {
+            // Error handling (mismatch, blur, etc.)
+            formElements.ocrStatus.className = 'ocr-status-error';
+            formElements.ocrStatus.textContent = result.error || "Verification failed.";
+            formElements.selectIdNextBtn.disabled = false;
+            formElements.selectIdNextBtn.textContent = "Retry Verification";
+        }
+    } catch (error) {
+        console.error("OCR Error:", error);
+        formElements.ocrStatus.className = 'ocr-status-error';
+        formElements.ocrStatus.textContent = "Server offline. You can proceed manually.";
+        formElements.selectIdNextBtn.disabled = false;
+        formElements.selectIdNextBtn.textContent = "Proceed Manually";
+        formElements.selectIdNextBtn.onclick = () => switchPanel('personalDetails');
+    }
+
+        // Safe log: only print if backend responded
+        if (typeof result !== 'undefined' && result !== null) {
+            console.log("Full Backend Response:", result); // Look at 'meta' and 'data' here
+        }
+}
+
+// Helper to reset the button back to OCR mode if the user changes their selection
+function resetVerifyButton() {
+    formElements.selectIdNextBtn.textContent = "Verify ID";
+    formElements.selectIdNextBtn.onclick = processOCR;
+}
+
+// =========================
+// 8. Navigation Buttons
+// =========================
+function setupNavigationButtons() {
+    formElements.selectIdBackBtn?.addEventListener('click', e => { e.preventDefault(); window.location.href = '/Banwa/client/pages/auth/signin.php'; });
+    formElements.personalDetailsBackBtn?.addEventListener('click', () => switchPanel('selectId'));
+    formElements.createAccBackBtn?.addEventListener('click', () => switchPanel('personalDetails'));
+
+    formElements.selectIdNextBtn?.addEventListener('click', async () => {
+        const stepFields = [formElements.idType, formElements.idFile];
+        if (!validateStep(stepFields)) return;
+        // Only run verification here. Do not auto-navigate; `processOCR` will enable
+        // and set the button's onclick to proceed when verification succeeds.
+        await processOCR();
     });
 
-    // Form submission
-    personalDetailsForm.addEventListener('submit', async (e) => {
+    formElements.personalDetailsNextBtn?.addEventListener('click', () => {
+        const stepFields = [
+            formElements.firstName,
+            formElements.lastName,
+            formElements.sex,
+            formElements.contactNo,
+            formElements.address
+        ];
+        if (validateStep(stepFields)) switchPanel('createAcc');
+    });
+
+}
+
+// =========================
+// 9. Account Submission & Resend
+// =========================
+let allData = null;
+let resendCount = 0;
+const MAX_RESENDS = 3;
+
+function startResendCooldown() {
+    const submitBtn = document.getElementById('createAccSubmitBtn');
+    if (submitBtn) submitBtn.style.display = 'none';
+    const btn = formElements.resendBtn;
+    btn.disabled = true;
+    let countdown = 90;
+    btn.textContent = `Resend available in ${countdown}s`;
+    const interval = setInterval(() => {
+        countdown--;
+        btn.textContent = `Resend available in ${countdown}s`;
+        if (countdown <= 0) {
+            clearInterval(interval);
+            if (resendCount < MAX_RESENDS) { btn.disabled = false; btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`; }
+            else btn.remove();
+        }
+    }, 1000);
+}
+
+async function resendVerificationEmail() {
+    if (!allData || resendCount >= MAX_RESENDS) return;
+    formElements.resendBtn.disabled = true;
+    const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: allData.email,
+        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+    });
+    if (error) {
+        formElements.formMessage.style.color = 'red';
+        formElements.formMessage.textContent = 'Failed to resend verification email. Please try again later.';
+        formElements.resendBtn.disabled = false;
+        return;
+    }
+    resendCount++;
+    formElements.formMessage.style.color = 'green';
+    formElements.formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
+    startResendCooldown();
+}
+
+formElements.resendBtn.addEventListener('click', resendVerificationEmail);
+
+function setupAccountSubmission() {
+    formElements.formMessage.style.display = 'none';
+    formElements.createAccForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        formElements.formMessage.textContent = '';
+        const stepFields = [formElements.password, formElements.reTypePassword, formElements.email, formElements.agreeCheckBox];
+        if (!validateStep(stepFields) ||
+            !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
+            return;
+        }
+        // Confirm with modal instead of native confirm()
+        const confirmed = await showSubmitConfirmation();
+        if (!confirmed) return;
 
-        const firstValid = validateInput(firstName, 'First name is required');
-        const lastValid = validateInput(lastName, 'Last name is required');
-        const sexValid = validateInput(sex, 'Please select your sex');
-        const addressValid = validateInput(address, 'Address is required');
-        const isValid = firstValid && lastValid && sexValid && addressValid;
-
-        if (!isValid) return;
-
-        // --- RETRIEVE STORED ACCOUNT INFO (from session) ---
-        const reg_username = sessionStorage.getItem('reg_username');
-        const reg_password = sessionStorage.getItem('reg_password');
-
-        // You now have all info for the server/db:
-        const allSignupData = {
-            username: reg_username,
-            password: reg_password,    // In production, never handle password in plain text like this!
-            firstName: firstName.value,
-            lastName: lastName.value,
-            sex: sex.value,
-            address: address.value
+        allData = {
+            fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
+            sex: formElements.sex.value,
+            contactNo: formElements.contactNo.value,
+            address: formElements.address.value,
+            idType: formElements.idType.value,
+            email: formElements.email.value,
+            password: formElements.password.value,
+            agreeCheckBox: formElements.agreeCheckBox.checked
+            ,
+            // attach OCR metadata and extracted fields (if available)
+            ocrMeta: lastOcrMeta,
+            ocrData: lastOcrData
         };
 
-        // ---- CONSOLE LOG ALL DATA CLEARLY ----
-        console.log('%c ALL REGISTRATION DATA:', 'color: green; font-weight: bold;');
-        console.log(allSignupData);
+        try {
+            const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: allData.email })
+            });
+            const dbCheck = await respCheck.json();
+            if (dbCheck.exists) {
+                formElements.formMessage.style.display = 'block';
+                formElements.formMessage.style.color = 'red';
+                formElements.formMessage.textContent = 'An account with this email already exists.';
+                return;
+            }
 
-        // --- SEND DATA TO SERVER or STORE ---
-        // Example: await fetch('/api/signup', { method: 'POST', body: JSON.stringify(allSignupData) });
+            const { data, error } = await supabase.auth.signUp({
+                email: allData.email,
+                password: allData.password,
+                options: { data: allData, emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+            });
 
-        // Clear sessionStorage for security after signup
-        sessionStorage.removeItem('reg_username');
-        sessionStorage.removeItem('reg_password');
+            if (error) {
+                formElements.formMessage.style.display = 'block';
+                formElements.formMessage.style.color = 'red';
+                if (error.message.toLowerCase().includes('already')) {
+                    formElements.formMessage.textContent = 'An account with this email already exists.';
+                } else {
+                    formElements.formMessage.textContent = 'An error occurred: ' + error.message;
+                }
+                return;
+            }
 
-        // Success
-        alert('Registration successful!\nYou may now log in to your account.');
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+            formElements.formMessage.style.display = 'block';
+            formElements.formMessage.style.color = 'green';
+            formElements.formMessage.innerHTML = `
+                Account created successfully.<br>
+                Please verify your email to activate your account.<br><br>
+                If you don’t receive the email within 1–2 minutes:
+                <br>
+                1. Make sure the email address is correct<br>
+                2. Check your Spam / Promotions folder<br>
+                3. You can resend the verification email
+            `;
 
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+            formElements.resendBtn.classList.add('show');
+            startResendCooldown();
+
+            // Fire-and-forget: send OCR meta to server-side verifier to apply DB updates
+            (async () => {
+                try {
+                    const supabaseUserId = data?.user?.id || data?.user?.user_metadata?.id || null;
+                    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                    const payload = {
+                        supabase_user_id: supabaseUserId,
+                        email: allData.email,
+                        ocrMeta: allData.ocrMeta,
+                        ocrData: allData.ocrData,
+                        debug: isLocal // request debug info only on local dev
+                    };
+                    const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const verifyResult = await resp.json();
+                    console.log('verify_ocr result', verifyResult);
+                    if (verifyResult.debug_info) console.error('verify_ocr debug:', verifyResult.debug_info);
+                    if (verifyResult.success && verifyResult.verified) {
+                        formElements.formMessage.innerHTML += '<br><small>Identity verification applied automatically.</small>';
+                    } else if (verifyResult.success && !verifyResult.verified) {
+                        formElements.formMessage.innerHTML += `<br><small>OCR verification recorded (issues: ${verifyResult.reasons.join(', ') || 'none'}).</small>`;
+                    }
+                } catch (err) {
+                    console.warn('verify_ocr call failed', err);
+                }
+            })();
+
+        } catch (err) {
+            formElements.formMessage.style.display = 'block';
+            formElements.formMessage.style.color = 'red';
+            formElements.formMessage.textContent = 'An error occurred. ' + (err.message || err);
+        }
     });
-});
+}
+
+// =========================
+// Submit Confirmation Modal
+// =========================
+// Use modal provided in PHP template. This function shows it and returns a Promise.
+function showSubmitConfirmation() {
+    const modal = document.getElementById('submitConfirmModal');
+    if (!modal) {
+        // Fallback to native confirm if template missing
+        return Promise.resolve(confirm('Are you sure you want to submit this application?'));
+    }
+
+    const backdrop = modal.querySelector('.modal-backdrop');
+    const btnCancel = modal.querySelector('.btn-cancel');
+    const btnConfirm = modal.querySelector('.btn-confirm');
+
+    let resolvePromise;
+    const p = new Promise(res => { resolvePromise = res; });
+
+    // Show modal (remove hidden class)
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Fade-in handled by CSS animation on modal-box; set focus
+    const firstFocusable = btnCancel || btnConfirm;
+    firstFocusable && firstFocusable.focus();
+
+    // Focus trap
+    function handleKey(e) {
+        if (e.key === 'Escape') {
+            close(false);
+        } else if (e.key === 'Tab') {
+            const focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
+            if (focusable.length === 0) return;
+            const idx = focusable.indexOf(document.activeElement);
+            if (e.shiftKey) {
+                if (idx === 0) { focusable[focusable.length - 1].focus(); e.preventDefault(); }
+            } else {
+                if (idx === focusable.length - 1) { focusable[0].focus(); e.preventDefault(); }
+            }
+        }
+    }
+
+    function close(val) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        document.removeEventListener('keydown', handleKey);
+        backdrop.removeEventListener('click', backdropClick);
+        btnCancel.removeEventListener('click', onCancel);
+        btnConfirm.removeEventListener('click', onConfirm);
+        resolvePromise(val);
+    }
+
+    function onCancel() { close(false); }
+    function onConfirm() { close(true); }
+    function backdropClick(e) { if (e.target === backdrop) close(false); }
+
+    document.addEventListener('keydown', handleKey);
+    backdrop.addEventListener('click', backdropClick);
+    btnCancel.addEventListener('click', onCancel);
+    btnConfirm.addEventListener('click', onConfirm);
+
+    return p;
+}
+
+// =========================
+// 10. Initialize
+// =========================
+function initialize() {
+    switchPanel('selectId');
+    setupRealtimeValidation();
+    setupNavigationButtons();
+    setupAccountSubmission();
+}
+
+document.addEventListener('DOMContentLoaded', initialize);

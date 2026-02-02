@@ -1,93 +1,163 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('resetForm');
-  if (!form) return;
+import supabase from "../../../server/api/supabase.js";
 
-  const p = document.getElementById('newPassword');
-  const c = document.getElementById('confirmPassword');
-  const errP = document.getElementById('errMsgNew');
-  const errC = document.getElementById('errMsgConfirm');
+// =========================
+// Reset Password Elements
+// =========================
+const resetPassElements = {
+    form: document.getElementById('resetPassForm'),
+    password: document.getElementById('password'),
+    reTypePassword: document.getElementById('reTypePassword'),
+    formMessage: document.getElementById('formMessage')
+};
 
-  // Password rule
-  const rules = [
-    /.{8,16}/,     // 8-16 chars
-    /[A-Za-z]/,    // at least 1 letter
-    /[0-9]/        // at least 1 number
-  ];
+// =========================
+// Validator Module
+// =========================
+const validator = (() => {
+    function getWrapper(el) { return el.closest('.label-and-input'); }
+    function getErrorEl(el) { return getWrapper(el)?.querySelector('.error-msg'); }
 
-  function validatePassword(val, errorEl, inputEl) {
-    if (!val) {
-      errorEl.textContent = 'Password is required';
-      inputEl.classList.add('error');
-      return false;
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        el.classList.add('error');
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
     }
-    if (!rules.every(r => r.test(val))) {
-      errorEl.textContent = 'Password must be 8-16 characters and contain both letters and numbers';
-      inputEl.classList.add('error');
-      return false;
-    }
-    errorEl.textContent = '';
-    inputEl.classList.remove('error');
-    return true;
-  }
 
-  function validateConfirmation(passwordVal, confirmVal, errorEl, inputEl) {
-    if (!confirmVal) {
-      errorEl.textContent = 'Please confirm your password';
-      inputEl.classList.add('error');
-      return false;
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        el.classList.remove('error');
+        if (errorEl) {
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
+        }
     }
-    if (passwordVal !== confirmVal) {
-      errorEl.textContent = 'Passwords do not match';
-      inputEl.classList.add('error');
-      return false;
+
+    function validatePassword(input) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, 'Password is required'); return false; }
+        if (value.length < 8 || value.length > 16) { showError(input, 'Password should be 8-16 characters long'); return false; }
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must contain letters and numbers'); return false; }
+        clearError(input);
+        return true;
     }
-    errorEl.textContent = '';
-    inputEl.classList.remove('error');
-    return true;
-  }
 
-  p.addEventListener('input', () => validatePassword(p.value, errP, p));
-  c.addEventListener('input', () => validateConfirmation(p.value, c.value, errC, c));
+    function validatePasswordMatch(passwordInput, reTypeInput) {
+        const passwordVal = passwordInput.value.trim();
+        const reTypeVal = reTypeInput.value.trim();
+        if (!reTypeVal) { showError(reTypeInput, 'Please re-type your password'); return false; }
+        if (passwordVal !== reTypeVal) { showError(reTypeInput, 'Passwords do not match'); return false; }
+        clearError(reTypeInput);
+        return true;
+    }
 
-  form.addEventListener('submit', (e) => {
+    return { password: validatePassword, matchPassword: validatePasswordMatch, clear: clearError };
+})();
+
+// =========================
+// Validation Config
+// =========================
+const validationConfig = [
+    { el: resetPassElements.password, type: 'password' },
+    { el: resetPassElements.reTypePassword, type: 'matchPassword', passwordEl: resetPassElements.password }
+];
+
+// =========================
+// Validate Field Helper
+// =========================
+function validateField(config) {
+    if (!config.el) return true;
+    switch (config.type) {
+        case 'password': return validator.password(config.el);
+        case 'matchPassword': return validator.matchPassword(config.passwordEl, config.el);
+    }
+}
+
+// =========================
+// Step Validation
+// =========================
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
+
+// =========================
+// Real-time Validation
+// =========================
+function setupRealtimeValidation() {
+    validationConfig.forEach(config => {
+        const { el } = config;
+        if (!el) return;
+
+        const targets = [el];
+        targets.forEach(target => {
+            target.addEventListener('blur', () => validateField(config));
+            target.addEventListener('input', () => validator.clear(target));
+        });
+    });
+}
+
+
+// =========================
+// Form Submission
+// =========================
+async function handleFormSubmit(e) {
     e.preventDefault();
+    resetPassElements.formMessage.textContent = '';
+    resetPassElements.formMessage.style.display = 'none';
 
-    const passVal = p.value || '';
-    const confirmVal = c.value || '';
+    if (!validateStep([resetPassElements.password, resetPassElements.reTypePassword])) return;
 
-    const validPassword = validatePassword(passVal, errP, p);
-    const validConfirm = validateConfirmation(passVal, confirmVal, errC, c);
+    try {
+        const { data, error } = await supabase.auth.updateUser({
+            password: resetPassElements.password.value
+        });
 
-    if (!validPassword) {
-      p.focus();
-      return;
+        if (error) {
+            resetPassElements.formMessage.style.display = 'block';
+            resetPassElements.formMessage.style.color = 'red';
+            resetPassElements.formMessage.textContent = `Reset failed: ${error.message}`;
+            return;
+        }
+
+        resetPassElements.formMessage.style.display = 'block';
+        resetPassElements.formMessage.style.color = 'green';
+        resetPassElements.formMessage.textContent = 'Password successfully updated. You may now sign in.';
+
+        setTimeout(() => {
+            window.location.href = '/Banwa/client/pages/auth/signin.php';
+        }, 2000);
+
+    } catch (err) {
+        console.error(err);
+        resetPassElements.formMessage.style.display = 'block';
+        resetPassElements.formMessage.style.color = 'red';
+        resetPassElements.formMessage.textContent = 'An unexpected error occurred. Please try again.';
     }
-    if (!validConfirm) {
-      c.focus();
-      return;
-    }
+}
 
-    // Submission succeeded, replace right panel
-    const right = document.querySelector('.right-panel');
-    if (right) {
-      right.innerHTML = `
-        <div style="max-width:520px;margin:48px auto 0;text-align:center;">
-          <h1 class="welcome-header" style="font-size:28px;color:#0b3a82">Password Updated!</h1>
-          <div class="success-circle" aria-hidden="true">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div style="margin-top:12px;color:#213a63;font-weight:700">Updated successfully.</div>
-          <div style="margin-top:22px">
-            <button id="backToLoginBtn" class="next-btn">Back to Login</button>
-          </div>
-        </div>
-      `;
-      setTimeout(() => {
-        const btn = document.getElementById('backToLoginBtn');
-        if (btn) btn.addEventListener('click', () => location.href = '/client/src/pages/auth/signin.php');
-      }, 0);
-    } else {
-      location.href = '/Banwa/client/pages/auth/signin.php';
-    }
-  });
-});
+// =========================
+// Initialize All Functionality
+// =========================
+function initialize() {
+    if (!resetPassElements.formMessage) return;
+
+    // Show invalid session
+    supabase.auth.getSession().then(({ data: sessionData }) => {
+        if (!sessionData || !sessionData.session) {
+            resetPassElements.formMessage.style.display = 'block';
+            resetPassElements.formMessage.style.color = 'red';
+            resetPassElements.formMessage.textContent = 'Reset link is invalid or expired.';
+        }
+    });
+
+    setupRealtimeValidation();
+    if (resetPassElements.form) resetPassElements.form.addEventListener('submit', handleFormSubmit);
+}
+
+// =========================
+// DOM Ready
+// =========================
+document.addEventListener('DOMContentLoaded', initialize);

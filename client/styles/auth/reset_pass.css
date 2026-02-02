@@ -1,14 +1,131 @@
-/* small page-specific styles for reset password page */
-.reset-help{ color:#c21c1c; font-weight:700; font-size:0.95rem; margin-top:6px; }
-#resetForm label{ display:block; margin-top:14px; color:#6b7280; font-size:0.95rem }
-#resetForm input{ width:100%; padding:10px; border-radius:8px; border:1px solid #ebecef; background:#f8f9fb; margin-top:6px }
-#resetForm .next-btn{ width:160px; display:inline-block }
+/* TODO:
+      Front-end dev, later will move this in global.css,
+      not today because of global may affected some files that use global.css 
+      that is why it is isolated for now for safety.
+*/
 
-@media (max-width:720px){
-  .reset-help{ font-size:0.9rem }
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+  --h5: 30px;
+  --h5-lh: 38px;
+
+  --txt3: 16;
+  --txt3-lh: 24px;
+
+  --regular: 400;
+  --bold: 700;
 }
 
-/* Success state styles */
-.success-circle{ width:120px; height:120px; border-radius:50%; border:8px solid #22c55e; display:inline-flex; align-items:center; justify-content:center; margin:18px auto 6px; background:#fff }
-.success-circle svg{ display:block }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
 
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.sections {
+  width: 100%;
+}
+
+.containers {
+  padding: 32px 16px;
+}
+
+@media screen and (min-width: 780px) {
+  .containers {
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+  }
+}
+
+/* ==================== Reset Password Form ==================== */
+.reset-pass-container {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+}
+
+.reset-pass-container .form {
+  margin-inline: auto;
+  max-width: 780px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 32px;
+}
+
+.reset-pass-container .form h5 {
+  font-size: var(--h5);
+  line-height: var(--h5-lh);
+  font-weight: var(--bold);
+}
+
+/* .reset-pass-container .form p {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #000000E5;
+} */
+
+.reset-pass-container .form .inputs-container {
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+}
+
+.reset-pass-container .form .inputs-container .label-and-input {
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+}
+
+.reset-pass-container .form .inputs-container .label-and-input input[type="password"] {
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid #C4C4C4;
+  width: 100%;
+  background-color: #f5f5f5;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.reset-pass-container .form button {
+  margin-left: auto;
+  padding: 16px;
+  border-radius: 8px;
+  border: transparent;
+  transition: background-color 200ms ease;
+  font-weight: 500;
+  width: max-content;
+  background-color: #00247C;
+  color: white;
+  display: block;
+}
+
+.reset-pass-container .form button:hover {
+  background-color: #00164d;
+}
+
+.error-msg {
+  color: red;
+  font-size: 12px;
+  display: none;
+}
+
+.error-msg.show {
+  display: block;
+}
+
+.error {
+  outline: 1px solid red;
+  /* border: 1px solid red !important; */
+}

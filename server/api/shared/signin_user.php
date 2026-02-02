@@ -49,7 +49,7 @@ try {
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/utilities_staff/utilities.php"]);
                 break;
             case 7: // incident report staff
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/incident_report_staff/manage.php"]);
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/incident_report_staff/incident_report.php"]);
                 break;
             default:
                 echo json_encode(["success" => false, "message" => "Unknown role. Contact support."]);
