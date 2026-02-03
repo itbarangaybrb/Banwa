@@ -75,8 +75,6 @@
                                         <option value="" disabled selected>Select ID Type</option>
                                         <option value="National">National ID (PhilSys)</option>
                                         <option value="Quezon">Quezon City ID</option>
-                                        <option value="Postal">Postal ID</option>
-                                        <option value="Passport">Philippine Passport</option>
                                     </select>
                                     <div class="error-msg"></div>
                                 </div>

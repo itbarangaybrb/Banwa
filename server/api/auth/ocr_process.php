@@ -1,12 +1,15 @@
 <?php
 // /Banwa/server/api/auth/ocr_process.php
-// PRIMARY: OCR.space (high accuracy)
-// FALLBACK: Tesseract with enhanced preprocessing (upscale + sharpen + adaptive threshold)
-// FULLY TYPE-SAFE PARSING
-// - Strict ID type validation using distinctive keywords
-// - Prevents label/address/date leakage into names
-// - Robust comma handling for Quezon City IDs
-// - Prioritizes detected middle name for National ID
+// PRIMARY: OCR.space only (high accuracy, reliable line order)
+// TESSERACT FALLBACK FULLY COMMENTED OUT
+// FEATURES:
+//   - OCR Confidence Scoring (rejects low confidence with reupload message)
+//   - Blurry image detection
+//   - ROBUST Quezon City ID parsing:
+//     → Primary: Line after label containing "LAST NAME" / "FIRST NAME" / "M.I."
+//     → Fallback: Any comma line with strict filters (no digits, @, emergency keywords)
+//   - Address clean (no prefixes, no dates/civil status)
+//   - Digital/preview ID support
 
 header('Content-Type: application/json');
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
@@ -14,8 +17,9 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 ob_start();
 
 // === CONFIG ===
-$TESSERACT_CMD = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe';
 $OCR_API_KEY = 'K81052119188957';
+$BLUR_THRESHOLD = 150;
+$CONFIDENCE_THRESHOLD = 70;
 
 $debug = !empty($_POST['debug']);
 $debug_info = [];
@@ -35,113 +39,124 @@ function str_contains_array($haystack, $needles) {
     return false;
 }
 
-function clean_value($str, $source) {
+function clean_value($str) {
     $str = trim($str);
     $str = preg_replace('/\s+/', ' ', $str);
-
-    if ($source === 'tesseract') {
-        $noise = ['=', '-', '—', '"', '\'', '_', '|', '[', ']', '(', ')', '~', '^', '*', '#', '@', '!', '?', '\\', '/', '“', '”', 'igs', 'ZA', 'aun', 'n\\iyy', ' G ', ' -_', 'za', 'igs ', '3 '];
-        $str = str_replace($noise, ' ', $str);
-        $str = preg_replace('/[.,\d]*$/', '', $str);
-        $str = preg_replace('/\s+[A-Za-z0-9]{1,2}(\s+|$)/', ' ', $str);
-        $str = trim($str);
-    }
-
-    return $str;
+    $str = preg_replace('/[.,\d]*$/', '', $str);
+    return trim($str);
 }
 
-function preprocess_for_tesseract($input_path, $id_type) {
-    if (!extension_loaded('gd')) return $input_path;
+function clean_address_line($line) {
+    $line = preg_replace('/^Tirahan\/Address\s*/i', '', $line);
+    $line = preg_replace('/^Address\s*[:\/]?\s*/i', '', $line);
+    $line = preg_replace('/^Tirahan\s*[:\/]?\s*/i', '', $line);
+    $line = preg_replace('/^Civil Status\s*/i', '', $line);
+    $line = preg_replace('/^Marital Status\s*/i', '', $line);
+    $line = preg_replace('/^Status\s*/i', '', $line);
+    $line = trim($line);
+    return $line;
+}
 
-    $info = getimagesize($input_path);
-    if (!$info) return $input_path;
+function is_image_blurry($path, $threshold = 150) {
+    if (!extension_loaded('gd')) return false;
+
+    $info = getimagesize($path);
+    if (!$info) return false;
 
     $im = match ($info[2]) {
-        IMAGETYPE_JPEG => imagecreatefromjpeg($input_path),
-        IMAGETYPE_PNG => imagecreatefrompng($input_path),
+        IMAGETYPE_JPEG => imagecreatefromjpeg($path),
+        IMAGETYPE_PNG => imagecreatefrompng($path),
         default => false
     };
-    if (!$im) return $input_path;
-
-    // Upscale 2x
-    $w = imagesx($im) * 2;
-    $h = imagesy($im) * 2;
-    $resized = imagecreatetruecolor($w, $h);
-    imagecopyresampled($resized, $im, 0, 0, 0, 0, $w, $h, imagesx($im), imagesy($im));
-    imagedestroy($im);
-    $im = $resized;
+    if (!$im) return false;
 
     imagefilter($im, IMG_FILTER_GRAYSCALE);
-    imagefilter($im, IMG_FILTER_CONTRAST, -100);
 
-    // Light sharpen
-    imageconvolution($im, [[-1,-1,-1], [-1,16,-1], [-1,-1,-1]], 8, 0);
+    $matrix = [[-1,-1,-1], [-1,8,-1], [-1,-1,-1]];
+    imageconvolution($im, $matrix, 1, 0);
 
-    // Adaptive threshold
-    $threshold = ($id_type === 'National') ? 110 : 160;
     $width = imagesx($im);
     $height = imagesy($im);
-    for ($x = 0; $x < $width; $x++) {
-        for ($y = 0; $y < $height; $y++) {
-            $gray = (imagecolorat($im, $x, $y) >> 16) & 0xFF;
-            $color = ($gray > $threshold) ? 255 : 0;
-            imagesetpixel($im, $x, $y, imagecolorallocate($im, $color, $color, $color));
+
+    $pixels = [];
+    for ($x = 0; $x < $width; $x += 10) {
+        for ($y = 0; $y < $height; $y += 10) {
+            $gray = imagecolorat($im, $x, $y) & 0xFF;
+            $pixels[] = $gray;
         }
     }
 
-    $out = sys_get_temp_dir() . '/proc_' . uniqid() . '.png';
-    imagepng($im, $out);
     imagedestroy($im);
-    return $out;
+
+    if (empty($pixels)) return false;
+
+    $mean = array_sum($pixels) / count($pixels);
+    $variance = 0;
+    foreach ($pixels as $p) {
+        $variance += pow($p - $mean, 2);
+    }
+    $variance /= count($pixels);
+
+    return $variance < $threshold;
 }
 
-// === PARSING ===
-function parse_id_data($raw_lines, $id_type, $source) {
+// === PARSING FUNCTION ===
+function parse_id_data($raw_lines, $id_type) {
     $data = ['firstName' => '', 'lastName' => '', 'middleName' => '', 'address' => ''];
 
     $lines = [];
     foreach ($raw_lines as $line) {
-        $clean = clean_value($line, $source);
+        $clean = clean_value($line);
         if ($clean === '') continue;
+        if (stripos($clean, 'PREVIEW ONLY') !== false || stripos($clean, 'PREVIEW') !== false) continue;
         $lines[] = $clean;
     }
 
     $full_text_upper = strtoupper(implode(' ', $lines));
 
-    // ID TYPE VALIDATION
+    // RELAXED TYPE VALIDATION
     $type_match = false;
     if ($id_type === 'National') {
-        if (str_contains_array($full_text_upper, ['PAMBANSANG PAGKAKAKILANLAN', 'PHILIPPINE IDENTIFICATION', 'PHILSYS', 'PAGKAKAKILANLAN'])) {
+        if (str_contains_array($full_text_upper, ['PAMBANSANG PAGKAKAKILANLAN', 'PHILIPPINE IDENTIFICATION', 'PHILSYS', 'PAGKAKAKILANLAN', 'PAMBANSANG', 'PHILIPPINE IDENTIFICATION CARD'])) {
             $type_match = true;
         }
     } elseif ($id_type === 'Quezon') {
-        if (str_contains_array($full_text_upper, ['QUEZON CITY', 'CITIZEN CARD', 'KASAMA KASA PAG-UNLAD'])) {
+        $has_quezon = strpos($full_text_upper, 'QUEZON') !== false;
+        $has_citizen = strpos($full_text_upper, 'CITIZEN') !== false || strpos($full_text_upper, 'CARD') !== false;
+        $has_slogan = strpos($full_text_upper, 'KASAMA') !== false && strpos($full_text_upper, 'PAG-UNLAD') !== false;
+        if ($has_quezon && ($has_citizen || $has_slogan)) {
             $type_match = true;
         }
     }
 
     if (!$type_match) {
-        return $data; // Wrong ID type uploaded
+        return $data;
     }
 
+    // EXCLUSIONS
     $name_labels = ['FIRST', 'LAST', 'MIDDLE', 'GIVEN', 'PANGALAN', 'APELYIDO', 'NAME', 'M.I.', 'MGA', 'GITNANG', 'SURNAME'];
-    $date_labels = ['BIRTH', 'KAPANGANAKAN', 'PETSA', 'DATE'];
-    $address_keywords = ['QUEZON', 'CITY', 'COMMONWEALTH', 'STEVE', 'ST', 'POOK', 'PALARIS', 'UP CAMPUS', 'CAMPUS', 'NCR', 'DISTRICT', 'SITIO', 'PAJO', 'BLOCK', 'LOT', 'BLK', 'B2', 'TIRAHAN', 'ADDRESS'];
+    $date_labels = ['BIRTH', 'KAPANGANAKAN', 'PETSA', 'DATE OF BIRTH'];
+    $civil_status_keywords = ['CIVIL STATUS', 'MARITAL STATUS', 'STATUS', 'SINGLE', 'MARRIED', 'WIDOWED', 'DIVORCED'];
+    $month_keywords = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+    $non_name_keywords = ['EMERGENCY', 'CONTACT', 'CASE', 'SIGNATURE', 'HOLDER', 'RESIDENT', 'BLOOD', 'TYPE', 'SEX', 'DATE', 'VALID', 'UNTIL', 'ISSUED', 'PHILIPPINES'];
+    $address_keywords = ['QUEZON', 'CITY', 'COMMONWEALTH', 'STEVE', 'ST', 'POOK', 'PALARIS', 'UP CAMPUS', 'CAMPUS', 'NCR', 'DISTRICT', 'SITIO', 'PAJO', 'BLOCK', 'LOT', 'BLK', 'B2', 'BAESA', 'TIRAHAN', 'ADDRESS'];
 
+    // NATIONAL ID (unchanged - working well)
     if ($id_type === 'National') {
         $last = $given = $middle = '';
 
         for ($i = 0; $i < count($lines) - 1; $i++) {
             $label_line = strtoupper($lines[$i]);
             $value = $lines[$i + 1];
+            $value_upper = strtoupper($value);
 
-            if (str_contains_array(strtoupper($value), array_merge($name_labels, $date_labels, $address_keywords))) continue;
+            if (str_contains_array($value_upper, array_merge($name_labels, $date_labels, $address_keywords, $civil_status_keywords, $month_keywords, $non_name_keywords))) continue;
 
-            if (str_contains_array($label_line, ['APELYIDO', 'LAST NAME', 'SURNAME'])) {
-                $last = ucwords(strtolower($value));
-            } elseif (str_contains_array($label_line, ['MIDDLE NAME', 'GITNANG'])) {
+            if (str_contains_array($label_line, ['GITNANG APELYIDO', 'GITNANG', 'MIDDLE NAME'])) {
                 $middle = ucwords(strtolower($value));
-            } elseif (str_contains_array($label_line, ['GIVEN NAMES', 'MGA PANGALAN', 'PANGALAN'])) {
+            } elseif (str_contains_array($label_line, ['APELYIDO', 'LAST NAME', 'SURNAME', 'LOST NAME'])) {
+                $last = ucwords(strtolower($value));
+            } elseif (str_contains_array($label_line, ['MGA PANGALAN', 'GIVEN NAMES', 'GIVEN NAME', 'PANGALAN'])) {
                 $given = $value;
             }
         }
@@ -159,40 +174,92 @@ function parse_id_data($raw_lines, $id_type, $source) {
                 }
             }
         }
-    } elseif ($id_type === 'Quezon') {
-        foreach ($lines as $line) {
-            $upper = strtoupper($line);
-            if (str_contains_array($upper, array_merge($name_labels, $date_labels, $address_keywords))) continue;
+    }
 
-            if (strpos($line, ',') !== false) {
-                [$last_part, $rest] = explode(',', $line, 2);
-                $last_part = trim($last_part);
-                $rest = trim($rest);
+    // QUEZON CITY ID - ROBUST DUAL METHOD
+    elseif ($id_type === 'Quezon') {
+        $found_name = false;
 
-                if (strlen($last_part) > 2 && strlen($rest) > 2) {
-                    $data['lastName'] = ucwords(strtolower($last_part));
+        // PRIMARY: After label line
+        for ($i = 0; $i < count($lines) - 1; $i++) {
+            $label_upper = strtoupper($lines[$i]);
+            if (str_contains_array($label_upper, ['LAST NAME', 'FIRST NAME', 'M.I.', 'NAME'])) {
+                $candidate = clean_value($lines[$i + 1]);
+                $candidate_upper = strtoupper($candidate);
 
-                    $name_parts = preg_split('/\s+/', $rest);
-                    $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 1 && preg_match('/[A-Za-z]/', $p));
+                // Strict filters for candidate
+                if (str_contains_array($candidate_upper, $non_name_keywords)) continue;
+                if (preg_match('/\d|@|\(|\)/', $candidate)) continue;
 
-                    if (!empty($name_parts)) {
-                        $data['firstName'] = ucwords(strtolower(array_shift($name_parts)));
+                if (strpos($candidate, ',') !== false) {
+                    [$last_part, $rest] = explode(',', $candidate, 2);
+                    $last_part = trim($last_part);
+                    $rest = trim($rest);
+
+                    if (strlen($last_part) > 2 && strlen($rest) > 2) {
+                        $data['lastName'] = ucwords(strtolower($last_part));
+
+                        $name_parts = preg_split('/\s+/', $rest);
+                        $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 1 && preg_match('/[A-Za-z]/', $p));
+
                         if (!empty($name_parts)) {
-                            $data['middleName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                            $data['firstName'] = ucwords(strtolower(array_shift($name_parts)));
+                            if (!empty($name_parts)) {
+                                $data['middleName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                            }
                         }
+                        $found_name = true;
+                        break;
                     }
-                    break;
+                }
+            }
+        }
+
+        // FALLBACK: Any suitable comma line
+        if (!$found_name) {
+            foreach ($lines as $line) {
+                $upper = strtoupper($line);
+
+                if (str_contains_array($upper, array_merge($name_labels, $date_labels, $address_keywords, $civil_status_keywords, $month_keywords, $non_name_keywords))) continue;
+                if (preg_match('/\d|@|\(|\)|EMERGENCY|CONTACT|SIGNATURE|RESIDENT|BLOOD|SEX|DATE|VALID|ISSUED/', $upper)) continue;
+
+                if (strpos($line, ',') !== false) {
+                    [$last_part, $rest] = explode(',', $line, 2);
+                    $last_part = trim($last_part);
+                    $rest = trim($rest);
+
+                    if (strlen($last_part) > 2 && strlen($rest) > 2) {
+                        $data['lastName'] = ucwords(strtolower($last_part));
+
+                        $name_parts = preg_split('/\s+/', $rest);
+                        $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 1 && preg_match('/[A-Za-z]/', $p));
+
+                        if (!empty($name_parts)) {
+                            $data['firstName'] = ucwords(strtolower(array_shift($name_parts)));
+                            if (!empty($name_parts)) {
+                                $data['middleName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                            }
+                        }
+                        break; // Take first valid
+                    }
                 }
             }
         }
     }
 
-    // Address
+    // ADDRESS COLLECTION
     $addr_parts = [];
     foreach ($lines as $line) {
         $upper = strtoupper($line);
-        if (str_contains_array($upper, $address_keywords) && !str_contains_array($upper, array_merge($name_labels, $date_labels))) {
-            $addr_parts[] = $line;
+
+        if (str_contains_array($upper, array_merge($date_labels, $civil_status_keywords, $month_keywords, $non_name_keywords))) continue;
+        if (preg_match('/\d{4}\/\d{2}\/\d{2}|\d{2}\/\d{2}\/\d{4}/', $line)) continue;
+
+        if (str_contains_array($upper, $address_keywords) && !str_contains_array($upper, array_merge($name_labels))) {
+            $cleaned = clean_address_line($line);
+            if ($cleaned !== '') {
+                $addr_parts[] = $cleaned;
+            }
         }
     }
     $data['address'] = !empty($addr_parts) ? implode(' ', $addr_parts) : '';
@@ -215,10 +282,22 @@ if (!$file || $file['error'] !== UPLOAD_ERR_OK || !$id_type) {
 }
 
 $tmp_path = $file['tmp_name'];
-$raw_text = null;
-$source = 'unknown';
 
-// === OCR.SPACE (PRIMARY) ===
+// BLURRY DETECTION
+if (is_image_blurry($tmp_path, $BLUR_THRESHOLD)) {
+    ob_end_clean();
+    echo json_encode([
+        "success" => false,
+        "error" => "The uploaded image appears blurry. Please upload a clearer, well-lit photo of the ID."
+    ]);
+    exit;
+}
+
+$raw_text = null;
+$source = 'ocr.space';
+$avg_confidence = 0;
+
+// OCR.SPACE
 $debug_info['ocrspace_attempted'] = true;
 
 $mime = get_mime_type($file['name']);
@@ -229,7 +308,7 @@ $file_field = class_exists('CURLFile')
 $post_fields = [
     'apikey' => $OCR_API_KEY,
     'language' => 'eng',
-    'isOverlayRequired' => 'false',
+    'isOverlayRequired' => 'true',
     'OCREngine' => '2',
     'file' => $file_field
 ];
@@ -256,51 +335,50 @@ if ($response !== false && $http_code === 200) {
     $result = json_decode($response, true);
     if (json_last_error() === JSON_ERROR_NONE && !empty($result['ParsedResults']) && $result['OCRExitCode'] == 1) {
         $raw_text = $result['ParsedResults'][0]['ParsedText'];
-        $source = 'ocr.space';
+
+        // Confidence
+        $confidences = [];
+        if (isset($result['ParsedResults'][0]['TextOverlay']['Lines'])) {
+            foreach ($result['ParsedResults'][0]['TextOverlay']['Lines'] as $line) {
+                if (isset($line['Words'])) {
+                    foreach ($line['Words'] as $word) {
+                        if (isset($word['WordConfidence'])) {
+                            $confidences[] = (int)$word['WordConfidence'];
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($confidences)) {
+            $avg_confidence = array_sum($confidences) / count($confidences);
+            if ($avg_confidence < $CONFIDENCE_THRESHOLD) {
+                ob_end_clean();
+                echo json_encode([
+                    "success" => false,
+                    "error" => "Low OCR confidence (" . round($avg_confidence, 1) . "%). Please upload a clearer image."
+                ]);
+                exit;
+            }
+        }
     }
 }
 
 $debug_info['ocrspace_error'] = $curl_error ?: ($http_code !== 200 ? "HTTP $http_code" : null);
 
-// === TESSERACT FALLBACK ===
-if ($raw_text === null || trim($raw_text) === '') {
-    $debug_info['tesseract_fallback'] = true;
-
-    $processed_path = preprocess_for_tesseract($tmp_path, $id_type);
-    $use_path = $processed_path !== $tmp_path ? $processed_path : $tmp_path;
-
-    $exe = escapeshellarg($TESSERACT_CMD);
-    $input = escapeshellarg($use_path);
-
-    foreach ([4, 6, 3] as $psm) {
-        $cmd = "$exe $input stdout -l eng --psm $psm";
-        $output = shell_exec($cmd . ' 2>&1');
-        if ($output !== null && trim($output) !== '' && stripos($output, 'error') === false) {
-            if (!$raw_text || strlen(trim($output)) > strlen($raw_text)) {
-                $raw_text = $output;
-                $source = 'tesseract';
-            }
-        }
-    }
-
-    if ($processed_path !== $tmp_path && file_exists($processed_path)) {
-        @unlink($processed_path);
-    }
-}
-
 if ($raw_text === null || trim($raw_text) === '') {
     ob_end_clean();
     echo json_encode([
         "success" => false,
-        "error" => "Both OCR methods failed",
+        "error" => "OCR failed",
         "debug_info" => $debug ? $debug_info : null
     ]);
     exit;
 }
 
-// === PARSE ===
+// PARSE
 $raw_lines = array_filter(array_map('trim', explode("\n", $raw_text)));
-$extracted_data = parse_id_data($raw_lines, $id_type, $source);
+$extracted_data = parse_id_data($raw_lines, $id_type);
 
 $response = [
     "success" => true,
@@ -308,6 +386,10 @@ $response = [
     "raw" => $raw_text,
     "source" => $source
 ];
+
+if ($avg_confidence > 0) {
+    $response['ocr_confidence'] = round($avg_confidence, 2);
+}
 
 if ($debug) {
     $response["debug_info"] = $debug_info;
