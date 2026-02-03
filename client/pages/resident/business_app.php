@@ -253,9 +253,15 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input">
                         <label class="label" for="requirementUpload">Attachment/s <span style="color: #BB1B1B;">*</span></label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                        <input type="file" id="requirementUpload" name="requirementUpload" multiple accept=".pdf,.jpg,.jpeg,.png"><!-- accept multiple file types -->
                         <div class="error-msg"></div>
                     </div>
+                </div>
+                <div class="label-and-input">
+                    <button type="button" id="verifyDocumentsBtn">
+                        Verify Documents with OCR
+                    </button>
+                    <div id="ocrResults" style="margin-top: 20px; max-height: 400px; overflow-y: auto;"></div>
                 </div>
 
                 <div class="buttons-container">

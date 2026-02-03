@@ -237,12 +237,22 @@ async function processOCR() {
         return;
     }
 
-    // 2. Loading State
+    // 2. Loading State - NOW WITH PROGRESS BAR ANIMATION
     formElements.selectIdNextBtn.disabled = true;
-    formElements.selectIdNextBtn.textContent = "Verifying...";
+    formElements.selectIdNextBtn.textContent = "Processing...";
+
     formElements.ocrStatus.className = 'ocr-status-processing';
     formElements.ocrStatus.style.display = 'block';
-    formElements.ocrStatus.textContent = "Checking ID fingerprints...";
+    
+    // Progress bar + text (indeterminate animation)
+    formElements.ocrStatus.innerHTML = `
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <div style="text-align: center; font-weight: bold; margin-top: 8px;">
+            Checking ID fingerprints...
+        </div>
+    `;
 
     const formData = new FormData();
     formData.append('file', formElements.idFile.files[0]);
@@ -252,7 +262,10 @@ async function processOCR() {
 
     let result = null;
     try {
-        const response = await fetch('http://127.0.0.1:5000/process_ocr', { method: 'POST', body: formData });
+        const response = await fetch('/Banwa/server/api/auth/ocr_process.php', {
+            method: 'POST',
+            body: formData  // formData should contain 'idFile' (File) and 'idType' (string)
+        });
         result = await response.json();
 
         if (result && result.success) {

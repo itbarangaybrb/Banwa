@@ -61,6 +61,88 @@ typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOf
 natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
 
+// OCR Verification Button
+document.getElementById('verifyDocumentsBtn')?.addEventListener('click', async () => {
+    const fileInput = document.getElementById('requirementUpload');
+    const resultsDiv = document.getElementById('ocrResults');
+
+    if (fileInput.files.length === 0) {
+        resultsDiv.innerHTML = '<p style="color: orange;">Please upload at least one document first.</p>';
+        return;
+    }
+
+    const checkedRequirements = Array.from(
+        document.querySelectorAll('input[name="requirements"]:checked')
+    ).map(cb => cb.value);
+
+    if (checkedRequirements.length === 0) {
+        resultsDiv.innerHTML = '<p style="color: orange;">Please check at least one requirement.</p>';
+        return;
+    }
+
+    const formData = new FormData();
+    for (const file of fileInput.files) {
+        formData.append('documents[]', file);
+    }
+    checkedRequirements.forEach(req => formData.append('requirements[]', req));
+    formData.append('natureOfApplication', document.getElementById('natureOfApplication').value);
+
+    const btn = document.getElementById('verifyDocumentsBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Verifying...';
+    btn.disabled = true;
+    resultsDiv.innerHTML = '<p>Processing documents with OCR.space...</p>';
+
+    try {
+        const response = await fetch('/Banwa/server/api/resident/ocr_handler.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            resultsDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+            return;
+        }
+
+        let html = '<h6 style="margin-bottom: 12px;">OCR Verification Results</h6><ul style="margin: 0; padding-left: 20px;">';
+
+        data.results.forEach(res => {
+            const detected = res.detected.length ? res.detected.join(', ') : 'None / Unknown';
+            const preview = res.text ? res.text.substring(0, 300).replace(/\n/g, '<br>') + '...' : 'No text extracted';
+            html += `
+                <li style="margin-bottom: 16px;">
+                    <strong>${res.filename}</strong><br>
+                    <small><strong>Detected as:</strong> ${detected}</small><br>
+                    <small><strong>Extracted text preview:</strong><br>${preview}</small>
+                </li>`;
+        });
+
+        html += '</ul>';
+
+        if (data.missing.length > 0) {
+            html += `<p style="color: #BB1B1B; margin-top: 16px;">
+                <strong>⚠ Verification incomplete:</strong> Could not confidently detect the following required documents: 
+                ${data.missing.join(', ')}.<br>
+                You may still submit, but the admin will manually review.
+            </p>`;
+        } else {
+            html += `<p style="color: green; margin-top: 16px;">
+                <strong>✓ All checked requirements appear to be verified!</strong>
+            </p>`;
+        }
+
+        resultsDiv.innerHTML = html;
+    } catch (err) {
+        console.error(err);
+        resultsDiv.innerHTML = '<p style="color: red;">Network error. Please try again.</p>';
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+});
+
 /**
  * Comprehensive validation utility for form input fields
  * Provides methods to validate different input types and display error messages
@@ -602,10 +684,15 @@ newSummaryForm.addEventListener('submit', async (e) => {
             formData.append('requirements[]', checkbox.value);
         });
 
-        // File Upload
+        // File Upload - send ALL files as array
         const fileInput = document.getElementById('requirementUpload');
         if (fileInput.files.length > 0) {
-            formData.append('requirementUpload', fileInput.files[0]);
+            for (const file of fileInput.files) {
+                formData.append('requirementUpload[]', file);
+            }
+        } else {
+            // validation already catches this, but safe
+            formData.append('requirementUpload[]', ''); // empty if none
         }
 
         const latitudeEl = document.getElementById('latitude2');
