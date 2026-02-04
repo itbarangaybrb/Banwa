@@ -749,29 +749,11 @@ function viewDetails(appId) {
     // 2. File Viewing Logic
     let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
 
-    // Normalize uploaded files - support `requirement_upload_json` or legacy `requirement_upload`
-    let uploadedFiles = [];
-    if (app.requirement_upload_json) {
-        if (Array.isArray(app.requirement_upload_json)) uploadedFiles = app.requirement_upload_json;
-        else {
-            try { uploadedFiles = JSON.parse(app.requirement_upload_json); } catch (e) { uploadedFiles = []; }
-        }
-    }
-    if (!uploadedFiles.length && app.requirement_upload) {
-        try {
-            const parsed = JSON.parse(app.requirement_upload);
-            if (Array.isArray(parsed)) uploadedFiles = parsed;
-            else uploadedFiles = [app.requirement_upload];
-        } catch (e) {
-            uploadedFiles = [app.requirement_upload];
-        }
-    }
+    if (app.requirement_upload) {
+        const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
+        const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
 
-    if (uploadedFiles.length > 0) {
-        const filename = uploadedFiles[0];
-        const filePath = `${UPLOADS_BASE_PATH}${filename}`;
-        const fileExt = (filename || '').split('.').pop().toLowerCase();
-
+        // If image, show thumbnail + view button
         if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
             fileHtml = `
                 <div class="file-viewer-box">
@@ -783,14 +765,12 @@ function viewDetails(appId) {
                     <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
                 </div>`;
         }
+        // If PDF or other, show generic icon + open button
         else {
-            const isPdf = fileExt === 'pdf';
-            const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
-            const iconColor = isPdf ? '#dc3545' : '#6c757d';
             fileHtml = `
                 <div class="file-viewer-box">
-                    <i class="fas ${iconClass} fa-3x" style="color:${iconColor}; margin-bottom:10px;"></i>
-                    <p style="margin-bottom:10px; font-weight:bold;">${filename}</p>
+                    <i class="fas fa-file-pdf fa-3x" style="color:#dc3545; margin-bottom:10px;"></i>
+                    <p style="margin-bottom:10px; font-weight:bold;">${app.requirement_upload}</p>
                     <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-external-link-alt"></i> Open Document</a>
                 </div>`;
         }
@@ -1425,20 +1405,9 @@ function downloadSummary(appId) {
     const constructionAddress = app.construction_address || 'Not specified';
     const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
 
-    // Generate HTML for file upload link (support JSON arrays)
-    let firstUploaded = null;
-    if (app.requirement_upload_json) {
-        if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
-        else {
-            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; } catch (e) {}
-        }
-    }
-    if (!firstUploaded && app.requirement_upload) {
-        try { const parsed = JSON.parse(app.requirement_upload); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; else firstUploaded = app.requirement_upload; } catch (e) { firstUploaded = app.requirement_upload; }
-    }
-
-    const fileUploadText = firstUploaded
-        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#007bff; text-decoration: none;">View Document (${firstUploaded})</a></li>`
+    // Generate HTML for file upload link
+    const fileUploadText = app.requirement_upload
+        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
         : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
 
     // Generate HTML for comments
