@@ -61,6 +61,8 @@ typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOf
 natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
 
+// OCR runs asynchronously on the server after upload; resident-side verify UI removed.
+
 /**
  * Comprehensive validation utility for form input fields
  * Provides methods to validate different input types and display error messages
@@ -617,10 +619,15 @@ newSummaryForm.addEventListener('submit', async function (e) {
             formData.append('requirements[]', checkbox.value);
         });
 
-        // File Upload
+        // File Upload - send ALL files as array
         const fileInput = document.getElementById('requirementUpload');
         if (fileInput.files.length > 0) {
-            formData.append('requirementUpload', fileInput.files[0]);
+            for (const file of fileInput.files) {
+                formData.append('requirementUpload[]', file);
+            }
+        } else {
+            // validation already catches this, but safe
+            formData.append('requirementUpload[]', ''); // empty if none
         }
 
         // Coordinates

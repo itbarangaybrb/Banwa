@@ -191,8 +191,19 @@ function openVerificationModal(appId) {
     if (!app) return;
 
     const modalBody = document.getElementById('verificationBody');
-    const proofPath = app.requirement_upload ? `../../../server/${app.requirement_upload}` : '#';
-    const proofLink = app.requirement_upload
+    // support JSON array or plain string for requirement_upload
+    let proofFile = null;
+    if (app.requirement_upload_json) {
+        if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) proofFile = app.requirement_upload_json[0];
+        else {
+            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) proofFile = parsed[0]; } catch (e) {}
+        }
+    }
+    if (!proofFile && app.requirement_upload) {
+        try { const parsed = JSON.parse(app.requirement_upload); proofFile = Array.isArray(parsed) ? parsed[0] : app.requirement_upload; } catch (e) { proofFile = app.requirement_upload; }
+    }
+    const proofPath = proofFile ? `../../../server/${proofFile}` : '#';
+    const proofLink = proofFile
         ? `<a href="${proofPath}" target="_blank" class="btn-info">View Proof of Payment</a>`
         : `<p style="color: red;">No proof of payment uploaded.</p>`;
 

@@ -253,10 +253,11 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input">
                         <label class="label" for="requirementUpload">Attachment/s <span style="color: #BB1B1B;">*</span></label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                        <input type="file" id="requirementUpload" name="requirementUpload[]" multiple accept=".pdf,.jpg,.jpeg,.png"><!-- accept multiple file types -->
                         <div class="error-msg"></div>
                     </div>
                 </div>
+                <!-- OCR now runs asynchronously on upload; no resident-side OCR button -->
 
                 <div class="buttons-container">
                     <button type="button" id="businessBackBtn">Back</button>
