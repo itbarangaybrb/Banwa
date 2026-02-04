@@ -714,9 +714,31 @@ function viewDetails(appId) {
 
     let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
 
-    if (app.requirement_upload) {
-        const filePath = `${UPLOADS_BASE_PATH}${app.requirement_upload}`;
-        const fileExt = app.requirement_upload.split('.').pop().toLowerCase();
+    // Normalize uploaded files - support new `requirement_upload_json` (array) or legacy `requirement_upload` (string or JSON array)
+    let uploadedFiles = [];
+    if (app.requirement_upload_json) {
+        if (Array.isArray(app.requirement_upload_json)) uploadedFiles = app.requirement_upload_json;
+        else {
+            try { uploadedFiles = JSON.parse(app.requirement_upload_json); } catch (e) { uploadedFiles = []; }
+        }
+    }
+    if (!uploadedFiles.length && app.requirement_upload) {
+        if (Array.isArray(app.requirement_upload)) uploadedFiles = app.requirement_upload;
+        else {
+            try {
+                const p = JSON.parse(app.requirement_upload);
+                if (Array.isArray(p)) uploadedFiles = p;
+                else uploadedFiles = [app.requirement_upload];
+            } catch (e) {
+                uploadedFiles = [app.requirement_upload];
+            }
+        }
+    }
+
+    if (uploadedFiles.length > 0) {
+        const filename = uploadedFiles[0];
+        const filePath = `${UPLOADS_BASE_PATH}${filename}`;
+        const fileExt = (filename || '').split('.').pop().toLowerCase();
 
         if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
             fileHtml = `
@@ -730,10 +752,14 @@ function viewDetails(appId) {
                 </div>`;
         }
         else {
+            // Use a generic file icon for non-image types (detect pdf specifically for icon color)
+            const isPdf = fileExt === 'pdf';
+            const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
+            const iconColor = isPdf ? '#dc3545' : '#6c757d';
             fileHtml = `
                 <div class="file-viewer-box">
-                    <i class="fas fa-file-pdf fa-3x" style="color:#dc3545; margin-bottom:10px;"></i>
-                    <p style="margin-bottom:10px; font-weight:bold;">${app.requirement_upload}</p>
+                    <i class="fas ${iconClass} fa-3x" style="color:${iconColor}; margin-bottom:10px;"></i>
+                    <p style="margin-bottom:10px; font-weight:bold;">${filename}</p>
                     <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-external-link-alt"></i> Open Document</a>
                 </div>`;
         }
@@ -815,6 +841,110 @@ function viewDetails(appId) {
 
     document.getElementById('modalBody').innerHTML = content;
     openModal('detailsModal');
+
+    // Fetch detailed application data (includes OCR results) and render OCR section
+    fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || data.status !== 'success' || !data.application) return;
+            const appDetail = data.application;
+            const colRight = document.querySelector('#modalBody .details-container .col-right');
+            if (!colRight) return;
+
+            const existingOCR = document.getElementById('ocrResultsCard');
+            if (existingOCR) existingOCR.remove();
+
+            const ocrResults = appDetail.ocr_results || [];
+            let ocrHtml = `
+                <div class="detail-card" id="ocrResultsCard">
+                    <h3>OCR Results</h3>
+                    <div style="font-size:13px; color:#333;">
+            `;
+
+            if (ocrResults.length === 0) {
+                ocrHtml += `<p style="color:#666;">No OCR results available.</p>`;
+            } else {
+                ocrResults.forEach(r => {
+                    const resObj = r.ocr_result || {};
+                    const detected = (resObj.detected && resObj.detected.length) ? resObj.detected.join(', ') : 'None/Unknown';
+                    const textPreview = (resObj.text && resObj.text.length) ? (resObj.text.substring(0, 400).replace(/\n/g, '<br>') + '...') : 'No text extracted';
+                    const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
+
+                    ocrHtml += `
+                        <div style="margin-bottom:12px;">
+                            <div style="font-weight:600;">File: <a href="${fileUrl}" target="_blank">${r.saved_filename || r.filename}</a></div>
+                            <div style="font-size:13px; color:#444;"><strong>Detected:</strong> ${detected}</div>
+                            <div style="margin-top:6px; font-size:12px; color:#555;"><strong>Text Preview:</strong><br>${textPreview}</div>
+                        </div>
+                    `;
+                });
+            }
+            // Add re-run OCR button
+            ocrHtml += `</div>
+                    <div style="margin-top:8px; text-align:right;">
+                        <button class="btn-secondary" id="rerunOcrBtn-${appId}">Re-run OCR</button>
+                    </div>
+                </div>`;
+            colRight.insertAdjacentHTML('afterbegin', ocrHtml);
+
+            // Attach handler for re-run button
+            const rerunBtn = document.getElementById(`rerunOcrBtn-${appId}`);
+            if (rerunBtn) {
+                rerunBtn.addEventListener('click', async () => {
+                    rerunBtn.disabled = true;
+                    const original = rerunBtn.textContent;
+                    rerunBtn.textContent = 'Running...';
+                    try {
+                        const fd = new FormData();
+                        fd.append('action', 'analyze_documents');
+                        fd.append('application_id', appId);
+
+                        const res = await fetch(BUSINESS_HANDLER_URL, { method: 'POST', body: fd, credentials: 'include', headers: { 'Accept': 'application/json' } });
+                        const data = await res.json();
+                        if (data && data.status === 'success') {
+                            // Refresh OCR results and DSS section
+                            fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'same-origin' })
+                                .then(r => r.json())
+                                .then(d => {
+                                    if (d && d.status === 'success' && d.application) {
+                                        // Re-render OCR card by triggering the same insertion flow
+                                        const modalBody = document.getElementById('modalBody');
+                                        // Remove old OCR card then re-open modal content (simple approach: close and re-open)
+                                        // Instead we'll call fetchDSSEvaluation and reload the OCR section
+                                        fetchDSSEvaluation(appId, app);
+                                        // Re-fetch application details to update the OCR card
+                                        // Slight delay to allow DB writes
+                                        setTimeout(() => {
+                                            fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'same-origin' })
+                                                .then(r2 => r2.json())
+                                                .then(d2 => {
+                                                    if (d2 && d2.status === 'success' && d2.application) {
+                                                        // Replace OCR card
+                                                        const existing = document.getElementById('ocrResultsCard');
+                                                        if (existing) existing.remove();
+                                                        // Insert updated OCR HTML by reusing this block: simpler to reload modal
+                                                        viewDetails(appId); // reopen details to refresh content
+                                                    }
+                                                });
+                                        }, 800);
+                                    } else {
+                                        alert('OCR re-run failed: ' + (data.message || 'Unknown'));
+                                    }
+                                });
+                        } else {
+                            alert('OCR re-run failed: ' + (data.message || 'Unknown'));
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Network error while running OCR');
+                    } finally {
+                        rerunBtn.disabled = false;
+                        rerunBtn.textContent = original;
+                    }
+                });
+            }
+        })
+        .catch(err => console.warn('Failed to load OCR results:', err));
 }
 
 /**
@@ -1042,8 +1172,20 @@ function downloadSummary(appId) {
     const businessStatus = app.business_status || 'Not specified';
     const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
 
-    const fileUploadText = app.requirement_upload
-        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${app.requirement_upload}" style="color:#007bff; text-decoration: none;">View Document (${app.requirement_upload})</a></li>`
+    // Determine first uploaded filename (support JSON array or plain string)
+    let firstUploaded = null;
+    if (app.requirement_upload_json) {
+        if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
+        else {
+            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; } catch (e) {}
+        }
+    }
+    if (!firstUploaded && app.requirement_upload) {
+        try { const parsed = JSON.parse(app.requirement_upload); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; else firstUploaded = app.requirement_upload; } catch (e) { firstUploaded = app.requirement_upload; }
+    }
+
+    const fileUploadText = firstUploaded
+        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#007bff; text-decoration: none;">View Document (${firstUploaded})</a></li>`
         : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
 
     let commentsHtml = '';
