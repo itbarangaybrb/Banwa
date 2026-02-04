@@ -24,7 +24,6 @@ if (!extension_loaded('pdo_pgsql')) {
     exit;
 }
 
-require_once __DIR__ . '/../../../api/dss_rule_engine/business_dss.php';
 require_once __DIR__ . '/../../../api/shared/ocr_service.php';
 require_once __DIR__ . '/../../../configs/ocr_config.php';
 

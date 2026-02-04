@@ -199,18 +199,64 @@ function filterApplications() {
  * 
  * @returns {Promise} Promise resolving to the applications array
  */
-function loadApplicationsFromDB() {
-    return fetch(`${BUSINESS_HANDLER_URL}?action=fetch`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') applications = data.data;
-            return applications;
-        })
-        .catch(error => {
-            console.error('Error fetching applications:', error);
+/**
+ * Fetches business applications from the server API
+ * Updates the global applications array with retrieved data
+ * Robustly handles JSON errors to prevent infinite loading
+ */
+async function loadApplicationsFromDB() {
+    const tableBody = document.getElementById('tableBody');
+    
+    try {
+        const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`);
+
+        // 1. Check for HTTP errors (like 404 or 500)
+        if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+        }
+
+        // 2. Get text first to debug "Unexpected end of JSON"
+        const textData = await response.text();
+        
+        if (!textData || textData.trim() === "") {
+            throw new Error("Server returned empty response.");
+        }
+
+        // 3. Try parsing
+        let data;
+        try {
+            data = JSON.parse(textData);
+        } catch (e) {
+            console.error("Raw Server Response:", textData); // Check console to see the PHP error!
+            throw new Error("Invalid JSON response from server. Check console for details.");
+        }
+
+        if (data.status === 'success') {
+            applications = data.data;
+        } else {
+            console.error('Server reported error:', data.message);
+            // Optional: alert('Error: ' + data.message);
             applications = [];
-            return applications;
-        });
+        }
+        return applications;
+
+    } catch (error) {
+        console.error('Critical Error fetching applications:', error);
+        applications = [];
+        
+        // Update UI to show error state instead of infinite loading
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 40px; color:#dc3545;">
+                        <i class="fas fa-exclamation-circle"></i> 
+                        Error loading data: ${error.message}<br>
+                        <small>Check the console (F12) for details.</small>
+                    </td>
+                </tr>`;
+        }
+        return applications;
+    }
 }
 
 /**

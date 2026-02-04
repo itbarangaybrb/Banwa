@@ -4,26 +4,55 @@ require_once __DIR__ . '/../../../../server/configs/database.php';
 ob_start();
 session_start();
 
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
+// 1. SET DEBUGGING HEADERS IMMEDIATELY
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// Log to a file you can check
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error.log');
+ini_set('error_log', __DIR__ . '/error_debug.log');
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-if (!extension_loaded('pdo_pgsql')) {
-    ob_clean();
-    die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
-}
-
-require_once __DIR__ . '/../../../../server/api/dss_rule_engine/business_dss.php';
-
-$action = $_REQUEST['action'] ?? null;
-ob_clean();
+ob_start(); // Start output buffering
 
 try {
+// 2. DATABASE & SESSION SETUP
+    $dbPath = __DIR__ . '/../../../../server/configs/database.php'; // Verify this path!
+    if (!file_exists($dbPath)) {
+        throw new Exception("Database file not found at: $dbPath");
+    }
+    require_once $dbPath;
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // 3. INCLUDE EXTERNAL SERVICES (The Fix for your Error)
+    // We include the analytics file here so we can use its functions
+    $analyticsPath = __DIR__ . '/../../../../server/services/staff/business/business_analytics.php';
+    if (file_exists($analyticsPath)) {
+        require_once $analyticsPath;
+    }
+
+    if (!extension_loaded('pdo_pgsql')) {
+        throw new Exception("PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini.");
+    }
+    
+    // Check if $pdo exists from the included file
+    if (!isset($pdo)) {
+        throw new Exception("Database connection variable \$pdo is not set.");
+    }
+
+    require_once __DIR__ . '/../../../services/staff/business/business_dss.php';
+
+    $action = $_REQUEST['action'] ?? null;
+    
+    // Clear buffer before processing action to ensure clean JSON output
+    ob_clean();
+
     switch ($action) {
         case 'create':
             handleCreateApplication($pdo);
@@ -38,7 +67,9 @@ try {
             handleUpdateApplication($pdo);
             break;
         case 'chart_business_type':
-            handleChartBusinessType($pdo);
+            // Call the function from the analytics file and echo the result
+            $result = handleChartBusinessType($pdo);
+            echo json_encode($result);
             break;
         case 'evaluate_application':
             handleEvaluateApplication($pdo);
@@ -64,25 +95,33 @@ try {
         case 'get_application_details':
             handleGetApplicationDetails($pdo);
             break;
-
         default:
-            echo json_encode(["status" => "error", "message" => "Invalid action"]);
+            echo json_encode(["status" => "error", "message" => "Unknown action: " . $action]);
+            break;
     }
-} catch (Exception $e) {
+
+} catch (Throwable $e) {
+    ob_clean();
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Server Error: " . $e->getMessage()]);
+    echo json_encode([
+        "status" => "error",
+        "message" => "System Crash: " . $e->getMessage(),
+        "details" => "Line " . $e->getLine() . " in " . basename($e->getFile())
+    ]);
 }
 exit;
 
-/**
- * Safely retrieves and trims input values from POST data
- * 
- * @param string $key The key to look for in $_POST array
- * @return string|null Trimmed value or null if not set/empty
- */
-function get_input($key)
-{
+// --- HELPER FUNCTIONS ---
+
+function get_input($key) {
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
+}
+
+function handleFetchApplications($pdo) {
+    $stmt = $pdo->prepare("SELECT * FROM business_applications ORDER BY created_at DESC");
+    $stmt->execute();
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(["status" => "success", "data" => $data]);
 }
 
 /**
@@ -263,24 +302,24 @@ function createInitialDSSEvaluation($pdo, $applicationId)
  * 
  * @param PDO $pdo Database connection object
  */
-function handleFetchApplications($pdo)
-{
-    try {
-        $sql = "SELECT ba.* 
-                FROM business_applications ba
-                ORDER BY ba.created_at DESC";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
+// function handleFetchApplications($pdo)
+// {
+//     try {
+//         $sql = "SELECT ba.* 
+//                 FROM business_applications ba
+//                 ORDER BY ba.created_at DESC";
+//         $stmt = $pdo->prepare($sql);
+//         $stmt->execute();
         
-        $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+//         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        echo json_encode(["status" => "success", "data" => $applications]);
+//         echo json_encode(["status" => "success", "data" => $applications]);
         
-    } catch (PDOException $e) {
-        error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
-    }
-}
+//     } catch (PDOException $e) {
+//         error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
+//         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
+//     }
+// }
 
 /**
  * Returns a summary object for a given DSS status with icon, message, and color
@@ -675,52 +714,7 @@ function triggerDSSevaluation($pdo, $applicationId)
     }
 }
 
-/**
- * Generates chart data for business analytics including application trends by date,
- * business type distribution, and DSS status breakdown
- * 
- * @param PDO $pdo Database connection object
- */
-function handleChartBusinessType($pdo)
-{
-    $sql1 = "
-        SELECT application_date, COUNT(*) AS total
-        FROM business_applications
-        GROUP BY application_date
-        ORDER BY total ASC
-    ";
 
-    $stmt1 = $pdo->query($sql1);
-    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-
-    $sql2 = "
-        SELECT type_of_business, COUNT(*) AS total
-        FROM business_applications
-        GROUP BY type_of_business
-        ORDER BY total ASC
-    ";
-
-    $stmt2 = $pdo->query($sql2);
-    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-
-    $sql3 = "
-        SELECT COALESCE(be.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
-        FROM business_applications ba
-        LEFT JOIN business_evaluations be ON ba.id = be.application_id
-        GROUP BY COALESCE(be.dss_status, 'Pending Evaluation')
-        ORDER BY total ASC
-    ";
-
-    $stmt3 = $pdo->query($sql3);
-    $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
-
-    echo json_encode([
-        "status" => "success",
-        "data_by_date" => $dataByDate,
-        "data_by_type" => $dataByType,
-        "data_by_dss" => $dataByDSS
-    ]);
-}
 
 /**
  * Evaluates a business application using the DSS rule engine

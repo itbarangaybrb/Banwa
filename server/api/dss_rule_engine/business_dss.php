@@ -5,8 +5,9 @@ require_once __DIR__ . '/../../configs/database.php';
  * Decision Support System Rule Engine for business permit application evaluation
  * Implements a Rete algorithm-based expert system to assess permit eligibility
  */
-class DSSRuleEngine
-{
+if (!class_exists('DSSRuleEngine')) {
+
+class DSSRuleEngine{
     private $rules = [];
     private $workingMemory = [];
     private $conflictSet = [];
@@ -483,5 +484,6 @@ class DSSRuleEngine
                 break;
         }
     }
+}
 }
 ?>
