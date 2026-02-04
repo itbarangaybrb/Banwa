@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../configs/database.php';
-require_once __DIR__ . '/../../../services/staff/incident_report/ir_analytics.php';
-require_once __DIR__ . '/../../../services/staff/incident_report/ir_applications.php';
 require_once __DIR__ . '/../../../services/staff/incident_report/ir_dss.php';
 
-ob_start();
 session_start();
 
 ini_set('display_errors', 0);
@@ -21,10 +18,7 @@ if (!extension_loaded('pdo_pgsql')) {
     die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
 }
 
-require_once __DIR__ . '/../../../api/dss_rule_engine/incident_report_dss.php';
-
 $action = $_REQUEST['action'] ?? null;
-ob_clean();
 
 try {
     switch ($action) {
@@ -44,7 +38,7 @@ try {
             handleChartIncidentType($pdo);
             break;
         case 'evaluate_report':
-            handleEvaluateReport($pdo);
+            handleEvaluateApplication($pdo);
             break;
         case 'get_evaluation':
             handleGetEvaluation($pdo);
@@ -66,15 +60,6 @@ try {
             break;
         case 'get_report_details':
             handleGetReportDetails($pdo);
-            break;
-        case 'add_witness':
-            handleAddWitness($pdo);
-            break;
-        case 'remove_witness':
-            handleRemoveWitness($pdo);
-            break;
-        case 'get_witnesses':
-            handleGetWitnesses($pdo);
             break;
 
         default:
@@ -108,11 +93,6 @@ function handleCreateApplication($pdo)
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
-        if (!$supabaseUserId) {
-            echo json_encode(["status" => "error", "message" => "User not authenticated"]);
-            return;
-        }
-
         // Reporting Person Information
         $rpFullName = get_input('rpFullName');
         $rpLotNo = get_input('rpLotNo');
@@ -129,6 +109,7 @@ function handleCreateApplication($pdo)
         $vicContact = get_input('vicContact');
         $vicCitizenship = get_input('vicCitizenship');
         $vicGender = get_input('vicGender');
+        
         $vicDOB = get_input('vicDOB');
         $vicOccupation = get_input('vicOccupation');
 
@@ -173,9 +154,6 @@ function handleCreateApplication($pdo)
             }
         }
         $witnessDataJson = json_encode($witnessesArray);
-
-        // Start transaction
-        $pdo->beginTransaction();
 
         // CORRECTED SQL - matches your database schema
         $sql = "INSERT INTO incident_reports (
@@ -235,29 +213,10 @@ function handleCreateApplication($pdo)
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $reportId = $result['id'];
-
-        // Also store witnesses in separate table
-        if (isset($_POST['witnesses']) && is_array($_POST['witnesses'])) {
-            $witnessStmt = $pdo->prepare("
-                INSERT INTO incident_witnesses (report_id, witness_name, witness_address, witness_contact)
-                VALUES (:report_id, :witness_name, :witness_address, :witness_contact)
-            ");
-
-            foreach ($_POST['witnesses'] as $witness) {
-                if (!empty($witness['name']) && !empty($witness['contact'])) {
-                    $witnessAddress = trim(($witness['lotNo'] ?? '') . ' ' . ($witness['street'] ?? ''));
-                    $witnessStmt->execute([
-                        ':report_id' => $reportId,
-                        ':witness_name' => trim($witness['name']),
-                        ':witness_address' => $witnessAddress,
-                        ':witness_contact' => trim($witness['contact'])
-                    ]);
-                }
-            }
-        }
+        createInitialDSSEvaluation($pdo, $reportId);
 
         // Commit transaction
-        $pdo->commit();
+        // $pdo->commit();
 
         echo json_encode(["status" => "success", "id" => $reportId, "message" => "Incident Report Created!"]);
     } catch (PDOException $e) {
@@ -345,8 +304,6 @@ function handleUpdateStatus($pdo)
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
-        logStatusUpdate($pdo, $id, $newStatus, $comments);
-
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
@@ -367,7 +324,7 @@ function handleUpdateStatus($pdo)
 function handleUpdateApplication($pdo)
 {
     try {
-        $reportId = get_input('report_id');
+        $reportId = get_input('application_id');
         if (!$reportId) {
             throw new Exception("Report ID is required for update.");
         }
@@ -518,20 +475,20 @@ function handleUpdateApplication($pdo)
             // Also update witnesses in separate table if provided
             if (isset($_POST['witnesses']) && is_array($_POST['witnesses'])) {
                 // Delete existing witnesses
-                $deleteStmt = $pdo->prepare("DELETE FROM incident_witnesses WHERE report_id = :report_id");
-                $deleteStmt->execute([':report_id' => $reportId]);
+                $deleteStmt = $pdo->prepare("DELETE FROM incident_witnesses WHERE application_id = :application_id");
+                $deleteStmt->execute([':application_id' => $reportId]);
 
                 // Insert updated witnesses
                 $witnessStmt = $pdo->prepare("
-                    INSERT INTO incident_witnesses (report_id, witness_name, witness_address, witness_contact)
-                    VALUES (:report_id, :witness_name, :witness_address, :witness_contact)
+                    INSERT INTO incident_witnesses (application_id, witness_name, witness_address, witness_contact)
+                    VALUES (:application_id, :witness_name, :witness_address, :witness_contact)
                 ");
 
                 foreach ($_POST['witnesses'] as $witness) {
                     if (!empty($witness['name']) && !empty($witness['contact'])) {
                         $witnessAddress = trim(($witness['lotNo'] ?? '') . ' ' . ($witness['street'] ?? ''));
                         $witnessStmt->execute([
-                            ':report_id' => $reportId,
+                            ':application_id' => $reportId,
                             ':witness_name' => trim($witness['name']),
                             ':witness_address' => $witnessAddress,
                             ':witness_contact' => trim($witness['contact'])
@@ -560,10 +517,10 @@ function handleUpdateApplication($pdo)
  * 
  * @param PDO $pdo Database connection object
  */
-function handleEvaluateReport($pdo)
+function handleEvaluateApplication($pdo)
 {
     try {
-        $reportId = $_POST['report_id'] ?? null;
+        $reportId = $_POST['application_id'] ?? null;
 
         if (!$reportId) {
             echo json_encode(["status" => "error", "message" => "Report ID required"]);
@@ -583,27 +540,27 @@ function handleEvaluateReport($pdo)
         $evaluationResult = $dss->evaluateReport($report);
         $statusValue = (string)$evaluationResult['status'];
 
-        $checkStmt = $pdo->prepare("SELECT 1 FROM incident_evaluations WHERE report_id = :report_id");
-        $checkStmt->execute([':report_id' => $reportId]);
+        $checkStmt = $pdo->prepare("SELECT 1 FROM incident_report_evaluations WHERE application_id = :application_id");
+        $checkStmt->execute([':application_id' => $reportId]);
 
         if ($checkStmt->fetch()) {
             $evalStmt = $pdo->prepare("
-                UPDATE incident_evaluations 
+                UPDATE incident_report_evaluations 
                 SET dss_status = :status, 
                     evaluation_details = :details, 
                     evaluated_at = NOW()
-                WHERE report_id = :report_id
+                WHERE application_id = :application_id
             ");
         } else {
             $evalStmt = $pdo->prepare("
-                INSERT INTO incident_evaluations 
-                (report_id, dss_status, evaluation_details, evaluated_at) 
-                VALUES (:report_id, :status, :details, NOW())
+                INSERT INTO incident_report_evaluations 
+                (application_id, dss_status, evaluation_details, evaluated_at) 
+                VALUES (:application_id, :status, :details, NOW())
             ");
         }
 
         $evalStmt->execute([
-            ':report_id' => $reportId,
+            ':application_id' => $reportId,
             ':status' => $statusValue,
             ':details' => json_encode($evaluationResult['evaluation_details'])
         ]);
@@ -641,7 +598,7 @@ function handleEvaluateReport($pdo)
 function handleGetEvaluation($pdo)
 {
     try {
-        $reportId = $_GET['report_id'] ?? null;
+        $reportId = $_GET['application_id'] ?? null;
 
         if (!$reportId) {
             echo json_encode(["status" => "error", "message" => "Report ID required"]);
@@ -663,16 +620,16 @@ function handleGetEvaluation($pdo)
         $stmt = $pdo->prepare("
             SELECT e.*, ir.rp_full_name, ir.incident_type,
                    ir.status as report_status, ir.dss_status as report_dss_status
-            FROM incident_evaluations e
-            JOIN incident_reports ir ON e.report_id = ir.id
-            WHERE e.report_id = :id
+            FROM incident_report_evaluations e
+            JOIN incident_reports ir ON e.application_id = ir.id
+            WHERE e.application_id = :id
         ");
         $stmt->execute([':id' => $reportId]);
         $evaluation = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$evaluation) {
             $evaluation = [
-                'report_id' => $reportId,
+                'application_id' => $reportId,
                 'dss_status' => 'Pending Evaluation',
                 'evaluation_details' => [
                     'passed_rules' => [],
@@ -709,7 +666,7 @@ function handleGetEvaluation($pdo)
 function handleGetReportWithDSS($pdo)
 {
     try {
-        $reportId = $_GET['report_id'] ?? null;
+        $reportId = $_GET['application_id'] ?? null;
 
         if (!$reportId) {
             echo json_encode(["status" => "error", "message" => "Report ID required"]);
@@ -737,13 +694,13 @@ function handleGetReportWithDSS($pdo)
                 ie.evaluated_at as dss_evaluated_at,
                 (SELECT json_agg(json_build_object('status', status, 'comments', comments, 'changed_at', changed_at))
                  FROM incident_status_history 
-                 WHERE report_id = ir.id 
+                 WHERE application_id = ir.id 
                  ORDER BY changed_at DESC) as status_history,
                 (SELECT json_agg(json_build_object('witness_name', witness_name, 'witness_address', witness_address, 'witness_contact', witness_contact))
                  FROM incident_witnesses 
-                 WHERE report_id = ir.id) as witnesses
+                 WHERE application_id = ir.id) as witnesses
             FROM incident_reports ir
-            LEFT JOIN incident_evaluations ie ON ir.id = ie.report_id
+            LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
             WHERE ir.id = :id
         ");
         $stmt->execute([':id' => $reportId]);
@@ -802,7 +759,7 @@ function handleGetEvaluationStats($pdo)
                     THEN (evaluation_details::json->>'urgency_score')::numeric 
                     ELSE 0 END) as avg_urgency
             FROM incident_reports ir
-            LEFT JOIN incident_evaluations ie ON ir.id = ie.report_id
+            LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
         ");
         $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -811,7 +768,7 @@ function handleGetEvaluationStats($pdo)
                 DATE(evaluated_at) as evaluation_date,
                 COUNT(*) as total_evaluations,
                 SUM(CASE WHEN dss_status = 'High Priority' THEN 1 ELSE 0 END) as high_priority_count
-            FROM incident_evaluations 
+            FROM incident_report_evaluations 
             WHERE evaluated_at >= NOW() - INTERVAL '30 days'
             GROUP BY DATE(evaluated_at)
             ORDER BY evaluation_date
@@ -888,7 +845,7 @@ function handleGetRules()
 function handleTriggerEvaluation($pdo)
 {
     try {
-        $reportId = $_POST['report_id'] ?? null;
+        $reportId = $_POST['application_id'] ?? null;
 
         if (!$reportId) {
             echo json_encode(["status" => "error", "message" => "Report ID required"]);
@@ -919,7 +876,7 @@ function handleEvaluateAllPending($pdo)
         }
 
         $sql = "SELECT ir.id FROM incident_reports ir
-                LEFT JOIN incident_evaluations ie ON ir.id = ie.report_id
+                LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
                 WHERE ie.id IS NULL OR ie.dss_status = 'Pending Evaluation' OR ie.dss_status = 'Evaluation Error'";
 
         $stmt = $pdo->query($sql);
@@ -963,7 +920,7 @@ function handleEvaluateAllPending($pdo)
 function handleGetReportDetails($pdo)
 {
     try {
-        $reportId = $_GET['report_id'] ?? null;
+        $reportId = $_GET['application_id'] ?? null;
 
         if (!$reportId) {
             echo json_encode(["status" => "error", "message" => "Report ID required"]);
@@ -985,9 +942,9 @@ function handleGetReportDetails($pdo)
                 ie.evaluated_at as dss_evaluated_at,
                 (SELECT json_agg(json_build_object('witness_name', witness_name, 'witness_address', witness_address, 'witness_contact', witness_contact))
                  FROM incident_witnesses 
-                 WHERE report_id = ir.id) as witnesses
+                 WHERE application_id = ir.id) as witnesses
             FROM incident_reports ir
-            LEFT JOIN incident_evaluations ie ON ir.id = ie.report_id
+            LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
             WHERE ir.id = :id
         ");
         $stmt->execute([':id' => $reportId]);
@@ -1022,55 +979,6 @@ function handleGetReportDetails($pdo)
 }
 
 /**
- * Adds a witness to an existing incident report
- * 
- * @param PDO $pdo Database connection object
- */
-function handleAddWitness($pdo)
-{
-    try {
-        $reportId = $_POST['report_id'] ?? null;
-        $witnessName = get_input('witness_name');
-        $witnessLotNo = get_input('witness_lot_no');
-        $witnessStreet = get_input('witness_street');
-        $witnessContact = get_input('witness_contact');
-
-        if (!$reportId || !$witnessName || !$witnessContact) {
-            echo json_encode(["status" => "error", "message" => "Missing required fields"]);
-            return;
-        }
-
-        $witnessAddress = trim(($witnessLotNo ?? '') . ' ' . ($witnessStreet ?? ''));
-
-        $sql = "INSERT INTO incident_witnesses (report_id, witness_name, witness_address, witness_contact)
-                VALUES (:report_id, :witness_name, :witness_address, :witness_contact)
-                RETURNING id";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':report_id' => $reportId,
-            ':witness_name' => $witnessName,
-            ':witness_address' => $witnessAddress,
-            ':witness_contact' => $witnessContact
-        ]);
-
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Also update the witness_data_json in the main table
-        updateWitnessDataJson($pdo, $reportId);
-
-        echo json_encode([
-            "status" => "success",
-            "id" => $result['id'],
-            "message" => "Witness added successfully"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Updates the witness_data_json field in incident_reports table
  * 
  * @param PDO $pdo Database connection object
@@ -1082,9 +990,9 @@ function updateWitnessDataJson($pdo, $reportId)
         $stmt = $pdo->prepare("
             SELECT witness_name, witness_address, witness_contact
             FROM incident_witnesses 
-            WHERE report_id = :report_id
+            WHERE application_id = :application_id
         ");
-        $stmt->execute([':report_id' => $reportId]);
+        $stmt->execute([':application_id' => $reportId]);
         $witnesses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $witnessDataJson = json_encode($witnesses);
@@ -1104,186 +1012,56 @@ function updateWitnessDataJson($pdo, $reportId)
 }
 
 /**
- * Removes a witness from an incident report
+ * Generates chart data for incident analytics
  * 
  * @param PDO $pdo Database connection object
  */
-function handleRemoveWitness($pdo)
+function handleChartIncidentType($pdo)
 {
     try {
-        $witnessId = $_POST['witness_id'] ?? null;
+        // Use date_reported instead of application_date
+        $sql1 = "
+            SELECT date_reported, COUNT(*) AS total
+            FROM incident_reports
+            GROUP BY date_reported
+            ORDER BY date_reported ASC
+        ";
 
-        if (!$witnessId) {
-            echo json_encode(["status" => "error", "message" => "Witness ID required"]);
-            return;
-        }
+        $stmt1 = $pdo->query($sql1);
+        $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-        // Get report_id before deleting
-        $getStmt = $pdo->prepare("SELECT report_id FROM incident_witnesses WHERE id = :id");
-        $getStmt->execute([':id' => $witnessId]);
-        $witness = $getStmt->fetch(PDO::FETCH_ASSOC);
+        $sql2 = "
+            SELECT incident_type, COUNT(*) AS total
+            FROM incident_reports
+            GROUP BY incident_type
+            ORDER BY total ASC
+        ";
 
-        if (!$witness) {
-            echo json_encode(["status" => "error", "message" => "Witness not found"]);
-            return;
-        }
+        $stmt2 = $pdo->query($sql2);
+        $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-        $reportId = $witness['report_id'];
-
-        $stmt = $pdo->prepare("DELETE FROM incident_witnesses WHERE id = :id");
-        $stmt->execute([':id' => $witnessId]);
-
-        // Update the witness_data_json in the main table
-        updateWitnessDataJson($pdo, $reportId);
+        $sql3 = "
+            SELECT 
+                COALESCE(dss_status, 'Pending Evaluation') as dss_status, 
+                COUNT(*) as total
+            FROM incident_reports
+            GROUP BY COALESCE(dss_status, 'Pending Evaluation')
+            ORDER BY total ASC
+        ";
+        $stmt3 = $pdo->query($sql3);
+        $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode([
             "status" => "success",
-            "message" => "Witness removed successfully"
+            "data_by_date" => $dataByDate,
+            "data_by_type" => $dataByType,
+            "data_by_dss" => $dataByDSS
         ]);
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Gets all witnesses for a specific incident report
- * 
- * @param PDO $pdo Database connection object
- */
-function handleGetWitnesses($pdo)
-{
-    try {
-        $reportId = $_GET['report_id'] ?? null;
-
-        if (!$reportId) {
-            echo json_encode(["status" => "error", "message" => "Report ID required"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT * FROM incident_witnesses 
-            WHERE report_id = :report_id 
-            ORDER BY id
-        ");
-        $stmt->execute([':report_id' => $reportId]);
-        $witnesses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         echo json_encode([
-            "status" => "success",
-            "witnesses" => $witnesses
+            "status" => "error",
+            "message" => "Error generating chart data: " . $e->getMessage()
         ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
     }
 }
-
-/**
- * Ensures required database tables exist for DSS functionality
- * 
- * @param PDO $pdo Database connection object
- * @return bool True if tables exist or were created successfully
- */
-function ensureEvaluationTableExists($pdo)
-{
-    try {
-        $checkStmt = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'incident_evaluations')");
-        $exists = $checkStmt->fetchColumn();
-
-        if (!$exists) {
-            $createSQL = "
-                -- Create incident_evaluations table
-                CREATE TABLE incident_evaluations (
-                    id SERIAL PRIMARY KEY,
-                    report_id INTEGER UNIQUE NOT NULL,
-                    dss_status VARCHAR(50) NOT NULL DEFAULT 'Pending Evaluation',
-                    evaluation_details JSONB,
-                    evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (report_id) REFERENCES incident_reports(id) ON DELETE CASCADE
-                );
-                
-                -- Add missing columns to incident_reports if they don't exist
-                DO $$ 
-                BEGIN 
-                    -- Add status column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'status') THEN
-                        ALTER TABLE incident_reports ADD COLUMN status VARCHAR(50) DEFAULT 'Pending';
-                    END IF;
-                    
-                    -- Add dss_status column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'dss_status') THEN
-                        ALTER TABLE incident_reports ADD COLUMN dss_status VARCHAR(50) DEFAULT 'Pending Evaluation';
-                    END IF;
-                    
-                    -- Add resolution_details column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'resolution_details') THEN
-                        ALTER TABLE incident_reports ADD COLUMN resolution_details TEXT;
-                    END IF;
-                    
-                    -- Add update_comments column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'update_comments') THEN
-                        ALTER TABLE incident_reports ADD COLUMN update_comments TEXT;
-                    END IF;
-                    
-                    -- Add created_at column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'created_at') THEN
-                        ALTER TABLE incident_reports ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-                    END IF;
-                    
-                    -- Add updated_at column
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'incident_reports' 
-                                  AND column_name = 'updated_at') THEN
-                        ALTER TABLE incident_reports ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-                    END IF;
-                END $$;
-                
-                -- Create incident_status_history table
-                CREATE TABLE IF NOT EXISTS incident_status_history (
-                    id SERIAL PRIMARY KEY,
-                    report_id INTEGER NOT NULL,
-                    status VARCHAR(50) NOT NULL,
-                    comments TEXT,
-                    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (report_id) REFERENCES incident_reports(id) ON DELETE CASCADE
-                );
-                
-                -- Create incident_witnesses table if it doesn't exist
-                CREATE TABLE IF NOT EXISTS incident_witnesses (
-                    id SERIAL PRIMARY KEY,
-                    report_id INTEGER NOT NULL,
-                    witness_name VARCHAR(255) NOT NULL,
-                    witness_address TEXT,
-                    witness_contact VARCHAR(15),
-                    FOREIGN KEY (report_id) REFERENCES incident_reports(id) ON DELETE CASCADE
-                );
-                
-                -- Create indexes
-                CREATE INDEX IF NOT EXISTS idx_incident_evaluations_report_id ON incident_evaluations(report_id);
-                CREATE INDEX IF NOT EXISTS idx_incident_status_history_report_id ON incident_status_history(report_id);
-                CREATE INDEX IF NOT EXISTS idx_incident_witnesses_report_id ON incident_witnesses(report_id);
-            ";
-
-            $pdo->exec($createSQL);
-            return true;
-        }
-
-        return true;
-    } catch (Exception $e) {
-        error_log("Failed to ensure evaluation table exists: " . $e->getMessage());
-        return false;
-    }
-}
-
-ensureEvaluationTableExists($pdo);

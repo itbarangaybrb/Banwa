@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../configs/database.php';
-require_once __DIR__ . '/../../../services/staff/utility/utility_analytics.php';
-require_once __DIR__ . '/../../../services/staff/utility/utility_applications.php';
 require_once __DIR__ . '/../../../services/staff/utility/utility_dss.php';
 
-ob_start();
 session_start();
 
 ini_set('display_errors', 0);
@@ -21,10 +18,7 @@ if (!extension_loaded('pdo_pgsql')) {
     die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
 }
 
-require_once __DIR__ . '/../../../api/dss_rule_engine/utility_dss.php';
-
 $action = $_REQUEST['action'] ?? null;
-ob_clean();
 
 try {
     switch ($action) {
@@ -236,8 +230,6 @@ function handleUpdateStatus($pdo)
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-
-        logStatusUpdate($pdo, $id, $newStatus, $comments);
 
         echo json_encode([
             "status" => "success",
@@ -819,61 +811,48 @@ function handleGetApplicationDetails($pdo)
 }
 
 /**
- * Ensures required database tables exist for DSS functionality
- * Creates utility_evaluations, utility_status_history tables if missing
- * Also adds dss_status column to utility_applications if not present
+ * Generates chart data for utility analytics including application trends by date,
+ * provider distribution, and DSS status breakdown
  * 
  * @param PDO $pdo Database connection object
- * @return bool True if tables exist or were created successfully
  */
-function ensureEvaluationTableExists($pdo)
+function handleChartUtilityType($pdo)
 {
-    try {
-        $checkStmt = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'utility_evaluations')");
-        $exists = $checkStmt->fetchColumn();
+    $sql1 = "
+        SELECT application_date, COUNT(*) AS total
+        FROM utility_applications
+        GROUP BY application_date
+        ORDER BY total ASC
+    ";
 
-        if (!$exists) {
-            $createSQL = "
-                CREATE TABLE utility_evaluations (
-                    id SERIAL PRIMARY KEY,
-                    application_id INTEGER UNIQUE NOT NULL,
-                    dss_status VARCHAR(50) NOT NULL DEFAULT 'Pending Evaluation',
-                    evaluation_details JSONB,
-                    evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (application_id) REFERENCES utility_applications(id) ON DELETE CASCADE
-                );
-                
-                DO $$ 
-                BEGIN 
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'utility_applications' 
-                                  AND column_name = 'dss_status') THEN
-                        ALTER TABLE utility_applications ADD COLUMN dss_status VARCHAR(50) DEFAULT 'Pending Evaluation';
-                    END IF;
-                END $$;
-                
-                CREATE TABLE IF NOT EXISTS utility_status_history (
-                    id SERIAL PRIMARY KEY,
-                    application_id INTEGER NOT NULL,
-                    status VARCHAR(50) NOT NULL,
-                    comments TEXT,
-                    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (application_id) REFERENCES utility_applications(id) ON DELETE CASCADE
-                );
-                
-                CREATE INDEX IF NOT EXISTS idx_utility_evaluations_app_id ON utility_evaluations(application_id);
-                CREATE INDEX IF NOT EXISTS idx_utility_status_history_app_id ON utility_status_history(application_id);
-            ";
+    $stmt1 = $pdo->query($sql1);
+    $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-            $pdo->exec($createSQL);
-            return true;
-        }
+    $sql2 = "
+        SELECT provider, COUNT(*) AS total
+        FROM utility_applications
+        GROUP BY provider
+        ORDER BY total ASC
+    ";
 
-        return true;
-    } catch (Exception $e) {
-        error_log("Failed to ensure evaluation table exists: " . $e->getMessage());
-        return false;
-    }
+    $stmt2 = $pdo->query($sql2);
+    $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+    $sql3 = "
+        SELECT COALESCE(ue.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+        FROM utility_applications ua
+        LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
+        GROUP BY COALESCE(ue.dss_status, 'Pending Evaluation')
+        ORDER BY total ASC
+    ";
+
+    $stmt3 = $pdo->query($sql3);
+    $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "status" => "success",
+        "data_by_date" => $dataByDate,
+        "data_by_type" => $dataByType,
+        "data_by_dss" => $dataByDSS
+    ]);
 }
-
-ensureEvaluationTableExists($pdo);

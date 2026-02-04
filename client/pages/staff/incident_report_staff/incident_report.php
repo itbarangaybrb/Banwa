@@ -500,7 +500,7 @@
             </div>
 
             <!-- Summary Tab -->
-            <div id="summary" class="tab-pane">
+            <!-- <div id="summary" class="tab-pane">
                 <h2>Generate Summary</h2>
                 <div class="form-group">
                     <select id="summaryIncidentSelect" onchange="updateIncidentSummary()">
@@ -512,6 +512,25 @@
                     <button class="btn-secondary" onclick="exportToPDF()">Export to PDF</button>
                 </div>
                 <div id="summaryOutput"></div>
+            </div> -->
+
+            <div id="summary" class="tab-pane">
+                <div class="summary-controls">
+                    <h2>Generate Incident Report Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
+                </div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a incident report from the list above to view the full report.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Modals -->

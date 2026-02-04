@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Application Management System</title>
-    
+
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map.css" />
-    
+
 </head>
 
 <body>
@@ -389,7 +389,7 @@
             </div>
 
             <!-- Summary Tab -->
-            <div id="summary" class="tab-pane">
+            <!-- <div id="summary" class="tab-pane">
                 <div class="summary-controls">
                     <h2>Generate Business Summary</h2>
                     <div class="control-row">
@@ -404,6 +404,24 @@
                     <div class="placeholder-state">
                         <i class="fas fa-file-invoice fa-3x"></i>
                         <p>Select a business from the list above to view the full report.</p>
+                    </div>
+                </div>
+            </div> -->
+            <div id="summary" class="tab-pane">
+                <div class="summary-controls">
+                    <h2>Generate Construction Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
+                </div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a construction application from the list above to view the full report.</p>
                     </div>
                 </div>
             </div>

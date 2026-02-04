@@ -1,6 +1,7 @@
 // Configuration
 const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
 let incidents = [];
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'household';
 let mapFilterVisible = true;
@@ -23,12 +24,6 @@ window.addEventListener('staffMapFilterChanged', (e) => {
 // Initialize sidebar navigation
 document.addEventListener('DOMContentLoaded', function () {
     initializeSidebarNav();
-    loadAnalyticsTab();
-
-    // Only initialize form if we're on a page that has the form
-    if (document.getElementById('incidentTimestamp') || document.getElementById('prevBtn')) {
-        initializeIncidentForm();
-    }
 });
 
 /**
@@ -54,25 +49,18 @@ function initializeSidebarNav() {
         });
     });
 
-    const userProfileBtn = document.getElementById('userProfileBtn');
-    if (userProfileBtn) {
-        userProfileBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            console.log('User profile button clicked');
-        });
-    }
+    loadAnalyticsTab();
 }
 
 /**
  * Switches between different incident tabs and loads appropriate data
+ * 
+ * @param {Event} event - The click event triggering tab switch
+ * @param {string} tabName - Name of the tab to switch to
  */
 function switchTab(event, tabName) {
     if (event) event.preventDefault();
-
-    const tabs = document.querySelectorAll('.tab-pane');
-    if (tabs.length === 0) return;
-
-    tabs.forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
 
     const target = document.getElementById(tabName);
@@ -113,7 +101,15 @@ function filterIncidents() {
     const tbody = document.getElementById('tableBody');
 
     if (!tbody) {
-        console.warn('Management table body not found');
+        console.error('Table body not found');
+        return;
+    }
+
+    if (!mapFilterVisible) {
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
+        </tr>`;
         return;
     }
 
@@ -122,20 +118,11 @@ function filterIncidents() {
 
     if (!incidents || !Array.isArray(incidents) || incidents.length === 0) {
         tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">
-                    <div class="spinner"></div>Loading incidents...
-                </td>
-            </tr>`;
-        return;
-    }
-
-    // If map filter hides this category, show message and do not render
-    if (!mapFilterVisible) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
-            </tr>`;
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#999;">
+                <div class="spinner"></div>Loading incidents...
+            </td>
+        </tr>`;
         return;
     }
 
@@ -144,25 +131,28 @@ function filterIncidents() {
         const victimName = (incident.vic_full_name || '').toLowerCase();
         const location = (incident.incident_location || '').toLowerCase();
         const reportId = (incident.id || '').toString();
+        const reporterName = (incident.rp_full_name || '').toLowerCase();
+        const suspectName = (incident.sus_full_name || '').toLowerCase();
 
         return incidentType.includes(searchTerm) ||
             victimName.includes(searchTerm) ||
             location.includes(searchTerm) ||
-            reportId.includes(searchTerm);
+            reportId.includes(searchTerm) ||
+            reporterName.includes(searchTerm) ||
+            suspectName.includes(searchTerm);
     });
 
     if (filtered.length === 0) {
         tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">
-                    No matching incidents found.
-                </td>
-            </tr>`;
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#999;">
+                No matching incidents found.
+            </td>
+        </tr>`;
         return;
     }
 
     filtered.forEach(incident => {
-        // A. Determine Status Color
         let badgeClass = 'reported';
         if (incident.status === 'Pending') badgeClass = 'pending';
         if (incident.status === 'Resolved') badgeClass = 'resolved';
@@ -170,7 +160,6 @@ function filterIncidents() {
         if (incident.status === 'Closed') badgeClass = 'closed';
         if (incident.status === 'Cancelled') badgeClass = 'cancelled';
 
-        // B. Determine "Smart Action" Button - EXACT SAME PATTERN AS UTILITIES
         let actionBtn = '';
 
         if (incident.status === 'Pending') {
@@ -192,7 +181,6 @@ function filterIncidents() {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">Update</button>`;
         }
 
-        // C. Build Row
         const row = document.createElement('tr');
         row.innerHTML = `
         <td>${incident.id}</td>
@@ -213,41 +201,51 @@ function filterIncidents() {
         tbody.appendChild(row);
     });
 }
+
 /**
  * Fetches incident reports from the server API
+ * 
+ * @returns {Promise} Promise resolving to the incidents array
  */
 function loadIncidentsFromDB() {
     return fetch(`${IR_HANDLER_URL}?action=fetch`)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-            }
-            const contentType = res.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                // Try to read the response as text to see what we got
-                return res.text().then(text => {
-                    console.error('Non-JSON response received:', text.substring(0, 200));
-                    throw new TypeError("Server returned non-JSON response");
-                });
-            }
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') {
-                incidents = data.data;
-            } else {
-                console.warn('API returned non-success status:', data.message);
-                incidents = [];
-            }
+            if (data.status === 'success') incidents = data.data;
             return incidents;
         })
         .catch(error => {
             console.error('Error fetching incidents:', error);
-            showAlert('Failed to load incidents. Please check your connection.', 'error');
             incidents = [];
             return incidents;
         });
 }
+
+/**
+ * Automatically refreshes the active tab every 30 seconds.
+ */
+let isRefreshing = false;
+setInterval(() => {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
+
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    if (activeTabId === 'management') {
+        loadIncidentsFromDB().finally(() => { filterIncidents(); finish(); });
+    } else if (activeTabId === 'process') {
+        loadIncidentsFromDB().finally(() => { loadProcessTable(); finish(); });
+    } else if (activeTabId === 'summary') {
+        loadIncidentsFromDB().finally(() => { loadSummarySelect(); finish(); });
+    } else if (activeTabId === 'dashboard') {
+        loadIncidentsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else {
+        finish();
+    }
+}, 30000);
 
 /**
  * Loads incidents into the process table with actionable statuses
@@ -259,9 +257,7 @@ function loadProcessTable() {
 
         tbody.innerHTML = '';
 
-        // Match utilities pattern: filter out completed/cancelled statuses
         const excludedStatuses = ['Closed', 'Cancelled', 'Resolved'];
-
         const actionable = incidents.filter(incident => {
             return !excludedStatuses.includes(incident.status);
         });
@@ -272,35 +268,27 @@ function loadProcessTable() {
         }
 
         actionable.forEach(incident => {
-            // EXACT SAME PATTERN: actionBtn variable with full HTML
-            let actionBtn = '';
+            let btnText = "Update";
+            let btnClass = "secondary";
 
-            if (incident.status === 'Pending') {
-                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Process</button>`;
-            }
-            else if (incident.status === 'Reported') {
-                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Begin Investigation</button>`;
-            }
-            else if (incident.status === 'Under Investigation') {
-                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Continue Investigation</button>`;
-            }
-            else if (incident.status === 'Referred to Authorities') {
-                actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${incident.id})">Follow Up</button>`;
-            }
-            else {
-                actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">Update</button>`;
-            }
+            if (incident.status === 'Pending') { btnClass = "primary"; btnText = "Process"; }
+            else if (incident.status === 'Reported') { btnClass = "primary"; btnText = "Begin Investigation"; }
+            else if (incident.status === 'Under Investigation') { btnClass = "primary"; btnText = "Continue Investigation"; }
+            else if (incident.status === 'Referred to Authorities') { btnClass = "warning"; btnText = "Follow Up"; }
+            else if (incident.status === 'Resolved') { btnText = "Finalize"; btnClass = "success"; }
 
             tbody.innerHTML += `
-        <tr>
-            <td>${incident.id}</td>
-            <td>${incident.incident_type || 'N/A'}</td>
-            <td>${incident.vic_full_name || 'N/A'}</td>
-            <td>${formatDate(incident.reported_at)}</td>
-            <td><span class="status-badge status-${incident.status.toLowerCase().replace(/ /g, '-')}">${incident.status}</span></td>
-            <td>${actionBtn}</td>
-        </tr>
-    `;
+            <tr>
+                <td>${incident.id}</td>
+                <td>${incident.incident_type || 'N/A'}</td>
+                <td>${incident.vic_full_name || 'N/A'}</td>
+                <td>${formatDate(incident.reported_at)}</td>
+                <td><span class="status-badge status-${incident.status.toLowerCase().replace(/ /g, '-')}">${incident.status}</span></td>
+                <td>
+                    <button class="btn-${btnClass}" onclick="openUpdateModal(${incident.id})">${btnText}</button>
+                </td>
+            </tr>
+        `;
         });
     });
 }
@@ -311,7 +299,6 @@ let chart3Instance;
 
 /**
  * Loads analytics data and renders charts for incident statistics
- * Creates three charts: timeline chart, incident type distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
     fetch(`${IR_HANDLER_URL}?action=chart_incident_type`)
@@ -325,7 +312,6 @@ function loadAnalyticsTab() {
             const labels2 = res.data_by_type.map(x => x.incident_type);
             const values2 = res.data_by_type.map(x => x.total);
 
-            // Add DSS status data if available
             const labels3 = res.data_by_dss ? res.data_by_dss.map(x => x.dss_status) : [];
             const values3 = res.data_by_dss ? res.data_by_dss.map(x => x.total) : [];
 
@@ -373,7 +359,6 @@ function loadAnalyticsTab() {
                 }
             });
 
-            // Add the third chart for DSS status if data exists
             if (labels3.length > 0) {
                 chart3Instance = new Chart(document.getElementById('chart3'), {
                     type: 'doughnut',
@@ -411,6 +396,8 @@ function loadAnalyticsTab() {
 
 /**
  * Applies pre-defined text prompts to the update comments textarea
+ * 
+ * @param {string} text - The text prompt to insert into the comments field
  */
 function applyPrompt(text) {
     const textarea = document.getElementById('updateComments');
@@ -422,116 +409,280 @@ function applyPrompt(text) {
 
 /**
  * Opens the update modal for a specific incident and loads current data
+ * Includes DSS evaluation results display and status tracking
+ * 
+ * @param {number} appId - The incident ID to open in the update modal
  */
-function openUpdateModal(incidentId) {
-    const incident = incidents.find(i => i.id == incidentId);
+function openUpdateModal(appId) {
+    const incident = incidents.find(i => i.id == appId);
 
     if (!incident) {
         alert("Incident data not found.");
         return;
     }
 
-    const updateReportId = document.getElementById('updateReportId');
-    const displayCurrentStatus = document.getElementById('displayCurrentStatus');
-    const newStatus = document.getElementById('newStatus');
-    const updateComments = document.getElementById('updateComments');
+    document.getElementById('updateReportId').value = incident.id;
+    document.getElementById('displayCurrentStatus').value = incident.status;
 
-    if (updateReportId) updateReportId.value = incident.id;
-    if (displayCurrentStatus) displayCurrentStatus.value = incident.status;
-    if (newStatus) newStatus.value = "";
-    if (updateComments) updateComments.value = "";
+    document.getElementById('newStatus').value = "";
+    document.getElementById('updateComments').value = "";
 
-    // Add incident summary section
-    addIncidentSummarySection(incident);
+    const existingDSSSection = document.getElementById('dssEvaluationSection');
+    if (existingDSSSection) existingDSSSection.remove();
 
-    const updateModal = document.getElementById('updateModal');
-    if (updateModal) {
-        updateModal.classList.add('active');
-    }
+    addBasicDSSSection(incident);
+
+    fetchDSSEvaluation(appId, incident);
+
+    document.getElementById('updateModal').classList.add('active');
 }
 
 /**
- * Adds incident summary section to the update modal
+ * Fetches DSS evaluation details from the server for a specific incident report
+ * 
+ * @param {number} appId - The incident report ID to fetch evaluation for
+ * @param {Object} incident - The incident object containing basic incident data
  */
-function addIncidentSummarySection(incident) {
+function fetchDSSEvaluation(appId, incident) {
+    console.debug('fetchDSSEvaluation ->', IR_HANDLER_URL, appId);
+    // Use 'application_id' parameter to match the PHP backend expectation
+    fetch(`${IR_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            console.debug('DSS response for', appId, data);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (data && data.status === 'success' && data.evaluation) {
+                if (existing) existing.remove();
+                addDSSSectionToModal(data.evaluation, incident);
+            } else {
+                if (existing) existing.querySelector('.dss-loading')?.remove();
+                const msg = (data && data.message) ? data.message : 'Detailed evaluation not available.';
+                if (existing) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = msg;
+                    existing.appendChild(note);
+                } else {
+                    addBasicDSSSection(incident);
+                    const created = document.getElementById('dssEvaluationSection');
+                    if (created) {
+                        const note = document.createElement('div');
+                        note.className = 'dss-error-msg';
+                        note.textContent = msg;
+                        created.appendChild(note);
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching DSS evaluation:', error);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (existing) existing.querySelector('.dss-loading')?.remove();
+            const errMsg = error && error.message ? error.message : 'Failed to load evaluation.';
+            if (existing) {
+                const note = document.createElement('div');
+                note.className = 'dss-error-msg';
+                note.textContent = errMsg;
+                existing.appendChild(note);
+            } else {
+                addBasicDSSSection(incident);
+                const created = document.getElementById('dssEvaluationSection');
+                if (created) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = errMsg;
+                    created.appendChild(note);
+                }
+            }
+        });
+}
+
+/**
+ * Creates and inserts a detailed DSS evaluation section into the update modal
+ * 
+ * @param {Object} evaluation - The DSS evaluation data object
+ * @param {Object} incident - The incident object for context
+ */
+function addDSSSectionToModal(evaluation, incident) {
     const updateForm = document.getElementById('updateForm');
     if (!updateForm) return;
 
-    const existingSection = document.getElementById('incidentSummarySection');
-    if (existingSection) {
-        existingSection.remove();
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
     }
 
-    const summarySection = document.createElement('div');
-    summarySection.id = 'incidentSummarySection';
-    summarySection.className = 'incident-summary-section';
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
 
-    summarySection.innerHTML = `
-        <div class="incident-summary-section">
-            <div class="summary-header">
-                <h3>Incident Summary</h3>
-            </div>
-            
-            <div class="summary-grid">
-                <div class="summary-column">
-                    <div class="summary-item">
-                        <strong>Victim:</strong> ${incident.vic_full_name || 'N/A'}
-                    </div>
-                    <div class="summary-item">
-                        <strong>Incident Type:</strong> ${incident.incident_type || 'N/A'}
-                    </div>
-                    <div class="summary-item">
-                        <strong>Location:</strong> ${incident.incident_location || 'N/A'}
-                    </div>
-                </div>
-                
-                <div class="summary-column">
-                    <div class="summary-item">
-                        <strong>Date:</strong> ${formatDate(incident.incident_timestamp)}
-                    </div>
-                    <div class="summary-item">
-                        <strong>Time:</strong> ${formatTime(incident.incident_timestamp)}
-                    </div>
-                    <div class="summary-item">
-                        <strong>Severity:</strong> ${getSeverityBadge(incident.severity)}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="summary-narrative">
-                <strong>Narrative:</strong>
-                <p>${incident.description || 'No description provided.'}</p>
-            </div>
+    const details = evaluation.evaluation_details || {};
+    const dssStatus = evaluation.dss_status || 'Pending Evaluation';
+    const score = details.score || 0;
+    const maxScore = details.max_score || 5;
+    const probability = typeof details.resolution_probability === 'number' ? details.resolution_probability : (parseFloat(details.resolution_probability) || 0);
+
+    const passedRules = details.passed_rules || [];
+    const failedRules = details.failed_rules || [];
+    const recommendations = details.recommendations || [];
+
+    let statusColor, statusBg;
+    switch (dssStatus) {
+        case 'Pre-Approved':
+        case 'High Priority':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            break;
+        case 'Additional Requirements Needed':
+        case 'Medium Priority':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            break;
+        case 'Rejected':
+        case 'Low Priority':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+    }
+
+    dssSection.innerHTML = `
+<div class="dss-evaluation-section">
+    <div class="dss-header">
+        <h3>DSS Evaluation Result</h3>
+        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+            ${dssStatus}
+        </span>
+    </div>
+    
+    <div class="dss-score-summary">
+        <div class="dss-score">
+            <strong>Score</strong>
+            <span>${score}/${maxScore}</span>
         </div>
-    `;
+        <div class="dss-probability">
+            <strong>Approval Probability</strong>
+            <span>${probability.toFixed(2)}%</span>
+        </div>
+    </div>
+    
+    <div class="dss-progress-container">
+        <div class="dss-progress-label">
+            <span>Approval Progress</span>
+            <span class="dss-progress-percentage">${probability}%</span>
+        </div>
+        <div class="dss-progress-bar">
+            <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, probability))}%"></div>
+        </div>
+    </div>
+    
+    <div class="dss-rules-summary">
+        <div class="dss-rules-column">
+            <h4>Passed Rules (${passedRules.length})</h4>
+            ${passedRules.length > 0 ?
+            `<ul class="dss-rules-list passed">${passedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
+        }
+        </div>
+        
+        <div class="dss-rules-column">
+            <h4>Failed Rules (${failedRules.length})</h4>
+            ${failedRules.length > 0 ?
+            `<ul class="dss-rules-list failed">${failedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules failed</p>`
+        }
+        </div>
+    </div>
+    
+    ${recommendations.length > 0 ? `
+        <div class="dss-recommendations">
+            <h4>Recommendations</h4>
+            <ul class="dss-recommendations-list">
+                ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+        </div>
+    ` : ''}
+    
+    ${evaluation.evaluated_at ? `
+        <div class="dss-timestamp">
+            Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+        </div>
+    ` : ''}
+</div>
+`;
 
-    updateForm.insertBefore(summarySection, updateForm.firstChild);
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
 }
 
 /**
- * Gets severity badge HTML
+ * Creates a basic DSS section when detailed evaluation data is unavailable
+ * 
+ * @param {Object} incident - The incident object containing basic DSS status
  */
-function getSeverityBadge(severity) {
-    let color, bg, text;
-    switch (severity) {
-        case 'High': color = '#721c24'; bg = '#f8d7da'; text = 'High'; break;
-        case 'Medium': color = '#856404'; bg = '#fff3cd'; text = 'Medium'; break;
-        case 'Low': color = '#155724'; bg = '#d4edda'; text = 'Low'; break;
-        default: color = '#6c757d'; bg = '#e2e3e5'; text = 'Not Rated';
+function addBasicDSSSection(incident) {
+    const updateForm = document.getElementById('updateForm');
+    if (!updateForm) return;
+
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
     }
-    return `<span style="color:${color}; background:${bg}; padding:2px 8px; border-radius:12px; font-size:12px;">${text}</span>`;
+
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
+
+    const dssStatus = incident.dss_status || 'Pending Evaluation';
+    let statusColor, statusBg;
+
+    switch (dssStatus) {
+        case 'Pre-Approved':
+        case 'High Priority':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            break;
+        case 'Additional Requirements Needed':
+        case 'Medium Priority':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            break;
+        case 'Rejected':
+        case 'Low Priority':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+    }
+
+    dssSection.innerHTML = `
+    <div class="dss-header">
+        <h3>DSS Evaluation</h3>
+        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+            ${dssStatus}
+        </span>
+    </div>
+    <p class="dss-loading">Loading detailed evaluation...</p>
+`;
+
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
 }
 
 /**
  * Submits incident status update to the server via API
+ * 
+ * @param {Event} event - The form submission event
  */
 function submitUpdate(event) {
     event.preventDefault();
 
-    const updateForm = document.getElementById('updateForm');
-    if (!updateForm) return;
-
-    const formData = new FormData(updateForm);
+    const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
     fetch(`${IR_HANDLER_URL}`, {
@@ -554,26 +705,29 @@ function submitUpdate(event) {
         .then(data => {
             if (data.status === 'success') {
                 closeModal('updateModal');
-                showAlert('Incident updated successfully!', 'success');
+                alert('Incident updated successfully!');
                 loadManagementTable();
                 loadProcessTable();
-                loadAnalyticsTab();
             } else {
-                showAlert('Error: ' + (data.message || 'Unknown error'), 'error');
+                alert('Error: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error updating incident:', error);
-            showAlert('Error updating incident. Please try again.', 'error');
+            alert('Error updating incident. Please try again.');
         });
 }
 
 /**
  * Displays detailed incident information in a modal view
+ * 
+ * @param {number} appId - The incident ID to view details for
  */
-function viewDetails(incidentId) {
-    const incident = incidents.find(i => i.id == incidentId);
+function viewDetails(appId) {
+    const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
+
+    const incidentLocation = incident.incident_location || 'Not specified';
 
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
@@ -585,80 +739,84 @@ function viewDetails(incidentId) {
     }
 
     const content = `
-        <div class="details-container">
-            <div class="details-header-card">
-                <div class="details-title">
-                    <h2>${incident.incident_type || 'Incident Report'}</h2>
-                    <div class="details-id">Report ID: ${incident.id}</div>
-                </div>
-                <div style="text-align:right;">
-                    <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
-                        ${incident.status}
-                    </span>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">Reported: ${formatDateTime(incident.reported_at)}</div>
-                </div>
+    <div class="details-container">
+        <div class="details-header-card">
+            <div class="details-title">
+                <h2>${incident.incident_type || 'Incident Report'}</h2>
+                <div class="details-id">Report ID: ${incident.id}</div>
             </div>
-
-            <div class="details-grid">
-                <div class="col-left">
-                    <div class="detail-card">
-                        <h3>Incident Information</h3>
-                        <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${incident.incident_type || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Date & Time</span> <span class="detail-value">${formatDateTime(incident.incident_timestamp)}</span></div>
-                        <div class="detail-row"><span class="detail-label">Location</span> <span class="detail-value">${incident.incident_location || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Coordinates</span> <span class="detail-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Severity</span> <span class="detail-value">${getSeverityBadge(incident.severity)}</span></div>
-                    </div>
-
-                    <div class="detail-card" style="margin-top:20px;">
-                        <h3>Victim Details</h3>
-                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.vic_full_name || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.vic_contact || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.vic_address || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Gender</span> <span class="detail-value">${incident.vic_gender || 'N/A'}</span></div>
-                    </div>
-                </div>
-
-                <div class="col-right">
-                    <div class="detail-card">
-                        <h3>Reporting Person</h3>
-                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.rp_full_name || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.rp_contact || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Relationship</span> <span class="detail-value">${incident.rp_relationship || 'N/A'}</span></div>
-                    </div>
-
-                    ${incident.sus_full_name ? `
-                    <div class="detail-card" style="margin-top:20px; border-color: #f5c6cb;">
-                        <h3>Suspect Details</h3>
-                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.sus_full_name || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.sus_contact || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.sus_address || 'N/A'}</span></div>
-                        <div class="detail-row"><span class="detail-label">Description</span> <span class="detail-value">${incident.sus_description || 'N/A'}</span></div>
-                    </div>
-                    ` : ''}
-                </div>
+            <div style="text-align:right;">
+                <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
+                    ${incident.status}
+                </span>
+                <div style="font-size:12px; color:#666; margin-top:5px;">Reported: ${formatDateTime(incident.reported_at)}</div>
             </div>
-
-            <div class="detail-card">
-                <h3>Narrative Description</h3>
-                <p style="margin:0; color:#555; line-height:1.6;">${incident.description || 'No description provided.'}</p>
-            </div>
-
-            ${incident.investigation_notes ? `
-            <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">Investigation Notes</h3>
-                <p style="margin:0; color:#555;">${incident.investigation_notes}</p>
-                <div style="font-size:12px; color:#666; margin-top:5px;">Updated: ${formatDateTime(incident.updated_at)}</div>
-            </div>
-            ` : ''}
         </div>
-    `;
 
-    const modalBody = document.getElementById('modalBody');
-    if (modalBody) {
-        modalBody.innerHTML = content;
-        openModal('detailsModal');
-    }
+        <div class="details-grid">
+            <div class="col-left">
+                <div class="detail-card">
+                    <h3>Incident Information</h3>
+                    <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${incident.incident_type || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Date & Time</span> <span class="detail-value">${formatDateTime(incident.incident_timestamp)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Location</span> <span class="detail-value">${incidentLocation}</span></div>
+                    <div class="detail-row"><span class="detail-label">Coordinates</span> <span class="detail-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Severity</span> <span class="detail-value">${getSeverityBadge(incident.severity)}</span></div>
+                </div>
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Victim Details</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.vic_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.vic_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.vic_address || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Gender</span> <span class="detail-value">${incident.vic_gender || 'N/A'}</span></div>
+                </div>
+            </div>
+
+            <div class="col-right">
+                <div class="detail-card">
+                    <h3>Reporting Person</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.rp_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.rp_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Relationship</span> <span class="detail-value">${incident.rp_relationship || 'N/A'}</span></div>
+                </div>
+
+                ${incident.sus_full_name ? `
+                <div class="detail-card" style="margin-top:20px; border-color: #f5c6cb;">
+                    <h3>Suspect Details</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.sus_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.sus_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.sus_address || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Description</span> <span class="detail-value">${incident.sus_description || 'N/A'}</span></div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <h3>Narrative Description</h3>
+            <p style="margin:0; color:#555; line-height:1.6;">${incident.description || 'No description provided.'}</p>
+        </div>
+
+        ${incident.investigation_notes ? `
+        <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
+            <h3 style="color:#856404; border-color:#ffeeba;">Investigation Notes</h3>
+            <p style="margin:0; color:#555;">${incident.investigation_notes}</p>
+            <div style="font-size:12px; color:#666; margin-top:5px;">Updated: ${formatDateTime(incident.updated_at)}</div>
+        </div>
+        ` : ''}
+
+        ${incident.dss_status ? `
+        <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
+            <h3>DSS Evaluation Status</h3>
+            <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
+        </div>
+        ` : ''}
+    </div>
+`;
+
+    document.getElementById('modalBody').innerHTML = content;
+    openModal('detailsModal');
 }
 
 /**
@@ -666,12 +824,10 @@ function viewDetails(incidentId) {
  */
 function loadSummarySelect() {
     loadIncidentsFromDB().finally(() => {
-        const select = document.getElementById('summaryIncidentSelect');
-        if (!select) return;
-
+        const select = document.getElementById('summaryApplicationSelect');
         select.innerHTML = '<option value="">-- Select Incident Report --</option>';
         incidents.forEach(incident => {
-            select.innerHTML += `<option value="${incident.id}"> ${incident.id} - ${incident.incident_type} (${formatDate(incident.incident_timestamp)})</option>`;
+            select.innerHTML += `<option value="${incident.id}">ID: ${incident.id} - ${incident.incident_type || 'Incident Report'}</option>`;
         });
     });
 }
@@ -679,28 +835,143 @@ function loadSummarySelect() {
 /**
  * Updates the summary display with detailed incident information
  */
-function updateIncidentSummary() {
-    const select = document.getElementById('summaryIncidentSelect');
+// function updateIncidentSummary() {
+//     const appId = document.getElementById('summaryIncidentSelect').value;
+//     const summaryOutput = document.getElementById('summaryOutput');
+
+//     if (!appId) {
+//         summaryOutput.innerHTML = `
+//         <div class="placeholder-state">
+//             <i class="fas fa-file-invoice fa-3x"></i>
+//             <p>Select an incident report from the list above to view the full report.</p>
+//         </div>`;
+//         return;
+//     }
+
+//     const incident = incidents.find(i => i.id == appId);
+//     if (!incident) return;
+
+//     let statusColor = '#6c757d';
+//     let statusBg = '#e2e3e5';
+
+//     switch (incident.status) {
+//         case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+//         case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+//         case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+//         case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+//     }
+
+//     const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
+//         year: 'numeric', month: 'long', day: 'numeric'
+//     });
+
+//     summaryOutput.innerHTML = `
+//     <div class="report-header">
+//         <div class="report-title">
+//             <h1>Incident Report Profile</h1>
+//             <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
+//         </div>
+//         <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+//             ${incident.status}
+//         </div>
+//     </div>
+
+//     <div class="report-grid">
+//         <div class="report-column">
+//             <div class="report-section">
+//                 <h3>Incident Details</h3>
+//                 <div class="info-row"><span class="info-label">Incident Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span></div>
+//                 <div class="info-row"><span class="info-label">Location</span> <span class="info-value" style="max-width: 200px; text-align:right;">${incident.incident_location || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Severity</span> <span class="info-value">${incident.severity || 'Not Rated'}</span></div>
+//             </div>
+
+//             <div class="report-section">
+//                 <h3>Victim Information</h3>
+//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.vic_full_name || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.vic_contact || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.vic_address || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.vic_gender || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Citizenship</span> <span class="info-value">${incident.vic_citizenship || 'N/A'}</span></div>
+//             </div>
+//         </div>
+
+//         <div class="report-column">
+//             <div class="report-section">
+//                 <h3>Reporting Person</h3>
+//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.rp_full_name || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.rp_contact || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.rp_address || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Relationship</span> <span class="info-value">${incident.rp_relationship || 'N/A'}</span></div>
+//             </div>
+
+//             ${incident.sus_full_name ? `
+//             <div class="financial-box">
+//                 <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
+//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.sus_gender || 'N/A'}</span></div>
+//                 <div class="info-row"><span class="info-label">Description</span> <span class="info-value">${incident.sus_description || 'N/A'}</span></div>
+//             </div>
+//             ` : ''}
+//         </div>
+//     </div>
+
+//     <div class="report-section">
+//         <h3>Incident Narrative</h3>
+//         <div style="background:#f8f9fa; padding:15px; border-radius:5px; border-left:4px solid #6366F1;">
+//             ${incident.description || 'No description provided.'}
+//         </div>
+//     </div>
+
+//     ${incident.investigation_notes ? `
+//     <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
+//         <h3 style="border:none; margin-bottom:5px;">Investigation Notes</h3>
+//         <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
+//         <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
+//     </div>` : ''}
+
+//     ${incident.dss_status ? `
+//     <div class="report-section" style="background:#d1ecf1; padding:15px; border-radius:5px; border-color:#bee5eb;">
+//         <h3 style="border:none; margin-bottom:5px; color:#0c5460;">DSS Evaluation</h3>
+//         <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status}</span></div>
+//     </div>` : ''}
+
+//     <div class="report-actions">
+//         <button class="btn-secondary" onclick="downloadSummary(${incident.id})"><i class="fas fa-download"></i> Download Word</button>
+//         <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+//     </div>
+// `;
+// }
+
+/**
+ * Updates the summary display with detailed incident information
+ * Generates a professional report view with formatted data
+ */
+function updateSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
     const summaryOutput = document.getElementById('summaryOutput');
 
-    if (!select || !summaryOutput) return;
-
-    const incidentId = select.value;
-
-    if (!incidentId) {
+    if (!appId) {
         summaryOutput.innerHTML = `
             <div class="placeholder-state">
                 <i class="fas fa-file-invoice fa-3x"></i>
-                <p>Select an incident report from the list above to view the full summary.</p>
+                <p>Select an incident report from the list above to view the full report.</p>
             </div>`;
         return;
     }
 
-    const incident = incidents.find(i => i.id == incidentId);
+    const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
 
+    // --- 1. Data Processing ---
+
+    // Status Badge Color Logic
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
+
     switch (incident.status) {
         case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
@@ -708,14 +979,18 @@ function updateIncidentSummary() {
         case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    const reportedDate = formatDateTime(incident.reported_at);
-    const incidentDate = formatDateTime(incident.incident_timestamp);
+    // Formatted Dates
+    const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // --- 2. Build HTML Structure ---
 
     summaryOutput.innerHTML = `
         <div class="report-header">
             <div class="report-title">
-                <h1>Incident Report Summary</h1>
-                <div class="report-meta">Report ID: ${incident.id} &bull; Reported: ${reportedDate}</div>
+                <h1>Incident Report Profile</h1>
+                <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
             </div>
             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
                 ${incident.status}
@@ -726,9 +1001,9 @@ function updateIncidentSummary() {
             <div class="report-column">
                 <div class="report-section">
                     <h3>Incident Details</h3>
-                    <div class="info-row"><span class="info-label">Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${incidentDate}</span></div>
-                    <div class="info-row"><span class="info-label">Location</span> <span class="info-value">${incident.incident_location || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Incident Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span></div>
+                    <div class="info-row"><span class="info-label">Location</span> <span class="info-value" style="max-width: 200px; text-align:right;">${incident.incident_location || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Severity</span> <span class="info-value">${incident.severity || 'Not Rated'}</span></div>
                 </div>
@@ -753,8 +1028,8 @@ function updateIncidentSummary() {
                 </div>
 
                 ${incident.sus_full_name ? `
-                <div class="report-section">
-                    <h3>Suspect Information</h3>
+                <div class="financial-box">
+                    <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
                     <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
@@ -767,7 +1042,7 @@ function updateIncidentSummary() {
 
         <div class="report-section">
             <h3>Incident Narrative</h3>
-            <div style="background:#f8f9fa; padding:15px; border-radius:5px; border-left:4px solid #6366F1;">
+            <div style="background:#f8f9fa; padding:15px; border-radius:5px;">
                 ${incident.description || 'No description provided.'}
             </div>
         </div>
@@ -780,135 +1055,16 @@ function updateIncidentSummary() {
         </div>` : ''}
 
         <div class="report-actions">
-            <button class="btn-secondary" onclick="downloadIncidentSummary(${incident.id})"><i class="fas fa-download"></i> Download Report</button>
-            <button class="btn-primary" onclick="printIncidentSummary()"><i class="fas fa-print"></i> Print Summary</button>
+            <button class="btn-secondary" onclick="downloadSummary(${incident.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
         </div>
     `;
 }
 
 /**
- * Downloads an incident summary as a Word document
- */
-function downloadIncidentSummary(incidentId) {
-    const incident = incidents.find(i => i.id == incidentId);
-    if (!incident) return;
-
-    const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Incident Report Summary - ${incident.id}</title>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
-                .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-                h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
-                h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
-                .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
-                .info-list { list-style-type: none; padding: 0; }
-                .info-list li { margin-bottom: 8px; }
-                .info-list strong { display: inline-block; width: 200px; font-weight: bold; }
-                .status-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-                .narrative-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #826EEA; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>Incident Report Summary</h1>
-                <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Report ID:</strong> ${incident.id}</p>
-                <p><strong>Status:</strong> ${incident.status}</p>
-
-                <h2>Incident Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Incident Type:</strong> ${incident.incident_type}</li>
-                        <li><strong>Date & Time:</strong> ${formatDateTime(incident.incident_timestamp)}</li>
-                        <li><strong>Location:</strong> ${incident.incident_location}</li>
-                        <li><strong>Coordinates:</strong> ${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</li>
-                        <li><strong>Severity:</strong> ${incident.severity || 'Not Rated'}</li>
-                    </ul>
-                </div>
-
-                <h2>Victim Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Full Name:</strong> ${incident.vic_full_name}</li>
-                        <li><strong>Contact Number:</strong> ${incident.vic_contact}</li>
-                        <li><strong>Address:</strong> ${incident.vic_address}</li>
-                        <li><strong>Gender:</strong> ${incident.vic_gender}</li>
-                        <li><strong>Citizenship:</strong> ${incident.vic_citizenship}</li>
-                    </ul>
-                </div>
-
-                <h2>Reporting Person</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Full Name:</strong> ${incident.rp_full_name}</li>
-                        <li><strong>Contact Number:</strong> ${incident.rp_contact}</li>
-                        <li><strong>Address:</strong> ${incident.rp_address}</li>
-                        <li><strong>Relationship:</strong> ${incident.rp_relationship}</li>
-                    </ul>
-                </div>
-
-                ${incident.sus_full_name ? `
-                <h2>Suspect Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Full Name:</strong> ${incident.sus_full_name}</li>
-                        <li><strong>Contact Number:</strong> ${incident.sus_contact}</li>
-                        <li><strong>Address:</strong> ${incident.sus_address}</li>
-                        <li><strong>Gender:</strong> ${incident.sus_gender}</li>
-                        <li><strong>Description:</strong> ${incident.sus_description}</li>
-                    </ul>
-                </div>
-                ` : ''}
-
-                <h2>Incident Narrative</h2>
-                <div class="narrative-box">
-                    ${incident.description || 'No description provided.'}
-                </div>
-
-                ${incident.investigation_notes ? `
-                <h2>Investigation Notes</h2>
-                <div class="card">
-                    <p><strong>Notes:</strong> ${incident.investigation_notes}</p>
-                    <p><strong>Last Updated:</strong> ${formatDateTime(incident.updated_at)}</p>
-                </div>
-                ` : ''}
-            </div>
-        </body>
-        </html>
-    `;
-
-    const blob = new Blob([htmlContent], { type: 'application/msword' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Incident_Report_${incident.id}_Summary.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-}
-
-/**
- * Archives an incident report by sending a request to the server
- */
-function archiveIncident(incidentId) {
-    if (!confirm('Are you sure you want to archive this incident report?')) return;
-    fetch(`${IR_HANDLER_URL}?action=archive&id=${incidentId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showAlert('Incident archived successfully', 'success');
-                loadManagementTable();
-            }
-        });
-}
-
-/**
- * Opens a modal dialog
+ * Opens a modal dialog by adding the 'active' class
+ * 
+ * @param {string} modalId - The ID of the modal element to open    
  */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -919,7 +1075,9 @@ function openModal(modalId) {
 }
 
 /**
- * Closes a modal dialog
+ * Closes a modal dialog by removing the 'active' class
+ * 
+ * @param {string} modalId - The ID of the modal element to close
  */
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -930,479 +1088,455 @@ function closeModal(modalId) {
 }
 
 /**
- * Displays a temporary alert message to the user
+ * Prints the current summary report to a new window
  */
-function showAlert(message, type) {
-    const alertContainer = document.getElementById('alert-container');
-    if (!alertContainer) {
-        // Create alert container if it doesn't exist
-        const container = document.createElement('div');
-        container.id = 'alert-container';
-        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
-        document.body.appendChild(container);
-    }
+// function printSummary() {
+//     const summaryToPrint = document.getElementById('summaryOutput');
 
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} active`;
-    alertDiv.textContent = message;
-    alertDiv.style.cssText = 'padding: 15px; margin: 10px 0; border-radius: 5px; color: white; min-width: 250px;';
-
-    if (type === 'success') {
-        alertDiv.style.background = '#4CAF50';
-    } else if (type === 'error') {
-        alertDiv.style.background = '#f44336';
-    } else if (type === 'warning') {
-        alertDiv.style.background = '#ff9800';
-    } else {
-        alertDiv.style.background = '#2196F3';
-    }
-
-    alertContainer.innerHTML = '';
-    alertContainer.appendChild(alertDiv);
-
-    setTimeout(() => {
-        alertDiv.style.opacity = '0';
-        setTimeout(() => {
-            if (alertDiv.parentNode === alertContainer) {
-                alertContainer.removeChild(alertDiv);
-            }
-        }, 300);
-    }, 4000);
-}
+//     const printWindow = window.open('', '', 'height=600,width=800');
+//     printWindow.document.write('<html><head><title>Incident Report Summary</title>');
+//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css">');
+//     printWindow.document.write('</head><body>');
+//     printWindow.document.write(summaryToPrint.innerHTML);
+//     printWindow.document.write('');
+//     printWindow.document.write('</body></html>');
+//     printWindow.document.close();
+//     printWindow.focus();
+// }
 
 /**
- * Prints the current incident summary
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content with proper structure
  */
-function printIncidentSummary() {
-    const summaryToPrint = document.getElementById('summaryOutput');
-    if (!summaryToPrint) return;
-
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Incident Report Summary</title>');
-    printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-    printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css">');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(summaryToPrint.innerHTML);
-    printWindow.document.write('');
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.focus();
-}
-
-/**
- * Generates a summary report
- */
-function generateSummaryReport() {
-    const incidentId = document.getElementById('summaryIncidentSelect');
-    if (!incidentId || !incidentId.value) {
-        showAlert('Please select an incident report first', 'warning');
-        return;
-    }
-    updateIncidentSummary();
-}
-
-/**
- * Exports to PDF
- */
-function exportToPDF() {
-    showAlert('PDF export functionality coming soon!', 'info');
-}
-
-// ==================== INCIDENT FORM HANDLING ====================
-
-let currentStep = 1;
-const totalSteps = 4;
-
-/**
- * Initializes the incident form
- */
-function initializeIncidentForm() {
-    // Check if we're on a page that has the form
-    const incidentTimestamp = document.getElementById('incidentTimestamp');
-    const requestDate = document.getElementById('requestDate');
-    const prevBtn = document.getElementById('prevBtn');
-
-    if (!incidentTimestamp || !requestDate || !prevBtn) {
-        console.warn('Incident form elements not found. Skipping form initialization.');
+function printSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    if (!appId) {
+        alert('Please select an incident report to print.');
         return;
     }
 
-    // Initialize date fields
-    const now = new Date();
-    const formattedDate = now.toISOString().slice(0, 16);
-    incidentTimestamp.value = formattedDate;
-    requestDate.value = now.toISOString().slice(0, 10);
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
 
-    // Step navigation
-    prevBtn.addEventListener('click', prevStep);
-
-    const nextBtn = document.getElementById('nextBtn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', nextStep);
+    // Get status colors
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+    switch (incident.status) {
+        case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', submitIncidentForm);
-    }
-
-    // Checkbox for same victim as reporting person
-    const victimSameAsRP = document.getElementById('victimSameAsRP');
-    if (victimSameAsRP) {
-        victimSameAsRP.addEventListener('change', function () {
-            if (this.checked) {
-                copyReportingPersonToVictim();
-            }
-        });
-    }
-
-    // Incident type change handler
-    const incidentType = document.getElementById('incidentType');
-    if (incidentType) {
-        incidentType.addEventListener('change', function () {
-            const otherContainer = document.getElementById('otherSpecifyContainer');
-            if (otherContainer) {
-                if (this.value === 'other') {
-                    otherContainer.classList.remove('hidden');
-                } else {
-                    otherContainer.classList.add('hidden');
-                }
-            }
-        });
-    }
-
-    updateNavigationButtons();
-}
-
-/**
- * Navigates to the next step in the form
- */
-function nextStep() {
-    if (validateCurrentStep()) {
-        if (currentStep < totalSteps) {
-            const currentStepEl = document.getElementById(`step${currentStep}`);
-            const nextStepEl = document.getElementById(`step${currentStep + 1}`);
-
-            if (currentStepEl) currentStepEl.classList.remove('active');
-            if (nextStepEl) nextStepEl.classList.add('active');
-
-            currentStep++;
-            updateNavigationButtons();
-        }
-    }
-}
-
-/**
- * Navigates to the previous step in the form
- */
-function prevStep() {
-    if (currentStep > 1) {
-        const currentStepEl = document.getElementById(`step${currentStep}`);
-        const prevStepEl = document.getElementById(`step${currentStep - 1}`);
-
-        if (currentStepEl) currentStepEl.classList.remove('active');
-        if (prevStepEl) prevStepEl.classList.add('active');
-
-        currentStep--;
-        updateNavigationButtons();
-    }
-}
-
-/**
- * Validates the current step
- */
-function validateCurrentStep() {
-    let isValid = true;
-    const currentStepElement = document.getElementById(`step${currentStep}`);
-
-    if (!currentStepElement) return false;
-
-    const requiredFields = currentStepElement.querySelectorAll('[required]');
-
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            isValid = false;
-            field.style.borderColor = '#dc3545';
-        } else {
-            field.style.borderColor = '';
-        }
+    // Format dates
+    const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    if (!isValid) {
-        showAlert('Please fill in all required fields marked with *', 'error');
-    }
+    // Create print-specific HTML with the same structure as updateIncidentSummary()
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Incident Report Summary - #${incident.id}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css">
+        </head>
+        <body>
+            <div class="print-container">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h1>Incident Report Profile</h1>
+                        <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
+                    </div>
+                    <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                        ${incident.status}
+                    </div>
+                </div>
 
-    return isValid;
+                <div class="report-grid">
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Incident Details</h3>
+                            <div class="info-row">
+                                <span class="info-label">Incident Type</span>
+                                <span class="info-value">${incident.incident_type || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Date & Time</span>
+                                <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Location</span>
+                                <span class="info-value">${incident.incident_location || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Coordinates</span>
+                                <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Severity</span>
+                                <span class="info-value">${incident.severity || 'Not Rated'}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>Victim Information</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.vic_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.vic_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.vic_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Gender</span>
+                                <span class="info-value">${incident.vic_gender || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Citizenship</span>
+                                <span class="info-value">${incident.vic_citizenship || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Reporting Person</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.rp_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.rp_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.rp_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Relationship</span>
+                                <span class="info-value">${incident.rp_relationship || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        ${incident.sus_full_name ? `
+                        <div class="financial-box">
+                            <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.sus_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.sus_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.sus_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Gender</span>
+                                <span class="info-value">${incident.sus_gender || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Description</span>
+                                <span class="info-value">${incident.sus_description || 'N/A'}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>Incident Narrative</h3>
+                    <div style="background:#f8f9fa; padding:15px; border-radius:5px;">
+                        ${incident.description || 'No description provided.'}
+                    </div>
+                </div>
+
+                ${incident.investigation_notes ? `
+                <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
+                    <h3 style="border:none; margin-top:5px;">Investigation Notes</h3>
+                    <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
+                </div>` : ''}
+
+                <div class="footer-note">
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</p>
+                    <p>Barangay Incident Report Management System</p>
+                </div>
+            </div>
+            
+            <script>
+                // Auto-print when page loads
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+                
+                // Also close when print dialog is cancelled
+                window.onafterprint = function() {
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
 }
 
 /**
- * Updates navigation buttons based on current step
+ * Downloads a summary report as a Word document
+ * 
+ * @param {number} appId - The incident ID to download summary for
  */
-function updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const submitBtn = document.getElementById('submitBtn');
+function downloadSummary(appId) {
 
-    if (!prevBtn || !nextBtn) return;
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
 
-    if (currentStep === 1) {
-        prevBtn.style.display = 'none';
-    } else {
-        prevBtn.style.display = 'inline-block';
+    const incidentLocation = incident.incident_location || 'Not specified';
+
+    let notesHtml = '';
+    if (incident.investigation_notes) {
+        notesHtml = `<div class="comment-box investigation"><h3>Investigation Notes</h3><p>${incident.investigation_notes}</p></div>`;
     }
 
-    if (currentStep === totalSteps) {
-        if (nextBtn) nextBtn.style.display = 'none';
-        if (submitBtn) submitBtn.style.display = 'inline-block';
-    } else {
-        if (nextBtn) nextBtn.style.display = 'inline-block';
-        if (submitBtn) submitBtn.style.display = 'none';
+    let dssHtml = '';
+    if (incident.dss_status) {
+        dssHtml = `<div class="comment-box dss"><h3>DSS Evaluation</h3><p><strong>Status:</strong> ${incident.dss_status}</p></div>`;
     }
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Incident Report Summary - ${incident.id}</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
+            .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
+            h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
+            .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
+            .info-list { list-style-type: none; padding: 0; }
+            .info-list li { margin-bottom: 8px; }
+            .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
+            .status-badge { background-color: ${incident.status === 'Resolved' ? '#d4edda' : incident.status === 'Cancelled' ? '#f8d7da' : '#fff3cd'}; color: ${incident.status === 'Resolved' ? '#155724' : incident.status === 'Cancelled' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
+            .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
+            .comment-box h3 { font-size: 12pt; }
+            .comment-box.investigation { border: 1px solid #ffeeba; background-color: #fff3cd; }
+            .comment-box.dss { border: 1px solid #bee5eb; background-color: #d1ecf1; }
+            .narrative-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #826EEA; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Incident Report Summary</h1>
+            <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p><strong>Report ID:</strong> ${incident.id}</p>
+            <p><strong>Status:</strong> <span class="status-badge">${incident.status}</span></p>
+
+            <h2>Incident Information</h2>
+            <div class="card">
+                <ul class="info-list">
+                    <li><strong>Incident Type:</strong> ${incident.incident_type}</li>
+                    <li><strong>Date & Time:</strong> ${formatDateTime(incident.incident_timestamp)}</li>
+                    <li><strong>Location:</strong> ${incidentLocation}</li>
+                    <li><strong>Coordinates:</strong> ${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</li>
+                    <li><strong>Severity:</strong> ${incident.severity || 'Not Rated'}</li>
+                </ul>
+            </div>
+
+            <h2>Victim Information</h2>
+            <div class="card">
+                <ul class="info-list">
+                    <li><strong>Full Name:</strong> ${incident.vic_full_name}</li>
+                    <li><strong>Contact Number:</strong> ${incident.vic_contact}</li>
+                    <li><strong>Address:</strong> ${incident.vic_address}</li>
+                    <li><strong>Gender:</strong> ${incident.vic_gender}</li>
+                    <li><strong>Citizenship:</strong> ${incident.vic_citizenship}</li>
+                </ul>
+            </div>
+
+            <h2>Reporting Person</h2>
+            <div class="card">
+                <ul class="info-list">
+                    <li><strong>Full Name:</strong> ${incident.rp_full_name}</li>
+                    <li><strong>Contact Number:</strong> ${incident.rp_contact}</li>
+                    <li><strong>Address:</strong> ${incident.rp_address}</li>
+                    <li><strong>Relationship:</strong> ${incident.rp_relationship}</li>
+                </ul>
+            </div>
+
+            ${incident.sus_full_name ? `
+            <h2>Suspect Information</h2>
+            <div class="card">
+                <ul class="info-list">
+                    <li><strong>Full Name:</strong> ${incident.sus_full_name}</li>
+                    <li><strong>Contact Number:</strong> ${incident.sus_contact}</li>
+                    <li><strong>Address:</strong> ${incident.sus_address}</li>
+                    <li><strong>Gender:</strong> ${incident.sus_gender}</li>
+                    <li><strong>Description:</strong> ${incident.sus_description}</li>
+                </ul>
+            </div>
+            ` : ''}
+
+            <h2>Incident Narrative</h2>
+            <div class="narrative-box">
+                ${incident.description || 'No description provided.'}
+            </div>
+
+            ${notesHtml}
+            ${dssHtml}
+        </div>
+    </body>
+    </html>
+`;
+
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Incident_Report_${incident.id}_Summary.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
+
+// Helper function for formatting dates
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+
+/**
+ * Creates a new incident report
+ */
+function createApplication(event) {
+    event.preventDefault();
+    alert('Create functionality not implemented yet');
 }
 
 /**
- * Copies reporting person data to victim fields
+ * Filters incidents in review table
  */
-function copyReportingPersonToVictim() {
-    const rpFullName = document.getElementById('rpFullName');
-    const rpLotNo = document.getElementById('rpLotNo');
-    const rpStreet = document.getElementById('rpStreet');
-    const rpContact = document.getElementById('rpContact');
+function filterReviewIncidents() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
 
-    const vicFullName = document.getElementById('vicFullName');
-    const vicLotNo = document.getElementById('vicLotNo');
-    const vicStreet = document.getElementById('vicStreet');
-    const vicContact = document.getElementById('vicContact');
-
-    if (rpFullName && vicFullName) vicFullName.value = rpFullName.value;
-    if (rpLotNo && vicLotNo) vicLotNo.value = rpLotNo.value;
-    if (rpStreet && vicStreet) vicStreet.value = rpStreet.value;
-    if (rpContact && vicContact) vicContact.value = rpContact.value;
-}
-
-/**
- * Submits the incident form
- */
-function submitIncidentForm(event) {
-    if (event) event.preventDefault();
-
-    if (!validateCurrentStep()) {
-        return;
-    }
-
-    const formData = new FormData();
-
-    // Reporting Person
-    const rpFullName = document.getElementById('rpFullName');
-    const rpLotNo = document.getElementById('rpLotNo');
-    const rpStreet = document.getElementById('rpStreet');
-    const rpContact = document.getElementById('rpContact');
-    const rpRelationship = document.getElementById('rpRelationship');
-
-    if (rpFullName) formData.append('rpFullName', rpFullName.value);
-    if (rpLotNo) formData.append('rpLotNo', rpLotNo.value);
-    if (rpStreet) formData.append('rpStreet', rpStreet.value);
-    if (rpContact) formData.append('rpContact', rpContact.value);
-    if (rpRelationship) formData.append('rpRelationship', rpRelationship.value);
-
-    // Victim Details
-    const vicFullName = document.getElementById('vicFullName');
-    const vicLotNo = document.getElementById('vicLotNo');
-    const vicStreet = document.getElementById('vicStreet');
-    const vicContact = document.getElementById('vicContact');
-    const vicCitizenship = document.getElementById('vicCitizenship');
-    const vicGender = document.getElementById('vicGender');
-    const vicDOB = document.getElementById('vicDOB');
-    const vicOccupation = document.getElementById('vicOccupation');
-
-    if (vicFullName) formData.append('vicFullName', vicFullName.value);
-    if (vicLotNo) formData.append('vicLotNo', vicLotNo.value);
-    if (vicStreet) formData.append('vicStreet', vicStreet.value);
-    if (vicContact) formData.append('vicContact', vicContact.value);
-    if (vicCitizenship) formData.append('vicCitizenship', vicCitizenship.value);
-    if (vicGender) formData.append('vicGender', vicGender.value);
-    if (vicDOB) formData.append('vicDOB', vicDOB.value);
-    if (vicOccupation) formData.append('vicOccupation', vicOccupation.value);
-
-    // Suspect Details
-    const susFullName = document.getElementById('susFullName');
-    const susLotNo = document.getElementById('susLotNo');
-    const susStreet = document.getElementById('susStreet');
-    const susContact = document.getElementById('susContact');
-    const susGender = document.getElementById('susGender');
-    const susDescription = document.getElementById('susDescription');
-
-    if (susFullName) formData.append('susFullName', susFullName.value);
-    if (susLotNo) formData.append('susLotNo', susLotNo.value);
-    if (susStreet) formData.append('susStreet', susStreet.value);
-    if (susContact) formData.append('susContact', susContact.value);
-    if (susGender) formData.append('susGender', susGender.value);
-    if (susDescription) formData.append('susDescription', susDescription.value);
-
-    // Incident Details
-    const incidentType = document.getElementById('incidentType');
-    const otherIncidentType = document.getElementById('otherIncidentType');
-    const incidentTimestamp = document.getElementById('incidentTimestamp');
-    const incidentLotNo = document.getElementById('incidentLotNo');
-    const incidentStreet = document.getElementById('incidentStreet');
-    const incidentLatitude = document.getElementById('incidentLatitude');
-    const incidentLongitude = document.getElementById('incidentLongitude');
-    const description = document.getElementById('description');
-
-    if (incidentType) {
-        const incidentTypeValue = incidentType.value === 'other' && otherIncidentType ? otherIncidentType.value : incidentType.value;
-        formData.append('incidentType', incidentTypeValue);
-    }
-    if (incidentTimestamp) formData.append('incidentTimestamp', incidentTimestamp.value);
-    if (incidentLotNo) formData.append('incidentLotNo', incidentLotNo.value);
-    if (incidentStreet) formData.append('incidentStreet', incidentStreet.value);
-    if (incidentLatitude) formData.append('incidentLatitude', incidentLatitude.value);
-    if (incidentLongitude) formData.append('incidentLongitude', incidentLongitude.value);
-    if (description) formData.append('description', description.value);
-
-    formData.append('action', 'create');
-
-    fetch(`${IR_HANDLER_URL}`, {
-        method: 'POST',
-        body: formData
-    })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-            }
-            const contentType = res.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return res.text().then(text => {
-                    console.error('Non-JSON response for form submit:', text.substring(0, 200));
-                    throw new TypeError("Server returned non-JSON response");
-                });
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                showAlert('Incident report created successfully!', 'success');
-                resetIncidentForm();
-                switchTab(null, 'management');
-            } else {
-                showAlert('Error: ' + (data.message || 'Unknown error'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error creating incident:', error);
-            showAlert('Error creating incident report. Please try again.', 'error');
-        });
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
 }
 
 /**
  * Resets the incident form
  */
 function resetIncidentForm() {
-    const form = document.querySelector('#create form');
-    if (!form) return;
+    const form = document.getElementById('incidentForm');
+    if (form) form.reset();
+    updateApplicationDate();
+}
 
-    form.querySelectorAll('input, select, textarea').forEach(field => {
-        field.value = '';
-    });
-
-    currentStep = 1;
-    document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
-
-    const step1 = document.getElementById('step1');
-    if (step1) step1.classList.add('active');
-
-    updateNavigationButtons();
-
-    // Reset date fields
+/**
+ * Returns the current date as a formatted string (YYYY-MM-DD)
+ * 
+ * @returns {string} Current date in YYYY-MM-DD format
+ */
+function getCurrentDateString() {
     const now = new Date();
-    const formattedDate = now.toISOString().slice(0, 16);
-    const incidentTimestamp = document.getElementById('incidentTimestamp');
-    const requestDate = document.getElementById('requestDate');
-
-    if (incidentTimestamp) incidentTimestamp.value = formattedDate;
-    if (requestDate) requestDate.value = now.toISOString().slice(0, 10);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 /**
- * Opens the map picker modal
+ * Updates the incident date input field with the current date
  */
-function openMapPicker() {
-    // Initialize map if not already initialized
-    if (!window.incidentMap) {
-        initializeIncidentMap();
-    }
-
-    const mapPickerModal = document.getElementById('mapPickerModal');
-    if (mapPickerModal) {
-        mapPickerModal.classList.add('active');
+function updateApplicationDate() {
+    const dateInput = document.getElementById('applicationDate');
+    if (dateInput) {
+        dateInput.value = getCurrentDateString();
     }
 }
 
-/**
- * Initializes the incident map for location picking
- */
-function initializeIncidentMap() {
-    const mapPicker = document.getElementById('mapPicker');
-    if (!mapPicker) return;
+// Wait for the DOM content to fully load before running the script
+document.addEventListener('DOMContentLoaded', () => {
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+});
 
-    const map = L.map('mapPicker').setView([14.617500, 121.075600], 16);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    let marker;
-
-    map.on('click', function (e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-
-        const selectedLatitude = document.getElementById('selectedLatitude');
-        const selectedLongitude = document.getElementById('selectedLongitude');
-
-        if (selectedLatitude) selectedLatitude.value = lat.toFixed(6);
-        if (selectedLongitude) selectedLongitude.value = lng.toFixed(6);
-
-        if (marker) {
-            map.removeLayer(marker);
+// CLOSE MODAL ON OUTSIDE CLICK
+window.onclick = function (event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target == modal) {
+            modal.classList.remove('active');
         }
-
-        marker = L.marker([lat, lng]).addTo(map)
-            .bindPopup('Selected Location')
-            .openPopup();
     });
-
-    window.incidentMap = map;
 }
 
-/**
- * Confirms the selected location
- */
-function confirmLocation() {
-    const selectedLatitude = document.getElementById('selectedLatitude');
-    const selectedLongitude = document.getElementById('selectedLongitude');
-    const incidentLatitude = document.getElementById('incidentLatitude');
-    const incidentLongitude = document.getElementById('incidentLongitude');
-
-    if (!selectedLatitude || !selectedLongitude || !incidentLatitude || !incidentLongitude) return;
-
-    const lat = selectedLatitude.value;
-    const lng = selectedLongitude.value;
-
-    if (lat && lng) {
-        incidentLatitude.value = lat;
-        incidentLongitude.value = lng;
-        closeModal('mapPickerModal');
-        showAlert('Location selected successfully!', 'success');
-    } else {
-        showAlert('Please select a location on the map first', 'warning');
-    }
-}
+document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
 
 // ==================== HELPER FUNCTIONS ====================
 
 /**
+ * Gets severity badge HTML
+ * 
+ * @param {string} severity - The severity level (High/Medium/Low)
+ * @returns {string} HTML for the severity badge
+ */
+function getSeverityBadge(severity) {
+    let color, bg, text;
+    switch (severity) {
+        case 'High': color = '#721c24'; bg = '#f8d7da'; text = 'High'; break;
+        case 'Medium': color = '#856404'; bg = '#fff3cd'; text = 'Medium'; break;
+        case 'Low': color = '#155724'; bg = '#d4edda'; text = 'Low'; break;
+        default: color = '#6c757d'; bg = '#e2e3e5'; text = 'Not Rated';
+    }
+    return `<span style="color:${color}; background:${bg}; padding:2px 8px; border-radius:12px; font-size:12px;">${text}</span>`;
+}
+
+/**
  * Formats a date string
+ * 
+ * @param {string} dateString - The date string to format
+ * @returns {string} Formatted date string
  */
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
@@ -1421,6 +1555,9 @@ function formatDate(dateString) {
 
 /**
  * Formats a date and time string
+ * 
+ * @param {string} dateTimeString - The date/time string to format
+ * @returns {string} Formatted date/time string
  */
 function formatDateTime(dateTimeString) {
     if (!dateTimeString) return 'N/A';
@@ -1441,6 +1578,9 @@ function formatDateTime(dateTimeString) {
 
 /**
  * Formats a time string
+ * 
+ * @param {string} dateTimeString - The date/time string to extract time from
+ * @returns {string} Formatted time string
  */
 function formatTime(dateTimeString) {
     if (!dateTimeString) return 'N/A';
@@ -1454,22 +1594,4 @@ function formatTime(dateTimeString) {
         console.warn('Error formatting time:', dateTimeString, e);
         return 'Invalid Time';
     }
-}
-
-// Close modal on outside click
-window.onclick = function (event) {
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        if (event.target == modal) {
-            modal.classList.remove('active');
-        }
-    });
-}
-
-// Add CSS for hidden class if not already present
-if (!document.querySelector('style[data-hidden-class]')) {
-    const style = document.createElement('style');
-    style.setAttribute('data-hidden-class', 'true');
-    style.textContent = '.hidden { display: none !important; }';
-    document.head.appendChild(style);
 }

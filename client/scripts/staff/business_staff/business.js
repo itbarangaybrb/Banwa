@@ -214,6 +214,37 @@ function loadApplicationsFromDB() {
 }
 
 /**
+ * Automatically refreshes the active tab every 30 seconds.
+ * Fetches the latest application data depending on which tab is active
+ * and updates the UI accordingly.
+ * 
+ * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ */
+let isRefreshing = false;
+setInterval(() => {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
+
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    if (activeTabId === 'management') {
+        loadApplicationsFromDB().finally(() => { filterApplications(); finish(); });
+    } else if (activeTabId === 'process') {
+        loadApplicationsFromDB().finally(() => { loadProcessTable(); finish(); });
+    } else if (activeTabId === 'summary') {
+        loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
+    } else if (activeTabId === 'dashboard') {
+        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else {
+        finish();
+    }
+}, 30000);
+
+
+/**
  * Loads applications into the process table with actionable statuses
  * Filters out excluded statuses and shows appropriate action buttons based on current status
  */
@@ -251,10 +282,10 @@ function loadProcessTable() {
                     <td>${app.payment_status || 'Unpaid'}</td>
                     <td>
                         <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                        ${app.status === 'Approved' 
-                            ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
-                            : ''
-                        }
+                        ${app.status === 'Approved'
+                    ? `<button class="btn-success" style="margin-left:6px;" onclick="generateClearance(${app.id})">Generate Clearance</button>`
+                    : ''
+                }
                     </td>
                 </tr>
             `;
@@ -456,9 +487,9 @@ function fetchDSSEvaluation(appId, app) {
             const errMsg = error && error.message ? error.message : 'Failed to load evaluation.';
             if (existing) {
                 const note = document.createElement('div');
-                    note.className = 'dss-error-msg';
-                    note.textContent = errMsg;
-                    existing.appendChild(note);
+                note.className = 'dss-error-msg';
+                note.textContent = errMsg;
+                existing.appendChild(note);
             } else {
                 addBasicDSSSection(app);
                 const created = document.getElementById('dssEvaluationSection');
@@ -630,7 +661,7 @@ function addBasicDSSSection(app) {
 
     dssSection.innerHTML = `
         <div class="dss-header">
-            <h3>📊 DSS Evaluation</h3>
+            <h3>DSS Evaluation</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
@@ -938,8 +969,8 @@ function updateSummary() {
         </div>` : ''}
 
         <div class="report-actions">
-            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
-            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
         </div>
     `;
 }
@@ -1014,19 +1045,202 @@ function showAlert(message, type) {
  * Prints the current summary report to a new window
  * Creates a print-friendly version of the summary content
  */
-function printSummary() {
-    const summaryToPrint = document.getElementById('summaryOutput');
+// function printSummary() {
+//     const summaryToPrint = document.getElementById('summaryOutput');
 
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Business Application Summary</title>');
-    printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-    printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(summaryToPrint.innerHTML);
-    printWindow.document.write('');
-    printWindow.document.write('</body></html>');
+//     const printWindow = window.open('', '', 'height=600,width=800');
+//     printWindow.document.write('<html><head><title>Business Application Summary</title>');
+//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">');
+//     printWindow.document.write('</head><body>');
+//     printWindow.document.write(summaryToPrint.innerHTML);
+//     printWindow.document.write('');
+//     printWindow.document.write('</body></html>');
+//     printWindow.document.close();
+//     printWindow.focus();
+// }
+
+/**
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content with proper structure
+ */
+function printSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    if (!appId) {
+        alert('Please select an application to print.');
+        return;
+    }
+
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
+
+    // Get status colors
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+    switch (app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Parse requirements
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
+        : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const amountDue = app.amount_due
+        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+        : '₱0.00';
+
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // Create print-specific HTML with the same structure as updateSummary()
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Business Application Summary - #${app.id}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
+        </head>
+        <body>
+            <div class="print-container">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h1>Business Profile</h1>
+                        <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+                    </div>
+                    <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                        ${app.status}
+                    </div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Business Identity</h3>
+                            <div class="info-row">
+                                <span class="info-label">Business Name</span>
+                                <span class="info-value">${app.business_name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Type</span>
+                                <span class="info-value">${app.type_of_business}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Nature</span>
+                                <span class="info-value">${app.nature_of_business}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${app.address_of_business}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>Ownership</h3>
+                            <div class="info-row">
+                                <span class="info-label">Owner Name</span>
+                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${app.telephone_no_owner}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Email</span>
+                                <span class="info-value">${app.email_address || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Operations & Docs</h3>
+                            <div class="info-row">
+                                <span class="info-label">Structure</span>
+                                <span class="info-value">${app.type_of_structure}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Employees</span>
+                                <span class="info-value">${app.no_of_employees}</span>
+                            </div>
+                            <div style="margin-top:15px;">
+                                <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
+                                <ul class="doc-list">${requirementsHtml}</ul>
+                            </div>
+                        </div>
+
+                        <div class="financial-box">
+                            <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
+                            <div class="info-row">
+                                <span class="info-label">Payment Status</span>
+                                <span class="info-value">${paymentStatus}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">OR Number</span>
+                                <span class="info-value">${app.or_number || '--'}</span>
+                            </div>
+                            <div class="financial-total">
+                                <span>Total Assessment</span>
+                                <span>${amountDue}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${app.approval_comments ? `
+                <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+                    <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
+                    <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+                </div>` : ''}
+
+                <div class="footer-note">
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
+                    <p>Barangay Business Management System</p>
+                </div>
+            </div>
+            
+            <script>
+                // Auto-print when page loads
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+                
+                // Also close when print dialog is cancelled
+                window.onafterprint = function() {
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    printWindow.document.write(printHTML);
     printWindow.document.close();
-    printWindow.focus();
 }
 
 /**
@@ -1501,7 +1715,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // CLOSE MODAL ON OUTSIDE CLICK
 window.onclick = function (event) {
-    const modals = document.querySelectorAll('.modal');
+    const modals = document.querySelectorAll('.staff-modal');
     modals.forEach(modal => {
         if (event.target == modal) {
             modal.classList.remove('active');
@@ -1518,7 +1732,7 @@ const statusTemplates = {
 };
 
 // Event listener for status change to update textarea with templates
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const statusSelect = document.getElementById('newStatus');
     if (statusSelect) {
         statusSelect.addEventListener('change', function () {

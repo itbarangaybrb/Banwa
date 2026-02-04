@@ -5,18 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Utilities Application Management System</title>
-    
+
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map.css" />
-    
+
 </head>
 
 <body>
@@ -359,12 +359,30 @@
             </div>
 
             <!-- Summary Tab -->
-            <div id="summary" class="tab-pane">
+            <!-- <div id="summary" class="tab-pane">
                 <h2>Generate Summary</h2>
                 <div class="form-group">
                     <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
                 </div>
                 <div id="summaryOutput"></div>
+            </div> -->
+            <div id="summary" class="tab-pane">
+                <div class="summary-controls">
+                    <h2>Generate Utility Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
+                </div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a utility from the list above to view the full report.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Modals -->

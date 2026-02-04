@@ -154,8 +154,8 @@ const validator = (() => {
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-        if (rules.exactLength && value.length !== rules.exactLength) { 
-            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false; 
+        if (rules.exactLength && value.length !== rules.exactLength) {
+            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false;
         }
         clearError(input); return true;
     }
@@ -207,8 +207,8 @@ const validator = (() => {
         if (!input) return true;
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
-        if (rules.minLength && value.length < rules.minLength) { 
-            showError(input, rules.errorMessage || `Must be at least ${rules.minLength} characters`); return false; 
+        if (rules.minLength && value.length < rules.minLength) {
+            showError(input, rules.errorMessage || `Must be at least ${rules.minLength} characters`); return false;
         }
         clearError(input); return true;
     }
@@ -224,9 +224,9 @@ const validator = (() => {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
         if (!lot && !options.optional) return validator.number(lotInput, 'Lot no. is required');
         if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
-        
+
         if (!lot || !street || street === 'select') return true;
-        
+
         const fullAddress = `${lot} ${street}`;
         const match = addressCoordinates.find(a => a.address === fullAddress);
         if (!match && options.validateExistence !== false) {
@@ -263,7 +263,7 @@ const validationConfig = [
     { el: rpLotNo, type: 'number', message: 'Please enter lot number', rules: { maxLength: 2 } },
     { el: rpStreet, type: 'select', message: 'Please select street' },
     { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
-    
+
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
     { el: vicLotNo, type: 'number', message: 'Please enter victim lot number', rules: { maxLength: 2 } },
@@ -273,10 +273,10 @@ const validationConfig = [
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
     { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
     { el: vicOccupation, type: 'text', message: 'Please enter victim occupation', rules: { minLength: 2 } },
-    
+
     // Suspect Details validation rules
     { el: susDescription, type: 'textarea', message: 'Please describe the suspect', rules: { minLength: 10 } },
-    
+
     // Incident Details validation rules
     { el: incidentType, type: 'select', message: 'Please select incident type' },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
@@ -331,7 +331,7 @@ function validateField(config) {
 
     addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
         if (!lot || !street) return;
-        
+
         [lot, street].forEach(el => {
             el.addEventListener('blur', () => {
                 if (lot.value && street.value) {
@@ -343,7 +343,7 @@ function validateField(config) {
     });
 
     // Special handling for "Other" incident type selection
-    incidentType.addEventListener('change', function() {
+    incidentType.addEventListener('change', function () {
         const otherContainer = document.getElementById('otherSpecifyContainer');
         if (this.value === 'other') {
             otherContainer.classList.remove('hidden');
@@ -356,7 +356,7 @@ function validateField(config) {
     // Input sanitization for contact number fields (remove non-digit characters)
     [rpContact, vicContact, susContact].forEach(el => {
         if (el) {
-            el.addEventListener('input', function() {
+            el.addEventListener('input', function () {
                 this.value = this.value.replace(/\D/g, '');
                 validator.clear(this);
             });
@@ -366,7 +366,7 @@ function validateField(config) {
     // Input sanitization for lot number fields (remove non-digit characters)
     [rpLotNo, vicLotNo, susLotNo, incidentLotNo].forEach(el => {
         if (el) {
-            el.addEventListener('input', function() {
+            el.addEventListener('input', function () {
                 this.value = this.value.replace(/\D/g, '');
                 validator.clear(this);
             });
@@ -426,7 +426,7 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
     if (susLotNo.value || susStreet.value) {
         validator.address(susLotNo, susStreet, { optional: true, validateExistence: false });
     }
-    
+
     // Add default witness if none exists
     if (witnessCount === 0) {
         addWitness();
@@ -447,7 +447,7 @@ document.getElementById('nextToIncident').addEventListener('click', () => {
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
     const stepFields = [incidentType, incidentTimestamp, incidentLotNo, incidentStreet, description];
-    
+
     // Handle "other" incident type with custom specification
     if (incidentType.value === 'other') {
         if (!otherIncidentType.value.trim()) {
@@ -455,7 +455,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
             return;
         }
     }
-    
+
     if (!validateStep(stepFields)) return;
     if (!validator.address(incidentLotNo, incidentStreet, { validateExistence: true })) return;
 
@@ -464,7 +464,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     document.getElementById('sumRpAddress').textContent = `${rpLotNo.value} ${rpStreet.value}`;
     document.getElementById('sumRpContact').textContent = rpContact.value;
     document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
-    
+
     if (victimSameAsRP.checked) {
         document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
         document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
@@ -482,21 +482,21 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumVicDOB').textContent = vicDOB.value;
         document.getElementById('sumVicOccupation').textContent = vicOccupation.value;
     }
-    
+
     document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
-    document.getElementById('sumSusAddress').textContent = susLotNo.value && susStreet.value ? 
+    document.getElementById('sumSusAddress').textContent = susLotNo.value && susStreet.value ?
         `${susLotNo.value} ${susStreet.value}` : 'Not specified';
     document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
     document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
     document.getElementById('sumSusDescription').textContent = susDescription.value;
-    
-    document.getElementById('sumIncidentType').textContent = 
+
+    document.getElementById('sumIncidentType').textContent =
         incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
     document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
     document.getElementById('sumIncidentLocation').textContent = `${incidentLotNo.value} ${incidentStreet.value}`;
-    document.getElementById('sumIncidentCoordinates').textContent = 
-        incidentLatitude.value && incidentLongitude.value ? 
-        `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
+    document.getElementById('sumIncidentCoordinates').textContent =
+        incidentLatitude.value && incidentLongitude.value ?
+            `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
     document.getElementById('sumDescription').textContent = description.value;
 
     switchPanel('summary');
@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Handles toggling of "Victim same as reporting person" checkbox
  * Shows/hides victim details fields and clears validation errors accordingly
  */
-victimSameAsRP.addEventListener('change', function() {
+victimSameAsRP.addEventListener('change', function () {
     const victimContainer = document.getElementById('victimDetailsContainer');
     if (this.checked) {
         victimContainer.style.display = 'none';
@@ -579,9 +579,9 @@ function addWitness() {
         </div>
         <button type="button" class="remove-witness-btn" style="margin-top: 10px;">Remove Witness</button>
     `;
-    
+
     witnessesContainer.appendChild(witnessDiv);
-    
+
     // Add remove functionality for witness entry
     witnessDiv.querySelector('.remove-witness-btn').addEventListener('click', () => {
         witnessDiv.remove();
@@ -630,14 +630,19 @@ newSummaryForm.addEventListener('submit', async function (e) {
         confirmButtonColor: '#00247C',
         cancelButtonColor: '#ad2c2c',
         confirmButtonText: 'Yes, submit it!',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'modal-content',
+            confirmButton: 'btn-proceed',
+            cancelButton: 'btn-cancel'
+        }
     });
 
     if (confirmResult.isConfirmed) {
         const formData = new FormData();
 
         formData.append('action', 'create');
-        
+
         // Get Supabase user ID for authentication
         const { data: { user } } = await supabase.auth.getUser();
         const supabaseUserId = user?.id;
@@ -678,13 +683,13 @@ newSummaryForm.addEventListener('submit', async function (e) {
             const lotNo = group.querySelector('.witness-lotNo').value;
             const street = group.querySelector('.witness-street').value;
             const contact = group.querySelector('.witness-contact').value;
-            
+
             if (name || lotNo || street || contact) {
-                witnesses.push({ 
-                    name, 
-                    lotNo, 
-                    street, 
-                    contact 
+                witnesses.push({
+                    name,
+                    lotNo,
+                    street,
+                    contact
                 });
             }
         });
@@ -692,7 +697,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Incident Details data (only this section includes coordinates)
         const incidentTypeVal = incidentType.value;
-        formData.append('incidentType', incidentTypeVal === 'other' ? 
+        formData.append('incidentType', incidentTypeVal === 'other' ?
             otherIncidentType.value : incidentTypeVal);
         formData.append('incidentTimestamp', incidentTimestamp.value);
         formData.append('incidentLotNo', incidentLotNo.value);
@@ -713,10 +718,15 @@ newSummaryForm.addEventListener('submit', async function (e) {
                 if (data.status === 'success') {
                     Swal.fire({
                         title: 'Success!',
-                        text: 'Incident report submitted successfully! Reference ID: ' + data.id,
-                        confirmButtonText: 'OK'
+                        text: 'Submitted successfully! Reference ID: ' + data.id,
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
                     }).then(() => {
-                        // Generate report document for download
                         generateReportDocument();
                         window.location.href = '/Banwa/client/pages/resident/status.php';
                     });
@@ -724,7 +734,13 @@ newSummaryForm.addEventListener('submit', async function (e) {
                     Swal.fire({
                         title: 'Error!',
                         text: 'Error: ' + data.message,
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
                     });
                 }
             })
@@ -732,8 +748,14 @@ newSummaryForm.addEventListener('submit', async function (e) {
                 console.error(err);
                 Swal.fire({
                     title: 'Error!',
-                    text: 'Something went wrong. Check console for details.',
-                    confirmButtonText: 'OK'
+                    text: 'Error: ' + err,
+                    confirmButtonText: 'OK',
+                    color: '#363636',
+                    confirmButtonColor: '#00247C',
+                    customClass: {
+                        popup: 'modal-content',
+                        confirmButton: 'btn-proceed',
+                    }
                 });
             });
     }
@@ -746,10 +768,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
 function generateReportDocument() {
     const reportOutput = document.getElementById('reportOutput');
     const downloadBtn = document.getElementById('downloadBtn');
-    
+
     if (reportOutput && downloadBtn) {
         reportOutput.classList.remove('hidden');
-        
+
         downloadBtn.addEventListener('click', () => {
             // Create a simple HTML document for the report
             const reportHTML = `
@@ -778,9 +800,9 @@ function generateReportDocument() {
                     </div>
                     <div class="section">
                         <h2>Victim Details</h2>
-                        ${victimSameAsRP.checked ? 
-                            '<div class="field">Same as Reporting Person</div>' :
-                            `
+                        ${victimSameAsRP.checked ?
+                    '<div class="field">Same as Reporting Person</div>' :
+                    `
                             <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
                             <div class="field"><span class="label">Address:</span> Lot ${vicLotNo.value}, ${vicStreet.value}</div>
                             <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
@@ -789,7 +811,7 @@ function generateReportDocument() {
                             <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
                             <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
                             `
-                        }
+                }
                     </div>
                     <div class="section">
                         <h2>Suspect Details</h2>
@@ -814,7 +836,7 @@ function generateReportDocument() {
                 </body>
                 </html>
             `;
-            
+
             // Create and download the file as a Word document
             const blob = new Blob([reportHTML], { type: 'application/msword' });
             const url = URL.createObjectURL(blob);
@@ -839,7 +861,7 @@ function openMapPicker(target) {
         alert('Map picker is only available for incident location');
         return;
     }
-    
+
     const modal = document.createElement('div');
     modal.className = 'map-modal';
     modal.innerHTML = `
@@ -895,7 +917,7 @@ async function initializeMapPicker(target) {
             incidentLatitude.value = lat;
             incidentLongitude.value = lng;
         }
-        
+
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
@@ -961,7 +983,7 @@ async function initializeMapPicker(target) {
                             if (target === 'incident') {
                                 incidentLatitude.value = lat;
                                 incidentLongitude.value = lng;
-                                
+
                                 // Fill lot and street fields for incident location
                                 incidentLotNo.value = house.house_number || '';
                                 incidentStreet.value = house.street_name || '';
@@ -970,7 +992,7 @@ async function initializeMapPicker(target) {
                                     el.dispatchEvent(new Event('change', { bubbles: true }));
                                 });
                             }
-                            
+
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
                         });
 

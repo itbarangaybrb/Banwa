@@ -26,13 +26,13 @@ window.addEventListener('staffMapFilterChanged', (e) => {
 });
 
 // UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const navLogo = document.querySelector('.nav_logo');
     const sideNav = document.querySelector('.side_nav');
 
     // TOGGLE SIDEBAR ON CLICK
     if (navLogo && sideNav) {
-        navLogo.addEventListener('click', function() {
+        navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
         });
     }
@@ -49,7 +49,7 @@ function switchTab(event, tabName) {
 
     // 2. Switch Sidebar Active State
     document.querySelectorAll('.nav_select').forEach(link => link.classList.remove('active'));
-    
+
     // Find and highlight the clicked link
     if (event) {
         const clickedLink = event.target.closest('.nav_select');
@@ -80,7 +80,7 @@ function loadPendingTable() {
                 }
                 pendingApps.forEach(app => {
                     const name = `${app.first_name} ${app.last_name}`;
-                    
+
                     let actionButton;
                     let paymentStatusDisplay = app.payment_status || 'N/A';
 
@@ -103,7 +103,7 @@ function loadPendingTable() {
                             <button class="btn-info" onclick="viewSummary(${app.id}, 'pending')">View Details</button>
                         </td>
                     </tr>`;
-                    
+
                     tbody.innerHTML += row;
                 });
             } else {
@@ -152,6 +152,32 @@ function loadHistoryTable() {
         });
 }
 
+/**
+ * Automatically refreshes the active tab every 30 seconds.
+ * Fetches the latest application data depending on which tab is active
+ * and updates the UI accordingly.
+ * 
+ * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ */
+let isRefreshing = false;
+setInterval(() => {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
+
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    if (activeTabId === 'pending') {
+        loadPendingTable().finally(finish);
+    } else if (activeTabId === 'history') {
+        loadHistoryTable().finally(finish);
+    } else {
+        finish();
+    }
+}, 30000);
+
 // =================================================================
 // PAYMENT VERIFICATION LOGIC (NEW)
 // =================================================================
@@ -166,7 +192,7 @@ function openVerificationModal(appId) {
 
     const modalBody = document.getElementById('verificationBody');
     const proofPath = app.requirement_upload ? `../../../server/${app.requirement_upload}` : '#';
-    const proofLink = app.requirement_upload 
+    const proofLink = app.requirement_upload
         ? `<a href="${proofPath}" target="_blank" class="btn-info">View Proof of Payment</a>`
         : `<p style="color: red;">No proof of payment uploaded.</p>`;
 
@@ -239,20 +265,20 @@ function openPaymentModal(id) {
     document.getElementById('payAppId').value = app.id;
     document.getElementById('dispAppId').textContent = app.id;
     document.getElementById('dispPayer').textContent = `${app.first_name} ${app.last_name}`;
-    
+
     // Set Amounts
     document.getElementById('amountDue').value = app.amount_due || '0.00';
     document.getElementById('amountPaid').value = '';
     document.getElementById('change').value = '0.00';
     document.getElementById('balance').value = '0.00';
-    
+
     // Reset Form Fields
     document.getElementById('refNumber').value = '';
     document.getElementById('proofFile').value = '';
-    
+
     // Set Default Date to Today
     document.getElementById('paymentDate').valueAsDate = new Date();
-    
+
     // Default Method
     document.getElementById('paymentMethod').value = 'Cash';
     toggleReferenceInput(); // Ensure correct label
@@ -279,10 +305,10 @@ function toggleReferenceInput() {
 }
 
 // Auto-calculate Change AND Balance (Requirement: Add Balance instead of only Change)
-document.getElementById('amountPaid').addEventListener('input', function() {
+document.getElementById('amountPaid').addEventListener('input', function () {
     const due = parseFloat(document.getElementById('amountDue').value) || 0;
     const paid = parseFloat(this.value) || 0;
-    
+
     if (paid >= due) {
         // Full Payment or Overpayment
         const change = paid - due;
@@ -303,7 +329,7 @@ function submitPayment(event) {
 
     // Validation
     const balance = parseFloat(document.getElementById('balance').value);
-    
+
     // Note: If you want to ALLOW partial payment (Balance > 0), remove the blocking alert.
     // If strict full payment is required, uncomment below:
     /*
@@ -316,17 +342,17 @@ function submitPayment(event) {
         method: 'POST',
         body: formData // FormData handles file uploads automatically
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeModal('paymentModal');
-            alert('Payment Successful!');
-            loadPendingTable();
-            // generateReceipt(data.id); // Optional auto-print
-        } else {
-            alert('Error: ' + data.message);
-        }
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('paymentModal');
+                alert('Payment Successful!');
+                loadPendingTable();
+                // generateReceipt(data.id); // Optional auto-print
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
 }
 
 // === PENALTY MODAL LOGIC ===
@@ -349,7 +375,7 @@ function generateReceipt(id) {
         // Fetch specific if not in list
         fetch(`${API_URL}?action=fetch_one&id=${id}`)
             .then(res => res.json())
-            .then(data => { if(data.status === 'success') printReceiptWindow(data.data); });
+            .then(data => { if (data.status === 'success') printReceiptWindow(data.data); });
     } else {
         printReceiptWindow(app);
     }
@@ -417,7 +443,7 @@ function showAlert(message, type) {
         <strong>${type.toUpperCase()}!</strong> ${message}
         <button class="close-alert" onclick="this.parentElement.remove()">&times;</button>
     `;
-    
+
     // Clear old alerts and append the new one
     container.innerHTML = '';
     container.appendChild(alertBox);
@@ -440,4 +466,4 @@ function filterTable(tableId, inputId) {
     }
 }
 
-window.onload = function() { loadPendingTable(); };
+window.onload = function () { loadPendingTable(); };

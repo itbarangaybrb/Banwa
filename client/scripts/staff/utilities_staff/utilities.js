@@ -226,6 +226,37 @@ function loadApplicationsFromDB() {
 }
 
 /**
+ * Automatically refreshes the active tab every 30 seconds.
+ * Fetches the latest application data depending on which tab is active
+ * and updates the UI accordingly.
+ * 
+ * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ */
+let isRefreshing = false;
+setInterval(() => {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
+
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    if (activeTabId === 'management') {
+        loadApplicationsFromDB().finally(() => { filterApplications(); finish(); });
+    } else if (activeTabId === 'process') {
+        loadApplicationsFromDB().finally(() => { loadProcessTable(); finish(); });
+    } else if (activeTabId === 'summary') {
+        loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
+    } else if (activeTabId === 'dashboard') {
+        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else {
+        finish();
+    }
+}, 30000);
+
+
+/**
  * Loads applications into the process table with actionable statuses
  * Filters out excluded statuses and shows appropriate action buttons based on current status
  */
@@ -647,7 +678,7 @@ function addBasicDSSSection(app) {
 
     dssSection.innerHTML = `
         <div class="dss-header">
-            <h3>📊 DSS Evaluation</h3>
+            <h3>DSS Evaluation</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
@@ -793,6 +824,101 @@ function loadSummarySelect() {
  * Updates the summary display with detailed application information
  * Generates a professional report view with formatted data
  */
+// function updateSummary() {
+//     const appId = document.getElementById('summaryApplicationSelect').value;
+//     const summaryOutput = document.getElementById('summaryOutput');
+
+//     if (!appId) {
+//         summaryOutput.innerHTML = `
+//             <div class="placeholder-state">
+//                 <i class="fas fa-file-invoice fa-3x"></i>
+//                 <p>Select a utility application from the list above to view the full report.</p>
+//             </div>`;
+//         return;
+//     }
+
+//     const app = applications.find(a => a.id == appId);
+//     if (!app) return;
+
+//     // --- 1. Data Processing ---
+
+//     // Status Badge Color Logic
+//     let statusColor = '#6c757d';
+//     let statusBg = '#e2e3e5';
+
+//     switch (app.status) {
+//         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+//         case 'Complied': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+//         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+//     }
+
+//     // Formatted Dates
+//     const dateApplied = new Date(app.request_date || app.created_at).toLocaleDateString('en-US', {
+//         year: 'numeric', month: 'long', day: 'numeric'
+//     });
+
+//     // --- 2. Build HTML Structure ---
+
+//     summaryOutput.innerHTML = `
+//         <div class="report-header">
+//             <div class="report-title">
+//                 <h1>Utility Permit Profile</h1>
+//                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+//             </div>
+//             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+//                 ${app.status}
+//             </div>
+//         </div>
+
+//         <div class="report-grid">
+//             <div class="report-column">
+//                 <div class="report-section">
+//                     <h3>Utility Details</h3>
+//                     <div class="info-row"><span class="info-label">Nature of Work</span> <span class="info-value">${app.nature_of_work || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Provider</span> <span class="info-value">${app.provider || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_utility || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span></div>
+//                 </div>
+
+//                 <div class="report-section">
+//                     <h3>Ownership</h3>
+//                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+//                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.owner_contact_no || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.owner_address || 'N/A'}</span></div>
+//                 </div>
+//             </div>
+
+//             <div class="report-column">
+//                 <div class="report-section">
+//                     <h3>Schedule & Agreement</h3>
+//                     <div class="info-row"><span class="info-label">Request Date</span> <span class="info-value">${app.request_date || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Date of Work</span> <span class="info-value">${app.date_of_work || 'N/A'}</span></div>
+//                     <div class="info-row"><span class="info-label">Agreement</span> <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
+//                 </div>
+
+//                 <div class="financial-box">
+//                     <h3 style="border:none; margin:0 0 10px 0;">DSS Evaluation</h3>
+//                     <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value">${app.dss_status || 'Pending Evaluation'}</span></div>
+//                 </div>
+//             </div>
+//         </div>
+
+//         ${app.approval_comments ? `
+//         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+//             <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
+//             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+//         </div>` : ''}
+
+//         <div class="report-actions">
+//             <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
+//             <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+//         </div>
+//     `;
+// }
+/**
+ * Updates the summary display with detailed application information
+ * Generates a professional report view with formatted data
+ */
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     const summaryOutput = document.getElementById('summaryOutput');
@@ -864,11 +990,6 @@ function updateSummary() {
                     <div class="info-row"><span class="info-label">Date of Work</span> <span class="info-value">${app.date_of_work || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Agreement</span> <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
                 </div>
-
-                <div class="financial-box">
-                    <h3 style="border:none; margin:0 0 10px 0;">DSS Evaluation</h3>
-                    <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value">${app.dss_status || 'Pending Evaluation'}</span></div>
-                </div>
             </div>
         </div>
 
@@ -879,8 +1000,8 @@ function updateSummary() {
         </div>` : ''}
 
         <div class="report-actions">
-            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
-            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
         </div>
     `;
 }
@@ -955,19 +1076,175 @@ function showAlert(message, type) {
  * Prints the current summary report to a new window
  * Creates a print-friendly version of the summary content
  */
-function printSummary() {
-    const summaryToPrint = document.getElementById('summaryOutput');
+// function printSummary() {
+//     const summaryToPrint = document.getElementById('summaryOutput');
 
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Utility Application Summary</title>');
-    printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-    printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/utilities_staff/utilities.css">');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(summaryToPrint.innerHTML);
-    printWindow.document.write('');
-    printWindow.document.write('</body></html>');
+//     const printWindow = window.open('', '', 'height=600,width=800');
+//     printWindow.document.write('<html><head><title>Utility Application Summary</title>');
+//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/utilities_staff/utilities.css">');
+//     printWindow.document.write('</head><body>');
+//     printWindow.document.write(summaryToPrint.innerHTML);
+//     printWindow.document.write('');
+//     printWindow.document.write('</body></html>');
+//     printWindow.document.close();
+//     printWindow.focus();
+// }
+
+/**
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content with proper structure
+ */
+function printSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    if (!appId) {
+        alert('Please select an application to print.');
+        return;
+    }
+
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
+
+    // --- 1. Data Processing ---
+
+    // Status Badge Color Logic
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+
+    switch (app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'Complied': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Formatted Dates
+    const dateApplied = new Date(app.request_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // --- 2. Build Print HTML Structure ---
+
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Utility Application Summary - #${app.id}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
+        </head>
+        <body>
+            <div class="print-container">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h1>Utility Permit Profile</h1>
+                        <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+                    </div>
+                    <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                        ${app.status}
+                    </div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Utility Details</h3>
+                            <div class="info-row">
+                                <span class="info-label">Nature of Work</span>
+                                <span class="info-value">${app.nature_of_work || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Provider</span>
+                                <span class="info-value">${app.provider || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${app.address_of_utility || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Coordinates</span>
+                                <span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>Ownership</h3>
+                            <div class="info-row">
+                                <span class="info-label">Owner Name</span>
+                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${app.owner_contact_no || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Owner Address</span>
+                                <span class="info-value">${app.owner_address || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Schedule & Agreement</h3>
+                            <div class="info-row">
+                                <span class="info-label">Request Date</span>
+                                <span class="info-value">${app.request_date || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Date of Work</span>
+                                <span class="info-value">${app.date_of_work || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Agreement</span>
+                                <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${app.approval_comments ? `
+                <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+                    <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
+                    <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+                </div>` : ''}
+
+                <div class="footer-note">
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
+                    <p>Barangay Utility Management System</p>
+                </div>
+            </div>
+            
+            <script>
+                // Auto-print when page loads
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+                
+                // Also close when print dialog is cancelled
+                window.onafterprint = function() {
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    printWindow.document.write(printHTML);
     printWindow.document.close();
-    printWindow.focus();
 }
 
 /**
@@ -1073,7 +1350,6 @@ function downloadSummary(appId) {
 function createApplication(event) {
     event.preventDefault();
     alert('Create functionality not implemented yet');
-    // You'll need to implement this based on your form fields
 }
 
 /**

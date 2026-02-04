@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../configs/database.php';
-require_once __DIR__ . '/../../../services/staff/construction/construction_analytics.php';
-require_once __DIR__ . '/../../../services/staff/construction/construction_applications.php';
 require_once __DIR__ . '/../../../services/staff/construction/construction_dss.php';
 
-ob_start();
 session_start();
 
 ini_set('display_errors', 0);
@@ -21,10 +18,7 @@ if (!extension_loaded('pdo_pgsql')) {
     die(json_encode(["status" => "error", "message" => "PostgreSQL Driver (pdo_pgsql) is NOT enabled. Check php.ini."]));
 }
 
-require_once __DIR__ . '/../../../api/dss_rule_engine/construction_dss.php';
-
 $action = $_REQUEST['action'] ?? null;
-ob_clean();
 
 try {
     switch ($action) {
@@ -321,8 +315,6 @@ function handleUpdateStatus($pdo)
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
-        logStatusUpdate($pdo, $id, $newStatus, $comments);
-
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
@@ -350,11 +342,11 @@ function handleUpdateApplication($pdo)
         }
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Initialize update arrays
         $updateFields = [];
         $params = [':id' => $applicationId];
-        
+
         // List of all possible fields that can be updated
         $possibleFields = [
             'firstName' => 'first_name',
@@ -378,7 +370,7 @@ function handleUpdateApplication($pdo)
             'longitude' => 'longitude',
             'agreed' => 'agreed'
         ];
-        
+
         // Check each possible field to see if it was submitted
         foreach ($possibleFields as $formField => $dbField) {
             $value = get_input($formField);
@@ -387,7 +379,7 @@ function handleUpdateApplication($pdo)
                 $params[":$dbField"] = $value;
             }
         }
-        
+
         // Handle address fields separately
         $lotNo = get_input('lotNo');
         $street = get_input('street');
@@ -396,7 +388,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "owner_address = :owner_address";
             $params[':owner_address'] = $ownerAddress;
         }
-        
+
         $constructionLotNo = get_input('constructionLotNo');
         $constructionStreet = get_input('constructionStreet');
         if ($constructionLotNo !== null || $constructionStreet !== null) {
@@ -404,7 +396,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "construction_address = :construction_address";
             $params[':construction_address'] = $constructionAddress;
         }
-        
+
         // Handle latitude/longitude
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
@@ -416,19 +408,19 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "longitude = :longitude";
             $params[':longitude'] = $longitude;
         }
-        
+
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM construction_applications WHERE id = :id");
         $getDSSStmt->execute([':id' => $applicationId]);
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
-        
+
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
         $updateFields[] = "status = 'Complied'";
         $params[':dss_status'] = $currentDSSStatus;
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/uploads/';
@@ -447,23 +439,23 @@ function handleUpdateApplication($pdo)
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // If no fields to update, return early
         if (count($updateFields) <= 3) { // Only dss_status, updated_at, and status were added
             echo json_encode(["status" => "success", "message" => "No changes to update."]);
             return;
         }
-        
+
         // Build SQL query
         $sql = "UPDATE construction_applications SET " . implode(', ', $updateFields);
-        
+
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
             $params[':supabase_user_id'] = $supabaseUserId;
         } else {
             $sql .= " WHERE id = :id";
         }
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -1001,61 +993,53 @@ function handleGetRequirements($pdo)
 }
 
 /**
- * Ensures required database tables exist for DSS functionality
+ * Generates chart data for construction analytics
  * 
  * @param PDO $pdo Database connection object
- * @return bool True if tables exist or were created successfully
  */
-function ensureEvaluationTableExists($pdo)
+function handleChartConstructionType($pdo)
 {
     try {
-        $checkStmt = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'construction_evaluations')");
-        $exists = $checkStmt->fetchColumn();
+        $sql1 = "
+            SELECT application_date, COUNT(*) AS total
+            FROM construction_applications
+            GROUP BY application_date
+            ORDER BY total ASC
+        ";
 
-        if (!$exists) {
-            $createSQL = "
-                CREATE TABLE construction_evaluations (
-                    id SERIAL PRIMARY KEY,
-                    application_id INTEGER UNIQUE NOT NULL,
-                    dss_status VARCHAR(50) NOT NULL DEFAULT 'Pending Evaluation',
-                    evaluation_details JSONB,
-                    evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    error_message TEXT,
-                    FOREIGN KEY (application_id) REFERENCES construction_applications(id) ON DELETE CASCADE
-                );
-                
-                DO $$ 
-                BEGIN 
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                                  WHERE table_name = 'construction_applications' 
-                                  AND column_name = 'dss_status') THEN
-                        ALTER TABLE construction_applications ADD COLUMN dss_status VARCHAR(50) DEFAULT 'Pending Evaluation';
-                    END IF;
-                END $$;
-                
-                CREATE TABLE IF NOT EXISTS construction_status_history (
-                    id SERIAL PRIMARY KEY,
-                    application_id INTEGER NOT NULL,
-                    status VARCHAR(50) NOT NULL,
-                    comments TEXT,
-                    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (application_id) REFERENCES construction_applications(id) ON DELETE CASCADE
-                );
-                
-                CREATE INDEX IF NOT EXISTS idx_construction_evaluations_app_id ON construction_evaluations(application_id);
-                CREATE INDEX IF NOT EXISTS idx_construction_status_history_app_id ON construction_status_history(application_id);
-            ";
+        $stmt1 = $pdo->query($sql1);
+        $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-            $pdo->exec($createSQL);
-            return true;
-        }
+        $sql2 = "
+            SELECT nature_of_activity, COUNT(*) AS total
+            FROM construction_applications
+            GROUP BY nature_of_activity
+            ORDER BY total ASC
+        ";
 
-        return true;
+        $stmt2 = $pdo->query($sql2);
+        $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+        $sql3 = "
+            SELECT COALESCE(ce.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+            FROM construction_applications ca
+            LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
+            GROUP BY COALESCE(ce.dss_status, 'Pending Evaluation')
+            ORDER BY total DESC
+        ";
+
+        $stmt3 = $pdo->query($sql3);
+        $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            "status" => "success",
+            "data_by_date" => $dataByDate,
+            "data_by_type" => $dataByType,
+            "data_by_dss" => $dataByDSS
+        ]);
     } catch (Exception $e) {
-        error_log("Failed to ensure evaluation table exists: " . $e->getMessage());
-        return false;
+        http_response_code(500);
+        error_log("Error in handleChartConstructionType: " . $e->getMessage());
+        echo json_encode(["status" => "error", "message" => "Error generating chart data"]);
     }
 }
-
-// Ensure DSS tables exist
-ensureEvaluationTableExists($pdo);

@@ -149,9 +149,9 @@ function filterApplications() {
         const address = (app.construction_address || '').toLowerCase();
 
         return natureOfActivity.includes(searchTerm) ||
-               fullName.includes(searchTerm) ||
-               id.includes(searchTerm) ||
-               address.includes(searchTerm);
+            fullName.includes(searchTerm) ||
+            id.includes(searchTerm) ||
+            address.includes(searchTerm);
     });
 
     // 5. RENDER LOGIC
@@ -224,6 +224,37 @@ function loadApplicationsFromDB() {
             return applications;
         });
 }
+
+/**
+ * Automatically refreshes the active tab every 30 seconds.
+ * Fetches the latest application data depending on which tab is active
+ * and updates the UI accordingly.
+ * 
+ * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ */
+let isRefreshing = false;
+setInterval(() => {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
+
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    if (activeTabId === 'management') {
+        loadApplicationsFromDB().finally(() => { filterApplications(); finish(); });
+    } else if (activeTabId === 'process') {
+        loadApplicationsFromDB().finally(() => { loadProcessTable(); finish(); });
+    } else if (activeTabId === 'summary') {
+        loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
+    } else if (activeTabId === 'dashboard') {
+        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else {
+        finish();
+    }
+}, 30000);
+
 
 /**
  * Loads applications into the process table with actionable statuses
@@ -851,6 +882,128 @@ function loadSummarySelect() {
  * Updates the summary display with detailed application information
  * Generates a professional report view with formatted data
  */
+// function updateSummary() {
+//     const appId = document.getElementById('summaryApplicationSelect').value;
+//     const summaryOutput = document.getElementById('summaryOutput');
+
+//     if (!appId) {
+//         summaryOutput.innerHTML = `
+//             <div class="placeholder-state">
+//                 <i class="fas fa-file-invoice fa-3x"></i>
+//                 <p>Select a construction application from the list above to view the full report.</p>
+//             </div>`;
+//         return;
+//     }
+
+//     const app = applications.find(a => a.id == appId);
+//     if (!app) return;
+
+//     // --- 1. Data Processing ---
+
+//     // Status Badge Color Logic
+//     let statusColor = '#6c757d';
+//     let statusBg = '#e2e3e5';
+
+//     switch (app.status) {
+//         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+//         case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+//         case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+//         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+//     }
+
+//     // Requirements Formatting
+//     let reqs = app.requirements;
+//     if (typeof reqs === 'string') {
+//         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
+//     }
+//     const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+//         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
+//         : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+
+//     // Formatted Dates & Money
+//     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+//         year: 'numeric', month: 'long', day: 'numeric'
+//     });
+
+//     const amountDue = app.amount_due
+//         ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+//         : '₱0.00';
+
+//     const paymentStatus = app.payment_status || 'Unpaid';
+
+//     // --- 2. Build HTML Structure ---
+
+//     summaryOutput.innerHTML = `
+//         <div class="report-header">
+//             <div class="report-title">
+//                 <h1>Construction Permit Profile</h1>
+//                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+//             </div>
+//             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+//                 ${app.status}
+//             </div>
+//         </div>
+
+//         <div class="report-grid">
+//             <div class="report-column">
+//                 <div class="report-section">
+//                     <h3>Construction Details</h3>
+//                     <div class="info-row"><span class="info-label">Activity</span> <span class="info-value">${app.nature_of_activity}</span></div>
+//                     <div class="info-row"><span class="info-label">Type of Work</span> <span class="info-value">${app.type_of_work}</span></div>
+//                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.construction_address}</span></div>
+//                     <div class="info-row"><span class="info-label">Work Details</span> <span class="info-value">${app.details_of_work || 'N/A'}</span></div>
+//                 </div>
+
+//                 <div class="report-section">
+//                     <h3>Ownership</h3>
+//                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+//                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.contact_no_owner}</span></div>
+//                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.address_owner}</span></div>
+//                 </div>
+//             </div>
+
+//             <div class="report-column">
+//                 <div class="report-section">
+//                     <h3>Schedule & Workforce</h3>
+//                     <div class="info-row"><span class="info-label">Start Date</span> <span class="info-value">${app.start_date}</span></div>
+//                     <div class="info-row"><span class="info-label">End Date</span> <span class="info-value">${app.end_date}</span></div>
+//                     <div class="info-row"><span class="info-label">Working Days</span> <span class="info-value">${app.number_of_working_days}</span></div>
+//                     <div class="info-row"><span class="info-label">Workers</span> <span class="info-value">${app.number_of_workers}</span></div>
+//                     <div style="margin-top:15px;">
+//                         <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
+//                         <ul class="doc-list">${requirementsHtml}</ul>
+//                     </div>
+//                 </div>
+
+//                 <div class="financial-box">
+//                     <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
+//                     <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
+//                     <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
+//                     <div class="financial-total">
+//                         <span>Total Assessment</span>
+//                         <span>${amountDue}</span>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+
+//         ${app.approval_comments ? `
+//         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+//             <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
+//             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+//         </div>` : ''}
+
+//         <div class="report-actions">
+//             <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
+//             <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+//         </div>
+//     `;
+// }
+
+/**
+ * Updates the summary display with detailed application information
+ * Generates a professional report view with formatted data
+ */
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     const summaryOutput = document.getElementById('summaryOutput');
@@ -867,9 +1020,6 @@ function updateSummary() {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // --- 1. Data Processing ---
-
-    // Status Badge Color Logic
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
 
@@ -880,7 +1030,6 @@ function updateSummary() {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // Requirements Formatting
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
@@ -889,7 +1038,6 @@ function updateSummary() {
         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
         : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
 
-    // Formatted Dates & Money
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -899,8 +1047,6 @@ function updateSummary() {
         : '₱0.00';
 
     const paymentStatus = app.payment_status || 'Unpaid';
-
-    // --- 2. Build HTML Structure ---
 
     summaryOutput.innerHTML = `
         <div class="report-header">
@@ -963,8 +1109,8 @@ function updateSummary() {
         </div>` : ''}
 
         <div class="report-actions">
-            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
-            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
+            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
         </div>
     `;
 }
@@ -1039,19 +1185,210 @@ function showAlert(message, type) {
  * Prints the current summary report to a new window
  * Creates a print-friendly version of the summary content
  */
-function printSummary() {
-    const summaryToPrint = document.getElementById('summaryOutput');
+// function printSummary() {
+//     const summaryToPrint = document.getElementById('summaryOutput');
 
-    const printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Construction Application Summary</title>');
-    printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-    printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(summaryToPrint.innerHTML);
-    printWindow.document.write('');
-    printWindow.document.write('</body></html>');
+//     const printWindow = window.open('', '', 'height=600,width=800');
+//     printWindow.document.write('<html><head><title>Construction Application Summary</title>');
+//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">');
+//     printWindow.document.write('</head><body>');
+//     printWindow.document.write(summaryToPrint.innerHTML);
+//     printWindow.document.write('');
+//     printWindow.document.write('</body></html>');
+//     printWindow.document.close();
+//     printWindow.focus();
+// }
+
+/**
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content with proper structure
+ */
+function printSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    if (!appId) {
+        alert('Please select an application to print.');
+        return;
+    }
+
+    const app = applications.find(a => a.id == appId);
+    if (!app) return;
+
+    // Get status colors
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+    switch (app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Parse requirements
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
+        : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const amountDue = app.amount_due
+        ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+        : '₱0.00';
+
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // Create print-specific HTML with the same structure as updateSummary()
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Construction Application Summary - #${app.id}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
+        </head>
+        <body>
+            <div class="print-container">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h1>Construction Permit Profile</h1>
+                        <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+                    </div>
+                    <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                        ${app.status}
+                    </div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Construction Details</h3>
+                            <div class="info-row">
+                                <span class="info-label">Activity</span>
+                                <span class="info-value">${app.nature_of_activity}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Type of Work</span>
+                                <span class="info-value">${app.type_of_work}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${app.construction_address}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Work Details</span>
+                                <span class="info-value">${app.details_of_work || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>Ownership</h3>
+                            <div class="info-row">
+                                <span class="info-label">Owner Name</span>
+                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${app.contact_no_owner}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Owner Address</span>
+                                <span class="info-value">${app.address_owner}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Schedule & Workforce</h3>
+                            <div class="info-row">
+                                <span class="info-label">Start Date</span>
+                                <span class="info-value">${app.start_date}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">End Date</span>
+                                <span class="info-value">${app.end_date}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Working Days</span>
+                                <span class="info-value">${app.number_of_working_days}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Workers</span>
+                                <span class="info-value">${app.number_of_workers}</span>
+                            </div>
+                            <div style="margin-top:15px;">
+                                <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
+                                <ul class="doc-list">${requirementsHtml}</ul>
+                            </div>
+                        </div>
+
+                        <div class="financial-box">
+                            <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
+                            <div class="info-row">
+                                <span class="info-label">Payment Status</span>
+                                <span class="info-value">${paymentStatus}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">OR Number</span>
+                                <span class="info-value">${app.or_number || '--'}</span>
+                            </div>
+                            <div class="financial-total">
+                                <span>Total Assessment</span>
+                                <span>${amountDue}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${app.approval_comments ? `
+                <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
+                    <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
+                    <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
+                </div>` : ''}
+
+                <div class="footer-note">
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</p>
+                    <p>Barangay Construction Management System</p>
+                </div>
+            </div>
+            
+            <script>
+                // Auto-print when page loads
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+                
+                // Also close when print dialog is cancelled
+                window.onafterprint = function() {
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    printWindow.document.write(printHTML);
     printWindow.document.close();
-    printWindow.focus();
 }
 
 /**
@@ -1182,7 +1519,7 @@ function createApplication(event) {
 function filterReviewApplications() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('#tableBody tr');
-    
+
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';

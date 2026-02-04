@@ -424,13 +424,18 @@ newSummaryForm.addEventListener('submit', async function (e) {
     }
 
     const confirmResult = await Swal.fire({
-        title: 'Submit Application?',
+        title: 'Submit Report?',
         text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonColor: '#00247C',
         cancelButtonColor: '#ad2c2c',
         confirmButtonText: 'Yes, submit it!',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'modal-content',
+            confirmButton: 'btn-proceed',
+            cancelButton: 'btn-cancel'
+        }
     });
 
     if (confirmResult.isConfirmed) {
@@ -467,8 +472,14 @@ newSummaryForm.addEventListener('submit', async function (e) {
                 if (data.status === 'success') {
                     Swal.fire({
                         title: 'Success!',
-                        text: 'Application submitted successfully! Reference ID: ' + data.id,
-                        confirmButtonText: 'OK'
+                        text: 'Submitted successfully! Reference ID: ' + data.id,
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
                     }).then(() => {
                         window.location.href = '/Banwa/client/pages/resident/status.php';
                     });
@@ -476,7 +487,14 @@ newSummaryForm.addEventListener('submit', async function (e) {
                     Swal.fire({
                         title: 'Error!',
                         text: 'Error: ' + data.message,
-                        confirmButtonText: 'OK'
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                            container: 'modal-overlay'
+                        }
                     });
                 }
             })
@@ -484,8 +502,14 @@ newSummaryForm.addEventListener('submit', async function (e) {
                 console.error(err);
                 Swal.fire({
                     title: 'Error!',
-                    text: 'Something went wrong. Check console for details.',
-                    confirmButtonText: 'OK'
+                    text: 'Error: ' + err,
+                    confirmButtonText: 'OK',
+                    color: '#363636',
+                    confirmButtonColor: '#00247C',
+                    customClass: {
+                        popup: 'modal-content',
+                        confirmButton: 'btn-proceed',
+                    }
                 });
             });
     }
@@ -705,7 +729,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
             const parts = data.full_name.trim().split(/\s+/);
             data.first_name = parts[0] || '';
-            data.last_name = parts.length > 1 ? parts[parts.length-1] : '';
+            data.last_name = parts.length > 1 ? parts[parts.length - 1] : '';
             data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
         }
 

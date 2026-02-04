@@ -532,12 +532,22 @@ const summaryForm = document.getElementById('summaryForm');
 const newSummaryForm = summaryForm.cloneNode(true);
 summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
-newSummaryForm.addEventListener('submit', async (e) => {
+newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
         await Notification.requestPermission();
+    }
+
+    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification("Business Application Submitted", {
+                body: "Click to view your application status",
+                icon: "/Banwa/client/img/banwalogo.png",
+                data: { url: "/Banwa/client/pages/resident/status.php" }
+            });
+        });
     }
 
     const confirmResult = await Swal.fire({
@@ -547,39 +557,44 @@ newSummaryForm.addEventListener('submit', async (e) => {
         confirmButtonColor: '#00247C',
         cancelButtonColor: '#ad2c2c',
         confirmButtonText: 'Yes, submit it!',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'modal-content',
+            confirmButton: 'btn-proceed',
+            cancelButton: 'btn-cancel'
+        }
     });
 
     if (confirmResult.isConfirmed) {
         const formData = new FormData();
 
-        // 1. ADD THE ACTION (Crucial for business_handler.php)
+        // Add action for business_handler.php
         formData.append('action', 'create');
 
-        // 2. CAPTURE DATA (Re-selecting elements ensures we get the latest values)
+        // Capture form data
         formData.append('businessName', document.getElementById('businessName').value);
+
+        // Get Supabase user ID
         const { data: { user } } = await supabase.auth.getUser();
         const supabaseUserId = user?.id;
         formData.append('supabase_user_id', supabaseUserId);
 
-        // Radio Buttons: Type of Business
+        // Type of Business (radio)
         const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
         formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
 
-        // Nature of Business (Split into Select and Specify for the DB)
+        // Nature of Business
         formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
         formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
 
-        // Address & Contacts
+        // Business Address
         formData.append('businessLotNo', document.getElementById('businessLotNo').value);
         formData.append('businessStreet', document.getElementById('businessStreet').value);
         formData.append('contactNoBusiness', document.getElementById('contactNoBusiness').value);
         formData.append('emailAddress', document.getElementById('emailAddress').value);
 
-        // Business Status (Radio Button)
+        // Business Status (radio)
         const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
-        // The PHP handler expects this as an array/json, but implies a single string in your HTML structure. 
-        // We send it as a key that PHP will json_encode.
         if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
 
         // Owner Details
@@ -591,12 +606,12 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('lotNo', document.getElementById('lotNo').value);
         formData.append('street', document.getElementById('street').value);
 
-        // Structure (Split into Select and Specify)
+        // Structure Details
         formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
         formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
         formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
 
-        // Requirements (Checkbox Array)
+        // Requirements (checkboxes)
         const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
         reqCheckboxes.forEach((checkbox) => {
             formData.append('requirements[]', checkbox.value);
@@ -608,72 +623,65 @@ newSummaryForm.addEventListener('submit', async (e) => {
             formData.append('requirementUpload', fileInput.files[0]);
         }
 
-        const latitudeEl = document.getElementById('latitude2');
-        const longitudeEl = document.getElementById('longitude2');
-        formData.append('latitude2', latitudeEl?.value || '');
-        formData.append('longitude2', longitudeEl?.value || '');
+        // Coordinates
+        const lat = document.getElementById('latitude2')?.value || '';
+        const lng = document.getElementById('longitude2')?.value || '';
+        formData.append('latitude2', lat);
+        formData.append('longitude2', lng);
 
         // Application Date
-        formData.append('applicationDate', document.getElementById('applicationDate').value);
+        const appDate = document.getElementById('applicationDate')?.value || '';
+        formData.append('applicationDate', appDate);
 
-        // Show loading state during submission
-        const submitBtn = newSummaryForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Submitting...';
-        submitBtn.disabled = true;
-
-        // 3. SEND TO BACKEND
-        try {
-            const response = await fetch(`${BUSINESS_HANDLER_URL}`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                // Show success notification
-                if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-                    navigator.serviceWorker.ready.then(registration => {
-                        registration.showNotification("Application Submitted", {
-                            body: "Click to view your application status",
-                            icon: "/Banwa/client/img/banwalogo.png",
-                            data: { url: "/Banwa/client/pages/resident/status.php" }
-                        });
+        fetch(`${BUSINESS_HANDLER_URL}`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Submitted successfully! Reference ID: ' + data.id,
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
+                    }).then(() => {
+                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Error: ' + data.message,
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
                     });
                 }
-
-                // Show success message
-                await Swal.fire({
-                    title: 'Success!',
-                    html: `Application submitted successfully! Reference ID: ${data.id}<br><br>You will be redirected to your status page.`,
-                    confirmButtonText: 'OK'
-                });
-
-                // Redirect to status page after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '/Banwa/client/pages/resident/status.php';
-                }, 2000);
-
-            } else {
-                await Swal.fire({
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({
                     title: 'Error!',
-                    text: 'Error: ' + data.message,
-                    confirmButtonText: 'OK'
+                    text: 'Error: ' + err,
+                    confirmButtonText: 'OK',
+                    color: '#363636',
+                    confirmButtonColor: '#00247C',
+                    customClass: {
+                        popup: 'modal-content',
+                        confirmButton: 'btn-proceed',
+                    }
                 });
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        } catch (error) {
-            console.error('Fetch Error:', error);
-            await Swal.fire({
-                title: 'Error!',
-                text: 'An error occurred while submitting the application.',
-                confirmButtonText: 'OK'
             });
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
     }
 });
 
@@ -896,7 +904,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
             const parts = data.full_name.trim().split(/\s+/);
             data.first_name = parts[0] || '';
-            data.last_name = parts.length > 1 ? parts[parts.length-1] : '';
+            data.last_name = parts.length > 1 ? parts[parts.length - 1] : '';
             data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
         }
 
