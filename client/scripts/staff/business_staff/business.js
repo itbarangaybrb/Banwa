@@ -932,38 +932,118 @@ function viewDetails(appId) {
             if (existingOCR) existingOCR.remove();
 
             const ocrResults = appDetail.ocr_results || [];
+
+            // Helper to format timestamp nicely (browser local time)
+            const formatTimestamp = (ts) => {
+                if (!ts) return 'Unknown time';
+                const date = new Date(ts);
+                if (isNaN(date.getTime())) return 'Invalid date';
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                }) + ' ' + date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            };
+
+            // Sort newest first using created_at
+            ocrResults.sort((a, b) => {
+                const dateA = new Date(a.created_at || 0);
+                const dateB = new Date(b.created_at || 0);
+                return dateB - dateA;
+            });
+
             let ocrHtml = `
                 <div class="detail-card" id="ocrResultsCard">
-                    <h3>OCR Results</h3>
-                    <div style="font-size:13px; color:#333;">
+                    <h3>OCR Results (${ocrResults.length} ${ocrResults.length === 1 ? 'run' : 'runs'})</h3>
             `;
 
             if (ocrResults.length === 0) {
-                ocrHtml += `<p style="color:#666;">No OCR results available.</p>`;
+                ocrHtml += `<p style="color:#666; font-style:italic;">No OCR results available.</p>`;
             } else {
-                ocrResults.forEach(r => {
-                    const resObj = r.ocr_result || {};
-                    const detected = (resObj.detected && resObj.detected.length) ? resObj.detected.join(', ') : 'None/Unknown';
-                    const textPreview = (resObj.text && resObj.text.length) ? (resObj.text.substring(0, 400).replace(/\n/g, '<br>') + '...') : 'No text extracted';
-                    const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
+                ocrHtml += `
+                    <div style="
+                        max-height: 250px;
+                        overflow-y: auto;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 6px;
+                        padding: 8px;
+                        background: #fafafa;
+                    ">
+                        ${ocrResults.map((r, index) => {
+                            const isLatest = index === 0;
+                            const resObj = r.ocr_result || {};
+                            const detected = (resObj.detected && resObj.detected.length)
+                                ? resObj.detected.join(', ')
+                                : 'None/Unknown';
 
-                    ocrHtml += `
-                        <div style="margin-bottom:12px;">
-                            <div style="font-weight:600;">File: <a href="${fileUrl}" target="_blank">${r.saved_filename || r.filename}</a></div>
-                            <div style="font-size:13px; color:#444;"><strong>Detected:</strong> ${detected}</div>
-                            <div style="margin-top:6px; font-size:12px; color:#555;"><strong>Text Preview:</strong><br>${textPreview}</div>
-                        </div>
-                    `;
-                });
+                            const rawText = resObj.text || '';
+                            const displayText = rawText.trim() ? rawText : 'No text extracted';
+
+                            const escapedText = displayText
+                                .replace(/&/g, '&amp;')
+                                .replace(/</g, '&lt;')
+                                .replace(/>/g, '&gt;');
+
+                            const fileName = r.saved_filename || r.filename || 'Unknown file';
+                            const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
+                            const timestamp = formatTimestamp(r.created_at);
+
+                            return `
+                                <details style="margin-bottom: 12px;">
+                                    <summary style="
+                                        cursor: pointer;
+                                        padding: 10px;
+                                        background: ${isLatest ? '#e3f2fd' : '#f5f5f5'};
+                                        border-radius: 4px;
+                                        font-weight: ${isLatest ? '600' : '500'};
+                                        line-height: 1.5;
+                                    ">
+                                        <strong>Run on:</strong> ${timestamp}
+                                        ${isLatest ? ' <em>(latest)</em>' : ''}
+                                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                                        <strong>File:</strong> <a href="${fileUrl}" target="_blank" style="color:#1976d2;">${fileName}</a>
+                                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                                        <strong>Detected:</strong> ${detected}
+                                    </summary>
+                                    <div style="
+                                        padding: 12px 16px;
+                                        background: white;
+                                        border-left: 3px solid #90caf9;
+                                        margin-top: 4px;
+                                        max-height: 500px;
+                                        overflow-y: auto;
+                                        border-radius: 0 0 4px 4px;
+                                    ">
+                                        <pre style="
+                                            margin: 0;
+                                            white-space: pre-wrap;
+                                            word-wrap: break-word;
+                                            font-family: monospace;
+                                            font-size: 13px;
+                                            color: #333;
+                                        ">${escapedText}</pre>
+                                    </div>
+                                </details>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             }
-            // Add re-run OCR button
-            ocrHtml += `</div>
+
+            // Re-run button (always visible)
+            ocrHtml += `
                     <div style="margin-top:8px; text-align:right;">
                         <button class="btn-secondary" id="rerunOcrBtn-${appId}">Re-run OCR</button>
                     </div>
-                </div>`;
-            colRight.insertAdjacentHTML('afterbegin', ocrHtml);
+                </div>
+            `;
 
+            colRight.insertAdjacentHTML('afterbegin', ocrHtml);
+            
             // Attach handler for re-run button
             const rerunBtn = document.getElementById(`rerunOcrBtn-${appId}`);
             if (rerunBtn) {
