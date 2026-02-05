@@ -61,8 +61,40 @@
                 <div class="hero-content-overlay">
                     <div class="hero_content">
                         <h1>BANWA</h1>
-                <h6>Barangay Blue Ridge B</h6>
-                    <p>Welcome to BANWA. The system enables Barangay Blue Ridge B to efficiently manage infrastructure, clearance, utilities, and incidents through interactive mapping and data-driven tools.</p>
+                        
+                        <div class="barangay-title-container">
+                            <h6>Barangay Blue Ridge B</h6>
+                            <div class="office-hours-container">
+                                <div class="office-hours">
+                                    <span class="hours-status"></span>
+                                    <div class="hours-tooltip">
+                                        <div class="hours-schedule">
+                                            <h4>Office Hours</h4>
+                                            <div class="schedule-item">
+                                                <span class="days">Monday - Friday</span>
+                                                <span class="time">8:00 AM - 5:00 PM</span>
+                                            </div>
+                                            <div class="schedule-item">
+                                                <span class="days">Saturday</span>
+                                                <span class="time">8:00 AM - 12:00 PM</span>
+                                            </div>
+                                            <div class="schedule-item">
+                                                <span class="days">Sunday</span>
+                                                <span class="time closed">Closed</span>
+                                            </div>
+                                            <div class="current-status">
+                                                <span class="status-indicator"></span>
+                                                <span class="status-text"></span>
+                                            </div>
+                                            <div class="next-open">
+                                                <span class="next-open-info"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Welcome to BANWA. The system enables Barangay Blue Ridge B to efficiently manage infrastructure, clearance, utilities, and incidents through interactive mapping and data-driven tools.</p>
+                        </div>
                     </div>
                 </div>
             </div>

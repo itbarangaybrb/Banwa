@@ -1,5 +1,114 @@
 document.addEventListener('DOMContentLoaded', function() {
     // ======================
+    // 0. OFFICE HOURS STATUS
+    // ======================
+    function updateOfficeHoursStatus() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        
+        // Check if office is open based on schedule
+        let isOpen = false;
+        let statusText = '';
+        let nextOpenInfo = '';
+        
+        // Sunday - always closed
+        if (currentDay === 0) {
+            isOpen = false;
+            statusText = 'Closed Today';
+            nextOpenInfo = 'Opens Monday at 8 AM';
+        } 
+        // Monday to Friday: 8:00 AM - 5:00 PM
+        else if (currentDay >= 1 && currentDay <= 5) {
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+            const openTime = 8 * 60; // 8:00 AM
+            const closeTime = 17 * 60; // 5:00 PM
+            
+            isOpen = currentTimeInMinutes >= openTime && currentTimeInMinutes < closeTime;
+            
+            if (isOpen) {
+                statusText = 'Open Now';
+                nextOpenInfo = ''; // Empty when open
+            } else if (currentTimeInMinutes < openTime) {
+                statusText = 'Closed Now';
+                nextOpenInfo = 'Opens at 8 AM';
+            } else {
+                statusText = 'Closed Now';
+                nextOpenInfo = 'Opens tomorrow at 8 AM';
+            }
+        } 
+        // Saturday: 8:00 AM - 12:00 PM
+        else if (currentDay === 6) {
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+            const openTime = 8 * 60; // 8:00 AM
+            const closeTime = 12 * 60; // 12:00 PM
+            
+            isOpen = currentTimeInMinutes >= openTime && currentTimeInMinutes < closeTime;
+            
+            if (isOpen) {
+                statusText = 'Open Now';
+                nextOpenInfo = ''; // Empty when open
+            } else if (currentTimeInMinutes < openTime) {
+                statusText = 'Closed Now';
+                nextOpenInfo = 'Opens at 8 AM';
+            } else {
+                statusText = 'Closed Now';
+                nextOpenInfo = 'Opens Monday at 8 AM';
+            }
+        }
+        
+        // Update office hours status if the element exists
+        const hoursStatus = document.querySelector('.hours-status');
+        const officeHoursElement = document.querySelector('.office-hours');
+        
+        if (hoursStatus && officeHoursElement) {
+            officeHoursElement.className = isOpen ? 'office-hours status-open' : 'office-hours status-closed';
+            
+            // Set status text
+            hoursStatus.textContent = isOpen ? '🟢 Open Now' : '🔴 Closed Now';
+        }
+        
+        // Update current status in tooltip if it exists
+        const currentStatusIndicator = document.querySelector('.current-status .status-indicator');
+        const currentStatusText = document.querySelector('.current-status .status-text');
+        const nextOpenSpan = document.querySelector('.next-open-info');
+        const nextOpenDiv = document.querySelector('.next-open');
+        
+        if (currentStatusIndicator && currentStatusText) {
+            currentStatusIndicator.className = isOpen ? 'status-indicator status-open' : 'status-indicator status-closed';
+            currentStatusText.textContent = statusText;
+            currentStatusText.className = isOpen ? 'status-text open' : 'status-text closed';
+            
+            // Update container class
+            const currentStatusContainer = document.querySelector('.current-status');
+            if (currentStatusContainer) {
+                currentStatusContainer.className = isOpen ? 'current-status' : 'current-status closed';
+            }
+            
+            // Update next open info if element exists
+            if (nextOpenSpan) {
+                nextOpenSpan.textContent = nextOpenInfo;
+            }
+            
+            // Show/hide the next-open div based on whether we have nextOpenInfo
+            if (nextOpenDiv) {
+                if (nextOpenInfo) {
+                    nextOpenDiv.classList.add('visible');
+                    nextOpenDiv.classList.remove('hidden');
+                } else {
+                    nextOpenDiv.classList.add('hidden');
+                    nextOpenDiv.classList.remove('visible');
+                }
+            }
+        }
+    }
+    
+    // Initial call and set interval
+    updateOfficeHoursStatus();
+    setInterval(updateOfficeHoursStatus, 60000); // Update every minute
+    
+    // ======================
     // 1. BACKGROUND CAROUSEL
     // ======================
     const carouselImages = document.querySelectorAll('.carousel-image');
