@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 credentials: 'include'
             });
 
-            window.location.href = "/Banwa/client/pages/auth/signin.php";
+            window.location.href = "/Banwa/client/index.php";
         });
     }
 });
