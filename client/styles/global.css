@@ -72,6 +72,7 @@ section[data-theme="blue"] h2 {
     margin-bottom: 1.5rem;
     font-weight: 700;
     user-select: none;
+    text-align: center;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;

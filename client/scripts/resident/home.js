@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
-// Barangay Officials Carousel
+// Barangay Officials Carousel - SIMPLE SINGLE CARD LOOP
 document.addEventListener('DOMContentLoaded', function() {
     const carouselTrack = document.querySelector('.carousel-track');
     const officialCards = document.querySelectorAll('.official-card');
@@ -165,50 +165,64 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentIndex = 0;
     const totalSlides = officialCards.length;
+    let isAnimating = false;
     
     // Function to update carousel
     function updateCarousel() {
-        // Hide all cards
-        officialCards.forEach(card => {
-            card.classList.remove('active');
-        });
+        if (isAnimating) return;
+        isAnimating = true;
         
-        // Show current card
+        // Calculate offset
+        const cardWidth = officialCards[0].offsetWidth + 20; // width + gap
+        const offset = -currentIndex * cardWidth;
+        
+        // Apply transform
+        carouselTrack.style.transform = `translateX(${offset}px)`;
+        
+        // Update active states
+        officialCards.forEach(card => card.classList.remove('active'));
         officialCards[currentIndex].classList.add('active');
         
         // Update indicators
         indicators.forEach((indicator, index) => {
             indicator.classList.toggle('active', index === currentIndex);
         });
+        
+        // Re-enable animation
+        setTimeout(() => {
+            isAnimating = false;
+        }, 500);
     }
     
-    // Next button click
+    // Next button
     nextBtn.addEventListener('click', function() {
         currentIndex = (currentIndex + 1) % totalSlides;
         updateCarousel();
     });
     
-    // Previous button click
+    // Previous button
     prevBtn.addEventListener('click', function() {
         currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
         updateCarousel();
     });
     
-    // Indicator click
+    // Indicators
     indicators.forEach((indicator, index) => {
         indicator.addEventListener('click', function() {
-            currentIndex = index;
-            updateCarousel();
+            if (!isAnimating && currentIndex !== index) {
+                currentIndex = index;
+                updateCarousel();
+            }
         });
     });
     
-    // Auto-rotate carousel (optional)
+    // Auto-rotate
     let carouselInterval = setInterval(() => {
         currentIndex = (currentIndex + 1) % totalSlides;
         updateCarousel();
-    }, 4000); // Change every 4 seconds
+    }, 4000);
     
-    // Pause auto-rotate on hover
+    // Pause on hover
     const carouselContainer = document.querySelector('.officials-carousel');
     carouselContainer.addEventListener('mouseenter', () => {
         clearInterval(carouselInterval);
@@ -221,6 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 4000);
     });
     
-    // Initialize carousel
+    // Initialize
     updateCarousel();
 });

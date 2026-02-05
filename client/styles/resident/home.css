@@ -408,7 +408,7 @@
 
 /* Button Colors */
 .construction-btn {
-    border-color: #3498db;
+    border-color: rgba(0, 36, 124, 0.5);
 }
 
 .construction-btn:hover {
@@ -416,27 +416,27 @@
 }
 
 .business-btn {
-    border-color: #2ecc71;
+    border-color: rgba(0, 36, 124, 0.5);
 }
 
 .business-btn:hover {
-    background: #2ecc71;
+    background: #3498db;
 }
 
 .utilities-btn {
-    border-color: #f39c12;
+    border-color: rgba(0, 36, 124, 0.5);
 }
 
 .utilities-btn:hover {
-    background: #f39c12;
+    background: #3498db;
 }
 
 .report-btn {
-    border-color: #e74c3c;
+    border-color: rgba(0, 36, 124, 0.5);
 }
 
 .report-btn:hover {
-    background: #e74c3c;
+    background: #3498db;
 }
 
 /* Button Icons */
@@ -806,140 +806,175 @@
     }
 }
 
-/* ==================== Barangay Officials Carousel ==================== */
+/* ==================== Barangay Officials Carousel - MULTIPLE VISIBLE ==================== */
 .officials-section {
     padding: 80px 0;
 }
 
 .officials-carousel {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     position: relative;
-    overflow: hidden;
-    border-radius: 20px;
     background: white;
+    border-radius: 20px;
     padding: 40px;
     box-shadow: 0 10px 40px rgba(0, 36, 124, 0.1);
+}
+
+.carousel-viewport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+/* Carousel Container (viewport) */
+.carousel-container {
+    width: 80%;
+    overflow: hidden;
+    margin: 0 20px;
 }
 
 /* Carousel Track */
 .carousel-track {
     display: flex;
+    gap: 20px;
     transition: transform 0.5s ease-in-out;
+    will-change: transform;
 }
 
+/* Official Cards - smaller when showing 3 */
 .official-card {
-    flex: 0 0 100%;
-    padding: 20px;
+    flex: 0 0 calc(33.333% - 14px); /* 3 cards with gap */
+    min-width: 0; /* Important for flex shrink */
+    padding: 15px;
     text-align: center;
-    opacity: 0;
+    background: white;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    border: 2px solid #eef2ff;
+    position: relative;
+    opacity: 0.7;
     transform: scale(0.9);
-    transition: all 0.5s ease;
-    display: none;
 }
 
+/* Center card (active) */
 .official-card.active {
     opacity: 1;
     transform: scale(1);
-    display: block;
+    border-color: #00247C;
+    box-shadow: 0 10px 30px rgba(0, 36, 124, 0.15);
+    z-index: 2;
 }
 
-/* Official Image - Smaller with no white space */
+/* Side cards */
+.official-card:not(.active) {
+    filter: brightness(0.9);
+}
+
+/* Official Image */
 .official-image {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto 25px;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px;
     border-radius: 10px;
     overflow: hidden;
-    position: relative;
     background: #f8faff;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 3px solid #eef2ff;
+    transition: all 0.3s ease;
+}
+
+.official-card.active .official-image {
+    border-color: #00247C;
+    transform: scale(1.05);
 }
 
 .official-image img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    transition: transform 0.5s ease;
-    padding: 10px; /* Small padding for PNGs */
+    padding: 5px;
 }
 
-.official-card.active .official-image img {
-    transform: scale(1.03);
-}
-
-/* Remove background for PNGs to avoid white space */
 .official-image img[src$=".png"] {
     background: transparent;
-    padding: 0; /* Remove padding for PNGs */
+    padding: 0;
 }
 
 /* Official Content */
 .official-content {
-    max-width: 500px;
+    max-width: 100%;
     margin: 0 auto;
 }
 
 .official-card h3 {
     color: #00247C;
-    font-size: 1.8rem;
-    margin-bottom: 10px;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
     font-weight: 700;
     line-height: 1.3;
 }
 
 .official-position {
     color: #3498db;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-/* Divider like your image */
+/* Divider */
 .official-divider {
-    width: 60px;
+    width: 50px;
     height: 2px;
     background: #3498db;
-    margin: 20px auto 0;
+    margin: 15px auto 0;
     border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+.official-card.active .official-divider {
+    width: 60px;
+    background: #00247C;
 }
 
 /* Carousel Navigation Buttons */
 .carousel-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 45px;
-    height: 45px;
+    position: relative;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: white;
     border: 2px solid #00247C;
     color: #00247C;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
     z-index: 10;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .carousel-nav:hover {
     background: #00247C;
     color: white;
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.1);
 }
 
-.carousel-nav.prev {
-    left: 15px;
+.carousel-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.carousel-nav.next {
-    right: 15px;
+.carousel-nav:disabled:hover {
+    background: white;
+    color: #00247C;
+    transform: none;
 }
 
 /* Carousel Indicators/Dots */
@@ -947,7 +982,7 @@
     display: flex;
     justify-content: center;
     gap: 12px;
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
 .indicator {
@@ -971,7 +1006,26 @@
     transform: scale(1.2);
 }
 
-/* Responsive Design for Carousel */
+/* Add these styles to your CSS */
+.official-card.clone {
+    pointer-events: none; /* Prevent clicks on clones */
+}
+
+.carousel-track {
+    will-change: transform; /* Optimize animations */
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .official-card {
+        flex: 0 0 calc(50% - 10px); /* Show 2 cards on medium screens */
+    }
+    
+    .carousel-container {
+        width: 85%;
+    }
+}
+
 @media (max-width: 768px) {
     .officials-section {
         padding: 60px 0;
@@ -980,40 +1034,35 @@
     .officials-carousel {
         padding: 30px 20px;
         border-radius: 15px;
-        max-width: 90%;
+        max-width: 95%;
+    }
+    
+    .official-card {
+        flex: 0 0 calc(100% - 10px); /* Show 1 card on small screens */
+    }
+    
+    .carousel-container {
+        width: 90%;
+        margin: 0 10px;
     }
     
     .official-image {
-        width: 160px;
-        height: 160px;
-        margin-bottom: 20px;
+        width: 130px;
+        height: 130px;
     }
     
     .official-card h3 {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
     
     .official-position {
-        font-size: 1.1rem;
-        margin-bottom: 15px;
-    }
-    
-    .official-divider {
-        margin-top: 15px;
+        font-size: 1rem;
     }
     
     .carousel-nav {
         width: 40px;
         height: 40px;
-        font-size: 1rem;
-    }
-    
-    .carousel-nav.prev {
-        left: 10px;
-    }
-    
-    .carousel-nav.next {
-        right: 10px;
+        font-size: 1.2rem;
     }
 }
 
@@ -1023,22 +1072,18 @@
     }
     
     .official-image {
-        width: 140px;
-        height: 140px;
+        width: 120px;
+        height: 120px;
     }
     
     .official-card h3 {
-        font-size: 1.3rem;
-    }
-    
-    .official-position {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
     
     .carousel-nav {
         width: 35px;
         height: 35px;
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 }
 

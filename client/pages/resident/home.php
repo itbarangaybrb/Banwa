@@ -74,39 +74,35 @@ include '../../pages/resident/_layout/nav.php';
             <div class="quick-action-container">
                 <!-- Title -->
                 <div class="quick-align">
-                    <h2>PLEASE CHOOSE FROM THE FOLLOWING SERVICES</h2>
+                    <h2>CHOOSE FROM THE FOLLOWING SERVICES</h2>
                 </div>
                 
                 <!-- Action Buttons Grid -->
                 <div class="action-buttons-grid">
                     <!-- Construction Button -->
-                    <a href="#" class="action-btn construction-btn">
+                    <a href="construction.php" class="action-btn construction-btn">
                         <div class="btn-icon">
-                            <i class="fas fa-hard-hat"></i>
                         </div>
                         <span class="btn-text">Construction</span>
                     </a>
                     
                     <!-- Business Clearance Button -->
-                    <a href="#" class="action-btn business-btn">
+                    <a href="business_clearance.php" class="action-btn business-btn">
                         <div class="btn-icon">
-                            <i class="fas fa-briefcase"></i>
                         </div>
                         <span class="btn-text">Business Clearance</span>
                     </a>
                     
                     <!-- Utilities Button -->
-                    <a href="#" class="action-btn utilities-btn">
+                    <a href="utilities.php" class="action-btn utilities-btn">
                         <div class="btn-icon">
-                            <i class="fas fa-bolt"></i>
                         </div>
                         <span class="btn-text">Utilities</span>
                     </a>
                     
                     <!-- Report Button -->
-                    <a href="#" class="action-btn report-btn">
+                    <a href="report.php" class="action-btn report-btn">
                         <div class="btn-icon">
-                            <i class="fas fa-file-alt"></i>
                         </div>
                         <span class="btn-text">Report</span>
                     </a>
