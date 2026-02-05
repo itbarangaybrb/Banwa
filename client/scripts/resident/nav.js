@@ -130,6 +130,82 @@ function displayLiveDateTime() {
     setInterval(update, 1000); // Update every second for smooth time changes
 }
 
+// nav.js - Add this to your existing nav.js file
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to get user initials from name
+    function getInitialsFromUserData(data) {
+        // Prefer first + last name initials
+        if (data.first_name && data.last_name) {
+            return (data.first_name[0] + data.last_name[0]).toUpperCase();
+        }
+        // Fallback: first two letters of first name
+        if (data.first_name && data.first_name.length >= 2) {
+            return data.first_name.slice(0, 2).toUpperCase();
+        }
+        // Fallback: first two letters of full name
+        if (data.full_name) {
+            const tokens = data.full_name.split(/\s+/).filter(Boolean);
+            if (tokens.length >= 2) {
+                return (tokens[0][0] + tokens[1][0]).toUpperCase();
+            }
+            if (tokens.length === 1 && tokens[0].length >= 2) {
+                return tokens[0].slice(0, 2).toUpperCase();
+            }
+        }
+        // Default fallback
+        return 'US';
+    }
+
+    // Function to load user data and update profile circle
+    async function loadUserDataAndUpdateAvatar() {
+        try {
+            // Fetch user data from your backend
+            const res = await fetch('/Banwa/server/api/resident/get_user.php', { 
+                credentials: 'include' 
+            });
+            const data = await res.json();
+            
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+            
+            // Get the profile circle element
+            const profileCircle = document.querySelector('.profile_circle');
+            
+            if (profileCircle) {
+                // Get initials from user data
+                const initials = getInitialsFromUserData(data);
+                
+                // ONLY update the text content - keep CSS background
+                profileCircle.textContent = initials;
+                
+                // Optional: You can add a subtle animation if you want
+                profileCircle.style.transition = 'transform 0.2s ease';
+                profileCircle.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    profileCircle.style.transform = 'scale(1)';
+                }, 200);
+            }
+            
+        } catch (err) {
+            console.error('Failed to load user data for nav avatar:', err);
+            // Optionally show default if fetch fails
+            const profileCircle = document.querySelector('.profile_circle');
+            if (profileCircle && profileCircle.textContent === 'JP') {
+                // Keep the default 'JP' or set to 'US'
+                profileCircle.textContent = 'US';
+            }
+        }
+    }
+
+    // Call the function when nav loads
+    loadUserDataAndUpdateAvatar();
+    
+    // Optional: Update on page navigation if needed
+    // window.addEventListener('pageshow', loadUserDataAndUpdateAvatar);
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     try {
         initNavHighlighting();

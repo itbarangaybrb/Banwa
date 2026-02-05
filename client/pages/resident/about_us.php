@@ -20,7 +20,7 @@ if ($_SESSION['role_id'] != 1) {
 
 <body>
 <?php 
-$page_title = "Home";
+$page_title = "About Us";
 include '../../pages/resident/_layout/nav.php';
 ?>
 
@@ -111,51 +111,129 @@ include '../../pages/resident/_layout/nav.php';
                 
                 <!-- Officials Carousel Container -->
                 <div class="officials-carousel">
-                    <!-- Carousel Navigation Buttons -->
-                    <button class="carousel-nav prev" aria-label="Previous official">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button class="carousel-nav next" aria-label="Next official">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    
-                    <!-- Carousel Track -->
-                    <div class="carousel-track">
-                        <!-- Official 1 -->
-                        <div class="official-card active">
-                            <div class="official-image">
-                                <img src="../../img/official-1.png" alt="Margarette Karra De Jesus">
-                            </div>
-                            <div class="official-content">
-                                <h3>Margarette Karra De Jesus</h3>
-                                <p class="official-position">2nd Kagawad</p>
-                                <div class="official-divider"></div>
+                    <div class="carousel-viewport">
+                        <!-- Carousel Navigation Buttons -->
+                        <button class="carousel-nav prev" aria-label="Previous official">
+                            <span>&#10094;</span>
+                        </button>
+                        
+                        <!-- Carousel Track Container -->
+                        <div class="carousel-container">
+                            <!-- Carousel Track -->
+                            <div class="carousel-track">
+                                <!-- Official 1 -->
+                                <div class="official-card" data-index="0">
+                                    <div class="official-image">
+                                        <img src="../../img/official-1.png" alt="Kapitan Sessan Castro-Lee">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Kapitan Sessan Castro-Lee</h3>
+                                        <p class="official-position">Barangay Captain</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Official 2 -->
+                                <div class="official-card" data-index="1">
+                                    <div class="official-image">
+                                        <img src="../../img/official-2.png" alt="Katherine T. De Jesus">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Katherine T. De Jesus</h3>
+                                        <p class="official-position">1st Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Official 3 -->
+                                <div class="official-card" data-index="2">
+                                    <div class="official-image">
+                                        <img src="../../img/official-3.png" alt="Margarette Karra De Jesus">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Margarette Karra De Jesus</h3>
+                                        <p class="official-position">2nd Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 4 -->
+                                <div class="official-card" data-index="3">
+                                    <div class="official-image">
+                                        <img src="../../img/official-4.png" alt="Anna Francesca L. Maristela">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Anna Francesca L. Maristela</h3>
+                                        <p class="official-position">3rd Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 5 -->
+                                <div class="official-card" data-index="4">
+                                    <div class="official-image">
+                                        <img src="../../img/official-5.png" alt="Augusto D. Ilagan">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Augusto D. Ilagan</h3>
+                                        <p class="official-position">4th Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 6 -->
+                                <div class="official-card" data-index="5">
+                                    <div class="official-image">
+                                        <img src="../../img/official-6.png" alt="Natalia L. Maristela">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Natalia L. Maristela</h3>
+                                        <p class="official-position">5th Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 7 -->
+                                <div class="official-card" data-index="6">
+                                    <div class="official-image">
+                                        <img src="../../img/official-7.png" alt="Modesto Carlo M. Ruiz Jr.">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Modesto Carlo M. Ruiz Jr.</h3>
+                                        <p class="official-position">6th Kagawad</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 8 -->
+                                <div class="official-card" data-index="7">
+                                    <div class="official-image">
+                                        <img src="../../img/official-8.png" alt="Rovie Rose B. Baylon">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Rovie Rose B. Baylon</h3>
+                                        <p class="official-position">Barangay Secretary</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Official 9 -->
+                                <div class="official-card" data-index="8">
+                                    <div class="official-image">
+                                        <img src="../../img/official-9.png" alt="Michell V. Meniano">
+                                    </div>
+                                    <div class="official-content">
+                                        <h3>Michell V. Meniano</h3>
+                                        <p class="official-position">Barangay Treasurer</p>
+                                        <div class="official-divider"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Official 2 -->
-                        <div class="official-card">
-                            <div class="official-image">
-                                <img src="../../img/official-2.png" alt="Kapitan Sessan Castro-Lee">
-                            </div>
-                            <div class="official-content">
-                                <h3>Kapitan Sessan Castro-Lee</h3>
-                                <p class="official-position">Barangay Captain</p>
-                                <div class="official-divider"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Official 3 -->
-                        <div class="official-card">
-                            <div class="official-image">
-                                <img src="../../img/official-3.png" alt="Katherine T. De Jesus">
-                            </div>
-                            <div class="official-content">
-                                <h3>Katherine T. De Jesus</h3>
-                                <p class="official-position">1st Kagawad</p>
-                                <div class="official-divider"></div>
-                            </div>
-                        </div>
+                        <button class="carousel-nav next" aria-label="Next official">
+                            <span>&#10095;</span>
+                        </button>
                     </div>
                     
                     <!-- Carousel Indicators/Dots -->
@@ -163,6 +241,12 @@ include '../../pages/resident/_layout/nav.php';
                         <button class="indicator active" data-index="0" aria-label="Go to slide 1"></button>
                         <button class="indicator" data-index="1" aria-label="Go to slide 2"></button>
                         <button class="indicator" data-index="2" aria-label="Go to slide 3"></button>
+                        <button class="indicator" data-index="3" aria-label="Go to slide 4"></button>
+                        <button class="indicator" data-index="4" aria-label="Go to slide 5"></button>
+                        <button class="indicator" data-index="5" aria-label="Go to slide 6"></button>
+                        <button class="indicator" data-index="6" aria-label="Go to slide 7"></button>
+                        <button class="indicator" data-index="7" aria-label="Go to slide 8"></button>
+                        <button class="indicator" data-index="8" aria-label="Go to slide 9"></button>
                     </div>
                 </div>
             </div>
@@ -187,5 +271,6 @@ include '../../pages/resident/_layout/nav.php';
     <script src="../../scripts/resident/nav.js" defer></script>
     <script src="../../scripts/resident/home.js" defer></script>
     <script type="module" src="../../scripts/auth/signout.js"></script>
+    <?php include '../../pages/resident/_layout/end.php'; ?>
     </body>
 </html>

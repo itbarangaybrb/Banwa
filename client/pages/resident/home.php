@@ -54,6 +54,19 @@ include '../../pages/resident/_layout/nav.php';
             <div class="hero-bg-carousel">
                 <div class="carousel-images">
                     <img src="../../img/building-1.png" alt="Barangay Hall" class="carousel-image active">
+                    <img src="../../img/building-2.png" alt="Municipal Building" class="carousel-image">
+                    <img src="../../img/building-3.png" alt="Community Center" class="carousel-image">
+                    <img src="../../img/building-4.png" alt="Barangay Hall-Side View" class="carousel-image">
+                    <img src="../../img/building-5.png" alt="Meeting Table" class="carousel-image">
+                    <!-- Add more images as needed -->
+                </div>
+                <!-- Optional: Navigation dots -->
+                <div class="carousel-dots">
+                    <span class="dot active" data-index="0"></span>
+                    <span class="dot" data-index="1"></span>
+                    <span class="dot" data-index="2"></span>
+                    <span class="dot" data-index="3"></span>
+                    <span class="dot" data-index="4"></span>
                 </div>
             </div>
             
@@ -112,28 +125,28 @@ include '../../pages/resident/_layout/nav.php';
                 <!-- Action Buttons Grid -->
                 <div class="action-buttons-grid">
                     <!-- Construction Button -->
-                    <a href="construction.php" class="action-btn construction-btn">
+                    <a href="construction_app.php" class="action-btn construction-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Construction</span>
                     </a>
                     
                     <!-- Business Clearance Button -->
-                    <a href="business_clearance.php" class="action-btn business-btn">
+                    <a href="business_app.php" class="action-btn business-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Business Clearance</span>
                     </a>
                     
                     <!-- Utilities Button -->
-                    <a href="utilities.php" class="action-btn utilities-btn">
+                    <a href="utilities_app.php" class="action-btn utilities-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Utilities</span>
                     </a>
                     
                     <!-- Report Button -->
-                    <a href="report.php" class="action-btn report-btn">
+                    <a href="incidentReport.php" class="action-btn report-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Report</span>

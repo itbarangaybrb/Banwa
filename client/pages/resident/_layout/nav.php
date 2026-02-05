@@ -36,7 +36,6 @@
             <div class="user_profile">
                 <div class="profile_dropdown">
                     <button class="profile_circle" id="profileIcon">
-                        JP <!-- Replace with user initials -->
                     </button>
                     <div class="profile_dropdown_menu">
                         <a href="../resident/profile.php" class="dropdown_link" <?php if ($page_title == "Profile") echo 'class="active"'; ?>>Profile</a>
