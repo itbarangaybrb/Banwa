@@ -14,8 +14,8 @@ header('Access-Control-Allow-Origin: *');
 
 // Include dependencies after error handling is configured
 require_once __DIR__ . '/../../../configs/database.php';
-require_once __DIR__ . '/../../../services/staff/business/business_analytics.php';
-require_once __DIR__ . '/../../../services/staff/business/business_applications.php';
+// require_once __DIR__ . '/../../../services/staff/business/business_analytics.php';
+// require_once __DIR__ . '/../../../services/staff/business/business_applications.php';
 require_once __DIR__ . '/../../../services/staff/business/business_dss.php';
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -24,7 +24,7 @@ if (!extension_loaded('pdo_pgsql')) {
     exit;
 }
 
-require_once __DIR__ . '/../../../api/dss_rule_engine/business_dss.php';
+// require_once __DIR__ . '/../../../api/dss_rule_engine/business_dss.php';
 require_once __DIR__ . '/../../../api/shared/ocr_service.php';
 require_once __DIR__ . '/../../../configs/ocr_config.php';
 
@@ -512,6 +512,7 @@ function handleUpdateApplication($pdo)
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM business_applications WHERE id = :id");
         $getDSSStmt->execute([':id' => $applicationId]);
+        $updateFields[] = "status = 'Complied'";
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
 
@@ -526,7 +527,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "status = :status_field";
             $params[':status_field'] = $explicitStatus;
         }
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload'])) {
             $uploadDir = __DIR__ . '/uploads/';

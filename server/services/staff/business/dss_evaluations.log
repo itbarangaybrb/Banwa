@@ -7,3 +7,15 @@
 {"timestamp":"2026-02-02 07:55:34","application_id":"60","dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
 {"timestamp":"2026-02-03 19:07:00","application_id":61,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
 {"timestamp":"2026-02-04 11:49:24","application_id":64,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-02-04 20:18:51","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:27:26","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:29:09","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:30:30","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:35:34","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:39:40","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:42:35","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:43:15","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:47:23","application_id":"72","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 20:59:57","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 21:10:10","application_id":"71","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-04 21:11:56","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}

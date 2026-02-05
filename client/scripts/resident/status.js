@@ -648,19 +648,19 @@ async function handleSubmitChanges(event, appId, appType) {
 
         const originalData = result.data;
         const finalFormData = new FormData();
-        
+
         // Track what fields were actually changed
         const changedFields = new Set();
-        
+
         // Compare form data with original data to find changes
         for (const [key, value] of formData.entries()) {
             const originalKey = getOriginalKey(key, keyMap);
             if (originalKey && originalData.hasOwnProperty(originalKey)) {
                 const originalValue = originalData[originalKey];
                 const newValue = value.toString().trim();
-                
+
                 // Check if value has changed
-                if (originalValue !== newValue && 
+                if (originalValue !== newValue &&
                     (!originalValue || originalValue.toString().trim() !== newValue)) {
                     changedFields.add(key);
                     finalFormData.append(key, value);
@@ -706,7 +706,18 @@ async function handleSubmitChanges(event, appId, appType) {
             throw new Error(updateResult.message || 'Update failed.');
         }
 
-        alert('Application updated successfully.');
+        // alert('Application updated successfully.');
+        Swal.fire({
+            title: 'Success!',
+            text: 'Application updated successfully.',
+            confirmButtonText: 'OK',
+            color: '#363636',
+            confirmButtonColor: '#00247C',
+            customClass: {
+                popup: 'modal-content',
+                confirmButton: 'btn-proceed',
+            }
+        })
         closeEditModal();
         loadApplications();
 
@@ -731,13 +742,13 @@ function getOriginalKey(formKey, keyMap) {
             return originalKey;
         }
     }
-    
+
     // Check if formKey exists as-is in the keyMap values
     if (Object.values(keyMap).includes(formKey)) {
         // Find the corresponding key
         return Object.keys(keyMap).find(key => keyMap[key] === formKey);
     }
-    
+
     return formKey; // Return as-is if no mapping found
 }
 

@@ -2,3 +2,4 @@
 {"timestamp":"2026-02-02 06:18:24","application_id":18,"dss_status":"Rejected","score":3,"max_score":4,"probability":75,"passed_rules":3,"failed_rules":1}
 {"timestamp":"2026-02-03 19:36:23","application_id":26,"dss_status":"Pre-Approved","score":4,"max_score":4,"probability":100,"passed_rules":4,"failed_rules":0}
 {"timestamp":"2026-02-03 19:39:17","application_id":27,"dss_status":"Pre-Approved","score":4,"max_score":4,"probability":100,"passed_rules":4,"failed_rules":0}
+{"timestamp":"2026-02-04 20:50:18","application_id":17,"dss_status":"Pre-Approved","score":4,"max_score":4,"probability":100,"passed_rules":4,"failed_rules":0}
