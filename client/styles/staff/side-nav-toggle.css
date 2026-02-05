@@ -1,0 +1,47 @@
+/* Minimal side-nav toggle styles to complement existing layout.
+   Use body.side-nav-collapsed to indicate collapsed state. */
+
+.side-nav {
+  width: 240px;
+  transition: width 200ms ease, transform 200ms ease;
+  overflow: hidden;
+}
+
+.side-nav .nav-label {
+  transition: opacity 150ms ease;
+}
+
+/* Collapsed state: narrow nav, hide labels */
+body.side-nav-collapsed .side-nav {
+  width: 64px;
+}
+
+body.side-nav-collapsed .side-nav .nav-label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Toggle button basic styling */
+[data-side-nav-toggle] {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+}
+
+[data-side-nav-toggle]:focus {
+  outline: 2px solid rgba(0,0,0,0.1);
+}
+
+/* Keep transitions smooth for content area when nav collapses */
+.content-with-side-nav {
+  transition: margin-left 200ms ease;
+}
+
+body.side-nav-collapsed .content-with-side-nav {
+  margin-left: 64px; /* match collapsed width */
+}

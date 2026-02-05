@@ -1,47 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reset Password</title>
-  <link rel="stylesheet" href="../../styles/auth/signup.css">
-  <link rel="stylesheet" href="../../styles/auth/reset_pass.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
+    <title>Forgot Password</title>
+
+    <link rel="stylesheet" href="../../styles/auth/reset_pass.css">
 </head>
 
 <body>
-  <div class="container">
-    <div class="left-panel">
-      <div class="logo-circle">
-        <img src="../../img/banwalogo.png" alt="logo">
-      </div>
-    </div>
-    <div class="right-panel">
+    <main>
+        <section class="sections">
+            <div class="containers">
+                <!-- ==================== Reset Password Form ==================== -->
+                <div class="reset-pass-container" id="forgotPass">
+                    <form class="form" id="resetPassForm">
+                        <h5>Reset Password</h5>
+                        <!-- <p></p> -->
 
-      <div style="max-width:520px;margin:38px auto 0;">
-        <h1 class="welcome-header" style="font-size:28px;color:#0b3a82">Reset Password</h1>
-        <div class="reset-help">Password is 8-16 characters long and must contain both letters and numbers.</div>
+                        <span id="formMessage"></span>
 
-        <form id="resetForm" style="margin-top:18px">
-          <div>
-            <label for="newPassword">New Password</label>
-            <input id="newPassword" name="newPassword" type="password" placeholder="New Password">
-            <div class="err-msg" id="errMsgNew"></div>
-          </div>
-          <div>
-            <label for="confirmPassword">Confirm Password</label>
-            <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm Password">
-            <div class="err-msg" id="errMsgConfirm"></div>
-          </div>
-          <div style="margin-top:20px">
-            <button type="submit" class="next-btn">SUBMIT</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+                        <div class="inputs-container">
+                            <div class="label-and-input">
+                                <label for="password">Password</label>
+                                <input type="password" name="password" id="password" autocomplete="false" />
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="label-and-input">
+                                <label for="reTypePassword">Re-type password</label>
+                                <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" />
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
 
-  <script src="../../scripts/auth/reset_pass.js"></script>
+                        <button type="submit" id="forgotPassBtn">Save</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="../../scripts/auth/reset_pass.js"></script>
 </body>
 
 </html>

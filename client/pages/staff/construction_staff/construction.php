@@ -5,11 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Application Management System</title>
-    <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
-    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../../../styles/staff/map1.css" />
+
+    <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
+    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+    <link rel="stylesheet" href="../../../styles/staff/dss.css" />
+    <link rel="stylesheet" href="../../../styles/staff/map.css" />
+
 </head>
 
 <body>
@@ -33,11 +40,9 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav_select" data-tab="review">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Review & Search</span>
+                    <a href="#" class="nav_select" data-tab="management">
+                        <i class="fas fa-tasks nav_icon"></i>
+                        <span class="nav_text">Manage Applications</span>
                     </a>
                 </li>
                 <li>
@@ -48,14 +53,7 @@
                         <span class="nav_text">Create New</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#" class="nav_select" data-tab="process">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="white" />
-                        </svg>
-                        <span class="nav_text">Process & Assess</span>
-                    </a>
-                </li>
+                <!-- Process tab remains available via actions inside Management; no separate nav item needed -->
                 <li>
                     <a href="#" class="nav_select" data-tab="summary">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
@@ -95,7 +93,7 @@
             </div>
         </header>
 
-        <div class="content">
+        <div class="staff-content">
             <div id="alert-container"></div>
 
             <div id="dashboard" class="tab-pane active">
@@ -123,26 +121,84 @@
                         </div>
 
                         <div id="search-results" class="search-results"></div>
-                    </div>
 
-                    <div class="filter-controls">
-                        <div class="filter-buttons">
-                            <button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
-                                <span class="filter-icon" style="background: #28a745;"></span>
-                                <span>Households</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
-                                <span class="filter-icon" style="background: #9C27B0;"></span>
-                                <span>Businesses</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
-                                <span class="filter-icon" style="background: #ffc107;"></span>
-                                <span>Construction</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
-                                <span class="filter-icon" style="background: #2196F3;"></span>
-                                <span>Utilities</span>
-                            </button>
+                        <div class="filter-controls">
+                            <div class="filter-dropdown-container">
+                                <div class="dropdown">
+                                    <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                        <i class="fas fa-filter"></i>
+                                        <span id="currentFilterText">Households</span>
+                                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                    </button>
+                                    <div class="dropdown-content" id="filterDropdown">
+                                        <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #28a745;"></span>
+                                                <span>Households</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #9C27B0;"></span>
+                                                <span>Businesses</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #ffc107;"></span>
+                                                <span>Construction</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #2196F3;"></span>
+                                                <span>Utilities</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="sub-filters" id="constructionSubFilters" style="display: none;">
+                                    <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                    <div class="sub-filter-buttons">
+                                        <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                            <i class="fas fa-layer-group"></i>
+                                            <span>All</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                            <i class="fas fa-building"></i>
+                                            <span>Major</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                            <i class="fas fa-home"></i>
+                                            <span>Minor</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                            <i class="fas fa-tools"></i>
+                                            <span>Repair</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                            <i class="fas fa-trash-alt"></i>
+                                            <span>Demolition</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="hazard-toggles">
+                                    <div class="hazard-toggle-container">
+                                        <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                            <i class="fas fa-water"></i>
+                                            <span>Flood Hazards</span>
+                                            <span class="toggle-indicator"></span>
+                                        </button>
+                                        <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>Fault Line</span>
+                                            <span class="toggle-indicator"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -170,24 +226,27 @@
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
-
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
                 </div>
             </div>
 
             <!-- Review Tab -->
-            <div id="review" class="tab-pane">
+            <div id="management" class="tab-pane">
                 <h2>Review Construction Applications</h2>
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterApplications()">
+                    <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
                 <div class="table-responsive">
                     <table id="applicationsTable">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Owner</th>
-                                <th>Contractor</th>
-                                <th>Contractor No.</th>
+                                <th>Applicant</th>
+                                <th>N. of Act.</th>
+                                <th>Con. name</th>
+                                <th>Con. no.</th>
                                 <th>Address</th>
                                 <th>Status</th>
                                 <th>Payment</th>
@@ -330,12 +389,41 @@
             </div>
 
             <!-- Summary Tab -->
-            <div id="summary" class="tab-pane">
-                <h2>Generate Summary</h2>
-                <div class="form-group">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
+            <!-- <div id="summary" class="tab-pane">
+                <div class="summary-controls">
+                    <h2>Generate Business Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Business Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
                 </div>
-                <div id="summaryOutput"></div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a business from the list above to view the full report.</p>
+                    </div>
+                </div>
+            </div> -->
+            <div id="summary" class="tab-pane">
+                <div class="summary-controls">
+                    <h2>Generate Construction Summary</h2>
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
+                </div>
+
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p>Select a construction application from the list above to view the full report.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Modals -->
@@ -352,7 +440,7 @@
             <div id="updateModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>⚙️ Update Application Status</h2>
+                        <h2>Update Application Status</h2>
                         <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
@@ -384,16 +472,16 @@
                             <label for="updateComments">Remarks / Comments *</label>
                             <div class="prompt-container">
                                 <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
                                 </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>
                         </div>
 
                         <div class="button-group">
-                            <button type="submit" class="btn-primary">💾 Update Status</button>
+                            <button type="submit" class="btn-primary">Update Status</button>
                             <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
                         </div>
                     </form>

@@ -20,7 +20,7 @@
 
             <div class="user_profile">
                 <div class="auth_buttons">
-                    <a href="pages/auth/signup1.php" class="sign-btn">Get Started</a>
+                    <a href="pages/auth/signup.php" class="sign-btn">Get Started</a>
                 </div>
                 <div class="time_date" id="live_datetime">
                     <div class="time-display">

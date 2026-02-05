@@ -1,0 +1,30 @@
+{"timestamp":"2026-01-24 10:32:33","application_id":33,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-24 10:59:49","application_id":34,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-24 11:02:57","application_id":35,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-24 11:05:55","application_id":36,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-24 11:08:27","application_id":37,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-24 11:11:33","application_id":38,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-24 11:19:55","application_id":39,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-24 11:22:20","application_id":40,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-24 12:46:18","application_id":41,"dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-24 13:11:22","application_id":42,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-24 13:39:13","application_id":43,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-25 14:42:28","application_id":44,"dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-26 10:49:20","application_id":45,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-26 10:53:04","application_id":46,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-26 11:05:03","application_id":47,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-26 11:06:48","application_id":48,"dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-26 11:07:41","application_id":49,"dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-26 11:12:52","application_id":"46","dss_status":"Additional Requirements Needed","score":4,"max_score":6,"probability":66.67,"passed_rules":4,"failed_rules":2}
+{"timestamp":"2026-01-26 11:16:11","application_id":50,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-26 11:43:34","application_id":51,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-26 11:46:30","application_id":52,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-26 11:56:09","application_id":53,"dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-26 12:21:59","application_id":54,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-26 12:33:16","application_id":55,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-26 18:02:47","application_id":56,"dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-28 07:54:09","application_id":57,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-28 09:31:36","application_id":58,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-30 09:47:18","application_id":"55","dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-01-31 10:35:03","application_id":"53","dss_status":"Additional Requirements Needed","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-01-31 10:37:01","application_id":59,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}

@@ -9,7 +9,7 @@
 
     <title>Signup</title>
 
-    <link rel="stylesheet" href="../../styles/auth/signup1.css">
+    <link rel="stylesheet" href="../../styles/auth/signup.css">
 </head>
 
 <body>
@@ -66,7 +66,7 @@
         </section>
     </main>
 
-    <script type="module" src="../../scripts/auth/signup1.js"></script>
+    <script type="module" src="../../scripts/auth/signup.js"></script>
 </body>
 
 </html>

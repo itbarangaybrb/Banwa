@@ -1,0 +1,218 @@
+[31-Jan-2026 10:13:05 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[31-Jan-2026 10:33:45 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[31-Jan-2026 10:34:25 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:21:35 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:39:26 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:45:02 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:15:01 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:21:56 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:49:14 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
+[01-Feb-2026 13:57:28 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:20:32 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:31:04 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:33:21 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[01-Feb-2026 15:57:34 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 06:16:06 UTC] R1 Check - Required: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 06:16:06 UTC] R1 Check - Missing: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Required: []
+[02-Feb-2026 06:16:06 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 06:16:06 UTC] R1 Check - Missing: []
+[02-Feb-2026 07:53:00 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:54:37 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:55:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
+LINE 1: INSERT INTO business_status_history 
+                    ^
+[02-Feb-2026 07:55:34 UTC] R1 Check - Required: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 07:55:34 UTC] R1 Check - Missing: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Required: []
+[02-Feb-2026 07:55:34 UTC] R1 Check - Submitted: ["SEC","DTI","TCT","Lease Contract"]
+[02-Feb-2026 07:55:34 UTC] R1 Check - Missing: []
+[02-Feb-2026 09:22:08 UTC] R1 Check - Required: []
+[02-Feb-2026 09:22:08 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[02-Feb-2026 09:22:08 UTC] R1 Check - Missing: []
+[02-Feb-2026 09:22:08 UTC] R1 Check - Required: []
+[02-Feb-2026 09:22:08 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[02-Feb-2026 09:22:08 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:12:43 UTC] PHP Fatal error:  Cannot redeclare function handleChartBusinessType() (previously declared in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1235) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_analytics.php on line 31
+Stack trace:
+#0 {main}
+[04-Feb-2026 20:12:54 UTC] PHP Fatal error:  Cannot redeclare function handleChartBusinessType() (previously declared in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1235) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_analytics.php on line 31
+Stack trace:
+#0 {main}
+[04-Feb-2026 20:12:54 UTC] PHP Fatal error:  Cannot redeclare function handleChartBusinessType() (previously declared in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1235) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_analytics.php on line 31
+Stack trace:
+#0 {main}
+[04-Feb-2026 20:18:51 UTC] R1 Check - Required: []
+[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:18:51 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:18:51 UTC] R1 Check - Required: []
+[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:18:51 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:27:26 UTC] R1 Check - Required: []
+[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:27:26 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:27:26 UTC] R1 Check - Required: []
+[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:27:26 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:29:09 UTC] R1 Check - Required: []
+[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:29:09 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:29:09 UTC] R1 Check - Required: []
+[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:29:09 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:30:30 UTC] R1 Check - Required: []
+[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:30:30 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:30:30 UTC] R1 Check - Required: []
+[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:30:30 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:35:34 UTC] R1 Check - Required: []
+[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:35:34 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:35:34 UTC] R1 Check - Required: []
+[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:35:34 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:39:40 UTC] R1 Check - Required: []
+[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:39:40 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:39:40 UTC] R1 Check - Required: []
+[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:39:40 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:42:35 UTC] R1 Check - Required: []
+[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:42:35 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:42:35 UTC] R1 Check - Required: []
+[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:42:35 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:43:15 UTC] R1 Check - Required: []
+[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:43:15 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:43:15 UTC] R1 Check - Required: []
+[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:43:15 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:47:23 UTC] R1 Check - Required: []
+[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:47:23 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:47:23 UTC] R1 Check - Required: []
+[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:47:23 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:59:57 UTC] R1 Check - Required: []
+[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:59:57 UTC] R1 Check - Missing: []
+[04-Feb-2026 20:59:57 UTC] R1 Check - Required: []
+[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:59:57 UTC] R1 Check - Missing: []
+[04-Feb-2026 21:10:10 UTC] R1 Check - Required: []
+[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:10:10 UTC] R1 Check - Missing: []
+[04-Feb-2026 21:10:10 UTC] R1 Check - Required: []
+[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:10:10 UTC] R1 Check - Missing: []
+[04-Feb-2026 21:11:56 UTC] R1 Check - Required: []
+[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:11:56 UTC] R1 Check - Missing: []
+[04-Feb-2026 21:11:56 UTC] R1 Check - Required: []
+[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:11:56 UTC] R1 Check - Missing: []
+[05-Feb-2026 03:14:03 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:53 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:56 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:21:16 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:21:46 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:16 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:45 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:46 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:23:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:23:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:24:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:24:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:25:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:25:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []

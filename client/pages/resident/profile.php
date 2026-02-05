@@ -23,122 +23,6 @@ if ($_SESSION['role_id'] != 1) {
 
 <body>
 
-    <!-- <p id="userStatus"></p>
-    <button id="signoutBtn">Logout</button>
-
-    <main>
-        <section class="sections">
-            <div class="containers">
-
-                <div class="profile-details"></div>
-
-                <div class="container-1">
-
-                    <div class="chng-pass-container" id="changePass">
-                        <form action="" class="forms" id="changePassForm">
-                            <h3>Change Password</h3>
-
-
-                            <div class="inputs-container">
-                                <div class="label-and-input">
-                                    <label for="currentPassword">Current password</label>
-                                    <input type="text" name="currentPassword" id="currentPassword">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="newPassword">New password</label>
-                                    <input type="text" name="newPassword" id="newPassword">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="reTypeNewPassword">Re-type new password</label>
-                                    <input type="text" name="reTypeNewPassword" id="reTypeNewPassword">
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="buttons-container">
-                                <button type="submit" id="saveNewPass">Save</button>
-                                <button type="submit" id="changePassEditBtn">Edit</button>
-                                <button type="button" id="changePassCancelBtn">Cancel</button>
-                            </div>
-                        </form>
-                    </div> -->
-
-<!--                     
-                    <div class="mng-acc-container hidden" id="manageAcc">
-                        <form action="" class="forms" id="mngAccForm">
-                            <h3>Manage Account</h3>
-
-
-                            <div class="inputs-container">
-                                <div class="label-and-input">
-                                    <label for="firstName">First Name</label>
-                                    <input type="text" name="firstName" id="firstName">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="middleName">Middle Name</label>
-                                    <input type="text" name="middleName" id="middleName">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="lastName">Last Name</label>
-                                    <input type="text" name="lastName" id="lastName">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="suffix">Suffix</label>
-                                    <input type="text" name="suffix" id="suffix">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="contactNo">Contact no.</label>
-                                    <input type="tel" name="contactNo" id="contactNo" maxlength="11" pattern="[0-9]{1,11}">
-                                    <div class="error-msg"></div>
-                                </div>
-                                <div class="label-and-input">
-                                    <label for="address">Address</label>
-                                    <input type="text" name="address" id="address">
-                                    <div class="error-msg"></div>
-                                </div>
-                            </div>
-
-                            <div class="buttons-container">
-                                <button type="submit" id="saveNewAccDetails">Save</button>
-                                <button type="submit" id="manageAccEditBtn">Edit</button>
-                                <button type="button" id="manageAccCancelBtn">Cancel</button>
-                            </div>
-                        </form>
-                    </div> -->
-<!-- 
-                    <div class="panel-buttons-container">
-                        <button type="button" id="changePasswordBtn">Change password</button>
-                        <button type="button" id="manageAccountBtn">Manage account</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main> -->
-
-    <!-- <script type="module" src="../../scripts/resident/profile.js"></script>
-    <script type="module" src="../../scripts/auth/signout.js"></script>
-</body>
-
-</html> -->
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <title>Profile</title>
-    <link rel="stylesheet" href="../../styles/resident/profile.css">
-</head>
-
-<body>
-
     <?php
     $page_title = "About Us";
     include '_layout/nav.php';
@@ -148,7 +32,6 @@ if ($_SESSION['role_id'] != 1) {
             <div class="profile-header">
                 <h1>My Profile</h1>
                 <p>Manage your account information and preferences</p>
-                <!-- <button id="logoutBtn" class="btn-logout">Logout</button> -->
             </div>
 
         <div class="profile-content">
@@ -157,29 +40,17 @@ if ($_SESSION['role_id'] != 1) {
                 <!-- User Profile Card -->
                 <div class="profile-card">
                     <div class="profile-image-section">
-                        <div class="profile-image-large">
-                            <img src="../../img/sample.png" alt="User Profile">
-                        </div>
-                        <div class="profile-actions">
-                            <button class="btn-change-photo">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M16 5L19 8M20 4L16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                Change Photo
-                            </button>
-                        </div>
+                        <div class="profile-image-large initial-avatar" id="profileAvatar" role="img" aria-label="User avatar">JC</div>
                     </div>
 
                     <div class="user-info">
-                        <h2 class="user-name">Juan Dela Cruz</h2>
+                        <h2 class="user-name" id="userFullName">Juan Dela Cruz</h2>
                         <p class="user-role">Resident</p>
 
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="info-label">Member Since:</span>
-                                <span class="info-value">January 2023</span>
+                                <span class="info-value" id="memberSince">January 2023</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Account Status:</span>
@@ -193,20 +64,20 @@ if ($_SESSION['role_id'] != 1) {
                 <div class="stats-card">
                     <h3>Account Overview</h3>
                     <div class="stats-grid">
-                        <div class="stat-item">
-                            <span class="stat-number">5</span>
+                        <div class="stat-item" data-key="applications">
+                            <span class="stat-number">0</span>
                             <span class="stat-label">Applications</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">3</span>
+                        <div class="stat-item" data-key="approved">
+                            <span class="stat-number">0</span>
                             <span class="stat-label">Approved</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">1</span>
+                        <div class="stat-item" data-key="pending">
+                            <span class="stat-number">0</span>
                             <span class="stat-label">Pending</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-number">1</span>
+                        <div class="stat-item" data-key="rejected">
+                            <span class="stat-number">0</span>
                             <span class="stat-label">Rejected</span>
                         </div>
                     </div>
@@ -222,7 +93,7 @@ if ($_SESSION['role_id'] != 1) {
                         <button class="btn-edit" id="changePassEditBtn">Edit</button>
                     </div>
 
-                    <form action="" class="forms" id="changePassFormContent">
+                    <form action="" class="forms" id="changePassForm">
                         <div class="inputs-container">
                             <div class="form-group">
                                 <label for="currentPassword">Current Password</label>
@@ -281,7 +152,7 @@ if ($_SESSION['role_id'] != 1) {
                         <button class="btn-edit" id="manageAccEditBtn">Edit</button>
                     </div>
 
-                    <form action="" class="forms" id="mngAccFormContent">
+                    <form action="" class="forms" id="mngAccForm">
                         <div class="inputs-container">
                             <div class="form-row">
                                 <div class="form-group">
@@ -340,3 +211,7 @@ if ($_SESSION['role_id'] != 1) {
     </main>
     <?php include '_layout/end.php'; ?>
     <script type="module" src="../../scripts/resident/profile.js"></script>
+    <script type="module" src="../../scripts/auth/signout.js"></script>
+</body>
+
+</html>

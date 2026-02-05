@@ -95,8 +95,8 @@
                     <table id="pendingTable">
                         <thead>
                             <tr>
-                                <th>App ID</th>
-                                <th>Payer Name</th>
+                                <th>ID</th>
+                                <th>Payer</th>
                                 <th>Business Name</th>
                                 <th>Assessment Amount</th>
                                 <th>Status</th>
@@ -127,8 +127,8 @@
                         <thead>
                             <tr>
                                 <th>OR/Ref No.</th>
-                                <th>App ID</th>
-                                <th>Payer Name</th>
+                                <th>ID</th>
+                                <th>Payer</th>
                                 <th>Amount Paid</th>
                                 <th>Date Paid</th>
                                 <th>Actions</th>
@@ -145,10 +145,10 @@
                 </div>
             </div>
 
-            <div id="paymentModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>💳 Process Payment</h2>
+            <div id="paymentModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
+                        <h2>Process Payment</h2>
                         <button class="close-btn" onclick="closeModal('paymentModal')">&times;</button>
                     </div>
                     <form id="paymentForm" onsubmit="submitPayment(event)" enctype="multipart/form-data">
@@ -206,17 +206,17 @@
                         </div>
 
                         <div class="button-group">
-                            <button type="submit" class="btn-primary">✅ Confirm Payment</button>
+                            <button type="submit" class="btn-primary">Confirm Payment</button>
                             <button type="button" class="btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div id="penaltyModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>⚠️ Process Annual Penalty</h2>
+            <div id="penaltyModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
+                        <h2>Process Annual Penalty</h2>
                         <button class="close-btn" onclick="closeModal('penaltyModal')">&times;</button>
                     </div>
                     <form id="penaltyForm" onsubmit="submitPenalty(event)">
@@ -252,9 +252,9 @@
                 </div>
             </div>
 
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="detailsModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
                         <h2>Application Summary</h2>
                         <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
                     </div>
@@ -262,9 +262,9 @@
                 </div>
             </div>
 
-            <div id="verificationModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="verificationModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
                         <h2>Verify Resident Payment</h2>
                         <button class="close-btn" onclick="closeModal('verificationModal')">&times;</button>
                     </div>
@@ -272,7 +272,8 @@
                 </div>
             </div>
 
-        </div> </div> <script src="../../../scripts/staff/finance_staff/finance.js"></script>
+        </div> </div>
+    <script src="../../../scripts/staff/finance_staff/finance.js"></script>
     
     <script>
         // Simple script to handle active class on sidebar items

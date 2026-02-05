@@ -22,4 +22,10 @@ body {
 .analytics-container canvas {
     width: 100% !important;
     height: 100% !important;
+    text-align: left !important;
 }
+
+.analytics-container canvas #chart3 {
+    text-align: left !important;
+}
+

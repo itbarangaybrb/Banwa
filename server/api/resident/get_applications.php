@@ -21,7 +21,9 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Utilities' AS type 
                             FROM utility_applications
                             WHERE supabase_user_id = ?");
@@ -38,7 +40,9 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Construction' AS type 
                             FROM construction_applications
                             WHERE supabase_user_id = ?");
@@ -55,21 +59,43 @@ try {
                                    status, 
                                    approval_comments, 
                                    first_name || ' ' || middle_name || ' ' || last_name AS fullname,
-                                   application_date AS request_date, 
+                                   application_date AS request_date,
+                                   created_at,
+                                   updated_at,
                                    'Business' AS type
                             FROM business_applications
                             WHERE supabase_user_id = ?");
     $stmt3->execute([$supabase_user_id]);
     $business = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
+    // ================================================================================
+    // INCIDENT REPORTS - NEW SECTION ADDED
+    // ================================================================================
+    $stmt4 = $pdo->prepare("SELECT id, 
+                                   rp_full_name as first_name,
+                                   '' as middle_name,
+                                   '' as last_name,
+                                   status,
+                                   approval_comments, 
+                                   rp_full_name as fullname,
+                                   date_reported as request_date,
+                                   created_at,
+                                   updated_at,
+                                   'Incident Reports' AS type,
+                                   incident_type,
+                                   rp_full_name
+                            FROM incident_reports
+                            WHERE supabase_user_id = ?");
+    $stmt4->execute([$supabase_user_id]);
+    $incident_reports = $stmt4->fetchAll(PDO::FETCH_ASSOC);
+
     // Merge results if you want to display both
-    $all_applications = array_merge($utilities, $construction, $business);
+    $all_applications = array_merge($utilities, $construction, $business, $incident_reports);
 
     echo json_encode([
         'success' => true,
         'applications' => $all_applications
     ]);
-
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }

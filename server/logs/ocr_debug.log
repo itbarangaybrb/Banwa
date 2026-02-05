@@ -1,0 +1,23 @@
+2026-02-04T20:18:47+00:00 - SSL error for 1770236327_localhost_8080_Banwa_client_pages_staff_business_staff_business.php (1).png, retrying with SSL verify disabled.
+2026-02-04T20:18:51+00:00 - ERROR for 1770236327_localhost_8080_Banwa_client_pages_staff_business_staff_business.php (1).png: array (
+  'OCRExitCode' => 3,
+  'IsErroredOnProcessing' => true,
+  'ErrorMessage' => 
+  array (
+    0 => 'File failed validation. File size exceeds the maximum permissible file size limit of 1024 KB',
+  ),
+  'ErrorDetails' => '',
+  'ProcessingTimeInMilliseconds' => '0',
+)
+2026-02-04T20:27:23+00:00 - SSL error for 1770236842_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-04T20:29:06+00:00 - SSL error for 1770236946_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-04T20:30:27+00:00 - SSL error for 1770237026_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-04T20:35:31+00:00 - SSL error for 1770237330_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-04T20:39:37+00:00 - SSL error for 1770237577_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-04T20:42:32+00:00 - SSL error for 1770237751_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-04T20:43:12+00:00 - SSL error for 1770237792_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-04T20:47:21+00:00 - SSL error for 1770238040_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-04T20:59:54+00:00 - SSL error for 1770238793_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-04T21:10:08+00:00 - SSL error for 1770239407_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-04T21:11:54+00:00 - SSL error for 1770239514_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-05T03:27:14+00:00 - SSL error for 1770262033_localhost_8080_Banwa_client_pages_resident_construction_app.php.png, retrying with SSL verify disabled.

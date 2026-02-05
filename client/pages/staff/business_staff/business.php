@@ -6,12 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Application Management System</title>
 
-    <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
-    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
-    <link rel="stylesheet" href="../../../styles/staff/map1.css" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
+    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+    <link rel="stylesheet" href="../../../styles/staff/dss.css" />
+    <link rel="stylesheet" href="../../../styles/staff/map.css" />
+
 </head>
 
 <body>
@@ -71,11 +76,11 @@
             </div>
         </header>
 
-        <div class="content">
+        <div class="staff-content">
             <div id="alert-container"></div>
 
             <div id="dashboard" class="tab-pane active">
-                
+
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -98,26 +103,84 @@
                             </div>
                         </div>
                         <div id="search-results" class="search-results"></div>
-                    </div>
 
-                    <div class="filter-controls">
-                        <div class="filter-buttons">
-                            <button class="filter-btn active" onclick="toggleMarkerType('household')" data-type="household">
-                                <span class="filter-icon" style="background: #28a745;"></span>
-                                <span>Households</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('business')" data-type="business">
-                                <span class="filter-icon" style="background: #9C27B0;"></span>
-                                <span>Businesses</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('construction')" data-type="construction">
-                                <span class="filter-icon" style="background: #ffc107;"></span>
-                                <span>Construction</span>
-                            </button>
-                            <button class="filter-btn active" onclick="toggleMarkerType('utility')" data-type="utility">
-                                <span class="filter-icon" style="background: #2196F3;"></span>
-                                <span>Utilities</span>
-                            </button>
+                        <div class="filter-controls">
+                            <div class="filter-dropdown-container">
+                                <div class="dropdown">
+                                    <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                        <i class="fas fa-filter"></i>
+                                        <span id="currentFilterText">Households</span>
+                                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                    </button>
+                                    <div class="dropdown-content" id="filterDropdown">
+                                        <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #28a745;"></span>
+                                                <span>Households</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #9C27B0;"></span>
+                                                <span>Businesses</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #ffc107;"></span>
+                                                <span>Construction</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background: #2196F3;"></span>
+                                                <span>Utilities</span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="sub-filters" id="constructionSubFilters" style="display: none;">
+                                    <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                    <div class="sub-filter-buttons">
+                                        <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                            <i class="fas fa-layer-group"></i>
+                                            <span>All</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                            <i class="fas fa-building"></i>
+                                            <span>Major</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                            <i class="fas fa-home"></i>
+                                            <span>Minor</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                            <i class="fas fa-tools"></i>
+                                            <span>Repair</span>
+                                        </button>
+                                        <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                            <i class="fas fa-trash-alt"></i>
+                                            <span>Demolition</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="hazard-toggles">
+                                    <div class="hazard-toggle-container">
+                                        <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                            <i class="fas fa-water"></i>
+                                            <span>Flood Hazards</span>
+                                            <span class="toggle-indicator"></span>
+                                        </button>
+                                        <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>Fault Line</span>
+                                            <span class="toggle-indicator"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -132,7 +195,7 @@
                         </div>
                         <div class="modal-body">
                             <div id="modal-content">
-                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -144,12 +207,15 @@
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div id="management" class="tab-pane">
                 <h2>Review Business Applications</h2>
-                
+
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
                 </div>
@@ -159,14 +225,14 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Business Name</th>
-                                <th>Owner</th>
+                                <th>Bus. Name</th>
+                                <th>Applicant</th>
                                 <th>Status</th>
                                 <th>Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="managementTableBody">
+                        <tbody id="tableBody">
                             <tr>
                                 <td colspan="6" class="loading">
                                     <div class="spinner"></div>Loading...
@@ -182,7 +248,7 @@
                 <p class="form-description">Fill in the details to create a new business application</p>
 
                 <form id="createForm" onsubmit="createApplication(event)">
-                    
+
                     <div class="section-title">Business Information</div>
                     <div class="form-row">
                         <div class="form-group">
@@ -383,12 +449,12 @@
 
             <div id="summary" class="tab-pane">
                 <div class="summary-controls">
-                    <h2>📄 Generate Business Summary</h2>
+                    <h2>Generate Business Summary</h2>
                     <div class="control-row">
                         <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                             <option value="">-- Select Business Application --</option>
                         </select>
-                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">🔄</button>
+                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
                     </div>
                 </div>
 
@@ -400,9 +466,9 @@
                 </div>
             </div>
 
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="detailsModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
                         <h2>Application Details</h2>
                         <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
                     </div>
@@ -410,10 +476,10 @@
                 </div>
             </div>
 
-            <div id="updateModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>⚙️ Update Application Status</h2>
+            <div id="updateModal" class="staff-modal">
+                <div class="staff-modal-content">
+                    <div class="staff-modal-header">
+                        <h2>Update Application Status</h2>
                         <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
@@ -424,9 +490,16 @@
                             <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
                         </div>
 
+                        <div class="info-banner" style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px;">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified.
+                            Use <em>"Missing Docs"</em> to trigger a notification to the applicant.
+                        </div>
+
                         <div class="form-group">
                             <label for="newStatus">New Status *</label>
-                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
+                            <div id="statusWarning" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; display: none; font-size: 13px;"></div>
+                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()" required onchange="updateWarningUI(this.value)">
                                 <option value="" disabled selected>Select Action...</option>
                                 <option value="Pre-Approved">Pre-Approved</option>
                                 <option value="Additional Requirements">Additional Requirements</option>
@@ -443,29 +516,26 @@
                             <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
                         </div>
 
-                        <div class="form-group">
-                            <label for="updateComments">Remarks / Comments *</label>
-                            <div class="prompt-container">
-                                <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">✅ Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">📂 Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">🏢 Visit Hall</button>
-                                </div>
-                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
-                            </div>
+                        <label for="updateComments">Remarks / Comments *</label>
+                        <label>Quick Responses:</label>
+                        <div class="prompt-suggestions">
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid Government ID or DTI Certificate. Please re-upload.')">Missing Docs</button>
                         </div>
-
+                        <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                         <div class="button-group">
-                            <button type="submit" class="btn-primary">💾 Update Status</button>
+                            <button type="submit" class="btn-primary">Update Status</button>
                             <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
                         </div>
                     </form>
                 </div>
             </div>
-
-        </div> </div> <script src="../../../scripts/staff/business_staff/business.js"></script>
+        </div>
+    </div>
+    <script src="../../../scripts/staff/business_staff/business.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
 </body>
+
 </html>

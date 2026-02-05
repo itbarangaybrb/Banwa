@@ -27,7 +27,7 @@ body {
     overflow: hidden;
 }
 
-.side_nav:hover {
+.side_nav.expanded {
     width: 325px;
     box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
 }
@@ -164,7 +164,7 @@ body {
     line-height: 1.4;
 }
 
-.side_nav:hover .nav_text {
+.side_nav.expanded .nav_text {
     opacity: 1;
 }
 
@@ -179,7 +179,7 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-.side_nav:hover ~ .main-wrapper {
+.side_nav.expanded ~ .main-wrapper {
     margin-left: 325px;
 }
 
@@ -203,7 +203,7 @@ body {
     transition: left 0.3s ease;
 }
 
-.side_nav:hover ~ .main-wrapper .top-header {
+.side_nav.expanded ~ .main-wrapper .top-header {
     left: 325px;
 }
 
@@ -281,7 +281,7 @@ body {
 }
 
 /* CONTENT AREA */
-.content {
+.staff-content {
     margin-left: 0;
     padding: 32px;
     padding-top: 100px;
@@ -826,7 +826,7 @@ h2 {
         align-items: center;
     }
 
-    .side_nav:hover {
+    .side_nav.expanded {
         width: 100%;
     }
 
@@ -867,7 +867,7 @@ h2 {
         display: none;
     }
 
-    .side_nav:hover .nav_text {
+    .side_nav.expanded .nav_text {
         opacity: 1;
     }
 
@@ -881,7 +881,7 @@ h2 {
         max-width: 100vw !important;
     }
 
-    .content {
+    .staff-content {
         padding: 20px;
     }
 
@@ -931,4 +931,173 @@ h2 {
     .nav_select {
         padding: 12px 10px;
     }
+}
+/* PROMPT TAG STYLES */
+.prompt-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.prompt-suggestions {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+
+.prompt-tag {
+    background: #f0f2f5;
+    border: 1px solid #d1d9e0;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #444;
+}
+
+.prompt-tag:hover {
+    background: #826EEA;
+    color: white;
+    border-color: #5B479B;
+}
+
+/* Optional: Make them look like they are floating inside the top of the box */
+#updateComments {
+    padding-top: 10px;
+}
+
+
+/* Container for the details */
+.details-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Header Section with Status */
+.details-header-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 5px solid #19316b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.details-title h2 { margin: 0; font-size: 20px; color: #333; }
+.details-id { color: #666; font-size: 14px; margin-top: 4px; }
+
+/* Grid Layout for the Content */
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Individual Data Cards */
+.detail-card {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+    background: white;
+}
+
+.detail-card h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+/* Key-Value Pair Styling */
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    border-bottom: 1px dashed #f5f5f5;
+    padding-bottom: 5px;
+}
+.detail-label { font-weight: 600; color: #555; }
+.detail-value { font-weight: 500; color: #000; text-align: right; max-width: 60%; }
+
+/* File Viewer Box */
+.file-viewer-box {
+    margin-top: 10px;
+    padding: 15px;
+    background: #eef2f7;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px dashed #ccc;
+}
+
+.file-thumbnail {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.file-thumbnail:hover { transform: scale(1.02); }
+
+.btn-view-doc {
+    background: #19316b;
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: inline-block;
+    transition: background 0.3s;
+}
+
+.btn-view-doc:hover { background: #0f1e42; color: white; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .details-grid { grid-template-columns: 1fr; }
+}
+
+/* Compact Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Make the icon-only buttons smaller/circular */
+.action-buttons .btn-info, 
+.action-buttons .btn-delete {
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Ensure the main action button stands out */
+.action-buttons .btn-primary,
+.action-buttons .btn-warning,
+.action-buttons .btn-success {
+    font-weight: 600;
+    min-width: 100px; /* Ensure text fits */
+}
+.main-wrapper {
+    margin-left: 70px; /* Width of the collapsed sidebar */
+    width: calc(100% - 70px);
+    transition: all 0.3s ease;
+    padding: 20px;
+}
+
+/* If sidebar is expanded, push content further */
+.side_nav.expanded + .main-wrapper {
+    margin-left: 325px;
+    width: calc(100% - 325px);
 }

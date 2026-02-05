@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             officeHoursElement.className = isOpen ? 'office-hours status-open' : 'office-hours status-closed';
             
             // Set status text
-            hoursStatus.textContent = isOpen ? '🟢 Open Now' : '🔴 Closed Now';
+            hoursStatus.textContent = isOpen ? 'Open Now' : 'Closed Now';
         }
         
         // Update current status in tooltip if it exists

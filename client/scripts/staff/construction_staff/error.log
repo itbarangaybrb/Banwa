@@ -1,0 +1,384 @@
+[25-Jan-2026 14:46:37 UTC] DEBUG: Fetching applications - User ID: db1d1ed3-3042-48ce-8b1e-b371402836f5, Is Staff: No
+[25-Jan-2026 14:46:37 UTC] DEBUG: Session data: Array
+(
+    [user_id] => 2
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [full_name] => Jeferson Ismael Muring jr
+    [role_id] => 1
+)
+
+[25-Jan-2026 14:46:37 UTC] DEBUG: User query executed for user_id: db1d1ed3-3042-48ce-8b1e-b371402836f5
+[25-Jan-2026 14:46:37 UTC] DEBUG: Fetched 5 applications
+[25-Jan-2026 14:46:37 UTC] DEBUG: First application: Array
+(
+    [id] => 5
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [first_name] => Jeferson
+    [middle_name] => Putorez
+    [last_name] => Oliven
+    [suffix] => Jr
+    [contact_no_owner] => 09123412341
+    [owner_address] => 15 Comets Loop
+    [nature_of_work] => 
+    [type_of_work] => commercial
+    [nature_of_activity] => Demolition
+    [details_of_work] => sd
+    [start_date] => 2026-01-23
+    [end_date] => 2026-01-24
+    [number_of_working_days] => 2
+    [number_of_workers] => 3
+    [contractor_name] => jed
+    [contractor_contact_number] => 04556463245
+    [application_method] => Online
+    [construction_address] => 8 Milkyway Dr
+    [latitude] => 14.61676900
+    [longitude] => 121.07567300
+    [requirement_upload] => localhost_8080_Banwa_client_pages_resident_construction_app.php (2).png
+    [agreed] => 0
+    [application_date] => 2026-01-23
+    [request_date] => 
+    [status] => Pending
+    [approval_comments] => 
+    [disapproval_reason] => 
+    [created_at] => 2026-01-23 22:42:02.978035
+    [updated_at] => 2026-01-23 22:42:02.978035
+    [payment_status] => 
+    [amount_due] => 
+    [amount_paid] => 
+    [or_number] => 
+    [payment_date] => 
+    [payment_method] => 
+    [dss_status] => 
+)
+
+[25-Jan-2026 14:51:22 UTC] DEBUG: Fetching applications - User ID: db1d1ed3-3042-48ce-8b1e-b371402836f5, Is Staff: No
+[25-Jan-2026 14:51:22 UTC] DEBUG: Session data: Array
+(
+    [user_id] => 2
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [full_name] => Jeferson Ismael Muring jr
+    [role_id] => 1
+)
+
+[25-Jan-2026 14:51:22 UTC] DEBUG: User query executed for user_id: db1d1ed3-3042-48ce-8b1e-b371402836f5
+[25-Jan-2026 14:51:22 UTC] DEBUG: Fetched 5 applications
+[25-Jan-2026 14:51:22 UTC] DEBUG: First application: Array
+(
+    [id] => 5
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [first_name] => Jeferson
+    [middle_name] => Putorez
+    [last_name] => Oliven
+    [suffix] => Jr
+    [contact_no_owner] => 09123412341
+    [owner_address] => 15 Comets Loop
+    [nature_of_work] => 
+    [type_of_work] => commercial
+    [nature_of_activity] => Demolition
+    [details_of_work] => sd
+    [start_date] => 2026-01-23
+    [end_date] => 2026-01-24
+    [number_of_working_days] => 2
+    [number_of_workers] => 3
+    [contractor_name] => jed
+    [contractor_contact_number] => 04556463245
+    [application_method] => Online
+    [construction_address] => 8 Milkyway Dr
+    [latitude] => 14.61676900
+    [longitude] => 121.07567300
+    [requirement_upload] => localhost_8080_Banwa_client_pages_resident_construction_app.php (2).png
+    [agreed] => 0
+    [application_date] => 2026-01-23
+    [request_date] => 
+    [status] => Pending
+    [approval_comments] => 
+    [disapproval_reason] => 
+    [created_at] => 2026-01-23 22:42:02.978035
+    [updated_at] => 2026-01-23 22:42:02.978035
+    [payment_status] => 
+    [amount_due] => 
+    [amount_paid] => 
+    [or_number] => 
+    [payment_date] => 
+    [payment_method] => 
+    [dss_status] => 
+)
+
+[25-Jan-2026 14:52:41 UTC] SQL Error in handleCreateApplication: SQLSTATE[42703]: Undefined column: 7 ERROR:  column "requirements" of relation "construction_applications" does not exist
+LINE 7:             requirement_upload, requirements, agreed, applic...
+                                        ^
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Required: ["Building Plan","Contractor License","Barangay Clearance"]
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Submitted: []
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Missing: ["Building Plan","Contractor License","Barangay Clearance"]
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Required: ["Building Plan","Contractor License","Barangay Clearance"]
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Submitted: []
+[25-Jan-2026 14:57:48 UTC] CR1 Check - Missing: ["Building Plan","Contractor License","Barangay Clearance"]
+[25-Jan-2026 14:58:03 UTC] DEBUG: Fetching applications - User ID: db1d1ed3-3042-48ce-8b1e-b371402836f5, Is Staff: No
+[25-Jan-2026 14:58:03 UTC] DEBUG: Session data: Array
+(
+    [user_id] => 2
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [full_name] => Jeferson Ismael Muring jr
+    [role_id] => 1
+)
+
+[25-Jan-2026 14:58:03 UTC] DEBUG: User query executed for user_id: db1d1ed3-3042-48ce-8b1e-b371402836f5
+[25-Jan-2026 14:58:03 UTC] DEBUG: Fetched 6 applications
+[25-Jan-2026 14:58:03 UTC] DEBUG: First application: Array
+(
+    [id] => 6
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [first_name] => Jeferson
+    [middle_name] => Putorez
+    [last_name] => Oliven
+    [suffix] => Jr
+    [contact_no_owner] => 09123412341
+    [owner_address] => 15 Comets Loop
+    [nature_of_work] => 
+    [type_of_work] => residential
+    [nature_of_activity] => Major Construction
+    [details_of_work] => New second flood
+    [start_date] => 2026-01-25
+    [end_date] => 2026-01-29
+    [number_of_working_days] => 5
+    [number_of_workers] => 3
+    [contractor_name] => Jerry
+    [contractor_contact_number] => 09898762342
+    [application_method] => Online
+    [construction_address] => 8 Twin Peaks Dr
+    [latitude] => 14.61767300
+    [longitude] => 121.07525100
+    [requirement_upload] => 1769353068_69762f6cd712d.jpg
+    [agreed] => 0
+    [application_date] => 2026-01-25
+    [request_date] => 
+    [status] => Pending
+    [approval_comments] => 
+    [disapproval_reason] => 
+    [created_at] => 2026-01-25 22:57:48.888091
+    [updated_at] => 2026-01-25 22:57:48.932109
+    [payment_status] => 
+    [amount_due] => 
+    [amount_paid] => 
+    [or_number] => 
+    [payment_date] => 
+    [payment_method] => 
+    [dss_status] => Additional Requirements Needed
+    [requirements] => []
+)
+
+[25-Jan-2026 15:43:17 UTC] DEBUG: Fetching applications - User ID: db1d1ed3-3042-48ce-8b1e-b371402836f5, Is Staff: No
+[25-Jan-2026 15:43:17 UTC] DEBUG: Session data: Array
+(
+    [user_id] => 2
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [full_name] => Jeferson Ismael Muring jr
+    [role_id] => 1
+)
+
+[25-Jan-2026 15:43:17 UTC] DEBUG: User query executed for user_id: db1d1ed3-3042-48ce-8b1e-b371402836f5
+[25-Jan-2026 15:43:17 UTC] DEBUG: Fetched 6 applications
+[25-Jan-2026 15:43:17 UTC] DEBUG: First application: Array
+(
+    [id] => 6
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [first_name] => Jeferson
+    [middle_name] => Putorez
+    [last_name] => Oliven
+    [suffix] => Jr
+    [contact_no_owner] => 09123412341
+    [owner_address] => 15 Comets Loop
+    [nature_of_work] => 
+    [type_of_work] => residential
+    [nature_of_activity] => Major Construction
+    [details_of_work] => New second flood
+    [start_date] => 2026-01-25
+    [end_date] => 2026-01-29
+    [number_of_working_days] => 5
+    [number_of_workers] => 3
+    [contractor_name] => Jerry
+    [contractor_contact_number] => 09898762342
+    [application_method] => Online
+    [construction_address] => 8 Twin Peaks Dr
+    [latitude] => 14.61767300
+    [longitude] => 121.07525100
+    [requirement_upload] => 1769353068_69762f6cd712d.jpg
+    [agreed] => 0
+    [application_date] => 2026-01-25
+    [request_date] => 
+    [status] => Pending
+    [approval_comments] => 
+    [disapproval_reason] => 
+    [created_at] => 2026-01-25 22:57:48.888091
+    [updated_at] => 2026-01-25 22:57:48.932109
+    [payment_status] => 
+    [amount_due] => 
+    [amount_paid] => 
+    [or_number] => 
+    [payment_date] => 
+    [payment_method] => 
+    [dss_status] => Additional Requirements Needed
+)
+
+[25-Jan-2026 15:53:11 UTC] DEBUG: Fetching applications - User ID: db1d1ed3-3042-48ce-8b1e-b371402836f5, Is Staff: No
+[25-Jan-2026 15:53:11 UTC] DEBUG: Session data: Array
+(
+    [user_id] => 2
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [full_name] => Jeferson Ismael Muring jr
+    [role_id] => 1
+)
+
+[25-Jan-2026 15:53:11 UTC] DEBUG: User query executed for user_id: db1d1ed3-3042-48ce-8b1e-b371402836f5
+[25-Jan-2026 15:53:11 UTC] DEBUG: Fetched 6 applications
+[25-Jan-2026 15:53:11 UTC] DEBUG: First application: Array
+(
+    [id] => 6
+    [supabase_user_id] => db1d1ed3-3042-48ce-8b1e-b371402836f5
+    [first_name] => Jeferson
+    [middle_name] => Putorez
+    [last_name] => Oliven
+    [suffix] => Jr
+    [contact_no_owner] => 09123412341
+    [owner_address] => 15 Comets Loop
+    [nature_of_work] => 
+    [type_of_work] => residential
+    [nature_of_activity] => Major Construction
+    [details_of_work] => New second flood
+    [start_date] => 2026-01-25
+    [end_date] => 2026-01-29
+    [number_of_working_days] => 5
+    [number_of_workers] => 3
+    [contractor_name] => Jerry
+    [contractor_contact_number] => 09898762342
+    [application_method] => Online
+    [construction_address] => 8 Twin Peaks Dr
+    [latitude] => 14.61767300
+    [longitude] => 121.07525100
+    [requirement_upload] => 1769353068_69762f6cd712d.jpg
+    [agreed] => 0
+    [application_date] => 2026-01-25
+    [request_date] => 
+    [status] => Pending
+    [approval_comments] => 
+    [disapproval_reason] => 
+    [created_at] => 2026-01-25 22:57:48.888091
+    [updated_at] => 2026-01-25 22:57:48.932109
+    [payment_status] => 
+    [amount_due] => 
+    [amount_paid] => 
+    [or_number] => 
+    [payment_date] => 
+    [payment_method] => 
+    [dss_status] => Additional Requirements Needed
+)
+
+[26-Jan-2026 10:12:15 UTC] DEBUG: Fetching applications - User ID: , Is Staff: No
+[26-Jan-2026 10:12:15 UTC] DEBUG: Session data: Array
+(
+)
+
+[26-Jan-2026 10:12:15 UTC] DEBUG: User query executed for user_id: 
+[26-Jan-2026 10:12:15 UTC] DEBUG: Fetched 0 applications
+[26-Jan-2026 10:12:15 UTC] DEBUG: Query returned empty: SELECT ca.* 
+                    FROM construction_applications ca
+                    WHERE ca.supabase_user_id = :user_id
+                    ORDER BY ca.created_at DESC
+[26-Jan-2026 10:12:15 UTC] DEBUG: Checking if user has any applications...
+[26-Jan-2026 10:12:15 UTC] DEBUG: Total applications for user in DB: 0
+[26-Jan-2026 10:12:22 UTC] DEBUG: Fetching applications - User ID: , Is Staff: No
+[26-Jan-2026 10:12:22 UTC] DEBUG: Session data: Array
+(
+)
+
+[26-Jan-2026 10:12:22 UTC] DEBUG: User query executed for user_id: 
+[26-Jan-2026 10:12:22 UTC] DEBUG: Fetched 0 applications
+[26-Jan-2026 10:12:22 UTC] DEBUG: Query returned empty: SELECT ca.* 
+                    FROM construction_applications ca
+                    WHERE ca.supabase_user_id = :user_id
+                    ORDER BY ca.created_at DESC
+[26-Jan-2026 10:12:22 UTC] DEBUG: Checking if user has any applications...
+[26-Jan-2026 10:12:22 UTC] DEBUG: Total applications for user in DB: 0
+[26-Jan-2026 10:13:03 UTC] DEBUG: Fetching applications - User ID: , Is Staff: No
+[26-Jan-2026 10:13:03 UTC] DEBUG: Session data: Array
+(
+)
+
+[26-Jan-2026 10:13:03 UTC] DEBUG: User query executed for user_id: 
+[26-Jan-2026 10:13:03 UTC] DEBUG: Fetched 0 applications
+[26-Jan-2026 10:13:03 UTC] DEBUG: Query returned empty: SELECT ca.* 
+                    FROM construction_applications ca
+                    WHERE ca.supabase_user_id = :user_id
+                    ORDER BY ca.created_at DESC
+[26-Jan-2026 10:13:03 UTC] DEBUG: Checking if user has any applications...
+[26-Jan-2026 10:13:03 UTC] DEBUG: Total applications for user in DB: 0
+[26-Jan-2026 10:13:48 UTC] DEBUG: Fetching applications - User ID: , Is Staff: No
+[26-Jan-2026 10:13:48 UTC] DEBUG: Session data: Array
+(
+)
+
+[26-Jan-2026 10:13:48 UTC] DEBUG: User query executed for user_id: 
+[26-Jan-2026 10:13:48 UTC] DEBUG: Fetched 0 applications
+[26-Jan-2026 10:13:48 UTC] DEBUG: Query returned empty: SELECT ca.* 
+                    FROM construction_applications ca
+                    WHERE ca.supabase_user_id = :user_id
+                    ORDER BY ca.created_at DESC
+[26-Jan-2026 10:13:48 UTC] DEBUG: Checking if user has any applications...
+[26-Jan-2026 10:13:48 UTC] DEBUG: Total applications for user in DB: 0
+[26-Jan-2026 10:14:43 UTC] DEBUG: Fetching applications - User ID: , Is Staff: No
+[26-Jan-2026 10:14:43 UTC] DEBUG: Session data: Array
+(
+)
+
+[26-Jan-2026 10:14:43 UTC] DEBUG: User query executed for user_id: 
+[26-Jan-2026 10:14:43 UTC] DEBUG: Fetched 0 applications
+[26-Jan-2026 10:14:43 UTC] DEBUG: Query returned empty: SELECT ca.* 
+                    FROM construction_applications ca
+                    WHERE ca.supabase_user_id = :user_id
+                    ORDER BY ca.created_at DESC
+[26-Jan-2026 10:14:43 UTC] DEBUG: Checking if user has any applications...
+[26-Jan-2026 10:14:43 UTC] DEBUG: Total applications for user in DB: 0
+[26-Jan-2026 10:54:10 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 10:54:10 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:03:09 UTC] DEBUG: Fetched 7 construction applications
+[26-Jan-2026 11:12:22 UTC] DEBUG: Fetched 7 construction applications
+[26-Jan-2026 11:12:58 UTC] DEBUG: Fetched 7 construction applications
+[26-Jan-2026 11:14:20 UTC] DEBUG: Fetched 7 construction applications
+[26-Jan-2026 11:39:36 UTC] DEBUG: Fetched 7 construction applications
+[26-Jan-2026 11:41:54 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:41:54 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:42:09 UTC] DEBUG: Fetched 8 construction applications
+[26-Jan-2026 11:42:38 UTC] DEBUG: Fetched 8 construction applications
+[26-Jan-2026 11:48:21 UTC] CR1 Check - Has file upload: No
+[26-Jan-2026 11:48:21 UTC] CR1 Check - Has file upload: No
+[26-Jan-2026 11:48:47 UTC] DEBUG: Fetched 9 construction applications
+[26-Jan-2026 11:50:43 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:50:43 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:57:17 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 11:57:17 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 17:42:06 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[26-Jan-2026 17:42:37 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 17:42:37 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 17:52:31 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[26-Jan-2026 18:04:02 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 18:04:02 UTC] CR1 Check - Has file upload: Yes
+[26-Jan-2026 18:07:20 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[26-Jan-2026 18:07:36 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[28-Jan-2026 14:45:40 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[30-Jan-2026 10:26:35 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_status_history" does not exist
+LINE 1: INSERT INTO construction_status_history 
+                    ^
+[31-Jan-2026 15:51:31 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:51:31 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:52:25 UTC] CR1 Check - Has file upload: No
+[31-Jan-2026 15:52:25 UTC] CR1 Check - Has file upload: No
