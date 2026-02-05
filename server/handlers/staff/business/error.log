@@ -178,3 +178,41 @@ Stack trace:
 [04-Feb-2026 21:11:56 UTC] R1 Check - Required: []
 [04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Permit"]
 [04-Feb-2026 21:11:56 UTC] R1 Check - Missing: []
+[05-Feb-2026 03:14:03 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:53 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:14:56 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
+Stack trace:
+#0 C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php(72): handleGetApplicationDetails(Object(PDO))
+#1 {main}
+  thrown in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 1076
+[05-Feb-2026 03:21:16 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:21:46 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:16 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:45 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:22:46 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:23:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:23:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:24:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:24:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:25:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:25:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
+[05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []

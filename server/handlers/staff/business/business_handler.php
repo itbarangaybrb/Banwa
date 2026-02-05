@@ -512,13 +512,13 @@ function handleUpdateApplication($pdo)
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM business_applications WHERE id = :id");
         $getDSSStmt->execute([':id' => $applicationId]);
-        $updateFields[] = "status = 'Complied'";
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
 
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
+        $updateFields[] = "status = 'Complied'"; 
         $params[':dss_status'] = $currentDSSStatus;
 
         // Only change status if explicitly provided in the update payload
@@ -527,7 +527,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "status = :status_field";
             $params[':status_field'] = $explicitStatus;
         }
-
+        
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload'])) {
             $uploadDir = __DIR__ . '/uploads/';
