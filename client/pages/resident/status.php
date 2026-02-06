@@ -82,10 +82,6 @@ if ($_SESSION['role_id'] != 1) {
         </div>
     </section>
 
-    <div class="bg-logo">
-        <img src="../../img/banwa-logo-1.png" alt="">
-    </div>
-
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="modal-close-btn">&times;</span>
