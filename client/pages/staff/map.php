@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../../styles/staff/map.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 </head>
 
@@ -193,12 +194,69 @@
                         <!-- Filter info removed as requested -->
                     </div>
                 </div>
+
+                <!-- Debug and Action Buttons -->
+                <div class="debug-actions" style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="hazard-toggle-btn" onclick="showImprovedFloodSummary()">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Flood Risk Assessment</span>
+                    </button>
+
+                    <button class="hazard-toggle-btn" onclick="refreshFloodWarnings()">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh Flood Warnings</span>
+                    </button>
+                    
+                    <button class="hazard-toggle-btn" onclick="debugFloodDetection()" style="background: #6c757d;">
+                        <i class="fas fa-bug"></i>
+                        <span>Debug Flood Detection</span>
+                    </button>
+                    
+                    <button class="hazard-toggle-btn" onclick="debugHousePolygons()" style="background: #17a2b8;">
+                        <i class="fas fa-home"></i>
+                        <span>Debug Houses</span>
+                    </button>
+                    
+                    <button class="hazard-toggle-btn" onclick="testFloodPolygonLocation()" style="background: #dc3545;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>View Flood Area</span>
+                    </button>
+                </div>
                 
                 <div id="map"></div>
                 
                 <div class="map-info">
                     <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
                 </div>
+
+                <div class="map-info">
+                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
+                </div>
+                
+                <!-- Debug Buttons Section -->
+                <div class="debug-buttons" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;">
+                    <h4 style="margin-bottom: 10px; color: #333; font-size: 0.9em;">
+                        <i class="fas fa-bug"></i> Flood Detection Debug Tools
+                    </h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <button onclick="debugFloodPolygon()" style="padding: 8px 12px; background: #17a2b8; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fas fa-bug"></i> Debug Flood Polygon
+                        </button>
+                        <button onclick="testSpecificPoints()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fas fa-vial"></i> Test Points
+                        </button>
+                        <button onclick="showFloodSummary()" style="padding: 8px 12px; background: #ff9900; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fas fa-chart-bar"></i> Show Flood Summary
+                        </button>
+                        <button onclick="updateMarkerFloodWarnings()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fas fa-sync-alt"></i> Refresh Warnings
+                        </button>
+                        <button onclick="debugFloodDetection()" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+                            <i class="fas fa-search"></i> Advanced Debug
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -213,6 +271,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../scripts/staff/map.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Detail Modal -->
     <div id="detail-modal" class="modal">
