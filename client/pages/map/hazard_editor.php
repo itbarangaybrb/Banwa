@@ -1,9 +1,15 @@
 <?php
-// flood_editor.php
-// Simple admin page - protect this with .htaccess or basic auth in production
 
-// Include database connection with PostGIS support
-include __DIR__ . '../../../../server/configs/database.php';
+$databasePath = $_SERVER['DOCUMENT_ROOT'] . '/server/configs/database.php';
+if (file_exists($databasePath)) {
+    include $databasePath;
+} else {
+    // Try relative path
+    $databasePath = __DIR__ . '/../../../server/configs/database.php';
+    if (file_exists($databasePath)) {
+        include $databasePath;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,6 +31,8 @@ include __DIR__ . '../../../../server/configs/database.php';
         body {
             font-family: 'Inter', sans-serif;
             background: #f4f4f4;
+            height: 100vh;
+            overflow: hidden;
         }
         
         .editor-container {
@@ -48,101 +56,190 @@ include __DIR__ . '../../../../server/configs/database.php';
             padding: 20px;
             overflow-y: auto;
             border-left: 2px solid #ddd;
+            min-width: 350px;
         }
         
-        .draw-tools {
+        /* Toolbar - Similar to house editor */
+        .toolbar {
             position: absolute;
             top: 20px;
             left: 20px;
             z-index: 1000;
             background: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: flex;
-            flex-direction: column;
             gap: 10px;
+            flex-wrap: wrap;
+            max-width: 600px;
+            min-width: 400px;
         }
         
-        .layer-control {
+        .toolbar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 15px;
+            border-right: 1px solid #eee;
+            margin-right: 15px;
+        }
+        
+        .toolbar-section:last-child {
+            border-right: none;
+            margin-right: 0;
+            padding-right: 0;
+        }
+        
+        .section-title {
+            font-size: 11px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .toolbar-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+        }
+        
+        .toolbar-btn.active {
+            background: #0066cc;
+            color: white;
+            border-color: #0066cc;
+            box-shadow: 0 2px 4px rgba(0,102,204,0.2);
+        }
+        
+        .toolbar-btn.success {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .toolbar-btn.success:hover {
+            background: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .toolbar-btn.danger {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .toolbar-btn.danger:hover {
+            background: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .toolbar-btn.warning {
+            background: #ffc107;
+            color: #212529;
+            border-color: #ffc107;
+        }
+        
+        .toolbar-btn.warning:hover {
+            background: #e0a800;
+            border-color: #d39e00;
+        }
+        
+        .toolbar-btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            border-color: #dee2e6;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none !important;
+        }
+        
+        .point-counter {
+            position: absolute;
+            top: 85px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(52, 152, 219, 0.95);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .coordinates-display {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 11px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.4;
+            margin-top: 5px;
+            border: 1px solid #333;
+        }
+        
+        .layer-controls {
             position: absolute;
             top: 20px;
             right: 20px;
             z-index: 1000;
             background: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-        
-        .draw-btn {
-            padding: 10px 15px;
-            background: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .draw-btn:hover {
-            background: #0052a3;
-        }
-        
-        .draw-btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-        
-        .draw-btn.danger {
-            background: #dc3545;
-        }
-        
-        .draw-btn.danger:hover {
-            background: #c82333;
-        }
-        
-        .draw-btn.warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .draw-btn.warning:hover {
-            background: #e0a800;
-        }
-        
-        .draw-btn.success {
-            background: #28a745;
-        }
-        
-        .draw-btn.success:hover {
-            background: #218838;
+            gap: 6px;
         }
         
         .layer-btn {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background: #f8f9fa;
             color: #333;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s ease;
         }
         
         .layer-btn:hover {
             background: #e9ecef;
+            border-color: #adb5bd;
         }
         
         .layer-btn.active {
@@ -158,7 +255,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             z-index: 1000;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -176,6 +273,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.2s ease;
         }
         
         .zoom-btn:hover {
@@ -186,40 +284,19 @@ include __DIR__ . '../../../../server/configs/database.php';
             border-bottom: none;
         }
         
-        .history-controls {
+        .map-scale {
             position: absolute;
-            top: 240px;
+            bottom: 20px;
             left: 20px;
             z-index: 1000;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 200px;
-        }
-        
-        .history-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .history-buttons .draw-btn {
-            flex: 1;
-            justify-content: center;
-            padding: 8px 12px;
-        }
-        
-        .history-info {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            color: #666;
-            text-align: center;
-            margin-top: 5px;
-            padding: 5px;
-            background: #f8f9fa;
-            border-radius: 4px;
+            font-weight: 600;
+            color: #333;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
         }
         
         .hazard-list {
@@ -233,24 +310,26 @@ include __DIR__ . '../../../../server/configs/database.php';
             border-radius: 6px;
             border-left: 4px solid;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            border: 1px solid #dee2e6;
         }
         
         .hazard-item:hover {
             background: #e9ecef;
-            transform: translateX(5px);
+            transform: translateX(3px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .hazard-item.high {
-            border-left-color: #0066cc;
+            border-left-color: #dc3545;
         }
         
         .hazard-item.medium {
-            border-left-color: #66b3ff;
+            border-left-color: #ffc107;
         }
         
         .hazard-item.low {
-            border-left-color: #cce6ff;
+            border-left-color: #28a745;
         }
         
         .edit-form {
@@ -258,6 +337,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             padding: 20px;
             border-radius: 8px;
             margin-top: 20px;
+            border: 1px solid #dee2e6;
         }
         
         .form-group {
@@ -269,14 +349,23 @@ include __DIR__ . '../../../../server/configs/database.php';
             margin-bottom: 5px;
             font-weight: 600;
             color: #333;
+            font-size: 13px;
         }
         
         .form-control {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
             font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0,102,204,0.1);
         }
         
         textarea.form-control {
@@ -284,70 +373,147 @@ include __DIR__ . '../../../../server/configs/database.php';
             resize: vertical;
         }
         
-        .coordinates-display {
-            font-family: monospace;
-            font-size: 12px;
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 10px;
-            border-radius: 5px;
-            max-height: 150px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
+        select.form-control {
+            cursor: pointer;
         }
         
         .status-message {
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
-            border-radius: 5px;
+            border-radius: 6px;
             text-align: center;
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 13px;
+            display: none;
+            border: 1px solid transparent;
         }
         
         .status-success {
             background: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
+            border-color: #c3e6cb;
         }
         
         .status-error {
             background: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
+            border-color: #f5c6cb;
         }
         
-        h3 {
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        
+        h3, h4 {
             color: #0066cc;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #0066cc;
+            border-bottom: 2px solid #e9ecef;
         }
         
-        .map-scale {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #333;
+        h3 {
+            font-size: 18px;
         }
         
-        .tools-title {
-            font-weight: 600;
-            color: #0066cc;
-            margin-bottom: 5px;
+        h4 {
+            font-size: 16px;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #856404;
+        }
+        
+        .instructions {
+            background: #e8f4fc;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .instructions h5 {
+            color: #2c3e50;
+            margin-bottom: 10px;
             font-size: 14px;
         }
         
-        .point-history {
+        .instructions ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .instructions code {
+            background: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        /* Point markers styling */
+        .leaflet-div-icon {
+            background: transparent;
+            border: none;
+        }
+        
+        .point-number {
+            background: #0066cc;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 11px;
-            color: #888;
-            margin-top: 3px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        
+        .point-line {
+            position: absolute;
+            background: #0066cc;
+            height: 2px;
+            pointer-events: none;
+            z-index: 500;
+        }
+        
+        .overlap-warning {
+            position: absolute;
+            top: 120px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            max-width: 300px;
         }
     </style>
 </head>
@@ -357,121 +523,178 @@ include __DIR__ . '../../../../server/configs/database.php';
         <div class="map-panel">
             <div id="editor-map"></div>
             
-            <!-- Drawing Tools -->
-            <div class="draw-tools">
-                <div class="tools-title">Drawing Tools</div>
-                <button class="draw-btn" onclick="startDrawing('polygon')" id="polygon-btn">
-                    <i class="fas fa-draw-polygon"></i> Draw Flood Area
-                </button>
-                <button class="draw-btn" onclick="startDrawing('rectangle')" id="rectangle-btn">
-                    <i class="fas fa-vector-square"></i> Draw Rectangle
-                </button>
-                <button class="draw-btn" onclick="editSelected()">
-                    <i class="fas fa-edit"></i> Edit Selected
-                </button>
-                <button class="draw-btn danger" onclick="deleteSelected()">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-                <button class="draw-btn success" onclick="saveHazard()">
-                    <i class="fas fa-save"></i> Save Hazard
-                </button>
+            <!-- Main Toolbar (Navigation-style) -->
+            <div class="toolbar">
+                <!-- Drawing Section -->
+                <div class="toolbar-section">
+                    <div class="section-title">Drawing</div>
+                    <div class="toolbar-buttons">
+                        <button class="toolbar-btn" onclick="startDrawing('polygon')" id="drawPolygonBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+                            </svg>
+                            Draw Polygon
+                        </button>
+                        <button class="toolbar-btn" onclick="startDrawing('rectangle')" id="drawRectangleBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            </svg>
+                            Draw Rectangle
+                        </button>
+                        <button class="toolbar-btn" onclick="editSelected()" id="editBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Edit
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- History Section -->
+                <div class="toolbar-section">
+                    <div class="section-title">History</div>
+                    <div class="toolbar-buttons">
+                        <button class="toolbar-btn warning" onclick="undoLastPoint()" id="undoBtn" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 7v6h6"/>
+                                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                            </svg>
+                            Undo (Ctrl+Z)
+                        </button>
+                        <button class="toolbar-btn danger" onclick="clearDrawing()" id="clearBtn" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Save Section -->
+                <div class="toolbar-section">
+                    <div class="section-title">Actions</div>
+                    <div class="toolbar-buttons">
+                        <button class="toolbar-btn success" onclick="saveHazard()" id="saveBtn" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            Save Hazard
+                        </button>
+                    </div>
+                </div>
             </div>
             
-            <!-- History Controls -->
-            <div class="history-controls">
-                <div class="tools-title">Undo/Redo</div>
-                <div class="history-buttons">
-                    <button class="draw-btn warning" id="undo-btn" onclick="undoAction()" disabled>
-                        <i class="fas fa-undo"></i> Undo
-                    </button>
-                    <button class="draw-btn warning" id="redo-btn" onclick="redoAction()" disabled>
-                        <i class="fas fa-redo"></i> Redo
-                    </button>
-                </div>
-                <div class="history-info" id="history-info">
-                    No actions yet
-                </div>
-                <div class="point-history" id="point-history">
-                    Last action: None
-                </div>
+            <!-- Point Counter -->
+            <div class="point-counter" id="pointCounter">
+                Points: <span id="pointCount">0</span>
+            </div>
+            
+            <!-- Overlap Warning -->
+            <div class="overlap-warning" id="overlapWarning">
+                ⚠️ Overlap detected with existing hazard!
             </div>
             
             <!-- Layer Controls -->
-            <div class="layer-control">
-                <div class="tools-title">Map Layers</div>
-                <button class="layer-btn active" onclick="switchLayer('street')">
-                    <i class="fas fa-map"></i> Street Map
+            <div class="layer-controls">
+                <button class="layer-btn active" onclick="switchLayer('street')" id="streetBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h4l3-9 4 18 3-9h4"/>
+                    </svg>
+                    Street
                 </button>
-                <button class="layer-btn" onclick="switchLayer('satellite')">
-                    <i class="fas fa-satellite"></i> Satellite
-                </button>
-                <button class="layer-btn" onclick="switchLayer('hybrid')">
-                    <i class="fas fa-layer-group"></i> Hybrid
+                <button class="layer-btn" onclick="switchLayer('satellite')" id="satelliteBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    Satellite
                 </button>
             </div>
             
             <!-- Zoom Controls -->
             <div class="zoom-controls">
-                <button class="zoom-btn" onclick="zoomIn()">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <button class="zoom-btn" onclick="zoomOut()">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <button class="zoom-btn" onclick="resetView()">
-                    <i class="fas fa-crosshairs"></i>
-                </button>
+                <button class="zoom-btn" onclick="zoomIn()">+</button>
+                <button class="zoom-btn" onclick="zoomOut()">−</button>
             </div>
             
             <!-- Map Scale -->
-            <div class="map-scale" id="map-scale">
+            <div class="map-scale" id="mapScale">
                 Scale: 1:1000
             </div>
         </div>
         
         <!-- Right: Control Panel -->
         <div class="control-panel">
-            <h3><i class="fas fa-water"></i> Flood Hazard Editor</h3>
-            <p>Draw or edit flood-prone areas on the map.</p>
+            <h3>🌊 Flood Hazard Editor</h3>
+            <p>Draw flood hazard areas on the map. Existing hazards are shown in color.</p>
             
             <!-- Status Message -->
-            <div id="status-message" class="status-message" style="display: none;"></div>
+            <div id="status-message" class="status-message"></div>
+            
+            <!-- Warning Box -->
+            <div class="warning-box">
+                <strong>⚠️ Important:</strong> Avoid overlapping with existing hazards. Check coordinates carefully.
+            </div>
             
             <!-- Edit Form -->
             <div class="edit-form">
                 <h4>Hazard Properties</h4>
                 
                 <div class="form-group">
-                    <label>Hazard Name:</label>
+                    <label>Hazard Name *</label>
                     <input type="text" id="hazard-name" class="form-control" 
-                           placeholder="e.g., Katipunan Avenue Low Area">
+                           placeholder="e.g., Katipunan Avenue Flood Zone" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>Risk Level:</label>
+                    <label>Risk Level *</label>
                     <select id="risk-level" class="form-control">
-                        <option value="low">Low Risk</option>
-                        <option value="medium">Medium Risk</option>
-                        <option value="high">High Risk</option>
+                        <option value="low">Low Risk (Green)</option>
+                        <option value="medium">Medium Risk (Yellow)</option>
+                        <option value="high">High Risk (Red)</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label>Description:</label>
+                    <label>Description</label>
                     <textarea id="hazard-desc" class="form-control" 
-                              placeholder="Describe the flood hazard..."></textarea>
+                              placeholder="Describe the flood hazard area..."></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label>Coordinates (GeoJSON):</label>
+                    <label>Coordinates (click on map to add points)</label>
                     <div id="coordinates-display" class="coordinates-display">
-                        Draw an area on the map...
+                        No points yet. Click "Draw Polygon" then click on map.
                     </div>
                 </div>
                 
-                <button class="draw-btn success" onclick="saveHazard()" style="width: 100%;">
-                    <i class="fas fa-save"></i> Save to Database
+                <button class="toolbar-btn success" onclick="saveHazard()" style="width: 100%; margin-top: 10px;" id="saveBtn2" disabled>
+                    💾 Save to Database
                 </button>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="instructions">
+                <h5>📋 How to Draw a Hazard Area:</h5>
+                <ul>
+                    <li>Click <strong>"Draw Polygon"</strong> or <strong>"Draw Rectangle"</strong></li>
+                    <li>Click on the map to add points (minimum 3 points for polygon)</li>
+                    <li>Use <strong>"Undo (Ctrl+Z)"</strong> to remove last point</li>
+                    <li>Fill in hazard properties on the right</li>
+                    <li>Click <strong>"Save Hazard"</strong> when ready</li>
+                </ul>
+                <p><strong>Keyboard Shortcuts:</strong></p>
+                <ul>
+                    <li><code>Ctrl+Z</code> - Undo last point</li>
+                    <li><code>Esc</code> - Cancel drawing</li>
+                    <li><code>Delete</code> - Clear all points</li>
+                    <li><code>Ctrl+S</code> - Save hazard</li>
+                </ul>
             </div>
             
             <!-- Existing Hazards List -->
@@ -487,27 +710,21 @@ include __DIR__ . '../../../../server/configs/database.php';
     <!-- Leaflet & Dependencies -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     
     <script>
         // Global variables
         let editorMap;
-        let drawControl;
-        let drawnItems = L.featureGroup();
-        let currentHazardId = null;
+        let drawingPoints = [];
+        let isDrawing = false;
+        let currentDrawingType = null;
+        let polygonLayer = null;
+        let pointMarkers = [];
+        let lineLayers = [];
         let hazards = [];
+        let existingHazardsLayer = L.layerGroup();
+        let currentHazardId = null;
         let baseLayers = {};
         let currentLayer = 'street';
-        
-        // Undo/Redo history - NEW: Track point-by-point actions
-        let history = [];
-        let currentHistoryIndex = -1;
-        let MAX_HISTORY = 50; // Increased for point-by-point tracking
-        
-        // Track drawing state
-        let isDrawing = false;
-        let currentDrawingLayer = null;
-        let currentVertices = [];
         
         // Define map bounds for Barangay Blue Ridge B
         const mapBounds = [
@@ -515,7 +732,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             [14.6250, 121.0850]  // Northeast
         ];
 
-        // Initialize editor map
+        // Initialize editor map with DEEP ZOOM
         function initEditorMap() {
             // Center on Barangay Blue Ridge B
             editorMap = L.map('editor-map', {
@@ -523,187 +740,33 @@ include __DIR__ . '../../../../server/configs/database.php';
                 zoom: 17,
                 maxBounds: mapBounds,
                 maxBoundsViscosity: 1.0,
-                zoomControl: false, // We'll use custom controls
+                zoomControl: false,
                 scrollWheelZoom: true,
                 doubleClickZoom: true,
                 touchZoom: true,
                 boxZoom: true,
-                keyboard: true
+                keyboard: true,
+                maxZoom: 22,  // Increased from 19 to 22 for deeper zoom
+                minZoom: 15
             });
             
-            // Add base layers
+            // Add base layers with DEEP ZOOM support
             baseLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors',
-                maxZoom: 22,
-                minZoom: 15
+                maxZoom: 22,  // Match map maxZoom
+                minZoom: 15,
+                maxNativeZoom: 19
             }).addTo(editorMap);
             
             baseLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: '© Esri, Maxar, Earthstar Geographics',
-                maxZoom: 22,
-                minZoom: 15
+                maxZoom: 22,  // Match map maxZoom
+                minZoom: 15,
+                maxNativeZoom: 19
             });
             
-            baseLayers.hybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-                attribution: '© Google',
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                maxZoom: 22,
-                minZoom: 15
-            });
-            
-            // Initialize draw control with custom event handling
-            drawControl = new L.Control.Draw({
-                draw: {
-                    polygon: {
-                        allowIntersection: false,
-                        shapeOptions: {
-                            color: '#0066cc',
-                            fillOpacity: 0.3
-                        },
-                        showArea: true,
-                        metric: true,
-                        guideLayers: true
-                    },
-                    rectangle: {
-                        shapeOptions: {
-                            color: '#0066cc',
-                            fillOpacity: 0.3
-                        },
-                        showArea: true,
-                        metric: true
-                    },
-                    circle: false,
-                    marker: false,
-                    polyline: false
-                },
-                edit: {
-                    featureGroup: drawnItems
-                }
-            });
-            
-            editorMap.addControl(drawControl);
-            drawnItems.addTo(editorMap);
-            
-            // Event listeners for drawing - NEW: Point-by-point tracking
-            editorMap.on('draw:drawstart', function(e) {
-                isDrawing = true;
-                currentVertices = [];
-                const layerType = e.layerType;
-                console.log(`Started drawing: ${layerType}`);
-                
-                // Save initial state when starting to draw
-                saveHistoryState('draw_start', [], `Started drawing ${layerType}`);
-            });
-            
-            editorMap.on('draw:drawvertex', function(e) {
-                if (isDrawing) {
-                    // Track each vertex added
-                    const vertex = e.latlng;
-                    currentVertices.push([vertex.lng, vertex.lat]);
-                    
-                    // Save state after each vertex
-                    saveHistoryState('add_vertex', {
-                        vertex: [vertex.lng, vertex.lat],
-                        vertices: [...currentVertices],
-                        layerType: e.layerType
-                    }, `Added point ${currentVertices.length}`);
-                    
-                    updatePointHistory(`Added point ${currentVertices.length}`);
-                }
-            });
-            
-            editorMap.on('draw:drawstop', function(e) {
-                isDrawing = false;
-                currentVertices = [];
-                console.log('Drawing stopped');
-            });
-            
-            editorMap.on('draw:editvertex', function(e) {
-                const layers = e.layers;
-                layers.eachLayer(function(layer) {
-                    // Save state when a vertex is edited
-                    const geoJson = layer.toGeoJSON();
-                    saveHistoryState('edit_vertex', {
-                        layer: layer,
-                        geoJson: geoJson,
-                        hazardId: layer.hazardId,
-                        hazardData: layer.hazardData
-                    }, 'Edited vertex');
-                    
-                    updateCoordinatesDisplay(layer);
-                });
-            });
-            
-            editorMap.on('draw:deletedvertex', function(e) {
-                const layers = e.layers;
-                layers.eachLayer(function(layer) {
-                    // Save state when a vertex is deleted
-                    const geoJson = layer.toGeoJSON();
-                    saveHistoryState('delete_vertex', {
-                        layer: layer,
-                        geoJson: geoJson,
-                        hazardId: layer.hazardId,
-                        hazardData: layer.hazardData
-                    }, 'Deleted vertex');
-                    
-                    updateCoordinatesDisplay(layer);
-                });
-            });
-            
-            editorMap.on(L.Draw.Event.CREATED, function(e) {
-                const layer = e.layer;
-                drawnItems.addLayer(layer);
-                updateCoordinatesDisplay(layer);
-                
-                // Save final state when drawing is completed
-                const geoJson = layer.toGeoJSON();
-                saveHistoryState('draw_complete', {
-                    layer: layer,
-                    geoJson: geoJson,
-                    vertices: geoJson.geometry.coordinates[0] // Polygon vertices
-                }, `Completed drawing with ${geoJson.geometry.coordinates[0].length} points`);
-                
-                updatePointHistory(`Completed shape`);
-            });
-            
-            editorMap.on(L.Draw.Event.EDITED, function(e) {
-                const layers = e.layers;
-                const editedLayers = [];
-                layers.eachLayer(function(layer) {
-                    updateCoordinatesDisplay(layer);
-                    editedLayers.push({
-                        layer: layer,
-                        geoJson: layer.toGeoJSON(),
-                        hazardId: layer.hazardId,
-                        hazardData: layer.hazardData
-                    });
-                });
-                
-                // Save edit state
-                if (editedLayers.length > 0) {
-                    saveHistoryState('edit_complete', editedLayers, `Edited ${editedLayers.length} layer(s)`);
-                }
-            });
-            
-            editorMap.on(L.Draw.Event.DELETED, function(e) {
-                const layers = e.layers;
-                const deletedLayers = Array.from(layers.getLayers());
-                
-                // Save delete state
-                saveHistoryState('delete_complete', deletedLayers, `Deleted ${deletedLayers.length} layer(s)`);
-                
-                if (deletedLayers.length > 0) {
-                    updateCoordinatesDisplay(null);
-                    updatePointHistory('Deleted layer(s)');
-                }
-            });
-            
-            // Also track map clicks during drawing for better UX
-            editorMap.on('click', function(e) {
-                if (isDrawing) {
-                    console.log('Map click during drawing at:', e.latlng);
-                }
-            });
+            // Add layers to map
+            existingHazardsLayer.addTo(editorMap);
             
             // Update scale on zoom
             editorMap.on('zoomend', updateMapScale);
@@ -712,224 +775,389 @@ include __DIR__ . '../../../../server/configs/database.php';
             // Load existing hazards from database
             loadExistingHazards();
             
-            // Initialize history with empty state
-            saveHistoryState('initial', [], 'Initial state');
+            // Set up keyboard shortcuts
+            setupKeyboardShortcuts();
+            
+            showStatus('✅ Map loaded. Click "Draw Polygon" to start drawing.', 'info');
         }
 
-        // Save current state to history - IMPROVED
-        function saveHistoryState(action, data, description) {
-            // Don't save if we're in the middle of undo/redo
-            if (currentHistoryIndex < history.length - 1) {
-                // We're not at the latest state, so truncate and start new branch
-                history = history.slice(0, currentHistoryIndex + 1);
+        // Start drawing
+        function startDrawing(type) {
+            if (isDrawing && currentDrawingType === type) {
+                stopDrawing();
+                return;
             }
             
-            // Create history state
-            const state = {
-                action: action,
-                timestamp: Date.now(),
-                data: data,
-                description: description || action,
-                drawnItemsState: getDrawnItemsState(),
-                formData: {
-                    hazardName: document.getElementById('hazard-name').value,
-                    riskLevel: document.getElementById('risk-level').value,
-                    description: document.getElementById('hazard-desc').value,
-                    currentHazardId: currentHazardId
-                }
-            };
-            
-            // Add to history
-            history.push(state);
-            
-            // Limit history size
-            if (history.length > MAX_HISTORY) {
-                history.shift(); // Remove oldest state
+            // Stop any existing drawing
+            if (isDrawing) {
+                stopDrawing();
             }
             
-            currentHistoryIndex = history.length - 1;
+            currentDrawingType = type;
+            isDrawing = true;
+            
+            // Update button states
+            if (type === 'polygon') {
+                document.getElementById('drawPolygonBtn').classList.add('active');
+                document.getElementById('drawRectangleBtn').classList.remove('active');
+                document.getElementById('editBtn').classList.remove('active');
+            } else if (type === 'rectangle') {
+                document.getElementById('drawRectangleBtn').classList.add('active');
+                document.getElementById('drawPolygonBtn').classList.remove('active');
+                document.getElementById('editBtn').classList.remove('active');
+            }
+            
+            // Clear any existing drawing
+            clearDrawingVisuals();
+            
+            // Show point counter
+            document.getElementById('pointCounter').style.display = 'block';
+            
+            // Set up click handler for manual point drawing
+            editorMap.on('click', handleMapClick);
+            
+            // Enable buttons
+            document.getElementById('undoBtn').disabled = false;
+            document.getElementById('clearBtn').disabled = false;
+            
+            showStatus(`Click on map to add points for ${type}. Press ESC to cancel.`, 'info');
+        }
+
+        // Stop drawing
+        function stopDrawing() {
+            isDrawing = false;
+            currentDrawingType = null;
+            
+            // Remove click handler
+            editorMap.off('click', handleMapClick);
+            
+            // Update button states
+            document.getElementById('drawPolygonBtn').classList.remove('active');
+            document.getElementById('drawRectangleBtn').classList.remove('active');
+            
+            // Update save button state
+            updateSaveButton();
+            
+            // Show instruction if not enough points
+            if (drawingPoints.length < 3) {
+                showStatus(`Need ${3 - drawingPoints.length} more points to save.`, 'warning');
+            } else {
+                showStatus('Ready to save. Fill in hazard properties.', 'info');
+            }
+        }
+
+        // Handle map clicks during drawing
+        function handleMapClick(e) {
+            if (!isDrawing) return;
+            
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            // Add point to array
+            drawingPoints.push([lat, lng]);
+            
+            // Update displays
+            updatePointCounter();
+            updateCoordinatesDisplay();
+            
+            // Add point marker
+            addPointMarker([lat, lng], drawingPoints.length);
+            
+            // Draw lines between points
+            updateConnectingLines();
+            
+            // Draw/update polygon if we have enough points
+            if (currentDrawingType === 'polygon' && drawingPoints.length >= 3) {
+                drawPolygon();
+            } else if (currentDrawingType === 'rectangle' && drawingPoints.length === 2) {
+                drawRectangle();
+            }
             
             // Update UI
-            updateUndoRedoButtons();
-            updateHistoryInfo();
+            updateSaveButton();
             
-            console.log(`History saved: ${description} (${history.length} states)`);
+            // Check for overlaps with existing hazards
+            checkForOverlaps();
+            
+            // Show status
+            if (currentDrawingType === 'polygon') {
+                if (drawingPoints.length < 3) {
+                    showStatus(`Added point ${drawingPoints.length}. Need ${3 - drawingPoints.length} more points.`, 'info');
+                } else {
+                    showStatus(`Added point ${drawingPoints.length}. Ready to save.`, 'success');
+                }
+            } else if (currentDrawingType === 'rectangle') {
+                if (drawingPoints.length < 2) {
+                    showStatus('Click again to set opposite corner for rectangle.', 'info');
+                } else {
+                    showStatus('Rectangle complete. Ready to save.', 'success');
+                    stopDrawing(); // Auto-stop for rectangle
+                }
+            }
         }
 
-        // Get current state of drawn items
-        function getDrawnItemsState() {
-            const layers = drawnItems.getLayers();
-            return layers.map(layer => {
-                const geoJson = layer.toGeoJSON();
-                return {
-                    type: layer.constructor.name,
-                    geoJson: geoJson,
-                    hazardId: layer.hazardId,
-                    hazardData: layer.hazardData,
-                    options: layer.options || {
-                        color: '#0066cc',
-                        fillOpacity: 0.3
-                    }
-                };
-            });
+        // Add a point marker with number
+        function addPointMarker(coords, number) {
+            const marker = L.marker(coords, {
+                icon: L.divIcon({
+                    className: 'point-marker',
+                    html: `<div class="point-number">${number}</div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(editorMap);
+            
+            pointMarkers.push(marker);
         }
 
-        // Restore state from history - IMPROVED
-        function restoreHistoryState(index) {
-            if (index < 0 || index >= history.length) {
-                console.error('Invalid history index:', index);
-                return;
+        // Draw connecting lines between points
+        function updateConnectingLines() {
+            // Clear existing lines
+            lineLayers.forEach(layer => editorMap.removeLayer(layer));
+            lineLayers = [];
+            
+            // Draw lines between consecutive points
+            for (let i = 1; i < drawingPoints.length; i++) {
+                const line = L.polyline([drawingPoints[i-1], drawingPoints[i]], {
+                    color: '#0066cc',
+                    weight: 2,
+                    opacity: 0.7,
+                    dashArray: '5, 5',
+                    interactive: false
+                }).addTo(editorMap);
+                
+                lineLayers.push(line);
+            }
+        }
+
+        // Draw polygon from points
+        function drawPolygon() {
+            // Remove existing polygon
+            if (polygonLayer) {
+                editorMap.removeLayer(polygonLayer);
             }
             
-            const state = history[index];
-            console.log(`Restoring state: ${state.description}`);
-            
-            // Clear current drawn items
-            drawnItems.clearLayers();
-            
-            // Restore drawn items from state
-            if (state.drawnItemsState && state.drawnItemsState.length > 0) {
-                state.drawnItemsState.forEach(layerState => {
-                    restoreLayerFromState(layerState);
-                });
+            // Create polygon (close it by adding first point at end)
+            const polygonCoords = [...drawingPoints];
+            if (drawingPoints.length >= 3) {
+                polygonCoords.push(drawingPoints[0]);
             }
             
-            // Restore form data if available
-            if (state.formData) {
-                document.getElementById('hazard-name').value = state.formData.hazardName || '';
-                document.getElementById('risk-level').value = state.formData.riskLevel || 'low';
-                document.getElementById('hazard-desc').value = state.formData.description || '';
-                currentHazardId = state.formData.currentHazardId || null;
+            // Get current risk level color
+            const riskLevel = document.getElementById('risk-level').value;
+            const color = getRiskColor(riskLevel);
+            
+            polygonLayer = L.polygon(polygonCoords, {
+                color: color,
+                weight: 3,
+                opacity: 0.8,
+                fillColor: color,
+                fillOpacity: 0.3,
+                interactive: false
+            }).addTo(editorMap);
+        }
+
+        // Draw rectangle from two points
+        function drawRectangle() {
+            if (drawingPoints.length !== 2) return;
+            
+            // Remove existing polygon
+            if (polygonLayer) {
+                editorMap.removeLayer(polygonLayer);
             }
             
-            // Update coordinates display
-            const layers = drawnItems.getLayers();
-            if (layers.length > 0) {
-                updateCoordinatesDisplay(layers[0]);
+            const bounds = L.latLngBounds(drawingPoints[0], drawingPoints[1]);
+            
+            // Get current risk level color
+            const riskLevel = document.getElementById('risk-level').value;
+            const color = getRiskColor(riskLevel);
+            
+            polygonLayer = L.rectangle(bounds, {
+                color: color,
+                weight: 3,
+                opacity: 0.8,
+                fillColor: color,
+                fillOpacity: 0.3,
+                interactive: false
+            }).addTo(editorMap);
+        }
+
+        // Get color based on risk level
+        function getRiskColor(riskLevel) {
+            switch(riskLevel) {
+                case 'high': return '#dc3545';
+                case 'medium': return '#ffc107';
+                case 'low': return '#28a745';
+                default: return '#0066cc';
+            }
+        }
+
+        // Undo last point
+        function undoLastPoint() {
+            if (drawingPoints.length > 0) {
+                // Remove last point from array
+                drawingPoints.pop();
+                
+                // Remove last marker
+                if (pointMarkers.length > 0) {
+                    const lastMarker = pointMarkers.pop();
+                    editorMap.removeLayer(lastMarker);
+                }
+                
+                // Update connecting lines
+                updateConnectingLines();
+                
+                // Redraw polygon/rectangle if we still have enough points
+                if (currentDrawingType === 'polygon' && drawingPoints.length >= 3) {
+                    drawPolygon();
+                } else if (currentDrawingType === 'rectangle' && drawingPoints.length === 2) {
+                    drawRectangle();
+                } else if (polygonLayer) {
+                    editorMap.removeLayer(polygonLayer);
+                    polygonLayer = null;
+                }
+                
+                // Update displays
+                updatePointCounter();
+                updateCoordinatesDisplay();
+                updateSaveButton();
+                checkForOverlaps();
+                
+                showStatus('↩️ Removed last point.', 'info');
+            }
+        }
+
+        // Clear all drawing
+        function clearDrawing() {
+            if (drawingPoints.length === 0) return;
+            
+            if (confirm('Clear all points and start over?')) {
+                drawingPoints = [];
+                clearDrawingVisuals();
+                
+                // Update displays
+                updatePointCounter();
+                updateCoordinatesDisplay();
+                updateSaveButton();
+                document.getElementById('overlapWarning').style.display = 'none';
+                
+                // Stop drawing if active
+                if (isDrawing) {
+                    stopDrawing();
+                }
+                
+                showStatus('🗑️ All points cleared.', 'info');
+            }
+        }
+
+        // Clear drawing visuals from map
+        function clearDrawingVisuals() {
+            // Clear point markers
+            pointMarkers.forEach(marker => editorMap.removeLayer(marker));
+            pointMarkers = [];
+            
+            // Clear lines
+            lineLayers.forEach(line => editorMap.removeLayer(line));
+            lineLayers = [];
+            
+            // Clear polygon
+            if (polygonLayer) {
+                editorMap.removeLayer(polygonLayer);
+                polygonLayer = null;
+            }
+        }
+
+        // Update point counter
+        function updatePointCounter() {
+            const count = drawingPoints.length;
+            document.getElementById('pointCount').textContent = count;
+            
+            if (count > 0) {
+                document.getElementById('pointCounter').style.display = 'block';
             } else {
-                document.getElementById('coordinates-display').textContent = 'Draw an area on the map...';
+                document.getElementById('pointCounter').style.display = 'none';
             }
-            
-            currentHistoryIndex = index;
-            updateUndoRedoButtons();
-            updateHistoryInfo();
-            
-            // Update point history display
-            updatePointHistory(state.description);
-            
-            // Show feedback
-            const action = index < history.length - 1 ? 'Undo' : 'Redo';
-            showStatus(`${action}: ${state.description}`, 'success');
         }
 
-        // Restore a single layer from state
-        function restoreLayerFromState(layerState) {
-            if (!layerState || !layerState.geoJson) {
-                console.warn('Invalid layer state:', layerState);
+        // Update coordinates display
+        function updateCoordinatesDisplay() {
+            const coordsDiv = document.getElementById('coordinates-display');
+            
+            if (drawingPoints.length === 0) {
+                coordsDiv.textContent = 'No points yet. Click "Draw Polygon" then click on map.';
                 return;
             }
             
-            try {
-                let layer;
-                const geoJson = layerState.geoJson;
-                
-                // Create appropriate layer type
-                if (layerState.type === 'Polygon' || geoJson.geometry.type === 'Polygon') {
-                    layer = L.geoJSON(geoJson, {
-                        style: layerState.options || {
-                            color: '#0066cc',
-                            fillOpacity: 0.3,
-                            weight: 2
-                        }
-                    }).getLayers()[0];
-                } else if (layerState.type === 'Rectangle' || layerState.type === 'L.Rectangle') {
-                    // Handle rectangles
-                    const bounds = L.geoJSON(geoJson).getBounds();
-                    layer = L.rectangle(bounds, {
-                        style: layerState.options || {
-                            color: '#0066cc',
-                            fillOpacity: 0.3,
-                            weight: 2
-                        }
-                    });
-                }
-                
-                if (layer) {
-                    // Restore layer properties
-                    layer.hazardId = layerState.hazardId;
-                    layer.hazardData = layerState.hazardData;
-                    
-                    // Add to map
-                    drawnItems.addLayer(layer);
-                    
-                    // Add popup for existing hazards
-                    if (layerState.hazardData) {
-                        layer.bindPopup(`
-                            <strong>${layerState.hazardData.hazard_name}</strong><br>
-                            Risk: ${layerState.hazardData.risk_level.toUpperCase()}<br>
-                            ${layerState.hazardData.description || ''}
-                        `);
-                    }
-                    
-                    console.log(`Restored layer: ${layerState.type}`);
-                }
-            } catch (error) {
-                console.error('Error restoring layer:', error, layerState);
-            }
-        }
-
-        // Undo last action
-        function undoAction() {
-            if (currentHistoryIndex > 0) {
-                restoreHistoryState(currentHistoryIndex - 1);
-            }
-        }
-
-        // Redo last undone action
-        function redoAction() {
-            if (currentHistoryIndex < history.length - 1) {
-                restoreHistoryState(currentHistoryIndex + 1);
-            }
-        }
-
-        // Update undo/redo button states
-        function updateUndoRedoButtons() {
-            const undoBtn = document.getElementById('undo-btn');
-            const redoBtn = document.getElementById('redo-btn');
+            let text = 'Points (lat, lng):\n';
+            drawingPoints.forEach((point, index) => {
+                text += `${index + 1}. ${point[0].toFixed(6)}, ${point[1].toFixed(6)}\n`;
+            });
+            text += `\nTotal: ${drawingPoints.length} points`;
             
-            undoBtn.disabled = currentHistoryIndex <= 0;
-            redoBtn.disabled = currentHistoryIndex >= history.length - 1;
+            coordsDiv.textContent = text;
         }
 
-        // Update history info display
-        function updateHistoryInfo() {
-            const infoEl = document.getElementById('history-info');
-            infoEl.textContent = `Actions: ${currentHistoryIndex + 1}/${history.length}`;
+        // Update save button state
+        function updateSaveButton() {
+            const canSave = drawingPoints.length >= 3 || 
+                           (currentDrawingType === 'rectangle' && drawingPoints.length === 2);
+            
+            document.getElementById('saveBtn').disabled = !canSave;
+            document.getElementById('saveBtn2').disabled = !canSave;
         }
 
-        // Update point history display
-        function updatePointHistory(action) {
-            const infoEl = document.getElementById('point-history');
-            infoEl.textContent = `Last: ${action}`;
+        // Check for overlaps with existing hazards
+        function checkForOverlaps() {
+            if (!polygonLayer || drawingPoints.length < 3) {
+                document.getElementById('overlapWarning').style.display = 'none';
+                return;
+            }
+            
+            const newPolygon = polygonLayer.toGeoJSON();
+            let hasOverlap = false;
+            
+            // Check against existing hazards
+            hazards.forEach(hazard => {
+                if (hazard.geojson) {
+                    try {
+                        const hazardGeoJson = JSON.parse(hazard.geojson);
+                        // Simple bounding box check first
+                        const newBounds = polygonLayer.getBounds();
+                        
+                        // For now, just show warning if bounds intersect
+                        existingHazardsLayer.eachLayer(function(layer) {
+                            if (layer.getBounds && newBounds.intersects(layer.getBounds())) {
+                                hasOverlap = true;
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error checking overlap:', e);
+                    }
+                }
+            });
+            
+            if (hasOverlap) {
+                document.getElementById('overlapWarning').style.display = 'block';
+            } else {
+                document.getElementById('overlapWarning').style.display = 'none';
+            }
         }
 
         // Switch between map layers
         function switchLayer(layerType) {
-            // Update button states
-            document.querySelectorAll('.layer-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            if (layerType === currentLayer) return;
             
-            // Switch layers
-            if (layerType !== currentLayer) {
-                baseLayers[currentLayer].remove();
-                baseLayers[layerType].addTo(editorMap);
-                currentLayer = layerType;
-                
-                // Save to history
-                saveHistoryState('switch_layer', { layer: layerType }, `Switched to ${layerType} view`);
-            }
+            // Remove current layer
+            baseLayers[currentLayer].remove();
+            
+            // Add new layer
+            baseLayers[layerType].addTo(editorMap);
+            currentLayer = layerType;
+            
+            // Update button states
+            document.getElementById('streetBtn').classList.remove('active');
+            document.getElementById('satelliteBtn').classList.remove('active');
+            document.getElementById(layerType + 'Btn').classList.add('active');
         }
 
         // Zoom functions
@@ -941,6 +1169,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             editorMap.zoomOut();
         }
 
+        // Reset view to default
         function resetView() {
             editorMap.setView([14.6175, 121.0756], 17);
         }
@@ -952,118 +1181,80 @@ include __DIR__ . '../../../../server/configs/database.php';
             const scaleText = scale >= 1000 ? 
                 `1:${(scale/1000).toFixed(0)}k` : 
                 `1:${scale}`;
-            document.getElementById('map-scale').textContent = `Scale: ${scaleText}`;
+            document.getElementById('mapScale').textContent = `Scale: ${scaleText}`;
         }
 
-        // Update coordinates display
-        function updateCoordinatesDisplay(layer) {
-            if (layer && layer.toGeoJSON) {
-                try {
-                    const geoJson = layer.toGeoJSON();
-                    const coordinates = JSON.stringify(geoJson.geometry.coordinates, null, 2);
-                    document.getElementById('coordinates-display').textContent = coordinates;
-                    
-                    // Update point count in history
-                    if (geoJson.geometry.type === 'Polygon' && geoJson.geometry.coordinates[0]) {
-                        const pointCount = geoJson.geometry.coordinates[0].length;
-                        updatePointHistory(`${pointCount} points in shape`);
-                    }
-                } catch (error) {
-                    console.error('Error updating coordinates:', error);
-                    document.getElementById('coordinates-display').textContent = 'Error displaying coordinates';
+        // Setup keyboard shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Don't trigger if typing in form fields
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                    return;
                 }
-            } else {
-                document.getElementById('coordinates-display').textContent = 'Draw an area on the map...';
-            }
+                
+                // Ctrl+Z for Undo
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    undoLastPoint();
+                }
+                
+                // Escape to cancel drawing
+                if (e.key === 'Escape' && isDrawing) {
+                    e.preventDefault();
+                    stopDrawing();
+                    showStatus('Drawing cancelled.', 'info');
+                }
+                
+                // Delete to clear
+                if (e.key === 'Delete') {
+                    e.preventDefault();
+                    clearDrawing();
+                }
+                
+                // Ctrl+S to save
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveHazard();
+                }
+                
+                // Zoom shortcuts
+                if (e.key === '+' || e.key === '=') {
+                    e.preventDefault();
+                    zoomIn();
+                }
+                if (e.key === '-' || e.key === '_') {
+                    e.preventDefault();
+                    zoomOut();
+                }
+                
+                // Number keys for drawing tools
+                if (e.key === '1') {
+                    e.preventDefault();
+                    startDrawing('polygon');
+                }
+                if (e.key === '2') {
+                    e.preventDefault();
+                    startDrawing('rectangle');
+                }
+                if (e.key === '3') {
+                    e.preventDefault();
+                    editSelected();
+                }
+                
+                // Reset view with R key
+                if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    resetView();
+                    showStatus('View reset to default.', 'info');
+                }
+            });
         }
 
-        // Start drawing
-        function startDrawing(type) {
-            // Save state before starting to draw
-            saveHistoryState('start_drawing', { type: type }, `Started ${type} drawing`);
-            
-            if (type === 'polygon') {
-                new L.Draw.Polygon(editorMap, drawControl.options.draw.polygon).enable();
-                document.getElementById('polygon-btn').classList.add('active');
-                document.getElementById('rectangle-btn').classList.remove('active');
-            } else if (type === 'rectangle') {
-                new L.Draw.Rectangle(editorMap, drawControl.options.draw.rectangle).enable();
-                document.getElementById('rectangle-btn').classList.add('active');
-                document.getElementById('polygon-btn').classList.remove('active');
-            }
-            
-            showStatus(`Drawing ${type} - click on map to add points`, 'success');
-        }
-
-        // Edit selected
+        // Edit selected hazard
         function editSelected() {
-            const layers = drawnItems.getLayers();
-            if (layers.length > 0) {
-                // Save state before editing
-                saveHistoryState('start_edit', { layers: layers }, 'Started editing');
-                
-                const layer = layers[0];
-                editorMap.fitBounds(layer.getBounds());
-                updateCoordinatesDisplay(layer);
-                
-                // Enable edit mode
-                new L.EditToolbar.Edit(editorMap, {
-                    featureGroup: drawnItems
-                }).enable();
-                
-                showStatus('Edit mode enabled - drag points to modify shape', 'success');
-            } else {
-                showStatus('No area selected to edit', 'error');
-            }
+            showStatus('Edit mode: Select a hazard from the list on the right.', 'info');
+            document.getElementById('editBtn').classList.add('active');
         }
-
-        // Delete selected
-        function deleteSelected() {
-            const layers = drawnItems.getLayers();
-            if (layers.length > 0) {
-                // Save state before deleting
-                saveHistoryState('delete_selected', { layers: Array.from(layers) }, `Deleting ${layers.length} layer(s)`);
-                
-                drawnItems.clearLayers();
-                document.getElementById('coordinates-display').textContent = 'Draw an area on the map...';
-                resetForm();
-                
-                showStatus(`${layers.length} layer(s) deleted`, 'success');
-            } else {
-                showStatus('No areas to delete', 'error');
-            }
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Don't trigger shortcuts if user is typing in form fields
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-                return;
-            }
-            
-            // Ctrl+Z or Cmd+Z for Undo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                undoAction();
-            }
-            // Ctrl+Shift+Z or Cmd+Shift+Z for Redo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
-                e.preventDefault();
-                redoAction();
-            }
-            // Ctrl+Y for Redo (Windows)
-            if ((e.ctrlKey) && e.key === 'y') {
-                e.preventDefault();
-                redoAction();
-            }
-            // Escape to cancel drawing
-            if (e.key === 'Escape' && isDrawing) {
-                e.preventDefault();
-                isDrawing = false;
-                currentVertices = [];
-                showStatus('Drawing cancelled', 'info');
-            }
-        });
 
         // Load existing hazards from database
         async function loadExistingHazards() {
@@ -1086,8 +1277,7 @@ include __DIR__ . '../../../../server/configs/database.php';
                     showStatus('Error loading hazards: ' + data.message, 'error');
                 }
             } catch (error) {
-                console.error('Error loading hazards:', error);
-                showStatus('Error loading hazards. Check console.', 'error');
+                showStatus('Error loading hazards. Please try again.', 'error');
             }
         }
 
@@ -1111,39 +1301,37 @@ include __DIR__ . '../../../../server/configs/database.php';
 
         // Display hazards on map
         function displayHazardsOnMap() {
-            hazards.forEach(hazard => {
-                // Convert PostGIS geometry to GeoJSON
-                const geoJson = JSON.parse(hazard.geojson);
-                
-                const color = hazard.risk_level === 'high' ? '#0066cc' :
-                             hazard.risk_level === 'medium' ? '#66b3ff' : '#cce6ff';
-                
-                const layer = L.geoJSON(geoJson, {
-                    style: {
-                        fillColor: color,
-                        fillOpacity: 0.3,
-                        color: color,
-                        weight: 2
-                    }
-                }).addTo(editorMap);
-                
-                // Store hazard ID on layer
-                layer.hazardId = hazard.hazard_id;
-                layer.hazardData = hazard;
-                
-                // Add to drawn items for editing
-                drawnItems.addLayer(layer);
-                
-                // Add popup
-                layer.bindPopup(`
-                    <strong>${hazard.hazard_name}</strong><br>
-                    Risk: ${hazard.risk_level.toUpperCase()}<br>
-                    ${hazard.description || ''}
-                `);
-            });
+            existingHazardsLayer.clearLayers();
             
-            // Save current state to history after loading hazards
-            saveHistoryState('load_hazards', Array.from(drawnItems.getLayers()), `Loaded ${hazards.length} hazards`);
+            hazards.forEach(hazard => {
+                if (hazard.geojson) {
+                    try {
+                        const geoJson = JSON.parse(hazard.geojson);
+                        const color = getRiskColor(hazard.risk_level);
+                        
+                        const layer = L.geoJSON(geoJson, {
+                            style: {
+                                fillColor: color,
+                                fillOpacity: 0.3,
+                                color: color,
+                                weight: 2
+                            }
+                        }).addTo(existingHazardsLayer);
+                        
+                        // Store hazard data on layer
+                        layer.hazardData = hazard;
+                        
+                        // Add popup
+                        layer.bindPopup(`
+                            <strong>${hazard.hazard_name}</strong><br>
+                            Risk: ${hazard.risk_level.toUpperCase()}<br>
+                            ${hazard.description || ''}
+                        `);
+                    } catch (e) {
+                        console.error('Error parsing hazard geojson:', e);
+                    }
+                }
+            });
         }
 
         // Edit existing hazard
@@ -1155,51 +1343,103 @@ include __DIR__ . '../../../../server/configs/database.php';
             document.getElementById('risk-level').value = hazard.risk_level;
             document.getElementById('hazard-desc').value = hazard.description || '';
             
-            // Clear and select only this layer
-            drawnItems.clearLayers();
+            // Clear drawing and load hazard geometry
+            clearDrawing();
             
-            let foundLayer = null;
-            editorMap.eachLayer(layer => {
-                if (layer.hazardId === hazard.hazard_id) {
-                    drawnItems.addLayer(layer);
-                    editorMap.fitBounds(layer.getBounds());
-                    updateCoordinatesDisplay(layer);
-                    foundLayer = layer;
+            // Parse and load the hazard geometry as drawing points
+            if (hazard.geojson) {
+                try {
+                    const geoJson = JSON.parse(hazard.geojson);
+                    if (geoJson.geometry.type === 'Polygon' && geoJson.geometry.coordinates[0]) {
+                        // Convert [lng, lat] to [lat, lng] for drawing
+                        drawingPoints = geoJson.geometry.coordinates[0]
+                            .slice(0, -1) // Remove closing point
+                            .map(coord => [coord[1], coord[0]]); // Swap lat/lng
+                        
+                        // Update visuals
+                        drawingPoints.forEach((point, index) => {
+                            addPointMarker(point, index + 1);
+                        });
+                        
+                        updateConnectingLines();
+                        drawPolygon();
+                        
+                        // Update displays
+                        updatePointCounter();
+                        updateCoordinatesDisplay();
+                        updateSaveButton();
+                        
+                        // Pan to hazard
+                        if (polygonLayer) {
+                            editorMap.fitBounds(polygonLayer.getBounds());
+                        }
+                        
+                        showStatus(`Editing: ${hazard.hazard_name}`, 'success');
+                    }
+                } catch (e) {
+                    console.error('Error loading hazard geometry:', e);
+                    showStatus('Error loading hazard geometry', 'error');
                 }
-            });
-            
-            if (foundLayer) {
-                saveHistoryState('select_hazard', { hazard: hazard, layer: foundLayer }, `Selected: ${hazard.hazard_name}`);
-                showStatus(`Editing: ${hazard.hazard_name}`, 'success');
-            } else {
-                showStatus('Could not find the hazard layer on map', 'error');
             }
         }
 
         // Save hazard to database
         async function saveHazard() {
-            const layers = drawnItems.getLayers();
-            if (layers.length === 0) {
-                showStatus('Please draw an area on the map first.', 'error');
+            // Validation
+            if (drawingPoints.length < 3 && !(currentDrawingType === 'rectangle' && drawingPoints.length === 2)) {
+                showStatus('Need at least 3 points for polygon or 2 points for rectangle.', 'error');
                 return;
             }
             
-            const layer = layers[0];
-            const geoJson = layer.toGeoJSON();
+            const hazardName = document.getElementById('hazard-name').value.trim();
+            if (!hazardName) {
+                showStatus('Please enter a hazard name.', 'error');
+                document.getElementById('hazard-name').focus();
+                return;
+            }
+            
+            // Prepare data
+            let geoJson;
+            let coordinates;
+            
+            if (currentDrawingType === 'rectangle' && drawingPoints.length === 2) {
+                // Rectangle
+                const bounds = L.latLngBounds(drawingPoints[0], drawingPoints[1]);
+                const corner1 = [bounds.getSouthWest().lng, bounds.getSouthWest().lat];
+                const corner2 = [bounds.getNorthEast().lng, bounds.getNorthEast().lat];
+                
+                geoJson = {
+                    type: "Polygon",
+                    coordinates: [[
+                        corner1,
+                        [corner2[0], corner1[1]],
+                        corner2,
+                        [corner1[0], corner2[1]],
+                        corner1 // Close polygon
+                    ]]
+                };
+                coordinates = geoJson.coordinates;
+            } else {
+                // Polygon
+                // Convert [lat, lng] to [lng, lat] for GeoJSON
+                const coords = drawingPoints.map(point => [point[1], point[0]]);
+                coords.push(coords[0]); // Close polygon
+                
+                geoJson = {
+                    type: "Polygon",
+                    coordinates: [coords]
+                };
+                coordinates = geoJson.coordinates;
+            }
             
             const hazardData = {
                 hazard_id: currentHazardId || '',
-                hazard_name: document.getElementById('hazard-name').value.trim(),
+                hazard_name: hazardName,
                 risk_level: document.getElementById('risk-level').value,
                 description: document.getElementById('hazard-desc').value.trim(),
-                coordinates: JSON.stringify(geoJson.geometry.coordinates),
+                coordinates: JSON.stringify(coordinates),
                 geojson: JSON.stringify(geoJson)
             };
-            
-            if (!hazardData.hazard_name) {
-                showStatus('Please enter a hazard name.', 'error');
-                return;
-            }
             
             try {
                 const formData = new FormData();
@@ -1209,6 +1449,8 @@ include __DIR__ . '../../../../server/configs/database.php';
                 for (const key in hazardData) {
                     formData.append(key, hazardData[key]);
                 }
+                
+                showStatus('Saving hazard...', 'info');
                 
                 const response = await fetch('hazard_handler.php', {
                     method: 'POST',
@@ -1221,21 +1463,18 @@ include __DIR__ . '../../../../server/configs/database.php';
                     showStatus(`Hazard ${currentHazardId ? 'updated' : 'saved'} successfully!`, 'success');
                     currentHazardId = result.hazard_id;
                     
-                    // Save to history
-                    saveHistoryState('save_hazard', { hazardData: hazardData, result: result }, `Saved: ${hazardData.hazard_name}`);
-                    
                     // Reload hazards from database
                     setTimeout(() => {
                         loadExistingHazards();
                         resetForm();
+                        clearDrawing();
                     }, 1000);
                     
                 } else {
                     showStatus('Error: ' + result.message, 'error');
                 }
             } catch (error) {
-                console.error('Error saving hazard:', error);
-                showStatus('Error saving hazard. Check console.', 'error');
+                showStatus('Error saving hazard. Please try again.', 'error');
             }
         }
 
@@ -1245,7 +1484,7 @@ include __DIR__ . '../../../../server/configs/database.php';
             document.getElementById('hazard-name').value = '';
             document.getElementById('risk-level').value = 'low';
             document.getElementById('hazard-desc').value = '';
-            document.getElementById('coordinates-display').textContent = 'Draw an area on the map...';
+            document.getElementById('coordinates-display').textContent = 'No points yet. Click "Draw Polygon" then click on map.';
         }
 
         // Show status message
@@ -1255,10 +1494,12 @@ include __DIR__ . '../../../../server/configs/database.php';
             statusEl.className = `status-message status-${type}`;
             statusEl.style.display = 'block';
             
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 5000);
+            // Auto-hide after 5 seconds (except errors)
+            if (type !== 'error') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+            }
         }
 
         // Initialize on page load

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../configs/database.php';
 
-// ==================== EXISTING MARKER FUNCTIONS ====================
+// ==================== MARKER FUNCTIONS ====================
 
 function getUtilitiesMarkers()
 {
@@ -207,20 +207,25 @@ function getFloodHazardAreas()
                     hazard_id,
                     hazard_type,
                     hazard_name,
-                    description,
                     risk_level,
+                    description,
                     ST_AsGeoJSON(geom) as geojson,
-                    last_flood_date,
-                    reported_by,
-                    date_identified,
-                    date_updated,
+                    properties,
                     created_at,
                     updated_at
                 FROM barangay_hazards 
                 WHERE hazard_type = 'flood'
-                AND (status IS NULL OR status != 'archived')
                 AND geom IS NOT NULL
-                ORDER BY risk_level DESC, hazard_name";
+                ORDER BY 
+                    CASE risk_level
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        WHEN 'very-low' THEN 4
+                        ELSE 5
+                    END,
+                    hazard_name";
+        
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -241,11 +246,11 @@ function getFloodHazardDataForSearch()
                     hazard_type,
                     risk_level,
                     description,
+                    properties,
                     ST_X(ST_Centroid(geom)) as longitude,
                     ST_Y(ST_Centroid(geom)) as latitude
                 FROM barangay_hazards 
                 WHERE hazard_type = 'flood'
-                AND (status IS NULL OR status != 'archived')
                 AND geom IS NOT NULL";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -265,13 +270,10 @@ function getFloodDetails($id)
                     hazard_id,
                     hazard_type,
                     hazard_name,
-                    description,
                     risk_level,
+                    description,
                     ST_AsGeoJSON(geom) as geojson,
-                    last_flood_date,
-                    reported_by,
-                    date_identified,
-                    date_updated,
+                    properties,
                     created_at,
                     updated_at
                 FROM barangay_hazards 
@@ -279,10 +281,340 @@ function getFloodDetails($id)
                 AND hazard_type = 'flood'";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Parse properties JSON if it exists
+        if ($result && !empty($result['properties'])) {
+            $result['properties'] = json_decode($result['properties'], true);
+        }
+        
+        return $result;
     } catch (PDOException $e) {
         error_log("Database error in getFloodDetails: " . $e->getMessage());
         return null;
+    }
+}
+
+/**
+ * Get houses that intersect (touch or overlap) flood hazard areas
+ * SIMPLIFIED VERSION - Works with your data
+ * 
+ * @param string $riskLevel Filter by specific risk level (optional)
+ * @return array Array of houses with their flood risk information
+ */
+function getHousesInFloodAreas($riskLevel = null)
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hp.house_id,
+                    hp.address,
+                    hp.street_name,
+                    hp.house_number,
+                    hp.center_lat,
+                    hp.center_lng,
+                    hp.area_sqm,
+                    hp.coordinates,
+                    bh.hazard_id,
+                    bh.hazard_name,
+                    bh.risk_level,
+                    bh.description as hazard_description,
+                    bh.properties,
+                    'Affected' as impact_level,
+                    100 as flood_coverage_percent
+                FROM house_polygons hp
+                INNER JOIN barangay_hazards bh 
+                    ON ST_Contains(
+                        bh.geom::geometry,
+                        ST_SetSRID(ST_MakePoint(hp.center_lng, hp.center_lat), 4326)
+                    )
+                WHERE bh.hazard_type = 'flood'
+                  AND hp.center_lat IS NOT NULL";
+        
+        // Add risk level filter if provided
+        if ($riskLevel !== null) {
+            $sql .= " AND LOWER(bh.risk_level) = LOWER(:risk_level)";
+        }
+        
+        $sql .= " ORDER BY 
+                    CASE LOWER(bh.risk_level)
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        WHEN 'very-low' THEN 4
+                        ELSE 5
+                    END,
+                    hp.address";
+        
+        $stmt = $pdo->prepare($sql);
+        
+        if ($riskLevel !== null) {
+            $stmt->execute([':risk_level' => $riskLevel]);
+        } else {
+            $stmt->execute();
+        }
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getHousesInFloodAreas: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get summary of houses in flood areas grouped by risk level
+ * SIMPLIFIED VERSION
+ * 
+ * @return array Summary with counts and details by risk level
+ */
+function getFloodAffectedHousesSummary()
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    bh.risk_level,
+                    COUNT(hp.house_id) as house_count,
+                    COUNT(hp.house_id) as fully_affected,
+                    0 as partially_affected,
+                    0 as minimally_affected,
+                    json_agg(
+                        json_build_object(
+                            'house_id', hp.house_id,
+                            'address', hp.address,
+                            'center_lat', hp.center_lat,
+                            'center_lng', hp.center_lng,
+                            'flood_coverage', 100
+                        )
+                        ORDER BY hp.address
+                    ) as houses
+                FROM house_polygons hp
+                INNER JOIN barangay_hazards bh 
+                    ON ST_Contains(
+                        bh.geom::geometry,
+                        ST_SetSRID(ST_MakePoint(hp.center_lng, hp.center_lat), 4326)
+                    )
+                WHERE bh.hazard_type = 'flood'
+                  AND hp.center_lat IS NOT NULL
+                GROUP BY bh.risk_level
+                ORDER BY 
+                    CASE LOWER(bh.risk_level)
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        WHEN 'very-low' THEN 4
+                        ELSE 5
+                    END";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Calculate totals
+        $total = 0;
+        $total_fully = 0;
+        foreach ($results as $row) {
+            $total += $row['house_count'];
+            $total_fully += $row['fully_affected'];
+        }
+        
+        return [
+            'total' => $total,
+            'fully_affected' => $total_fully,
+            'partially_affected' => 0,
+            'minimally_affected' => 0,
+            'by_risk_level' => $results
+        ];
+    } catch (PDOException $e) {
+        error_log("Database error in getFloodAffectedHousesSummary: " . $e->getMessage());
+        return [
+            'total' => 0,
+            'fully_affected' => 0,
+            'partially_affected' => 0,
+            'minimally_affected' => 0,
+            'by_risk_level' => []
+        ];
+    }
+}
+
+/**
+ * Get warning message based on flood risk level AND impact level
+ * 
+ * @param string $riskLevel The flood risk level
+ * @param string $impactLevel The impact level (Fully, Partially, Minimally)
+ * @return array Warning information with title, message, and recommendations
+ */
+function getFloodWarning($riskLevel, $impactLevel = 'Fully Affected')
+{
+    $riskLevel = strtolower($riskLevel);
+    $impactLevel = strtolower($impactLevel);
+    
+    $baseWarnings = [
+        'high' => [
+            'title' => '🚨 High Flood Risk Area',
+            'severity' => 'danger',
+            'base_message' => 'This area is at HIGH RISK of flooding.',
+        ],
+        'medium' => [
+            'title' => '⚠️ Medium Flood Risk Area',
+            'severity' => 'warning',
+            'base_message' => 'This area has MODERATE RISK of flooding.',
+        ],
+        'low' => [
+            'title' => 'ℹ️ Low Flood Risk Area',
+            'severity' => 'info',
+            'base_message' => 'This area has LOW RISK of flooding.',
+        ],
+        'very-low' => [
+            'title' => '✓ Very Low Flood Risk Area',
+            'severity' => 'success',
+            'base_message' => 'This area has VERY LOW RISK of flooding.',
+        ]
+    ];
+    
+    $impactMessages = [
+        'fully affected' => 'The entire house is within the flood zone.',
+        'partially affected' => 'Part of the house is within the flood zone.',
+        'minimally affected' => 'A small portion of the house touches the flood zone.'
+    ];
+    
+    $impactRecommendations = [
+        'fully affected' => [
+            'Immediate evacuation may be required during heavy rainfall',
+            'Prepare emergency evacuation plans immediately',
+            'Keep emergency supplies ready (food, water, medicine)',
+            'Identify nearest evacuation centers'
+        ],
+        'partially affected' => [
+            'Monitor weather updates closely',
+            'Prepare evacuation plan for affected areas of the house',
+            'Move valuable items away from flood-prone sections',
+            'Consider flood barriers or sandbags'
+        ],
+        'minimally affected' => [
+            'Stay alert during heavy rainfall',
+            'Monitor the affected area of your property',
+            'Ensure good drainage around affected sections',
+            'Keep emergency contacts handy'
+        ]
+    ];
+    
+    $warning = $baseWarnings[$riskLevel] ?? $baseWarnings['low'];
+    
+    $warning['message'] = $warning['base_message'] . ' ' . ($impactMessages[$impactLevel] ?? '');
+    $warning['recommendations'] = array_merge(
+        $impactRecommendations[$impactLevel] ?? $impactRecommendations['fully affected'],
+        [
+            'Monitor weather updates and barangay advisories',
+            'Secure important documents in waterproof containers',
+            'Report any drainage problems to barangay officials'
+        ]
+    );
+    
+    unset($warning['base_message']);
+    
+    return $warning;
+}
+
+/**
+ * Alternative method: Check if a point (house center) is in flood area
+ * Faster than polygon intersection, good for quick checks
+ * 
+ * @param float $lat Latitude of house center
+ * @param float $lng Longitude of house center
+ * @return array|null Flood hazard info if in flood area, null otherwise
+ */
+function checkHouseCenterInFlood($lat, $lng)
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hazard_id,
+                    hazard_name,
+                    risk_level,
+                    description
+                FROM barangay_hazards
+                WHERE hazard_type = 'flood'
+                  AND ST_Contains(
+                      geom::geometry,
+                      ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)
+                  )
+                LIMIT 1";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':lat' => $lat,
+            ':lng' => $lng
+        ]);
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in checkHouseCenterInFlood: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Get all houses with their flood status (in or out of flood areas)
+ * Useful for reports and statistics
+ * 
+ * @return array All houses with flood status
+ */
+function getAllHousesWithFloodStatus()
+{
+    global $pdo;
+    try {
+        $sql = "SELECT 
+                    hp.house_id,
+                    hp.address,
+                    hp.street_name,
+                    hp.house_number,
+                    hp.center_lat,
+                    hp.center_lng,
+                    bh.hazard_id,
+                    bh.hazard_name,
+                    bh.risk_level,
+                    CASE 
+                        WHEN bh.hazard_id IS NOT NULL THEN 'In Flood Area'
+                        ELSE 'Safe'
+                    END as flood_status
+                FROM house_polygons hp
+                LEFT JOIN barangay_hazards bh 
+                    ON bh.hazard_type = 'flood'
+                    AND hp.coordinates IS NOT NULL
+                    AND ST_Within(
+                        ST_SetSRID(
+                            ST_GeomFromGeoJSON(
+                                json_build_object(
+                                    'type', 'Polygon',
+                                    'coordinates', json_build_array(hp.coordinates)  -- FIXED: Added json_build_array()
+                                )::text
+                            ), 
+                            4326
+                        ),
+                        bh.geom::geometry
+                    )
+                ORDER BY 
+                    CASE 
+                        WHEN bh.hazard_id IS NOT NULL THEN 1 
+                        ELSE 2 
+                    END,
+                    CASE LOWER(bh.risk_level)
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        WHEN 'very-low' THEN 4
+                        ELSE 5
+                    END,
+                    hp.address";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getAllHousesWithFloodStatus: " . $e->getMessage());
+        return [];
     }
 }
 
@@ -770,6 +1102,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             'success' => true,
             'is_inside' => $house !== null,
             'house' => $house
+        ]);
+        exit;
+    }
+
+    // Get houses in flood areas
+    if ($_POST['action'] === 'get_houses_in_flood') {
+        $riskLevel = $_POST['risk_level'] ?? null;
+        $houses = getHousesInFloodAreas($riskLevel);
+        
+        echo json_encode([
+            'success' => true,
+            'count' => count($houses),
+            'houses' => $houses
+        ]);
+        exit;
+    }
+
+    // Get flood affected houses summary
+    if ($_POST['action'] === 'get_flood_houses_summary') {
+        $summary = getFloodAffectedHousesSummary();
+        
+        echo json_encode([
+            'success' => true,
+            'summary' => $summary
+        ]);
+        exit;
+    }
+
+    // Get flood warning information
+    if ($_POST['action'] === 'get_flood_warning') {
+        $riskLevel = $_POST['risk_level'] ?? 'low';
+        $warning = getFloodWarning($riskLevel);
+        
+        echo json_encode([
+            'success' => true,
+            'warning' => $warning
+        ]);
+        exit;
+    }
+
+    // Check if house center is in flood area (FAST method)
+    if ($_POST['action'] === 'check_house_in_flood') {
+        $lat = $_POST['lat'] ?? 0;
+        $lng = $_POST['lng'] ?? 0;
+        $floodInfo = checkHouseCenterInFlood($lat, $lng);
+        
+        echo json_encode([
+            'success' => true,
+            'in_flood' => $floodInfo !== null,
+            'flood_info' => $floodInfo
+        ]);
+        exit;
+    }
+
+    // Get all houses with flood status
+    if ($_POST['action'] === 'get_all_houses_flood_status') {
+        $houses = getAllHousesWithFloodStatus();
+        
+        echo json_encode([
+            'success' => true,
+            'count' => count($houses),
+            'houses' => $houses
         ]);
         exit;
     }

@@ -1422,6 +1422,32 @@ header {
     font-size: 1.2em;
 }
 
+/* Flood warning markers */
+.flood-warning {
+    animation: bounceWarning 1s infinite alternate;
+}
+
+@keyframes bounceWarning {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-5px); }
+}
+
+/* Flood warning in popups */
+.flood-warning-section {
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05));
+    border-left: 4px solid #ff0000;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    animation: pulseWarning 2s infinite;
+}
+
+@keyframes pulseWarning {
+    0% { background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05)); }
+    50% { background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 0, 0, 0.1)); }
+    100% { background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.05)); }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .content {
