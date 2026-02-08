@@ -257,6 +257,32 @@
                     </div>
                 </div>
 
+                <!-- SDSS Test Buttons -->
+<div class="debug-buttons" style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #d1ecf1;">
+    <h4 style="margin-bottom: 10px; color: #333; font-size: 0.9em;">
+        <i class="fas fa-chart-line"></i> SDSS Spatial Analysis Tools
+    </h4>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <button onclick="testSDSS()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-play"></i> Test SDSS
+        </button>
+        <button onclick="runBusinessSDSS(1)" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-store"></i> Test Business
+        </button>
+        <button onclick="runConstructionSDSS(1)" style="padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-hard-hat"></i> Test Construction
+        </button>
+        <button onclick="showImprovedFloodSummary()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-chart-bar"></i> Flood Summary
+        </button>
+    </div>
+</div>
+
+<!-- Add this button to your debug buttons section -->
+<button onclick="testFixedFloodDetectionButton()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+    <i class="fas fa-check-circle"></i> Test Fixed Flood Detection
+</button>
+
             </div>
         </div>
     </main>
