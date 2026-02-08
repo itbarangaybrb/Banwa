@@ -1,12 +1,28 @@
 import supabase from "../../../../server/api/supabase.js";
 
+function toggleCreateSection() {
+    const createSection = document.getElementById('createSection');
+    const createBtn = document.getElementById('createBtn');
+
+    const isCurrentlyVisible = !createSection.classList.contains('hidden');
+
+    createSection.classList.toggle('hidden');
+
+    createBtn.textContent = isCurrentlyVisible ? 'Create New User' : 'Back to User List';
+}
+
+document.getElementById('createBtn')
+    .addEventListener('click', toggleCreateSection);
+
+
+
 const fe = {
     role: document.getElementById('role'),
     email: document.getElementById('email'),
     password: document.getElementById('password'),
     retypePassword: document.getElementById('retypePassword'),
     formMessage: document.getElementById('formMessage'),
-    registrationForm: document.getElementById('registrationForm')
+    createForm: document.getElementById('createForm')
 }
 
 const validator = (() => {
@@ -108,7 +124,7 @@ let isSubmitting = false;
 function registration() {
     fe.formMessage.style.display = 'none';
 
-    fe.registrationForm.addEventListener('submit', async (e) => {
+    fe.createForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         if (isSubmitting) return;

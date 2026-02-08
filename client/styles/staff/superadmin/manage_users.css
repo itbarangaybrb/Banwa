@@ -9,40 +9,40 @@
     --bold: 700;
 }
 
-.registration-container {}
+.form-container {}
 
-.registration-container .form {
+.form-container .form {
     margin-inline: auto;
     max-width: 680px;
     display: flex;
     flex-direction: column;
     row-gap: 32px;
-    border: 1px solid grey;
+    /* border: 1px solid grey; */
     padding: 32px 24px;
     border-radius: 16px;
 }
 
-.registration-container .form h5 {
+.form-container .form h5 {
     font-size: var(--h5);
     line-height: var(--h5-lh);
     font-weight: var(--bold);
 }
 
-.registration-container .form .inputs-container {
+.form-container .form .inputs-container {
     display: flex;
     flex-direction: column;
     row-gap: 16px;
 }
 
-.registration-container .form .inputs-container .label-and-input {
+.form-container .form .inputs-container .label-and-input {
     display: flex;
     flex-direction: column;
     row-gap: 4px;
 }
 
-.registration-container .form .inputs-container .label-and-input select,
-.registration-container .form .inputs-container .label-and-input input[type="email"],
-.registration-container .form .inputs-container .label-and-input input[type="password"] {
+.form-container .form .inputs-container .label-and-input select,
+.form-container .form .inputs-container .label-and-input input[type="email"],
+.form-container .form .inputs-container .label-and-input input[type="password"] {
     padding: 12px 8px;
     border-radius: 8px;
     border: 1px solid #C4C4C4;
@@ -53,26 +53,26 @@
     appearance: none;
 }
 
-.registration-container .form .inputs-container .label-and-input .error-msg {
+.form-container .form .inputs-container .label-and-input .error-msg {
     color: red;
     font-size: 12px;
     display: none;
 }
 
-.registration-container .form .inputs-container .label-and-input .error-msg.show {
+.form-container .form .inputs-container .label-and-input .error-msg.show {
     display: block;
 }
 
-.registration-container .form .inputs-container .label-and-input .error {
+.form-container .form .inputs-container .label-and-input .error {
     outline: 1px solid red;
 }
 
-.registration-container .form .buttons-container {
+.form-container .form .buttons-container {
     margin-left: auto;
     width: max-content;
 }
 
-.registration-container .form .buttons-container button {
+.form-container .form .buttons-container button {
     padding: 16px;
     border-radius: 8px;
     border: transparent;
@@ -80,21 +80,27 @@
     font-weight: 500;
 }
 
-.registration-container .form .buttons-container button:nth-child(1) {
-    background-color: #dbdbdb;
-    color: black;
-}
-
-.registration-container .form .buttons-container button:nth-child(2) {
+.form-container .form .buttons-container button {
     background-color: #00247C;
     color: white;
     margin-left: 4px;
 }
 
-.registration-container .form .buttons-container button:nth-child(1):hover {
-    background-color: #c9c9c9;
+.form-container .form .buttons-container button:hover {
+    background-color: #00164d;
 }
 
-.registration-container .form .buttons-container button:nth-child(2):hover {
-    background-color: #00164d;
+.hidden {
+    display: none;
+}
+
+.buttons {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #C4C4C4;
+    cursor: pointer;
+}
+
+.buttons:hover {
+    background-color: rgb(223, 223, 223);
 }
