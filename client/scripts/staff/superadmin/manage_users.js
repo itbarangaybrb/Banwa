@@ -1,19 +1,69 @@
 import supabase from "../../../../server/api/supabase.js";
 
-function toggleCreateSection() {
-    const createSection = document.getElementById('createSection');
-    const createBtn = document.getElementById('createBtn');
-
-    const isCurrentlyVisible = !createSection.classList.contains('hidden');
-
-    createSection.classList.toggle('hidden');
-
-    createBtn.textContent = isCurrentlyVisible ? 'Create New User' : 'Back to User List';
+function hideModal(modal) {
+    modal.classList.remove('active');
 }
 
-document.getElementById('createBtn')
-    .addEventListener('click', toggleCreateSection);
+function showModal(modal) {
+    modal.classList.add('active');
+}
 
+// create account modal
+const createModal = document.getElementById('createModal');
+const createBtn = document.getElementById('createBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+
+createBtn.addEventListener('click', () => {
+    showModal(createModal);
+});
+
+cancelBtn.addEventListener('click', () => {
+    hideModal(createModal);
+});
+
+
+/**
+ * Fetches all user data from the server and populates the users table
+ * Only retrieves and displays data; does not autofill any form fields
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+    const tbody = document.getElementById('usersTableBody');
+
+    try {
+        const resp = await fetch('/Banwa/server/api/staff/superadmin/get_user_all.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        const users = await resp.json();
+
+        // Clear table first
+        tbody.innerHTML = '';
+
+        if (!Array.isArray(users) || users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5">No users found</td></tr>`;
+            return;
+        }
+
+        // Loop through each user and append a row
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>${user.user_id}</td>
+                <td>${user.full_name}</td>
+                <td>${user.email}</td>
+                <td>${user.role_id}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch user data for autofill:', err);
+        tbody.innerHTML = `<tr><td colspan="5">Error loading users</td></tr>`;
+    }
+});
 
 
 const fe = {

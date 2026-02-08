@@ -73,53 +73,95 @@ if ($_SESSION['role_id'] != 2) {
     </aside>
 
     <main class="main">
-        <button class="buttons create-btn" type="button" id="createBtn">Create New User</button>
+        <section class="sections">
+            <button class="buttons create-btn" type="button" id="createBtn">Create New User</button>
+            
+            <div class="divider"></div>
 
-        <section class="sections hidden" id="createSection">
-            <div class="containers form-container">
-                <form class="form" id="createForm">
-                    <div class="header-and-parags">
-                        <h5>Create New Account</h5>
-                    </div>
+            <div class="row containers">
+                <div class="search-container">
+                    <input type="input" name="" id="">
+                    <img src="../../../img/search-icon.svg" alt="Search" class="icon">
+                </div>
 
-                    <span id="formMessage"></span>
-
-                    <div class="inputs-container">
-                        <div class="label-and-input">
-                            <label for="role">Role</label>
-                            <select name="role" id="role" name="role">
-                                <option value="" disabled selected>Select</option>
-                                <option value="3">Admin</option>
-                                <option value="4">Business staff</option>
-                                <option value="5">Construction staff</option>
-                                <option value="6">Utility staff</option>
-                                <option value="7">Finance staff</option>
-                            </select>
-                            <div class="error-msg"></div>
-                        </div>
-                        <div class="label-and-input">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email">
-                            <div class="error-msg"></div>
-                        </div>
-                        <div class="label-and-input">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password">
-                            <div class="error-msg"></div>
-                        </div>
-                        <div class="label-and-input">
-                            <label for="retypePassword">Re-type password</label>
-                            <input type="password" id="retypePassword" name="retypePassword">
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="buttons-container">
-                        <button type="submit">Create</button>
-                    </div>
-                </form>
+                <div class="filters-container">
+                    <button class="buttons" type="button">Manage Columns</button>
+                    <button class="buttons" type="button">Export As</button>
+                </div>
             </div>
         </section>
+
+        
+        <section class="sections">
+            <div class="containers">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th id="nameFilter">
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Name
+                                </span>
+                            </th>
+                            <th id="emailFilter"> <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Email Address
+                                </span></th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="containers form-container modal" id="createModal">
+            <form class="form" id="createForm">
+                <div class="header-and-parags">
+                    <h5>Create New Account</h5>
+                </div>
+
+                <span id="formMessage"></span>
+
+                <div class="inputs-container">
+                    <div class="label-and-input">
+                        <label for="role">Role</label>
+                        <select name="role" id="role" name="role">
+                            <option value="" disabled selected>Select</option>
+                            <option value="3">Admin</option>
+                            <option value="4">Business staff</option>
+                            <option value="5">Construction staff</option>
+                            <option value="6">Utility staff</option>
+                            <option value="7">Finance staff</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="retypePassword">Re-type password</label>
+                        <input type="password" id="retypePassword" name="retypePassword">
+                        <div class="error-msg"></div>
+                    </div>
+                </div>
+
+                <div class="buttons-container">
+                    <button type="button" id="cancelBtn">Cancel</button>
+                    <button type="submit">Create</button>
+                </div>
+            </form>
+        </div>
     </main>
 
     <script src="../../../scripts/staff/superadmin/main.js"></script>

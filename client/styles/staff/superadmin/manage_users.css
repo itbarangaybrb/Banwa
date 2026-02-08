@@ -9,17 +9,77 @@
     --bold: 700;
 }
 
-.form-container {}
+.row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.divider {
+    height: 1px;
+    background-color: #C4C4C4;
+    margin: 16px 0;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.search-container input {
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid gray;
+    width: 100%;
+}
+
+.search-container img {
+    position: absolute;
+    right: 8px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+table thead tr th {
+   padding: 8px;
+}
+
+table tbody tr {
+   border-top: 1px solid #C4C4C4;
+}
+
+table tbody tr td {
+   padding: 8px;
+}
+
+table thead tr th .th-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 
 .form-container .form {
-    margin-inline: auto;
+    margin: auto;
     max-width: 680px;
     display: flex;
     flex-direction: column;
     row-gap: 32px;
-    /* border: 1px solid grey; */
     padding: 32px 24px;
     border-radius: 16px;
+    background-color: white;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: max-content;
 }
 
 .form-container .form h5 {
@@ -80,22 +140,42 @@
     font-weight: 500;
 }
 
-.form-container .form .buttons-container button {
+.form-container .form .buttons-container button:nth-child(1) {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.form-container .form .buttons-container button:nth-child(1):hover {
+    background-color: #c9c9c9;
+}
+
+.form-container .form .buttons-container button:nth-child(2) {
     background-color: #00247C;
     color: white;
     margin-left: 4px;
 }
 
-.form-container .form .buttons-container button:hover {
+.form-container .form .buttons-container button:nth-child(2):hover {
     background-color: #00164d;
 }
 
-.hidden {
+.modal {
     display: none;
 }
 
+.modal.active {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
 .buttons {
-    padding: 8px 12px;
+    padding: 7px 12px;
     border-radius: 4px;
     border: 1px solid #C4C4C4;
     cursor: pointer;
