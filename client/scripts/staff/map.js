@@ -3003,44 +3003,27 @@ async function loadAllMarkers() {
     clearAllMarkers();
     
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_markers');
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
-        }
+        // Load each marker type separately using the new API endpoints
+        const [constructions, businesses, households, utilities, floodData] = await Promise.all([
+            fetchMarkers('get_construction_markers'),
+            fetchMarkers('get_business_markers'),
+            fetchMarkers('get_generic_markers'),  // Note: Changed from 'households' to 'generic_markers'
+            fetchMarkers('get_utilities_markers'),
+            fetchMarkers('get_flood_hazards')
+        ]);
 
-        const floodFormData = new FormData();
-        floodFormData.append('action', 'get_flood_data_for_search');
-        
-        const floodResponse = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: floodFormData
-        });
-        
-        const floodData = await floodResponse.json();
-        
+        // Combine all markers for search
         allMarkersData = [
-            ...(data.constructions || []).map(c => ({...c, type: 'construction'})),
-            ...(data.businesses || []).map(b => ({...b, type: 'business'})),
-            ...(data.households || []).map(h => ({...h, type: 'household'})),
-            ...(data.utilities || []).map(u => ({...u, type: 'utility'})),
-            ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
+            ...(constructions || []).map(c => ({ ...c, type: 'construction' })),
+            ...(businesses || []).map(b => ({ ...b, type: 'business' })),
+            ...(households || []).map(h => ({ ...h, type: 'household' })),  // Still works with generic markers
+            ...(utilities || []).map(u => ({ ...u, type: 'utility' })),
+            ...(floodData || []).map(f => ({ ...f, type: 'flood' }))
         ];
 
-        if (data.constructions && Array.isArray(data.constructions)) {
-            data.constructions.forEach(construction => {
+        // Process construction markers
+        if (constructions && Array.isArray(constructions)) {
+            constructions.forEach(construction => {
                 if (construction.latitude && construction.longitude) {
                     try {
                         const lat = parseFloat(construction.latitude);
@@ -3048,9 +3031,9 @@ async function loadAllMarkers() {
                         
                         if (!isNaN(lat) && !isNaN(lng)) {
                             const popupContent = createConstructionPopup(construction);
-                            const marker = L.marker([lat, lng], { 
+                            const marker = L.marker([lat, lng], {
                                 icon: constructionIcon,
-                                title: construction.homeowner_name || 'Construction Site'
+                                title: construction.first_name || 'Construction Site'
                             }).bindPopup(popupContent);
                             
                             constructionMarkers.push(marker);
@@ -3065,8 +3048,9 @@ async function loadAllMarkers() {
             });
         }
 
-        if (data.businesses && Array.isArray(data.businesses)) {
-            data.businesses.forEach(business => {
+        // Process business markers
+        if (businesses && Array.isArray(businesses)) {
+            businesses.forEach(business => {
                 if (business.latitude && business.longitude) {
                     try {
                         const lat = parseFloat(business.latitude);
@@ -3074,7 +3058,7 @@ async function loadAllMarkers() {
                         
                         if (!isNaN(lat) && !isNaN(lng)) {
                             const popupContent = createBusinessPopup(business);
-                            const marker = L.marker([lat, lng], { 
+                            const marker = L.marker([lat, lng], {
                                 icon: businessIcon,
                                 title: business.business_name || 'Business'
                             }).bindPopup(popupContent);
@@ -3091,8 +3075,9 @@ async function loadAllMarkers() {
             });
         }
 
-        if (data.households && Array.isArray(data.households)) {
-            data.households.forEach(household => {
+        // Process household (generic) markers
+        if (households && Array.isArray(households)) {
+            households.forEach(household => {
                 if (household.latitude && household.longitude) {
                     try {
                         const lat = parseFloat(household.latitude);
@@ -3100,7 +3085,7 @@ async function loadAllMarkers() {
                         
                         if (!isNaN(lat) && !isNaN(lng)) {
                             const popupContent = createHouseholdPopup(household);
-                            const marker = L.marker([lat, lng], { 
+                            const marker = L.marker([lat, lng], {
                                 icon: householdIcon,
                                 title: household.title || 'Household'
                             }).bindPopup(popupContent);
@@ -3117,8 +3102,9 @@ async function loadAllMarkers() {
             });
         }
 
-        if (data.utilities && Array.isArray(data.utilities)) {
-            data.utilities.forEach(utility => {
+        // Process utility markers
+        if (utilities && Array.isArray(utilities)) {
+            utilities.forEach(utility => {
                 if (utility.latitude && utility.longitude) {
                     try {
                         const lat = parseFloat(utility.latitude);
@@ -3126,9 +3112,9 @@ async function loadAllMarkers() {
                         
                         if (!isNaN(lat) && !isNaN(lng)) {
                             const popupContent = createUtilityPopup(utility);
-                            const marker = L.marker([lat, lng], { 
+                            const marker = L.marker([lat, lng], {
                                 icon: utilityIcon,
-                                title: utility.applicant_name || 'Utility Work'
+                                title: utility.first_name || 'Utility Work'
                             }).bindPopup(popupContent);
                             
                             utilityMarkers.push(marker);
@@ -3148,10 +3134,37 @@ async function loadAllMarkers() {
         }
 
         loadHousePolygons();
-
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
         alert('Error loading markers. Please check browser console for details.');
+    }
+}
+
+// Helper function to fetch markers
+async function fetchMarkers(action) {
+    try {
+        const formData = new FormData();
+        formData.append('action', action);
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(`Server error: ${data.message || 'Unknown error'}`);
+        }
+        
+        return data.markers || data.hazards || [];
+    } catch (error) {
+        console.error(`Error fetching ${action}:`, error);
+        return [];
     }
 }
 
@@ -3889,5 +3902,627 @@ function setupMobileMenuClose() {
                 sideNav.classList.remove('active');
             }
         }
+    });
+}
+
+// ==================== SPATIAL DECISION SUPPORT SYSTEM (SDSS) ====================
+
+/**
+ * Run SDSS check for a business application
+ */
+async function runBusinessSDSS(businessId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'sdss_evaluate_business');
+        formData.append('business_id', businessId);
+        
+        Swal.fire({
+            title: 'Running Spatial Analysis...',
+            html: 'Checking school proximity, business density, and residential protection...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Evaluation failed');
+        }
+        
+        const evaluation = data.evaluation;
+        
+        // Build HTML content
+        let htmlContent = `
+            <div style="max-width: 800px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
+                        🎯 Spatial Decision Support System
+                    </h3>
+                    <h4 style="margin: 0; font-size: 18px; opacity: 0.9;">
+                        ${evaluation.business_name}
+                    </h4>
+                    <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+                        Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+                    </div>
+                </div>
+                
+                <!-- Summary Card -->
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h5 style="margin-top: 0; color: #333; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
+                        📊 Evaluation Summary
+                    </h5>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="font-size: 28px; font-weight: bold; color: #28a745;">${evaluation.summary.total_rules_checked}</div>
+                            <div style="font-size: 12px; color: #666;">Rules Checked</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="font-size: 28px; font-weight: bold; color: ${evaluation.summary.critical_issues > 0 ? '#dc3545' : '#17a2b8'}">${evaluation.summary.rules_triggered}</div>
+                            <div style="font-size: 12px; color: #666;">Rules Triggered</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="font-size: 28px; font-weight: bold; color: #dc3545;">${evaluation.summary.critical_issues}</div>
+                            <div style="font-size: 12px; color: #666;">Critical Issues</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="font-size: 28px; font-weight: bold; color: #ffc107;">${evaluation.summary.warnings}</div>
+                            <div style="font-size: 12px; color: #666;">Warnings</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Overall Status -->
+                    <div style="text-align: center; padding: 15px; border-radius: 8px; margin-top: 15px; 
+                                background: ${getStatusColor(evaluation.summary.overall_status, true)};
+                                border: 2px solid ${getStatusColor(evaluation.summary.overall_status)};">
+                        <h4 style="margin: 0; color: ${getStatusColor(evaluation.summary.overall_status)};">
+                            ${getStatusIcon(evaluation.summary.overall_status)} 
+                            ${evaluation.summary.overall_status.replace(/_/g, ' ')}
+                        </h4>
+                    </div>
+                </div>
+                
+                <!-- Rules Results -->
+        `;
+        
+        if (evaluation.rules.length === 0) {
+            htmlContent += `
+                <div style="background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <h5 style="margin: 0; color: #155724;">
+                        ✅ All Clear!
+                    </h5>
+                    <p style="margin: 10px 0 0 0; color: #155724;">
+                        No spatial issues detected. This application meets all spatial planning requirements.
+                    </p>
+                </div>
+            `;
+        } else {
+            htmlContent += `
+                <div style="margin-bottom: 20px;">
+                    <h5 style="color: #333; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
+                        📋 Detailed Findings
+                    </h5>
+            `;
+            
+            evaluation.rules.forEach(rule => {
+                const severityColor = getSeverityColor(rule.severity);
+                const severityBg = getSeverityColor(rule.severity, true);
+                
+                htmlContent += `
+                    <div style="background: ${severityBg}; padding: 15px; border-radius: 8px; 
+                                border-left: 4px solid ${severityColor}; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <h6 style="margin: 0 0 8px 0; color: ${severityColor};">
+                                    ${getSeverityIcon(rule.severity)} ${rule.rule}
+                                </h6>
+                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #333;">
+                                    ${rule.message}
+                                </p>
+                                <p style="margin: 0 0 10px 0; color: #666;">
+                                    <strong>Recommendation:</strong> ${rule.recommendation}
+                                </p>
+                                <p style="margin: 0; color: #666;">
+                                    <strong>Action:</strong> <span style="color: ${severityColor}; font-weight: 600;">${rule.action.replace(/_/g, ' ')}</span>
+                                </p>
+                            </div>
+                            <div style="margin-left: 15px; padding: 5px 10px; background: ${severityColor}; 
+                                        color: white; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                ${rule.severity}
+                            </div>
+                        </div>
+                        
+                        <!-- Show details if available -->
+                        ${rule.details || rule.flood_info ? `
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px;">
+                                <strong style="color: #666; font-size: 13px;">Details:</strong>
+                                <div style="margin-top: 5px; font-size: 13px; color: #666;">
+                                    ${rule.details ? 
+                                        rule.details.map(item => `
+                                            <div style="padding: 3px 0;">
+                                                • ${item.name} (${item.distance}m)
+                                            </div>
+                                        `).join('') 
+                                        : ''}
+                                    ${rule.flood_info ? 
+                                        `<div style="padding: 3px 0;">
+                                            • ${rule.flood_info.hazard_name} - ${rule.flood_info.risk_level} risk
+                                        </div>` 
+                                        : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            htmlContent += `</div>`;
+        }
+        
+        htmlContent += `
+                <!-- Actions -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h6 style="margin: 0 0 10px 0; color: #333;">Next Steps:</h6>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="Swal.close();" 
+                                style="flex: 1; padding: 10px; background: #6c757d; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            Close
+                        </button>
+                        <button onclick="downloadSDSSReport(${businessId}, 'business')" 
+                                style="flex: 1; padding: 10px; background: #17a2b8; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            📄 Download Report
+                        </button>
+                        <button onclick="showOnMap(${businessId}, 'business')" 
+                                style="flex: 1; padding: 10px; background: #28a745; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            🗺️ Show on Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: htmlContent,
+            width: 850,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'sdss-modal'
+            }
+        });
+        
+    } catch (error) {
+        console.error('SDSS Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'SDSS Evaluation Failed',
+            text: error.message || 'An error occurred during spatial analysis.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+/**
+ * Run SDSS check for a construction application
+ */
+async function runConstructionSDSS(constructionId) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'sdss_evaluate_construction');
+        formData.append('construction_id', constructionId);
+        
+        Swal.fire({
+            title: 'Checking Flood Risk...',
+            html: 'Analyzing construction location against flood hazard areas...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Evaluation failed');
+        }
+        
+        const evaluation = data.evaluation;
+        
+        let htmlContent = `
+            <div style="max-width: 800px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #17a2b8 0%, #28a745 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
+                        🏗️ Construction Flood Risk Assessment
+                    </h3>
+                    <h4 style="margin: 0; font-size: 18px; opacity: 0.9;">
+                        ${evaluation.address || 'Construction Site'}
+                    </h4>
+                    <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
+                        Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+                    </div>
+                </div>
+        `;
+        
+        if (evaluation.rules.length === 0) {
+            htmlContent += `
+                <div style="background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <h5 style="margin: 0; color: #155724;">
+                        ✅ No Flood Risk Detected
+                    </h5>
+                    <p style="margin: 10px 0 0 0; color: #155724;">
+                        This construction site is not located in any identified flood hazard areas.
+                    </p>
+                </div>
+            `;
+        } else {
+            evaluation.rules.forEach(rule => {
+                const severityColor = getSeverityColor(rule.severity);
+                const severityBg = getSeverityColor(rule.severity, true);
+                
+                htmlContent += `
+                    <div style="background: ${severityBg}; padding: 20px; border-radius: 8px; 
+                                border-left: 4px solid ${severityColor}; margin-bottom: 20px;">
+                        <h5 style="margin: 0 0 15px 0; color: ${severityColor};">
+                            ${getSeverityIcon(rule.severity)} ${rule.rule}
+                        </h5>
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">
+                            ${rule.message}
+                        </p>
+                        <div style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                            <p style="margin: 0 0 8px 0; color: #666;">
+                                <strong>Recommendation:</strong> ${rule.recommendation}
+                            </p>
+                            <p style="margin: 0; color: #666;">
+                                <strong>Action Required:</strong> <span style="color: ${severityColor}; font-weight: 600;">${rule.action.replace(/_/g, ' ')}</span>
+                            </p>
+                        </div>
+                        
+                        ${rule.flood_info ? `
+                            <div style="padding: 10px; background: #f8f9fa; border-radius: 5px; margin-top: 10px;">
+                                <h6 style="margin: 0 0 8px 0; color: #666;">Flood Hazard Details:</h6>
+                                <div style="font-size: 14px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="color: #666;">Name:</span>
+                                        <span style="font-weight: 600;">${rule.flood_info.hazard_name}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="color: #666;">Risk Level:</span>
+                                        <span style="color: ${severityColor}; font-weight: 600;">${rule.flood_info.risk_level.toUpperCase()}</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span style="color: #666;">Description:</span>
+                                        <span style="text-align: right;">${rule.flood_info.description || 'No description'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+        
+        htmlContent += `
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h6 style="margin: 0 0 10px 0; color: #333;">Assessment Result:</h6>
+                    <div style="padding: 12px; background: white; border-radius: 6px; border-left: 4px solid ${getStatusColor(evaluation.summary.overall_status)};">
+                        <h5 style="margin: 0; color: ${getStatusColor(evaluation.summary.overall_status)};">
+                            ${getStatusIcon(evaluation.summary.overall_status)} 
+                            ${evaluation.summary.overall_status.replace(/_/g, ' ')}
+                        </h5>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="Swal.close();" 
+                                style="flex: 1; padding: 10px; background: #6c757d; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            Close
+                        </button>
+                        <button onclick="downloadSDSSReport(${constructionId}, 'construction')" 
+                                style="flex: 1; padding: 10px; background: #17a2b8; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            📄 Download Report
+                        </button>
+                        <button onclick="showOnMap(${constructionId}, 'construction')" 
+                                style="flex: 1; padding: 10px; background: #28a745; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer;">
+                            🗺️ Show on Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: htmlContent,
+            width: 850,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'sdss-modal'
+            }
+        });
+        
+    } catch (error) {
+        console.error('SDSS Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'SDSS Evaluation Failed',
+            text: error.message || 'An error occurred during flood risk analysis.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+/**
+ * Helper: Get status color
+ */
+function getStatusColor(status, light = false) {
+    const colors = {
+        'APPROVE': light ? '#d4edda' : '#28a745',
+        'APPROVE_WITH_CONDITIONS': light ? '#fff3cd' : '#ffc107',
+        'DENY_OR_RELOCATE': light ? '#f8d7da' : '#dc3545',
+        'REQUIRE_MITIGATION': light ? '#f8d7da' : '#dc3545'
+    };
+    return colors[status] || (light ? '#e9ecef' : '#6c757d');
+}
+
+/**
+ * Helper: Get status icon
+ */
+function getStatusIcon(status) {
+    const icons = {
+        'APPROVE': '✅',
+        'APPROVE_WITH_CONDITIONS': '⚠️',
+        'DENY_OR_RELOCATE': '🚫',
+        'REQUIRE_MITIGATION': '⚠️'
+    };
+    return icons[status] || '📋';
+}
+
+/**
+ * Helper: Get severity color
+ */
+function getSeverityColor(severity, light = false) {
+    const colors = {
+        'CRITICAL': light ? '#f8d7da' : '#dc3545',
+        'WARNING': light ? '#fff3cd' : '#ffc107',
+        'INFO': light ? '#d1ecf1' : '#17a2b8'
+    };
+    return colors[severity] || (light ? '#e9ecef' : '#6c757d');
+}
+
+/**
+ * Helper: Get severity icon
+ */
+function getSeverityIcon(severity) {
+    const icons = {
+        'CRITICAL': '🚫',
+        'WARNING': '⚠️',
+        'INFO': 'ℹ️'
+    };
+    return icons[severity] || '📋';
+}
+
+/**
+ * Download SDSS report as PDF
+ */
+function downloadSDSSReport(id, type) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Report Generation',
+        text: 'PDF report feature coming soon!',
+        confirmButtonText: 'OK'
+    });
+}
+
+/**
+ * Show location on map
+ */
+function showOnMap(id, type) {
+    Swal.close();
+    
+    // Get location from appropriate table
+    const formData = new FormData();
+    formData.append('action', type === 'business' ? 'get_business_details' : 'get_construction_details');
+    formData.append('id', id);
+    
+    fetch(MAP_HANDLER_URL, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const item = data.data;
+            const lat = parseFloat(item.latitude);
+            const lng = parseFloat(item.longitude);
+            
+            // Fly to location
+            map.flyTo([lat, lng], 18, { duration: 1.5 });
+            
+            // Show marker
+            const marker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'sdss-marker',
+                    html: `<div style="
+                        width: 30px; height: 30px; background: #ffc107; 
+                        border-radius: 50%; border: 3px solid white; 
+                        box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
+                        animation: pulse 2s infinite;
+                    "></div>`,
+                    iconSize: [30, 30]
+                })
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <div style="padding: 10px;">
+                    <strong>${type === 'business' ? item.business_name : item.construction_address}</strong><br>
+                    <small>${type === 'business' ? 'Business' : 'Construction'}</small><br>
+                    <small>Click to close</small>
+                </div>
+            `).openPopup();
+            
+            // Remove after 15 seconds
+            setTimeout(() => {
+                if (map.hasLayer(marker)) {
+                    map.removeLayer(marker);
+                }
+            }, 15000);
+        }
+    });
+}
+
+/**
+ * Test SDSS functions
+ */
+function testSDSS() {
+    Swal.fire({
+        title: 'Test SDSS Functions',
+        html: `
+            <div style="text-align: left;">
+                <p>Select a test to run:</p>
+                <select id="testType" class="swal2-input" style="margin-bottom: 10px;">
+                    <option value="business">Business Application</option>
+                    <option value="construction">Construction Permit</option>
+                </select>
+                <input id="testId" class="swal2-input" placeholder="Enter ID to test">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Run Test',
+        preConfirm: () => {
+            const type = document.getElementById('testType').value;
+            const id = document.getElementById('testId').value;
+            
+            if (!id) {
+                Swal.showValidationMessage('Please enter an ID');
+                return false;
+            }
+            
+            if (type === 'business') {
+                runBusinessSDSS(parseInt(id));
+            } else {
+                runConstructionSDSS(parseInt(id));
+            }
+        }
+    });
+}
+
+// ==================== UPDATED FUNCTIONS FOR NEW API STRUCTURE ====================
+
+// Update the viewMapDetails function to use new API structure
+async function viewMapDetails(id, type) {
+    try {
+        const formData = new FormData();
+        
+        // Map type to new action names
+        const actionMap = {
+            'construction': 'get_construction_details',
+            'business': 'get_business_details',
+            'utility': 'get_utilities_details',
+            'household': 'get_household_details'
+        };
+        
+        formData.append('action', actionMap[type]);
+        formData.append('id', id);
+
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayDetailsInModal(data.data, type);
+        }
+    } catch (error) {
+        console.error('Error loading details:', error);
+    }
+}
+
+// Add a test function to verify the new flood detection works
+async function testFixedFloodDetection() {
+    console.log("=== TESTING FIXED FLOOD DETECTION ===");
+    
+    try {
+        // Test 1: Get houses in flood with coverage percentages
+        const housesResponse = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_houses_in_flood'
+        });
+        
+        const housesData = await housesResponse.json();
+        
+        if (housesData.success && housesData.houses.length > 0) {
+            console.log(`✅ Found ${housesData.houses.length} houses in flood areas`);
+            
+            // Check if we have different coverage percentages (not all 100%)
+            const differentCoverages = housesData.houses.some(house => {
+                const coverage = house.flood_coverage_percent;
+                return coverage !== 100 && coverage !== null && coverage !== undefined;
+            });
+            
+            if (differentCoverages) {
+                console.log("✅ SUCCESS: Flood detection is working with precise coverage percentages!");
+                console.log("Coverage percentages found:", housesData.houses.map(h => h.flood_coverage_percent));
+            } else {
+                console.log("⚠️ WARNING: All houses show 100% coverage. The fix may not be working.");
+            }
+            
+            // Test 2: Get flood summary
+            const summaryResponse = await fetch(MAP_HANDLER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=get_flood_houses_summary'
+            });
+            
+            const summaryData = await summaryResponse.json();
+            
+            if (summaryData.success) {
+                console.log("✅ Flood summary loaded successfully");
+                console.log("Summary:", summaryData.summary);
+            }
+        } else {
+            console.log("ℹ️ No houses found in flood areas (this might be expected)");
+        }
+        
+    } catch (error) {
+        console.error("❌ Error testing flood detection:", error);
+    }
+}
+
+// Add this function to your debug buttons section
+function testFixedFloodDetectionButton() {
+    Swal.fire({
+        title: 'Testing Fixed Flood Detection',
+        html: 'Running the improved flood detection system...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    testFixedFloodDetection().then(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Test Complete',
+            html: 'Check browser console for results.<br><br>The fixed system should show:<br>• Different coverage percentages (not all 100%)<br>• Houses classified as Fully/Partially/Minimally Affected<br>• Accurate counts in summary',
+            confirmButtonText: 'OK'
+        });
     });
 }
