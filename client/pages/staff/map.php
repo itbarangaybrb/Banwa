@@ -225,39 +225,7 @@
                 
                 <div id="map"></div>
                 
-                <div class="map-info">
-                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
-                </div>
-
-                <div class="map-info">
-                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
-                </div>
-                
-                <!-- Debug Buttons Section -->
-                <div class="debug-buttons" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;">
-                    <h4 style="margin-bottom: 10px; color: #333; font-size: 0.9em;">
-                        <i class="fas fa-bug"></i> Flood Detection Debug Tools
-                    </h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button onclick="debugFloodPolygon()" style="padding: 8px 12px; background: #17a2b8; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-                            <i class="fas fa-bug"></i> Debug Flood Polygon
-                        </button>
-                        <button onclick="testSpecificPoints()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-                            <i class="fas fa-vial"></i> Test Points
-                        </button>
-                        <button onclick="showFloodSummary()" style="padding: 8px 12px; background: #ff9900; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-                            <i class="fas fa-chart-bar"></i> Show Flood Summary
-                        </button>
-                        <button onclick="updateMarkerFloodWarnings()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-                            <i class="fas fa-sync-alt"></i> Refresh Warnings
-                        </button>
-                        <button onclick="debugFloodDetection()" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-                            <i class="fas fa-search"></i> Advanced Debug
-                        </button>
-                    </div>
-                </div>
-
-                <!-- SDSS Test Buttons -->
+               <!-- debug buttons section -->
 <div class="debug-buttons" style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #d1ecf1;">
     <h4 style="margin-bottom: 10px; color: #333; font-size: 0.9em;">
         <i class="fas fa-chart-line"></i> SDSS Spatial Analysis Tools
@@ -266,11 +234,11 @@
         <button onclick="testSDSS()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
             <i class="fas fa-play"></i> Test SDSS
         </button>
-        <button onclick="runBusinessSDSS(1)" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-store"></i> Test Business
+        <button onclick="showAllBusinessesSDSSReport()" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-store"></i> Business SDSS Report
         </button>
-        <button onclick="runConstructionSDSS(1)" style="padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-hard-hat"></i> Test Construction
+        <button onclick="showAllConstructionSDSSReport()" style="padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
+            <i class="fas fa-hard-hat"></i> Construction SDSS Report
         </button>
         <button onclick="showImprovedFloodSummary()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
             <i class="fas fa-chart-bar"></i> Flood Summary
