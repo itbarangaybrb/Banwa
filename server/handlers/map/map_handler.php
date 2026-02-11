@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../configs/database.php';
 
+// ==================== UTILITY FUNCTIONS ====================
+
 function getUtilitiesMarkers()
 {
     global $pdo;
@@ -134,6 +136,8 @@ function getGenericById($id)
         return null;
     }
 }
+
+// ==================== FLOOD HAZARD FUNCTIONS ====================
 
 function getAllFloodHazards()
 {
@@ -672,6 +676,8 @@ function sdss_evaluateAllConstruction()
     return $results;
 }
 
+// ==================== HOUSE POLYGON FUNCTIONS ====================
+
 function getHousePolygons()
 {
     global $pdo;
@@ -703,9 +709,584 @@ function getHouseById($houseId)
     }
 }
 
+// ==================== NEW FAULT LINE ASSESSMENT FUNCTIONS ====================
+
+/**
+ * Get fault line risk assessment for all structures
+ */
+function getFaultLineAssessment() {
+    global $pdo;
+    
+    try {
+        // Fault line coordinates (hardcoded for now - can be moved to database later)
+        $faultLineCoords = [
+            [14.6175408, 121.0765329],
+            [14.6177993, 121.0765362],
+            [14.6180432, 121.0765517],
+            [14.6182482, 121.0765671],
+            [14.6185088, 121.0765914],
+            [14.6188121, 121.0766554],
+            [14.6190770, 121.0767448]
+        ];
+        
+        // Get all house polygons
+        $sql = "SELECT house_id, address, street_name, house_number, 
+                       center_lat, center_lng, area_sqm
+                FROM house_polygons
+                WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
+        $stmt = $pdo->query($sql);
+        $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $structures_at_risk = [];
+        $critical_count = 0;
+        $high_risk_count = 0;
+        $medium_risk_count = 0;
+        
+        foreach ($houses as $house) {
+            $minDistance = PHP_FLOAT_MAX;
+            
+            // Calculate minimum distance to fault line
+            for ($i = 0; $i < count($faultLineCoords) - 1; $i++) {
+                $distance = calculateDistanceToLineSegment(
+                    $house['center_lat'], 
+                    $house['center_lng'],
+                    $faultLineCoords[$i][0], 
+                    $faultLineCoords[$i][1],
+                    $faultLineCoords[$i + 1][0], 
+                    $faultLineCoords[$i + 1][1]
+                );
+                $minDistance = min($minDistance, $distance);
+            }
+            
+            // Categorize risk level
+            $risk_level = null;
+            $requirements = [];
+            
+            if ($minDistance < 50) {
+                $risk_level = 'critical';
+                $critical_count++;
+                $requirements = [
+                    'Construction prohibited within 50m of fault line',
+                    'Existing structures require immediate seismic assessment',
+                    'Special engineering evaluation mandatory',
+                    'Seismic retrofitting required'
+                ];
+            } elseif ($minDistance < 100) {
+                $risk_level = 'high';
+                $high_risk_count++;
+                $requirements = [
+                    'Seismic design standards mandatory',
+                    'Structural engineer certification required',
+                    'Regular safety inspections needed',
+                    'Enhanced foundation required'
+                ];
+            } elseif ($minDistance < 200) {
+                $risk_level = 'medium';
+                $medium_risk_count++;
+                $requirements = [
+                    'Enhanced foundation design recommended',
+                    'Earthquake preparedness plan required',
+                    'Standard building codes with seismic provisions'
+                ];
+            }
+            
+            if ($risk_level) {
+                $structures_at_risk[] = [
+                    'house_id' => $house['house_id'],
+                    'address' => $house['address'],
+                    'street_name' => $house['street_name'],
+                    'house_number' => $house['house_number'],
+                    'latitude' => $house['center_lat'],
+                    'longitude' => $house['center_lng'],
+                    'distance_meters' => round($minDistance),
+                    'risk_level' => $risk_level,
+                    'requirements' => $requirements
+                ];
+            }
+        }
+        
+        // Sort by risk level (critical first) then by distance
+        usort($structures_at_risk, function($a, $b) {
+            $riskOrder = ['critical' => 0, 'high' => 1, 'medium' => 2];
+            $aOrder = $riskOrder[$a['risk_level']] ?? 999;
+            $bOrder = $riskOrder[$b['risk_level']] ?? 999;
+            
+            if ($aOrder === $bOrder) {
+                return $a['distance_meters'] - $b['distance_meters'];
+            }
+            return $aOrder - $bOrder;
+        });
+        
+        return [
+            'status' => 'success',
+            'data' => [
+                'summary' => [
+                    'total_at_risk' => count($structures_at_risk),
+                    'critical' => $critical_count,
+                    'high_risk' => $high_risk_count,
+                    'medium_risk' => $medium_risk_count
+                ],
+                'structures' => $structures_at_risk
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in getFaultLineAssessment: " . $e->getMessage());
+        return [
+            'status' => 'error',
+            'message' => 'Failed to assess fault line risk: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * Calculate distance from a point to a line segment (in meters)
+ */
+function calculateDistanceToLineSegment($pointLat, $pointLng, $line1Lat, $line1Lng, $line2Lat, $line2Lng) {
+    // Convert to radians
+    $lat1 = deg2rad($pointLat);
+    $lon1 = deg2rad($pointLng);
+    $lat2 = deg2rad($line1Lat);
+    $lon2 = deg2rad($line1Lng);
+    $lat3 = deg2rad($line2Lat);
+    $lon3 = deg2rad($line2Lng);
+    
+    // Earth radius in meters
+    $R = 6371000;
+    
+    // Calculate distances
+    $d12 = calculateHaversineDistance($line1Lat, $line1Lng, $line2Lat, $line2Lng);
+    $d1p = calculateHaversineDistance($line1Lat, $line1Lng, $pointLat, $pointLng);
+    $d2p = calculateHaversineDistance($line2Lat, $line2Lng, $pointLat, $pointLng);
+    
+    // If line segment has zero length
+    if ($d12 < 0.001) {
+        return $d1p;
+    }
+    
+    // Calculate cross track distance (perpendicular distance from point to infinite line)
+    $bearing12 = calculateBearing($line1Lat, $line1Lng, $line2Lat, $line2Lng);
+    $bearing1p = calculateBearing($line1Lat, $line1Lng, $pointLat, $pointLng);
+    
+    $dxt = asin(sin($d1p / $R) * sin(deg2rad($bearing1p) - deg2rad($bearing12))) * $R;
+    
+    // Calculate along track distance
+    $dat = acos(cos($d1p / $R) / cos($dxt / $R)) * $R;
+    
+    // Check if perpendicular point is on the segment
+    if ($dat > $d12) {
+        return $d2p; // Closer to end point
+    } elseif ($dat < 0) {
+        return $d1p; // Closer to start point
+    } else {
+        return abs($dxt); // Perpendicular distance
+    }
+}
+
+/**
+ * Calculate bearing between two points
+ */
+function calculateBearing($lat1, $lon1, $lat2, $lon2) {
+    $lat1 = deg2rad($lat1);
+    $lon1 = deg2rad($lon1);
+    $lat2 = deg2rad($lat2);
+    $lon2 = deg2rad($lon2);
+    
+    $dLon = $lon2 - $lon1;
+    
+    $y = sin($dLon) * cos($lat2);
+    $x = cos($lat1) * sin($lat2) - sin($lat1) * cos($lat2) * cos($dLon);
+    
+    $bearing = atan2($y, $x);
+    
+    return rad2deg($bearing);
+}
+
+/**
+ * Calculate Haversine distance between two points (in meters)
+ */
+function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
+    $R = 6371000; // Earth radius in meters
+    
+    $lat1 = deg2rad($lat1);
+    $lon1 = deg2rad($lon1);
+    $lat2 = deg2rad($lat2);
+    $lon2 = deg2rad($lon2);
+    
+    $dlat = $lat2 - $lat1;
+    $dlon = $lon2 - $lon1;
+    
+    $a = sin($dlat / 2) * sin($dlat / 2) +
+         cos($lat1) * cos($lat2) *
+         sin($dlon / 2) * sin($dlon / 2);
+    
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    
+    return $R * $c;
+}
+
+// ==================== NEW BUSINESS SDSS REPORT FUNCTIONS ====================
+
+/**
+ * Get SDSS report for all businesses
+ */
+function getBusinessSDSSReport() {
+    global $pdo;
+    
+    try {
+        // Get all businesses with coordinates
+        $sql = "SELECT id, business_name, type_of_business, nature_of_business,
+                       address_of_business, no_of_employees, latitude, longitude,
+                       first_name, middle_name, last_name
+                FROM business_applications
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $stmt = $pdo->query($sql);
+        $businesses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $warnings = [];
+        
+        foreach ($businesses as $business) {
+            $businessWarnings = evaluateBusinessSDSS($business, $pdo);
+            if (!empty($businessWarnings)) {
+                $warnings[] = $businessWarnings;
+            }
+        }
+        
+        return [
+            'status' => 'success',
+            'data' => [
+                'summary' => [
+                    'total' => count($businesses),
+                    'with_warnings' => count($warnings),
+                    'compliant' => count($businesses) - count($warnings)
+                ],
+                'warnings' => $warnings
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in getBusinessSDSSReport: " . $e->getMessage());
+        return [
+            'status' => 'error',
+            'message' => 'Failed to generate business SDSS report: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * Evaluate a single business against SDSS rules
+ */
+function evaluateBusinessSDSS($business, $pdo) {
+    $lat = $business['latitude'];
+    $lng = $business['longitude'];
+    
+    // Check flood risk
+    $floodRisk = checkPointInFloodZone($lat, $lng);
+    
+    // Check fault line proximity
+    $faultLineDistance = getDistanceToFaultLine($lat, $lng);
+    
+    // Collect warnings
+    $businessData = [
+        'business' => $business,
+        'warnings' => []
+    ];
+    
+    $maxSeverity = null;
+    
+    // Rule 1: Flood zone check
+    if ($floodRisk && isset($floodRisk['risk_level'])) {
+        $riskLevel = strtolower($floodRisk['risk_level']);
+        
+        if ($riskLevel === 'high') {
+            $businessData['warnings'][] = [
+                'type' => 'Flood Hazard Violation',
+                'description' => 'Business located in HIGH flood risk zone',
+                'severity' => 'CRITICAL',
+                'actions' => [
+                    'Install flood barriers and elevation systems immediately',
+                    'Develop and implement emergency evacuation plan',
+                    'Store inventory and equipment above flood level',
+                    'Obtain flood insurance coverage',
+                    'Install early warning systems'
+                ]
+            ];
+            $maxSeverity = 'CRITICAL';
+        } elseif ($riskLevel === 'medium') {
+            $businessData['warnings'][] = [
+                'type' => 'Flood Risk Warning',
+                'description' => 'Business located in MEDIUM flood risk zone',
+                'severity' => 'HIGH',
+                'actions' => [
+                    'Prepare flood mitigation measures',
+                    'Monitor weather alerts during rainy season',
+                    'Prepare sandbags and drainage systems',
+                    'Keep emergency supplies ready'
+                ]
+            ];
+            $maxSeverity = $maxSeverity ?? 'HIGH';
+        }
+    }
+    
+    // Rule 2: Fault line proximity check
+    if ($faultLineDistance < 50) {
+        $businessData['warnings'][] = [
+            'type' => 'Fault Line Critical Violation',
+            'description' => "Business within {$faultLineDistance}m of fault line (prohibited zone)",
+            'severity' => 'CRITICAL',
+            'actions' => [
+                'Business operations within 50m of fault line are PROHIBITED',
+                'Immediate structural assessment required',
+                'Seismic retrofitting mandatory',
+                'Special permits and engineering certification needed',
+                'Consider relocation'
+            ]
+        ];
+        $maxSeverity = 'CRITICAL';
+    } elseif ($faultLineDistance < 100) {
+        $businessData['warnings'][] = [
+            'type' => 'Fault Line High Risk',
+            'description' => "Business within {$faultLineDistance}m of fault line",
+            'severity' => 'HIGH',
+            'actions' => [
+                'Seismic design standards mandatory',
+                'Structural engineer certification required',
+                'Regular safety inspections needed',
+                'Enhanced foundation requirements'
+            ]
+        ];
+        $maxSeverity = $maxSeverity ?? 'HIGH';
+    }
+    
+    // Rule 3: Employee capacity check
+    $employees = intval($business['no_of_employees'] ?? 0);
+    if ($employees > 50) {
+        $businessData['warnings'][] = [
+            'type' => 'High Occupancy Warning',
+            'description' => "High employee count ({$employees} employees)",
+            'severity' => 'MEDIUM',
+            'actions' => [
+                'Ensure adequate space per employee',
+                'Verify fire safety equipment capacity',
+                'Conduct regular safety drills',
+                'Ensure proper ventilation and emergency exits'
+            ]
+        ];
+        $maxSeverity = $maxSeverity ?? 'MEDIUM';
+    }
+    
+    // Return only if there are warnings
+    if (empty($businessData['warnings'])) {
+        return null;
+    }
+    
+    // Set the highest severity
+    $businessData['severity'] = $maxSeverity;
+    
+    return $businessData;
+}
+
+// ==================== NEW CONSTRUCTION SDSS REPORT FUNCTIONS ====================
+
+/**
+ * Get SDSS report for all construction sites
+ */
+function getConstructionSDSSReport() {
+    global $pdo;
+    
+    try {
+        // Get all construction with coordinates
+        $sql = "SELECT id, first_name, middle_name, last_name, construction_address,
+                       type_of_work, nature_of_work, number_of_workers, 
+                       number_of_working_days, latitude, longitude
+                FROM construction_applications
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $stmt = $pdo->query($sql);
+        $constructions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $warnings = [];
+        
+        foreach ($constructions as $construction) {
+            $constructionWarnings = evaluateConstructionSDSS($construction, $pdo);
+            if (!empty($constructionWarnings)) {
+                $warnings[] = $constructionWarnings;
+            }
+        }
+        
+        return [
+            'status' => 'success',
+            'data' => [
+                'summary' => [
+                    'total' => count($constructions),
+                    'with_warnings' => count($warnings),
+                    'compliant' => count($constructions) - count($warnings)
+                ],
+                'warnings' => $warnings
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in getConstructionSDSSReport: " . $e->getMessage());
+        return [
+            'status' => 'error',
+            'message' => 'Failed to generate construction SDSS report: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * Evaluate a single construction site against SDSS rules
+ */
+function evaluateConstructionSDSS($construction, $pdo) {
+    $lat = $construction['latitude'];
+    $lng = $construction['longitude'];
+    
+    // Check flood risk
+    $floodRisk = checkPointInFloodZone($lat, $lng);
+    
+    // Check fault line proximity
+    $faultLineDistance = getDistanceToFaultLine($lat, $lng);
+    
+    // Determine project type
+    $typeOfWork = strtolower($construction['type_of_work'] ?? '');
+    $projectType = 'minor';
+    if (strpos($typeOfWork, 'major') !== false) $projectType = 'major';
+    elseif (strpos($typeOfWork, 'repair') !== false) $projectType = 'repair';
+    elseif (strpos($typeOfWork, 'demolition') !== false) $projectType = 'demolition';
+    
+    // Minimum workers required
+    $minWorkersRequired = [
+        'major' => 10,
+        'minor' => 3,
+        'repair' => 2,
+        'demolition' => 5
+    ];
+    
+    $constructionData = [
+        'construction' => $construction,
+        'warnings' => []
+    ];
+    
+    $maxSeverity = null;
+    
+    // Rule 1: Flood zone construction
+    if ($floodRisk && isset($floodRisk['risk_level'])) {
+        $riskLevel = strtolower($floodRisk['risk_level']);
+        
+        if ($riskLevel === 'high') {
+            $constructionData['warnings'][] = [
+                'type' => 'Flood Zone Construction Violation',
+                'description' => 'Construction in HIGH flood risk zone',
+                'severity' => 'CRITICAL',
+                'actions' => [
+                    'Flood-resistant construction methods MANDATORY',
+                    'Elevated foundation required (minimum 1.5m above ground)',
+                    'Waterproof materials required for basement/ground floor',
+                    'Install flood barriers and drainage systems',
+                    'Obtain special flood zone construction permit'
+                ]
+            ];
+            $maxSeverity = 'CRITICAL';
+        }
+    }
+    
+    // Rule 2: Fault line setback
+    if ($faultLineDistance < 50) {
+        $constructionData['warnings'][] = [
+            'type' => 'Fault Line Setback Violation',
+            'description' => "Construction within {$faultLineDistance}m of fault line (PROHIBITED)",
+            'severity' => 'CRITICAL',
+            'actions' => [
+                'CONSTRUCTION PROHIBITED within 50m of fault line',
+                'Stop all work immediately',
+                'Relocate construction site',
+                'Legal action may be taken for violations',
+                'Consult with city engineer'
+            ]
+        ];
+        $maxSeverity = 'CRITICAL';
+    } elseif ($faultLineDistance < 100) {
+        $constructionData['warnings'][] = [
+            'type' => 'Seismic Requirements',
+            'description' => "Construction within {$faultLineDistance}m of fault line",
+            'severity' => 'HIGH',
+            'actions' => [
+                'Seismic design standards MANDATORY',
+                'Structural engineer certification required',
+                'Enhanced foundation and reinforcement',
+                'Regular structural inspections during construction'
+            ]
+        ];
+        $maxSeverity = $maxSeverity ?? 'HIGH';
+    }
+    
+    // Rule 3: Worker adequacy
+    $workers = intval($construction['number_of_workers'] ?? 0);
+    $minRequired = $minWorkersRequired[$projectType] ?? 3;
+    
+    if ($workers < $minRequired) {
+        $constructionData['warnings'][] = [
+            'type' => 'Inadequate Workforce',
+            'description' => "{$projectType} construction requires minimum {$minRequired} workers (current: {$workers})",
+            'severity' => 'MEDIUM',
+            'actions' => [
+                "Increase workforce to minimum {$minRequired} workers",
+                'Ensure proper supervision and safety coverage',
+                'Verify all workers have safety training',
+                'Implement buddy system for safety'
+            ]
+        ];
+        $maxSeverity = $maxSeverity ?? 'MEDIUM';
+    }
+    
+    // Return only if there are warnings
+    if (empty($constructionData['warnings'])) {
+        return null;
+    }
+    
+    $constructionData['severity'] = $maxSeverity;
+    
+    return $constructionData;
+}
+
+/**
+ * Get distance from point to fault line
+ */
+function getDistanceToFaultLine($lat, $lng) {
+    $faultLineCoords = [
+        [14.6175408, 121.0765329],
+        [14.6177993, 121.0765362],
+        [14.6180432, 121.0765517],
+        [14.6182482, 121.0765671],
+        [14.6185088, 121.0765914],
+        [14.6188121, 121.0766554],
+        [14.6190770, 121.0767448]
+    ];
+    
+    $minDistance = PHP_FLOAT_MAX;
+    
+    for ($i = 0; $i < count($faultLineCoords) - 1; $i++) {
+        $distance = calculateDistanceToLineSegment(
+            $lat, 
+            $lng,
+            $faultLineCoords[$i][0], 
+            $faultLineCoords[$i][1],
+            $faultLineCoords[$i + 1][0], 
+            $faultLineCoords[$i + 1][1]
+        );
+        $minDistance = min($minDistance, $distance);
+    }
+    
+    return round($minDistance);
+}
+
+// ==================== POST REQUEST HANDLER ====================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
+    // ==================== MARKER FUNCTIONS ====================
+    
     if ($_POST['action'] === 'get_utilities_markers') {
         echo json_encode(['success' => true, 'markers' => getUtilitiesMarkers()]);
         exit;
@@ -726,6 +1307,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
+    // ==================== DETAIL FUNCTIONS ====================
+    
     if ($_POST['action'] === 'get_utilities_details') {
         $data = getUtilitiesById($_POST['id'] ?? 0);
         echo json_encode($data ? ['success' => true, 'data' => $data] : ['success' => false]);
@@ -750,6 +1333,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
+    // ==================== FLOOD HAZARD FUNCTIONS ====================
+    
     if ($_POST['action'] === 'get_flood_hazards') {
         echo json_encode(['success' => true, 'hazards' => getAllFloodHazards()]);
         exit;
@@ -772,11 +1357,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
+    // NEW: Flood summary for the fixed assessment
+    if ($_POST['action'] === 'get_flood_summary') {
+        $summary = getFloodAffectedHousesSummary();
+        $houses = getHousesInFloodAreas();
+        
+        echo json_encode([
+            'status' => 'success',
+            'data' => [
+                'summary' => $summary,
+                'houses' => $houses
+            ]
+        ]);
+        exit;
+    }
+
     if ($_POST['action'] === 'get_flood_warning') {
         echo json_encode(['success' => true, 'warning' => getFloodWarning($_POST['risk_level'] ?? 'low', $_POST['impact_level'] ?? 'Fully Affected')]);
         exit;
     }
 
+    // ==================== HOUSE POLYGON FUNCTIONS ====================
+    
     if ($_POST['action'] === 'get_houses') {
         echo json_encode(['success' => true, 'houses' => getHousePolygons()]);
         exit;
@@ -788,6 +1390,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
+    if ($_POST['action'] === 'get_house_polygons') {
+        $houses = getHousePolygons();
+        echo json_encode(['success' => true, 'houses' => $houses]);
+        exit;
+    }
+
+    // ==================== SDSS FUNCTIONS ====================
+    
     if ($_POST['action'] === 'sdss_evaluate_business') {
         $evaluation = sdss_evaluateBusiness($_POST['business_id'] ?? 0);
         echo json_encode(['success' => !isset($evaluation['error']), 'evaluation' => $evaluation]);
@@ -800,20 +1410,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // NEW: Get complete SDSS report for all businesses
     if ($_POST['action'] === 'sdss_get_all_businesses_report' || $_POST['action'] === 'sdss_evaluate_all_businesses') {
         $report = sdss_evaluateAllBusinesses();
         echo json_encode(['success' => true, 'report' => $report, 'results' => $report['affected'] ?? []]);
         exit;
     }
 
-    // NEW: Get complete SDSS report for all construction
     if ($_POST['action'] === 'sdss_get_all_construction_report' || $_POST['action'] === 'sdss_evaluate_all_construction') {
         $report = sdss_evaluateAllConstruction();
         echo json_encode(['success' => true, 'report' => $report, 'results' => $report['affected'] ?? []]);
         exit;
     }
 
+    // ==================== NEW FAULT LINE FUNCTIONS ====================
+    
+    // Fault line assessment
+    if ($_POST['action'] === 'get_fault_line_assessment') {
+        $result = getFaultLineAssessment();
+        echo json_encode($result);
+        exit;
+    }
+    
+    // Get fault line (if you have this data)
+    if ($_POST['action'] === 'get_fault_line') {
+        // Example fault line coordinates - replace with actual data from database
+        $faultLine = [
+            'coordinates' => [
+                [14.6175408, 121.0765329],
+                [14.6177993, 121.0765362],
+                [14.6180432, 121.0765517],
+                [14.6182482, 121.0765671],
+                [14.6185088, 121.0765914],
+                [14.6188121, 121.0766554],
+                [14.6190770, 121.0767448]
+            ]
+        ];
+        echo json_encode(['success' => true, 'fault_line' => $faultLine]);
+        exit;
+    }
+
+    // ==================== NEW BUSINESS SDSS REPORT FUNCTIONS ====================
+    
+    // Business SDSS report
+    if ($_POST['action'] === 'get_business_sdss_report') {
+        $result = getBusinessSDSSReport();
+        echo json_encode($result);
+        exit;
+    }
+
+    // ==================== NEW CONSTRUCTION SDSS REPORT FUNCTIONS ====================
+    
+    // Construction SDSS report
+    if ($_POST['action'] === 'get_construction_sdss_report') {
+        $result = getConstructionSDSSReport();
+        echo json_encode($result);
+        exit;
+    }
+
+    // ==================== COMBINED FUNCTIONS ====================
+    
     // Get all markers (combined)
     if ($_POST['action'] === 'get_all_markers') {
         $allMarkers = [];
@@ -873,28 +1528,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         
         echo json_encode(['success' => true, 'markers' => $allMarkers]);
-        exit;
-    }
-
-    // Get house polygons
-    if ($_POST['action'] === 'get_house_polygons') {
-        $houses = getHousePolygons();
-        echo json_encode(['success' => true, 'houses' => $houses]);
-        exit;
-    }
-
-    // Get fault line (if you have this data)
-    if ($_POST['action'] === 'get_fault_line') {
-        // Example fault line coordinates - replace with actual data from database
-        $faultLine = [
-            'coordinates' => [
-                [14.6160, 121.0730],
-                [14.6170, 121.0750],
-                [14.6180, 121.0770],
-                [14.6190, 121.0790]
-            ]
-        ];
-        echo json_encode(['success' => true, 'fault_line' => $faultLine]);
         exit;
     }
 
