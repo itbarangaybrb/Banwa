@@ -666,7 +666,10 @@ function handleChartConstructionType($pdo)
         $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $sql2 = "
-            SELECT nature_of_activity, COUNT(*) AS total
+            SELECT 
+                nature_of_activity, 
+                COUNT(*) AS total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM construction_applications
             GROUP BY nature_of_activity
             ORDER BY total ASC
@@ -676,7 +679,10 @@ function handleChartConstructionType($pdo)
         $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
         $sql3 = "
-            SELECT COALESCE(ce.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+            SELECT 
+                COALESCE(ce.dss_status, 'Pending Evaluation') as dss_status, 
+                COUNT(*) as total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM construction_applications ca
             LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
             GROUP BY COALESCE(ce.dss_status, 'Pending Evaluation')
