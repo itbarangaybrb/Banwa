@@ -1347,7 +1347,6 @@ function getFloodSafetyAdvice(riskLevel) {
         'high': 'High flood risk. Consider elevation, flood barriers, and evacuation plan.',
         'medium': 'Moderate flood risk. Install check valves and keep drains clear.',
         'low': 'Low flood risk. Monitor weather alerts and prepare emergency kit.',
-        'very-low': 'Minimal flood risk. Stay informed during heavy rainfall.'
     };
     
     return advice[riskLevel] || 'Take necessary precautions during heavy rainfall.';
@@ -1358,7 +1357,6 @@ function getFloodRiskColor(riskLevel) {
         'high': '#ff0000',
         'medium': '#ff9900',
         'low': '#ffff00',
-        'very-low': '#0066cc'
     };
     return colors[riskLevel] || '#666666';
 }
@@ -1616,14 +1614,6 @@ function getFloodAreaStyle(riskLevel) {
             opacity: 0.6,
             dashArray: '3, 3'
         },
-        'very-low': {
-            fillColor: '#cce6ff',
-            color: '#99ccff',
-            fillOpacity: 0.15,
-            weight: 1,
-            opacity: 0.5,
-            dashArray: '2, 2'
-        }
     };
     
     return styles[riskLevel] || styles.medium;
@@ -1652,10 +1642,6 @@ function addFloodLegend() {
             <div class="flood-legend-item">
                 <div class="flood-legend-color" style="background: #ffff00; opacity: 0.2;"></div>
                 <span class="flood-legend-text">Low Risk</span>
-            </div>
-            <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #cce6ff; opacity: 0.15;"></div>
-                <span class="flood-legend-text">Very Low Risk</span>
             </div>
         `;
         return div;
@@ -1848,7 +1834,7 @@ async function getFloodHousesSummary() {
             // Risk Level Breakdown - Sorted from lowest to highest risk
             if (data.summary.by_risk_level && data.summary.by_risk_level.length > 0) {
                 // Sort risk levels from lowest to highest
-                const riskOrder = {'very-low': 1, 'low': 2, 'medium': 3, 'high': 4};
+                const riskOrder = {'low': 2, 'medium': 3, 'high': 4};
                 const sortedRisks = [...data.summary.by_risk_level].sort((a, b) => {
                     const orderA = riskOrder[a.risk_level?.toLowerCase()] || 999;
                     const orderB = riskOrder[b.risk_level?.toLowerCase()] || 999;
@@ -1864,7 +1850,6 @@ async function getFloodHousesSummary() {
                 sortedRisks.forEach(item => {
                     if (item.risk_level) {
                         const colors = {
-                            'very-low': '#2196F3',
                             'low': '#ffc107',
                             'medium': '#ff9800',
                             'high': '#dc3545'
@@ -2010,13 +1995,19 @@ async function getFloodHousesSummary() {
 
 // ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
 
-/**
- * FIXED: Fault Line Risk Assessment
- * Now properly detects houses near fault line
- */
 async function showFaultLineRiskAssessment() {
     try {
         console.log('Fetching fault line risk assessment...');
+        
+        // Show loading indicator
+        Swal.fire({
+            title: 'Analyzing Fault Line Risk',
+            html: 'Please wait while we assess structures near the fault line...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
@@ -2037,18 +2028,19 @@ async function showFaultLineRiskAssessment() {
         
         const data = result.data;
         
+        // Display comprehensive fault line risk report
         let reportHTML = `
             <div style="max-width: 900px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #8B0000 0%, #dc3545 100%); 
+                <div style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); 
                             color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                     <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        ⚠️ Fault Line Proximity Assessment
+                        ⚠️ Fault Line Proximity Risk Assessment
                     </h3>
                     <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
                         ${data.summary.total_at_risk}
                     </div>
                     <div style="font-size: 16px; opacity: 0.95;">
-                        Structures Near Fault Line
+                        Structures Within Risk Zone (&lt;200m from Fault Line)
                     </div>
                 </div>
         `;
@@ -2058,7 +2050,7 @@ async function showFaultLineRiskAssessment() {
                 <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
                             padding: 30px; text-align: center;">
                     <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
-                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Critical Violations</h3>
+                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Structures at Risk</h3>
                     <p style="color: #155724; margin: 0; font-size: 14px;">
                         All structures are at safe distances from the fault line.
                     </p>
@@ -2067,9 +2059,9 @@ async function showFaultLineRiskAssessment() {
         } else {
             // Risk Level Summary - Sorted from lowest to highest risk
             reportHTML += `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
                             gap: 15px; margin-bottom: 25px;">
-                    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
+                    <div style="background: #fff9c4; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
                         <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
                             ${data.summary.medium_risk}
                         </div>
@@ -2090,15 +2082,15 @@ async function showFaultLineRiskAssessment() {
                 </div>
             `;
             
-            // Detailed List - Sorted by distance (farthest to closest)
+            // Detailed List - Sorted by distance (closest first - most dangerous)
             if (data.structures && data.structures.length > 0) {
-                // Sort structures by distance (farthest first, then closest)
-                const sortedStructures = [...data.structures].sort((a, b) => b.distance_meters - a.distance_meters);
+                // Sort structures by distance (closest first)
+                const sortedStructures = [...data.structures].sort((a, b) => a.distance_meters - b.distance_meters);
                 
                 reportHTML += `
                     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
                                 padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #333;"> Structures at Risk (Sorted by Distance):</h4>
+                        <h4 style="margin: 0 0 15px 0; color: #333;">📍 Structures at Risk (Sorted by Distance):</h4>
                         <div style="max-height: 400px; overflow-y: auto;">
                 `;
                 
@@ -2118,6 +2110,9 @@ async function showFaultLineRiskAssessment() {
                                     <strong style="font-size: 16px; color: #333;">
                                         ${structure.address || structure.street_name || 'Address not specified'}
                                     </strong>
+                                    ${structure.house_number ? `<div style="font-size: 13px; color: #666; margin-top: 3px;">
+                                        House #${structure.house_number}
+                                    </div>` : ''}
                                 </div>
                                 <span style="background: ${color}; color: white; padding: 4px 12px; 
                                              border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
@@ -2126,12 +2121,12 @@ async function showFaultLineRiskAssessment() {
                             </div>
                             
                             <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                                <strong> Distance from Fault Line:</strong> 
+                                <strong>📏 Distance from Fault Line:</strong> 
                                 <span style="color: ${color}; font-weight: bold; font-size: 18px;">
                                     ${structure.distance_meters}m
                                 </span>
                                 <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
-                                    <span>Distance:</span>
+                                    <span style="font-size: 12px;">Distance:</span>
                                     <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
                                         <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
                                                     background: ${color};"></div>
@@ -2140,15 +2135,15 @@ async function showFaultLineRiskAssessment() {
                                 </div>
                             </div>
                             
-                            <div style="background: #fff3cd; border-left: 3px solid #856404; 
-                                        padding: 10px; border-radius: 4px; margin-top: 12px;">
-                                <strong style="color: #856404;">⚠️ Required Actions:</strong>
-                                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
-                                    ${structure.requirements ? structure.requirements.map(req => 
-                                        `<li>${req}</li>`
-                                    ).join('') : '<li>Seismic assessment required</li>'}
-                                </ul>
-                            </div>
+                            ${structure.requirements && structure.requirements.length > 0 ? `
+                                <div style="background: #fff3cd; border-left: 3px solid #856404; 
+                                            padding: 10px; border-radius: 4px; margin-top: 12px;">
+                                    <strong style="color: #856404;">⚠️ Required Actions:</strong>
+                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                        ${structure.requirements.map(req => `<li>${req}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 });
@@ -2163,10 +2158,14 @@ async function showFaultLineRiskAssessment() {
         reportHTML += `
                 <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 20px; 
                             border-radius: 8px; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #856404;"> Legal Requirements:</h4>
-                    <p style="margin: 5px 0; font-size: 14px; color: #666;">
-                        Structures within 50m of fault lines require special permits and seismic retrofitting.
-                        Contact the Barangay Engineering Office for compliance assessment.
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 Legal Requirements:</h4>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #666; font-size: 14px;">
+                        <li><strong>Critical Zone (&lt;50m):</strong> Construction ALLOWED with enhanced seismic standards. Mandatory structural engineer certification, geological survey, and reinforced foundation required.</li>
+                        <li><strong>High Risk (50-100m):</strong> Seismic design standards mandatory. Structural engineer certification required.</li>
+                        <li><strong>Medium Risk (100-200m):</strong> Enhanced foundation design recommended. Standard building codes with seismic provisions apply.</li>
+                    </ul>
+                    <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">
+                        📞 Contact the Barangay Engineering Office for compliance assessment and permits.
                     </p>
                 </div>
             </div>
@@ -2190,27 +2189,53 @@ async function showFaultLineRiskAssessment() {
     }
 }
 
-// ==================== BUSINESS SDSS REPORT (PHP-based) ====================
+// ==================== BUSINESS SDSS REPORT ====================
 
-/**
- * NEW: Business SDSS Report (PHP-based)
- */
 async function showAllBusinessesSDSSReport() {
     try {
         console.log('Fetching business SDSS report...');
+        console.log('Using URL:', MAP_HANDLER_URL);
+        
+        // Show loading indicator
+        Swal.fire({
+            title: 'Generating Report',
+            html: 'Please wait while we analyze business safety compliance...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded' 
+            },
             body: 'action=get_business_sdss_report'
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('HTTP Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
-        const result = await response.json();
-        console.log('Business SDSS result:', result);
+        const text = await response.text();
+        console.log('Raw response:', text);
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            console.error('Raw text was:', text);
+            throw new Error('Invalid JSON response from server: ' + text.substring(0, 200));
+        }
+        
+        console.log('Parsed business SDSS result:', result);
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch business SDSS report');
@@ -2218,38 +2243,92 @@ async function showAllBusinessesSDSSReport() {
         
         const data = result.data;
         
+        // Check if data structure is correct
+        if (!data || !data.summary || !data.warnings) {
+            console.error('Invalid data structure:', data);
+            throw new Error('Invalid data structure received from server');
+        }
+        
         // Show report using SweetAlert2
         displayBusinessSDSSReport(data);
         
     } catch (error) {
         console.error('Error in business SDSS:', error);
+        console.error('Error stack:', error.stack);
+        
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Failed to generate business SDSS report: ' + error.message
+            title: 'Error Generating Report',
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Failed to generate business SDSS report:</strong></p>
+                    <p style="color: #dc3545; font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        ${error.message}
+                    </p>
+                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                        Please check:
+                    </p>
+                    <ul style="text-align: left; font-size: 13px; color: #666;">
+                        <li>Database connection is working</li>
+                        <li>Business applications table has data with coordinates</li>
+                        <li>Flood hazard data is properly configured</li>
+                        <li>Check browser console for detailed error logs</li>
+                    </ul>
+                </div>
+            `,
+            width: 600
         });
     }
 }
 
 /**
- * NEW: Construction SDSS Report (PHP-based)
+ * Fixed Construction SDSS Report with better error handling
  */
 async function showAllConstructionSDSSReport() {
     try {
         console.log('Fetching construction SDSS report...');
+        console.log('Using URL:', MAP_HANDLER_URL);
+        
+        // Show loading indicator
+        Swal.fire({
+            title: 'Generating Report',
+            html: 'Please wait while we analyze construction site safety...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
         
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded' 
+            },
             body: 'action=get_construction_sdss_report'
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('HTTP Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
-        const result = await response.json();
-        console.log('Construction SDSS result:', result);
+        const text = await response.text();
+        console.log('Raw response:', text);
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            console.error('Raw text was:', text);
+            throw new Error('Invalid JSON response from server: ' + text.substring(0, 200));
+        }
+        
+        console.log('Parsed construction SDSS result:', result);
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch construction SDSS report');
@@ -2257,23 +2336,58 @@ async function showAllConstructionSDSSReport() {
         
         const data = result.data;
         
+        // Check if data structure is correct
+        if (!data || !data.summary || !data.warnings) {
+            console.error('Invalid data structure:', data);
+            throw new Error('Invalid data structure received from server');
+        }
+        
         // Show report using SweetAlert2
         displayConstructionSDSSReport(data);
         
     } catch (error) {
         console.error('Error in construction SDSS:', error);
+        console.error('Error stack:', error.stack);
+        
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Failed to generate construction SDSS report: ' + error.message
+            title: 'Error Generating Report',
+            html: `
+                <div style="text-align: left;">
+                    <p><strong>Failed to generate construction SDSS report:</strong></p>
+                    <p style="color: #dc3545; font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        ${error.message}
+                    </p>
+                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                        Please check:
+                    </p>
+                    <ul style="text-align: left; font-size: 13px; color: #666;">
+                        <li>Database connection is working</li>
+                        <li>Construction applications table has data with coordinates</li>
+                        <li>Flood hazard data is properly configured</li>
+                        <li>Check browser console for detailed error logs</li>
+                    </ul>
+                </div>
+            `,
+            width: 600
         });
     }
 }
 
 /**
- * Display Business SDSS Report
+ * Display Business SDSS Report (same as before but with null checks)
  */
 function displayBusinessSDSSReport(data) {
+    if (!data || !data.summary || !data.warnings) {
+        console.error('Invalid data structure:', data);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid data structure received'
+        });
+        return;
+    }
+    
     const { summary, warnings } = data;
     
     if (warnings.length === 0) {
@@ -2296,16 +2410,16 @@ function displayBusinessSDSSReport(data) {
         return;
     }
     
-    const critical = warnings.filter(w => w.severity === 'CRITICAL');
-    const high = warnings.filter(w => w.severity === 'HIGH');
-    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    const critical = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'CRITICAL'));
+    const high = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'HIGH') && !critical.includes(w));
+    const medium = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
     
     let reportHTML = `
         <div style="max-width: 900px; text-align: left;">
             <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
                         color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                 <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                     Business Safety Compliance Report
+                    🏢 Business Safety Compliance Report
                 </h3>
                 <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
                     ${warnings.length}
@@ -2334,14 +2448,23 @@ function displayBusinessSDSSReport(data) {
             </div>
     `;
     
-    // Show all warnings - sort by severity (medium, high, critical)
+    // Show all warnings - sort by severity
     const sortedWarnings = [...medium, ...high, ...critical];
     
     sortedWarnings.forEach(item => {
+        if (!item || !item.business || !item.warnings) return;
+        
         const business = item.business;
-        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
-                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        const itemWarnings = item.warnings;
+        
+        // Get highest severity
+        const hasCritical = itemWarnings.some(w => w.severity === 'CRITICAL');
+        const hasHigh = itemWarnings.some(w => w.severity === 'HIGH');
+        const highestSeverity = hasCritical ? 'CRITICAL' : (hasHigh ? 'HIGH' : 'MEDIUM');
+        
+        const borderColor = highestSeverity === 'CRITICAL' ? '#8B0000' : 
+                           highestSeverity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
         
         reportHTML += `
             <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
@@ -2352,34 +2475,43 @@ function displayBusinessSDSSReport(data) {
                     </strong>
                     <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
                                  border-radius: 3px; font-size: 12px; font-weight: bold;">
-                        ${item.severity}
+                        ${highestSeverity}
                     </span>
                 </div>
                 
                 <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                    <div> <strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
-                    <div> <strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
-                    <div> <strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
+                    <div>📍 <strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
+                    <div>🏪 <strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
+                    <div>👥 <strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
                 </div>
-                
+        `;
+        
+        // Display all warnings for this business
+        itemWarnings.forEach(warning => {
+            const warnColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
+                            warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+            
+            reportHTML += `
                 <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠️ ${item.type}
+                    <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${warning.type}
                     </div>
                     <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                        ${item.description}
+                        ${warning.description}
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                            ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
                         </div>
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                            ${warning.actions.map(action => `<li>${action}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+        });
+        
+        reportHTML += `</div>`;
     });
     
     reportHTML += `
@@ -2388,7 +2520,7 @@ function displayBusinessSDSSReport(data) {
                     For business permits and safety compliance:
                 </p>
                 <div style="font-weight: bold; color: #333; font-size: 16px;">
-                    Barangay Blue Ridge B Business Permits Office
+                    📞 Barangay Blue Ridge B Business Permits Office
                 </div>
             </div>
         </div>
@@ -2404,14 +2536,24 @@ function displayBusinessSDSSReport(data) {
 }
 
 /**
- * Display Construction SDSS Report
+ * Display Construction SDSS Report (same as before but with null checks)
  */
 function displayConstructionSDSSReport(data) {
+    if (!data || !data.summary || !data.warnings) {
+        console.error('Invalid data structure:', data);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid data structure received'
+        });
+        return;
+    }
+    
     const { summary, warnings } = data;
     
     if (warnings.length === 0) {
         Swal.fire({
-            title: 'Construction Safety Compliance',
+            title: 'Construction Site Safety',
             html: `
                 <div style="text-align: center; padding: 30px;">
                     <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
@@ -2429,16 +2571,16 @@ function displayConstructionSDSSReport(data) {
         return;
     }
     
-    const critical = warnings.filter(w => w.severity === 'CRITICAL');
-    const high = warnings.filter(w => w.severity === 'HIGH');
-    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    const critical = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'CRITICAL'));
+    const high = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'HIGH') && !critical.includes(w));
+    const medium = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
     
     let reportHTML = `
         <div style="max-width: 900px; text-align: left;">
-            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); 
+            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); 
                         color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                 <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                    🏗️ Construction Safety Compliance Report
+                    🏗️ Construction Site Safety Report
                 </h3>
                 <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
                     ${warnings.length}
@@ -2467,14 +2609,23 @@ function displayConstructionSDSSReport(data) {
             </div>
     `;
     
-    // Show all warnings - sort by severity (medium, high, critical)
+    // Show all warnings - sort by severity
     const sortedWarnings = [...medium, ...high, ...critical];
     
     sortedWarnings.forEach(item => {
+        if (!item || !item.construction || !item.warnings) return;
+        
         const site = item.construction;
-        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
-                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        const itemWarnings = item.warnings;
+        
+        // Get highest severity
+        const hasCritical = itemWarnings.some(w => w.severity === 'CRITICAL');
+        const hasHigh = itemWarnings.some(w => w.severity === 'HIGH');
+        const highestSeverity = hasCritical ? 'CRITICAL' : (hasHigh ? 'HIGH' : 'MEDIUM');
+        
+        const borderColor = highestSeverity === 'CRITICAL' ? '#8B0000' : 
+                           highestSeverity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
         
         const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
         
@@ -2487,7 +2638,7 @@ function displayConstructionSDSSReport(data) {
                     </strong>
                     <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
                                  border-radius: 3px; font-size: 12px; font-weight: bold;">
-                        ${item.severity}
+                        ${highestSeverity}
                     </span>
                 </div>
                 
@@ -2496,25 +2647,34 @@ function displayConstructionSDSSReport(data) {
                     <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
                     <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
                 </div>
-                
+        `;
+        
+        // Display all warnings for this construction site
+        itemWarnings.forEach(warning => {
+            const warnColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
+                            warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+            
+            reportHTML += `
                 <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠️ ${item.type}
+                    <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${warning.type}
                     </div>
                     <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                        ${item.description}
+                        ${warning.description}
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                            ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
                         </div>
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                            ${warning.actions.map(action => `<li>${action}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+        });
+        
+        reportHTML += `</div>`;
     });
     
     reportHTML += `
@@ -2523,7 +2683,7 @@ function displayConstructionSDSSReport(data) {
                     For construction permits and safety compliance:
                 </p>
                 <div style="font-weight: bold; color: #333; font-size: 16px;">
-                    Barangay Blue Ridge B Engineering Office
+                    📞 Barangay Blue Ridge B Engineering Office
                 </div>
             </div>
         </div>
@@ -2537,6 +2697,7 @@ function displayConstructionSDSSReport(data) {
         showCloseButton: true
     });
 }
+
 
 // ==================== EVENT LISTENERS ====================
 
@@ -2953,8 +3114,192 @@ function debugFloodState() {
     console.log('Flood Legend in DOM:', !!legendElement);
 }
 
+// ==================== SDSS RULES SUMMARY REPORT ====================
+
+/**
+ * Show SDSS Rules Summary Report
+ */
+async function showSDSSRulesReport() {
+    try {
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_sdss_rules_summary'
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            displaySDSSRulesReport(result.data);
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.message || 'Failed to load SDSS rules summary',
+                confirmButtonColor: '#667eea'
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching SDSS rules summary:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to fetch SDSS rules summary',
+            confirmButtonColor: '#667eea'
+        });
+    }
+}
+
+/**
+ * Display SDSS Rules Summary Report
+ */
+function displaySDSSRulesReport(data) {
+    const { summary, rules } = data;
+    
+    // Group rules by category
+    const floodRules = [];
+    const seismicRules = [];
+    
+    for (const [key, rule] of Object.entries(rules)) {
+        if (rule.category === 'Flood Hazard') {
+            floodRules.push({ key, ...rule });
+        } else if (rule.category === 'Seismic Hazard') {
+            seismicRules.push({ key, ...rule });
+        }
+    }
+    
+    // Build HTML content
+    let htmlContent = `
+        <div style="max-width: 900px; margin: 0 auto;">
+            <!-- Summary Section -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
+                        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+                <h3 style="margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-list-check"></i>
+                    SDSS Rules Summary Report
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Houses</div>
+                        <div style="font-size: 32px; font-weight: bold;">${summary.total_houses}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Rule Violations</div>
+                        <div style="font-size: 32px; font-weight: bold;">${summary.total_rule_violations}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Rules Evaluated</div>
+                        <div style="font-size: 32px; font-weight: bold;">${summary.rules_evaluated}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Note about multiple violations -->
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; 
+                        border-radius: 8px; margin-bottom: 25px; color: #856404;">
+                <i class="fas fa-info-circle"></i>
+                <strong>Note:</strong> A single house may violate multiple rules (e.g., both flood and fault line risks). 
+                Therefore, total violations may exceed total houses.
+            </div>
+            
+            <!-- Flood Hazard Rules -->
+            <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; 
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <h4 style="color: #2196F3; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-water"></i>
+                    Flood Hazard Rules
+                </h4>
+                <div style="display: grid; gap: 15px;">
+                    ${floodRules.map(rule => createRuleCard(rule, summary.total_houses)).join('')}
+                </div>
+            </div>
+            
+            <!-- Seismic Hazard Rules -->
+            <div style="background: white; border-radius: 12px; padding: 25px; 
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <h4 style="color: #ff5722; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Seismic Hazard Rules (Fault Line)
+                </h4>
+                <div style="display: grid; gap: 15px;">
+                    ${seismicRules.map(rule => createRuleCard(rule, summary.total_houses)).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: '',
+        html: htmlContent,
+        width: '95%',
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'sdss-rules-modal',
+            popup: 'sdss-rules-popup'
+        }
+    });
+}
+
+/**
+ * Create a rule card HTML
+ */
+function createRuleCard(rule, totalHouses) {
+    const severityColors = {
+        'CRITICAL': { bg: '#ffebee', border: '#f44336', text: '#c62828' },
+        'HIGH': { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
+        'MEDIUM': { bg: '#e8f5e9', border: '#4caf50', text: '#2e7d32' }
+    };
+    
+    const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
+    
+    return `
+        <div style="border: 2px solid ${colors.border}; border-radius: 10px; 
+                    background: ${colors.bg}; padding: 20px; transition: all 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 16px; color: #333; margin-bottom: 6px;">
+                        ${rule.name}
+                    </div>
+                    <div style="color: #666; font-size: 14px; line-height: 1.5;">
+                        ${rule.description}
+                    </div>
+                </div>
+                <div style="text-align: center; margin-left: 20px;">
+                    <div style="background: white; border-radius: 50%; width: 70px; height: 70px; 
+                                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 3px solid ${colors.border};">
+                        <div style="font-size: 26px; font-weight: bold; color: ${colors.text};">
+                            ${rule.count}
+                        </div>
+                        <div style="font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px;">
+                            Houses
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; 
+                        border-top: 1px solid ${colors.border}40;">
+                <span style="background: ${colors.text}; color: white; padding: 4px 10px; 
+                            border-radius: 20px; font-size: 12px; font-weight: 600;">
+                    ${rule.severity}
+                </span>
+                <span style="color: #666; font-size: 13px;">
+                    ${rule.count > 0 ? 
+                        `${((rule.count / totalHouses) * 100).toFixed(1)}% of total houses` : 
+                        'No violations detected'}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;
 window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
 window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport;
 window.showAllConstructionSDSSReport = showAllConstructionSDSSReport;
+window.displayBusinessSDSSReport = displayBusinessSDSSReport;
+window.displayConstructionSDSSReport = displayConstructionSDSSReport;
+window.showSDSSRulesReport = showSDSSRulesReport;
