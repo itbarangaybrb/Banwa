@@ -4,7 +4,7 @@ const MAP_HANDLER_URL = '/Banwa/server/handlers/map/map_handler.php';
 const map = L.map('map').setView([14.6175, 121.0756], 17);
 let constructionMarkers = [];
 let businessMarkers = [];
-let householdMarkers = [];
+let householdMarkers = []; // Will not be used anymore - keeping for compatibility
 let utilityMarkers = [];
 let housePolygonsLayer = null;
 let housePolygonsData = [];
@@ -29,6 +29,12 @@ let searchTimeout = null;
 
 // Modal state
 let currentMarkerData = null;
+
+// Helper function to check if control is on map (Leaflet doesn't have hasControl)
+function hasControl(control) {
+    if (!control || !control._map) return false;
+    return control._map === map;
+}
 
 // Barangay boundary
 const blueRidgeGeoJSON = {
@@ -78,11 +84,6 @@ const constructionIcon = L.divIcon({
 const businessIcon = L.divIcon({ 
     className: 'business-marker', 
     iconSize: [15, 15] 
-});
-
-const householdIcon = L.divIcon({ 
-    className: 'household-marker', 
-    iconSize: [12, 12] 
 });
 
 const utilityIcon = L.divIcon({ 
@@ -143,7 +144,7 @@ function toggleFloodLayer() {
         }
         
         // Show flood legend
-        if (floodLegend && !map.hasControl(floodLegend)) {
+        if (floodLegend && !hasControl(floodLegend)) {
             floodLegend.addTo(map);
         }
     } else {
@@ -162,7 +163,7 @@ function removeFloodLegend() {
     if (floodLegend) {
         try {
             // Try to remove the control from map
-            if (map.hasControl(floodLegend)) {
+            if (hasControl(floodLegend)) {
                 map.removeControl(floodLegend);
             }
         } catch (e) {
@@ -300,17 +301,7 @@ function updateAllVisibility() {
 }
 
 function updateMarkerVisibility() {
-    householdMarkers.forEach(marker => {
-        if (activeFilter === 'household') {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
+    // Note: householdMarkers array is kept empty - only house polygons are used
     
     constructionMarkers.forEach(marker => {
         if (activeFilter === 'construction') {
@@ -442,7 +433,10 @@ function performSearch() {
             marker.applicant_name || '',
             marker.applicant_address || '',
             marker.hazard_name || '',
-            marker.risk_level || ''
+            marker.risk_level || '',
+            marker.address || '',
+            marker.house_number || '',
+            marker.street_name || ''
         ];
         
         let matchScore = 0;
@@ -485,24 +479,27 @@ function performSearch() {
                 item.className = 'search-result-item';
                 item.dataset.index = index;
                 
-                const type = marker.marker_type || 
+                const type = marker.marker_type || marker.type ||
                             (marker.construction_id ? 'construction' : 
                              marker.id ? 'business' : 
                              marker.utility_id ? 'utility' : 
-                             marker.hazard_id ? 'flood' : 'household');
+                             marker.hazard_id ? 'flood' :
+                             marker.house_id ? 'household' : 'household');
                 
                 const title = marker.title || 
                              marker.business_name || 
                              marker.homeowner_name || 
                              marker.applicant_name ||
                              marker.hazard_name ||
-                             'Unnamed Marker';
+                             marker.address ||
+                             (marker.house_number ? `House #${marker.house_number}` : 'Unnamed Marker');
                 
                 const subtitle = marker.description || 
                                marker.address_of_construction || 
                                marker.address_of_business || 
                                marker.applicant_address ||
                                marker.location || 
+                               marker.street_name ||
                                (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
                                '';
                 
@@ -575,7 +572,7 @@ function clearSearch() {
     if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
         floodLayer.addTo(map);
         // Also add legend
-        if (floodLegend && !map.hasControl(floodLegend)) {
+        if (floodLegend && !hasControl(floodLegend)) {
             floodLegend.addTo(map);
         }
     }
@@ -618,12 +615,6 @@ function hideAllMarkers() {
         }
     });
     
-    householdMarkers.forEach(marker => {
-        if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-        }
-    });
-    
     utilityMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
@@ -654,19 +645,26 @@ function showOnlySearchedMarker(markerData) {
         map.removeLayer(activeSearchMarker);
     }
     
-    const type = markerData.marker_type || 
+    const type = markerData.marker_type || markerData.type ||
                 (markerData.construction_id ? 'construction' : 
                  markerData.id ? 'business' : 
                  markerData.utility_id ? 'utility' : 
-                 markerData.hazard_id ? 'flood' : 'household');
+                 markerData.hazard_id ? 'flood' :
+                 markerData.house_id ? 'household' : 'household');
     
     if (type === 'flood') {
         showFloodAreaHighlight(markerData);
         return;
     }
     
-    const lat = parseFloat(markerData.latitude);
-    const lng = parseFloat(markerData.longitude);
+    // For house polygons, show the polygon instead of a marker
+    if (type === 'household' && markerData.coordinates) {
+        showHousePolygonHighlight(markerData);
+        return;
+    }
+    
+    const lat = parseFloat(markerData.latitude || markerData.center_lat);
+    const lng = parseFloat(markerData.longitude || markerData.center_lng);
     
     const highlightIcon = L.divIcon({
         className: 'highlighted-marker',
@@ -722,7 +720,7 @@ function showOnlySearchedMarker(markerData) {
     } else if (type === 'utility') {
         popupContent = createUtilityPopup(markerData);
     } else {
-        popupContent = createHouseholdPopup(markerData);
+        popupContent = createHousePopup(markerData);
     }
     
     setTimeout(() => {
@@ -740,6 +738,46 @@ function showOnlySearchedMarker(markerData) {
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) {
         resultsContainer.style.display = 'none';
+    }
+}
+
+function showHousePolygonHighlight(houseData) {
+    try {
+        const coords = JSON.parse(houseData.coordinates);
+        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+        latLngCoords.push(latLngCoords[0]);
+        
+        activeSearchMarker = L.polygon(latLngCoords, {
+            color: '#ffeb3b',
+            weight: 4,
+            fillColor: '#ffeb3b',
+            fillOpacity: 0.3,
+            interactive: true
+        }).addTo(map);
+        
+        const bounds = activeSearchMarker.getBounds();
+        map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 18
+        });
+        
+        const popupContent = createHousePopup(houseData);
+        activeSearchMarker.bindPopup(popupContent).openPopup();
+        
+        document.querySelectorAll('.search-result-item').forEach(item => {
+            item.classList.remove('active');
+            const resultIndex = searchResults.findIndex(result => result.marker.house_id == houseData.house_id);
+            if (parseInt(item.dataset.index) === resultIndex) {
+                item.classList.add('active');
+            }
+        });
+        
+        const resultsContainer = document.getElementById('search-results');
+        if (resultsContainer) {
+            resultsContainer.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error highlighting house polygon:', e);
     }
 }
 
@@ -768,8 +806,8 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
         if (data.success && data.data) {
             const hazard = data.data;
             
-            if (hazard.geojson) {
-                const geoJson = JSON.parse(hazard.geojson);
+            if (hazard.geometry) {
+                const geoJson = JSON.parse(hazard.geometry);
                 
                 const highlightStyle = getFloodAreaStyle(hazard.risk_level);
                 highlightStyle.fillOpacity += 0.2;
@@ -882,31 +920,17 @@ function createUtilityPopup(data) {
     `;
 }
 
-function createHouseholdPopup(data) {
-    return `
-        <div class="popup-content">
-            <h4>
-                <span>${data.title || 'Household'}</span>
-                <span class="household-badge">Household</span>
-            </h4>
-            <div class="popup-section">
-                <p><strong>Description:</strong> ${data.description || 'Not specified'}</p>
-                <p><strong>Location:</strong> ${data.location || 'Not specified'}</p>
-            </div>
-            <div class="popup-section">
-                <p><strong>Type:</strong> ${data.marker_type || 'household'}</p>
-                <p><strong>Created:</strong> ${formatDate(data.created_at)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.marker_id}, 'household')">
-                View Full Details
-            </button>
-        </div>
-    `;
-}
-
 function createFloodPopup(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
     const riskClass = `flood-risk-${data.risk_level || 'medium'}`;
+    
+    // Parse properties JSON if it exists
+    let properties = {};
+    try {
+        properties = data.properties ? JSON.parse(data.properties) : {};
+    } catch (e) {
+        console.warn('Could not parse flood properties:', e);
+    }
     
     return `
         <div class="popup-content">
@@ -917,12 +941,12 @@ function createFloodPopup(data) {
             <div class="popup-section flood-popup-section">
                 <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
                 <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
-                <p><strong>Last Flood:</strong> ${formatDate(data.last_flood_date) || 'Not recorded'}</p>
+                <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
             </div>
             <div class="popup-section">
                 <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
-                <p><strong>Reported By:</strong> ${data.reported_by || 'Barangay Office'}</p>
-                <p><strong>Identified:</strong> ${formatDate(data.date_identified)}</p>
+                <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
+                <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
             </div>
             <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
                 View Flood Details
@@ -935,8 +959,8 @@ function createHousePopup(data) {
     return `
         <div class="popup-content">
             <h4>
-                <span>House ${data.house_number || ''}</span>
-                <span class="household-badge">House</span>
+                <span>${data.house_number ? 'House #' + data.house_number : 'House'}</span>
+                <span class="household-badge">Household</span>
             </h4>
             <div class="popup-section">
                 <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
@@ -947,7 +971,7 @@ function createHousePopup(data) {
                 <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
             </div>
             <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
-                View House Details
+                View Full Details
             </button>
         </div>
     `;
@@ -1209,6 +1233,15 @@ function createHouseholdModalContent(data) {
 
 function createFloodModalContent(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
+    
+    // Parse properties JSON if it exists
+    let properties = {};
+    try {
+        properties = data.properties ? JSON.parse(data.properties) : {};
+    } catch (e) {
+        console.warn('Could not parse flood properties:', e);
+    }
+    
     return `
         <table class="detail-table">
             <tr>
@@ -1225,15 +1258,15 @@ function createFloodModalContent(data) {
             </tr>
             <tr>
                 <td>Last Flood Date</td>
-                <td>${formatDate(data.last_flood_date) || 'Not recorded'}</td>
+                <td>${formatDate(properties.last_flood_date) || 'Not recorded'}</td>
             </tr>
             <tr>
                 <td>Reported By</td>
-                <td>${data.reported_by || 'Barangay Office'}</td>
+                <td>${properties.reported_by || 'Barangay Office'}</td>
             </tr>
             <tr>
                 <td>Date Identified</td>
-                <td>${formatDate(data.date_identified)}</td>
+                <td>${formatDate(properties.date_identified)}</td>
             </tr>
             <tr>
                 <td>Safety Advice</td>
@@ -1248,15 +1281,26 @@ function createFloodModalContent(data) {
 }
 
 function createHouseModalContent(data) {
+    // Parse coordinates to display polygon info
+    let coordinateInfo = 'Not available';
+    if (data.coordinates) {
+        try {
+            const coords = JSON.parse(data.coordinates);
+            coordinateInfo = `${coords.length} vertices`;
+        } catch (e) {
+            coordinateInfo = 'Invalid coordinate data';
+        }
+    }
+    
     return `
         <table class="detail-table">
             <tr>
-                <td>Address</td>
-                <td>${data.address || 'Not specified'}</td>
-            </tr>
-            <tr>
                 <td>House Number</td>
                 <td>${data.house_number || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>${data.address || 'Not specified'}</td>
             </tr>
             <tr>
                 <td>Street Name</td>
@@ -1268,7 +1312,11 @@ function createHouseModalContent(data) {
             </tr>
             <tr>
                 <td>Center Coordinates</td>
-                <td>${data.center_lat || ''}, ${data.center_lng || ''}</td>
+                <td>Latitude: ${data.center_lat || 'N/A'}, Longitude: ${data.center_lng || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Polygon Data</td>
+                <td>${coordinateInfo}</td>
             </tr>
             <tr>
                 <td>Created</td>
@@ -1322,7 +1370,7 @@ async function loadAllMarkers() {
     
     try {
         const formData = new FormData();
-        formData.append('action', 'get_markers');
+        formData.append('action', 'get_all_markers');
         
         const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
@@ -1339,8 +1387,9 @@ async function loadAllMarkers() {
             throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         }
 
+        // Get flood data for search
         const floodFormData = new FormData();
-        floodFormData.append('action', 'get_flood_data_for_search');
+        floodFormData.append('action', 'get_flood_hazards');
         
         const floodResponse = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
@@ -1349,122 +1398,100 @@ async function loadAllMarkers() {
         
         const floodData = await floodResponse.json();
         
+        // Build allMarkersData for search - include houses from house polygons
         allMarkersData = [
-            ...(data.constructions || []).map(c => ({...c, type: 'construction'})),
-            ...(data.businesses || []).map(b => ({...b, type: 'business'})),
-            ...(data.households || []).map(h => ({...h, type: 'household'})),
-            ...(data.utilities || []).map(u => ({...u, type: 'utility'})),
+            ...(data.markers || []).filter(m => m.type === 'construction'),
+            ...(data.markers || []).filter(m => m.type === 'business'),
+            ...(data.markers || []).filter(m => m.type === 'utility'),
             ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
         ];
 
-        if (data.constructions && Array.isArray(data.constructions)) {
-            data.constructions.forEach(construction => {
-                if (construction.latitude && construction.longitude) {
-                    try {
-                        const lat = parseFloat(construction.latitude);
-                        const lng = parseFloat(construction.longitude);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createConstructionPopup(construction);
-                            const marker = L.marker([lat, lng], { 
-                                icon: constructionIcon,
-                                title: construction.homeowner_name || 'Construction Site'
-                            }).bindPopup(popupContent);
-                            
-                            constructionMarkers.push(marker);
-                            if (activeFilter === 'construction') {
-                                marker.addTo(map);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing construction marker:', error);
-                    }
-                }
-            });
-        }
+        // Process markers by type
+        const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
+        const businessMarkersList = (data.markers || []).filter(m => m.type === 'business');
+        const utilityMarkersList = (data.markers || []).filter(m => m.type === 'utility');
 
-        if (data.businesses && Array.isArray(data.businesses)) {
-            data.businesses.forEach(business => {
-                if (business.latitude && business.longitude) {
-                    try {
-                        const lat = parseFloat(business.latitude);
-                        const lng = parseFloat(business.longitude);
+        // Load construction markers
+        constructionMarkersList.forEach(construction => {
+            if (construction.latitude && construction.longitude) {
+                try {
+                    const lat = parseFloat(construction.latitude);
+                    const lng = parseFloat(construction.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createConstructionPopup(construction);
+                        const marker = L.marker([lat, lng], { 
+                            icon: constructionIcon,
+                            title: construction.name || 'Construction Site'
+                        }).bindPopup(popupContent);
                         
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createBusinessPopup(business);
-                            const marker = L.marker([lat, lng], { 
-                                icon: businessIcon,
-                                title: business.business_name || 'Business'
-                            }).bindPopup(popupContent);
-                            
-                            businessMarkers.push(marker);
-                            if (activeFilter === 'business') {
-                                marker.addTo(map);
-                            }
+                        constructionMarkers.push(marker);
+                        if (activeFilter === 'construction') {
+                            marker.addTo(map);
                         }
-                    } catch (error) {
-                        console.error('Error processing business marker:', error);
                     }
+                } catch (error) {
+                    console.error('Error processing construction marker:', error);
                 }
-            });
-        }
+            }
+        });
 
-        if (data.households && Array.isArray(data.households)) {
-            data.households.forEach(household => {
-                if (household.latitude && household.longitude) {
-                    try {
-                        const lat = parseFloat(household.latitude);
-                        const lng = parseFloat(household.longitude);
+        // Load business markers
+        businessMarkersList.forEach(business => {
+            if (business.latitude && business.longitude) {
+                try {
+                    const lat = parseFloat(business.latitude);
+                    const lng = parseFloat(business.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createBusinessPopup(business);
+                        const marker = L.marker([lat, lng], { 
+                            icon: businessIcon,
+                            title: business.name || 'Business'
+                        }).bindPopup(popupContent);
                         
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createHouseholdPopup(household);
-                            const marker = L.marker([lat, lng], { 
-                                icon: householdIcon,
-                                title: household.title || 'Household'
-                            }).bindPopup(popupContent);
-                            
-                            householdMarkers.push(marker);
-                            if (activeFilter === 'household') {
-                                marker.addTo(map);
-                            }
+                        businessMarkers.push(marker);
+                        if (activeFilter === 'business') {
+                            marker.addTo(map);
                         }
-                    } catch (error) {
-                        console.error('Error processing household marker:', error);
                     }
+                } catch (error) {
+                    console.error('Error processing business marker:', error);
                 }
-            });
-        }
+            }
+        });
 
-        if (data.utilities && Array.isArray(data.utilities)) {
-            data.utilities.forEach(utility => {
-                if (utility.latitude && utility.longitude) {
-                    try {
-                        const lat = parseFloat(utility.latitude);
-                        const lng = parseFloat(utility.longitude);
+        // Load utility markers
+        utilityMarkersList.forEach(utility => {
+            if (utility.latitude && utility.longitude) {
+                try {
+                    const lat = parseFloat(utility.latitude);
+                    const lng = parseFloat(utility.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createUtilityPopup(utility);
+                        const marker = L.marker([lat, lng], { 
+                            icon: utilityIcon,
+                            title: utility.name || 'Utility Work'
+                        }).bindPopup(popupContent);
                         
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createUtilityPopup(utility);
-                            const marker = L.marker([lat, lng], { 
-                                icon: utilityIcon,
-                                title: utility.applicant_name || 'Utility Work'
-                            }).bindPopup(popupContent);
-                            
-                            utilityMarkers.push(marker);
-                            if (activeFilter === 'utility') {
-                                marker.addTo(map);
-                            }
+                        utilityMarkers.push(marker);
+                        if (activeFilter === 'utility') {
+                            marker.addTo(map);
                         }
-                    } catch (error) {
-                        console.error('Error processing utility marker:', error);
                     }
+                } catch (error) {
+                    console.error('Error processing utility marker:', error);
                 }
-            });
-        }
+            }
+        });
 
+        // Load flood layer if active
         if (floodLayerActive) {
             loadFloodData();
         }
 
+        // Load house polygons (not markers)
         loadHousePolygons();
 
     } catch (error) {
@@ -1499,18 +1526,18 @@ async function loadFloodData() {
             }
             
             // Ensure legend is also added if active
-            if (floodLayerActive && floodLegend && !map.hasControl(floodLegend)) {
+            if (floodLayerActive && floodLegend && !hasControl(floodLegend)) {
                 floodLegend.addTo(map);
             }
         } else {
             console.warn('No flood data found:', data.message);
             floodLayer = L.layerGroup();
-            floodLegend = null; // Reset legend if no data
+            floodLegend = null;
         }
     } catch (error) {
         console.error('ERROR LOADING FLOOD DATA:', error);
         floodLayer = L.layerGroup();
-        floodLegend = null; // Reset legend on error
+        floodLegend = null;
     }
 }
 
@@ -1525,12 +1552,12 @@ function renderFloodAreas(hazards) {
     
     hazards.forEach(hazard => {
         try {
-            if (!hazard.geojson) {
-                console.warn('Flood hazard missing GeoJSON:', hazard.hazard_id);
+            if (!hazard.geometry) {
+                console.warn('Flood hazard missing geometry:', hazard.hazard_id);
                 return;
             }
             
-            const geoJson = JSON.parse(hazard.geojson);
+            const geoJson = JSON.parse(hazard.geometry);
             const style = getFloodAreaStyle(hazard.risk_level);
             
             const layer = L.geoJSON(geoJson, {
@@ -1656,6 +1683,14 @@ async function loadHousePolygons() {
         
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
+            
+            // Add houses to allMarkersData for search
+            const housesForSearch = data.houses.map(house => ({
+                ...house,
+                type: 'household'
+            }));
+            allMarkersData = [...allMarkersData, ...housesForSearch];
+            
             renderHousePolygons();
         }
     } catch (error) {
@@ -1704,7 +1739,6 @@ function renderHousePolygons() {
 function clearAllMarkers() {
     constructionMarkers.forEach(marker => map.removeLayer(marker));
     businessMarkers.forEach(marker => map.removeLayer(marker));
-    householdMarkers.forEach(marker => map.removeLayer(marker));
     utilityMarkers.forEach(marker => map.removeLayer(marker));
     
     if (floodLayer) {
@@ -1723,10 +1757,785 @@ function clearAllMarkers() {
     
     constructionMarkers = [];
     businessMarkers = [];
-    householdMarkers = [];
     utilityMarkers = [];
     floodLayer = null;
-    floodLegend = null; // Reset the legend variable
+    floodLegend = null;
+}
+
+// ==================== FLOOD ASSESSMENT FUNCTION ====================
+
+/**
+ * FIXED: Flood Risk Assessment
+ * Now properly fetches data from PHP backend with percentages from low to high
+ */
+async function getFloodHousesSummary() {
+    try {
+        console.log('Fetching flood risk assessment from server...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_flood_summary'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Server response:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch flood assessment');
+        }
+        
+        const data = result.data;
+        
+        // Display comprehensive flood risk report
+        let reportHTML = `
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                         ⚠️ Flood Risk Assessment Report
+                    </h3>
+                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
+                        ${data.summary.total}
+                    </div>
+                    <div style="font-size: 16px; opacity: 0.95;">
+                        Households in Flood-Prone Areas
+                    </div>
+                </div>
+        `;
+        
+        if (data.summary.total === 0) {
+            reportHTML += `
+                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
+                            padding: 30px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Flood Risk Detected</h3>
+                    <p style="color: #155724; margin: 0; font-size: 14px;">
+                        All households are currently outside flood hazard zones.
+                    </p>
+                </div>
+            `;
+        } else {
+            // Impact Level Summary - Sorted from lowest to highest impact
+            reportHTML += `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                            gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #fff9c4; border-left: 4px solid #f9a825; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #f9a825; margin-bottom: 5px;">
+                            ${data.summary.minimally_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Minimally Affected (1-24%)</div>
+                    </div>
+                    <div style="background: #fff3e0; border-left: 4px solid #ef6c00; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ef6c00; margin-bottom: 5px;">
+                            ${data.summary.partially_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Partially Affected (25-74%)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #c62828; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #c62828; margin-bottom: 5px;">
+                            ${data.summary.fully_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Fully Affected (75-100%)</div>
+                    </div>
+                </div>
+            `;
+            
+            // Risk Level Breakdown - Sorted from lowest to highest risk
+            if (data.summary.by_risk_level && data.summary.by_risk_level.length > 0) {
+                // Sort risk levels from lowest to highest
+                const riskOrder = {'very-low': 1, 'low': 2, 'medium': 3, 'high': 4};
+                const sortedRisks = [...data.summary.by_risk_level].sort((a, b) => {
+                    const orderA = riskOrder[a.risk_level?.toLowerCase()] || 999;
+                    const orderB = riskOrder[b.risk_level?.toLowerCase()] || 999;
+                    return orderA - orderB;
+                });
+                
+                reportHTML += `
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;">By Flood Risk Level:</h4>
+                        <div style="display: grid; gap: 10px;">
+                `;
+                
+                sortedRisks.forEach(item => {
+                    if (item.risk_level) {
+                        const colors = {
+                            'very-low': '#2196F3',
+                            'low': '#ffc107',
+                            'medium': '#ff9800',
+                            'high': '#dc3545'
+                        };
+                        const color = colors[item.risk_level.toLowerCase()] || '#666';
+                        
+                        reportHTML += `
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="background: ${color}; color: white; padding: 8px 15px; 
+                                           border-radius: 5px; font-weight: bold; min-width: 100px; text-align: center;">
+                                    ${item.risk_level.toUpperCase()}
+                                </div>
+                                <div style="font-size: 24px; font-weight: bold; color: ${color};">
+                                    ${item.count}
+                                </div>
+                                <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; background: ${color}; 
+                                               width: ${(item.count / data.summary.total * 100)}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                reportHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Detailed List - Sorted by coverage percentage (lowest to highest)
+            if (data.houses && data.houses.length > 0) {
+                // Sort houses by flood coverage percentage (lowest to highest)
+                const sortedHouses = [...data.houses].sort((a, b) => {
+                    const percentA = parseFloat(a.flood_coverage_percent) || 0;
+                    const percentB = parseFloat(b.flood_coverage_percent) || 0;
+                    return percentA - percentB;
+                });
+                
+                reportHTML += `
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                                padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;"> Affected Households (Sorted by Coverage %):</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                sortedHouses.forEach(house => {
+                    const impactColors = {
+                        'Minimally Affected': '#f9a825',
+                        'Partially Affected': '#ef6c00',
+                        'Fully Affected': '#c62828',
+                        'Affected': '#ff9800'
+                    };
+                    const color = impactColors[house.impact_level] || '#666';
+                    const coveragePercent = parseFloat(house.flood_coverage_percent || 0).toFixed(1);
+                    
+                    reportHTML += `
+                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
+                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <strong style="font-size: 16px; color: #333;">
+                                        ${house.address || 'Address not specified'}
+                                    </strong>
+                                    ${house.street_name ? `<div style="font-size: 13px; color: #666; margin-top: 3px;">
+                                         ${house.street_name}
+                                    </div>` : ''}
+                                </div>
+                                <span style="background: ${color}; color: white; padding: 4px 12px; 
+                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
+                                    ${house.impact_level} (${coveragePercent}%)
+                                </span>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                                        gap: 10px; font-size: 13px; color: #555;">
+                                <div>
+                                    <strong>Flood Risk:</strong> 
+                                    <span style="color: ${color}; font-weight: bold;">
+                                        ${(house.risk_level || 'Unknown').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div>
+                                    <strong>Coverage:</strong> 
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span>${coveragePercent}%</span>
+                                        <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                            <div style="height: 100%; width: ${coveragePercent}%; background: ${color};"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${house.area_sqm ? `<div><strong>Area:</strong> ${house.area_sqm} sqm</div>` : ''}
+                            </div>
+                            
+                            ${house.hazard_description ? `
+                                <div style="margin-top: 12px; padding: 10px; background: white; 
+                                            border-radius: 4px; font-size: 13px; color: #555;">
+                                    <strong>ℹ️ Hazard Info:</strong> ${house.hazard_description}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                
+                reportHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        reportHTML += `
+                <div style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 20px; 
+                            border-radius: 8px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1565c0;"> Recommendations:</h4>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #555; font-size: 14px;">
+                        <li>Households in high-risk zones should prepare evacuation plans</li>
+                        <li>Install flood barriers and elevate important items</li>
+                        <li>Monitor weather alerts during rainy season</li>
+                        <li>Contact Barangay Office for flood mitigation assistance</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 950,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in flood assessment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate flood risk assessment: ' + error.message
+        });
+    }
+}
+
+// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
+
+/**
+ * FIXED: Fault Line Risk Assessment
+ * Now properly detects houses near fault line
+ */
+async function showFaultLineRiskAssessment() {
+    try {
+        console.log('Fetching fault line risk assessment...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_fault_line_assessment'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Fault line assessment result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch fault line assessment');
+        }
+        
+        const data = result.data;
+        
+        let reportHTML = `
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #8B0000 0%, #dc3545 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                        ⚠️ Fault Line Proximity Assessment
+                    </h3>
+                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
+                        ${data.summary.total_at_risk}
+                    </div>
+                    <div style="font-size: 16px; opacity: 0.95;">
+                        Structures Near Fault Line
+                    </div>
+                </div>
+        `;
+        
+        if (data.summary.total_at_risk === 0) {
+            reportHTML += `
+                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
+                            padding: 30px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Critical Violations</h3>
+                    <p style="color: #155724; margin: 0; font-size: 14px;">
+                        All structures are at safe distances from the fault line.
+                    </p>
+                </div>
+            `;
+        } else {
+            // Risk Level Summary - Sorted from lowest to highest risk
+            reportHTML += `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+                            gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
+                            ${data.summary.medium_risk}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Medium Risk (100-200m)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
+                            ${data.summary.high_risk}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">High Risk (50-100m)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #8B0000; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #8B0000; margin-bottom: 5px;">
+                            ${data.summary.critical}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Critical (&lt;50m)</div>
+                    </div>
+                </div>
+            `;
+            
+            // Detailed List - Sorted by distance (farthest to closest)
+            if (data.structures && data.structures.length > 0) {
+                // Sort structures by distance (farthest first, then closest)
+                const sortedStructures = [...data.structures].sort((a, b) => b.distance_meters - a.distance_meters);
+                
+                reportHTML += `
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                                padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;"> Structures at Risk (Sorted by Distance):</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                sortedStructures.forEach(structure => {
+                    const riskColors = {
+                        'medium': '#ff9800',
+                        'high': '#dc3545',
+                        'critical': '#8B0000'
+                    };
+                    const color = riskColors[structure.risk_level] || '#666';
+                    
+                    reportHTML += `
+                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
+                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <strong style="font-size: 16px; color: #333;">
+                                        ${structure.address || structure.street_name || 'Address not specified'}
+                                    </strong>
+                                </div>
+                                <span style="background: ${color}; color: white; padding: 4px 12px; 
+                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
+                                    ${structure.risk_level.toUpperCase()} - ${structure.distance_meters}m
+                                </span>
+                            </div>
+                            
+                            <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                                <strong> Distance from Fault Line:</strong> 
+                                <span style="color: ${color}; font-weight: bold; font-size: 18px;">
+                                    ${structure.distance_meters}m
+                                </span>
+                                <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
+                                    <span>Distance:</span>
+                                    <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
+                                        <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
+                                                    background: ${color};"></div>
+                                    </div>
+                                    <span style="font-size: 12px;">/200m</span>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #fff3cd; border-left: 3px solid #856404; 
+                                        padding: 10px; border-radius: 4px; margin-top: 12px;">
+                                <strong style="color: #856404;">⚠️ Required Actions:</strong>
+                                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                    ${structure.requirements ? structure.requirements.map(req => 
+                                        `<li>${req}</li>`
+                                    ).join('') : '<li>Seismic assessment required</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                reportHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        reportHTML += `
+                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 20px; 
+                            border-radius: 8px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;"> Legal Requirements:</h4>
+                    <p style="margin: 5px 0; font-size: 14px; color: #666;">
+                        Structures within 50m of fault lines require special permits and seismic retrofitting.
+                        Contact the Barangay Engineering Office for compliance assessment.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 950,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in fault line assessment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate fault line assessment: ' + error.message
+        });
+    }
+}
+
+// ==================== BUSINESS SDSS REPORT (PHP-based) ====================
+
+/**
+ * NEW: Business SDSS Report (PHP-based)
+ */
+async function showAllBusinessesSDSSReport() {
+    try {
+        console.log('Fetching business SDSS report...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_business_sdss_report'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Business SDSS result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch business SDSS report');
+        }
+        
+        const data = result.data;
+        
+        // Show report using SweetAlert2
+        displayBusinessSDSSReport(data);
+        
+    } catch (error) {
+        console.error('Error in business SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate business SDSS report: ' + error.message
+        });
+    }
+}
+
+/**
+ * NEW: Construction SDSS Report (PHP-based)
+ */
+async function showAllConstructionSDSSReport() {
+    try {
+        console.log('Fetching construction SDSS report...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_construction_sdss_report'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Construction SDSS result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch construction SDSS report');
+        }
+        
+        const data = result.data;
+        
+        // Show report using SweetAlert2
+        displayConstructionSDSSReport(data);
+        
+    } catch (error) {
+        console.error('Error in construction SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate construction SDSS report: ' + error.message
+        });
+    }
+}
+
+/**
+ * Display Business SDSS Report
+ */
+function displayBusinessSDSSReport(data) {
+    const { summary, warnings } = data;
+    
+    if (warnings.length === 0) {
+        Swal.fire({
+            title: 'Business Safety Compliance',
+            html: `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
+                        <strong style="font-size: 20px; color: #155724;">All businesses compliant</strong>
+                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                            Out of ${summary.total} total businesses analyzed, no safety violations detected.
+                        </p>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745'
+        });
+        return;
+    }
+    
+    const critical = warnings.filter(w => w.severity === 'CRITICAL');
+    const high = warnings.filter(w => w.severity === 'HIGH');
+    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    
+    let reportHTML = `
+        <div style="max-width: 900px; text-align: left;">
+            <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
+                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                     Business Safety Compliance Report
+                </h3>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                    ${warnings.length}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings
+                </div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                    Out of ${summary.total} total businesses analyzed
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Show all warnings - sort by severity (medium, high, critical)
+    const sortedWarnings = [...medium, ...high, ...critical];
+    
+    sortedWarnings.forEach(item => {
+        const business = item.business;
+        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
+                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        
+        reportHTML += `
+            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 18px; color: #333;">
+                        ${business.business_name || 'Unnamed Business'}
+                    </strong>
+                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
+                        ${item.severity}
+                    </span>
+                </div>
+                
+                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                    <div> <strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
+                    <div> <strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
+                    <div> <strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${item.type}
+                    </div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                        ${item.description}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                        </div>
+                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    reportHTML += `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    For business permits and safety compliance:
+                </p>
+                <div style="font-weight: bold; color: #333; font-size: 16px;">
+                    Barangay Blue Ridge B Business Permits Office
+                </div>
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: '',
+        html: reportHTML,
+        width: 950,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+/**
+ * Display Construction SDSS Report
+ */
+function displayConstructionSDSSReport(data) {
+    const { summary, warnings } = data;
+    
+    if (warnings.length === 0) {
+        Swal.fire({
+            title: 'Construction Safety Compliance',
+            html: `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
+                        <strong style="font-size: 20px; color: #155724;">All construction sites compliant</strong>
+                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                            Out of ${summary.total} total sites analyzed, no safety violations detected.
+                        </p>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745'
+        });
+        return;
+    }
+    
+    const critical = warnings.filter(w => w.severity === 'CRITICAL');
+    const high = warnings.filter(w => w.severity === 'HIGH');
+    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    
+    let reportHTML = `
+        <div style="max-width: 900px; text-align: left;">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); 
+                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                    🏗️ Construction Safety Compliance Report
+                </h3>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                    ${warnings.length}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings
+                </div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                    Out of ${summary.total} total sites analyzed
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Show all warnings - sort by severity (medium, high, critical)
+    const sortedWarnings = [...medium, ...high, ...critical];
+    
+    sortedWarnings.forEach(item => {
+        const site = item.construction;
+        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
+                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        
+        const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
+        
+        reportHTML += `
+            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 18px; color: #333;">
+                        ${owner}
+                    </strong>
+                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
+                        ${item.severity}
+                    </span>
+                </div>
+                
+                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                    <div>📍 <strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
+                    <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
+                    <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${item.type}
+                    </div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                        ${item.description}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                        </div>
+                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    reportHTML += `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    For construction permits and safety compliance:
+                </p>
+                <div style="font-weight: bold; color: #333; font-size: 16px;">
+                    Barangay Blue Ridge B Engineering Office
+                </div>
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: '',
+        html: reportHTML,
+        width: 950,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
 }
 
 // ==================== EVENT LISTENERS ====================
@@ -1807,102 +2616,119 @@ map.whenReady(function() {
         }
     }).addTo(map);
     
-    // ============= ADD FAULT LINE =============
-    const faultLineGeoJSON = {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": "Fault Line",
-                    "description": "Potential seismic fault line"
-                },
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                        [121.0765328982805, 14.617540821420917],
-                        [121.07653620957734, 14.617799286676458],
-                        [121.07655166229381, 14.618043150864395],
-                        [121.0765671150105, 14.618248213765824],
-                        [121.07659139785397, 14.618508814258277],
-                        [121.07665541626238, 14.618812135753643],
-                        [121.07674482127817, 14.619077007702046]
-                    ]
-                }
-            }
-        ]
-    };
+    // ============= ADD FAULT LINE (CORRECTED COORDINATES) =============
+    const faultLineCoordinates = [
+        [14.6175408, 121.0765329],
+        [14.6177993, 121.0765362],
+        [14.6180432, 121.0765517],
+        [14.6182482, 121.0765671],
+        [14.6185088, 121.0765914],
+        [14.6188121, 121.0766554],
+        [14.6190770, 121.0767448]
+    ];
     
-    // Create fault line but don't add to map yet
-    faultLine = L.geoJSON(faultLineGeoJSON, {
-        style: {
-            color: '#ff0000',
+    // Create fault line with correct coordinates
+    faultLine = L.polyline(faultLineCoordinates, {
+        color: '#ff0000',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '10, 10',
+        lineCap: 'round',
+        lineJoin: 'round'
+    });
+    
+    faultLine.bindPopup(`
+        <div style="max-width: 300px;">
+            <h4 style="color: #ff0000; margin-bottom: 10px;">
+                <i class="fas fa-exclamation-triangle"></i> FAULT LINE
+            </h4>
+            <p><strong>⚠️ Seismic Hazard Zone</strong></p>
+            <p>This area has been identified as having potential seismic activity.</p>
+            <p style="font-size: 0.9em; color: #666;">
+                <i class="fas fa-info-circle"></i> 
+                Construction and development in this area should follow earthquake-resistant guidelines.
+            </p>
+        </div>
+    `);
+    
+    faultLine.on('mouseover', function() {
+        this.setStyle({
+            weight: 6,
+            opacity: 1,
+            color: '#ff4444'
+        });
+    });
+    
+    faultLine.on('mouseout', function() {
+        this.setStyle({
             weight: 4,
             opacity: 0.8,
-            dashArray: '10, 10',
-            lineCap: 'round',
-            lineJoin: 'round'
-        },
-        onEachFeature: function(feature, layer) {
-            layer.bindPopup(`
-                <div style="max-width: 300px;">
-                    <h4 style="color: #ff0000; margin-bottom: 10px;">
-                        <i class="fas fa-exclamation-triangle"></i> FAULT LINE
-                    </h4>
-                    <p><strong>⚠️ Seismic Hazard Zone</strong></p>
-                    <p>This area has been identified as having potential seismic activity.</p>
-                    <p style="font-size: 0.9em; color: #666;">
-                        <i class="fas fa-info-circle"></i> 
-                        Construction and development in this area should follow earthquake-resistant guidelines.
-                    </p>
-                </div>
-            `);
-            
-            layer.on('mouseover', function() {
-                this.setStyle({
-                    weight: 6,
-                    opacity: 1,
-                    color: '#ff4444'
-                });
-            });
-            
-            layer.on('mouseout', function() {
-                this.setStyle({
-                    weight: 4,
-                    opacity: 0.8,
-                    color: '#ff0000'
-                });
-            });
-        }
+            color: '#ff0000'
+        });
     });
     
-    // Create warning marker but don't add to map yet
-    const faultCoords = faultLineGeoJSON.features[0].geometry.coordinates;
-    const midIndex = Math.floor(faultCoords.length / 2);
-    const warningPoint = faultCoords[midIndex];
+    // Create warning marker at the midpoint of the fault line
+    const midIndex = Math.floor(faultLineCoordinates.length / 2);
+    const warningPoint = faultLineCoordinates[midIndex];
     
     const warningIcon = L.divIcon({
-        className: 'incident-marker',
+        className: 'fault-warning-marker',
         html: `<div style="
             position: relative;
-            width: 25px;
-            height: 25px;
-            background: rgba(255, 0, 0, 0.7);
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
+            width: 30px;
+            height: 30px;
         ">
-            <i class="fas fa-exclamation" style="color: white; font-size: 12px;"></i>
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 0, 0, 0.3);
+                border-radius: 50%;
+                animation: pulse-fault 2s infinite;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                width: 20px;
+                height: 20px;
+                background: rgba(255, 0, 0, 0.9);
+                border-radius: 50%;
+                border: 2px solid white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <i class="fas fa-exclamation" style="color: white; font-size: 10px;"></i>
+            </div>
         </div>`,
-        iconSize: [25, 25],
-        iconAnchor: [12.5, 12.5]
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
     });
     
-    warningMarker = L.marker([warningPoint[1], warningPoint[0]], {
+    // Add CSS animation for fault line warning marker
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse-fault {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    warningMarker = L.marker(warningPoint, {
         icon: warningIcon,
         title: 'Fault Line Warning'
     });
@@ -2120,9 +2946,15 @@ function debugFloodState() {
     console.log('Flood Layer exists:', !!floodLayer);
     console.log('Flood Layer on map:', floodLayer ? map.hasLayer(floodLayer) : false);
     console.log('Flood Legend exists:', !!floodLegend);
-    console.log('Flood Legend on map:', floodLegend ? map.hasControl(floodLegend) : false);
+    console.log('Flood Legend on map:', floodLegend ? hasControl(floodLegend) : false);
     
     // Check DOM for legend
     const legendElement = document.querySelector('.flood-legend');
     console.log('Flood Legend in DOM:', !!legendElement);
 }
+
+// Make functions globally available
+window.getFloodHousesSummary = getFloodHousesSummary;
+window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
+window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport;
+window.showAllConstructionSDSSReport = showAllConstructionSDSSReport;

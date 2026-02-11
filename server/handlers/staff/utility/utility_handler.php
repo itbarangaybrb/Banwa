@@ -44,26 +44,11 @@ try {
         case 'chart_utilities_type':
             handleChartUtilityType($pdo);
             break;
-        case 'evaluate_application':
-            handleEvaluateApplication($pdo);
-            break;
         case 'get_evaluation':
             handleGetEvaluation($pdo);
             break;
         case 'get_evaluation_stats':
             handleGetEvaluationStats($pdo);
-            break;
-        case 'get_rules':
-            handleGetRules();
-            break;
-        case 'get_application_with_dss':
-            handleGetApplicationWithDSS($pdo);
-            break;
-        case 'trigger_evaluation':
-            handleTriggerEvaluation($pdo);
-            break;
-        case 'evaluate_all_pending':
-            handleEvaluateAllPending($pdo);
             break;
         case 'get_application_details':
             handleGetApplicationDetails($pdo);
@@ -99,7 +84,7 @@ function handleCreateApplication($pdo)
 {
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Owner Information
         $firstName = get_input('firstName');
         $middleName = get_input('middleName');
@@ -107,20 +92,20 @@ function handleCreateApplication($pdo)
         $suffix = get_input('suffix') ?? '';
         $contactNoOwner = get_input('contactNoOwner');
         $addressOwner = get_input('addressOwner');
-        
+
         // Application Details
         $requestDate = get_input('requestDate');
         $dateOfWork = get_input('dateOfWork');
         $natureOfWork = get_input('natureOfWork');
         $provider = get_input('provider');
-        
+
         // Location Information
         $utilityLotNo = get_input('utilityLotNo');
         $utilityStreet = get_input('utilityStreet');
         $addressOfUtility = trim($utilityLotNo . ' ' . $utilityStreet);
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
-        
+
         // Status and Agreements
         $status = 'Pending';
         $agreed = (int)(get_input('agreed') ?? 0);
@@ -186,11 +171,10 @@ function handleFetchApplications($pdo)
                 ORDER BY ua.created_at DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
-        
+
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         echo json_encode(["status" => "success", "data" => $applications]);
-        
     } catch (PDOException $e) {
         error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
@@ -264,11 +248,11 @@ function handleUpdateApplication($pdo)
         }
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Initialize update arrays
         $updateFields = [];
         $params = [':id' => $applicationId];
-        
+
         // List of all possible fields that can be updated
         $possibleFields = [
             'firstName' => 'first_name',
@@ -281,7 +265,7 @@ function handleUpdateApplication($pdo)
             'natureOfWork' => 'nature_of_work',
             'provider' => 'provider'
         ];
-        
+
         // Check each possible field to see if it was submitted
         foreach ($possibleFields as $formField => $dbField) {
             $value = get_input($formField);
@@ -290,14 +274,14 @@ function handleUpdateApplication($pdo)
                 $params[":$dbField"] = $value;
             }
         }
-        
+
         // Handle address fields separately
         $ownerAddress = get_input('addressOwner');
         if ($ownerAddress !== null) {
             $updateFields[] = "owner_address = :owner_address";
             $params[':owner_address'] = $ownerAddress;
         }
-        
+
         $utilityLotNo = get_input('utilityLotNo');
         $utilityStreet = get_input('utilityStreet');
         if ($utilityLotNo !== null || $utilityStreet !== null) {
@@ -305,7 +289,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "address_of_utility = :address_of_utility";
             $params[':address_of_utility'] = $addressOfUtility;
         }
-        
+
         // Handle latitude/longitude
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
@@ -317,22 +301,22 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "longitude = :longitude";
             $params[':longitude'] = $longitude;
         }
-        
+
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM utility_applications WHERE id = :id");
         $getDSSStmt->execute([':id' => $applicationId]);
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
-        
+
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
         $updateFields[] = "status = 'Complied'";
         $params[':dss_status'] = $currentDSSStatus;
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/uploads/utility/';
+            $uploadDir = __DIR__ . '/uploads/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
             }
@@ -344,23 +328,23 @@ function handleUpdateApplication($pdo)
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // If no fields to update, return early
         if (count($updateFields) <= 3) { // Only dss_status, updated_at, and status were added
             echo json_encode(["status" => "success", "message" => "No changes to update."]);
             return;
         }
-        
+
         // Build SQL query
         $sql = "UPDATE utility_applications SET " . implode(', ', $updateFields);
-        
+
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
             $params[':supabase_user_id'] = $supabaseUserId;
         } else {
             $sql .= " WHERE id = :id";
         }
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -377,85 +361,6 @@ function handleUpdateApplication($pdo)
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Evaluates a utility application using the DSS rule engine
- * Returns evaluation results and updates database records
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateApplication($pdo)
-{
-    try {
-        $applicationId = $_POST['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
-        $stmt->execute([':id' => $applicationId]);
-        $application = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$application) {
-            echo json_encode(["status" => "error", "message" => "Application not found"]);
-            return;
-        }
-
-        $dss = new DSSRuleEngine();
-        $evaluationResult = $dss->evaluateApplication($application);
-        $statusValue = (string)$evaluationResult['status'];
-
-        $checkStmt = $pdo->prepare("SELECT 1 FROM utility_evaluations WHERE application_id = :app_id");
-        $checkStmt->execute([':app_id' => $applicationId]);
-
-        if ($checkStmt->fetch()) {
-            $evalStmt = $pdo->prepare("
-                UPDATE utility_evaluations 
-                SET dss_status = :status, 
-                    evaluation_details = :details, 
-                    evaluated_at = NOW()
-                WHERE application_id = :app_id
-            ");
-        } else {
-            $evalStmt = $pdo->prepare("
-                INSERT INTO utility_evaluations 
-                (application_id, dss_status, evaluation_details, evaluated_at) 
-                VALUES (:app_id, :status, :details, NOW())
-            ");
-        }
-
-        $evalStmt->execute([
-            ':app_id' => $applicationId,
-            ':status' => $statusValue,
-            ':details' => json_encode($evaluationResult['evaluation_details'])
-        ]);
-
-        $updateStmt = $pdo->prepare("
-            UPDATE utility_applications 
-            SET dss_status = :dss_status
-            WHERE id = :id
-        ");
-
-        $updateStmt->execute([
-            ':dss_status' => $statusValue,
-            ':id' => $applicationId
-        ]);
-
-        logEvaluation($applicationId, $evaluationResult);
-
-        echo json_encode([
-            "status" => "success",
-            "dss_result" => $evaluationResult,
-            "message" => "Application evaluated successfully"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("DSS Evaluation Error: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Evaluation Error: " . $e->getMessage()]);
     }
 }
 
@@ -529,70 +434,6 @@ function handleGetEvaluation($pdo)
 }
 
 /**
- * Retrieves complete application details including DSS evaluation and status history
- * Restricted to staff users only for comprehensive application management
- * 
- * @param PDO $pdo Database connection object
- */
-function handleGetApplicationWithDSS($pdo)
-{
-    try {
-        $applicationId = $_GET['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        $isStaff = $_SESSION['is_staff'] ?? false;
-        if (!$isStaff) {
-            echo json_encode(["status" => "error", "message" => "Unauthorized"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT ua.*, 
-                   ue.dss_status, 
-                   ue.evaluation_details,
-                   ue.evaluated_at as dss_evaluated_at,
-                   (SELECT json_agg(json_build_object('status', status, 'comments', comments, 'changed_at', changed_at))
-                    FROM utility_status_history 
-                    WHERE application_id = ua.id 
-                    ORDER BY changed_at DESC) as status_history
-            FROM utility_applications ua
-            LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
-            WHERE ua.id = :id
-        ");
-        $stmt->execute([':id' => $applicationId]);
-        $application = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$application) {
-            echo json_encode(["status" => "error", "message" => "Application not found"]);
-            return;
-        }
-
-        if (isset($application['evaluation_details']) && $application['evaluation_details']) {
-            $application['evaluation_details'] = json_decode($application['evaluation_details'], true);
-        }
-        if (isset($application['status_history']) && $application['status_history']) {
-            $application['status_history'] = json_decode($application['status_history'], true);
-        }
-
-        if (isset($application['evaluation_details'])) {
-            $application['dss_summary'] = getDSSSummary($application['evaluation_details']);
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "application" => $application
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Retrieves DSS evaluation statistics including overall counts, success rates, and trends
  * Provides analytics data for dashboard display and system monitoring
  * 
@@ -634,133 +475,6 @@ function handleGetEvaluationStats($pdo)
             "status" => "success",
             "stats" => $stats,
             "trends" => $trends
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Returns information about all DSS rules used in the evaluation system
- * Provides rule descriptions and priorities for documentation and display purposes
- * 
- * @return array List of DSS rules with metadata
- */
-function handleGetRules()
-{
-    try {
-        $rules = [
-            [
-                'id' => 'R1',
-                'name' => 'Complete Requirements Rule',
-                'description' => 'Checks if all required documents are submitted based on utility type',
-                'priority' => 10
-            ],
-            [
-                'id' => 'R2',
-                'name' => 'Valid Utility Location Rule',
-                'description' => 'Verifies utility location is within barangay boundaries',
-                'priority' => 9
-            ],
-            [
-                'id' => 'R3',
-                'name' => 'Provider Compliance Rule',
-                'description' => 'Ensures utility provider is authorized',
-                'priority' => 8
-            ],
-            [
-                'id' => 'R4',
-                'name' => 'Work Safety Rule',
-                'description' => 'Checks if proposed work meets safety standards',
-                'priority' => 7
-            ],
-            [
-                'id' => 'R5',
-                'name' => 'Valid Contact Information Rule',
-                'description' => 'Validates phone number and owner information',
-                'priority' => 6
-            ]
-        ];
-
-        echo json_encode([
-            "status" => "success",
-            "rules" => $rules
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Manually triggers DSS evaluation for a specific application
- * 
- * @param PDO $pdo Database connection object
- */
-function handleTriggerEvaluation($pdo)
-{
-    try {
-        $applicationId = $_POST['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        triggerDSSevaluation($pdo, $applicationId);
-
-        echo json_encode(["status" => "success", "message" => "DSS evaluation triggered"]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Evaluates all pending applications (for staff use)
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateAllPending($pdo)
-{
-    try {
-        $isStaff = $_SESSION['is_staff'] ?? false;
-        if (!$isStaff) {
-            echo json_encode(["status" => "error", "message" => "Unauthorized - Staff only"]);
-            return;
-        }
-
-        $sql = "SELECT ua.id FROM utility_applications ua
-                LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
-                WHERE ue.id IS NULL OR ue.dss_status = 'Pending Evaluation' OR ue.dss_status = 'Evaluation Error'";
-
-        $stmt = $pdo->query($sql);
-        $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $results = [
-            'total' => count($applications),
-            'successful' => 0,
-            'failed' => 0,
-            'details' => []
-        ];
-
-        foreach ($applications as $app) {
-            try {
-                triggerDSSevaluation($pdo, $app['id']);
-                $results['successful']++;
-                $results['details'][] = "Application {$app['id']}: Evaluation successful";
-            } catch (Exception $e) {
-                error_log("Failed to evaluate application {$app['id']}: " . $e->getMessage());
-                $results['failed']++;
-                $results['details'][] = "Application {$app['id']}: Failed - " . $e->getMessage();
-            }
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "results" => $results,
-            "message" => "Evaluated {$results['successful']} of {$results['total']} applications"
         ]);
     } catch (Exception $e) {
         http_response_code(500);
@@ -836,7 +550,10 @@ function handleChartUtilityType($pdo)
     $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
     $sql2 = "
-        SELECT provider, COUNT(*) AS total
+        SELECT 
+            provider, 
+            COUNT(*) AS total,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
         FROM utility_applications
         GROUP BY provider
         ORDER BY total ASC
@@ -846,7 +563,10 @@ function handleChartUtilityType($pdo)
     $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
     $sql3 = "
-        SELECT COALESCE(ue.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+        SELECT 
+            COALESCE(ue.dss_status, 'Pending Evaluation') as dss_status,
+            COUNT(*) as total,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
         FROM utility_applications ua
         LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
         GROUP BY COALESCE(ue.dss_status, 'Pending Evaluation')

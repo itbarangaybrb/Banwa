@@ -34,7 +34,7 @@ try {
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/resident/home.php"]);
                 break;
             case 2: // super admin
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/superadmin/dashboard.php"]);
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/superadmin/dashboard.php"]);
                 break;
             case 3: // admin
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/admin/dashboard.php"]);

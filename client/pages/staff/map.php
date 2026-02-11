@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="../../styles/staff/map.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 </head>
 
@@ -193,12 +194,28 @@
                         <!-- Filter info removed as requested -->
                     </div>
                 </div>
+
+                <!-- Assessment and Report Buttons -->
+                <div class="debug-actions" style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="hazard-toggle-btn" onclick="getFloodHousesSummary()">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Flood Risk Assessment</span>
+                    </button>
+                    <button class="hazard-toggle-btn" onclick="showFaultLineRiskAssessment()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Fault Line Risk Assessment</span>
+                    </button>
+                    <button class="hazard-toggle-btn" onclick="showAllBusinessesSDSSReport()">
+                        <i class="fas fa-building"></i>
+                        <span>Business SDSS Report</span>
+                    </button>
+                    <button class="hazard-toggle-btn" onclick="showAllConstructionSDSSReport()">
+                        <i class="fas fa-hard-hat"></i>
+                        <span>Construction SDSS Report</span>
+                    </button>
+                </div>
                 
                 <div id="map"></div>
-                
-                <div class="map-info">
-                    <p><strong>Note:</strong> Use the navigation buttons to switch between map views. Select layers from the dropdown filter. Hazard layers (Flood & Fault Line) can be toggled using the buttons below the filter.</p>
-                </div>
             </div>
         </div>
     </main>
@@ -212,6 +229,7 @@
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../../scripts/staff/map.js"></script>
     
     <!-- Detail Modal -->

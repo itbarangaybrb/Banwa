@@ -44,26 +44,8 @@ try {
         case 'chart_construction_type':
             handleChartConstructionType($pdo);
             break;
-        case 'evaluate_application':
-            handleEvaluateApplication($pdo);
-            break;
         case 'get_evaluation':
             handleGetEvaluation($pdo);
-            break;
-        case 'get_evaluation_stats':
-            handleGetEvaluationStats($pdo);
-            break;
-        case 'get_rules':
-            handleGetRules();
-            break;
-        case 'get_application_with_dss':
-            handleGetApplicationWithDSS($pdo);
-            break;
-        case 'trigger_evaluation':
-            handleTriggerEvaluation($pdo);
-            break;
-        case 'evaluate_all_pending':
-            handleEvaluateAllPending($pdo);
             break;
         case 'get_application_details':
             handleGetApplicationDetails($pdo);
@@ -154,7 +136,7 @@ function handleCreateApplication($pdo)
         // File upload - Single file upload only, no requirements array
         $requirementUpload = null;
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/uploads/construction/';
+            $uploadDir = __DIR__ . '/uploads/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
                 // Add .htaccess for security
@@ -485,85 +467,6 @@ function handleUpdateApplication($pdo)
 }
 
 /**
- * Evaluates a construction application using the DSS rule engine
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateApplication($pdo)
-{
-    try {
-        $applicationId = $_POST['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
-        $stmt->execute([':id' => $applicationId]);
-        $application = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$application) {
-            echo json_encode(["status" => "error", "message" => "Application not found"]);
-            return;
-        }
-
-        $dss = new ConstructionDSSRuleEngine();
-        $evaluationResult = $dss->evaluateApplication($application);
-        $statusValue = (string)$evaluationResult['status'];
-
-        $checkStmt = $pdo->prepare("SELECT 1 FROM construction_evaluations WHERE application_id = :app_id");
-        $checkStmt->execute([':app_id' => $applicationId]);
-
-        if ($checkStmt->fetch()) {
-            $evalStmt = $pdo->prepare("
-                UPDATE construction_evaluations 
-                SET dss_status = :status, 
-                    evaluation_details = :details, 
-                    evaluated_at = NOW()
-                WHERE application_id = :app_id
-            ");
-        } else {
-            $evalStmt = $pdo->prepare("
-                INSERT INTO construction_evaluations 
-                (application_id, dss_status, evaluation_details, evaluated_at) 
-                VALUES (:app_id, :status, :details, NOW())
-            ");
-        }
-
-        $evalStmt->execute([
-            ':app_id' => $applicationId,
-            ':status' => $statusValue,
-            ':details' => json_encode($evaluationResult['evaluation_details'])
-        ]);
-
-        $updateStmt = $pdo->prepare("
-            UPDATE construction_applications 
-            SET dss_status = :dss_status,
-                updated_at = NOW()
-            WHERE id = :id
-        ");
-
-        $updateStmt->execute([
-            ':dss_status' => $statusValue,
-            ':id' => $applicationId
-        ]);
-
-        logEvaluation($applicationId, $evaluationResult);
-
-        echo json_encode([
-            "status" => "success",
-            "dss_result" => $evaluationResult,
-            "message" => "Application evaluated successfully"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("DSS Evaluation Error: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Evaluation Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Retrieves DSS evaluation details for a specific construction application
  * 
  * @param PDO $pdo Database connection object
@@ -627,261 +530,6 @@ function handleGetEvaluation($pdo)
     } catch (Exception $e) {
         http_response_code(500);
         error_log("Error in handleGetEvaluation: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Retrieves complete application details including DSS evaluation
- * 
- * @param PDO $pdo Database connection object
- */
-function handleGetApplicationWithDSS($pdo)
-{
-    try {
-        $applicationId = $_GET['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        $isStaff = $_SESSION['is_staff'] ?? false;
-        if (!$isStaff) {
-            echo json_encode(["status" => "error", "message" => "Unauthorized"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT ca.*, 
-                   ce.dss_status, 
-                   ce.evaluation_details,
-                   ce.evaluated_at as dss_evaluated_at,
-                   (SELECT json_agg(json_build_object('status', status, 'comments', comments, 'changed_at', changed_at))
-                    FROM construction_status_history 
-                    WHERE application_id = ca.id 
-                    ORDER BY changed_at DESC) as status_history
-            FROM construction_applications ca
-            LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
-            WHERE ca.id = :id
-        ");
-        $stmt->execute([':id' => $applicationId]);
-        $application = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$application) {
-            echo json_encode(["status" => "error", "message" => "Application not found"]);
-            return;
-        }
-
-        // MODIFIED: Removed requirements decoding since we're not using it anymore
-        if (isset($application['evaluation_details']) && $application['evaluation_details']) {
-            $application['evaluation_details'] = json_decode($application['evaluation_details'], true);
-        }
-        if (isset($application['status_history']) && $application['status_history']) {
-            $application['status_history'] = json_decode($application['status_history'], true);
-        }
-
-        if (isset($application['evaluation_details'])) {
-            $application['dss_summary'] = getDSSSummary($application['evaluation_details']);
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "application" => $application
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Error in handleGetApplicationWithDSS: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Retrieves DSS evaluation statistics
- * 
- * @param PDO $pdo Database connection object
- */
-function handleGetEvaluationStats($pdo)
-{
-    try {
-        $statsStmt = $pdo->query("
-            SELECT 
-                COUNT(*) as total_applications,
-                SUM(CASE WHEN dss_status = 'Pre-Approved' THEN 1 ELSE 0 END) as pre_approved,
-                SUM(CASE WHEN dss_status = 'Additional Requirements Needed' THEN 1 ELSE 0 END) as needs_requirements,
-                SUM(CASE WHEN dss_status = 'Rejected' THEN 1 ELSE 0 END) as rejected,
-                AVG(CASE WHEN evaluation_details::json->>'score' IS NOT NULL 
-                    THEN (evaluation_details::json->>'score')::numeric 
-                    ELSE 0 END) as avg_score,
-                AVG(CASE WHEN evaluation_details::json->>'approval_probability' IS NOT NULL 
-                    THEN (evaluation_details::json->>'approval_probability')::numeric 
-                    ELSE 0 END) as avg_probability
-            FROM construction_applications ca
-            LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
-        ");
-        $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
-
-        $trendsStmt = $pdo->query("
-            SELECT 
-                DATE(evaluated_at) as evaluation_date,
-                COUNT(*) as total_evaluations,
-                SUM(CASE WHEN dss_status = 'Pre-Approved' THEN 1 ELSE 0 END) as pre_approved_count
-            FROM construction_evaluations 
-            WHERE evaluated_at >= NOW() - INTERVAL '30 days'
-            GROUP BY DATE(evaluated_at)
-            ORDER BY evaluation_date
-        ");
-        $trends = $trendsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            "status" => "success",
-            "stats" => $stats,
-            "trends" => $trends
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Error in handleGetEvaluationStats: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Returns information about all DSS rules for construction
- * 
- * @return array List of DSS rules
- */
-function handleGetRules()
-{
-    try {
-        $rules = [
-            [
-                'id' => 'CR1',
-                'name' => 'Complete Requirements Rule',
-                'description' => 'Checks if all required construction documents are submitted',
-                'priority' => 10
-            ],
-            [
-                'id' => 'CR2',
-                'name' => 'Valid Construction Location Rule',
-                'description' => 'Verifies construction site is within barangay boundaries',
-                'priority' => 9
-            ],
-            [
-                'id' => 'CR3',
-                'name' => 'Safety Compliance Rule',
-                'description' => 'Ensures construction type meets safety standards',
-                'priority' => 8
-            ],
-            [
-                'id' => 'CR4',
-                'name' => 'Contractor Qualification Rule',
-                'description' => 'Validates contractor information and qualifications',
-                'priority' => 7
-            ],
-            [
-                'id' => 'CR5',
-                'name' => 'Schedule Validation Rule',
-                'description' => 'Checks if construction schedule is reasonable and safe',
-                'priority' => 6
-            ],
-            [
-                'id' => 'CR6',
-                'name' => 'Owner Agreement Rule',
-                'description' => 'Verifies owner agreement and valid contact information',
-                'priority' => 5
-            ],
-            [
-                'id' => 'CR7',
-                'name' => 'Environmental Impact Rule',
-                'description' => 'Assesses environmental impact and required documentation',
-                'priority' => 4
-            ]
-        ];
-
-        echo json_encode([
-            "status" => "success",
-            "rules" => $rules
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Error in handleGetRules: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Manually triggers DSS evaluation for a specific construction application
- * 
- * @param PDO $pdo Database connection object
- */
-function handleTriggerEvaluation($pdo)
-{
-    try {
-        $applicationId = $_POST['application_id'] ?? null;
-
-        if (!$applicationId) {
-            echo json_encode(["status" => "error", "message" => "Application ID required"]);
-            return;
-        }
-
-        triggerDSSevaluation($pdo, $applicationId);
-
-        echo json_encode(["status" => "success", "message" => "DSS evaluation triggered"]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Error in handleTriggerEvaluation: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Evaluates all pending construction applications (for staff use)
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateAllPending($pdo)
-{
-    try {
-        $isStaff = $_SESSION['is_staff'] ?? false;
-        if (!$isStaff) {
-            echo json_encode(["status" => "error", "message" => "Unauthorized - Staff only"]);
-            return;
-        }
-
-        $sql = "SELECT ca.id FROM construction_applications ca
-                LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
-                WHERE ce.id IS NULL OR ce.dss_status = 'Pending Evaluation' OR ce.dss_status = 'Evaluation Error'";
-
-        $stmt = $pdo->query($sql);
-        $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $results = [
-            'total' => count($applications),
-            'successful' => 0,
-            'failed' => 0,
-            'details' => []
-        ];
-
-        foreach ($applications as $app) {
-            try {
-                triggerDSSevaluation($pdo, $app['id']);
-                $results['successful']++;
-                $results['details'][] = "Application {$app['id']}: Evaluation successful";
-            } catch (Exception $e) {
-                error_log("Failed to evaluate application {$app['id']}: " . $e->getMessage());
-                $results['failed']++;
-                $results['details'][] = "Application {$app['id']}: Failed - " . $e->getMessage();
-            }
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "results" => $results,
-            "message" => "Evaluated {$results['successful']} of {$results['total']} applications"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("Error in handleEvaluateAllPending: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
     }
 }
@@ -1018,7 +666,10 @@ function handleChartConstructionType($pdo)
         $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $sql2 = "
-            SELECT nature_of_activity, COUNT(*) AS total
+            SELECT 
+                nature_of_activity, 
+                COUNT(*) AS total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM construction_applications
             GROUP BY nature_of_activity
             ORDER BY total ASC
@@ -1028,7 +679,10 @@ function handleChartConstructionType($pdo)
         $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
         $sql3 = "
-            SELECT COALESCE(ce.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+            SELECT 
+                COALESCE(ce.dss_status, 'Pending Evaluation') as dss_status, 
+                COUNT(*) as total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM construction_applications ca
             LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
             GROUP BY COALESCE(ce.dss_status, 'Pending Evaluation')

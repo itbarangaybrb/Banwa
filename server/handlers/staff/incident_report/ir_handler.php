@@ -44,26 +44,11 @@ try {
         case 'chart_incident_type':
             handleChartIncidentType($pdo);
             break;
-        case 'evaluate_report':
-            handleEvaluateApplication($pdo);
-            break;
         case 'get_evaluation':
             handleGetEvaluation($pdo);
             break;
-        case 'get_evaluation_stats':
-            handleGetEvaluationStats($pdo);
-            break;
-        case 'get_rules':
-            handleGetRules();
-            break;
         case 'get_report_with_dss':
             handleGetReportWithDSS($pdo);
-            break;
-        case 'trigger_evaluation':
-            handleTriggerEvaluation($pdo);
-            break;
-        case 'evaluate_all_pending':
-            handleEvaluateAllPending($pdo);
             break;
         case 'get_report_details':
             handleGetReportDetails($pdo);
@@ -116,7 +101,7 @@ function handleCreateApplication($pdo)
         $vicContact = get_input('vicContact');
         $vicCitizenship = get_input('vicCitizenship');
         $vicGender = get_input('vicGender');
-        
+
         $vicDOB = get_input('vicDOB');
         $vicOccupation = get_input('vicOccupation');
 
@@ -337,11 +322,11 @@ function handleUpdateApplication($pdo)
         }
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Initialize update arrays
         $updateFields = [];
         $params = [':id' => $reportId];
-        
+
         // List of all possible fields that can be updated
         $possibleFields = [
             'rpFullName' => 'rp_full_name',
@@ -361,7 +346,7 @@ function handleUpdateApplication($pdo)
             'incidentTimestamp' => 'incident_timestamp',
             'description' => 'description'
         ];
-        
+
         // Check each possible field to see if it was submitted
         foreach ($possibleFields as $formField => $dbField) {
             $value = get_input($formField);
@@ -370,14 +355,14 @@ function handleUpdateApplication($pdo)
                 $params[":$dbField"] = $value;
             }
         }
-        
+
         // Handle other incident type
         $otherIncidentType = get_input('otherIncidentType');
         if ($otherIncidentType !== null) {
             $updateFields[] = "incident_type = :incident_type";
             $params[':incident_type'] = $otherIncidentType;
         }
-        
+
         // Handle address fields separately
         $rpLotNo = get_input('rpLotNo');
         $rpStreet = get_input('rpStreet');
@@ -386,7 +371,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "rp_address = :rp_address";
             $params[':rp_address'] = $rpAddress;
         }
-        
+
         $vicLotNo = get_input('vicLotNo');
         $vicStreet = get_input('vicStreet');
         if ($vicLotNo !== null || $vicStreet !== null) {
@@ -394,7 +379,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "vic_address = :vic_address";
             $params[':vic_address'] = $vicAddress;
         }
-        
+
         $susLotNo = get_input('susLotNo');
         $susStreet = get_input('susStreet');
         if (($susLotNo !== null || $susStreet !== null) && ($susLotNo !== '' || $susStreet !== '')) {
@@ -402,7 +387,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "sus_address = :sus_address";
             $params[':sus_address'] = $susAddress;
         }
-        
+
         // Handle latitude/longitude
         $latitude = get_input('incidentLatitude');
         $longitude = get_input('incidentLongitude');
@@ -414,7 +399,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "longitude = :longitude";
             $params[':longitude'] = $longitude;
         }
-        
+
         // Handle witness data JSON field
         if (isset($_POST['witnesses']) && is_array($_POST['witnesses'])) {
             $witnessesArray = [];
@@ -432,18 +417,18 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "witness_data_json = :witness_data_json";
             $params[':witness_data_json'] = $witnessDataJson;
         }
-        
+
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM incident_reports WHERE id = :id");
         $getDSSStmt->execute([':id' => $reportId]);
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
-        
+
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
         $params[':dss_status'] = $currentDSSStatus;
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/uploads/';
@@ -458,23 +443,23 @@ function handleUpdateApplication($pdo)
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // If no fields to update, return early
         if (count($updateFields) <= 2) { // Only dss_status and updated_at were added
             echo json_encode(["status" => "success", "message" => "No changes to update."]);
             return;
         }
-        
+
         // Build SQL query
         $sql = "UPDATE incident_reports SET " . implode(', ', $updateFields);
-        
+
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
             $params[':supabase_user_id'] = $supabaseUserId;
         } else {
             $sql .= " WHERE id = :id";
         }
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -516,84 +501,6 @@ function handleUpdateApplication($pdo)
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "General Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Evaluates an incident report using the DSS rule engine
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateApplication($pdo)
-{
-    try {
-        $reportId = $_POST['application_id'] ?? null;
-
-        if (!$reportId) {
-            echo json_encode(["status" => "error", "message" => "Report ID required"]);
-            return;
-        }
-
-        $stmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
-        $stmt->execute([':id' => $reportId]);
-        $report = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$report) {
-            echo json_encode(["status" => "error", "message" => "Report not found"]);
-            return;
-        }
-
-        $dss = new IncidentReportDSS();
-        $evaluationResult = $dss->evaluateReport($report);
-        $statusValue = (string)$evaluationResult['status'];
-
-        $checkStmt = $pdo->prepare("SELECT 1 FROM incident_report_evaluations WHERE application_id = :application_id");
-        $checkStmt->execute([':application_id' => $reportId]);
-
-        if ($checkStmt->fetch()) {
-            $evalStmt = $pdo->prepare("
-                UPDATE incident_report_evaluations 
-                SET dss_status = :status, 
-                    evaluation_details = :details, 
-                    evaluated_at = NOW()
-                WHERE application_id = :application_id
-            ");
-        } else {
-            $evalStmt = $pdo->prepare("
-                INSERT INTO incident_report_evaluations 
-                (application_id, dss_status, evaluation_details, evaluated_at) 
-                VALUES (:application_id, :status, :details, NOW())
-            ");
-        }
-
-        $evalStmt->execute([
-            ':application_id' => $reportId,
-            ':status' => $statusValue,
-            ':details' => json_encode($evaluationResult['evaluation_details'])
-        ]);
-
-        $updateStmt = $pdo->prepare("
-            UPDATE incident_reports 
-            SET dss_status = :dss_status
-            WHERE id = :id
-        ");
-
-        $updateStmt->execute([
-            ':dss_status' => $statusValue,
-            ':id' => $reportId
-        ]);
-
-        logEvaluation($reportId, $evaluationResult);
-
-        echo json_encode([
-            "status" => "success",
-            "dss_result" => $evaluationResult,
-            "message" => "Report evaluated successfully"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        error_log("DSS Evaluation Error: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Evaluation Error: " . $e->getMessage()]);
     }
 }
 
@@ -746,180 +653,6 @@ function handleGetReportWithDSS($pdo)
 }
 
 /**
- * Retrieves DSS evaluation statistics
- * 
- * @param PDO $pdo Database connection object
- */
-function handleGetEvaluationStats($pdo)
-{
-    try {
-        $statsStmt = $pdo->query("
-            SELECT 
-                COUNT(*) as total_reports,
-                SUM(CASE WHEN dss_status = 'High Priority' THEN 1 ELSE 0 END) as high_priority,
-                SUM(CASE WHEN dss_status = 'Medium Priority' THEN 1 ELSE 0 END) as medium_priority,
-                SUM(CASE WHEN dss_status = 'Low Priority' THEN 1 ELSE 0 END) as low_priority,
-                AVG(CASE WHEN evaluation_details::json->>'score' IS NOT NULL 
-                    THEN (evaluation_details::json->>'score')::numeric 
-                    ELSE 0 END) as avg_score,
-                AVG(CASE WHEN evaluation_details::json->>'urgency_score' IS NOT NULL 
-                    THEN (evaluation_details::json->>'urgency_score')::numeric 
-                    ELSE 0 END) as avg_urgency
-            FROM incident_reports ir
-            LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
-        ");
-        $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
-
-        $trendsStmt = $pdo->query("
-            SELECT 
-                DATE(evaluated_at) as evaluation_date,
-                COUNT(*) as total_evaluations,
-                SUM(CASE WHEN dss_status = 'High Priority' THEN 1 ELSE 0 END) as high_priority_count
-            FROM incident_report_evaluations 
-            WHERE evaluated_at >= NOW() - INTERVAL '30 days'
-            GROUP BY DATE(evaluated_at)
-            ORDER BY evaluation_date
-        ");
-        $trends = $trendsStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            "status" => "success",
-            "stats" => $stats,
-            "trends" => $trends
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Returns information about all DSS rules used in the incident report evaluation system
- * 
- * @return array List of DSS rules with metadata
- */
-function handleGetRules()
-{
-    try {
-        $rules = [
-            [
-                'id' => 'IR1',
-                'name' => 'Incident Severity Rule',
-                'description' => 'Evaluates the severity level based on incident type',
-                'priority' => 10
-            ],
-            [
-                'id' => 'IR2',
-                'name' => 'Timeliness Rule',
-                'description' => 'Checks if report was filed within reasonable time after incident',
-                'priority' => 9
-            ],
-            [
-                'id' => 'IR3',
-                'name' => 'Location Validity Rule',
-                'description' => 'Verifies incident location is within barangay boundaries',
-                'priority' => 8
-            ],
-            [
-                'id' => 'IR4',
-                'name' => 'Completeness Rule',
-                'description' => 'Ensures all required information is provided',
-                'priority' => 7
-            ],
-            [
-                'id' => 'IR5',
-                'name' => 'Witness Credibility Rule',
-                'description' => 'Evaluates witness information for credibility',
-                'priority' => 6
-            ]
-        ];
-
-        echo json_encode([
-            "status" => "success",
-            "rules" => $rules
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Manually triggers DSS evaluation for a specific report
- * 
- * @param PDO $pdo Database connection object
- */
-function handleTriggerEvaluation($pdo)
-{
-    try {
-        $reportId = $_POST['application_id'] ?? null;
-
-        if (!$reportId) {
-            echo json_encode(["status" => "error", "message" => "Report ID required"]);
-            return;
-        }
-
-        triggerDSSevaluation($pdo, $reportId);
-
-        echo json_encode(["status" => "success", "message" => "DSS evaluation triggered"]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
- * Evaluates all pending reports (for staff use)
- * 
- * @param PDO $pdo Database connection object
- */
-function handleEvaluateAllPending($pdo)
-{
-    try {
-        $isStaff = $_SESSION['is_staff'] ?? false;
-        if (!$isStaff) {
-            echo json_encode(["status" => "error", "message" => "Unauthorized - Staff only"]);
-            return;
-        }
-
-        $sql = "SELECT ir.id FROM incident_reports ir
-                LEFT JOIN incident_report_evaluations ie ON ir.id = ie.application_id
-                WHERE ie.id IS NULL OR ie.dss_status = 'Pending Evaluation' OR ie.dss_status = 'Evaluation Error'";
-
-        $stmt = $pdo->query($sql);
-        $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $results = [
-            'total' => count($reports),
-            'successful' => 0,
-            'failed' => 0,
-            'details' => []
-        ];
-
-        foreach ($reports as $report) {
-            try {
-                triggerDSSevaluation($pdo, $report['id']);
-                $results['successful']++;
-                $results['details'][] = "Report {$report['id']}: Evaluation successful";
-            } catch (Exception $e) {
-                error_log("Failed to evaluate report {$report['id']}: " . $e->getMessage());
-                $results['failed']++;
-                $results['details'][] = "Report {$report['id']}: Failed - " . $e->getMessage();
-            }
-        }
-
-        echo json_encode([
-            "status" => "success",
-            "results" => $results,
-            "message" => "Evaluated {$results['successful']} of {$results['total']} reports"
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
-    }
-}
-
-/**
  * Gets detailed report information for frontend display
  * 
  * @param PDO $pdo Database connection object
@@ -1026,7 +759,6 @@ function updateWitnessDataJson($pdo, $reportId)
 function handleChartIncidentType($pdo)
 {
     try {
-        // Use date_reported instead of application_date
         $sql1 = "
             SELECT date_reported, COUNT(*) AS total
             FROM incident_reports
@@ -1038,7 +770,10 @@ function handleChartIncidentType($pdo)
         $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $sql2 = "
-            SELECT incident_type, COUNT(*) AS total
+            SELECT 
+                incident_type, 
+                COUNT(*) AS total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM incident_reports
             GROUP BY incident_type
             ORDER BY total ASC
@@ -1050,11 +785,13 @@ function handleChartIncidentType($pdo)
         $sql3 = "
             SELECT 
                 COALESCE(dss_status, 'Pending Evaluation') as dss_status, 
-                COUNT(*) as total
+                COUNT(*) as total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM incident_reports
             GROUP BY COALESCE(dss_status, 'Pending Evaluation')
             ORDER BY total ASC
         ";
+
         $stmt3 = $pdo->query($sql3);
         $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 
