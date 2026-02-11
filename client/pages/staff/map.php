@@ -197,54 +197,28 @@
 
                 <!-- Debug and Action Buttons -->
                 <div class="debug-actions" style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="hazard-toggle-btn" onclick="showImprovedFloodSummary()">
+                    <button class="hazard-toggle-btn" onclick="getFloodHousesSummary()">
                         <i class="fas fa-chart-bar"></i>
                         <span>Flood Risk Assessment</span>
                     </button>
+<button class="hazard-toggle-btn" onclick="showFaultLineRiskAssessment()">
+    <i class="fas fa-map-marker-alt"></i>
+    <span>Fault Line Risk Assessment</span>
+</button>
 
-                    <button class="hazard-toggle-btn" onclick="refreshFloodWarnings()">
-                        <i class="fas fa-sync-alt"></i>
-                        <span>Refresh Flood Warnings</span>
-                    </button>
-                    
-                    <button class="hazard-toggle-btn" onclick="debugFloodDetection()" style="background: #6c757d;">
-                        <i class="fas fa-bug"></i>
-                        <span>Debug Flood Detection</span>
-                    </button>
-                    
-                    <button class="hazard-toggle-btn" onclick="debugHousePolygons()" style="background: #17a2b8;">
-                        <i class="fas fa-home"></i>
-                        <span>Debug Houses</span>
-                    </button>
-                    
-                    <button class="hazard-toggle-btn" onclick="testFloodPolygonLocation()" style="background: #dc3545;">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>View Flood Area</span>
-                    </button>
+<button class="hazard-toggle-btn" onclick="showAllBusinessesSDSSReport()">
+    <i class="fas fa-building"></i>
+    <span>Business SDSS Report</span>
+</button>
+
+<button class="hazard-toggle-btn" onclick="showAllConstructionSDSSReport()">
+    <i class="fas fa-hard-hat"></i>
+    <span>Construction SDSS Report</span>
+</button>
                 </div>
                 
                 <div id="map"></div>
                 
-               <!-- debug buttons section -->
-<div class="debug-buttons" style="margin-top: 10px; padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #d1ecf1;">
-    <h4 style="margin-bottom: 10px; color: #333; font-size: 0.9em;">
-        <i class="fas fa-chart-line"></i> SDSS Spatial Analysis Tools
-    </h4>
-    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-        <button onclick="testSDSS()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-play"></i> Test SDSS
-        </button>
-        <button onclick="showAllBusinessesSDSSReport()" style="padding: 8px 12px; background: #9C27B0; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-store"></i> Business SDSS Report
-        </button>
-        <button onclick="showAllConstructionSDSSReport()" style="padding: 8px 12px; background: #ff9800; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-hard-hat"></i> Construction SDSS Report
-        </button>
-        <button onclick="showImprovedFloodSummary()" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-            <i class="fas fa-chart-bar"></i> Flood Summary
-        </button>
-    </div>
-</div>
 
 <!-- Add this button to your debug buttons section -->
 <button onclick="testFixedFloodDetectionButton()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">

@@ -148,7 +148,24 @@ function getAllFloodHazards()
                 END, hazard_name";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $hazards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process hazards to extract coordinates from GeoJSON
+        foreach ($hazards as &$hazard) {
+            if ($hazard['geometry']) {
+                $geojson = json_decode($hazard['geometry'], true);
+                if ($geojson && isset($geojson['coordinates'])) {
+                    // GeoJSON Polygon format: [[[lng, lat], [lng, lat], ...]]
+                    // Leaflet needs: [[lat, lng], [lat, lng], ...]
+                    $coords = $geojson['coordinates'][0]; // Get outer ring
+                    $hazard['coordinates'] = array_map(function($coord) {
+                        return [$coord[1], $coord[0]]; // Swap from [lng, lat] to [lat, lng]
+                    }, $coords);
+                }
+            }
+        }
+        
+        return $hazards;
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
         return [];
@@ -204,10 +221,13 @@ function getHousesInFloodAreas($riskLevel = null)
                     bh.description as hazard_description, bh.properties,
                     CASE 
                         WHEN hg.coordinates IS NOT NULL THEN
-                            ROUND(
-                                (ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
-                                 NULLIF(ST_Area(hg.geom::geography), 0) * 100)::numeric,
-                                1
+                            LEAST(
+                                ROUND(
+                                    (ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                     NULLIF(ST_Area(hg.geom::geography), 0) * 100)::numeric,
+                                    1
+                                ),
+                                100.0
                             )
                         ELSE 100
                     END as flood_coverage_percent,
@@ -781,16 +801,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     // NEW: Get complete SDSS report for all businesses
-    if ($_POST['action'] === 'sdss_get_all_businesses_report') {
+    if ($_POST['action'] === 'sdss_get_all_businesses_report' || $_POST['action'] === 'sdss_evaluate_all_businesses') {
         $report = sdss_evaluateAllBusinesses();
-        echo json_encode(['success' => true, 'report' => $report]);
+        echo json_encode(['success' => true, 'report' => $report, 'results' => $report['affected'] ?? []]);
         exit;
     }
 
     // NEW: Get complete SDSS report for all construction
-    if ($_POST['action'] === 'sdss_get_all_construction_report') {
+    if ($_POST['action'] === 'sdss_get_all_construction_report' || $_POST['action'] === 'sdss_evaluate_all_construction') {
         $report = sdss_evaluateAllConstruction();
-        echo json_encode(['success' => true, 'report' => $report]);
+        echo json_encode(['success' => true, 'report' => $report, 'results' => $report['affected'] ?? []]);
+        exit;
+    }
+
+    // Get all markers (combined)
+    if ($_POST['action'] === 'get_all_markers') {
+        $allMarkers = [];
+        
+        // Get households (house polygons as markers)
+        $houses = getHousePolygons();
+        foreach ($houses as $house) {
+            if ($house['center_lat'] && $house['center_lng']) {
+                $allMarkers[] = [
+                    'id' => $house['house_id'],
+                    'type' => 'household',
+                    'name' => $house['address'] ?: "House #{$house['house_id']}",
+                    'address' => $house['address'],
+                    'latitude' => $house['center_lat'],
+                    'longitude' => $house['center_lng']
+                ];
+            }
+        }
+        
+        // Get businesses
+        $businesses = getBusinessMarkers();
+        foreach ($businesses as $business) {
+            $allMarkers[] = [
+                'id' => $business['id'],
+                'type' => 'business',
+                'name' => $business['business_name'],
+                'address' => $business['address_of_business'],
+                'latitude' => $business['latitude'],
+                'longitude' => $business['longitude']
+            ];
+        }
+        
+        // Get construction
+        $constructions = getConstructionMarkers();
+        foreach ($constructions as $construction) {
+            $allMarkers[] = [
+                'id' => $construction['id'],
+                'type' => 'construction',
+                'name' => $construction['nature_of_work'] ?? 'Construction Project',
+                'address' => $construction['construction_address'],
+                'latitude' => $construction['latitude'],
+                'longitude' => $construction['longitude']
+            ];
+        }
+        
+        // Get utilities
+        $utilities = getUtilitiesMarkers();
+        foreach ($utilities as $utility) {
+            $allMarkers[] = [
+                'id' => $utility['id'],
+                'type' => 'utility',
+                'name' => $utility['nature_of_work'] ?? 'Utility Work',
+                'address' => $utility['address_of_utility'],
+                'latitude' => $utility['latitude'],
+                'longitude' => $utility['longitude']
+            ];
+        }
+        
+        echo json_encode(['success' => true, 'markers' => $allMarkers]);
+        exit;
+    }
+
+    // Get house polygons
+    if ($_POST['action'] === 'get_house_polygons') {
+        $houses = getHousePolygons();
+        echo json_encode(['success' => true, 'houses' => $houses]);
+        exit;
+    }
+
+    // Get fault line (if you have this data)
+    if ($_POST['action'] === 'get_fault_line') {
+        // Example fault line coordinates - replace with actual data from database
+        $faultLine = [
+            'coordinates' => [
+                [14.6160, 121.0730],
+                [14.6170, 121.0750],
+                [14.6180, 121.0770],
+                [14.6190, 121.0790]
+            ]
+        ];
+        echo json_encode(['success' => true, 'fault_line' => $faultLine]);
         exit;
     }
 
