@@ -4,7 +4,7 @@ const MAP_HANDLER_URL = '/Banwa/server/handlers/map/map_handler.php';
 const map = L.map('map').setView([14.6175, 121.0756], 17);
 let constructionMarkers = [];
 let businessMarkers = [];
-let householdMarkers = [];
+let householdMarkers = []; // Will not be used anymore - keeping for compatibility
 let utilityMarkers = [];
 let housePolygonsLayer = null;
 let housePolygonsData = [];
@@ -30,9 +30,11 @@ let searchTimeout = null;
 // Modal state
 let currentMarkerData = null;
 
-// Flood display variables
-let tempHouseMarker = null;
-let floodHighlightLayer = null;
+// Helper function to check if control is on map (Leaflet doesn't have hasControl)
+function hasControl(control) {
+    if (!control || !control._map) return false;
+    return control._map === map;
+}
 
 // Barangay boundary
 const blueRidgeGeoJSON = {
@@ -84,11 +86,6 @@ const businessIcon = L.divIcon({
     iconSize: [15, 15] 
 });
 
-const householdIcon = L.divIcon({ 
-    className: 'household-marker', 
-    iconSize: [12, 12] 
-});
-
 const utilityIcon = L.divIcon({ 
     className: 'utility-marker', 
     iconSize: [12, 12] 
@@ -117,1660 +114,13 @@ function closeModal(modalId = 'detail-modal') {
     }
 }
 
-// ==================== FLOOD AFFECTED HOUSES FUNCTIONS ====================
-
-/**
- * Get houses that are within flood areas
- * @param {string} riskLevel - Optional filter by risk level ('Low', 'Medium', 'High')
- * @returns {Promise} Promise with houses data
- */
-async function getHousesInFlood(riskLevel = null) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_houses_in_flood');
-        if (riskLevel) {
-            formData.append('risk_level', riskLevel);
-        }
-        
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log(`Found ${data.count} houses in flood areas`);
-            return data.houses;
-        } else {
-            console.error('Error getting houses in flood:', data.message);
-            return [];
-        }
-    } catch (error) {
-        console.error('Error fetching houses in flood:', error);
-        return [];
-    }
-}
-
-/**
- * Get summary of flood-affected houses grouped by risk level
- * @returns {Promise} Promise with summary data
- */
-async function getFloodHousesSummary() {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_flood_houses_summary');
-        
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            return data.summary;
-        } else {
-            console.error('Error getting flood summary:', data.message);
-            return { 
-                total: 0, 
-                fully_affected: 0,
-                partially_affected: 0,
-                minimally_affected: 0,
-                by_risk_level: [] 
-            };
-        }
-    } catch (error) {
-        console.error('Error fetching flood summary:', error);
-        return { 
-            total: 0, 
-            fully_affected: 0,
-            partially_affected: 0,
-            minimally_affected: 0,
-            by_risk_level: [] 
-        };
-    }
-}
-
-/**
- * Get flood warning information for a specific risk level and impact level
- * @param {string} riskLevel - Risk level ('Low', 'Medium', 'High', 'Very-Low')
- * @param {string} impactLevel - Impact level ('Fully Affected', 'Partially Affected', 'Minimally Affected')
- * @returns {Promise} Promise with warning data
- */
-async function getFloodWarning(riskLevel, impactLevel = 'Fully Affected') {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'get_flood_warning');
-        formData.append('risk_level', riskLevel);
-        formData.append('impact_level', impactLevel);
-        
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            return data.warning;
-        } else {
-            console.error('Error getting flood warning:', data.message);
-            return null;
-        }
-    } catch (error) {
-        console.error('Error fetching flood warning:', error);
-        return null;
-    }
-}
-
-/**
- * Show improved flood summary with coverage percentages
- */
-async function showImprovedFloodSummary() {
-    // Show loading state
-    Swal.fire({
-        title: 'Analyzing Flood Risk...',
-        html: 'Checking houses in flood areas and calculating coverage...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    try {
-        // Get summary data
-        const summary = await getFloodHousesSummary();
-        
-        if (summary.total === 0) {
-            Swal.fire({
-                icon: 'success',
-                title: 'No Houses in Flood Areas',
-                html: `
-                    <div style="text-align: left; padding: 20px;">
-                        <p style="color: #28a745; font-size: 16px; margin-bottom: 15px;">
-                            ✓ Great news! No houses are currently located within identified flood hazard areas.
-                        </p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
-                            <strong>Stay Prepared:</strong>
-                            <ul style="margin-top: 10px; padding-left: 20px;">
-                                <li>Continue monitoring weather updates</li>
-                                <li>Maintain clear drainage systems</li>
-                                <li>Keep emergency contact numbers ready</li>
-                            </ul>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#28a745'
-            });
-            return;
-        }
-        
-        // Build summary HTML
-        let summaryHTML = `
-            <div style="max-width: 750px; text-align: left;">
-                <!-- Header with Statistics -->
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            color: white; padding: 25px; border-radius: 12px; 
-                            margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
-                        🏘️ Flood Risk Assessment
-                    </h3>
-                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                        ${summary.total}
-                    </div>
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">
-                        ${summary.total === 1 ? 'House' : 'Houses'} Affected by Flooding
-                    </div>
-                    
-                    <!-- Impact Level Breakdown -->
-                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 8px; flex: 1;">
-                            <div style="font-size: 24px; font-weight: bold;">${summary.fully_affected || 0}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Fully Affected<br>(≥75%)</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 8px; flex: 1;">
-                            <div style="font-size: 24px; font-weight: bold;">${summary.partially_affected || 0}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Partially<br>(25-74%)</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 8px; flex: 1;">
-                            <div style="font-size: 24px; font-weight: bold;">${summary.minimally_affected || 0}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Minimally<br>(<25%)</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Risk Level Breakdown -->
-                <div style="margin-bottom: 20px;">
-        `;
-        
-        // Process each risk level
-        for (const levelData of summary.by_risk_level) {
-            const riskLevel = levelData.risk_level;
-            const count = levelData.house_count;
-            const houses = JSON.parse(levelData.houses);
-            
-            // Get warning info (using first house's impact level as example)
-            const warning = await getFloodWarning(riskLevel, 'Fully Affected');
-            
-            // Set colors based on risk level
-            let colorScheme = {};
-            switch(riskLevel.toLowerCase()) {
-                case 'high':
-                    colorScheme = { bg: '#fee', border: '#dc3545', text: '#dc3545', icon: '🚨' };
-                    break;
-                case 'medium':
-                    colorScheme = { bg: '#fff3cd', border: '#ffc107', text: '#856404', icon: '⚠️' };
-                    break;
-                case 'low':
-                    colorScheme = { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460', icon: 'ℹ️' };
-                    break;
-                default:
-                    colorScheme = { bg: '#d4edda', border: '#28a745', text: '#155724', icon: '✓' };
-            }
-            
-            summaryHTML += `
-                <div style="background: ${colorScheme.bg}; 
-                            border: 2px solid ${colorScheme.border}; 
-                            border-radius: 10px; 
-                            padding: 20px; 
-                            margin-bottom: 15px;">
-                    
-                    <!-- Risk Level Header -->
-                    <div style="display: flex; justify-content: space-between; 
-                                align-items: center; margin-bottom: 15px; 
-                                padding-bottom: 10px; border-bottom: 2px solid ${colorScheme.border};">
-                        <h4 style="margin: 0; color: ${colorScheme.text}; font-size: 18px;">
-                            ${colorScheme.icon} ${riskLevel.toUpperCase()} Risk
-                        </h4>
-                        <span style="background: ${colorScheme.border}; 
-                                     color: white; 
-                                     padding: 5px 15px; 
-                                     border-radius: 20px; 
-                                     font-weight: bold;">
-                            ${count} ${count === 1 ? 'House' : 'Houses'}
-                        </span>
-                    </div>
-                    
-                    <!-- Warning Message -->
-                    <div style="background: white; 
-                                padding: 15px; 
-                                border-radius: 8px; 
-                                margin-bottom: 15px;
-                                border-left: 4px solid ${colorScheme.border};">
-                        <p style="margin: 0 0 10px 0; color: ${colorScheme.text}; font-weight: 600;">
-                            ${warning.message}
-                        </p>
-                        
-                        <!-- Impact Statistics -->
-                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin: 10px 0;">
-                            <strong style="display: block; margin-bottom: 5px; font-size: 13px;">
-                                Impact Breakdown:
-                            </strong>
-                            <div style="display: flex; gap: 10px; font-size: 12px;">
-                                <span>🔴 Fully: ${levelData.fully_affected || 0}</span>
-                                <span>🟡 Partially: ${levelData.partially_affected || 0}</span>
-                                <span>🟢 Minimally: ${levelData.minimally_affected || 0}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Recommendations -->
-                        <div style="margin-top: 15px;">
-                            <strong style="color: ${colorScheme.text}; display: block; margin-bottom: 8px;">
-                                Safety Recommendations:
-                            </strong>
-                            <ul style="margin: 0; padding-left: 20px; color: #555;">
-                                ${warning.recommendations.slice(0, 4).map(rec => 
-                                    `<li style="margin-bottom: 5px;">${rec}</li>`
-                                ).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- House List with Coverage -->
-                    <div style="background: white; 
-                                padding: 15px; 
-                                border-radius: 8px;">
-                        <strong style="display: block; margin-bottom: 10px; color: #333;">
-                            📍 Affected Houses (sorted by coverage):
-                        </strong>
-                        <div style="max-height: 200px; 
-                                    overflow-y: auto; 
-                                    padding-right: 10px;">
-                            ${houses.map((house, index) => {
-                                const coverage = house.flood_coverage || 0;
-                                let coverageColor = '#28a745'; // green
-                                let coverageIcon = '🟢';
-                                let impactText = 'Minimally';
-                                
-                                if (coverage >= 75) {
-                                    coverageColor = '#dc3545'; // red
-                                    coverageIcon = '🔴';
-                                    impactText = 'Fully';
-                                } else if (coverage >= 25) {
-                                    coverageColor = '#ffc107'; // yellow
-                                    coverageIcon = '🟡';
-                                    impactText = 'Partially';
-                                }
-                                
-                                // Escape single quotes in address
-                                const safeAddress = house.address ? house.address.replace(/'/g, "\\'") : '';
-                                
-                                return `
-                                <div style="padding: 10px 12px; 
-                                            margin-bottom: 8px; 
-                                            background: #f8f9fa; 
-                                            border-radius: 6px; 
-                                            border-left: 4px solid ${coverageColor};
-                                            cursor: pointer;
-                                            transition: all 0.2s;"
-                                     onmouseover="this.style.background='#e9ecef'; this.style.transform='translateX(5px)'"
-                                     onmouseout="this.style.background='#f8f9fa'; this.style.transform='translateX(0)'"
-                                     onclick="zoomToHouse(${house.center_lat}, ${house.center_lng}, '${safeAddress}', ${coverage})">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <div style="flex: 1;">
-                                            <div style="font-weight: 600; color: #333; margin-bottom: 3px;">
-                                                ${house.address || `House #${house.house_id}`}
-                                            </div>
-                                            <div style="font-size: 11px; color: #666;">
-                                                ${coverageIcon} ${impactText} Affected • Click to view on map
-                                            </div>
-                                        </div>
-                                        <div style="background: ${coverageColor}; 
-                                                    color: white; 
-                                                    padding: 5px 12px; 
-                                                    border-radius: 15px; 
-                                                    font-weight: bold;
-                                                    font-size: 13px;
-                                                    margin-left: 10px;">
-                                            ${coverage}%
-                                        </div>
-                                    </div>
-                                </div>
-                            `}).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        summaryHTML += `
-                </div>
-                
-                <!-- Footer Actions -->
-                <div style="background: #f8f9fa; 
-                            padding: 15px; 
-                            border-radius: 10px; 
-                            text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                        For emergency assistance, contact:
-                    </p>
-                    <div style="font-weight: bold; color: #333; font-size: 16px;">
-                        Barangay Blue Ridge B Emergency Hotline
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Show the summary
-        Swal.fire({
-            title: '',
-            html: summaryHTML,
-            width: 850,
-            confirmButtonText: 'Close',
-            confirmButtonColor: '#667eea',
-            showCloseButton: true,
-            customClass: {
-                container: 'flood-summary-modal',
-                popup: 'flood-summary-popup'
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error showing flood summary:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to load flood summary. Please try again.',
-            confirmButtonText: 'OK'
-        });
-    }
-}
-
-/**
- * Zoom to a specific house on the map with coverage info
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- * @param {string} address - House address
- * @param {number} coverage - Flood coverage percentage
- */
-function zoomToHouse(lat, lng, address, coverage = 0) {
-    // Close the SweetAlert
-    Swal.close();
-    
-    // Zoom to location
-    map.setView([lat, lng], 19, {
-        animate: true,
-        duration: 1.5
-    });
-    
-    // Add a temporary marker to highlight the location
-    if (window.tempHouseMarker) {
-        map.removeLayer(window.tempHouseMarker);
-    }
-    
-    // Determine color based on coverage
-    let markerColor = '#28a745'; // green
-    let impactText = 'Minimally Affected';
-    
-    if (coverage >= 75) {
-        markerColor = '#dc3545'; // red
-        impactText = 'Fully Affected';
-    } else if (coverage >= 25) {
-        markerColor = '#ffc107'; // yellow
-        impactText = 'Partially Affected';
-    }
-    
-    window.tempHouseMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-            className: 'pulse-marker',
-            html: `<div class="pulse" style="background: ${markerColor};"></div>`,
-            iconSize: [30, 30]
-        })
-    }).addTo(map);
-    
-    // Show detailed popup
-    window.tempHouseMarker.bindPopup(`
-        <div style="padding: 12px; min-width: 200px;">
-            <strong style="font-size: 15px; display: block; margin-bottom: 8px;">
-                ${address}
-            </strong>
-            <div style="background: #f8f9fa; padding: 8px; border-radius: 5px; margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #666; font-size: 13px;">Flood Coverage:</span>
-                    <strong style="color: ${markerColor}; font-size: 16px;">${coverage}%</strong>
-                </div>
-            </div>
-            <div style="color: ${markerColor}; font-weight: 600; font-size: 13px;">
-                ⚠️ ${impactText}
-            </div>
-            ${coverage >= 50 ? 
-                `<div style="margin-top: 8px; padding: 6px; background: #fff3cd; border-radius: 4px; font-size: 11px; color: #856404;">
-                    ⚠ More than half of this house is in the flood zone
-                </div>` 
-                : ''}
-        </div>
-    `).openPopup();
-    
-    // Remove marker after 15 seconds
-    setTimeout(() => {
-        if (window.tempHouseMarker) {
-            map.removeLayer(window.tempHouseMarker);
-            window.tempHouseMarker = null;
-        }
-    }, 15000);
-}
-
-/**
- * Highlight houses on map with color coding by coverage
- * @param {string} riskLevel - Optional filter by risk level
- */
-async function highlightFloodAffectedHouses(riskLevel = null) {
-    try {
-        // Clear existing highlights
-        if (window.floodHighlightLayer) {
-            map.removeLayer(window.floodHighlightLayer);
-        }
-        
-        // Get houses in flood
-        const houses = await getHousesInFlood(riskLevel);
-        
-        if (houses.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: 'No Houses Found',
-                text: riskLevel 
-                    ? `No houses found in ${riskLevel} risk flood areas.`
-                    : 'No houses found in flood areas.',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            return;
-        }
-        
-        // Create a layer group for highlights
-        window.floodHighlightLayer = L.layerGroup().addTo(map);
-        
-        // Add highlights for each house
-        houses.forEach(house => {
-            if (house.coordinates) {
-                const coords = JSON.parse(house.coordinates);
-                const latlngs = coords.map(coord => [coord[1], coord[0]]);
-                const coverage = house.flood_coverage_percent || 0;
-                
-                // Determine color based on coverage percentage
-                let fillColor = '#28a745'; // green (minimal)
-                let weight = 2;
-                
-                if (coverage >= 75) {
-                    fillColor = '#dc3545'; // red (fully affected)
-                    weight = 4;
-                } else if (coverage >= 25) {
-                    fillColor = '#ffc107'; // yellow (partially affected)
-                    weight = 3;
-                }
-                
-                const polygon = L.polygon(latlngs, {
-                    color: fillColor,
-                    weight: weight,
-                    fillColor: fillColor,
-                    fillOpacity: 0.4,
-                    className: 'flood-affected-house-highlight'
-                }).addTo(window.floodHighlightLayer);
-                
-                polygon.bindPopup(`
-                    <div style="padding: 10px;">
-                        <strong>${house.address || `House #${house.house_id}`}</strong>
-                        <br>
-                        <span style="color: ${fillColor}; font-weight: 600;">
-                            ${house.impact_level || 'Affected'}
-                        </span>
-                        <br>
-                        <div style="margin-top: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
-                            <strong>${coverage}%</strong> of house in flood zone
-                        </div>
-                        <small style="color: #666;">${house.hazard_name}</small>
-                    </div>
-                `);
-            }
-        });
-        
-        // Show detailed notification
-        const fullyAffected = houses.filter(h => (h.flood_coverage_percent || 0) >= 75).length;
-        const partiallyAffected = houses.filter(h => {
-            const cov = h.flood_coverage_percent || 0;
-            return cov >= 25 && cov < 75;
-        }).length;
-        const minimallyAffected = houses.filter(h => (h.flood_coverage_percent || 0) < 25).length;
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Houses Highlighted',
-            html: `
-                <div style="text-align: left;">
-                    <p><strong>${houses.length}</strong> houses highlighted on map:</p>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin: 5px 0;">🔴 Fully Affected (≥75%): ${fullyAffected}</li>
-                        <li style="margin: 5px 0;">🟡 Partially Affected (25-74%): ${partiallyAffected}</li>
-                        <li style="margin: 5px 0;">🟢 Minimally Affected (<25%): ${minimallyAffected}</li>
-                    </ul>
-                </div>
-            `,
-            timer: 3000,
-            showConfirmButton: false
-        });
-        
-    } catch (error) {
-        console.error('Error highlighting houses:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to highlight houses. Please try again.'
-        });
-    }
-}
-
-// ==================== ADVANCED FLOOD DETECTION SYSTEM ====================
-
-// Improved point-in-polygon with logging
-function isPointInPolygon(point, polygon) {
-    const x = point[0], y = point[1];
-    let inside = false;
-    
-    console.log(`Checking point [${x}, ${y}] against polygon with ${polygon.length} vertices`);
-    
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i][0], yi = polygon[i][1];
-        const xj = polygon[j][0], yj = polygon[j][1];
-        
-        const intersect = ((yi > y) !== (yj > y)) &&
-            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        
-        if (intersect) inside = !inside;
-    }
-    
-    return inside;
-}
-
-// Check if point is inside any flood area
-function checkIfInFloodArea(lat, lng) {
-    if (!floodLayer || !floodLayer.getLayers) return null;
-    
-    const point = [lng, lat]; // [lng, lat] format for polygon checking
-    const layers = floodLayer.getLayers();
-    
-    console.log(`Checking point: lat=${lat}, lng=${lng} (as [${lng}, ${lat}])`);
-    
-    for (let layer of layers) {
-        try {
-            if (layer.feature && layer.feature.geometry) {
-                const geometry = layer.feature.geometry;
-                
-                if (geometry.type === 'Polygon' && geometry.coordinates) {
-                    const polygon = geometry.coordinates[0];
-                    console.log(`Polygon has ${polygon.length} vertices`);
-                    console.log(`First vertex: ${polygon[0][0]}, ${polygon[0][1]}`);
-                    
-                    if (isPointInPolygon(point, polygon)) {
-                        console.log(`✅ Point IS IN flood area: ${layer.hazardData?.hazard_name || 'Unknown'}`);
-                        return layer.hazardData || {
-                            hazard_name: 'Flood Hazard Area',
-                            risk_level: 'unknown'
-                        };
-                    }
-                } else if (geometry.type === 'MultiPolygon') {
-                    for (let polygonGroup of geometry.coordinates) {
-                        const polygon = polygonGroup[0];
-                        if (isPointInPolygon(point, polygon)) {
-                            return layer.hazardData || {
-                                hazard_name: 'Flood Hazard Area',
-                                risk_level: 'unknown'
-                            };
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error checking flood layer:', error);
-        }
-    }
-    
-    console.log(`❌ Point is NOT in flood area`);
-    return null;
-}
-
-// ADVANCED: Check polygon intersection (house vs flood)
-function isPolygonIntersectingFlood(houseCoords) {
-    if (!floodLayer || !floodLayer.getLayers) return null;
-    
-    const floodLayers = floodLayer.getLayers();
-    const housePoints = houseCoords.map(coord => [coord[0], coord[1]]); // Ensure [lng, lat]
-    
-    for (let floodLayerObj of floodLayers) {
-        if (floodLayerObj.feature && floodLayerObj.feature.geometry) {
-            const floodGeometry = floodLayerObj.feature.geometry;
-            
-            if (floodGeometry.type === 'Polygon' && floodGeometry.coordinates) {
-                const floodPolygon = floodGeometry.coordinates[0];
-                
-                // Strategy 1: Check if any house vertex is inside flood
-                for (let vertex of housePoints) {
-                    if (isPointInPolygon(vertex, floodPolygon)) {
-                        console.log(`✅ House vertex in flood: ${vertex[1]}, ${vertex[0]}`);
-                        return floodLayerObj.hazardData;
-                    }
-                }
-                
-                // Strategy 2: Check if any flood vertex is inside house (simplified bounds check)
-                // This is computationally expensive, so we do a simpler check
-                // Strategy 3: Check house bounding box center
-                if (housePoints.length > 0) {
-                    let centerLng = 0, centerLat = 0;
-                    for (let vertex of housePoints) {
-                        centerLng += vertex[0];
-                        centerLat += vertex[1];
-                    }
-                    centerLng /= housePoints.length;
-                    centerLat /= housePoints.length;
-                    
-                    if (isPointInPolygon([centerLng, centerLat], floodPolygon)) {
-                        console.log(`✅ House center in flood: ${centerLat}, ${centerLng}`);
-                        return floodLayerObj.hazardData;
-                    }
-                }
-            }
-        }
-    }
-    
-    return null;
-}
-
-// Get house coordinates array
-function getHouseCoordinates(house) {
-    try {
-        if (house.coordinates) {
-            const coords = JSON.parse(house.coordinates);
-            if (Array.isArray(coords) && coords.length >= 3) {
-                return coords;
-            }
-        }
-    } catch (e) {
-        console.error('Error parsing house coordinates:', e);
-    }
-    return null;
-}
-
-// Get house center point
-function getHouseCenter(house) {
-    // Try explicit center coordinates first
-    if (house.center_lat && house.center_lng) {
-        return {
-            lat: parseFloat(house.center_lat),
-            lng: parseFloat(house.center_lng)
-        };
-    }
-    
-    // Calculate from polygon coordinates
-    const coords = getHouseCoordinates(house);
-    if (coords && coords.length > 0) {
-        let sumLat = 0, sumLng = 0;
-        let validCoords = 0;
-        
-        coords.forEach(coord => {
-            if (Array.isArray(coord) && coord.length >= 2) {
-                sumLng += parseFloat(coord[0]); // longitude
-                sumLat += parseFloat(coord[1]); // latitude
-                validCoords++;
-            }
-        });
-        
-        if (validCoords > 0) {
-            return {
-                lat: sumLat / validCoords,
-                lng: sumLng / validCoords
-            };
-        }
-    }
-    
-    // Fallback to any lat/lng fields
-    if (house.latitude && house.longitude) {
-        return {
-            lat: parseFloat(house.latitude),
-            lng: parseFloat(house.longitude)
-        };
-    }
-    
-    return null;
-}
-
-// OPTIMIZED: Check if house is in flood area using multiple strategies
-function isHouseInFloodArea(house) {
-    console.log(`Checking house: ${house.address || 'Unnamed'}`);
-    
-    if (!floodLayer) {
-        console.log('No flood layer available');
-        return null;
-    }
-    
-    // Strategy 1: Check house center (fastest)
-    const center = getHouseCenter(house);
-    if (center) {
-        const centerResult = checkIfInFloodArea(center.lat, center.lng);
-        if (centerResult) {
-            console.log(`✅ House center in flood: ${center.lat}, ${center.lng}`);
-            return centerResult;
-        }
-    }
-    
-    // Strategy 2: Check polygon intersection (more accurate)
-    const houseCoords = getHouseCoordinates(house);
-    if (houseCoords && houseCoords.length >= 3) {
-        const polygonResult = isPolygonIntersectingFlood(houseCoords);
-        if (polygonResult) {
-            return polygonResult;
-        }
-    }
-    
-    // Strategy 3: Check multiple interior points
-    if (houseCoords && houseCoords.length >= 3) {
-        // Get bounds of house
-        let minLat = Infinity, maxLat = -Infinity;
-        let minLng = Infinity, maxLng = -Infinity;
-        
-        houseCoords.forEach(coord => {
-            const lat = parseFloat(coord[1]);
-            const lng = parseFloat(coord[0]);
-            if (lat < minLat) minLat = lat;
-            if (lat > maxLat) maxLat = lat;
-            if (lng < minLng) minLng = lng;
-            if (lng > maxLng) maxLng = lng;
-        });
-        
-        // Check 9 interior grid points
-        const gridSize = 3;
-        for (let i = 1; i < gridSize; i++) {
-            for (let j = 1; j < gridSize; j++) {
-                const testLat = minLat + (maxLat - minLat) * (i / gridSize);
-                const testLng = minLng + (maxLng - minLng) * (j / gridSize);
-                const testPoint = [testLng, testLat];
-                
-                // Quick point-in-polygon for house
-                let insideHouse = false;
-                for (let k = 0, l = houseCoords.length - 1; k < houseCoords.length; l = k++) {
-                    const xi = houseCoords[k][0], yi = houseCoords[k][1];
-                    const xj = houseCoords[l][0], yj = houseCoords[l][1];
-                    
-                    const intersect = ((yi > testLat) !== (yj > testLat)) &&
-                        (testLng < (xj - xi) * (testLat - yi) / (yj - yi) + xi);
-                    
-                    if (intersect) insideHouse = !insideHouse;
-                }
-                
-                if (insideHouse) {
-                    const gridResult = checkIfInFloodArea(testLat, testLng);
-                    if (gridResult) {
-                        console.log(`✅ House interior point in flood: ${testLat}, ${testLng}`);
-                        return gridResult;
-                    }
-                }
-            }
-        }
-    }
-    
-    console.log(`❌ House NOT in flood area`);
-    return null;
-}
-
-// ==================== DEBUG FUNCTIONS ====================
-
-// Debug function to log flood polygon coordinates
-function debugFloodPolygon() {
-    if (!floodLayer) {
-        console.log('No flood layer loaded');
-        alert('Please turn on flood layer first');
-        return;
-    }
-    
-    const layers = floodLayer.getLayers();
-    if (layers.length === 0) {
-        console.log('No flood layers found');
-        alert('No flood layers found in floodLayer');
-        return;
-    }
-    
-    console.log('=== FLOOD POLYGON DEBUG ===');
-    layers.forEach((layer, index) => {
-        if (layer.feature && layer.feature.geometry) {
-            const geometry = layer.feature.geometry;
-            console.log(`Layer ${index}: ${geometry.type}`);
-            
-            if (geometry.type === 'Polygon' && geometry.coordinates) {
-                const polygon = geometry.coordinates[0];
-                console.log(`Number of vertices: ${polygon.length}`);
-                
-                // Log first 3 and last 3 vertices
-                console.log('First 3 vertices:');
-                for (let i = 0; i < Math.min(3, polygon.length); i++) {
-                    console.log(`  [${polygon[i][0]}, ${polygon[i][1]}]`);
-                }
-                
-                console.log('Last 3 vertices:');
-                for (let i = Math.max(0, polygon.length - 3); i < polygon.length; i++) {
-                    console.log(`  [${polygon[i][0]}, ${polygon[i][1]}]`);
-                }
-                
-                // Calculate bounds
-                let minLng = Infinity, maxLng = -Infinity;
-                let minLat = Infinity, maxLat = -Infinity;
-                
-                polygon.forEach(coord => {
-                    const lng = coord[0];
-                    const lat = coord[1];
-                    if (lng < minLng) minLng = lng;
-                    if (lng > maxLng) maxLng = lng;
-                    if (lat < minLat) minLat = lat;
-                    if (lat > maxLat) maxLat = lat;
-                });
-                
-                console.log(`Bounds: Lng [${minLng.toFixed(6)}, ${maxLng.toFixed(6)}], Lat [${minLat.toFixed(6)}, ${maxLat.toFixed(6)}]`);
-                
-                // Show bounds on map
-                const bounds = L.latLngBounds(
-                    [minLat, minLng],
-                    [maxLat, maxLng]
-                );
-                map.fitBounds(bounds);
-                
-                // Add a marker at the center
-                const centerLat = (minLat + maxLat) / 2;
-                const centerLng = (minLng + maxLng) / 2;
-                L.marker([centerLat, centerLng]).addTo(map)
-                    .bindPopup(`Flood Polygon Center<br>Lat: ${centerLat.toFixed(6)}<br>Lng: ${centerLng.toFixed(6)}`)
-                    .openPopup();
-            }
-            
-            if (layer.hazardData) {
-                console.log(`Hazard Data: ${layer.hazardData.hazard_name} (${layer.hazardData.risk_level})`);
-            }
-        }
-    });
-    
-    alert('Check browser console for flood polygon details. Map zoomed to flood bounds.');
-}
-
-// Test specific points against flood polygon
-function testSpecificPoints() {
-    if (!floodLayer) {
-        alert('Please load flood layer first');
-        return;
-    }
-    
-    // Test points based on your flood polygon coordinates from the database dump
-    const testPoints = [
-        { lat: 14.61639406374255, lng: 121.07278956348526, name: 'First vertex' },
-        { lat: 14.616, lng: 121.073, name: 'Inside test point' },
-        { lat: 14.6175, lng: 121.0756, name: 'Map center' },
-        { lat: 14.618, lng: 121.076, name: 'North-east test' }
-    ];
-    
-    console.log('=== TESTING SPECIFIC POINTS ===');
-    let results = [];
-    testPoints.forEach(point => {
-        const result = checkIfInFloodArea(point.lat, point.lng);
-        const status = result ? 'IN FLOOD' : 'NOT IN FLOOD';
-        console.log(`${point.name} (${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}): ${status}`);
-        results.push(`${point.name}: ${status}`);
-    });
-    
-    // Also test the map center
-    const center = map.getCenter();
-    const centerResult = checkIfInFloodArea(center.lat, center.lng);
-    console.log(`Map center (${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}): ${centerResult ? 'IN FLOOD' : 'NOT IN FLOOD'}`);
-    results.push(`Map center: ${centerResult ? 'IN FLOOD' : 'NOT IN FLOOD'}`);
-    
-    alert('Test Results:\n' + results.join('\n') + '\n\nCheck browser console for details.');
-}
-
-// Helper functions for flood warnings
-function getFloodRiskColor(riskLevel) {
-    const colors = {
-        'high': '#ff0000',
-        'medium': '#ff9900',
-        'low': '#ffff00',
-        'very-low': '#0066cc'
-    };
-    return colors[riskLevel] || '#666666';
-}
-
-function getFloodSafetyAdvice(riskLevel) {
-    const advice = {
-        'high': 'High flood risk. Consider elevation, flood barriers, and evacuation plan.',
-        'medium': 'Moderate flood risk. Install check valves and keep drains clear.',
-        'low': 'Low flood risk. Monitor weather alerts and prepare emergency kit.',
-        'very-low': 'Minimal flood risk. Stay informed during heavy rainfall.'
-    };
-    return advice[riskLevel] || 'Take necessary precautions during heavy rainfall.';
-}
-
-function createFloodWarningSection(floodInfo) {
-    const riskColor = getFloodRiskColor(floodInfo.risk_level);
-    const riskText = floodInfo.risk_level ? floodInfo.risk_level.toUpperCase() : 'UNKNOWN';
-    
-    return `
-        <div class="flood-warning-section" style="
-            background: linear-gradient(135deg, ${riskColor}20, ${riskColor}10);
-            border-left: 4px solid ${riskColor};
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        ">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
-                <i class="fas fa-exclamation-triangle" style="color: ${riskColor}; font-size: 1.2em;"></i>
-                <strong style="color: ${riskColor};">⚠️ FLOOD HAZARD WARNING</strong>
-            </div>
-            <p style="margin: 0; font-size: 0.9em; color: #333;">
-                This location is inside a <strong style="color: ${riskColor};">${riskText} RISK</strong> flood area.
-                ${floodInfo.hazard_name ? `<br><em>Area: ${floodInfo.hazard_name}</em>` : ''}
-            </p>
-            <div style="margin-top: 8px; font-size: 0.85em; color: #666;">
-                ${getFloodSafetyAdvice(floodInfo.risk_level)}
-            </div>
-        </div>
-    `;
-}
-
-function createFloodWarningTableRow(floodInfo) {
-    const riskColor = getFloodRiskColor(floodInfo.risk_level);
-    const riskText = floodInfo.risk_level ? floodInfo.risk_level.toUpperCase() : 'UNKNOWN';
-    
-    return `
-        <tr style="background: ${riskColor}15;">
-            <td style="color: ${riskColor}; font-weight: bold;">
-                <i class="fas fa-exclamation-triangle"></i> Flood Hazard
-            </td>
-            <td style="color: ${riskColor};">
-                <strong>${riskText} RISK AREA</strong><br>
-                ${floodInfo.hazard_name ? `Area: ${floodInfo.hazard_name}<br>` : ''}
-                ${getFloodSafetyAdvice(floodInfo.risk_level)}
-            </td>
-        </tr>
-    `;
-}
-
-function createWarningIcon(type, riskLevel) {
-    const riskColors = {
-        'high': '#ff0000',
-        'medium': '#ff9900',
-        'low': '#ffff00',
-        'very-low': '#0066cc'
-    };
-    
-    const typeColors = {
-        'construction': '#ffc107',
-        'business': '#9C27B0',
-        'household': '#28a745',
-        'utility': '#2196F3'
-    };
-    
-    const baseColor = typeColors[type] || '#666666';
-    const riskColor = riskColors[riskLevel] || '#666666';
-    
-    return L.divIcon({
-        className: `${type}-marker flood-warning`,
-        html: `
-            <div style="position: relative; width: 20px; height: 20px;">
-                <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: ${riskColor};
-                    border-radius: 50%;
-                    border: 2px solid white;
-                    box-shadow: 0 0 10px ${riskColor};
-                    animation: pulse 2s infinite;
-                "></div>
-                <div style="
-                    position: absolute;
-                    top: 4px;
-                    left: 4px;
-                    width: 12px;
-                    height: 12px;
-                    background: ${baseColor};
-                    border-radius: 50%;
-                    border: 1px solid white;
-                "></div>
-                <div style="
-                    position: absolute;
-                    top: -4px;
-                    right: -4px;
-                    width: 10px;
-                    height: 10px;
-                    background: ${riskColor};
-                    border-radius: 50%;
-                    border: 1px solid white;
-                    font-size: 6px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                ">!</div>
-            </div>
-        `,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    });
-}
-
-// Update all markers with flood warnings
-function updateMarkerFloodWarnings() {
-    if (!floodLayer) return;
-    
-    constructionMarkers.forEach(marker => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        marker.setIcon(floodInfo ? createWarningIcon('construction', floodInfo.risk_level) : constructionIcon);
-    });
-    
-    businessMarkers.forEach(marker => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        marker.setIcon(floodInfo ? createWarningIcon('business', floodInfo.risk_level) : businessIcon);
-    });
-    
-    householdMarkers.forEach(marker => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        marker.setIcon(floodInfo ? createWarningIcon('household', floodInfo.risk_level) : householdIcon);
-    });
-    
-    utilityMarkers.forEach(marker => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        marker.setIcon(floodInfo ? createWarningIcon('utility', floodInfo.risk_level) : utilityIcon);
-    });
-}
-
-// ==================== FLOOD SUMMARY & ANALYSIS ====================
-
-// Get comprehensive flood-affected summary
-function getFloodAffectedSummary() {
-    const summary = {
-        construction: 0,
-        business: 0,
-        household: 0,
-        utility: 0,
-        houses: 0,
-        total: 0,
-        checked: {
-            construction: 0,
-            business: 0,
-            household: 0,
-            utility: 0,
-            houses: 0
-        },
-        details: {
-            construction: [],
-            business: [],
-            household: [],
-            utility: [],
-            houses: []
-        },
-        floodDataAvailable: false,
-        message: ''
-    };
-    
-    console.log('=== ADVANCED FLOOD ANALYSIS START ===');
-    
-    if (!floodLayer) {
-        summary.message = 'Flood layer not loaded. Turn on flood layer first.';
-        return summary;
-    }
-    
-    const layers = floodLayer.getLayers ? floodLayer.getLayers() : [];
-    if (layers.length === 0) {
-        summary.message = 'No flood hazard data available.';
-        return summary;
-    }
-    
-    summary.floodDataAvailable = true;
-    
-    // Check construction sites
-    summary.checked.construction = constructionMarkers.length;
-    constructionMarkers.forEach((marker, index) => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        if (floodInfo) {
-            summary.construction++;
-            summary.total++;
-            summary.details.construction.push({
-                id: marker.id || index,
-                location: latlng,
-                floodInfo: floodInfo
-            });
-            console.log(`✅ Construction ${index} in flood:`, floodInfo.hazard_name);
-        }
-    });
-    
-    // Check businesses
-    summary.checked.business = businessMarkers.length;
-    businessMarkers.forEach((marker, index) => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        if (floodInfo) {
-            summary.business++;
-            summary.total++;
-            summary.details.business.push({
-                id: marker.id || index,
-                location: latlng,
-                floodInfo: floodInfo
-            });
-            console.log(`✅ Business ${index} in flood:`, floodInfo.hazard_name);
-        }
-    });
-    
-    // Check households
-    summary.checked.household = householdMarkers.length;
-    householdMarkers.forEach((marker, index) => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        if (floodInfo) {
-            summary.household++;
-            summary.total++;
-            summary.details.household.push({
-                id: marker.id || index,
-                location: latlng,
-                floodInfo: floodInfo
-            });
-            console.log(`✅ Household ${index} in flood:`, floodInfo.hazard_name);
-        }
-    });
-    
-    // Check utilities
-    summary.checked.utility = utilityMarkers.length;
-    utilityMarkers.forEach((marker, index) => {
-        const latlng = marker.getLatLng();
-        const floodInfo = checkIfInFloodArea(latlng.lat, latlng.lng);
-        if (floodInfo) {
-            summary.utility++;
-            summary.total++;
-            summary.details.utility.push({
-                id: marker.id || index,
-                location: latlng,
-                floodInfo: floodInfo
-            });
-            console.log(`✅ Utility ${index} in flood:`, floodInfo.hazard_name);
-        }
-    });
-    
-    // Check house polygons (ADVANCED DETECTION)
-    summary.checked.houses = housePolygonsData.length;
-    console.log(`Checking ${housePolygonsData.length} houses with advanced detection...`);
-    
-    housePolygonsData.forEach((house, index) => {
-        const floodInfo = isHouseInFloodArea(house);
-        if (floodInfo) {
-            summary.houses++;
-            summary.total++;
-            summary.details.houses.push({
-                id: house.house_id || index,
-                address: house.address,
-                center: getHouseCenter(house),
-                floodInfo: floodInfo
-            });
-            console.log(`✅ House ${index} (${house.address || 'unnamed'}) in flood:`, floodInfo.hazard_name);
-        }
-    });
-    
-    console.log('=== ANALYSIS RESULTS ===');
-    console.log('Total affected:', summary.total);
-    console.log('Houses in flood:', summary.houses, '/', summary.checked.houses);
-    console.log('Construction in flood:', summary.construction, '/', summary.checked.construction);
-    console.log('Businesses in flood:', summary.business, '/', summary.checked.business);
-    console.log('Details:', summary.details);
-    
-    return summary;
-}
-
-// Show comprehensive flood summary with visualization
-function showFloodSummary() {
-    const summary = getFloodAffectedSummary();
-    
-    if (!summary.floodDataAvailable) {
-        // Show error state
-        const errorContent = `
-            <div style="max-width: 500px;">
-                <h3 style="color: #dc3545; margin-bottom: 15px;">
-                    <i class="fas fa-exclamation-triangle"></i> Flood Analysis Unavailable
-                </h3>
-                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-                    <p style="margin: 0;">${summary.message}</p>
-                </div>
-                <button onclick="toggleFloodLayer()" style="
-                    padding: 10px 20px;
-                    background: #28a745;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    width: 100%;
-                ">
-                    <i class="fas fa-water"></i> Turn On Flood Layer
-                </button>
-            </div>
-        `;
-        
-        L.popup()
-            .setLatLng(map.getCenter())
-            .setContent(errorContent)
-            .openOn(map);
-        return;
-    }
-    
-    // Calculate percentages
-    const housePercent = summary.checked.houses > 0 ? Math.round((summary.houses / summary.checked.houses) * 100) : 0;
-    const constructionPercent = summary.checked.construction > 0 ? Math.round((summary.construction / summary.checked.construction) * 100) : 0;
-    const businessPercent = summary.checked.business > 0 ? Math.round((summary.business / summary.checked.business) * 100) : 0;
-    const totalChecked = summary.checked.construction + summary.checked.business + 
-                        summary.checked.household + summary.checked.utility + summary.checked.houses;
-    
-    // Create detailed summary content
-    const summaryContent = `
-        <div style="max-width: 600px;">
-            <h3 style="color: #0066cc; margin-bottom: 15px; border-bottom: 2px solid #0066cc; padding-bottom: 10px;">
-                <i class="fas fa-water"></i> Comprehensive Flood Hazard Analysis
-            </h3>
-            
-            <!-- Summary Cards -->
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #0066cc;">
-                    <div style="font-size: 24px; font-weight: bold; color: #0066cc;">${summary.total}</div>
-                    <div style="font-size: 12px; color: #666;">Total Affected Locations</div>
-                </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
-                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">${totalChecked}</div>
-                    <div style="font-size: 12px; color: #666;">Total Locations Checked</div>
-                </div>
-            </div>
-            
-            <!-- Detailed Breakdown -->
-            <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h4 style="color: #0066cc; margin-top: 0; margin-bottom: 10px;">
-                    <i class="fas fa-chart-pie"></i> Affected Locations Breakdown
-                </h4>
-                
-                <!-- Houses -->
-                <div style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span><i class="fas fa-home" style="color: #795548;"></i> Houses</span>
-                        <span><strong>${summary.houses}</strong> / ${summary.checked.houses} (${housePercent}%)</span>
-                    </div>
-                    <div style="height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; width: ${housePercent}%; background: #795548;"></div>
-                    </div>
-                </div>
-                
-                <!-- Construction -->
-                <div style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span><i class="fas fa-hard-hat" style="color: #ff9900;"></i> Construction Sites</span>
-                        <span><strong>${summary.construction}</strong> / ${summary.checked.construction} (${constructionPercent}%)</span>
-                    </div>
-                    <div style="height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; width: ${constructionPercent}%; background: #ff9900;"></div>
-                    </div>
-                </div>
-                
-                <!-- Businesses -->
-                <div style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span><i class="fas fa-store" style="color: #9C27B0;"></i> Businesses</span>
-                        <span><strong>${summary.business}</strong> / ${summary.checked.business} (${businessPercent}%)</span>
-                    </div>
-                    <div style="height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; width: ${businessPercent}%; background: #9C27B0;"></div>
-                    </div>
-                </div>
-                
-                <!-- Households & Utilities -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                    <div style="text-align: center; padding: 10px; background: white; border-radius: 5px;">
-                        <div style="font-size: 18px; font-weight: bold; color: #28a745;">${summary.household}</div>
-                        <div style="font-size: 11px; color: #666;">Households</div>
-                    </div>
-                    <div style="text-align: center; padding: 10px; background: white; border-radius: 5px;">
-                        <div style="font-size: 18px; font-weight: bold; color: #2196F3;">${summary.utility}</div>
-                        <div style="font-size: 11px; color: #666;">Utilities</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Actions -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                <button onclick="visualizeAffectedLocations()" style="
-                    padding: 10px;
-                    background: #17a2b8;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 0.9em;
-                ">
-                    <i class="fas fa-eye"></i> Visualize Affected
-                </button>
-                <button onclick="generateFloodReport()" style="
-                    padding: 10px;
-                    background: #28a745;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 0.9em;
-                ">
-                    <i class="fas fa-file-download"></i> Generate Report
-                </button>
-            </div>
-            
-            <!-- Debug Info (collapsible) -->
-            <details style="margin-top: 15px; font-size: 0.8em; color: #666;">
-                <summary>Debug Information</summary>
-                <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px; max-height: 150px; overflow-y: auto;">
-Flood Layers: ${floodLayer.getLayers().length}
-Detection Method: Advanced (Center + Polygon + Grid)
-House Detection: ${summary.details.houses.length} houses found
-Marker Detection: ${summary.details.construction.length + summary.details.business.length} markers found
-                </pre>
-            </details>
-        </div>
-    `;
-    
-    L.popup()
-        .setLatLng(map.getCenter())
-        .setContent(summaryContent)
-        .openOn(map);
-}
-
-// Visualize affected locations on map
-function visualizeAffectedLocations() {
-    const summary = getFloodAffectedSummary();
-    
-    // Clear previous visualization
-    if (window.visualizationLayer) {
-        map.removeLayer(window.visualizationLayer);
-    }
-    
-    window.visualizationLayer = L.layerGroup().addTo(map);
-    
-    // Visualize affected houses
-    summary.details.houses.forEach(house => {
-        if (house.center) {
-            L.circleMarker([house.center.lat, house.center.lng], {
-                color: '#ff0000',
-                fillColor: '#ff0000',
-                fillOpacity: 0.7,
-                radius: 8
-            }).bindPopup(`<b>Affected House</b><br>${house.address || 'No address'}<br>Risk: ${house.floodInfo.risk_level}`)
-              .addTo(window.visualizationLayer);
-        }
-    });
-    
-    // Visualize affected construction sites
-    summary.details.construction.forEach(construction => {
-        L.circleMarker([construction.location.lat, construction.location.lng], {
-            color: '#ff9900',
-            fillColor: '#ff9900',
-            fillOpacity: 0.7,
-            radius: 6
-        }).bindPopup(`<b>Affected Construction Site</b><br>Risk: ${construction.floodInfo.risk_level}`)
-          .addTo(window.visualizationLayer);
-    });
-    
-    // Visualize affected businesses
-    summary.details.business.forEach(business => {
-        L.circleMarker([business.location.lat, business.location.lng], {
-            color: '#9C27B0',
-            fillColor: '#9C27B0',
-            fillOpacity: 0.7,
-            radius: 6
-        }).bindPopup(`<b>Affected Business</b><br>Risk: ${business.floodInfo.risk_level}`)
-          .addTo(window.visualizationLayer);
-    });
-    
-    alert(`Visualization added! Showing ${summary.total} affected locations:
-• RED circles: Affected houses (${summary.houses})
-• ORANGE circles: Affected construction (${summary.construction})
-• PURPLE circles: Affected businesses (${summary.business})`);
-}
-
-// Generate flood report
-function generateFloodReport() {
-    const summary = getFloodAffectedSummary();
-    const now = new Date();
-    
-    const report = `
-FLOOD HAZARD ANALYSIS REPORT
-Generated: ${now.toLocaleString()}
-========================================
-
-SUMMARY:
-• Total Affected Locations: ${summary.total}
-• Houses in Flood Areas: ${summary.houses} of ${summary.checked.houses}
-• Construction Sites Affected: ${summary.construction} of ${summary.checked.construction}
-• Businesses Affected: ${summary.business} of ${summary.checked.business}
-• Households Affected: ${summary.household}
-• Utilities Affected: ${summary.utility}
-
-DETAILED BREAKDOWN:
-${summary.details.houses.map((h, i) => `${i+1}. House: ${h.address || 'No address'} - Risk: ${h.floodInfo.risk_level}`).join('\n')}
-
-${summary.details.construction.map((c, i) => `${i+1}. Construction Site ${c.id} - Risk: ${c.floodInfo.risk_level}`).join('\n')}
-
-${summary.details.business.map((b, i) => `${i+1}. Business ${b.id} - Risk: ${b.floodInfo.risk_level}`).join('\n')}
-
-RECOMMENDATIONS:
-1. ${summary.houses > 0 ? `Evacuate ${summary.houses} houses in flood zones` : 'No houses in immediate danger'}
-2. ${summary.construction > 0 ? `Halt ${summary.construction} construction projects in flood areas` : 'Construction sites safe'}
-3. ${summary.business > 0 ? `Alert ${summary.business} businesses to prepare for flooding` : 'Business areas safe'}
-
-========================================
-END OF REPORT
-    `;
-    
-    // Create downloadable file
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `flood-report-${now.toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    alert('Flood report generated and downloaded!');
-}
-
-// Debug flood detection
-function debugFloodDetection() {
-    console.log('=== ADVANCED FLOOD DETECTION DEBUG ===');
-    
-    const center = map.getCenter();
-    console.log('Map center:', center.lat, center.lng);
-    console.log('Center in flood?', checkIfInFloodArea(center.lat, center.lng));
-    
-    if (housePolygonsData.length > 0) {
-        console.log('Testing first house with all methods:');
-        const house = housePolygonsData[0];
-        
-        // Method 1: Center point
-        const center = getHouseCenter(house);
-        if (center) {
-            console.log('House center:', center.lat, center.lng);
-            console.log('Center in flood?', checkIfInFloodArea(center.lat, center.lng));
-        }
-        
-        // Method 2: Polygon intersection
-        const coords = getHouseCoordinates(house);
-        if (coords) {
-            console.log('House has', coords.length, 'vertices');
-            console.log('Polygon intersection?', isPolygonIntersectingFlood(coords));
-        }
-        
-        // Method 3: Advanced detection
-        console.log('Advanced detection result:', isHouseInFloodArea(house));
-    }
-    
-    const summary = getFloodAffectedSummary();
-    console.log('Complete analysis:', summary);
-    
-    alert(`Flood Detection Debug Complete!
-Check browser console for detailed results.
-
-Summary:
-• Houses checked: ${summary.checked.houses}
-• Houses in flood: ${summary.houses}
-• Construction in flood: ${summary.construction}
-• Businesses in flood: ${summary.business}`);
-}
-
-// Refresh flood warnings
-function refreshFloodWarnings() {
-    if (!floodLayer) {
-        loadFloodData();
-        return;
-    }
-    
-    updateMarkerFloodWarnings();
-    const summary = getFloodAffectedSummary();
-    
-    alert(`✅ Flood warnings updated!
-    
-Affected Locations:
-• Houses: ${summary.houses}
-• Construction: ${summary.construction}
-• Businesses: ${summary.business}
-• Total: ${summary.total}
-
-Markers with flood warnings have been updated.`);
-}
-
-// Test function to debug flood detection
-function testFloodDetection(lat, lng) {
-    console.log('=== TESTING FLOOD DETECTION ===');
-    console.log('Test point:', lat, lng);
-    
-    if (!floodLayer) {
-        console.log('ERROR: No flood layer loaded');
-        return;
-    }
-    
-    const layers = floodLayer.getLayers ? floodLayer.getLayers() : [];
-    console.log('Number of flood layers:', layers.length);
-    
-    if (layers.length === 0) {
-        console.log('ERROR: No layers found in floodLayer');
-        return;
-    }
-    
-    layers.forEach((layer, index) => {
-        if (layer.hazardData) {
-            console.log(`Layer ${index}:`, layer.hazardData.hazard_name, 'Risk:', layer.hazardData.risk_level);
-            if (layer.feature && layer.feature.geometry) {
-                console.log('Geometry type:', layer.feature.geometry.type);
-            }
-        }
-    });
-    
-    const floodInfo = checkIfInFloodArea(lat, lng);
-    console.log('Flood detection result:', floodInfo);
-    
-    if (floodInfo) {
-        console.log('✅ Point is IN flood area:', floodInfo.hazard_name);
-    } else {
-        console.log('❌ Point is NOT in flood area');
-    }
-    
-    return floodInfo;
-}
-
-// Test with map center
-function testMapCenter() {
-    const center = map.getCenter();
-    testFloodDetection(center.lat, center.lng);
-}
-
-// Test flood polygon location
-function testFloodPolygonLocation() {
-    if (!floodLayer) {
-        console.log('No flood layer');
-        alert('Please turn on flood layer first');
-        return;
-    }
-    
-    const layers = floodLayer.getLayers();
-    if (layers.length === 0) {
-        console.log('No layers in flood layer');
-        alert('No flood data loaded');
-        return;
-    }
-    
-    const layer = layers[0];
-    if (layer.getBounds) {
-        const bounds = layer.getBounds();
-        console.log('Flood polygon bounds:', {
-            north: bounds.getNorth(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            west: bounds.getWest()
-        });
-        
-        map.flyToBounds(bounds, { padding: [50, 50] });
-        
-        alert(`Flood Area Location:
-North: ${bounds.getNorth().toFixed(6)}
-South: ${bounds.getSouth().toFixed(6)}
-East: ${bounds.getEast().toFixed(6)}
-West: ${bounds.getWest().toFixed(6)}`);
-    }
-}
-
-// ==================== DEBUG FUNCTIONS ====================
-
-// Debug flood state
-function debugFloodState() {
-    console.log('=== FLOOD DEBUG ===');
-    console.log('floodLayerActive:', floodLayerActive);
-    console.log('floodLayer exists:', !!floodLayer);
-    console.log('floodLayer on map:', floodLayer ? map.hasLayer(floodLayer) : false);
-    console.log('floodLegend exists:', !!floodLegend);
-    
-    const formData = new FormData();
-    formData.append('action', 'get_flood_hazards');
-    fetch(MAP_HANDLER_URL, { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(d => console.log('API response hazards count:', d.hazards ? d.hazards.length : 0));
-}
-
 // ==================== HAZARD LAYER TOGGLES ====================
 
 // Toggle flood layer
 function toggleFloodLayer() {
-    console.log('toggleFloodLayer called, current state:', floodLayerActive);
     floodLayerActive = !floodLayerActive;
     
+    // Update button style
     const floodToggleBtn = document.getElementById('floodToggleBtn');
     if (floodToggleBtn) {
         if (floodLayerActive) {
@@ -1783,30 +133,27 @@ function toggleFloodLayer() {
     }
     
     if (floodLayerActive) {
-        console.log('Activating flood layer');
+        // Show flood layer
         if (!floodLayer) {
             loadFloodData();
         } else {
+            // Check if already on map
             if (!map.hasLayer(floodLayer)) {
-                console.log('Adding existing flood layer to map');
                 floodLayer.addTo(map);
             }
         }
         
-        if (floodLegend) {
-            if (!floodLegend._map) {
-                console.log('Adding flood legend to map');
-                floodLegend.addTo(map);
-            }
-        } else if (floodLayer) {
-            addFloodLegend();
+        // Show flood legend
+        if (floodLegend && !hasControl(floodLegend)) {
+            floodLegend.addTo(map);
         }
     } else {
-        console.log('Deactivating flood layer');
+        // Hide flood layer
         if (floodLayer && map.hasLayer(floodLayer)) {
             map.removeLayer(floodLayer);
         }
         
+        // Hide flood legend
         removeFloodLegend();
     }
 }
@@ -1815,16 +162,19 @@ function toggleFloodLayer() {
 function removeFloodLegend() {
     if (floodLegend) {
         try {
-            if (floodLegend._map) {
+            // Try to remove the control from map
+            if (hasControl(floodLegend)) {
                 map.removeControl(floodLegend);
             }
         } catch (e) {
-            console.log('Error removing flood legend:', e);
+            console.log('Error removing flood legend via map.removeControl:', e);
+            // Alternative method: remove by DOM element
             const legendElement = document.querySelector('.flood-legend');
             if (legendElement && legendElement.parentNode) {
                 legendElement.parentNode.removeChild(legendElement);
             }
         }
+        // Don't set floodLegend to null here - keep the object for reuse
     }
 }
 
@@ -1832,6 +182,7 @@ function removeFloodLegend() {
 function toggleFaultLine() {
     faultLineActive = !faultLineActive;
     
+    // Update button style
     const faultToggleBtn = document.getElementById('faultToggleBtn');
     if (faultToggleBtn) {
         if (faultLineActive) {
@@ -1844,6 +195,7 @@ function toggleFaultLine() {
     }
     
     if (faultLineActive) {
+        // Show fault line
         if (faultLine && !map.hasLayer(faultLine)) {
             faultLine.addTo(map);
         }
@@ -1851,6 +203,7 @@ function toggleFaultLine() {
             warningMarker.addTo(map);
         }
     } else {
+        // Hide fault line
         if (faultLine && map.hasLayer(faultLine)) {
             map.removeLayer(faultLine);
         }
@@ -1928,6 +281,7 @@ function selectFilterType(type, event) {
 function activateFilter(type) {
     activeFilter = type;
     updateAllVisibility();
+    // Broadcast filter state for application management pages
     try {
         const activeFilters = {
             construction: activeFilter === 'construction',
@@ -1947,17 +301,7 @@ function updateAllVisibility() {
 }
 
 function updateMarkerVisibility() {
-    householdMarkers.forEach(marker => {
-        if (activeFilter === 'household') {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
-        } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
-        }
-    });
+    // Note: householdMarkers array is kept empty - only house polygons are used
     
     constructionMarkers.forEach(marker => {
         if (activeFilter === 'construction') {
@@ -2089,7 +433,10 @@ function performSearch() {
             marker.applicant_name || '',
             marker.applicant_address || '',
             marker.hazard_name || '',
-            marker.risk_level || ''
+            marker.risk_level || '',
+            marker.address || '',
+            marker.house_number || '',
+            marker.street_name || ''
         ];
         
         let matchScore = 0;
@@ -2132,24 +479,27 @@ function performSearch() {
                 item.className = 'search-result-item';
                 item.dataset.index = index;
                 
-                const type = marker.marker_type || 
+                const type = marker.marker_type || marker.type ||
                             (marker.construction_id ? 'construction' : 
                              marker.id ? 'business' : 
                              marker.utility_id ? 'utility' : 
-                             marker.hazard_id ? 'flood' : 'household');
+                             marker.hazard_id ? 'flood' :
+                             marker.house_id ? 'household' : 'household');
                 
                 const title = marker.title || 
                              marker.business_name || 
                              marker.homeowner_name || 
                              marker.applicant_name ||
                              marker.hazard_name ||
-                             'Unnamed Marker';
+                             marker.address ||
+                             (marker.house_number ? `House #${marker.house_number}` : 'Unnamed Marker');
                 
                 const subtitle = marker.description || 
                                marker.address_of_construction || 
                                marker.address_of_business || 
                                marker.applicant_address ||
                                marker.location || 
+                               marker.street_name ||
                                (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
                                '';
                 
@@ -2188,8 +538,7 @@ function performSearch() {
 function highlightText(text, searchTerm) {
     if (!searchTerm || !text) return text;
     
-    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const searchRegex = new RegExp(`(${escapedSearchTerm})`, 'gi');
+    const searchRegex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(searchRegex, '<span class="highlight">$1</span>');
 }
 
@@ -2216,15 +565,19 @@ function clearSearch() {
         activeSearchMarker = null;
     }
     
+    // Restore visibility based on current states
     updateAllVisibility();
     
+    // Restore flood layer if active
     if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
         floodLayer.addTo(map);
-        if (floodLegend && !floodLegend._map) {
+        // Also add legend
+        if (floodLegend && !hasControl(floodLegend)) {
             floodLegend.addTo(map);
         }
     }
     
+    // Restore fault line if active
     if (faultLineActive) {
         if (faultLine && !map.hasLayer(faultLine)) {
             faultLine.addTo(map);
@@ -2234,6 +587,7 @@ function clearSearch() {
         }
     }
     
+    // Restore house polygons if needed
     if (activeFilter === 'household' && housePolygonsLayer) {
         if (!map.hasLayer(housePolygonsLayer)) {
             housePolygonsLayer.addTo(map);
@@ -2261,12 +615,6 @@ function hideAllMarkers() {
         }
     });
     
-    householdMarkers.forEach(marker => {
-        if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-        }
-    });
-    
     utilityMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
@@ -2277,6 +625,7 @@ function hideAllMarkers() {
         map.removeLayer(floodLayer);
     }
     
+    // Remove flood legend if it exists
     removeFloodLegend();
     
     if (faultLine && map.hasLayer(faultLine)) {
@@ -2296,19 +645,26 @@ function showOnlySearchedMarker(markerData) {
         map.removeLayer(activeSearchMarker);
     }
     
-    const type = markerData.marker_type || 
+    const type = markerData.marker_type || markerData.type ||
                 (markerData.construction_id ? 'construction' : 
                  markerData.id ? 'business' : 
                  markerData.utility_id ? 'utility' : 
-                 markerData.hazard_id ? 'flood' : 'household');
+                 markerData.hazard_id ? 'flood' :
+                 markerData.house_id ? 'household' : 'household');
     
     if (type === 'flood') {
         showFloodAreaHighlight(markerData);
         return;
     }
     
-    const lat = parseFloat(markerData.latitude);
-    const lng = parseFloat(markerData.longitude);
+    // For house polygons, show the polygon instead of a marker
+    if (type === 'household' && markerData.coordinates) {
+        showHousePolygonHighlight(markerData);
+        return;
+    }
+    
+    const lat = parseFloat(markerData.latitude || markerData.center_lat);
+    const lng = parseFloat(markerData.longitude || markerData.center_lng);
     
     const highlightIcon = L.divIcon({
         className: 'highlighted-marker',
@@ -2364,7 +720,7 @@ function showOnlySearchedMarker(markerData) {
     } else if (type === 'utility') {
         popupContent = createUtilityPopup(markerData);
     } else {
-        popupContent = createHouseholdPopup(markerData);
+        popupContent = createHousePopup(markerData);
     }
     
     setTimeout(() => {
@@ -2382,6 +738,46 @@ function showOnlySearchedMarker(markerData) {
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) {
         resultsContainer.style.display = 'none';
+    }
+}
+
+function showHousePolygonHighlight(houseData) {
+    try {
+        const coords = JSON.parse(houseData.coordinates);
+        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+        latLngCoords.push(latLngCoords[0]);
+        
+        activeSearchMarker = L.polygon(latLngCoords, {
+            color: '#ffeb3b',
+            weight: 4,
+            fillColor: '#ffeb3b',
+            fillOpacity: 0.3,
+            interactive: true
+        }).addTo(map);
+        
+        const bounds = activeSearchMarker.getBounds();
+        map.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 18
+        });
+        
+        const popupContent = createHousePopup(houseData);
+        activeSearchMarker.bindPopup(popupContent).openPopup();
+        
+        document.querySelectorAll('.search-result-item').forEach(item => {
+            item.classList.remove('active');
+            const resultIndex = searchResults.findIndex(result => result.marker.house_id == houseData.house_id);
+            if (parseInt(item.dataset.index) === resultIndex) {
+                item.classList.add('active');
+            }
+        });
+        
+        const resultsContainer = document.getElementById('search-results');
+        if (resultsContainer) {
+            resultsContainer.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error highlighting house polygon:', e);
     }
 }
 
@@ -2410,8 +806,8 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
         if (data.success && data.data) {
             const hazard = data.data;
             
-            if (hazard.geojson) {
-                const geoJson = JSON.parse(hazard.geojson);
+            if (hazard.geometry) {
+                const geoJson = JSON.parse(hazard.geometry);
                 
                 const highlightStyle = getFloodAreaStyle(hazard.risk_level);
                 highlightStyle.fillOpacity += 0.2;
@@ -2455,16 +851,12 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
 // ==================== POPUP CREATION FUNCTIONS ====================
 
 function createConstructionPopup(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarning = floodInfo ? createFloodWarningSection(floodInfo) : '';
-    
     return `
         <div class="popup-content">
             <h4>
                 <span>Construction Site</span>
                 <span class="construction-badge">Construction</span>
             </h4>
-            ${floodWarning}
             <div class="popup-section">
                 <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
                 <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
@@ -2483,16 +875,12 @@ function createConstructionPopup(data) {
 }
 
 function createBusinessPopup(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarning = floodInfo ? createFloodWarningSection(floodInfo) : '';
-    
     return `
         <div class="popup-content">
             <h4>
                 <span>${data.business_name || 'Business'}</span>
                 <span class="business-badge">Business</span>
             </h4>
-            ${floodWarning}
             <div class="popup-section">
                 <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
                 <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
@@ -2510,16 +898,12 @@ function createBusinessPopup(data) {
 }
 
 function createUtilityPopup(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarning = floodInfo ? createFloodWarningSection(floodInfo) : '';
-    
     return `
         <div class="popup-content">
             <h4>
                 <span>Utility Work</span>
                 <span class="utility-badge">Utility</span>
             </h4>
-            ${floodWarning}
             <div class="popup-section">
                 <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
                 <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
@@ -2536,41 +920,17 @@ function createUtilityPopup(data) {
     `;
 }
 
-function createHouseholdPopup(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarning = floodInfo ? createFloodWarningSection(floodInfo) : '';
-    
-    return `
-        <div class="popup-content">
-            <h4>
-                <span>${data.title || 'Household'}</span>
-                <span class="household-badge">Household</span>
-            </h4>
-            ${floodWarning}
-            <div class="popup-section">
-                <p><strong>Description:</strong> ${data.description || 'Not specified'}</p>
-                <p><strong>Location:</strong> ${data.location || 'Not specified'}</p>
-            </div>
-            <div class="popup-section">
-                <p><strong>Type:</strong> ${data.marker_type || 'household'}</p>
-                <p><strong>Created:</strong> ${formatDate(data.created_at)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.marker_id}, 'household')">
-                View Full Details
-            </button>
-        </div>
-    `;
-}
-
 function createFloodPopup(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
     const riskClass = `flood-risk-${data.risk_level || 'medium'}`;
     
-    const properties = data.properties || {};
-    const lastFloodDate = properties.last_flood_date || properties.created_at || 'Not recorded';
-    const reportedBy = properties.source || properties.reported_by || properties.updated_by || 'Barangay Office';
-    const dateIdentified = properties.created_at || data.created_at || 'Not specified';
-    const safetyAdvice = properties.safety_advice || getFloodSafetyAdvice(data.risk_level);
+    // Parse properties JSON if it exists
+    let properties = {};
+    try {
+        properties = data.properties ? JSON.parse(data.properties) : {};
+    } catch (e) {
+        console.warn('Could not parse flood properties:', e);
+    }
     
     return `
         <div class="popup-content">
@@ -2581,12 +941,12 @@ function createFloodPopup(data) {
             <div class="popup-section flood-popup-section">
                 <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
                 <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
-                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at) || 'Not recorded'}</p>
+                <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
             </div>
             <div class="popup-section">
-                <p><strong>Safety Advice:</strong> ${safetyAdvice}</p>
-                <p><strong>Reported By:</strong> ${reportedBy}</p>
-                <p><strong>Identified:</strong> ${formatDate(dateIdentified)}</p>
+                <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
+                <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
+                <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
             </div>
             <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
                 View Flood Details
@@ -2596,18 +956,12 @@ function createFloodPopup(data) {
 }
 
 function createHousePopup(data) {
-    const centerLat = parseFloat(data.center_lat) || parseFloat(data.latitude);
-    const centerLng = parseFloat(data.center_lng) || parseFloat(data.longitude);
-    const floodInfo = checkIfInFloodArea(centerLat, centerLng);
-    const floodWarning = floodInfo ? createFloodWarningSection(floodInfo) : '';
-    
     return `
         <div class="popup-content">
             <h4>
-                <span>House ${data.house_number || ''}</span>
-                <span class="household-badge">House</span>
+                <span>${data.house_number ? 'House #' + data.house_number : 'House'}</span>
+                <span class="household-badge">Household</span>
             </h4>
-            ${floodWarning}
             <div class="popup-section">
                 <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
                 <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
@@ -2617,7 +971,7 @@ function createHousePopup(data) {
                 <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
             </div>
             <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
-                View House Details
+                View Full Details
             </button>
         </div>
     `;
@@ -2738,12 +1092,8 @@ function displayHouseDetailsInModal(data) {
 
 // Create modal content functions
 function createConstructionModalContent(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarningRow = floodInfo ? createFloodWarningTableRow(floodInfo) : '';
-    
     return `
         <table class="detail-table">
-            ${floodWarningRow}
             <tr>
                 <td>Homeowner Name</td>
                 <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
@@ -2777,12 +1127,8 @@ function createConstructionModalContent(data) {
 }
 
 function createBusinessModalContent(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarningRow = floodInfo ? createFloodWarningTableRow(floodInfo) : '';
-    
     return `
         <table class="detail-table">
-            ${floodWarningRow}
             <tr>
                 <td>Business Name</td>
                 <td>${data.business_name || 'Not specified'}</td>
@@ -2816,12 +1162,8 @@ function createBusinessModalContent(data) {
 }
 
 function createUtilityModalContent(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarningRow = floodInfo ? createFloodWarningTableRow(floodInfo) : '';
-    
     return `
         <table class="detail-table">
-            ${floodWarningRow}
             <tr>
                 <td>Applicant Name</td>
                 <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
@@ -2855,12 +1197,8 @@ function createUtilityModalContent(data) {
 }
 
 function createHouseholdModalContent(data) {
-    const floodInfo = checkIfInFloodArea(parseFloat(data.latitude), parseFloat(data.longitude));
-    const floodWarningRow = floodInfo ? createFloodWarningTableRow(floodInfo) : '';
-    
     return `
         <table class="detail-table">
-            ${floodWarningRow}
             <tr>
                 <td>Title</td>
                 <td>${data.title || 'Not specified'}</td>
@@ -2895,12 +1233,14 @@ function createHouseholdModalContent(data) {
 
 function createFloodModalContent(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
-    const properties = data.properties || {};
     
-    const lastFloodDate = properties.last_flood_date || properties.created_at;
-    const reportedBy = properties.source || properties.reported_by || properties.updated_by;
-    const dateIdentified = properties.created_at || data.created_at;
-    const safetyAdvice = properties.safety_advice || getFloodSafetyAdvice(data.risk_level);
+    // Parse properties JSON if it exists
+    let properties = {};
+    try {
+        properties = data.properties ? JSON.parse(data.properties) : {};
+    } catch (e) {
+        console.warn('Could not parse flood properties:', e);
+    }
     
     return `
         <table class="detail-table">
@@ -2918,48 +1258,49 @@ function createFloodModalContent(data) {
             </tr>
             <tr>
                 <td>Last Flood Date</td>
-                <td>${formatDate(lastFloodDate) || 'Not recorded'}</td>
+                <td>${formatDate(properties.last_flood_date) || 'Not recorded'}</td>
             </tr>
             <tr>
                 <td>Reported By</td>
-                <td>${reportedBy || 'Barangay Office'}</td>
+                <td>${properties.reported_by || 'Barangay Office'}</td>
             </tr>
             <tr>
                 <td>Date Identified</td>
-                <td>${formatDate(dateIdentified)}</td>
+                <td>${formatDate(properties.date_identified)}</td>
             </tr>
             <tr>
                 <td>Safety Advice</td>
-                <td>${safetyAdvice}</td>
+                <td>${getFloodSafetyAdvice(data.risk_level)}</td>
             </tr>
             <tr>
                 <td>Last Updated</td>
                 <td>${formatDate(data.updated_at)}</td>
-            </tr>
-            <tr>
-                <td>Properties</td>
-                <td><pre style="font-size: 0.8em; white-space: pre-wrap; max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 5px;">${JSON.stringify(properties, null, 2)}</pre></td>
             </tr>
         </table>
     `;
 }
 
 function createHouseModalContent(data) {
-    const centerLat = parseFloat(data.center_lat) || parseFloat(data.latitude);
-    const centerLng = parseFloat(data.center_lng) || parseFloat(data.longitude);
-    const floodInfo = checkIfInFloodArea(centerLat, centerLng);
-    const floodWarningRow = floodInfo ? createFloodWarningTableRow(floodInfo) : '';
+    // Parse coordinates to display polygon info
+    let coordinateInfo = 'Not available';
+    if (data.coordinates) {
+        try {
+            const coords = JSON.parse(data.coordinates);
+            coordinateInfo = `${coords.length} vertices`;
+        } catch (e) {
+            coordinateInfo = 'Invalid coordinate data';
+        }
+    }
     
     return `
         <table class="detail-table">
-            ${floodWarningRow}
-            <tr>
-                <td>Address</td>
-                <td>${data.address || 'Not specified'}</td>
-            </tr>
             <tr>
                 <td>House Number</td>
                 <td>${data.house_number || 'Not specified'}</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>${data.address || 'Not specified'}</td>
             </tr>
             <tr>
                 <td>Street Name</td>
@@ -2971,7 +1312,11 @@ function createHouseModalContent(data) {
             </tr>
             <tr>
                 <td>Center Coordinates</td>
-                <td>${data.center_lat || ''}, ${data.center_lng || ''}</td>
+                <td>Latitude: ${data.center_lat || 'N/A'}, Longitude: ${data.center_lng || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Polygon Data</td>
+                <td>${coordinateInfo}</td>
             </tr>
             <tr>
                 <td>Created</td>
@@ -2997,156 +1342,37 @@ function formatDate(dateString) {
     });
 }
 
+function getFloodSafetyAdvice(riskLevel) {
+    const advice = {
+        'high': 'High flood risk. Consider elevation, flood barriers, and evacuation plan.',
+        'medium': 'Moderate flood risk. Install check valves and keep drains clear.',
+        'low': 'Low flood risk. Monitor weather alerts and prepare emergency kit.',
+        'very-low': 'Minimal flood risk. Stay informed during heavy rainfall.'
+    };
+    
+    return advice[riskLevel] || 'Take necessary precautions during heavy rainfall.';
+}
+
+function getFloodRiskColor(riskLevel) {
+    const colors = {
+        'high': '#ff0000',
+        'medium': '#ff9900',
+        'low': '#ffff00',
+        'very-low': '#0066cc'
+    };
+    return colors[riskLevel] || '#666666';
+}
+
 // ==================== DATA LOADING FUNCTIONS ====================
 
 async function loadAllMarkers() {
     clearAllMarkers();
     
     try {
-        // Load each marker type separately using the new API endpoints
-        const [constructions, businesses, households, utilities, floodData] = await Promise.all([
-            fetchMarkers('get_construction_markers'),
-            fetchMarkers('get_business_markers'),
-            fetchMarkers('get_generic_markers'),  // Note: Changed from 'households' to 'generic_markers'
-            fetchMarkers('get_utilities_markers'),
-            fetchMarkers('get_flood_hazards')
-        ]);
-
-        // Combine all markers for search
-        allMarkersData = [
-            ...(constructions || []).map(c => ({ ...c, type: 'construction' })),
-            ...(businesses || []).map(b => ({ ...b, type: 'business' })),
-            ...(households || []).map(h => ({ ...h, type: 'household' })),  // Still works with generic markers
-            ...(utilities || []).map(u => ({ ...u, type: 'utility' })),
-            ...(floodData || []).map(f => ({ ...f, type: 'flood' }))
-        ];
-
-        // Process construction markers
-        if (constructions && Array.isArray(constructions)) {
-            constructions.forEach(construction => {
-                if (construction.latitude && construction.longitude) {
-                    try {
-                        const lat = parseFloat(construction.latitude);
-                        const lng = parseFloat(construction.longitude);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createConstructionPopup(construction);
-                            const marker = L.marker([lat, lng], {
-                                icon: constructionIcon,
-                                title: construction.first_name || 'Construction Site'
-                            }).bindPopup(popupContent);
-                            
-                            constructionMarkers.push(marker);
-                            if (activeFilter === 'construction') {
-                                marker.addTo(map);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing construction marker:', error);
-                    }
-                }
-            });
-        }
-
-        // Process business markers
-        if (businesses && Array.isArray(businesses)) {
-            businesses.forEach(business => {
-                if (business.latitude && business.longitude) {
-                    try {
-                        const lat = parseFloat(business.latitude);
-                        const lng = parseFloat(business.longitude);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createBusinessPopup(business);
-                            const marker = L.marker([lat, lng], {
-                                icon: businessIcon,
-                                title: business.business_name || 'Business'
-                            }).bindPopup(popupContent);
-                            
-                            businessMarkers.push(marker);
-                            if (activeFilter === 'business') {
-                                marker.addTo(map);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing business marker:', error);
-                    }
-                }
-            });
-        }
-
-        // Process household (generic) markers
-        if (households && Array.isArray(households)) {
-            households.forEach(household => {
-                if (household.latitude && household.longitude) {
-                    try {
-                        const lat = parseFloat(household.latitude);
-                        const lng = parseFloat(household.longitude);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createHouseholdPopup(household);
-                            const marker = L.marker([lat, lng], {
-                                icon: householdIcon,
-                                title: household.title || 'Household'
-                            }).bindPopup(popupContent);
-                            
-                            householdMarkers.push(marker);
-                            if (activeFilter === 'household') {
-                                marker.addTo(map);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing household marker:', error);
-                    }
-                }
-            });
-        }
-
-        // Process utility markers
-        if (utilities && Array.isArray(utilities)) {
-            utilities.forEach(utility => {
-                if (utility.latitude && utility.longitude) {
-                    try {
-                        const lat = parseFloat(utility.latitude);
-                        const lng = parseFloat(utility.longitude);
-                        
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            const popupContent = createUtilityPopup(utility);
-                            const marker = L.marker([lat, lng], {
-                                icon: utilityIcon,
-                                title: utility.first_name || 'Utility Work'
-                            }).bindPopup(popupContent);
-                            
-                            utilityMarkers.push(marker);
-                            if (activeFilter === 'utility') {
-                                marker.addTo(map);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing utility marker:', error);
-                    }
-                }
-            });
-        }
-
-        if (floodLayerActive) {
-            loadFloodData();
-        }
-
-        loadHousePolygons();
-    } catch (error) {
-        console.error('ERROR LOADING MARKERS:', error);
-        alert('Error loading markers. Please check browser console for details.');
-    }
-}
-
-// Helper function to fetch markers
-async function fetchMarkers(action) {
-    try {
         const formData = new FormData();
-        formData.append('action', action);
+        formData.append('action', 'get_all_markers');
         
-        const response = await fetch(MAP_HANDLER_URL, {
+        const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
@@ -3158,13 +1384,119 @@ async function fetchMarkers(action) {
         const data = await response.json();
         
         if (!data.success) {
-            throw new Error(`Server error: ${data.message || 'Unknown error'}`);
+            throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         }
+
+        // Get flood data for search
+        const floodFormData = new FormData();
+        floodFormData.append('action', 'get_flood_hazards');
         
-        return data.markers || data.hazards || [];
+        const floodResponse = await fetch(`${MAP_HANDLER_URL}`, {
+            method: 'POST',
+            body: floodFormData
+        });
+        
+        const floodData = await floodResponse.json();
+        
+        // Build allMarkersData for search - include houses from house polygons
+        allMarkersData = [
+            ...(data.markers || []).filter(m => m.type === 'construction'),
+            ...(data.markers || []).filter(m => m.type === 'business'),
+            ...(data.markers || []).filter(m => m.type === 'utility'),
+            ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
+        ];
+
+        // Process markers by type
+        const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
+        const businessMarkersList = (data.markers || []).filter(m => m.type === 'business');
+        const utilityMarkersList = (data.markers || []).filter(m => m.type === 'utility');
+
+        // Load construction markers
+        constructionMarkersList.forEach(construction => {
+            if (construction.latitude && construction.longitude) {
+                try {
+                    const lat = parseFloat(construction.latitude);
+                    const lng = parseFloat(construction.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createConstructionPopup(construction);
+                        const marker = L.marker([lat, lng], { 
+                            icon: constructionIcon,
+                            title: construction.name || 'Construction Site'
+                        }).bindPopup(popupContent);
+                        
+                        constructionMarkers.push(marker);
+                        if (activeFilter === 'construction') {
+                            marker.addTo(map);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing construction marker:', error);
+                }
+            }
+        });
+
+        // Load business markers
+        businessMarkersList.forEach(business => {
+            if (business.latitude && business.longitude) {
+                try {
+                    const lat = parseFloat(business.latitude);
+                    const lng = parseFloat(business.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createBusinessPopup(business);
+                        const marker = L.marker([lat, lng], { 
+                            icon: businessIcon,
+                            title: business.name || 'Business'
+                        }).bindPopup(popupContent);
+                        
+                        businessMarkers.push(marker);
+                        if (activeFilter === 'business') {
+                            marker.addTo(map);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing business marker:', error);
+                }
+            }
+        });
+
+        // Load utility markers
+        utilityMarkersList.forEach(utility => {
+            if (utility.latitude && utility.longitude) {
+                try {
+                    const lat = parseFloat(utility.latitude);
+                    const lng = parseFloat(utility.longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createUtilityPopup(utility);
+                        const marker = L.marker([lat, lng], { 
+                            icon: utilityIcon,
+                            title: utility.name || 'Utility Work'
+                        }).bindPopup(popupContent);
+                        
+                        utilityMarkers.push(marker);
+                        if (activeFilter === 'utility') {
+                            marker.addTo(map);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing utility marker:', error);
+                }
+            }
+        });
+
+        // Load flood layer if active
+        if (floodLayerActive) {
+            loadFloodData();
+        }
+
+        // Load house polygons (not markers)
+        loadHousePolygons();
+
     } catch (error) {
-        console.error(`Error fetching ${action}:`, error);
-        return [];
+        console.error('ERROR LOADING MARKERS:', error);
+        alert('Error loading markers. Please check browser console for details.');
     }
 }
 
@@ -3184,33 +1516,21 @@ async function loadFloodData() {
         
         const data = await response.json();
         
-        console.log('Flood data loaded:', data.hazards ? data.hazards.length : 0, 'hazards');
-        
         if (data.success && data.hazards) {
-            if (data.hazards.length > 0) {
-                processAndRenderFloodAreas(data.hazards);
-                addFloodLegend();
-                
-                setTimeout(() => {
-                    updateMarkerFloodWarnings();
-                }, 500);
-                
-                if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
-                    floodLayer.addTo(map);
-                }
-                
-                if (floodLayerActive && floodLegend) {
-                    if (!floodLegend._map) {
-                        floodLegend.addTo(map);
-                    }
-                }
-            } else {
-                console.log('No flood hazards found in response');
-                floodLayer = L.layerGroup();
-                floodLegend = null;
+            renderFloodAreas(data.hazards);
+            addFloodLegend();
+            
+            // Add to map if flood layer is active
+            if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
+                floodLayer.addTo(map);
+            }
+            
+            // Ensure legend is also added if active
+            if (floodLayerActive && floodLegend && !hasControl(floodLegend)) {
+                floodLegend.addTo(map);
             }
         } else {
-            console.log('Flood data request was not successful:', data.message);
+            console.warn('No flood data found:', data.message);
             floodLayer = L.layerGroup();
             floodLegend = null;
         }
@@ -3221,49 +1541,29 @@ async function loadFloodData() {
     }
 }
 
-function processAndRenderFloodAreas(hazards) {
+function renderFloodAreas(hazards) {
+    // Clear existing flood layer
     if (floodLayer) {
         map.removeLayer(floodLayer);
     }
     
+    // Create new layer group
     floodLayer = L.layerGroup();
-    
-    console.log(`Processing ${hazards.length} flood hazards`);
     
     hazards.forEach(hazard => {
         try {
-            console.log(`Processing hazard: ${hazard.hazard_name} (${hazard.hazard_type})`);
-            
-            if (!hazard.geojson && hazard.geom) {
-                console.log('Warning: No geojson, only geom');
+            if (!hazard.geometry) {
+                console.warn('Flood hazard missing geometry:', hazard.hazard_id);
                 return;
             }
             
-            if (!hazard.geojson) {
-                console.log('Warning: No geojson data');
-                return;
-            }
-            
-            const geoJson = typeof hazard.geojson === 'string' 
-                ? JSON.parse(hazard.geojson) 
-                : hazard.geojson;
-            
-            console.log(`GeoJSON type: ${geoJson.type}, coordinates length: ${geoJson.coordinates ? geoJson.coordinates[0].length : 'none'}`);
-                
+            const geoJson = JSON.parse(hazard.geometry);
             const style = getFloodAreaStyle(hazard.risk_level);
             
             const layer = L.geoJSON(geoJson, {
                 style: style,
                 onEachFeature: function(feature, layer) {
-                    layer.hazardData = {
-                        hazard_id: hazard.hazard_id,
-                        hazard_name: hazard.hazard_name,
-                        hazard_type: hazard.hazard_type,
-                        risk_level: hazard.risk_level,
-                        description: hazard.description
-                    };
-                    
-                    const popupContent = createFloodPopup(layer.hazardData);
+                    const popupContent = createFloodPopup(hazard);
                     layer.bindPopup(popupContent);
                     
                     layer.on('mouseover', function() {
@@ -3277,58 +1577,17 @@ function processAndRenderFloodAreas(hazards) {
                     layer.on('mouseout', function() {
                         this.setStyle(style);
                     });
+                    
+                    layer.hazardData = hazard;
                 }
             });
             
             layer.addTo(floodLayer);
-            console.log(`✅ Added layer for ${hazard.hazard_name} to floodLayer`);
             
         } catch (e) {
             console.error('Error rendering flood hazard:', e, hazard);
         }
     });
-    
-    // Check how many layers were actually added
-    const layerCount = floodLayer.getLayers().length;
-    console.log(`Total layers in floodLayer: ${layerCount}`);
-    
-    if (layerCount === 0) {
-        console.error('No flood layers were added! Check GeoJSON data.');
-    }
-}
-
-function addFloodLegend() {
-    removeFloodLegend();
-    
-    floodLegend = L.control({ position: 'bottomright' });
-    
-    floodLegend.onAdd = function(map) {
-        const div = L.DomUtil.create('div', 'info legend flood-legend');
-        div.innerHTML = `
-            <h4>Flood Risk Levels</h4>
-            <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ff0000; opacity: 0.3;"></div>
-                <span class="flood-legend-text">High Risk</span>
-            </div>
-            <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ff9900; opacity: 0.25;"></div>
-                <span class="flood-legend-text">Medium Risk</span>
-            </div>
-            <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ffff00; opacity: 0.2;"></div>
-                <span class="flood-legend-text">Low Risk</span>
-            </div>
-            <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #cce6ff; opacity: 0.15;"></div>
-                <span class="flood-legend-text">Very Low Risk</span>
-            </div>
-        `;
-        return div;
-    };
-    
-    if (floodLayerActive) {
-        floodLegend.addTo(map);
-    }
 }
 
 function getFloodAreaStyle(riskLevel) {
@@ -3370,6 +1629,44 @@ function getFloodAreaStyle(riskLevel) {
     return styles[riskLevel] || styles.medium;
 }
 
+function addFloodLegend() {
+    // Remove existing legend if any
+    if (floodLegend) {
+        removeFloodLegend();
+    }
+    
+    floodLegend = L.control({ position: 'bottomright' });
+    
+    floodLegend.onAdd = function(map) {
+        const div = L.DomUtil.create('div', 'info legend flood-legend');
+        div.innerHTML = `
+            <h4>Flood Risk Levels</h4>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ff0000; opacity: 0.3;"></div>
+                <span class="flood-legend-text">High Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ff9900; opacity: 0.25;"></div>
+                <span class="flood-legend-text">Medium Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #ffff00; opacity: 0.2;"></div>
+                <span class="flood-legend-text">Low Risk</span>
+            </div>
+            <div class="flood-legend-item">
+                <div class="flood-legend-color" style="background: #cce6ff; opacity: 0.15;"></div>
+                <span class="flood-legend-text">Very Low Risk</span>
+            </div>
+        `;
+        return div;
+    };
+    
+    // Only add to map if flood layer is active
+    if (floodLayerActive) {
+        floodLegend.addTo(map);
+    }
+}
+
 async function loadHousePolygons() {
     try {
         const formData = new FormData();
@@ -3386,6 +1683,14 @@ async function loadHousePolygons() {
         
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
+            
+            // Add houses to allMarkersData for search
+            const housesForSearch = data.houses.map(house => ({
+                ...house,
+                type: 'household'
+            }));
+            allMarkersData = [...allMarkersData, ...housesForSearch];
+            
             renderHousePolygons();
         }
     } catch (error) {
@@ -3434,13 +1739,13 @@ function renderHousePolygons() {
 function clearAllMarkers() {
     constructionMarkers.forEach(marker => map.removeLayer(marker));
     businessMarkers.forEach(marker => map.removeLayer(marker));
-    householdMarkers.forEach(marker => map.removeLayer(marker));
     utilityMarkers.forEach(marker => map.removeLayer(marker));
     
     if (floodLayer) {
         map.removeLayer(floodLayer);
     }
     
+    // Remove flood legend if it exists
     removeFloodLegend();
     
     if (faultLine && map.hasLayer(faultLine)) {
@@ -3452,84 +1757,380 @@ function clearAllMarkers() {
     
     constructionMarkers = [];
     businessMarkers = [];
-    householdMarkers = [];
     utilityMarkers = [];
     floodLayer = null;
     floodLegend = null;
 }
 
+// ==================== FLOOD ASSESSMENT FUNCTION ====================
+
+/**
+ * Get summary of flood-affected houses
+ * @returns {Promise} Promise with summary data
+ */
+async function getFloodHousesSummary() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_flood_houses_summary');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.summary) {
+            return data.summary;
+        } else {
+            console.error('Error getting flood summary:', data.message);
+            return { 
+                total: 0,
+                affected_houses: [],
+                by_risk: {}
+            };
+        }
+    } catch (error) {
+        console.error('Error fetching flood summary:', error);
+        return { 
+            total: 0,
+            affected_houses: [],
+            by_risk: {}
+        };
+    }
+}
+
+// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
+
+// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
+
+async function showFaultLineRiskAssessment() {
+    Swal.fire({
+        title: 'Analyzing Fault Line Risk...',
+        html: 'Checking houses near fault line...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        // Check if fault line is loaded
+        if (!faultLine) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Fault Line Not Found',
+                text: 'Please enable the fault line layer first.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        
+        // Get all houses
+        if (housePolygonsData.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Houses Found',
+                text: 'No house data available for analysis.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        
+        // Calculate distance from fault line for each house
+        const housesNearFaultLine = [];
+        const criticalDistance = 50; // meters
+        const highRiskDistance = 100; // meters
+        const mediumRiskDistance = 200; // meters
+        
+        housePolygonsData.forEach(house => {
+            if (house.coordinates) {
+                try {
+                    let coords;
+                    if (typeof house.coordinates === 'string') {
+                        coords = JSON.parse(house.coordinates);
+                    } else {
+                        coords = house.coordinates;
+                    }
+                    
+                    // Get center point of house polygon
+                    const polygon = L.polygon(coords);
+                    const center = polygon.getBounds().getCenter();
+                    
+                    // Calculate minimum distance to fault line
+                    let minDistance = Infinity;
+                    const faultCoords = faultLine.getLatLngs();
+                    
+                    faultCoords.forEach(faultPoint => {
+                        const distance = map.distance(center, faultPoint);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                        }
+                    });
+                    
+                    // Determine risk level
+                    let riskLevel = 'safe';
+                    let riskLabel = 'Safe';
+                    let riskColor = '#28a745';
+                    
+                    if (minDistance < criticalDistance) {
+                        riskLevel = 'critical';
+                        riskLabel = 'CRITICAL';
+                        riskColor = '#8B0000';
+                    } else if (minDistance < highRiskDistance) {
+                        riskLevel = 'high';
+                        riskLabel = 'HIGH RISK';
+                        riskColor = '#dc3545';
+                    } else if (minDistance < mediumRiskDistance) {
+                        riskLevel = 'medium';
+                        riskLabel = 'MEDIUM RISK';
+                        riskColor = '#ffc107';
+                    }
+                    
+                    if (riskLevel !== 'safe') {
+                        housesNearFaultLine.push({
+                            ...house,
+                            distance: Math.round(minDistance),
+                            riskLevel: riskLevel,
+                            riskLabel: riskLabel,
+                            riskColor: riskColor
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error calculating fault line distance for house:', house.house_id, e);
+                }
+            }
+        });
+        
+        // Sort by distance (closest first)
+        housesNearFaultLine.sort((a, b) => a.distance - b.distance);
+        
+        // Build report HTML
+        const critical = housesNearFaultLine.filter(h => h.riskLevel === 'critical');
+        const high = housesNearFaultLine.filter(h => h.riskLevel === 'high');
+        const medium = housesNearFaultLine.filter(h => h.riskLevel === 'medium');
+        
+        if (housesNearFaultLine.length === 0) {
+            Swal.fire({
+                icon: 'success',
+                title: 'All Houses Safe',
+                html: `
+                    <div style="text-align: left; padding: 20px;">
+                        <p style="color: #28a745; font-size: 16px; margin-bottom: 15px;">
+                            ✓ Great news! No houses are located near the fault line.
+                        </p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                            <strong>All houses are at safe distances from seismic hazard zones.</strong>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#28a745'
+            });
+            return;
+        }
+        
+        let reportHTML = `
+            <div style="max-width: 800px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #dc3545 0%, #8B0000 100%); 
+                            color: white; padding: 25px; border-radius: 12px; 
+                            margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
+                        🌍 Fault Line Risk Assessment
+                    </h3>
+                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                        ${housesNearFaultLine.length}
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">
+                        ${housesNearFaultLine.length === 1 ? 'House' : 'Houses'} Near Fault Line
+                    </div>
+                    
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Critical<br/>(<50m)</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">High Risk<br/>(50-100m)</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Medium Risk<br/>(100-200m)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+        `;
+        
+        // Critical risk houses
+        if (critical.length > 0) {
+            reportHTML += `
+                <div style="margin-bottom: 25px;">
+                    <h4 style="background: #8B0000; color: white; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
+                        🚨 CRITICAL - Within 50 meters (${critical.length} ${critical.length === 1 ? 'house' : 'houses'})
+                    </h4>
+            `;
+            
+            critical.forEach(house => {
+                reportHTML += `
+                    <div style="border-left: 4px solid #8B0000; background: #ffebee; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
+                            <span style="background: #8B0000; color: white; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
+                                ${house.distance}m away
+                            </span>
+                        </div>
+                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
+                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
+                            <div style="color: #8B0000; font-weight: bold; margin-bottom: 8px;">⚠️ IMMEDIATE ACTIONS REQUIRED:</div>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
+                                <li>Structural assessment by licensed engineer REQUIRED</li>
+                                <li>Seismic retrofitting may be necessary</li>
+                                <li>Prepare earthquake emergency plan</li>
+                                <li>Keep emergency supplies ready</li>
+                                <li>Know evacuation routes</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `</div>`;
+        }
+        
+        // High risk houses
+        if (high.length > 0) {
+            reportHTML += `
+                <div style="margin-bottom: 25px;">
+                    <h4 style="background: #dc3545; color: white; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
+                        ⚠️ HIGH RISK - 50-100 meters (${high.length} ${high.length === 1 ? 'house' : 'houses'})
+                    </h4>
+            `;
+            
+            high.forEach(house => {
+                reportHTML += `
+                    <div style="border-left: 4px solid #dc3545; background: #fff5f5; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
+                            <span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
+                                ${house.distance}m away
+                            </span>
+                        </div>
+                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
+                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
+                            <div style="color: #dc3545; font-weight: bold; margin-bottom: 8px;">⚠️ RECOMMENDED ACTIONS:</div>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
+                                <li>Consider seismic assessment for peace of mind</li>
+                                <li>Ensure foundation is earthquake-resistant</li>
+                                <li>Secure heavy furniture and appliances</li>
+                                <li>Develop family earthquake response plan</li>
+                                <li>Maintain emergency kit</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `</div>`;
+        }
+        
+        // Medium risk houses
+        if (medium.length > 0) {
+            reportHTML += `
+                <div style="margin-bottom: 25px;">
+                    <h4 style="background: #ffc107; color: #333; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
+                        ⚡ MEDIUM RISK - 100-200 meters (${medium.length} ${medium.length === 1 ? 'house' : 'houses'})
+                    </h4>
+            `;
+            
+            medium.forEach(house => {
+                reportHTML += `
+                    <div style="border-left: 4px solid #ffc107; background: #fffbeb; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
+                            <span style="background: #ffc107; color: #333; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
+                                ${house.distance}m away
+                            </span>
+                        </div>
+                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
+                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
+                        </div>
+                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
+                            <div style="color: #f57f17; font-weight: bold; margin-bottom: 8px;">💡 PRECAUTIONARY MEASURES:</div>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
+                                <li>Stay informed about earthquake safety</li>
+                                <li>Practice earthquake drills with family</li>
+                                <li>Know where to take cover during shaking</li>
+                                <li>Keep basic emergency supplies</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `</div>`;
+        }
+        
+        reportHTML += `
+                </div>
+                
+                <div style="background: #f8f9fa; 
+                            padding: 20px; 
+                            border-radius: 10px; 
+                            text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                        For structural assessment and emergency preparedness:
+                    </p>
+                    <div style="font-weight: bold; color: #333; font-size: 16px;">
+                        Barangay Blue Ridge B Engineering Office
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button onclick="Swal.close();" 
+                                style="padding: 10px 30px; background: #667eea; color: white; 
+                                       border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 900,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in showFaultLineRiskAssessment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error Loading Fault Line Assessment',
+            html: `
+                <p>Failed to load fault line risk data.</p>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    ${error.message || 'Please try again later.'}
+                </p>
+            `,
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
 // ==================== EVENT LISTENERS ====================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Add enhanced flood styles
-    const enhancedFloodStyles = `
-    <style>
-        /* Pulse marker with dynamic colors */
-        .pulse-marker {
-            position: relative;
-        }
-        
-        .pulse {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            animation: pulse-animation 2s infinite;
-            opacity: 0.7;
-        }
-        
-        @keyframes pulse-animation {
-            0% {
-                transform: scale(0.8);
-                opacity: 0.8;
-            }
-            50% {
-                transform: scale(1.3);
-                opacity: 0.4;
-            }
-            100% {
-                transform: scale(0.8);
-                opacity: 0.8;
-            }
-        }
-        
-        /* Enhanced scrollbar */
-        .flood-summary-popup ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .flood-summary-popup ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        .flood-summary-popup ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-        }
-        
-        .flood-summary-popup ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        /* Flood affected house highlight animation */
-        .flood-affected-house-highlight {
-            animation: flood-highlight-pulse 3s infinite;
-        }
-        
-        @keyframes flood-highlight-pulse {
-            0%, 100% {
-                opacity: 0.4;
-            }
-            50% {
-                opacity: 0.7;
-            }
-        }
-    </style>
-    `;
-    
-    // Inject styles
-    document.head.insertAdjacentHTML('beforeend', enhancedFloodStyles);
-    
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', handleSearchInput);
@@ -3594,6 +2195,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==================== MAP INITIALIZATION ====================
 
 map.whenReady(function() {
+    // Add barangay boundary polygon
     const barangayBoundary = L.geoJSON(blueRidgeGeoJSON, {
         style: {
             color: '#00247C',
@@ -3604,99 +2206,119 @@ map.whenReady(function() {
         }
     }).addTo(map);
     
-    const faultLineGeoJSON = {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {
-                    "name": "Fault Line",
-                    "description": "Potential seismic fault line"
-                },
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                        [121.0765328982805, 14.617540821420917],
-                        [121.07653620957734, 14.617799286676458],
-                        [121.07655166229381, 14.618043150864395],
-                        [121.0765671150105, 14.618248213765824],
-                        [121.07659139785397, 14.618508814258277],
-                        [121.07665541626238, 14.618812135753643],
-                        [121.07674482127817, 14.619077007702046]
-                    ]
-                }
-            }
-        ]
-    };
+    // ============= ADD FAULT LINE (CORRECTED COORDINATES) =============
+    const faultLineCoordinates = [
+        [14.6175408, 121.0765329],
+        [14.6177993, 121.0765362],
+        [14.6180432, 121.0765517],
+        [14.6182482, 121.0765671],
+        [14.6185088, 121.0765914],
+        [14.6188121, 121.0766554],
+        [14.6190770, 121.0767448]
+    ];
     
-    faultLine = L.geoJSON(faultLineGeoJSON, {
-        style: {
-            color: '#ff0000',
+    // Create fault line with correct coordinates
+    faultLine = L.polyline(faultLineCoordinates, {
+        color: '#ff0000',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '10, 10',
+        lineCap: 'round',
+        lineJoin: 'round'
+    });
+    
+    faultLine.bindPopup(`
+        <div style="max-width: 300px;">
+            <h4 style="color: #ff0000; margin-bottom: 10px;">
+                <i class="fas fa-exclamation-triangle"></i> FAULT LINE
+            </h4>
+            <p><strong>⚠️ Seismic Hazard Zone</strong></p>
+            <p>This area has been identified as having potential seismic activity.</p>
+            <p style="font-size: 0.9em; color: #666;">
+                <i class="fas fa-info-circle"></i> 
+                Construction and development in this area should follow earthquake-resistant guidelines.
+            </p>
+        </div>
+    `);
+    
+    faultLine.on('mouseover', function() {
+        this.setStyle({
+            weight: 6,
+            opacity: 1,
+            color: '#ff4444'
+        });
+    });
+    
+    faultLine.on('mouseout', function() {
+        this.setStyle({
             weight: 4,
             opacity: 0.8,
-            dashArray: '10, 10',
-            lineCap: 'round',
-            lineJoin: 'round'
-        },
-        onEachFeature: function(feature, layer) {
-            layer.bindPopup(`
-                <div style="max-width: 300px;">
-                    <h4 style="color: #ff0000; margin-bottom: 10px;">
-                        <i class="fas fa-exclamation-triangle"></i> FAULT LINE
-                    </h4>
-                    <p><strong>⚠️ Seismic Hazard Zone</strong></p>
-                    <p>This area has been identified as having potential seismic activity.</p>
-                    <p style="font-size: 0.9em; color: #666;">
-                        <i class="fas fa-info-circle"></i> 
-                        Construction and development in this area should follow earthquake-resistant guidelines.
-                    </p>
-                </div>
-            `);
-            
-            layer.on('mouseover', function() {
-                this.setStyle({
-                    weight: 6,
-                    opacity: 1,
-                    color: '#ff4444'
-                });
-            });
-            
-            layer.on('mouseout', function() {
-                this.setStyle({
-                    weight: 4,
-                    opacity: 0.8,
-                    color: '#ff0000'
-                });
-            });
-        }
+            color: '#ff0000'
+        });
     });
     
-    const faultCoords = faultLineGeoJSON.features[0].geometry.coordinates;
-    const midIndex = Math.floor(faultCoords.length / 2);
-    const warningPoint = faultCoords[midIndex];
+    // Create warning marker at the midpoint of the fault line
+    const midIndex = Math.floor(faultLineCoordinates.length / 2);
+    const warningPoint = faultLineCoordinates[midIndex];
     
     const warningIcon = L.divIcon({
-        className: 'incident-marker',
+        className: 'fault-warning-marker',
         html: `<div style="
             position: relative;
-            width: 25px;
-            height: 25px;
-            background: rgba(255, 0, 0, 0.7);
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
+            width: 30px;
+            height: 30px;
         ">
-            <i class="fas fa-exclamation" style="color: white; font-size: 12px;"></i>
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 0, 0, 0.3);
+                border-radius: 50%;
+                animation: pulse-fault 2s infinite;
+            "></div>
+            <div style="
+                position: absolute;
+                top: 5px;
+                left: 5px;
+                width: 20px;
+                height: 20px;
+                background: rgba(255, 0, 0, 0.9);
+                border-radius: 50%;
+                border: 2px solid white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <i class="fas fa-exclamation" style="color: white; font-size: 10px;"></i>
+            </div>
         </div>`,
-        iconSize: [25, 25],
-        iconAnchor: [12.5, 12.5]
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
     });
     
-    warningMarker = L.marker([warningPoint[1], warningPoint[0]], {
+    // Add CSS animation for fault line warning marker
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse-fault {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    warningMarker = L.marker(warningPoint, {
         icon: warningIcon,
         title: 'Fault Line Warning'
     });
@@ -3715,8 +2337,10 @@ map.whenReady(function() {
         </div>
     `);
     
+    // Set up soft boundary
     setupSoftBoundary();
     
+    // Load all data
     loadAllMarkers();
     initDateTime();
     setupMobileMenuClose();
@@ -3905,624 +2529,727 @@ function setupMobileMenuClose() {
     });
 }
 
-// ==================== SPATIAL DECISION SUPPORT SYSTEM (SDSS) ====================
+// ==================== DEBUG FUNCTION ====================
 
-/**
- * Run SDSS check for a business application
- */
-async function runBusinessSDSS(businessId) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'sdss_evaluate_business');
-        formData.append('business_id', businessId);
-        
-        Swal.fire({
-            title: 'Running Spatial Analysis...',
-            html: 'Checking school proximity, business density, and residential protection...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-        
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.message || 'Evaluation failed');
-        }
-        
-        const evaluation = data.evaluation;
-        
-        // Build HTML content
-        let htmlContent = `
-            <div style="max-width: 800px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
-                        🎯 Spatial Decision Support System
-                    </h3>
-                    <h4 style="margin: 0; font-size: 18px; opacity: 0.9;">
-                        ${evaluation.business_name}
-                    </h4>
-                    <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
-                        Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
-                    </div>
-                </div>
-                
-                <!-- Summary Card -->
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h5 style="margin-top: 0; color: #333; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
-                        📊 Evaluation Summary
-                    </h5>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="font-size: 28px; font-weight: bold; color: #28a745;">${evaluation.summary.total_rules_checked}</div>
-                            <div style="font-size: 12px; color: #666;">Rules Checked</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="font-size: 28px; font-weight: bold; color: ${evaluation.summary.critical_issues > 0 ? '#dc3545' : '#17a2b8'}">${evaluation.summary.rules_triggered}</div>
-                            <div style="font-size: 12px; color: #666;">Rules Triggered</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="font-size: 28px; font-weight: bold; color: #dc3545;">${evaluation.summary.critical_issues}</div>
-                            <div style="font-size: 12px; color: #666;">Critical Issues</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="font-size: 28px; font-weight: bold; color: #ffc107;">${evaluation.summary.warnings}</div>
-                            <div style="font-size: 12px; color: #666;">Warnings</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Overall Status -->
-                    <div style="text-align: center; padding: 15px; border-radius: 8px; margin-top: 15px; 
-                                background: ${getStatusColor(evaluation.summary.overall_status, true)};
-                                border: 2px solid ${getStatusColor(evaluation.summary.overall_status)};">
-                        <h4 style="margin: 0; color: ${getStatusColor(evaluation.summary.overall_status)};">
-                            ${getStatusIcon(evaluation.summary.overall_status)} 
-                            ${evaluation.summary.overall_status.replace(/_/g, ' ')}
-                        </h4>
-                    </div>
-                </div>
-                
-                <!-- Rules Results -->
-        `;
-        
-        if (evaluation.rules.length === 0) {
-            htmlContent += `
-                <div style="background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
-                    <h5 style="margin: 0; color: #155724;">
-                        ✅ All Clear!
-                    </h5>
-                    <p style="margin: 10px 0 0 0; color: #155724;">
-                        No spatial issues detected. This application meets all spatial planning requirements.
-                    </p>
-                </div>
-            `;
-        } else {
-            htmlContent += `
-                <div style="margin-bottom: 20px;">
-                    <h5 style="color: #333; border-bottom: 2px solid #dee2e6; padding-bottom: 10px;">
-                        📋 Detailed Findings
-                    </h5>
-            `;
-            
-            evaluation.rules.forEach(rule => {
-                const severityColor = getSeverityColor(rule.severity);
-                const severityBg = getSeverityColor(rule.severity, true);
-                
-                htmlContent += `
-                    <div style="background: ${severityBg}; padding: 15px; border-radius: 8px; 
-                                border-left: 4px solid ${severityColor}; margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <h6 style="margin: 0 0 8px 0; color: ${severityColor};">
-                                    ${getSeverityIcon(rule.severity)} ${rule.rule}
-                                </h6>
-                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #333;">
-                                    ${rule.message}
-                                </p>
-                                <p style="margin: 0 0 10px 0; color: #666;">
-                                    <strong>Recommendation:</strong> ${rule.recommendation}
-                                </p>
-                                <p style="margin: 0; color: #666;">
-                                    <strong>Action:</strong> <span style="color: ${severityColor}; font-weight: 600;">${rule.action.replace(/_/g, ' ')}</span>
-                                </p>
-                            </div>
-                            <div style="margin-left: 15px; padding: 5px 10px; background: ${severityColor}; 
-                                        color: white; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                                ${rule.severity}
-                            </div>
-                        </div>
-                        
-                        <!-- Show details if available -->
-                        ${rule.details || rule.flood_info ? `
-                            <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px;">
-                                <strong style="color: #666; font-size: 13px;">Details:</strong>
-                                <div style="margin-top: 5px; font-size: 13px; color: #666;">
-                                    ${rule.details ? 
-                                        rule.details.map(item => `
-                                            <div style="padding: 3px 0;">
-                                                • ${item.name} (${item.distance}m)
-                                            </div>
-                                        `).join('') 
-                                        : ''}
-                                    ${rule.flood_info ? 
-                                        `<div style="padding: 3px 0;">
-                                            • ${rule.flood_info.hazard_name} - ${rule.flood_info.risk_level} risk
-                                        </div>` 
-                                        : ''}
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            
-            htmlContent += `</div>`;
-        }
-        
-        htmlContent += `
-                <!-- Actions -->
-                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <h6 style="margin: 0 0 10px 0; color: #333;">Next Steps:</h6>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="Swal.close();" 
-                                style="flex: 1; padding: 10px; background: #6c757d; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            Close
-                        </button>
-                        <button onclick="downloadSDSSReport(${businessId}, 'business')" 
-                                style="flex: 1; padding: 10px; background: #17a2b8; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            📄 Download Report
-                        </button>
-                        <button onclick="showOnMap(${businessId}, 'business')" 
-                                style="flex: 1; padding: 10px; background: #28a745; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            🗺️ Show on Map
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        Swal.fire({
-            title: '',
-            html: htmlContent,
-            width: 850,
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: {
-                popup: 'sdss-modal'
-            }
-        });
-        
-    } catch (error) {
-        console.error('SDSS Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'SDSS Evaluation Failed',
-            text: error.message || 'An error occurred during spatial analysis.',
-            confirmButtonText: 'OK'
-        });
-    }
-}
-
-/**
- * Run SDSS check for a construction application
- */
-async function runConstructionSDSS(constructionId) {
-    try {
-        const formData = new FormData();
-        formData.append('action', 'sdss_evaluate_construction');
-        formData.append('construction_id', constructionId);
-        
-        Swal.fire({
-            title: 'Checking Flood Risk...',
-            html: 'Analyzing construction location against flood hazard areas...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-        
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.message || 'Evaluation failed');
-        }
-        
-        const evaluation = data.evaluation;
-        
-        let htmlContent = `
-            <div style="max-width: 800px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #17a2b8 0%, #28a745 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
-                        🏗️ Construction Flood Risk Assessment
-                    </h3>
-                    <h4 style="margin: 0; font-size: 18px; opacity: 0.9;">
-                        ${evaluation.address || 'Construction Site'}
-                    </h4>
-                    <div style="margin-top: 15px; font-size: 14px; opacity: 0.8;">
-                        Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
-                    </div>
-                </div>
-        `;
-        
-        if (evaluation.rules.length === 0) {
-            htmlContent += `
-                <div style="background: #d4edda; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
-                    <h5 style="margin: 0; color: #155724;">
-                        ✅ No Flood Risk Detected
-                    </h5>
-                    <p style="margin: 10px 0 0 0; color: #155724;">
-                        This construction site is not located in any identified flood hazard areas.
-                    </p>
-                </div>
-            `;
-        } else {
-            evaluation.rules.forEach(rule => {
-                const severityColor = getSeverityColor(rule.severity);
-                const severityBg = getSeverityColor(rule.severity, true);
-                
-                htmlContent += `
-                    <div style="background: ${severityBg}; padding: 20px; border-radius: 8px; 
-                                border-left: 4px solid ${severityColor}; margin-bottom: 20px;">
-                        <h5 style="margin: 0 0 15px 0; color: ${severityColor};">
-                            ${getSeverityIcon(rule.severity)} ${rule.rule}
-                        </h5>
-                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #333;">
-                            ${rule.message}
-                        </p>
-                        <div style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                            <p style="margin: 0 0 8px 0; color: #666;">
-                                <strong>Recommendation:</strong> ${rule.recommendation}
-                            </p>
-                            <p style="margin: 0; color: #666;">
-                                <strong>Action Required:</strong> <span style="color: ${severityColor}; font-weight: 600;">${rule.action.replace(/_/g, ' ')}</span>
-                            </p>
-                        </div>
-                        
-                        ${rule.flood_info ? `
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 5px; margin-top: 10px;">
-                                <h6 style="margin: 0 0 8px 0; color: #666;">Flood Hazard Details:</h6>
-                                <div style="font-size: 14px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                        <span style="color: #666;">Name:</span>
-                                        <span style="font-weight: 600;">${rule.flood_info.hazard_name}</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                        <span style="color: #666;">Risk Level:</span>
-                                        <span style="color: ${severityColor}; font-weight: 600;">${rule.flood_info.risk_level.toUpperCase()}</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <span style="color: #666;">Description:</span>
-                                        <span style="text-align: right;">${rule.flood_info.description || 'No description'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-        }
-        
-        htmlContent += `
-                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <h6 style="margin: 0 0 10px 0; color: #333;">Assessment Result:</h6>
-                    <div style="padding: 12px; background: white; border-radius: 6px; border-left: 4px solid ${getStatusColor(evaluation.summary.overall_status)};">
-                        <h5 style="margin: 0; color: ${getStatusColor(evaluation.summary.overall_status)};">
-                            ${getStatusIcon(evaluation.summary.overall_status)} 
-                            ${evaluation.summary.overall_status.replace(/_/g, ' ')}
-                        </h5>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button onclick="Swal.close();" 
-                                style="flex: 1; padding: 10px; background: #6c757d; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            Close
-                        </button>
-                        <button onclick="downloadSDSSReport(${constructionId}, 'construction')" 
-                                style="flex: 1; padding: 10px; background: #17a2b8; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            📄 Download Report
-                        </button>
-                        <button onclick="showOnMap(${constructionId}, 'construction')" 
-                                style="flex: 1; padding: 10px; background: #28a745; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer;">
-                            🗺️ Show on Map
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        Swal.fire({
-            title: '',
-            html: htmlContent,
-            width: 850,
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: {
-                popup: 'sdss-modal'
-            }
-        });
-        
-    } catch (error) {
-        console.error('SDSS Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'SDSS Evaluation Failed',
-            text: error.message || 'An error occurred during flood risk analysis.',
-            confirmButtonText: 'OK'
-        });
-    }
-}
-
-/**
- * Helper: Get status color
- */
-function getStatusColor(status, light = false) {
-    const colors = {
-        'APPROVE': light ? '#d4edda' : '#28a745',
-        'APPROVE_WITH_CONDITIONS': light ? '#fff3cd' : '#ffc107',
-        'DENY_OR_RELOCATE': light ? '#f8d7da' : '#dc3545',
-        'REQUIRE_MITIGATION': light ? '#f8d7da' : '#dc3545'
-    };
-    return colors[status] || (light ? '#e9ecef' : '#6c757d');
-}
-
-/**
- * Helper: Get status icon
- */
-function getStatusIcon(status) {
-    const icons = {
-        'APPROVE': '✅',
-        'APPROVE_WITH_CONDITIONS': '⚠️',
-        'DENY_OR_RELOCATE': '🚫',
-        'REQUIRE_MITIGATION': '⚠️'
-    };
-    return icons[status] || '📋';
-}
-
-/**
- * Helper: Get severity color
- */
-function getSeverityColor(severity, light = false) {
-    const colors = {
-        'CRITICAL': light ? '#f8d7da' : '#dc3545',
-        'WARNING': light ? '#fff3cd' : '#ffc107',
-        'INFO': light ? '#d1ecf1' : '#17a2b8'
-    };
-    return colors[severity] || (light ? '#e9ecef' : '#6c757d');
-}
-
-/**
- * Helper: Get severity icon
- */
-function getSeverityIcon(severity) {
-    const icons = {
-        'CRITICAL': '🚫',
-        'WARNING': '⚠️',
-        'INFO': 'ℹ️'
-    };
-    return icons[severity] || '📋';
-}
-
-/**
- * Download SDSS report as PDF
- */
-function downloadSDSSReport(id, type) {
-    Swal.fire({
-        icon: 'info',
-        title: 'Report Generation',
-        text: 'PDF report feature coming soon!',
-        confirmButtonText: 'OK'
-    });
-}
-
-/**
- * Show location on map
- */
-function showOnMap(id, type) {
-    Swal.close();
+function debugFloodState() {
+    console.log('Flood Layer Active:', floodLayerActive);
+    console.log('Flood Layer exists:', !!floodLayer);
+    console.log('Flood Layer on map:', floodLayer ? map.hasLayer(floodLayer) : false);
+    console.log('Flood Legend exists:', !!floodLegend);
+    console.log('Flood Legend on map:', floodLegend ? hasControl(floodLegend) : false);
     
-    // Get location from appropriate table
-    const formData = new FormData();
-    formData.append('action', type === 'business' ? 'get_business_details' : 'get_construction_details');
-    formData.append('id', id);
-    
-    fetch(MAP_HANDLER_URL, {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            const item = data.data;
-            const lat = parseFloat(item.latitude);
-            const lng = parseFloat(item.longitude);
-            
-            // Fly to location
-            map.flyTo([lat, lng], 18, { duration: 1.5 });
-            
-            // Show marker
-            const marker = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    className: 'sdss-marker',
-                    html: `<div style="
-                        width: 30px; height: 30px; background: #ffc107; 
-                        border-radius: 50%; border: 3px solid white; 
-                        box-shadow: 0 0 20px rgba(255, 193, 7, 0.8);
-                        animation: pulse 2s infinite;
-                    "></div>`,
-                    iconSize: [30, 30]
-                })
-            }).addTo(map);
-            
-            marker.bindPopup(`
-                <div style="padding: 10px;">
-                    <strong>${type === 'business' ? item.business_name : item.construction_address}</strong><br>
-                    <small>${type === 'business' ? 'Business' : 'Construction'}</small><br>
-                    <small>Click to close</small>
-                </div>
-            `).openPopup();
-            
-            // Remove after 15 seconds
-            setTimeout(() => {
-                if (map.hasLayer(marker)) {
-                    map.removeLayer(marker);
-                }
-            }, 15000);
-        }
-    });
+    // Check DOM for legend
+    const legendElement = document.querySelector('.flood-legend');
+    console.log('Flood Legend in DOM:', !!legendElement);
 }
 
+// ==================== SDSS (Spatial Decision Support System) FUNCTIONS ====================
+
 /**
- * Test SDSS functions
+ * Test SDSS functionality
  */
-function testSDSS() {
+async function testSDSS() {
+    console.log('Testing SDSS...');
+    
+    const businessCount = allMarkersData.filter(m => m.type === 'business').length;
+    const constructionCount = allMarkersData.filter(m => m.type === 'construction').length;
+    const utilityCount = allMarkersData.filter(m => m.type === 'utility').length;
+    const houseCount = housePolygonsData.length;
+    
     Swal.fire({
-        title: 'Test SDSS Functions',
+        title: 'SDSS System Test',
         html: `
             <div style="text-align: left;">
-                <p>Select a test to run:</p>
-                <select id="testType" class="swal2-input" style="margin-bottom: 10px;">
-                    <option value="business">Business Application</option>
-                    <option value="construction">Construction Permit</option>
-                </select>
-                <input id="testId" class="swal2-input" placeholder="Enter ID to test">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0;">Spatial Decision Support System</h4>
+                    <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">Rule-Based Compliance Monitoring</p>
+                </div>
+                
+                <h4 style="color: #333; margin-top: 20px;">📊 System Status</h4>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 5px; margin-bottom: 15px;">
+                    <p style="margin: 5px 0;">✅ Map initialized successfully</p>
+                    <p style="margin: 5px 0;">✅ Spatial layers loaded: ${floodLayer ? 'Flood zones' : 'No flood data'}, ${faultLine ? 'Fault line' : 'No fault line'}</p>
+                    <p style="margin: 5px 0;">✅ Data loaded: ${businessCount} businesses, ${constructionCount} construction sites, ${utilityCount} utilities, ${houseCount} houses</p>
+                </div>
+                
+                <h4 style="color: #333; margin-top: 20px;">⚖️ Active SDSS Rules</h4>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #856404;">
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #856404;">Flood Risk Rules (1.x)</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
+                            <li><strong>Rule 1.2:</strong> Businesses in flood zones require mitigation</li>
+                            <li><strong>Rule 1.3:</strong> High flood zone construction requires special design</li>
+                            <li><strong>Rule 1.4:</strong> Flood mitigation recommended for medium/low zones</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #856404;">Fault Line Rules (2.x)</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
+                            <li><strong>Rule 2.1:</strong> Seismic certification required within 100m</li>
+                            <li><strong>Rule 2.2:</strong> Construction prohibited within 50m (Critical)</li>
+                            <li><strong>Rule 2.3:</strong> Seismic design mandatory within 100m</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #856404;">Occupancy Rules (3.x)</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
+                            <li><strong>Rule 3.1:</strong> High-density establishments need enhanced safety</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <strong style="color: #856404;">Construction Safety Rules (4.x)</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
+                            <li><strong>Rule 4.1:</strong> Minimum worker requirements by project type</li>
+                            <li><strong>Rule 4.2:</strong> Construction timeline reasonableness standards</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h4 style="color: #333; margin-top: 20px;">🔍 How to Use SDSS</h4>
+                <div style="background: #e3f2fd; padding: 12px; border-radius: 5px; border-left: 4px solid #1976d2;">
+                    <ol style="margin: 5px 0; padding-left: 20px; font-size: 0.9em;">
+                        <li>Click <strong>"Business SDSS Report"</strong> to check all businesses for violations</li>
+                        <li>Click <strong>"Construction SDSS Report"</strong> to check construction compliance</li>
+                        <li>Reports show: Critical violations, Violations, Warnings, and Compliant items</li>
+                        <li>Each violation shows the specific rule broken and required action</li>
+                    </ol>
+                </div>
+                
+                <div style="background: #e8f5e9; padding: 12px; border-radius: 5px; margin-top: 15px; border-left: 4px solid #2e7d32;">
+                    <p style="margin: 0; font-size: 0.9em;"><strong>✅ SDSS Ready</strong> - All rules loaded and operational</p>
+                </div>
             </div>
         `,
-        showCancelButton: true,
-        confirmButtonText: 'Run Test',
-        preConfirm: () => {
-            const type = document.getElementById('testType').value;
-            const id = document.getElementById('testId').value;
-            
-            if (!id) {
-                Swal.showValidationMessage('Please enter an ID');
-                return false;
-            }
-            
-            if (type === 'business') {
-                runBusinessSDSS(parseInt(id));
-            } else {
-                runConstructionSDSS(parseInt(id));
-            }
-        }
+        width: '800px',
+        icon: 'success',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#667eea'
     });
 }
 
-// ==================== UPDATED FUNCTIONS FOR NEW API STRUCTURE ====================
-
-// Update the viewMapDetails function to use new API structure
-async function viewMapDetails(id, type) {
-    try {
-        const formData = new FormData();
-        
-        // Map type to new action names
-        const actionMap = {
-            'construction': 'get_construction_details',
-            'business': 'get_business_details',
-            'utility': 'get_utilities_details',
-            'household': 'get_household_details'
-        };
-        
-        formData.append('action', actionMap[type]);
-        formData.append('id', id);
-
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            displayDetailsInModal(data.data, type);
-        }
-    } catch (error) {
-        console.error('Error loading details:', error);
-    }
-}
-
-// Add a test function to verify the new flood detection works
-async function testFixedFloodDetection() {
-    console.log("=== TESTING FIXED FLOOD DETECTION ===");
-    
-    try {
-        // Test 1: Get houses in flood with coverage percentages
-        const housesResponse = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_houses_in_flood'
-        });
-        
-        const housesData = await housesResponse.json();
-        
-        if (housesData.success && housesData.houses.length > 0) {
-            console.log(`✅ Found ${housesData.houses.length} houses in flood areas`);
-            
-            // Check if we have different coverage percentages (not all 100%)
-            const differentCoverages = housesData.houses.some(house => {
-                const coverage = house.flood_coverage_percent;
-                return coverage !== 100 && coverage !== null && coverage !== undefined;
-            });
-            
-            if (differentCoverages) {
-                console.log("✅ SUCCESS: Flood detection is working with precise coverage percentages!");
-                console.log("Coverage percentages found:", housesData.houses.map(h => h.flood_coverage_percent));
-            } else {
-                console.log("⚠️ WARNING: All houses show 100% coverage. The fix may not be working.");
-            }
-            
-            // Test 2: Get flood summary
-            const summaryResponse = await fetch(MAP_HANDLER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=get_flood_houses_summary'
-            });
-            
-            const summaryData = await summaryResponse.json();
-            
-            if (summaryData.success) {
-                console.log("✅ Flood summary loaded successfully");
-                console.log("Summary:", summaryData.summary);
-            }
-        } else {
-            console.log("ℹ️ No houses found in flood areas (this might be expected)");
-        }
-        
-    } catch (error) {
-        console.error("❌ Error testing flood detection:", error);
-    }
-}
-
-// Add this function to your debug buttons section
-function testFixedFloodDetectionButton() {
-    Swal.fire({
-        title: 'Testing Fixed Flood Detection',
-        html: 'Running the improved flood detection system...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
-    
-    testFixedFloodDetection().then(() => {
+/**
+ * Show comprehensive SDSS report for all businesses with spatial analysis
+ */
+async function showAllBusinessesSDSSReport() {
+    if (!allMarkersData || allMarkersData.length === 0) {
         Swal.fire({
-            icon: 'success',
-            title: 'Test Complete',
-            html: 'Check browser console for results.<br><br>The fixed system should show:<br>• Different coverage percentages (not all 100%)<br>• Houses classified as Fully/Partially/Minimally Affected<br>• Accurate counts in summary',
-            confirmButtonText: 'OK'
+            title: 'No Data',
+            text: 'No businesses found on the map',
+            icon: 'info'
         });
+        return;
+    }
+    
+    const businessData = allMarkersData.filter(m => m.type === 'business');
+    
+    if (businessData.length === 0) {
+        Swal.fire({
+            title: 'No Businesses',
+            text: 'No business data available for analysis',
+            icon: 'info'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Analyzing Businesses...',
+        html: 'Checking business compliance with safety rules...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        const warnings = [];
+        
+        for (const business of businessData) {
+            const lat = parseFloat(business.latitude);
+            const lng = parseFloat(business.longitude);
+            
+            if (isNaN(lat) || isNaN(lng)) continue;
+            
+            const point = L.latLng(lat, lng);
+            const businessWarnings = [];
+            
+            // SDSS RULE 1: Check if in flood zone
+            let inFloodZone = false;
+            let floodRiskLevel = 'none';
+            
+            if (floodLayer) {
+                floodLayer.eachLayer(layer => {
+                    if (layer.getBounds && layer.getBounds().contains(point)) {
+                        inFloodZone = true;
+                        if (layer.hazardData) {
+                            floodRiskLevel = layer.hazardData.risk_level || 'unknown';
+                        }
+                    }
+                });
+            }
+            
+            if (inFloodZone) {
+                businessWarnings.push({
+                    type: 'Flood Risk',
+                    severity: floodRiskLevel === 'low' ? 'MEDIUM' : 'HIGH',
+                    description: `Business is located in a ${floodRiskLevel.toUpperCase()} flood risk zone`,
+                    actions: [
+                        'Elevate valuable equipment and inventory',
+                        'Install flood barriers at entrances',
+                        'Keep sandbags ready during rainy season',
+                        'Develop flood emergency evacuation plan',
+                        'Consider flood insurance'
+                    ]
+                });
+            }
+            
+            // SDSS RULE 2: Check proximity to fault line
+            if (faultLine) {
+                let minDistance = Infinity;
+                const faultCoords = faultLine.getLatLngs();
+                
+                faultCoords.forEach(faultPoint => {
+                    const distance = map.distance(point, faultPoint);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                    }
+                });
+                
+                if (minDistance < 100) {
+                    businessWarnings.push({
+                        type: 'Seismic Risk',
+                        severity: minDistance < 50 ? 'CRITICAL' : 'HIGH',
+                        description: `Business is ${Math.round(minDistance)}m from fault line`,
+                        actions: [
+                            'Obtain seismic safety assessment',
+                            'Ensure building meets earthquake-resistant standards',
+                            'Secure shelving and heavy equipment',
+                            'Train staff on earthquake safety procedures',
+                            'Post emergency evacuation routes'
+                        ]
+                    });
+                }
+            }
+            
+            // SDSS RULE 3: High occupancy check
+            if (business.no_of_employees && business.no_of_employees > 50) {
+                businessWarnings.push({
+                    type: 'High Occupancy',
+                    severity: 'MEDIUM',
+                    description: `High employee count (${business.no_of_employees} employees)`,
+                    actions: [
+                        'Ensure adequate emergency exits',
+                        'Conduct regular fire drills',
+                        'Maintain fire extinguishers',
+                        'Post evacuation maps',
+                        'Train emergency response team'
+                    ]
+                });
+            }
+            
+            if (businessWarnings.length > 0) {
+                warnings.push({
+                    business: business,
+                    warnings: businessWarnings
+                });
+            }
+        }
+        
+        // Build report
+        if (warnings.length === 0) {
+            Swal.fire({
+                icon: 'success',
+                title: 'All Businesses Compliant',
+                html: `
+                    <div style="padding: 20px; text-align: left;">
+                        <p style="color: #28a745; font-size: 16px;">
+                            ✓ All ${businessData.length} businesses meet basic safety requirements!
+                        </p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <strong>No critical warnings detected</strong>
+                            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                                Continue regular safety inspections and emergency preparedness.
+                            </p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#28a745'
+            });
+            return;
+        }
+        
+        let reportHTML = `
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                        🏢 Business Safety Compliance Report
+                    </h3>
+                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                        ${warnings.length}
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">
+                        ${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings
+                    </div>
+                    <div style="margin-top: 15px; font-size: 13px; opacity: 0.8;">
+                        Out of ${businessData.length} total businesses analyzed
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 SDSS Rules Applied:</h4>
+                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
+                        <li><strong>Rule 1:</strong> Flood zone safety requirements</li>
+                        <li><strong>Rule 2:</strong> Seismic hazard proximity standards</li>
+                        <li><strong>Rule 3:</strong> High-occupancy safety measures</li>
+                    </ul>
+                </div>
+        `;
+        
+        warnings.forEach(item => {
+            const biz = item.business;
+            const critical = item.warnings.some(w => w.severity === 'CRITICAL');
+            const borderColor = critical ? '#8B0000' : '#ffc107';
+            const bgColor = critical ? '#ffebee' : '#fffbeb';
+            
+            reportHTML += `
+                <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                            padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <strong style="font-size: 18px; color: #333;">
+                            ${biz.business_name || 'Unnamed Business'}
+                        </strong>
+                        <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                     border-radius: 3px; font-size: 12px; font-weight: bold;">
+                            ${item.warnings.length} WARNING${item.warnings.length > 1 ? 'S' : ''}
+                        </span>
+                    </div>
+                    
+                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                        <div>📍 <strong>Address:</strong> ${biz.address_of_business || 'Not specified'}</div>
+                        <div>🏢 <strong>Type:</strong> ${biz.type_of_business || 'N/A'}</div>
+                        <div>👥 <strong>Employees:</strong> ${biz.no_of_employees || 'N/A'}</div>
+                    </div>
+            `;
+            
+            item.warnings.forEach(warning => {
+                const severityColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
+                                     warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+                
+                reportHTML += `
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                        <div style="color: ${severityColor}; font-weight: bold; margin-bottom: 8px;">
+                            <span style="background: ${severityColor}; color: white; padding: 2px 8px; 
+                                       border-radius: 3px; font-size: 11px; margin-right: 8px;">
+                                ${warning.severity}
+                            </span>
+                            ${warning.type}: ${warning.description}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                                ✅ Required Actions:
+                            </div>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                `;
+                
+                warning.actions.forEach(action => {
+                    reportHTML += `<li>${action}</li>`;
+                });
+                
+                reportHTML += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `</div>`;
+        });
+        
+        reportHTML += `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                        For safety compliance assistance:
+                    </p>
+                    <div style="font-weight: bold; color: #333; font-size: 16px;">
+                        Barangay Blue Ridge B Business Permit Office
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 950,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in business SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate business safety report: ' + error.message
+        });
+    }
+}
+
+/**
+ * Show comprehensive SDSS report for all construction sites with spatial analysis
+ */
+async function showAllConstructionSDSSReport() {
+    if (!allMarkersData || allMarkersData.length === 0) {
+        Swal.fire({
+            title: 'No Data',
+            text: 'No construction sites found',
+            icon: 'info'
+        });
+        return;
+    }
+    
+    const constructionData = allMarkersData.filter(m => m.type === 'construction');
+    
+    if (constructionData.length === 0) {
+        Swal.fire({
+            title: 'No Construction Sites',
+            text: 'No construction data available for analysis',
+            icon: 'info'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Analyzing Construction Sites...',
+        html: 'Checking construction safety compliance...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    try {
+        const warnings = [];
+        
+        for (const construction of constructionData) {
+            const lat = parseFloat(construction.latitude);
+            const lng = parseFloat(construction.longitude);
+            
+            if (isNaN(lat) || isNaN(lng)) continue;
+            
+            const point = L.latLng(lat, lng);
+            const siteWarnings = [];
+            
+            // SDSS RULE 1: Check if in flood zone
+            let inFloodZone = false;
+            let floodRiskLevel = 'none';
+            
+            if (floodLayer) {
+                floodLayer.eachLayer(layer => {
+                    if (layer.getBounds && layer.getBounds().contains(point)) {
+                        inFloodZone = true;
+                        if (layer.hazardData) {
+                            floodRiskLevel = layer.hazardData.risk_level || 'unknown';
+                        }
+                    }
+                });
+            }
+            
+            if (inFloodZone) {
+                siteWarnings.push({
+                    type: 'Flood Risk Construction',
+                    severity: 'HIGH',
+                    description: `Construction site in ${floodRiskLevel.toUpperCase()} flood risk zone`,
+                    actions: [
+                        'Elevate foundation minimum 1.5 meters above flood level',
+                        'Use flood-resistant building materials',
+                        'Install proper drainage systems',
+                        'Raise electrical outlets above potential flood level',
+                        'Consider waterproofing basement/ground floor'
+                    ]
+                });
+            }
+            
+            // SDSS RULE 2: Check proximity to fault line
+            if (faultLine) {
+                let minDistance = Infinity;
+                const faultCoords = faultLine.getLatLngs();
+                
+                faultCoords.forEach(faultPoint => {
+                    const distance = map.distance(point, faultPoint);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                    }
+                });
+                
+                if (minDistance < 50) {
+                    siteWarnings.push({
+                        type: 'CRITICAL - Fault Line Violation',
+                        severity: 'CRITICAL',
+                        description: `Construction within ${Math.round(minDistance)}m of fault line - PROHIBITED`,
+                        actions: [
+                            '🚨 STOP WORK ORDER - Construction must be relocated',
+                            'This violates National Building Code Section 305',
+                            'Contact Barangay Engineering Office immediately',
+                            'Site must be at least 50 meters from fault line'
+                        ]
+                    });
+                } else if (minDistance < 100) {
+                    siteWarnings.push({
+                        type: 'Seismic Requirements',
+                        severity: 'HIGH',
+                        description: `Construction ${Math.round(minDistance)}m from fault line`,
+                        actions: [
+                            'Seismic-resistant design MANDATORY',
+                            'Structural engineer certification required',
+                            'Use reinforced concrete and steel framework',
+                            'Follow earthquake-resistant building codes',
+                            'Regular seismic safety inspections needed'
+                        ]
+                    });
+                }
+            }
+            
+            // SDSS RULE 3: Worker safety
+            const workers = parseInt(construction.number_of_workers) || 0;
+            if (workers < 2 && construction.type_of_work && 
+                (construction.type_of_work.toLowerCase().includes('major') || 
+                 construction.type_of_work.toLowerCase().includes('construction'))) {
+                siteWarnings.push({
+                    type: 'Inadequate Workforce',
+                    severity: 'MEDIUM',
+                    description: `Only ${workers} worker(s) for construction project`,
+                    actions: [
+                        'Increase workforce for safety and efficiency',
+                        'Minimum 2 workers required for major construction',
+                        'Ensure adequate supervision on site',
+                        'Update work schedule if needed'
+                    ]
+                });
+            }
+            
+            if (siteWarnings.length > 0) {
+                warnings.push({
+                    construction: construction,
+                    warnings: siteWarnings
+                });
+            }
+        }
+        
+        // Build report
+        if (warnings.length === 0) {
+            Swal.fire({
+                icon: 'success',
+                title: 'All Construction Sites Compliant',
+                html: `
+                    <div style="padding: 20px; text-align: left;">
+                        <p style="color: #28a745; font-size: 16px;">
+                            ✓ All ${constructionData.length} construction sites meet safety requirements!
+                        </p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <strong>No safety violations detected</strong>
+                            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                                Continue monitoring and regular safety inspections.
+                            </p>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#28a745'
+            });
+            return;
+        }
+        
+        const critical = warnings.filter(w => w.warnings.some(x => x.severity === 'CRITICAL'));
+        const high = warnings.filter(w => !critical.includes(w) && w.warnings.some(x => x.severity === 'HIGH'));
+        const medium = warnings.filter(w => !critical.includes(w) && !high.includes(w));
+        
+        let reportHTML = `
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                        🏗️ Construction Safety Compliance Report
+                    </h3>
+                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                        ${warnings.length}
+                    </div>
+                    <div style="font-size: 14px; opacity: 0.9;">
+                        ${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings
+                    </div>
+                    
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Critical</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                            <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Medium</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 SDSS Rules Applied:</h4>
+                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
+                        <li><strong>Rule 1:</strong> Flood-resistant construction requirements</li>
+                        <li><strong>Rule 2:</strong> Fault line setback and seismic standards</li>
+                        <li><strong>Rule 3:</strong> Worker safety and workforce adequacy</li>
+                    </ul>
+                </div>
+        `;
+        
+        // Show critical first
+        [...critical, ...high, ...medium].forEach(item => {
+            const site = item.construction;
+            const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
+            const borderColor = hasCritical ? '#8B0000' : 
+                               item.warnings.some(w => w.severity === 'HIGH') ? '#dc3545' : '#ffc107';
+            const bgColor = hasCritical ? '#ffebee' : '#fffbeb';
+            
+            const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
+            
+            reportHTML += `
+                <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                            padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <strong style="font-size: 18px; color: #333;">
+                            ${owner}
+                        </strong>
+                        <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                     border-radius: 3px; font-size: 12px; font-weight: bold;">
+                            ${item.warnings.length} WARNING${item.warnings.length > 1 ? 'S' : ''}
+                        </span>
+                    </div>
+                    
+                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                        <div>📍 <strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
+                        <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
+                        <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
+                    </div>
+            `;
+            
+            item.warnings.forEach(warning => {
+                const severityColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
+                                     warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+                
+                reportHTML += `
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                        <div style="color: ${severityColor}; font-weight: bold; margin-bottom: 8px;">
+                            <span style="background: ${severityColor}; color: white; padding: 2px 8px; 
+                                       border-radius: 3px; font-size: 11px; margin-right: 8px;">
+                                ${warning.severity}
+                            </span>
+                            ${warning.type}: ${warning.description}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                                ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                            </div>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                `;
+                
+                warning.actions.forEach(action => {
+                    reportHTML += `<li>${action}</li>`;
+                });
+                
+                reportHTML += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            reportHTML += `</div>`;
+        });
+        
+        reportHTML += `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                        For construction permits and safety compliance:
+                    </p>
+                    <div style="font-weight: bold; color: #333; font-size: 16px;">
+                        Barangay Blue Ridge B Engineering Office
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 950,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in construction SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate construction safety report: ' + error.message
+        });
+    }
+}
+
+/**
+ * Helper function to get flood risk color
+ */
+function getFloodRiskColor(riskLevel) {
+    const colors = {
+        'high': '#ff0000',
+        'medium': '#ff9900',
+        'low': '#ffff00',
+        'very-low': '#0066cc'
+    };
+    return colors[riskLevel] || '#666666';
+}
+
+/**
+ * Test fixed flood detection
+ */
+async function testFixedFloodDetectionButton() {
+    console.log('Testing fixed flood detection...');
+    
+    if (!floodLayer) {
+        Swal.fire({
+            title: 'Flood Layer Not Loaded',
+            text: 'Please enable the flood layer first',
+            icon: 'warning'
+        });
+        return;
+    }
+    
+    let floodCount = 0;
+    floodLayer.eachLayer(() => floodCount++);
+    
+    Swal.fire({
+        title: 'Flood Detection Test',
+        html: `
+            <div style="text-align: left;">
+                <h4>✅ Flood Detection Status</h4>
+                <p><strong>Flood Layer Active:</strong> ${floodLayerActive ? 'Yes' : 'No'}</p>
+                <p><strong>Flood Areas Found:</strong> ${floodCount}</p>
+                <p><strong>House Polygons Loaded:</strong> ${housePolygonsData.length}</p>
+                <p><strong>Status:</strong> ${floodCount > 0 ? '✅ Working correctly' : '⚠️ No flood areas detected'}</p>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Close'
     });
 }
+
+// Make new functions available globallyx   
+window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
+window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport;
+window.showAllConstructionSDSSReport = showAllConstructionSDSSReport;

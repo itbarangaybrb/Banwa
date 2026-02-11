@@ -1,4 +1,3 @@
-/* Map CSS with Integrated Navigation Design */
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
 *,
@@ -16,7 +15,6 @@ body {
   margin: 0;
 }
 
-/* Side Navigation */
 .side_nav {
   position: fixed;
   left: 0;
@@ -187,7 +185,6 @@ body {
   opacity: 1;
 }
 
-/* Navigation Separator */
 .nav-separator {
   padding: 15px 16px 5px 16px;
   color: rgba(255, 255, 255, 0.5);
@@ -203,7 +200,6 @@ body {
   opacity: 1 !important;
 }
 
-/* Navigation Badges */
 .nav_badge {
   font-size: 10px;
   padding: 2px 6px;
@@ -217,7 +213,6 @@ body {
   opacity: 1;
 }
 
-/* Header */
 header {
   position: fixed;
   top: 0;
@@ -293,7 +288,6 @@ header {
   cursor: pointer;
 }
 
-/* Main Content */
 .content {
   margin-left: 70px;
   padding: 32px;
@@ -307,7 +301,6 @@ header {
   margin-left: 325px;
 }
 
-/* Container */
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -318,7 +311,6 @@ header {
   min-height: calc(100vh - 140px);
 }
 
-/* Map Container */
 .map-container {
   padding: 25px;
   background: white;
@@ -341,7 +333,6 @@ header {
   font-size: 1em;
 }
 
-/* Search and Filter Controls */
 .map-controls {
   background: white;
   padding: 20px;
@@ -413,7 +404,6 @@ header {
   background: #e0e0e0;
 }
 
-/* Search highlight styles */
 .highlight {
   background-color: #ffff00;
   border-radius: 3px;
@@ -430,7 +420,6 @@ header {
   text-align: center;
 }
 
-/* =================== FILTER DROPDOWN STYLES =================== */
 .filter-controls {
   margin-top: 15px;
   display: flex;
@@ -559,7 +548,6 @@ header {
   flex-shrink: 0;
 }
 
-/* Sub-filters */
 .sub-filters {
   margin-top: 0;
   padding: 15px;
@@ -625,7 +613,6 @@ header {
   font-size: 0.8em;
 }
 
-/* =================== HAZARD TOGGLE STYLES =================== */
 .hazard-toggles {
   margin-top: 15px;
   padding: 15px;
@@ -696,12 +683,10 @@ header {
   transition: all 0.3s ease;
 }
 
-/* Filter info - Hidden as requested */
 .filter-info {
   display: none;
 }
 
-/* Map Styling */
 #map {
   height: 600px;
   width: 100%;
@@ -710,7 +695,6 @@ header {
   box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* Marker Styles */
 .household-marker {
   background: #28a745;
   border: 2px solid white;
@@ -756,7 +740,6 @@ header {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Leaflet Popup Customization */
 .leaflet-popup-content {
   font-family: "Inter", sans-serif;
   max-width: 400px !important;
@@ -776,7 +759,6 @@ header {
   border: 1px solid #e9ecef;
 }
 
-/* Popup Content */
 .popup-content {
   max-width: 380px;
 }
@@ -814,7 +796,6 @@ header {
   font-weight: 600;
 }
 
-/* Badge styles */
 .household-badge,
 .business-badge,
 .construction-badge,
@@ -860,7 +841,6 @@ header {
   letter-spacing: 0.5px;
 }
 
-/* Button Styles */
 .view-details-btn {
   display: inline-block;
   margin-top: 15px;
@@ -884,7 +864,6 @@ header {
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
-/* Geocoding Actions */
 .geocoding-actions {
   display: flex;
   gap: 10px;
@@ -925,7 +904,6 @@ header {
   transform: translateY(-2px);
 }
 
-/* Modal Styles */
 .modal {
   display: none;
   position: fixed;
@@ -991,7 +969,6 @@ header {
   padding: 5px;
 }
 
-/* Detail Table */
 .detail-table {
   width: 100%;
   border-collapse: collapse;
@@ -1024,7 +1001,6 @@ header {
   color: #555;
 }
 
-/* Legend */
 .legend {
   margin-top: 20px;
   padding: 15px;
@@ -1056,7 +1032,6 @@ header {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Map Info */
 .map-info {
   margin-top: 20px;
   padding: 15px;
@@ -1071,7 +1046,6 @@ header {
   color: #0c5460;
 }
 
-/* Status Badges */
 .status-badge {
   display: inline-block;
   padding: 6px 12px;
@@ -1096,7 +1070,6 @@ header {
   color: #856404;
 }
 
-/* Footer */
 .footer {
   background: #f8f9fa;
   transition: margin-left 0.3s ease;
@@ -1112,7 +1085,6 @@ header {
   margin-left: 325px;
 }
 
-/* Search Results */
 .search-results {
   max-height: 200px;
   overflow-y: auto;
@@ -1194,7 +1166,6 @@ header {
   background: linear-gradient(135deg, #ff0000, #8b0000);
 }
 
-/* Animation for highlighted markers */
 .highlighted-marker {
   animation: bounce 1s infinite alternate;
 }
@@ -1208,17 +1179,14 @@ header {
   }
 }
 
-/* Barangay center marker */
 .barangay-center-marker {
   z-index: 1000;
 }
 
-/* Test geocode marker */
 .test-geocode-marker {
   z-index: 1001;
 }
 
-/* Notification styles */
 .notification {
   padding: 12px 15px;
   margin: 10px 0;
@@ -1232,7 +1200,6 @@ header {
   color: #856404;
 }
 
-/* Success and warning text */
 .success-text {
   color: #28a745;
   font-weight: 500;
@@ -1243,7 +1210,6 @@ header {
   font-weight: 500;
 }
 
-/* Button colors for different actions */
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -1293,7 +1259,6 @@ header {
   transform: translateY(-2px);
 }
 
-/* Fault Line Animations */
 @keyframes faultPulse {
   0% {
     stroke-opacity: 0.7;
@@ -1313,7 +1278,6 @@ header {
   animation: faultPulse 2s infinite;
 }
 
-/* Flood Area Legend */
 .flood-legend {
   background: white;
   padding: 12px;
@@ -1355,7 +1319,6 @@ header {
   font-weight: 500;
 }
 
-/* Flood area result icon */
 .result-icon.flood-area {
   background: linear-gradient(135deg, #ff0000, #ff9900, #ffff00);
   border: 2px solid white;
@@ -1366,7 +1329,6 @@ header {
   flex-shrink: 0;
 }
 
-/* Flood popup specific styles */
 .flood-popup-section {
   background: #f0f8ff;
   padding: 10px;
@@ -1375,7 +1337,6 @@ header {
   border-left: 4px solid #0066cc;
 }
 
-/* Flood risk badges in popups */
 .flood-risk-high {
   color: #ff0000;
   font-weight: bold;
@@ -1397,7 +1358,6 @@ header {
   font-weight: bold;
 }
 
-/* Flood area animation */
 @keyframes floodPulse {
   0% {
     fill-opacity: 0.3;
@@ -1417,7 +1377,6 @@ header {
   animation: floodPulse 2s infinite;
 }
 
-/* Mobile menu button */
 .mobile-menu-btn {
   display: none;
   position: fixed;
@@ -1433,7 +1392,6 @@ header {
   font-size: 1.2em;
 }
 
-/* Flood warning markers */
 .flood-warning {
   animation: bounceWarning 1s infinite alternate;
 }
@@ -1447,7 +1405,6 @@ header {
   }
 }
 
-/* Flood warning in popups */
 .flood-warning-section {
   background: linear-gradient(
     135deg,
@@ -1485,7 +1442,6 @@ header {
   }
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .content {
     padding: 20px;
@@ -1661,7 +1617,6 @@ header {
   }
 }
 
-/* ==================== SDSS MODAL STYLES ==================== */
 .swal2-popup.sdss-modal {
   padding: 0;
   border-radius: 12px;
@@ -1686,7 +1641,6 @@ header {
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* SDSS status badges */
 .sdss-status {
   display: inline-block;
   padding: 4px 12px;
@@ -1720,7 +1674,6 @@ header {
   border: 1px solid #f5c6cb;
 }
 
-/* SDSS rule cards */
 .sdss-rule-card {
   padding: 15px;
   border-radius: 8px;
@@ -1743,7 +1696,6 @@ header {
   border-left-color: #17a2b8;
 }
 
-/* Animation for SDSS markers */
 @keyframes sdss-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
@@ -1759,5 +1711,3 @@ header {
 .sdss-marker {
   animation: sdss-pulse 2s infinite;
 }
-
-
