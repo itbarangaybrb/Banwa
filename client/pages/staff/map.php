@@ -195,36 +195,27 @@
                     </div>
                 </div>
 
-                <!-- Debug and Action Buttons -->
+                <!-- Assessment and Report Buttons -->
                 <div class="debug-actions" style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="hazard-toggle-btn" onclick="getFloodHousesSummary()">
                         <i class="fas fa-chart-bar"></i>
                         <span>Flood Risk Assessment</span>
                     </button>
-<button class="hazard-toggle-btn" onclick="showFaultLineRiskAssessment()">
-    <i class="fas fa-map-marker-alt"></i>
-    <span>Fault Line Risk Assessment</span>
-</button>
-
-<button class="hazard-toggle-btn" onclick="showAllBusinessesSDSSReport()">
-    <i class="fas fa-building"></i>
-    <span>Business SDSS Report</span>
-</button>
-
-<button class="hazard-toggle-btn" onclick="showAllConstructionSDSSReport()">
-    <i class="fas fa-hard-hat"></i>
-    <span>Construction SDSS Report</span>
-</button>
+                    <button class="hazard-toggle-btn" onclick="showFaultLineRiskAssessment()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Fault Line Risk Assessment</span>
+                    </button>
+                    <button class="hazard-toggle-btn" onclick="showAllBusinessesSDSSReport()">
+                        <i class="fas fa-building"></i>
+                        <span>Business SDSS Report</span>
+                    </button>
+                    <button class="hazard-toggle-btn" onclick="showAllConstructionSDSSReport()">
+                        <i class="fas fa-hard-hat"></i>
+                        <span>Construction SDSS Report</span>
+                    </button>
                 </div>
                 
                 <div id="map"></div>
-                
-
-<!-- Add this button to your debug buttons section -->
-<button onclick="testFixedFloodDetectionButton()" style="padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.85em;">
-    <i class="fas fa-check-circle"></i> Test Fixed Flood Detection
-</button>
-
             </div>
         </div>
     </main>
@@ -238,8 +229,8 @@
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../../scripts/staff/map.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../scripts/staff/map.js"></script>
     
     <!-- Detail Modal -->
     <div id="detail-modal" class="modal">

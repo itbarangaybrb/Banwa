@@ -1765,341 +1765,227 @@ function clearAllMarkers() {
 // ==================== FLOOD ASSESSMENT FUNCTION ====================
 
 /**
- * Get summary of flood-affected houses
- * @returns {Promise} Promise with summary data
+ * FIXED: Flood Risk Assessment
+ * Now properly fetches data from PHP backend with percentages from low to high
  */
 async function getFloodHousesSummary() {
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_flood_houses_summary');
+        console.log('Fetching flood risk assessment from server...');
         
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_flood_summary'
         });
         
-        const data = await response.json();
-        
-        if (data.success && data.summary) {
-            return data.summary;
-        } else {
-            console.error('Error getting flood summary:', data.message);
-            return { 
-                total: 0,
-                affected_houses: [],
-                by_risk: {}
-            };
-        }
-    } catch (error) {
-        console.error('Error fetching flood summary:', error);
-        return { 
-            total: 0,
-            affected_houses: [],
-            by_risk: {}
-        };
-    }
-}
-
-// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
-
-// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
-
-async function showFaultLineRiskAssessment() {
-    Swal.fire({
-        title: 'Analyzing Fault Line Risk...',
-        html: 'Checking houses near fault line...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    try {
-        // Check if fault line is loaded
-        if (!faultLine) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Fault Line Not Found',
-                text: 'Please enable the fault line layer first.',
-                confirmButtonText: 'OK'
-            });
-            return;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Get all houses
-        if (housePolygonsData.length === 0) {
-            Swal.fire({
-                icon: 'info',
-                title: 'No Houses Found',
-                text: 'No house data available for analysis.',
-                confirmButtonText: 'OK'
-            });
-            return;
+        const result = await response.json();
+        console.log('Server response:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch flood assessment');
         }
         
-        // Calculate distance from fault line for each house
-        const housesNearFaultLine = [];
-        const criticalDistance = 50; // meters
-        const highRiskDistance = 100; // meters
-        const mediumRiskDistance = 200; // meters
+        const data = result.data;
         
-        housePolygonsData.forEach(house => {
-            if (house.coordinates) {
-                try {
-                    let coords;
-                    if (typeof house.coordinates === 'string') {
-                        coords = JSON.parse(house.coordinates);
-                    } else {
-                        coords = house.coordinates;
-                    }
-                    
-                    // Get center point of house polygon
-                    const polygon = L.polygon(coords);
-                    const center = polygon.getBounds().getCenter();
-                    
-                    // Calculate minimum distance to fault line
-                    let minDistance = Infinity;
-                    const faultCoords = faultLine.getLatLngs();
-                    
-                    faultCoords.forEach(faultPoint => {
-                        const distance = map.distance(center, faultPoint);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                        }
-                    });
-                    
-                    // Determine risk level
-                    let riskLevel = 'safe';
-                    let riskLabel = 'Safe';
-                    let riskColor = '#28a745';
-                    
-                    if (minDistance < criticalDistance) {
-                        riskLevel = 'critical';
-                        riskLabel = 'CRITICAL';
-                        riskColor = '#8B0000';
-                    } else if (minDistance < highRiskDistance) {
-                        riskLevel = 'high';
-                        riskLabel = 'HIGH RISK';
-                        riskColor = '#dc3545';
-                    } else if (minDistance < mediumRiskDistance) {
-                        riskLevel = 'medium';
-                        riskLabel = 'MEDIUM RISK';
-                        riskColor = '#ffc107';
-                    }
-                    
-                    if (riskLevel !== 'safe') {
-                        housesNearFaultLine.push({
-                            ...house,
-                            distance: Math.round(minDistance),
-                            riskLevel: riskLevel,
-                            riskLabel: riskLabel,
-                            riskColor: riskColor
-                        });
-                    }
-                } catch (e) {
-                    console.error('Error calculating fault line distance for house:', house.house_id, e);
-                }
-            }
-        });
-        
-        // Sort by distance (closest first)
-        housesNearFaultLine.sort((a, b) => a.distance - b.distance);
-        
-        // Build report HTML
-        const critical = housesNearFaultLine.filter(h => h.riskLevel === 'critical');
-        const high = housesNearFaultLine.filter(h => h.riskLevel === 'high');
-        const medium = housesNearFaultLine.filter(h => h.riskLevel === 'medium');
-        
-        if (housesNearFaultLine.length === 0) {
-            Swal.fire({
-                icon: 'success',
-                title: 'All Houses Safe',
-                html: `
-                    <div style="text-align: left; padding: 20px;">
-                        <p style="color: #28a745; font-size: 16px; margin-bottom: 15px;">
-                            ✓ Great news! No houses are located near the fault line.
-                        </p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
-                            <strong>All houses are at safe distances from seismic hazard zones.</strong>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#28a745'
-            });
-            return;
-        }
-        
+        // Display comprehensive flood risk report
         let reportHTML = `
-            <div style="max-width: 800px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #dc3545 0%, #8B0000 100%); 
-                            color: white; padding: 25px; border-radius: 12px; 
-                            margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 24px;">
-                        🌍 Fault Line Risk Assessment
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                         ⚠️ Flood Risk Assessment Report
                     </h3>
-                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                        ${housesNearFaultLine.length}
+                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
+                        ${data.summary.total}
                     </div>
-                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">
-                        ${housesNearFaultLine.length === 1 ? 'House' : 'Houses'} Near Fault Line
-                    </div>
-                    
-                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Critical<br/>(<50m)</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">High Risk<br/>(50-100m)</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Medium Risk<br/>(100-200m)</div>
-                        </div>
+                    <div style="font-size: 16px; opacity: 0.95;">
+                        Households in Flood-Prone Areas
                     </div>
                 </div>
-                
-                <div style="margin-bottom: 20px;">
         `;
         
-        // Critical risk houses
-        if (critical.length > 0) {
+        if (data.summary.total === 0) {
             reportHTML += `
-                <div style="margin-bottom: 25px;">
-                    <h4 style="background: #8B0000; color: white; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
-                        🚨 CRITICAL - Within 50 meters (${critical.length} ${critical.length === 1 ? 'house' : 'houses'})
-                    </h4>
+                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
+                            padding: 30px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Flood Risk Detected</h3>
+                    <p style="color: #155724; margin: 0; font-size: 14px;">
+                        All households are currently outside flood hazard zones.
+                    </p>
+                </div>
+            `;
+        } else {
+            // Impact Level Summary - Sorted from lowest to highest impact
+            reportHTML += `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                            gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #fff9c4; border-left: 4px solid #f9a825; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #f9a825; margin-bottom: 5px;">
+                            ${data.summary.minimally_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Minimally Affected (1-24%)</div>
+                    </div>
+                    <div style="background: #fff3e0; border-left: 4px solid #ef6c00; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ef6c00; margin-bottom: 5px;">
+                            ${data.summary.partially_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Partially Affected (25-74%)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #c62828; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #c62828; margin-bottom: 5px;">
+                            ${data.summary.fully_affected}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Fully Affected (75-100%)</div>
+                    </div>
+                </div>
             `;
             
-            critical.forEach(house => {
+            // Risk Level Breakdown - Sorted from lowest to highest risk
+            if (data.summary.by_risk_level && data.summary.by_risk_level.length > 0) {
+                // Sort risk levels from lowest to highest
+                const riskOrder = {'very-low': 1, 'low': 2, 'medium': 3, 'high': 4};
+                const sortedRisks = [...data.summary.by_risk_level].sort((a, b) => {
+                    const orderA = riskOrder[a.risk_level?.toLowerCase()] || 999;
+                    const orderB = riskOrder[b.risk_level?.toLowerCase()] || 999;
+                    return orderA - orderB;
+                });
+                
                 reportHTML += `
-                    <div style="border-left: 4px solid #8B0000; background: #ffebee; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
-                            <span style="background: #8B0000; color: white; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
-                                ${house.distance}m away
-                            </span>
-                        </div>
-                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
-                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
-                        </div>
-                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
-                            <div style="color: #8B0000; font-weight: bold; margin-bottom: 8px;">⚠️ IMMEDIATE ACTIONS REQUIRED:</div>
-                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
-                                <li>Structural assessment by licensed engineer REQUIRED</li>
-                                <li>Seismic retrofitting may be necessary</li>
-                                <li>Prepare earthquake emergency plan</li>
-                                <li>Keep emergency supplies ready</li>
-                                <li>Know evacuation routes</li>
-                            </ul>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;">By Flood Risk Level:</h4>
+                        <div style="display: grid; gap: 10px;">
+                `;
+                
+                sortedRisks.forEach(item => {
+                    if (item.risk_level) {
+                        const colors = {
+                            'very-low': '#2196F3',
+                            'low': '#ffc107',
+                            'medium': '#ff9800',
+                            'high': '#dc3545'
+                        };
+                        const color = colors[item.risk_level.toLowerCase()] || '#666';
+                        
+                        reportHTML += `
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="background: ${color}; color: white; padding: 8px 15px; 
+                                           border-radius: 5px; font-weight: bold; min-width: 100px; text-align: center;">
+                                    ${item.risk_level.toUpperCase()}
+                                </div>
+                                <div style="font-size: 24px; font-weight: bold; color: ${color};">
+                                    ${item.count}
+                                </div>
+                                <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; background: ${color}; 
+                                               width: ${(item.count / data.summary.total * 100)}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                reportHTML += `
                         </div>
                     </div>
                 `;
-            });
+            }
             
-            reportHTML += `</div>`;
-        }
-        
-        // High risk houses
-        if (high.length > 0) {
-            reportHTML += `
-                <div style="margin-bottom: 25px;">
-                    <h4 style="background: #dc3545; color: white; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
-                        ⚠️ HIGH RISK - 50-100 meters (${high.length} ${high.length === 1 ? 'house' : 'houses'})
-                    </h4>
-            `;
-            
-            high.forEach(house => {
+            // Detailed List - Sorted by coverage percentage (lowest to highest)
+            if (data.houses && data.houses.length > 0) {
+                // Sort houses by flood coverage percentage (lowest to highest)
+                const sortedHouses = [...data.houses].sort((a, b) => {
+                    const percentA = parseFloat(a.flood_coverage_percent) || 0;
+                    const percentB = parseFloat(b.flood_coverage_percent) || 0;
+                    return percentA - percentB;
+                });
+                
                 reportHTML += `
-                    <div style="border-left: 4px solid #dc3545; background: #fff5f5; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
-                            <span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
-                                ${house.distance}m away
-                            </span>
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                                padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;"> Affected Households (Sorted by Coverage %):</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                sortedHouses.forEach(house => {
+                    const impactColors = {
+                        'Minimally Affected': '#f9a825',
+                        'Partially Affected': '#ef6c00',
+                        'Fully Affected': '#c62828',
+                        'Affected': '#ff9800'
+                    };
+                    const color = impactColors[house.impact_level] || '#666';
+                    const coveragePercent = parseFloat(house.flood_coverage_percent || 0).toFixed(1);
+                    
+                    reportHTML += `
+                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
+                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <strong style="font-size: 16px; color: #333;">
+                                        ${house.address || 'Address not specified'}
+                                    </strong>
+                                    ${house.street_name ? `<div style="font-size: 13px; color: #666; margin-top: 3px;">
+                                         ${house.street_name}
+                                    </div>` : ''}
+                                </div>
+                                <span style="background: ${color}; color: white; padding: 4px 12px; 
+                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
+                                    ${house.impact_level} (${coveragePercent}%)
+                                </span>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+                                        gap: 10px; font-size: 13px; color: #555;">
+                                <div>
+                                    <strong>Flood Risk:</strong> 
+                                    <span style="color: ${color}; font-weight: bold;">
+                                        ${(house.risk_level || 'Unknown').toUpperCase()}
+                                    </span>
+                                </div>
+                                <div>
+                                    <strong>Coverage:</strong> 
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span>${coveragePercent}%</span>
+                                        <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                            <div style="height: 100%; width: ${coveragePercent}%; background: ${color};"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${house.area_sqm ? `<div><strong>Area:</strong> ${house.area_sqm} sqm</div>` : ''}
+                            </div>
+                            
+                            ${house.hazard_description ? `
+                                <div style="margin-top: 12px; padding: 10px; background: white; 
+                                            border-radius: 4px; font-size: 13px; color: #555;">
+                                    <strong>ℹ️ Hazard Info:</strong> ${house.hazard_description}
+                                </div>
+                            ` : ''}
                         </div>
-                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
-                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
-                        </div>
-                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
-                            <div style="color: #dc3545; font-weight: bold; margin-bottom: 8px;">⚠️ RECOMMENDED ACTIONS:</div>
-                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
-                                <li>Consider seismic assessment for peace of mind</li>
-                                <li>Ensure foundation is earthquake-resistant</li>
-                                <li>Secure heavy furniture and appliances</li>
-                                <li>Develop family earthquake response plan</li>
-                                <li>Maintain emergency kit</li>
-                            </ul>
+                    `;
+                });
+                
+                reportHTML += `
                         </div>
                     </div>
                 `;
-            });
-            
-            reportHTML += `</div>`;
-        }
-        
-        // Medium risk houses
-        if (medium.length > 0) {
-            reportHTML += `
-                <div style="margin-bottom: 25px;">
-                    <h4 style="background: #ffc107; color: #333; padding: 12px; border-radius: 6px; margin: 0 0 15px 0;">
-                        ⚡ MEDIUM RISK - 100-200 meters (${medium.length} ${medium.length === 1 ? 'house' : 'houses'})
-                    </h4>
-            `;
-            
-            medium.forEach(house => {
-                reportHTML += `
-                    <div style="border-left: 4px solid #ffc107; background: #fffbeb; padding: 15px; margin-bottom: 12px; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <strong style="font-size: 16px;">${house.address || 'House #' + house.house_number}</strong>
-                            <span style="background: #ffc107; color: #333; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">
-                                ${house.distance}m away
-                            </span>
-                        </div>
-                        <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                            <div>📍 <strong>Street:</strong> ${house.street_name || 'Not specified'}</div>
-                            <div>📏 <strong>Area:</strong> ${house.area_sqm || 'N/A'} sqm</div>
-                        </div>
-                        <div style="background: white; padding: 12px; border-radius: 4px; margin-top: 10px;">
-                            <div style="color: #f57f17; font-weight: bold; margin-bottom: 8px;">💡 PRECAUTIONARY MEASURES:</div>
-                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #333;">
-                                <li>Stay informed about earthquake safety</li>
-                                <li>Practice earthquake drills with family</li>
-                                <li>Know where to take cover during shaking</li>
-                                <li>Keep basic emergency supplies</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            reportHTML += `</div>`;
+            }
         }
         
         reportHTML += `
-                </div>
-                
-                <div style="background: #f8f9fa; 
-                            padding: 20px; 
-                            border-radius: 10px; 
-                            text-align: center;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                        For structural assessment and emergency preparedness:
-                    </p>
-                    <div style="font-weight: bold; color: #333; font-size: 16px;">
-                        Barangay Blue Ridge B Engineering Office
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <button onclick="Swal.close();" 
-                                style="padding: 10px 30px; background: #667eea; color: white; 
-                                       border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                            Close
-                        </button>
-                    </div>
+                <div style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 20px; 
+                            border-radius: 8px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1565c0;"> Recommendations:</h4>
+                    <ul style="margin: 5px 0; padding-left: 20px; color: #555; font-size: 14px;">
+                        <li>Households in high-risk zones should prepare evacuation plans</li>
+                        <li>Install flood barriers and elevate important items</li>
+                        <li>Monitor weather alerts during rainy season</li>
+                        <li>Contact Barangay Office for flood mitigation assistance</li>
+                    </ul>
                 </div>
             </div>
         `;
@@ -2107,25 +1993,549 @@ async function showFaultLineRiskAssessment() {
         Swal.fire({
             title: '',
             html: reportHTML,
-            width: 900,
+            width: 950,
             showConfirmButton: false,
             showCloseButton: true
         });
         
     } catch (error) {
-        console.error('Error in showFaultLineRiskAssessment:', error);
+        console.error('Error in flood assessment:', error);
         Swal.fire({
             icon: 'error',
-            title: 'Error Loading Fault Line Assessment',
-            html: `
-                <p>Failed to load fault line risk data.</p>
-                <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                    ${error.message || 'Please try again later.'}
-                </p>
-            `,
-            confirmButtonText: 'OK'
+            title: 'Error',
+            text: 'Failed to generate flood risk assessment: ' + error.message
         });
     }
+}
+
+// ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
+
+/**
+ * FIXED: Fault Line Risk Assessment
+ * Now properly detects houses near fault line
+ */
+async function showFaultLineRiskAssessment() {
+    try {
+        console.log('Fetching fault line risk assessment...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_fault_line_assessment'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Fault line assessment result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch fault line assessment');
+        }
+        
+        const data = result.data;
+        
+        let reportHTML = `
+            <div style="max-width: 900px; text-align: left;">
+                <div style="background: linear-gradient(135deg, #8B0000 0%, #dc3545 100%); 
+                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                        ⚠️ Fault Line Proximity Assessment
+                    </h3>
+                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
+                        ${data.summary.total_at_risk}
+                    </div>
+                    <div style="font-size: 16px; opacity: 0.95;">
+                        Structures Near Fault Line
+                    </div>
+                </div>
+        `;
+        
+        if (data.summary.total_at_risk === 0) {
+            reportHTML += `
+                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
+                            padding: 30px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Critical Violations</h3>
+                    <p style="color: #155724; margin: 0; font-size: 14px;">
+                        All structures are at safe distances from the fault line.
+                    </p>
+                </div>
+            `;
+        } else {
+            // Risk Level Summary - Sorted from lowest to highest risk
+            reportHTML += `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+                            gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
+                            ${data.summary.medium_risk}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Medium Risk (100-200m)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
+                            ${data.summary.high_risk}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">High Risk (50-100m)</div>
+                    </div>
+                    <div style="background: #ffebee; border-left: 4px solid #8B0000; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #8B0000; margin-bottom: 5px;">
+                            ${data.summary.critical}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">Critical (&lt;50m)</div>
+                    </div>
+                </div>
+            `;
+            
+            // Detailed List - Sorted by distance (farthest to closest)
+            if (data.structures && data.structures.length > 0) {
+                // Sort structures by distance (farthest first, then closest)
+                const sortedStructures = [...data.structures].sort((a, b) => b.distance_meters - a.distance_meters);
+                
+                reportHTML += `
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                                padding: 20px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #333;"> Structures at Risk (Sorted by Distance):</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                sortedStructures.forEach(structure => {
+                    const riskColors = {
+                        'medium': '#ff9800',
+                        'high': '#dc3545',
+                        'critical': '#8B0000'
+                    };
+                    const color = riskColors[structure.risk_level] || '#666';
+                    
+                    reportHTML += `
+                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
+                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <strong style="font-size: 16px; color: #333;">
+                                        ${structure.address || structure.street_name || 'Address not specified'}
+                                    </strong>
+                                </div>
+                                <span style="background: ${color}; color: white; padding: 4px 12px; 
+                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
+                                    ${structure.risk_level.toUpperCase()} - ${structure.distance_meters}m
+                                </span>
+                            </div>
+                            
+                            <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                                <strong> Distance from Fault Line:</strong> 
+                                <span style="color: ${color}; font-weight: bold; font-size: 18px;">
+                                    ${structure.distance_meters}m
+                                </span>
+                                <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
+                                    <span>Distance:</span>
+                                    <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
+                                        <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
+                                                    background: ${color};"></div>
+                                    </div>
+                                    <span style="font-size: 12px;">/200m</span>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #fff3cd; border-left: 3px solid #856404; 
+                                        padding: 10px; border-radius: 4px; margin-top: 12px;">
+                                <strong style="color: #856404;">⚠️ Required Actions:</strong>
+                                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                    ${structure.requirements ? structure.requirements.map(req => 
+                                        `<li>${req}</li>`
+                                    ).join('') : '<li>Seismic assessment required</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                reportHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        reportHTML += `
+                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 20px; 
+                            border-radius: 8px; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;"> Legal Requirements:</h4>
+                    <p style="margin: 5px 0; font-size: 14px; color: #666;">
+                        Structures within 50m of fault lines require special permits and seismic retrofitting.
+                        Contact the Barangay Engineering Office for compliance assessment.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        Swal.fire({
+            title: '',
+            html: reportHTML,
+            width: 950,
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+        
+    } catch (error) {
+        console.error('Error in fault line assessment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate fault line assessment: ' + error.message
+        });
+    }
+}
+
+// ==================== BUSINESS SDSS REPORT (PHP-based) ====================
+
+/**
+ * NEW: Business SDSS Report (PHP-based)
+ */
+async function showAllBusinessesSDSSReport() {
+    try {
+        console.log('Fetching business SDSS report...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_business_sdss_report'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Business SDSS result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch business SDSS report');
+        }
+        
+        const data = result.data;
+        
+        // Show report using SweetAlert2
+        displayBusinessSDSSReport(data);
+        
+    } catch (error) {
+        console.error('Error in business SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate business SDSS report: ' + error.message
+        });
+    }
+}
+
+/**
+ * NEW: Construction SDSS Report (PHP-based)
+ */
+async function showAllConstructionSDSSReport() {
+    try {
+        console.log('Fetching construction SDSS report...');
+        
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_construction_sdss_report'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Construction SDSS result:', result);
+        
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to fetch construction SDSS report');
+        }
+        
+        const data = result.data;
+        
+        // Show report using SweetAlert2
+        displayConstructionSDSSReport(data);
+        
+    } catch (error) {
+        console.error('Error in construction SDSS:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to generate construction SDSS report: ' + error.message
+        });
+    }
+}
+
+/**
+ * Display Business SDSS Report
+ */
+function displayBusinessSDSSReport(data) {
+    const { summary, warnings } = data;
+    
+    if (warnings.length === 0) {
+        Swal.fire({
+            title: 'Business Safety Compliance',
+            html: `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
+                        <strong style="font-size: 20px; color: #155724;">All businesses compliant</strong>
+                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                            Out of ${summary.total} total businesses analyzed, no safety violations detected.
+                        </p>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745'
+        });
+        return;
+    }
+    
+    const critical = warnings.filter(w => w.severity === 'CRITICAL');
+    const high = warnings.filter(w => w.severity === 'HIGH');
+    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    
+    let reportHTML = `
+        <div style="max-width: 900px; text-align: left;">
+            <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
+                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                     Business Safety Compliance Report
+                </h3>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                    ${warnings.length}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings
+                </div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                    Out of ${summary.total} total businesses analyzed
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Show all warnings - sort by severity (medium, high, critical)
+    const sortedWarnings = [...medium, ...high, ...critical];
+    
+    sortedWarnings.forEach(item => {
+        const business = item.business;
+        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
+                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        
+        reportHTML += `
+            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 18px; color: #333;">
+                        ${business.business_name || 'Unnamed Business'}
+                    </strong>
+                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
+                        ${item.severity}
+                    </span>
+                </div>
+                
+                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                    <div> <strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
+                    <div> <strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
+                    <div> <strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${item.type}
+                    </div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                        ${item.description}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                        </div>
+                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    reportHTML += `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    For business permits and safety compliance:
+                </p>
+                <div style="font-weight: bold; color: #333; font-size: 16px;">
+                    Barangay Blue Ridge B Business Permits Office
+                </div>
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: '',
+        html: reportHTML,
+        width: 950,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+/**
+ * Display Construction SDSS Report
+ */
+function displayConstructionSDSSReport(data) {
+    const { summary, warnings } = data;
+    
+    if (warnings.length === 0) {
+        Swal.fire({
+            title: 'Construction Safety Compliance',
+            html: `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
+                        <strong style="font-size: 20px; color: #155724;">All construction sites compliant</strong>
+                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                            Out of ${summary.total} total sites analyzed, no safety violations detected.
+                        </p>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745'
+        });
+        return;
+    }
+    
+    const critical = warnings.filter(w => w.severity === 'CRITICAL');
+    const high = warnings.filter(w => w.severity === 'HIGH');
+    const medium = warnings.filter(w => w.severity === 'MEDIUM');
+    
+    let reportHTML = `
+        <div style="max-width: 900px; text-align: left;">
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); 
+                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
+                    🏗️ Construction Safety Compliance Report
+                </h3>
+                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
+                    ${warnings.length}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings
+                </div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                    Out of ${summary.total} total sites analyzed
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
+                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Show all warnings - sort by severity (medium, high, critical)
+    const sortedWarnings = [...medium, ...high, ...critical];
+    
+    sortedWarnings.forEach(item => {
+        const site = item.construction;
+        const borderColor = item.severity === 'CRITICAL' ? '#8B0000' : 
+                           item.severity === 'HIGH' ? '#dc3545' : '#ffc107';
+        const bgColor = item.severity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        
+        const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
+        
+        reportHTML += `
+            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
+                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <strong style="font-size: 18px; color: #333;">
+                        ${owner}
+                    </strong>
+                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
+                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
+                        ${item.severity}
+                    </span>
+                </div>
+                
+                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                    <div>📍 <strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
+                    <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
+                    <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
+                    <div style="color: ${borderColor}; font-weight: bold; margin-bottom: 8px;">
+                        ⚠️ ${item.type}
+                    </div>
+                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                        ${item.description}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
+                            ${item.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                        </div>
+                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
+                            ${item.actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    reportHTML += `
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                    For construction permits and safety compliance:
+                </p>
+                <div style="font-weight: bold; color: #333; font-size: 16px;">
+                    Barangay Blue Ridge B Engineering Office
+                </div>
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: '',
+        html: reportHTML,
+        width: 950,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
 }
 
 // ==================== EVENT LISTENERS ====================
@@ -2543,713 +2953,8 @@ function debugFloodState() {
     console.log('Flood Legend in DOM:', !!legendElement);
 }
 
-// ==================== SDSS (Spatial Decision Support System) FUNCTIONS ====================
-
-/**
- * Test SDSS functionality
- */
-async function testSDSS() {
-    console.log('Testing SDSS...');
-    
-    const businessCount = allMarkersData.filter(m => m.type === 'business').length;
-    const constructionCount = allMarkersData.filter(m => m.type === 'construction').length;
-    const utilityCount = allMarkersData.filter(m => m.type === 'utility').length;
-    const houseCount = housePolygonsData.length;
-    
-    Swal.fire({
-        title: 'SDSS System Test',
-        html: `
-            <div style="text-align: left;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0;">Spatial Decision Support System</h4>
-                    <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">Rule-Based Compliance Monitoring</p>
-                </div>
-                
-                <h4 style="color: #333; margin-top: 20px;">📊 System Status</h4>
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 5px; margin-bottom: 15px;">
-                    <p style="margin: 5px 0;">✅ Map initialized successfully</p>
-                    <p style="margin: 5px 0;">✅ Spatial layers loaded: ${floodLayer ? 'Flood zones' : 'No flood data'}, ${faultLine ? 'Fault line' : 'No fault line'}</p>
-                    <p style="margin: 5px 0;">✅ Data loaded: ${businessCount} businesses, ${constructionCount} construction sites, ${utilityCount} utilities, ${houseCount} houses</p>
-                </div>
-                
-                <h4 style="color: #333; margin-top: 20px;">⚖️ Active SDSS Rules</h4>
-                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #856404;">
-                    <div style="margin-bottom: 15px;">
-                        <strong style="color: #856404;">Flood Risk Rules (1.x)</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
-                            <li><strong>Rule 1.2:</strong> Businesses in flood zones require mitigation</li>
-                            <li><strong>Rule 1.3:</strong> High flood zone construction requires special design</li>
-                            <li><strong>Rule 1.4:</strong> Flood mitigation recommended for medium/low zones</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <strong style="color: #856404;">Fault Line Rules (2.x)</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
-                            <li><strong>Rule 2.1:</strong> Seismic certification required within 100m</li>
-                            <li><strong>Rule 2.2:</strong> Construction prohibited within 50m (Critical)</li>
-                            <li><strong>Rule 2.3:</strong> Seismic design mandatory within 100m</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="margin-bottom: 15px;">
-                        <strong style="color: #856404;">Occupancy Rules (3.x)</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
-                            <li><strong>Rule 3.1:</strong> High-density establishments need enhanced safety</li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <strong style="color: #856404;">Construction Safety Rules (4.x)</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9em;">
-                            <li><strong>Rule 4.1:</strong> Minimum worker requirements by project type</li>
-                            <li><strong>Rule 4.2:</strong> Construction timeline reasonableness standards</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <h4 style="color: #333; margin-top: 20px;">🔍 How to Use SDSS</h4>
-                <div style="background: #e3f2fd; padding: 12px; border-radius: 5px; border-left: 4px solid #1976d2;">
-                    <ol style="margin: 5px 0; padding-left: 20px; font-size: 0.9em;">
-                        <li>Click <strong>"Business SDSS Report"</strong> to check all businesses for violations</li>
-                        <li>Click <strong>"Construction SDSS Report"</strong> to check construction compliance</li>
-                        <li>Reports show: Critical violations, Violations, Warnings, and Compliant items</li>
-                        <li>Each violation shows the specific rule broken and required action</li>
-                    </ol>
-                </div>
-                
-                <div style="background: #e8f5e9; padding: 12px; border-radius: 5px; margin-top: 15px; border-left: 4px solid #2e7d32;">
-                    <p style="margin: 0; font-size: 0.9em;"><strong>✅ SDSS Ready</strong> - All rules loaded and operational</p>
-                </div>
-            </div>
-        `,
-        width: '800px',
-        icon: 'success',
-        confirmButtonText: 'Close',
-        confirmButtonColor: '#667eea'
-    });
-}
-
-/**
- * Show comprehensive SDSS report for all businesses with spatial analysis
- */
-async function showAllBusinessesSDSSReport() {
-    if (!allMarkersData || allMarkersData.length === 0) {
-        Swal.fire({
-            title: 'No Data',
-            text: 'No businesses found on the map',
-            icon: 'info'
-        });
-        return;
-    }
-    
-    const businessData = allMarkersData.filter(m => m.type === 'business');
-    
-    if (businessData.length === 0) {
-        Swal.fire({
-            title: 'No Businesses',
-            text: 'No business data available for analysis',
-            icon: 'info'
-        });
-        return;
-    }
-    
-    Swal.fire({
-        title: 'Analyzing Businesses...',
-        html: 'Checking business compliance with safety rules...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    try {
-        const warnings = [];
-        
-        for (const business of businessData) {
-            const lat = parseFloat(business.latitude);
-            const lng = parseFloat(business.longitude);
-            
-            if (isNaN(lat) || isNaN(lng)) continue;
-            
-            const point = L.latLng(lat, lng);
-            const businessWarnings = [];
-            
-            // SDSS RULE 1: Check if in flood zone
-            let inFloodZone = false;
-            let floodRiskLevel = 'none';
-            
-            if (floodLayer) {
-                floodLayer.eachLayer(layer => {
-                    if (layer.getBounds && layer.getBounds().contains(point)) {
-                        inFloodZone = true;
-                        if (layer.hazardData) {
-                            floodRiskLevel = layer.hazardData.risk_level || 'unknown';
-                        }
-                    }
-                });
-            }
-            
-            if (inFloodZone) {
-                businessWarnings.push({
-                    type: 'Flood Risk',
-                    severity: floodRiskLevel === 'low' ? 'MEDIUM' : 'HIGH',
-                    description: `Business is located in a ${floodRiskLevel.toUpperCase()} flood risk zone`,
-                    actions: [
-                        'Elevate valuable equipment and inventory',
-                        'Install flood barriers at entrances',
-                        'Keep sandbags ready during rainy season',
-                        'Develop flood emergency evacuation plan',
-                        'Consider flood insurance'
-                    ]
-                });
-            }
-            
-            // SDSS RULE 2: Check proximity to fault line
-            if (faultLine) {
-                let minDistance = Infinity;
-                const faultCoords = faultLine.getLatLngs();
-                
-                faultCoords.forEach(faultPoint => {
-                    const distance = map.distance(point, faultPoint);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                    }
-                });
-                
-                if (minDistance < 100) {
-                    businessWarnings.push({
-                        type: 'Seismic Risk',
-                        severity: minDistance < 50 ? 'CRITICAL' : 'HIGH',
-                        description: `Business is ${Math.round(minDistance)}m from fault line`,
-                        actions: [
-                            'Obtain seismic safety assessment',
-                            'Ensure building meets earthquake-resistant standards',
-                            'Secure shelving and heavy equipment',
-                            'Train staff on earthquake safety procedures',
-                            'Post emergency evacuation routes'
-                        ]
-                    });
-                }
-            }
-            
-            // SDSS RULE 3: High occupancy check
-            if (business.no_of_employees && business.no_of_employees > 50) {
-                businessWarnings.push({
-                    type: 'High Occupancy',
-                    severity: 'MEDIUM',
-                    description: `High employee count (${business.no_of_employees} employees)`,
-                    actions: [
-                        'Ensure adequate emergency exits',
-                        'Conduct regular fire drills',
-                        'Maintain fire extinguishers',
-                        'Post evacuation maps',
-                        'Train emergency response team'
-                    ]
-                });
-            }
-            
-            if (businessWarnings.length > 0) {
-                warnings.push({
-                    business: business,
-                    warnings: businessWarnings
-                });
-            }
-        }
-        
-        // Build report
-        if (warnings.length === 0) {
-            Swal.fire({
-                icon: 'success',
-                title: 'All Businesses Compliant',
-                html: `
-                    <div style="padding: 20px; text-align: left;">
-                        <p style="color: #28a745; font-size: 16px;">
-                            ✓ All ${businessData.length} businesses meet basic safety requirements!
-                        </p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                            <strong>No critical warnings detected</strong>
-                            <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                                Continue regular safety inspections and emergency preparedness.
-                            </p>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#28a745'
-            });
-            return;
-        }
-        
-        let reportHTML = `
-            <div style="max-width: 900px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        🏢 Business Safety Compliance Report
-                    </h3>
-                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                        ${warnings.length}
-                    </div>
-                    <div style="font-size: 14px; opacity: 0.9;">
-                        ${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings
-                    </div>
-                    <div style="margin-top: 15px; font-size: 13px; opacity: 0.8;">
-                        Out of ${businessData.length} total businesses analyzed
-                    </div>
-                </div>
-                
-                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 SDSS Rules Applied:</h4>
-                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
-                        <li><strong>Rule 1:</strong> Flood zone safety requirements</li>
-                        <li><strong>Rule 2:</strong> Seismic hazard proximity standards</li>
-                        <li><strong>Rule 3:</strong> High-occupancy safety measures</li>
-                    </ul>
-                </div>
-        `;
-        
-        warnings.forEach(item => {
-            const biz = item.business;
-            const critical = item.warnings.some(w => w.severity === 'CRITICAL');
-            const borderColor = critical ? '#8B0000' : '#ffc107';
-            const bgColor = critical ? '#ffebee' : '#fffbeb';
-            
-            reportHTML += `
-                <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
-                            padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <strong style="font-size: 18px; color: #333;">
-                            ${biz.business_name || 'Unnamed Business'}
-                        </strong>
-                        <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
-                                     border-radius: 3px; font-size: 12px; font-weight: bold;">
-                            ${item.warnings.length} WARNING${item.warnings.length > 1 ? 'S' : ''}
-                        </span>
-                    </div>
-                    
-                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                        <div>📍 <strong>Address:</strong> ${biz.address_of_business || 'Not specified'}</div>
-                        <div>🏢 <strong>Type:</strong> ${biz.type_of_business || 'N/A'}</div>
-                        <div>👥 <strong>Employees:</strong> ${biz.no_of_employees || 'N/A'}</div>
-                    </div>
-            `;
-            
-            item.warnings.forEach(warning => {
-                const severityColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
-                                     warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-                
-                reportHTML += `
-                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                        <div style="color: ${severityColor}; font-weight: bold; margin-bottom: 8px;">
-                            <span style="background: ${severityColor}; color: white; padding: 2px 8px; 
-                                       border-radius: 3px; font-size: 11px; margin-right: 8px;">
-                                ${warning.severity}
-                            </span>
-                            ${warning.type}: ${warning.description}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                                ✅ Required Actions:
-                            </div>
-                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                `;
-                
-                warning.actions.forEach(action => {
-                    reportHTML += `<li>${action}</li>`;
-                });
-                
-                reportHTML += `
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            reportHTML += `</div>`;
-        });
-        
-        reportHTML += `
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                        For safety compliance assistance:
-                    </p>
-                    <div style="font-weight: bold; color: #333; font-size: 16px;">
-                        Barangay Blue Ridge B Business Permit Office
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        Swal.fire({
-            title: '',
-            html: reportHTML,
-            width: 950,
-            showConfirmButton: false,
-            showCloseButton: true
-        });
-        
-    } catch (error) {
-        console.error('Error in business SDSS:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to generate business safety report: ' + error.message
-        });
-    }
-}
-
-/**
- * Show comprehensive SDSS report for all construction sites with spatial analysis
- */
-async function showAllConstructionSDSSReport() {
-    if (!allMarkersData || allMarkersData.length === 0) {
-        Swal.fire({
-            title: 'No Data',
-            text: 'No construction sites found',
-            icon: 'info'
-        });
-        return;
-    }
-    
-    const constructionData = allMarkersData.filter(m => m.type === 'construction');
-    
-    if (constructionData.length === 0) {
-        Swal.fire({
-            title: 'No Construction Sites',
-            text: 'No construction data available for analysis',
-            icon: 'info'
-        });
-        return;
-    }
-    
-    Swal.fire({
-        title: 'Analyzing Construction Sites...',
-        html: 'Checking construction safety compliance...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-    
-    try {
-        const warnings = [];
-        
-        for (const construction of constructionData) {
-            const lat = parseFloat(construction.latitude);
-            const lng = parseFloat(construction.longitude);
-            
-            if (isNaN(lat) || isNaN(lng)) continue;
-            
-            const point = L.latLng(lat, lng);
-            const siteWarnings = [];
-            
-            // SDSS RULE 1: Check if in flood zone
-            let inFloodZone = false;
-            let floodRiskLevel = 'none';
-            
-            if (floodLayer) {
-                floodLayer.eachLayer(layer => {
-                    if (layer.getBounds && layer.getBounds().contains(point)) {
-                        inFloodZone = true;
-                        if (layer.hazardData) {
-                            floodRiskLevel = layer.hazardData.risk_level || 'unknown';
-                        }
-                    }
-                });
-            }
-            
-            if (inFloodZone) {
-                siteWarnings.push({
-                    type: 'Flood Risk Construction',
-                    severity: 'HIGH',
-                    description: `Construction site in ${floodRiskLevel.toUpperCase()} flood risk zone`,
-                    actions: [
-                        'Elevate foundation minimum 1.5 meters above flood level',
-                        'Use flood-resistant building materials',
-                        'Install proper drainage systems',
-                        'Raise electrical outlets above potential flood level',
-                        'Consider waterproofing basement/ground floor'
-                    ]
-                });
-            }
-            
-            // SDSS RULE 2: Check proximity to fault line
-            if (faultLine) {
-                let minDistance = Infinity;
-                const faultCoords = faultLine.getLatLngs();
-                
-                faultCoords.forEach(faultPoint => {
-                    const distance = map.distance(point, faultPoint);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                    }
-                });
-                
-                if (minDistance < 50) {
-                    siteWarnings.push({
-                        type: 'CRITICAL - Fault Line Violation',
-                        severity: 'CRITICAL',
-                        description: `Construction within ${Math.round(minDistance)}m of fault line - PROHIBITED`,
-                        actions: [
-                            '🚨 STOP WORK ORDER - Construction must be relocated',
-                            'This violates National Building Code Section 305',
-                            'Contact Barangay Engineering Office immediately',
-                            'Site must be at least 50 meters from fault line'
-                        ]
-                    });
-                } else if (minDistance < 100) {
-                    siteWarnings.push({
-                        type: 'Seismic Requirements',
-                        severity: 'HIGH',
-                        description: `Construction ${Math.round(minDistance)}m from fault line`,
-                        actions: [
-                            'Seismic-resistant design MANDATORY',
-                            'Structural engineer certification required',
-                            'Use reinforced concrete and steel framework',
-                            'Follow earthquake-resistant building codes',
-                            'Regular seismic safety inspections needed'
-                        ]
-                    });
-                }
-            }
-            
-            // SDSS RULE 3: Worker safety
-            const workers = parseInt(construction.number_of_workers) || 0;
-            if (workers < 2 && construction.type_of_work && 
-                (construction.type_of_work.toLowerCase().includes('major') || 
-                 construction.type_of_work.toLowerCase().includes('construction'))) {
-                siteWarnings.push({
-                    type: 'Inadequate Workforce',
-                    severity: 'MEDIUM',
-                    description: `Only ${workers} worker(s) for construction project`,
-                    actions: [
-                        'Increase workforce for safety and efficiency',
-                        'Minimum 2 workers required for major construction',
-                        'Ensure adequate supervision on site',
-                        'Update work schedule if needed'
-                    ]
-                });
-            }
-            
-            if (siteWarnings.length > 0) {
-                warnings.push({
-                    construction: construction,
-                    warnings: siteWarnings
-                });
-            }
-        }
-        
-        // Build report
-        if (warnings.length === 0) {
-            Swal.fire({
-                icon: 'success',
-                title: 'All Construction Sites Compliant',
-                html: `
-                    <div style="padding: 20px; text-align: left;">
-                        <p style="color: #28a745; font-size: 16px;">
-                            ✓ All ${constructionData.length} construction sites meet safety requirements!
-                        </p>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                            <strong>No safety violations detected</strong>
-                            <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                                Continue monitoring and regular safety inspections.
-                            </p>
-                        </div>
-                    </div>
-                `,
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#28a745'
-            });
-            return;
-        }
-        
-        const critical = warnings.filter(w => w.warnings.some(x => x.severity === 'CRITICAL'));
-        const high = warnings.filter(w => !critical.includes(w) && w.warnings.some(x => x.severity === 'HIGH'));
-        const medium = warnings.filter(w => !critical.includes(w) && !high.includes(w));
-        
-        let reportHTML = `
-            <div style="max-width: 900px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        🏗️ Construction Safety Compliance Report
-                    </h3>
-                    <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                        ${warnings.length}
-                    </div>
-                    <div style="font-size: 14px; opacity: 0.9;">
-                        ${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings
-                    </div>
-                    
-                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Critical</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                            <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
-                            <div style="font-size: 12px; opacity: 0.9;">Medium</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 SDSS Rules Applied:</h4>
-                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
-                        <li><strong>Rule 1:</strong> Flood-resistant construction requirements</li>
-                        <li><strong>Rule 2:</strong> Fault line setback and seismic standards</li>
-                        <li><strong>Rule 3:</strong> Worker safety and workforce adequacy</li>
-                    </ul>
-                </div>
-        `;
-        
-        // Show critical first
-        [...critical, ...high, ...medium].forEach(item => {
-            const site = item.construction;
-            const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
-            const borderColor = hasCritical ? '#8B0000' : 
-                               item.warnings.some(w => w.severity === 'HIGH') ? '#dc3545' : '#ffc107';
-            const bgColor = hasCritical ? '#ffebee' : '#fffbeb';
-            
-            const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
-            
-            reportHTML += `
-                <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
-                            padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <strong style="font-size: 18px; color: #333;">
-                            ${owner}
-                        </strong>
-                        <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
-                                     border-radius: 3px; font-size: 12px; font-weight: bold;">
-                            ${item.warnings.length} WARNING${item.warnings.length > 1 ? 'S' : ''}
-                        </span>
-                    </div>
-                    
-                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                        <div>📍 <strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
-                        <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
-                        <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
-                    </div>
-            `;
-            
-            item.warnings.forEach(warning => {
-                const severityColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
-                                     warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-                
-                reportHTML += `
-                    <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                        <div style="color: ${severityColor}; font-weight: bold; margin-bottom: 8px;">
-                            <span style="background: ${severityColor}; color: white; padding: 2px 8px; 
-                                       border-radius: 3px; font-size: 11px; margin-right: 8px;">
-                                ${warning.severity}
-                            </span>
-                            ${warning.type}: ${warning.description}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                                ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
-                            </div>
-                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                `;
-                
-                warning.actions.forEach(action => {
-                    reportHTML += `<li>${action}</li>`;
-                });
-                
-                reportHTML += `
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            reportHTML += `</div>`;
-        });
-        
-        reportHTML += `
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
-                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                        For construction permits and safety compliance:
-                    </p>
-                    <div style="font-weight: bold; color: #333; font-size: 16px;">
-                        Barangay Blue Ridge B Engineering Office
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        Swal.fire({
-            title: '',
-            html: reportHTML,
-            width: 950,
-            showConfirmButton: false,
-            showCloseButton: true
-        });
-        
-    } catch (error) {
-        console.error('Error in construction SDSS:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to generate construction safety report: ' + error.message
-        });
-    }
-}
-
-/**
- * Helper function to get flood risk color
- */
-function getFloodRiskColor(riskLevel) {
-    const colors = {
-        'high': '#ff0000',
-        'medium': '#ff9900',
-        'low': '#ffff00',
-        'very-low': '#0066cc'
-    };
-    return colors[riskLevel] || '#666666';
-}
-
-/**
- * Test fixed flood detection
- */
-async function testFixedFloodDetectionButton() {
-    console.log('Testing fixed flood detection...');
-    
-    if (!floodLayer) {
-        Swal.fire({
-            title: 'Flood Layer Not Loaded',
-            text: 'Please enable the flood layer first',
-            icon: 'warning'
-        });
-        return;
-    }
-    
-    let floodCount = 0;
-    floodLayer.eachLayer(() => floodCount++);
-    
-    Swal.fire({
-        title: 'Flood Detection Test',
-        html: `
-            <div style="text-align: left;">
-                <h4>✅ Flood Detection Status</h4>
-                <p><strong>Flood Layer Active:</strong> ${floodLayerActive ? 'Yes' : 'No'}</p>
-                <p><strong>Flood Areas Found:</strong> ${floodCount}</p>
-                <p><strong>House Polygons Loaded:</strong> ${housePolygonsData.length}</p>
-                <p><strong>Status:</strong> ${floodCount > 0 ? '✅ Working correctly' : '⚠️ No flood areas detected'}</p>
-            </div>
-        `,
-        icon: 'info',
-        confirmButtonText: 'Close'
-    });
-}
-
-// Make new functions available globallyx   
+// Make functions globally available
+window.getFloodHousesSummary = getFloodHousesSummary;
 window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
 window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport;
 window.showAllConstructionSDSSReport = showAllConstructionSDSSReport;
