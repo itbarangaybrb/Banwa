@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
 
 if ($_SESSION['role_id'] != 2) {
-	header("Location: /Banwa/client/pages/auth/signin.php");
-	exit;
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
 }
 ?>
 
@@ -52,7 +52,7 @@ if ($_SESSION['role_id'] != 2) {
                     </a>
                 </li>
             </ul>
-            
+
             <ul class="list">
                 <li class="items">
                     <a class="links" id="signoutBtn" href="#">
@@ -71,7 +71,9 @@ if ($_SESSION['role_id'] != 2) {
     </aside>
 
     <main class="main">
-        <h1>Dashboard</h1>
+        <section class="sections">
+            <h1>COMING SOON ....</h1>
+        </section>
     </main>
 
     <script type="module" src="../../../scripts/auth/signout.js"></script>
