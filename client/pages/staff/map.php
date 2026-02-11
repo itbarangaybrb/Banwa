@@ -213,6 +213,10 @@
                         <i class="fas fa-hard-hat"></i>
                         <span>Construction SDSS Report</span>
                     </button>
+                    <button class="hazard-toggle-btn" onclick="showSDSSRulesReport()">
+                        <i class="fas fa-list-check"></i>
+                        <span>SDSS Rules Summary</span>
+                    </button>
                 </div>
                 
                 <div id="map"></div>

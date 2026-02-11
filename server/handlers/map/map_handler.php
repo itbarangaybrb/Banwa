@@ -766,10 +766,12 @@ function getFaultLineAssessment() {
                 $risk_level = 'critical';
                 $critical_count++;
                 $requirements = [
-                    'Construction prohibited within 50m of fault line',
-                    'Existing structures require immediate seismic assessment',
-                    'Special engineering evaluation mandatory',
-                    'Seismic retrofitting required'
+                    'CRITICAL ZONE: Construction allowed with enhanced seismic standards',
+                    'Mandatory structural engineer certification required',
+                    'Special seismic design and geological survey mandatory',
+                    'Reinforced foundation with deep pile requirements',
+                    'Use earthquake-resistant materials and construction methods',
+                    'Building insurance and regular structural inspections required'
                 ];
             } elseif ($minDistance < 100) {
                 $risk_level = 'high';
@@ -1031,15 +1033,17 @@ function evaluateBusinessSDSS($business, $pdo) {
     // Rule 2: Fault line proximity check
     if ($faultLineDistance < 50) {
         $businessData['warnings'][] = [
-            'type' => 'Fault Line Critical Violation',
-            'description' => "Business within {$faultLineDistance}m of fault line (prohibited zone)",
+            'type' => 'Fault Line Critical Zone Warning',
+            'description' => "Business within {$faultLineDistance}m of fault line (CRITICAL ZONE - Special Requirements)",
             'severity' => 'CRITICAL',
             'actions' => [
-                'Business operations within 50m of fault line are PROHIBITED',
-                'Immediate structural assessment required',
-                'Seismic retrofitting mandatory',
+                'CRITICAL ZONE: Business operations allowed ONLY with enhanced safety measures',
+                'Mandatory structural assessment and seismic compliance certification',
+                'Seismic retrofitting of building required',
+                'Emergency evacuation plan and earthquake drills mandatory',
                 'Special permits and engineering certification needed',
-                'Consider relocation'
+                'Building insurance covering earthquake damage required',
+                'Regular safety inspections and structural monitoring'
             ]
         ];
         $maxSeverity = 'CRITICAL';
@@ -1193,15 +1197,17 @@ function evaluateConstructionSDSS($construction, $pdo) {
     // Rule 2: Fault line setback
     if ($faultLineDistance < 50) {
         $constructionData['warnings'][] = [
-            'type' => 'Fault Line Setback Violation',
-            'description' => "Construction within {$faultLineDistance}m of fault line (PROHIBITED)",
+            'type' => 'Fault Line Critical Zone Warning',
+            'description' => "Construction within {$faultLineDistance}m of fault line (CRITICAL ZONE - Special Requirements)",
             'severity' => 'CRITICAL',
             'actions' => [
-                'CONSTRUCTION PROHIBITED within 50m of fault line',
-                'Stop all work immediately',
-                'Relocate construction site',
-                'Legal action may be taken for violations',
-                'Consult with city engineer'
+                'CRITICAL ZONE: Construction allowed ONLY with enhanced seismic standards',
+                'Mandatory structural engineer certification and seismic design approval',
+                'Reinforced foundation with deep pile requirements',
+                'Use of earthquake-resistant materials and construction methods',
+                'Building Insurance and geological survey required',
+                'Regular structural integrity inspections mandatory',
+                'Emergency preparedness and evacuation plan required'
             ]
         ];
         $maxSeverity = 'CRITICAL';
@@ -1278,6 +1284,126 @@ function getDistanceToFaultLine($lat, $lng) {
     }
     
     return round($minDistance);
+}
+
+// ==================== SDSS RULES SUMMARY FUNCTION ====================
+
+/**
+ * Get summary of all SDSS rules and count of houses affected by each rule
+ */
+function getSDSSRulesSummary() {
+    global $pdo;
+    
+    try {
+        // Get all houses
+        $sql = "SELECT house_id, address, street_name, house_number, 
+                       center_lat, center_lng
+                FROM house_polygons
+                WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
+        $stmt = $pdo->query($sql);
+        $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Initialize rule counters
+        $rules = [
+            'FLOOD_HIGH_RISK' => [
+                'name' => 'High Flood Risk Zone',
+                'description' => 'Houses located in high flood risk areas requiring immediate mitigation',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FLOOD_MEDIUM_RISK' => [
+                'name' => 'Medium Flood Risk Zone',
+                'description' => 'Houses in moderate flood zones requiring preparedness measures',
+                'severity' => 'HIGH',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FLOOD_LOW_RISK' => [
+                'name' => 'Low Flood Risk Zone',
+                'description' => 'Houses in low flood risk areas with standard precautions',
+                'severity' => 'MEDIUM',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FAULT_CRITICAL' => [
+                'name' => 'Fault Line Critical Zone (<50m)',
+                'description' => 'Houses within 50m of fault line - enhanced seismic standards mandatory',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ],
+            'FAULT_HIGH_RISK' => [
+                'name' => 'Fault Line High Risk (50-100m)',
+                'description' => 'Houses requiring seismic design standards and structural certification',
+                'severity' => 'HIGH',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ],
+            'FAULT_MEDIUM_RISK' => [
+                'name' => 'Fault Line Medium Risk (100-200m)',
+                'description' => 'Houses requiring enhanced foundation and earthquake preparedness',
+                'severity' => 'MEDIUM',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ]
+        ];
+        
+        // Count houses for each rule
+        foreach ($houses as $house) {
+            $lat = $house['center_lat'];
+            $lng = $house['center_lng'];
+            
+            // Check flood zones
+            $floodRisk = checkPointInFloodZone($lat, $lng);
+            if ($floodRisk) {
+                $riskLevel = strtoupper($floodRisk['risk_level']);
+                $ruleKey = "FLOOD_{$riskLevel}_RISK";
+                if (isset($rules[$ruleKey])) {
+                    $rules[$ruleKey]['count']++;
+                }
+            }
+            
+            // Check fault line proximity
+            $faultDistance = getDistanceToFaultLine($lat, $lng);
+            if ($faultDistance < 50) {
+                $rules['FAULT_CRITICAL']['count']++;
+            } elseif ($faultDistance < 100) {
+                $rules['FAULT_HIGH_RISK']['count']++;
+            } elseif ($faultDistance < 200) {
+                $rules['FAULT_MEDIUM_RISK']['count']++;
+            }
+        }
+        
+        // Calculate totals
+        $totalHouses = count($houses);
+        $totalAffected = 0;
+        foreach ($rules as $rule) {
+            $totalAffected += $rule['count'];
+        }
+        
+        // Note: A house can be affected by multiple rules (e.g., both flood and fault line)
+        // So totalAffected can be > totalHouses
+        
+        return [
+            'status' => 'success',
+            'data' => [
+                'summary' => [
+                    'total_houses' => $totalHouses,
+                    'total_rule_violations' => $totalAffected,
+                    'rules_evaluated' => count($rules)
+                ],
+                'rules' => $rules
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in getSDSSRulesSummary: " . $e->getMessage());
+        return [
+            'status' => 'error',
+            'message' => 'Failed to generate SDSS rules summary: ' . $e->getMessage()
+        ];
+    }
 }
 
 // ==================== POST REQUEST HANDLER ====================
@@ -1463,6 +1589,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // Construction SDSS report
     if ($_POST['action'] === 'get_construction_sdss_report') {
         $result = getConstructionSDSSReport();
+        echo json_encode($result);
+        exit;
+    }
+
+    // ==================== SDSS RULES SUMMARY ====================
+    
+    // SDSS Rules Summary
+    if ($_POST['action'] === 'get_sdss_rules_summary') {
+        $result = getSDSSRulesSummary();
         echo json_encode($result);
         exit;
     }
