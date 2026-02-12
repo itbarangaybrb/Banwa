@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── DOM References ─────────────────────────────────────────────
     const modal = document.getElementById('guidelinesModal');
     const modalTitle = document.getElementById('modalTitle');
+    const disclaimer = document.getElementById('disclaimer');
     const modalBody = document.getElementById('modalBody');
     const closeBtn = document.getElementById('closeModal');
     const proceedBtn = document.getElementById('confirmProceed');
@@ -23,6 +24,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const guidelines = {
         business: {
             title: "Business Clearance Requirements",
+            disclaimer: `
+                    <div class="disclaimer">
+                        <div class="disclaimer-icon">🕒</div>
+                        <p>
+                            <strong>Processing Time:</strong> Business clearance applications typically take a few working days 
+                            to process after submission. Thank you for your patience.
+                        </p>
+                    </div>
+                `,
             content: `
                 <ul>
                     <li>Owner personal information and contact details.</li>
@@ -32,6 +42,15 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         construction: {
             title: "Construction Permit Requirements",
+            disclaimer: `
+                    <div class="disclaimer">
+                        <div class="disclaimer-icon">🕒</div>
+                        <p>
+                            <strong>Processing Time:</strong> Construction Permit applications typically take a few working days 
+                            to process after submission. Thank you for your patience.
+                        </p>
+                    </div>
+                `,
             content: `
                 <ul>
                     <li>Nature of activity (New construction, Repair, or Demolition).</li>
@@ -41,6 +60,15 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         utilities: {
             title: "Utility Application Requirements",
+            disclaimer: `
+                    <div class="disclaimer">
+                        <div class="disclaimer-icon">🕒</div>
+                        <p>
+                            <strong>Processing Time:</strong> Utilities Clearance applications typically take a few working days 
+                            to process after submission. Thank you for your patience.
+                        </p>
+                    </div>
+                `,
             content: `
                 <ul>
                     <li>Provider name (Meralco, Manila Water, etc.).</li>
@@ -50,6 +78,15 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         report: {
             title: "Incident Report Guidelines",
+            disclaimer: `
+                    <div class="disclaimer">
+                        <div class="disclaimer-icon">🕒</div>
+                        <p>
+                            <strong>Processing Time:</strong> Incident Reports typically take a few working days 
+                            to process after submission. Thank you for your patience.
+                        </p>
+                    </div>
+                `,
             content: `
                 <p><strong>Important:</strong> Submitting false reports is punishable by law.</p>
                 <ul>
@@ -75,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Populate modal with relevant guidelines
                 modalTitle.textContent = guidelines[serviceKey].title;
+                disclaimer.innerHTML = guidelines[serviceKey].disclaimer;
                 modalBody.innerHTML = guidelines[serviceKey].content;
 
                 // Show the modal using class (assumes CSS handles visibility/animation)
