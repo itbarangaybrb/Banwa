@@ -206,7 +206,7 @@ function filterApplications() {
  */
 async function loadApplicationsFromDB() {
     const tableBody = document.getElementById('tableBody');
-    
+
     try {
         const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`);
 
@@ -217,7 +217,7 @@ async function loadApplicationsFromDB() {
 
         // 2. Get text first to debug "Unexpected end of JSON"
         const textData = await response.text();
-        
+
         if (!textData || textData.trim() === "") {
             throw new Error("Server returned empty response.");
         }
@@ -243,7 +243,7 @@ async function loadApplicationsFromDB() {
     } catch (error) {
         console.error('Critical Error fetching applications:', error);
         applications = [];
-        
+
         // Update UI to show error state instead of infinite loading
         if (tableBody) {
             tableBody.innerHTML = `
@@ -355,12 +355,17 @@ function loadAnalyticsTab() {
 
             const labels1 = res.data_by_date.map(x => x.application_date);
             const values1 = res.data_by_date.map(x => x.total);
+            const totals1 = values1.slice();
+            const percentages1 = values1.map(v => ((v / values1.reduce((a,b)=>a+b,0))*100).toFixed(2));
 
             const labels2 = res.data_by_type.map(x => x.type_of_business);
             const values2 = res.data_by_type.map(x => x.total);
+            const totals2 = values2.slice();
+            const percentages2 = values2.map(v => ((v / values2.reduce((a,b)=>a+b,0))*100).toFixed(2));
 
             const labels3 = res.data_by_dss.map(x => x.dss_status);
-            const values3 = res.data_by_dss.map(x => x.total);
+            const totals3 = res.data_by_dss.map(x => x.total);
+            const percentages3 = res.data_by_dss.map(x => x.percentage);
 
             const dateColors = ['#4F46E5', '#2563EB', '#0284C7', '#0891B2', '#0D9488', '#14B8A6'];
             const typeColors = ['#F59E0B', '#F97316', '#EF4444', '#8B5CF6', '#EC4899', '#84CC16'];
@@ -384,7 +389,18 @@ function loadAnalyticsTab() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = totals1[context.dataIndex];
+                                    const percent = percentages1[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
@@ -402,7 +418,18 @@ function loadAnalyticsTab() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = totals2[context.dataIndex];
+                                    const percent = percentages2[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
@@ -412,10 +439,9 @@ function loadAnalyticsTab() {
                     labels: labels3,
                     datasets: [{
                         label: 'DSS Status Distribution',
-                        data: values3,
+                        data: totals3,
                         backgroundColor: dssColors,
-                        borderWidth: 1,
-                        borderRadius: '4'
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -424,11 +450,15 @@ function loadAnalyticsTab() {
                     plugins: {
                         legend: {
                             position: 'right',
-                            align: 'left',
-                            labels: {
-                                textAlign: 'left',
-                                padding: 20,
-                                usePointStyle: true
+                            align: 'center'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = totals3[context.dataIndex];
+                                    const percent = percentages3[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
                             }
                         }
                     }
@@ -974,25 +1004,25 @@ function viewDetails(appId) {
                         background: #fafafa;
                     ">
                         ${ocrResults.map((r, index) => {
-                            const isLatest = index === 0;
-                            const resObj = r.ocr_result || {};
-                            const detected = (resObj.detected && resObj.detected.length)
-                                ? resObj.detected.join(', ')
-                                : 'None/Unknown';
+                    const isLatest = index === 0;
+                    const resObj = r.ocr_result || {};
+                    const detected = (resObj.detected && resObj.detected.length)
+                        ? resObj.detected.join(', ')
+                        : 'None/Unknown';
 
-                            const rawText = resObj.text || '';
-                            const displayText = rawText.trim() ? rawText : 'No text extracted';
+                    const rawText = resObj.text || '';
+                    const displayText = rawText.trim() ? rawText : 'No text extracted';
 
-                            const escapedText = displayText
-                                .replace(/&/g, '&amp;')
-                                .replace(/</g, '&lt;')
-                                .replace(/>/g, '&gt;');
+                    const escapedText = displayText
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
 
-                            const fileName = r.saved_filename || r.filename || 'Unknown file';
-                            const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
-                            const timestamp = formatTimestamp(r.created_at);
+                    const fileName = r.saved_filename || r.filename || 'Unknown file';
+                    const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
+                    const timestamp = formatTimestamp(r.created_at);
 
-                            return `
+                    return `
                                 <details style="margin-bottom: 12px;">
                                     <summary style="
                                         cursor: pointer;
@@ -1029,7 +1059,7 @@ function viewDetails(appId) {
                                     </div>
                                 </details>
                             `;
-                        }).join('')}
+                }).join('')}
                     </div>
                 `;
             }
@@ -1043,7 +1073,7 @@ function viewDetails(appId) {
             `;
 
             colRight.insertAdjacentHTML('afterbegin', ocrHtml);
-            
+
             // Attach handler for re-run button
             const rerunBtn = document.getElementById(`rerunOcrBtn-${appId}`);
             if (rerunBtn) {
@@ -1517,7 +1547,7 @@ function downloadSummary(appId) {
     if (app.requirement_upload_json) {
         if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
         else {
-            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; } catch (e) {}
+            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; } catch (e) { }
         }
     }
     if (!firstUploaded && app.requirement_upload) {

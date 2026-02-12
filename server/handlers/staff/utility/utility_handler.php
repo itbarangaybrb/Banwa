@@ -84,7 +84,7 @@ function handleCreateApplication($pdo)
 {
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Owner Information
         $firstName = get_input('firstName');
         $middleName = get_input('middleName');
@@ -92,20 +92,20 @@ function handleCreateApplication($pdo)
         $suffix = get_input('suffix') ?? '';
         $contactNoOwner = get_input('contactNoOwner');
         $addressOwner = get_input('addressOwner');
-        
+
         // Application Details
         $requestDate = get_input('requestDate');
         $dateOfWork = get_input('dateOfWork');
         $natureOfWork = get_input('natureOfWork');
         $provider = get_input('provider');
-        
+
         // Location Information
         $utilityLotNo = get_input('utilityLotNo');
         $utilityStreet = get_input('utilityStreet');
         $addressOfUtility = trim($utilityLotNo . ' ' . $utilityStreet);
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
-        
+
         // Status and Agreements
         $status = 'Pending';
         $agreed = (int)(get_input('agreed') ?? 0);
@@ -171,11 +171,10 @@ function handleFetchApplications($pdo)
                 ORDER BY ua.created_at DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
-        
+
         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         echo json_encode(["status" => "success", "data" => $applications]);
-        
     } catch (PDOException $e) {
         error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
@@ -249,11 +248,11 @@ function handleUpdateApplication($pdo)
         }
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Initialize update arrays
         $updateFields = [];
         $params = [':id' => $applicationId];
-        
+
         // List of all possible fields that can be updated
         $possibleFields = [
             'firstName' => 'first_name',
@@ -266,7 +265,7 @@ function handleUpdateApplication($pdo)
             'natureOfWork' => 'nature_of_work',
             'provider' => 'provider'
         ];
-        
+
         // Check each possible field to see if it was submitted
         foreach ($possibleFields as $formField => $dbField) {
             $value = get_input($formField);
@@ -275,14 +274,14 @@ function handleUpdateApplication($pdo)
                 $params[":$dbField"] = $value;
             }
         }
-        
+
         // Handle address fields separately
         $ownerAddress = get_input('addressOwner');
         if ($ownerAddress !== null) {
             $updateFields[] = "owner_address = :owner_address";
             $params[':owner_address'] = $ownerAddress;
         }
-        
+
         $utilityLotNo = get_input('utilityLotNo');
         $utilityStreet = get_input('utilityStreet');
         if ($utilityLotNo !== null || $utilityStreet !== null) {
@@ -290,7 +289,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "address_of_utility = :address_of_utility";
             $params[':address_of_utility'] = $addressOfUtility;
         }
-        
+
         // Handle latitude/longitude
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
@@ -302,19 +301,19 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "longitude = :longitude";
             $params[':longitude'] = $longitude;
         }
-        
+
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM utility_applications WHERE id = :id");
         $getDSSStmt->execute([':id' => $applicationId]);
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
-        
+
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
         $updateFields[] = "status = 'Complied'";
         $params[':dss_status'] = $currentDSSStatus;
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/uploads/';
@@ -329,23 +328,23 @@ function handleUpdateApplication($pdo)
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // If no fields to update, return early
         if (count($updateFields) <= 3) { // Only dss_status, updated_at, and status were added
             echo json_encode(["status" => "success", "message" => "No changes to update."]);
             return;
         }
-        
+
         // Build SQL query
         $sql = "UPDATE utility_applications SET " . implode(', ', $updateFields);
-        
+
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
             $params[':supabase_user_id'] = $supabaseUserId;
         } else {
             $sql .= " WHERE id = :id";
         }
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -551,7 +550,10 @@ function handleChartUtilityType($pdo)
     $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
     $sql2 = "
-        SELECT provider, COUNT(*) AS total
+        SELECT 
+            provider, 
+            COUNT(*) AS total,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
         FROM utility_applications
         GROUP BY provider
         ORDER BY total ASC
@@ -561,7 +563,10 @@ function handleChartUtilityType($pdo)
     $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
     $sql3 = "
-        SELECT COALESCE(ue.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+        SELECT 
+            COALESCE(ue.dss_status, 'Pending Evaluation') as dss_status,
+            COUNT(*) as total,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
         FROM utility_applications ua
         LEFT JOIN utility_evaluations ue ON ua.id = ue.application_id
         GROUP BY COALESCE(ue.dss_status, 'Pending Evaluation')

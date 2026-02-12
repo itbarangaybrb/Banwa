@@ -33,6 +33,7 @@
     border-radius: 4px;
     border: 1px solid gray;
     width: 100%;
+    padding: 4px 8px;
 }
 
 .search-container img {
@@ -48,15 +49,24 @@ table {
 }
 
 table thead tr th {
-   padding: 8px;
+    padding: 8px;
 }
 
 table tbody tr {
-   border-top: 1px solid #C4C4C4;
+    border-top: 1px solid #C4C4C4;
+}
+
+table tbody tr:hover {
+    background-color: #c9c9c9;
+}
+
+table tbody tr td:last-child {
+    width: 1%;
 }
 
 table tbody tr td {
-   padding: 8px;
+    padding: 8px;
+    white-space: nowrap;
 }
 
 table thead tr th .th-content {
@@ -102,6 +112,7 @@ table thead tr th .th-content {
 
 .form-container .form .inputs-container .label-and-input select,
 .form-container .form .inputs-container .label-and-input input[type="email"],
+.form-container .form .inputs-container .label-and-input input[type="text"],
 .form-container .form .inputs-container .label-and-input input[type="password"] {
     padding: 12px 8px;
     border-radius: 8px;
@@ -183,4 +194,45 @@ table thead tr th .th-content {
 
 .buttons:hover {
     background-color: rgb(223, 223, 223);
+}
+
+.swal-popup {
+    color: black;
+    padding: 32px 24px;
+    border-radius: 16px;
+    background-color: white;
+}
+
+.swal-title {}
+
+.swal2-actions {
+    gap: 8px;
+}
+
+.swal-confirm-btn,
+.swal-cancel-btn {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+}
+
+.swal-confirm-btn {
+    background-color: #00247C;
+    color: white;
+    margin-left: 4px;
+}
+
+.swal-confirm-btn:hover {
+    background-color: #00164d;
+}
+
+.swal-cancel-btn {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.swal-cancel-btn:hover {
+    background-color: #c9c9c9;
 }

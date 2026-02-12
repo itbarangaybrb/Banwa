@@ -308,12 +308,17 @@ function loadAnalyticsTab() {
 
             const labels1 = res.data_by_date.map(x => x.date_reported);
             const values1 = res.data_by_date.map(x => x.total);
+            const totals1 = values1.slice();
+            const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
 
             const labels2 = res.data_by_type.map(x => x.incident_type);
             const values2 = res.data_by_type.map(x => x.total);
+            const totals2 = values2.slice();
+            const percentages2 = res.data_by_type.map(x => x.percentage);
 
-            const labels3 = res.data_by_dss ? res.data_by_dss.map(x => x.dss_status) : [];
-            const values3 = res.data_by_dss ? res.data_by_dss.map(x => x.total) : [];
+            const labels3 = res.data_by_dss.map(x => x.dss_status);
+            const totals3 = res.data_by_dss.map(x => x.total);
+            const percentages3 = res.data_by_dss.map(x => x.percentage);
 
             const dateColors = ['#6366F1'];
             const typeColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
@@ -337,7 +342,22 @@ function loadAnalyticsTab() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals1[context.dataIndex];
+                                    const percent = percentages1[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
@@ -355,39 +375,56 @@ function loadAnalyticsTab() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-
-            if (labels3.length > 0) {
-                chart3Instance = new Chart(document.getElementById('chart3'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels3,
-                        datasets: [{
-                            label: 'DSS Status Distribution',
-                            data: values3,
-                            backgroundColor: dssColors,
-                            borderWidth: 1,
-                        }]
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: true }
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                                align: 'left',
-                                labels: {
-                                    textAlign: 'left',
-                                    padding: 20,
-                                    usePointStyle: true
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals2[context.dataIndex];
+                                    const percent = percentages2[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
                                 }
                             }
                         }
                     }
-                });
-            }
+                }
+            });
+
+            chart3Instance = new Chart(document.getElementById('chart3'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels3,
+                    datasets: [{
+                        label: 'DSS Status Distribution',
+                        data: totals3,
+                        backgroundColor: dssColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals3[context.dataIndex];
+                                    const percent = percentages3[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         })
         .catch(error => {
             console.error('Error loading analytics:', error);
@@ -1273,12 +1310,12 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}</p>
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
                     <p>Barangay Incident Report Management System</p>
                 </div>
             </div>

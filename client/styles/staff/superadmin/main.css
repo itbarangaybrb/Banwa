@@ -35,7 +35,7 @@ body {
 }
 
 .sections {
-    max-width: 1440px;
+    /* max-width: 1440px; */
     width: 100%;
     padding: 24px 24px;
     margin-inline: auto;
@@ -61,7 +61,7 @@ body {
     left: 0;
     bottom: 0;
     z-index: 2;
-    padding: 24px 16px;
+    padding: 16px 8px;
     border-right: 1px solid grey;
 
     display: flex;
@@ -158,5 +158,31 @@ body {
 
 .main {
     margin-top: 72px;
-    margin-left: 81px;
+    margin-left: 65px;
+}
+
+#page-loader {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #ddd;
+    border-top: 4px solid #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

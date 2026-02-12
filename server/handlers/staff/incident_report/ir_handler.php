@@ -101,7 +101,7 @@ function handleCreateApplication($pdo)
         $vicContact = get_input('vicContact');
         $vicCitizenship = get_input('vicCitizenship');
         $vicGender = get_input('vicGender');
-        
+
         $vicDOB = get_input('vicDOB');
         $vicOccupation = get_input('vicOccupation');
 
@@ -322,11 +322,11 @@ function handleUpdateApplication($pdo)
         }
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
-        
+
         // Initialize update arrays
         $updateFields = [];
         $params = [':id' => $reportId];
-        
+
         // List of all possible fields that can be updated
         $possibleFields = [
             'rpFullName' => 'rp_full_name',
@@ -346,7 +346,7 @@ function handleUpdateApplication($pdo)
             'incidentTimestamp' => 'incident_timestamp',
             'description' => 'description'
         ];
-        
+
         // Check each possible field to see if it was submitted
         foreach ($possibleFields as $formField => $dbField) {
             $value = get_input($formField);
@@ -355,14 +355,14 @@ function handleUpdateApplication($pdo)
                 $params[":$dbField"] = $value;
             }
         }
-        
+
         // Handle other incident type
         $otherIncidentType = get_input('otherIncidentType');
         if ($otherIncidentType !== null) {
             $updateFields[] = "incident_type = :incident_type";
             $params[':incident_type'] = $otherIncidentType;
         }
-        
+
         // Handle address fields separately
         $rpLotNo = get_input('rpLotNo');
         $rpStreet = get_input('rpStreet');
@@ -371,7 +371,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "rp_address = :rp_address";
             $params[':rp_address'] = $rpAddress;
         }
-        
+
         $vicLotNo = get_input('vicLotNo');
         $vicStreet = get_input('vicStreet');
         if ($vicLotNo !== null || $vicStreet !== null) {
@@ -379,7 +379,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "vic_address = :vic_address";
             $params[':vic_address'] = $vicAddress;
         }
-        
+
         $susLotNo = get_input('susLotNo');
         $susStreet = get_input('susStreet');
         if (($susLotNo !== null || $susStreet !== null) && ($susLotNo !== '' || $susStreet !== '')) {
@@ -387,7 +387,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "sus_address = :sus_address";
             $params[':sus_address'] = $susAddress;
         }
-        
+
         // Handle latitude/longitude
         $latitude = get_input('incidentLatitude');
         $longitude = get_input('incidentLongitude');
@@ -399,7 +399,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "longitude = :longitude";
             $params[':longitude'] = $longitude;
         }
-        
+
         // Handle witness data JSON field
         if (isset($_POST['witnesses']) && is_array($_POST['witnesses'])) {
             $witnessesArray = [];
@@ -417,18 +417,18 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "witness_data_json = :witness_data_json";
             $params[':witness_data_json'] = $witnessDataJson;
         }
-        
+
         // Get current DSS status
         $getDSSStmt = $pdo->prepare("SELECT dss_status FROM incident_reports WHERE id = :id");
         $getDSSStmt->execute([':id' => $reportId]);
         $currentDSS = $getDSSStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentDSS['dss_status'] ?? 'Pending Evaluation';
-        
+
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
         $params[':dss_status'] = $currentDSSStatus;
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/uploads/';
@@ -443,23 +443,23 @@ function handleUpdateApplication($pdo)
                 throw new Exception("Failed to move uploaded file.");
             }
         }
-        
+
         // If no fields to update, return early
         if (count($updateFields) <= 2) { // Only dss_status and updated_at were added
             echo json_encode(["status" => "success", "message" => "No changes to update."]);
             return;
         }
-        
+
         // Build SQL query
         $sql = "UPDATE incident_reports SET " . implode(', ', $updateFields);
-        
+
         if ($supabaseUserId) {
             $sql .= " WHERE id = :id AND supabase_user_id = :supabase_user_id";
             $params[':supabase_user_id'] = $supabaseUserId;
         } else {
             $sql .= " WHERE id = :id";
         }
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
@@ -759,7 +759,6 @@ function updateWitnessDataJson($pdo, $reportId)
 function handleChartIncidentType($pdo)
 {
     try {
-        // Use date_reported instead of application_date
         $sql1 = "
             SELECT date_reported, COUNT(*) AS total
             FROM incident_reports
@@ -771,7 +770,10 @@ function handleChartIncidentType($pdo)
         $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $sql2 = "
-            SELECT incident_type, COUNT(*) AS total
+            SELECT 
+                incident_type, 
+                COUNT(*) AS total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM incident_reports
             GROUP BY incident_type
             ORDER BY total ASC
@@ -783,11 +785,13 @@ function handleChartIncidentType($pdo)
         $sql3 = "
             SELECT 
                 COALESCE(dss_status, 'Pending Evaluation') as dss_status, 
-                COUNT(*) as total
+                COUNT(*) as total,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
             FROM incident_reports
             GROUP BY COALESCE(dss_status, 'Pending Evaluation')
             ORDER BY total ASC
         ";
+
         $stmt3 = $pdo->query($sql3);
         $dataByDSS = $stmt3->fetchAll(PDO::FETCH_ASSOC);
 

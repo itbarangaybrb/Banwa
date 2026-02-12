@@ -1,30 +1,33 @@
 import supabase from "../../../../server/api/supabase.js";
 
-function hideModal(modal) {
-    modal.classList.remove('active');
-}
+/**
+ * Handles opening and closing of modals
+ * @param {Event} e - Click event
+ */
+document.addEventListener('click', (e) => {
+    const modalId = e.target.dataset.modal;
+    if (modalId) document.getElementById(modalId)?.classList.add('active');
 
-function showModal(modal) {
-    modal.classList.add('active');
-}
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.modal');
+        modal?.classList.remove('active');
 
-// create account modal
-const createModal = document.getElementById('createModal');
-const createBtn = document.getElementById('createBtn');
-const cancelBtn = document.getElementById('cancelBtn');
+        const form = modal?.querySelector('form');
+        if (form) {
+            form.reset();
 
-createBtn.addEventListener('click', () => {
-    showModal(createModal);
+            // Clear validation states
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                validator.clear(input);
+            });
+        }
+    }
+
 });
-
-cancelBtn.addEventListener('click', () => {
-    hideModal(createModal);
-});
-
 
 /**
- * Fetches all user data from the server and populates the users table
- * Only retrieves and displays data; does not autofill any form fields
+ * Fetches all users and populates the table
+ * Does not autofill form fields
  */
 document.addEventListener('DOMContentLoaded', async () => {
     const tbody = document.getElementById('usersTableBody');
@@ -36,8 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const users = await resp.json();
-
-        // Clear table first
         tbody.innerHTML = '';
 
         if (!Array.isArray(users) || users.length === 0) {
@@ -45,39 +46,66 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Loop through each user and append a row
         users.forEach(user => {
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
                 <td>${user.user_id}</td>
                 <td>${user.full_name}</td>
                 <td>${user.email}</td>
+                <td>lorem ipsum</td>
                 <td>${user.role_id}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="buttons edit-btn"
+                                data-modal="editModal"
+                                data-id="${user.user_id}"
+                                data-fullname="${user.full_name}"
+                                data-email="${user.email}"
+                                data-role="${user.role_id}">
+                            Edit
+                        </button>
+                        <button class="buttons delete-btn">Archive</button>
+                        <button class="buttons suspend-btn">Suspend</button>
+                    </div>
+                </td>
             `;
-
             tbody.appendChild(tr);
         });
 
     } catch (err) {
-        console.error('Failed to fetch user data for autofill:', err);
+        console.error('Failed to fetch users:', err);
         tbody.innerHTML = `<tr><td colspan="5">Error loading users</td></tr>`;
     }
 });
 
+/**
+ * Handles edit button click to populate edit form
+ * @param {Event} e - Click event
+ */
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('edit-btn')) return;
 
-const fe = {
-    role: document.getElementById('role'),
-    email: document.getElementById('email'),
-    password: document.getElementById('password'),
-    retypePassword: document.getElementById('retypePassword'),
-    formMessage: document.getElementById('formMessage'),
-    createForm: document.getElementById('createForm')
-}
+    const btn = e.target;
 
+    document.getElementById('editModal').classList.add('active');
+
+    const form = document.getElementById('editForm');
+
+    form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
+    form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
+    form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
+
+    form.dataset.userId = btn.dataset.id;
+});
+
+
+/**
+ * Validator for form input fields
+ * Provides text, email, password, select, and matchPassword validation
+ */
 const validator = (() => {
     function getWrapper(el) { return el.closest('.label-and-input'); }
-    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
+    function getErrorEl(el) { return getWrapper(el)?.querySelector('.error-msg'); }
     function showError(el, message) {
         const errorEl = getErrorEl(el);
         el.classList.add('error');
@@ -87,6 +115,17 @@ const validator = (() => {
         const errorEl = getErrorEl(el);
         el.classList.remove('error');
         if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('show'); }
+    }
+
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        if (!value || value === 'select') { showError(input, message); return false; }
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters allowed'); return false;
+        }
+        clearError(input); return true;
     }
 
     function validateEmail(input, message) {
@@ -107,6 +146,7 @@ const validator = (() => {
     }
 
     function validatePasswordMatches(passwordInput, reTypeInput) {
+        if (!passwordInput || !reTypeInput) return true;
         const password = passwordInput.value.trim();
         const reType = reTypeInput.value.trim();
         if (!reType) { showError(reTypeInput, 'Re-type password'); return false; }
@@ -122,6 +162,7 @@ const validator = (() => {
     }
 
     return {
+        text: validateText,
         email: validateEmail,
         password: validatePassword,
         matchPassword: validatePasswordMatches,
@@ -130,139 +171,345 @@ const validator = (() => {
     };
 })();
 
-const validationConfig = [
-    { el: fe.role, type: 'select', message: 'Please select role' },
-    { el: fe.email, type: 'email', message: 'Please enter email address' },
-    { el: fe.password, type: 'password', message: 'Please enter password' },
-    { el: fe.retypePassword, type: 'password', message: 'Please enter re-type password' },
-];
+/**
+ * Generates validation configuration for a form
+ * @param {HTMLFormElement} form - Form element
+ * @returns {Array} Validation configuration array
+ */
+function createValidationConfig(form) {
+    const config = [];
+    form.querySelectorAll('.label-and-input').forEach(wrapper => {
+        const input = wrapper.querySelector('input, select, textarea');
+        if (!input) return;
 
+        const name = input.name;
+        switch (name) {
+            // Create form fields
+            case 'fullName':
+                config.push({ el: input, type: 'text', message: 'Please enter full name' });
+                break;
+            case 'role':
+                config.push({ el: input, type: 'select', message: 'Please select role' });
+                break;
+            case 'email':
+                config.push({ el: input, type: 'email', message: 'Please enter email address' });
+                break;
+            case 'password':
+                config.push({ el: input, type: 'password', message: 'Please enter password' });
+                break;
+            case 'retypePassword':
+                config.push({ el: input, type: 'password', message: 'Please re-type password' });
+                break;
+
+            // Edit form fields
+            case 'editFullName':
+                config.push({ el: input, type: 'text', message: 'Please enter full name' });
+                break;
+            case 'editEmail':
+                config.push({ el: input, type: 'email', message: 'Please enter email address' });
+                break;
+            case 'editRole':
+                config.push({ el: input, type: 'select', message: 'Please select role' });
+                break;
+
+            default:
+                break;
+        }
+    });
+    return config;
+}
+
+/**
+ * Validates a single field based on its configuration
+ * @param {Object} config - Validation configuration object
+ * @returns {boolean} True if valid, false otherwise
+ */
 function validateField(config) {
     if (!config || !config.el) return false;
-
     const { el, type, message } = config;
-
     switch (type) {
+        case 'text': return validator.text(el, message);
         case 'email': return validator.email(el, message);
         case 'select': return validator.select(el, message);
         case 'password': return validator.password(el, message);
-        default: return false;
+        default: return true;
     }
 }
 
-function realtimeValidation() {
-    validationConfig.forEach(config => {
-        const { el } = config;
+/**
+ * Validates all fields in a step
+ * @param {Array} fields - Array of input elements
+ * @param {Array} config - Validation configuration array
+ * @returns {boolean} True if all fields are valid
+ */
+function validateStep(fields, config) {
+    return fields.map(f => validateField(config.find(c => c.el === f))).every(v => v);
+}
+
+/**
+ * Adds real-time validation event listeners to fields
+ * @param {Array} config - Validation configuration array
+ */
+function realtimeValidation(config) {
+    config.forEach(({ el }) => {
         if (!el) return;
-        const targets = [el];
-        targets.forEach(target => {
-            target.addEventListener('blur', () => validateField(config));
-            target.addEventListener('input', () => validator.clear(target));
-        });
+        el.addEventListener('blur', () => validateField(config.find(c => c.el === el)));
+        el.addEventListener('input', () => validator.clear(el));
     });
 
-    fe.retypePassword?.addEventListener('blur', () => validator.matchPassword(fe.password, fe.retypePassword));
-    fe.retypePassword?.addEventListener('input', () => validator.clear(fe.retypePassword));
+    const password = config.find(c => c.el.name === 'password')?.el;
+    const retype = config.find(c => c.el.name === 'retypePassword')?.el;
+
+    if (password && retype) {
+        retype.addEventListener('blur', () => validator.matchPassword(password, retype));
+        retype.addEventListener('input', () => validator.clear(retype));
+    }
 }
 
-function validateStep(fields) {
-    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
-}
+/**
+ * Initializes a form with validation and submit handling
+ * @param {HTMLFormElement} form - Form element
+ * @param {Function} submitCallback - Callback to handle form submission
+ */
+function initializeForm(form, submitCallback) {
+    const config = createValidationConfig(form);
+    realtimeValidation(config);
 
-let isSubmitting = false;
-
-function registration() {
-    fe.formMessage.style.display = 'none';
-
-    fe.createForm.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if (isSubmitting) return;
-        isSubmitting = true;
+        const fields = config.map(c => c.el);
 
-        fe.formMessage.textContent = '';
+        let valid = validateStep(fields, config);
 
-        const fields = [
-            fe.role,
-            fe.email,
-            fe.password,
-            fe.retypePassword
-        ];
+        const password = config.find(c => c.el.name === 'password')?.el;
+        const retype = config.find(c => c.el.name === 'retypePassword')?.el;
+        if (password && retype) valid = valid && validator.matchPassword(password, retype);
 
-        if (!validateStep(fields) ||
-            !validator.matchPassword(fe.password, fe.retypePassword)) {
-            isSubmitting = false;
+        if (!valid) return;
+
+        if (submitCallback) await submitCallback(form, fields);
+    });
+}
+
+/**
+ * Handles submission of create user form
+ * Checks email uniqueness and signs up user via Supabase
+ * @param {HTMLFormElement} form - Create form element
+ */
+async function handleCreateFormSubmit(form) {
+    const formMessage = form.querySelector('#formMessage');
+    if (formMessage) { formMessage.style.display = 'none'; }
+
+    const confirmResult = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to create this account.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, create it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    const fullName = form.querySelector('[name="fullName"]').value.trim();
+    const role = form.querySelector('[name="role"]').value;
+    const email = form.querySelector('[name="email"]').value;
+    const password = form.querySelector('[name="password"]').value;
+
+
+    try {
+        // Check email exists
+        const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const dbCheck = await respCheck.json();
+        if (dbCheck.exists) {
+            formMessage.style.display = 'block';
+            formMessage.style.color = 'red';
+            formMessage.textContent = 'An account with this email already exists.';
             return;
         }
 
-        if (!confirm('Are you sure you want to register this account?')) {
-            isSubmitting = false;
-            return;
+        // Supabase signup
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    fullname: fullName,
+                    role: role
+                },
+                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification_superadmin.php"
+            }
+        });
+
+        if (error) throw error;
+
+        form.closest('.modal')?.classList.remove('active');
+
+        await Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Account created! Verify email to activate.',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            showClass: { popup: '' },
+            hideClass: { popup: '' }
+        });
+
+        form.reset();
+    } catch (err) {
+        formMessage.style.display = 'block';
+        formMessage.style.color = 'red';
+        formMessage.textContent = 'An error occurred. ' + (err.message || err);
+    }
+}
+
+/**
+ * Handles submission of update user form
+ * Sends updated user data to the server
+ * @param {HTMLFormElement} form - Edit form element
+ */
+async function handleUpdateFormSubmit(form) {
+    const confirmResult = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to update this account.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, update it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    const payload = {
+        user_id: form.dataset.userId,
+        full_name: form.querySelector('[name="editFullName"]').value.trim(),
+        email: form.querySelector('[name="editEmail"]').value.trim(),
+        role_id: form.querySelector('[name="editRole"]').value.trim()
+    };
+
+    try {
+        const resp = await fetch('/Banwa/server/api/staff/superadmin/update_user.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json();
+
+        if (!resp.ok || result.error) {
+            throw new Error(result.error || 'Failed to update user');
         }
 
-        const ad = {
-            role: fe.role.value,
-            email: fe.email.value,
-            password: fe.password.value
-        };
+        form.closest('.modal')?.classList.remove('active');
 
-        try {
-            const respCheck = await fetch(
-                '/Banwa/server/api/shared/check_email.php',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: ad.email })
-                }
-            );
-
-            const dbCheck = await respCheck.json();
-            if (dbCheck.exists) {
-                fe.formMessage.style.display = 'block';
-                fe.formMessage.style.color = 'red';
-                fe.formMessage.textContent =
-                    'An account with this email already exists.';
-                return;
+        await Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Account updated!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            showClass: {
+                popup: ''
+            },
+            hideClass: {
+                popup: ''
             }
+        });
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message || 'Update failed.'
+        });
+    }
+}
 
-            const { error } = await supabase.auth.signUp({
-                email: ad.email,
-                password: ad.password,
-                options: {
-                    data: { role: ad.role },
-                    emailRedirectTo:
-                        "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
-                }
-            });
+/**
+ * Initializes table search filtering
+ * Filters by ID, name, email, and role
+ */
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const tbody = document.getElementById('usersTableBody');
 
-            if (error) {
-                fe.formMessage.style.display = 'block';
-                fe.formMessage.style.color = 'red';
-                fe.formMessage.textContent = error.message;
-                return;
+    if (!searchInput || !tbody) return;
+
+    searchInput.addEventListener('change', () => {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+
+        // Remove existing "No users found" row
+        const existingNoUsersRow = tbody.querySelector('.no-users-row');
+        if (existingNoUsersRow) {
+            tbody.removeChild(existingNoUsersRow);
+        }
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 0) return; // skip non-data rows
+
+            const rowText = Array.from(cells)
+                .map(td => td.textContent.toLowerCase())
+                .join(' ');
+
+            if (rowText.includes(keyword)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
             }
+        });
 
-            fe.formMessage.style.display = 'block';
-            fe.formMessage.style.color = 'green';
-            fe.formMessage.innerHTML = `
-                Account created successfully.<br>
-                Please verify your email to activate the account.
-            `;
-
-        } catch (err) {
-            fe.formMessage.style.display = 'block';
-            fe.formMessage.style.color = 'red';
-            fe.formMessage.textContent =
-                'An error occurred. ' + (err.message || err);
-        } finally {
-            isSubmitting = false;
+        // If no rows visible, show "No users found"
+        if (visibleCount === 0) {
+            const tr = document.createElement('tr');
+            tr.classList.add('no-users-row');
+            tr.innerHTML = `<td colspan="6" style="text-align:center;">No users found</td>`;
+            tbody.appendChild(tr);
         }
     });
 }
 
-function initialize() {
-    realtimeValidation();
-    registration();
-}
 
-document.addEventListener('DOMContentLoaded', initialize);
+/**
+ * Automatically initializes create and edit forms and table search on page load
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const createForm = document.getElementById('createForm');
+    if (createForm) initializeForm(createForm, handleCreateFormSubmit);
+
+    const editForm = document.getElementById('editForm');
+    if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
+
+    handleSearch();
+
+    const exportBtn = document.querySelector('[data-modal="exportUsers"]');
+    exportBtn.addEventListener('click', () => {
+        exportTableAsPDF('usersTable', 'users_export.pdf');
+    });
+});

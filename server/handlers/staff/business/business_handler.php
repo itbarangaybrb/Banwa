@@ -500,7 +500,7 @@ function handleUpdateApplication($pdo)
         // Always include these updates
         $updateFields[] = "dss_status = :dss_status";
         $updateFields[] = "updated_at = NOW()";
-        $updateFields[] = "status = 'Complied'"; 
+        $updateFields[] = "status = 'Complied'";
         $params[':dss_status'] = $currentDSSStatus;
 
         // Only change status if explicitly provided in the update payload
@@ -509,7 +509,7 @@ function handleUpdateApplication($pdo)
             $updateFields[] = "status = :status_field";
             $params[':status_field'] = $explicitStatus;
         }
-        
+
         // Handle file upload if provided
         if (isset($_FILES['requirementUpload'])) {
             $uploadDir = __DIR__ . '/uploads/';
@@ -891,7 +891,10 @@ function handleChartBusinessType($pdo)
     $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
     $sql2 = "
-        SELECT type_of_business, COUNT(*) AS total
+        SELECT 
+        type_of_business,
+        COUNT(*) AS total,
+        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
         FROM business_applications
         GROUP BY type_of_business
         ORDER BY total ASC
@@ -901,9 +904,16 @@ function handleChartBusinessType($pdo)
     $dataByType = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
     $sql3 = "
-        SELECT COALESCE(be.dss_status, 'Pending Evaluation') as dss_status, COUNT(*) as total
+    SELECT 
+        COALESCE(be.dss_status, 'Pending Evaluation') AS dss_status,
+        COUNT(*) AS total,
+        ROUND(
+            COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (),
+            2
+        ) AS percentage
         FROM business_applications ba
-        LEFT JOIN business_evaluations be ON ba.id = be.application_id
+        LEFT JOIN business_evaluations be 
+            ON ba.id = be.application_id
         GROUP BY COALESCE(be.dss_status, 'Pending Evaluation')
         ORDER BY total ASC
     ";
