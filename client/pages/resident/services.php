@@ -113,12 +113,14 @@ if ($_SESSION['role_id'] != 1) {
     <div id="guidelinesModal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modalTitle">Guidelines</h3>
-            <div id="modalBody" class="modal-body">
-                </div>
+
+            <div id="modalBody" class="modal-body"></div>
+            <h5 id="disclaimer"> Disclaimer: </h5>
             <div class="modal-footer">
                 <button type="button" class="btn-modal btn-cancel" id="closeModal">Cancel</button>
                 <button type="button" class="btn-modal btn-proceed" id="confirmProceed">Proceed</button>
             </div>
+            
         </div>
     </div>
 

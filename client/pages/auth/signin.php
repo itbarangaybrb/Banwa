@@ -17,7 +17,7 @@
       <form class="form" id="login">
         <div class="header-and-parag">
           <img src="../../img/banwalogo.png" alt="Barangay Blue Ridge B Logo">
-          <h4>Sign in to BBRB</h4>
+          <h4>Sign in to BANWA</h4>
           <!-- <p>Log in to access your account.</p> -->
         </div>
 
@@ -45,7 +45,7 @@
       </form>
     </div>
   </section>
-
+ 
   <!-- <div class="container">
     <div class="left-panel">
       <div class="logo-circle">

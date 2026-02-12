@@ -1,303 +1,284 @@
 import supabase from "../../../server/api/supabase.js";
 
-// =========================
-// Switch panel utility
-// =========================
+// ────────────────────────────────────────────────
+//                  UI PANEL SWITCHING
+// ────────────────────────────────────────────────
+/**
+ * Switches visibility between registration panels
+ * @param {string} panelId - ID of the panel to show
+ */
 function switchPanel(panelId) {
-    const panels = ['personalDetails', 'selectId', 'createAcc']
-        .map(id => document.getElementById(id));
-    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    const panelIds = ['personalDetails', 'selectId', 'createAcc'];
+    const panels = panelIds.map(id => document.getElementById(id));
+
+    panels.forEach(panel => {
+        // Show only the requested panel, hide others
+        panel.classList.toggle('hidden', panel.id !== panelId);
+    });
 }
 
+// ────────────────────────────────────────────────
+//                  FORM VALIDATION & SUBMISSION
+// ────────────────────────────────────────────────
 function validation() {
-    // =========================
-    // Form elements
-    // =========================
-    const idType = document.getElementById('idType');
-    const idFile = document.getElementById('idFile');
+    // ── DOM Elements ───────────────────────────────────────
+    const elements = {
+        // Personal Details
+        firstName: document.getElementById('firstName'),
+        middleName: document.getElementById('middleName'),
+        lastName: document.getElementById('lastName'),
+        suffix: document.getElementById('suffix'),
+        sex: document.getElementById('sex'),
+        contactNo: document.getElementById('contactNo'),
+        address: document.getElementById('address'),
 
-    const firstName = document.getElementById('firstName');
-    const middleName = document.getElementById('middleName');
-    const lastName = document.getElementById('lastName');
-    const suffix = document.getElementById('suffix');
-    const sex = document.getElementById('sex');
-    const contactNo = document.getElementById('contactNo');
-    const address = document.getElementById('address');
+        // ID Upload
+        idType: document.getElementById('idType'),
+        idFile: document.getElementById('idFile'),
 
-    const email = document.getElementById('createAccEmail');
-    const password = document.getElementById('password');
-    const reTypePassword = document.getElementById('reTypePassword');
-    const agreeCheckBox = document.getElementById('agreeCheckBox');
+        // Account Creation
+        email: document.getElementById('createAccEmail'),
+        password: document.getElementById('password'),
+        reTypePassword: document.getElementById('reTypePassword'),
+        agreeCheckBox: document.getElementById('agreeCheckBox'),
+    };
 
-    // Show first panel
+    // Start with first panel visible
     switchPanel('personalDetails');
 
-    // =========================
-    // Validation inputs (text, select, checkbox, textarea)
-    // =========================
-    const validator = (() => {
-        function getWrapper(el) {
-            return el.closes('label-and-input');
-        }
+    // ── Shared Validation Helpers ───────────────────────────
+    /**
+     * Finds the closest .label-and-input wrapper
+     * @param {HTMLElement} el 
+     * @returns {HTMLElement|null}
+     */
+    function getWrapper(el) {
+        return el.closest('.label-and-input');
+    }
 
-        function getErrorEl(el) {
-            return getWrapper(el).querySelector('.error-msg');
-        }
+    /**
+     * Gets the error message element inside the wrapper
+     * @param {HTMLElement} el 
+     * @returns {HTMLElement|null}
+     */
+    function getErrorEl(el) {
+        const wrapper = getWrapper(el);
+        return wrapper?.querySelector('.error-msg') || null;
+    }
 
-        function showError(el, message) {
-            const errorEl = getErrorEl(el);
-            el.classList.add('error');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-        }
+    /**
+     * Displays error message and adds error styling
+     */
+    function showError(input, message) {
+        const errorEl = getErrorEl(input);
+        if (!errorEl) return;
 
-        function clearError(el) {
-            const errorEl = getErrorEl(el);
-            EncodedAudioChunk.classList.remove('error');
-            errorEl.textContent = '';
-            errorEl.classList.remove('show');
-        }
+        input.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    }
 
-        function validateText(input, message, rules = {}) {
-            if (!input) return true;
+    /**
+     * Clears error state
+     */
+    function clearError(input) {
+        const errorEl = getErrorEl(input);
+        if (!errorEl) return;
 
-            let value = input.value.trim();
+        input.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+    }
 
-            if (rules.normalizeSpaces) {
-                value = value.replace(/\s+/g, ' ').trim();
-            }
+    /**
+     * Main validation function for most inputs
+     * Handles text, email, password, phone, checkbox, etc.
+     * @param {HTMLElement} input 
+     * @param {string} defaultMessage 
+     * @returns {boolean} is valid
+     */
+    function validateInput(input, defaultMessage = 'This field is required') {
+        if (!input) return true;
 
-            if (value === '' || value === 'select') {
-                showError(input, message);
-                return false;
-            }
-
-            if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-                showError(input, rules.errorMessage || 'Only letters with single spaces are allowed');
-                return false;
-            }
-
-            if (rules.pattern && !rules.pattern.test(value)) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
-
-            if (rules.minLength && value.length < rules.minLength) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
-
-            if (rules.maxLength && value.length > rules.maxLength) {
-                showError(input, rules.errorMessage || message);
-                return false;
-            }
-
-            clearError(input);
-            return true;
-        }
-    })
-
-    function validateInput(input, message) {
-        const wrapper = input.closest('.label-and-input');
+        const wrapper = getWrapper(input);
         const errorEl = wrapper?.querySelector('.error-msg');
         if (!errorEl) return true;
-        const valueRaw = input.type === 'checkbox' ? input.checked : (input.value ?? '');
-        const value = (typeof valueRaw === 'string') ? valueRaw.trim() : valueRaw;
+
+        let value = input.type === 'checkbox' 
+            ? input.checked 
+            : (input.value ?? '').trim();
 
         const setError = (msg) => {
             input.classList.add('error');
             errorEl.classList.add('show');
             errorEl.textContent = msg;
+            return false;
         };
 
-        const clearError = () => {
+        const clear = () => {
             input.classList.remove('error');
             errorEl.classList.remove('show');
             errorEl.textContent = '';
+            return true;
         };
 
-        // Field-specific validations
-        if (input === password) {
-            const val = value;
-            if (!val) {
-                setError('Password is required');
-                return false;
+        // ── Field-specific validations ────────────────────────
+        if (input === elements.password) {
+            if (!value) return setError('Password is required');
+            if (value.length < 8 || value.length > 16) {
+                return setError('Password should be 8-16 characters long');
             }
-            if (val.length < 8 || val.length > 16) {
-                setError('Password should be 8-16 characters long');
-                return false;
+            if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+                return setError('Password must contain letters and numbers');
             }
-            if (!/[A-Za-z]/.test(val) || !/[0-9]/.test(val)) {
-                setError('Password must contain letters and numbers');
-                return false;
-            }
-            clearError();
-            return true;
+            return clear();
         }
 
-        if (input === reTypePassword) {
-            const val = value;
-            if (!val) {
-                setError('Please re-type your password');
-                return false;
+        if (input === elements.reTypePassword) {
+            if (!value) return setError('Please re-type your password');
+            if (value !== (elements.password.value || '').trim()) {
+                return setError('Passwords do not match');
             }
-            if (val !== (password.value || '').trim()) {
-                setError('Passwords do not match');
-                return false;
-            }
-            clearError();
-            return true;
+            return clear();
         }
 
-        if (input === contactNo) {
-            const digits = (input.value || '').replace(/\D/g, '');
+        if (input === elements.contactNo) {
+            // Clean input to digits only
+            const digits = value.replace(/\D/g, '');
             input.value = digits;
-            if (!digits) {
-                setError('Phone number is required');
-                return false;
-            }
-            if (digits.length !== 11) {
-                setError('Phone number must be 11 digits');
-                return false;
-            }
-            clearError();
-            return true;
+
+            if (!digits) return setError('Phone number is required');
+            if (digits.length !== 11) return setError('Phone number must be 11 digits');
+            return clear();
         }
 
-        if (input === email) {
-            const val = value;
+        if (input === elements.email) {
+            if (!value) return setError('Email is required');
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!val) {
-                setError('Email is required');
-                return false;
-            }
-            if (!emailPattern.test(val)) {
-                setError('Enter a valid email address');
-                return false;
-            }
-            clearError();
-            return true;
+            if (!emailPattern.test(value)) return setError('Enter a valid email address');
+            return clear();
         }
 
-        clearError();
-        return true;
+        // Generic required check for other fields
+        if (!value || value === 'select') {
+            return setError(defaultMessage);
+        }
+
+        return clear();
     }
 
-    // =========================
-    // Attach events (refactored)
-    // =========================
-    (() => {
-        const inputs = [firstName, lastName, password, reTypePassword, email];
+    // ── Real-time & blur validation ────────────────────────
+    (function attachInputListeners() {
+        const inputsToValidate = [
+            elements.firstName,
+            elements.lastName,
+            elements.contactNo,
+            elements.email,
+            elements.password,
+            elements.reTypePassword,
+        ].filter(Boolean);
 
-        const getErrorHandlers = (input) => {
-            const wrapper = input.closest('.label-and-input');
-            const errorEl = wrapper?.querySelector('.error-msg');
-            if (!errorEl) return null;
-
-            const clearError = () => {
-                input.classList.remove('error');
-                errorEl.classList.remove('show');
-                errorEl.textContent = '';
-            };
-
-            return { clearError };
-        };
-
-        inputs.forEach(input => {
-            if (!input) return;
-            const handlers = getErrorHandlers(input);
-            if (!handlers) return;
-
+        inputsToValidate.forEach(input => {
+            // Clear error when user starts typing
             input.addEventListener('input', () => {
-                if (input === contactNo) input.value = input.value.replace(/\D/g, '');
-                handlers.clearError();
+                if (input === elements.contactNo) {
+                    input.value = input.value.replace(/\D/g, '');
+                }
+                clearError(input);
             });
 
-            input.addEventListener('blur', () => validateInput(input, 'This field is required'));
+            // Validate on blur (when user leaves the field)
+            input.addEventListener('blur', () => {
+                validateInput(input);
+            });
         });
     })();
 
-
-
-    // =========================
-    // Navigation buttons
-    // =========================
-    document.getElementById('personalDetailsBackBtn').addEventListener('click', (e) => {
+    // ── Navigation & Form Submission ───────────────────────
+    // Back to login
+    document.getElementById('personalDetailsBackBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
         window.location.href = '/Banwa/client/pages/auth/signin.php';
     });
-    document.getElementById('createAccBackBtn').addEventListener('click', () => switchPanel('selectId'));
 
-    // =========================
-    // Personal Details 'Next' Button
-    // =========================
-    document.getElementById('personalDetailsNextBtn').addEventListener('click', function (e) {
+    // Back to ID selection
+    document.getElementById('createAccBackBtn')?.addEventListener('click', () => {
+        switchPanel('selectId');
+    });
+
+    // Personal Details → ID Upload
+    document.getElementById('personalDetailsNextBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        const validations = [
-            validateInput(firstName, 'First name is required'),
-            validateInput(lastName, 'Last name is required')
-        ];
 
-        if (validations.every(v => v)) switchPanel('selectId');
+        const isValid = [
+            validateInput(elements.firstName, 'First name is required'),
+            validateInput(elements.lastName, 'Last name is required'),
+        ].every(Boolean);
+
+        if (isValid) switchPanel('selectId');
     });
 
-    // =========================
-    // Select ID 'Next' Button
-    // =========================
-    document.getElementById('selectIdNextBtn').addEventListener('click', () => {
-        const validations = [
-            validateInput(idType, 'Please select a type of ID'),
-            validateInput(idFile, 'Please upload your ID file')
-        ];
+    // ID Upload → Create Account
+    document.getElementById('selectIdNextBtn')?.addEventListener('click', () => {
+        const isValid = [
+            validateInput(elements.idType, 'Please select a type of ID'),
+            validateInput(elements.idFile, 'Please upload your ID file'),
+        ].every(Boolean);
 
-        if (validations.every(v => v)) switchPanel('createAcc');
+        if (isValid) switchPanel('createAcc');
     });
 
-
-    // =========================
-    // Create Account 'Submit' Button
-    // =========================
+    // ── Final Account Creation ─────────────────────────────
     const formMessage = document.getElementById('formMessage');
-    formMessage.style.display = 'none';
     const resendBtn = document.getElementById('resendEmailBtn');
-    let allData = null;
+    let signupData = null;
 
-    document.getElementById('createAccForm').addEventListener('submit', async (e) => {
+    formMessage.style.display = 'none';
+
+    document.getElementById('createAccForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         formMessage.textContent = '';
+        formMessage.style.display = 'none';
 
-        const validations = [
-            validateInput(password, 'Password is required'),
-            validateInput(reTypePassword, 'Please re-type your password'),
-            validateInput(email, 'Email is required'),
-        ];
+        const isValid = [
+            validateInput(elements.password),
+            validateInput(elements.reTypePassword),
+            validateInput(elements.email),
+        ].every(Boolean);
 
+        if (!isValid) return;
 
-        if (!validations.every(v => v)) return;
         if (!confirm('Are you sure you want to submit this application?')) return;
 
-        allData = {
-            fullname: `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim(),
-            email: email.value,
-            password: password.value,
+        signupData = {
+            fullname: [
+                elements.firstName.value,
+                elements.middleName.value,
+                elements.lastName.value,
+                elements.suffix.value
+            ].filter(Boolean).join(' ').trim(),
+            email: elements.email.value.trim(),
+            password: elements.password.value,
         };
 
         try {
-            const respCheck = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(allData.email)}`);
-            const dbCheck = await respCheck.json();
+            // Check if email already exists (custom backend check)
+            const resp = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(signupData.email)}`);
+            const { exists } = await resp.json();
 
-            if (dbCheck.exists) {
+            if (exists) {
                 formMessage.style.display = 'block';
                 formMessage.style.color = 'red';
                 formMessage.textContent = 'An account with this email already exists.';
                 return;
             }
 
+            // Supabase signup
             const { data, error } = await supabase.auth.signUp({
-                email: allData.email,
-                password: allData.password,
+                email: signupData.email,
+                password: signupData.password,
                 options: {
-                    data: allData,
+                    data: signupData,
                     emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php",
                 },
             });
@@ -313,31 +294,30 @@ function validation() {
                 throw error;
             }
 
+            // Success
             formMessage.style.display = 'block';
             formMessage.style.color = 'green';
             formMessage.innerHTML = `
-            Account created successfully.<br>
-            Please verify your email to activate your account.<br><br>
-            If you don’t receive the email within 1–2 minutes:
-            <br>
-            1. Make sure the email address is correct<br>
-            2. Check your Spam / Promotions folder<br>
-            3. You can resend the verification email<br>
-           
-        `;
+                Account created successfully.<br>
+                Please verify your email to activate your account.<br><br>
+                If you don’t receive the email within 1–2 minutes:<br>
+                1. Make sure the email address is correct<br>
+                2. Check your Spam / Promotions folder<br>
+                3. You can resend the verification email
+            `;
 
             resendBtn.classList.add('show');
             startResendCooldown();
 
         } catch (err) {
-            // console.error('Error during signup:', err);
             formMessage.style.display = 'block';
             formMessage.style.color = 'red';
-            formMessage.textContent = 'An error occurred. ' + (err.message || err);
+            formMessage.textContent = 'An error occurred. Please try again.';
+            console.error('Signup error:', err);
         }
     });
 
-
+    // ── Resend Verification Email Logic ─────────────────────
     let resendCount = 0;
     const MAX_RESENDS = 3;
 
@@ -345,34 +325,38 @@ function validation() {
         const submitBtn = document.getElementById('createAccSubmitBtn');
         if (submitBtn) submitBtn.style.display = 'none';
 
-        const btn = resendBtn;
-        btn.disabled = true;
+        resendBtn.disabled = true;
         let countdown = 90;
-        btn.textContent = `Resend available in ${countdown}s`;
+
+        const updateButton = () => {
+            resendBtn.textContent = `Resend available in ${countdown}s`;
+        };
+        updateButton();
 
         const interval = setInterval(() => {
             countdown--;
-            btn.textContent = `Resend available in ${countdown}s`;
+            updateButton();
+
             if (countdown <= 0) {
                 clearInterval(interval);
                 if (resendCount < MAX_RESENDS) {
-                    btn.disabled = false;
-                    btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
+                    resendBtn.disabled = false;
+                    resendBtn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
                 } else {
-                    btn.remove();
+                    resendBtn.remove();
                 }
             }
         }, 1000);
     }
 
     resendBtn.addEventListener('click', async () => {
-        if (!allData || resendCount >= MAX_RESENDS) return;
+        if (!signupData || resendCount >= MAX_RESENDS) return;
 
         resendBtn.disabled = true;
 
         const { error } = await supabase.auth.resend({
             type: 'signup',
-            email: allData.email,
+            email: signupData.email,
             options: {
                 emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
             }
@@ -391,7 +375,7 @@ function validation() {
 
         startResendCooldown();
     });
-
 }
 
+// Initialize validation & event listeners
 validation();

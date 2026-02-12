@@ -1,19 +1,31 @@
 import supabase from "../../../server/api/supabase.js";
 
-// =========================
-// 1. Navigation Logic
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 1. Navigation Logic – Panel Switching
+// ───────────────────────────────────────────────────────────────
+/**
+ * Switches visibility between multi-step registration panels
+ * @param {string} panelId - The ID of the panel to display
+ */
 function switchPanel(panelId) {
-    const panels = ['personalDetails', 'selectId', 'createAcc']
-        .map(id => document.getElementById(id));
-    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
+    const panelIds = ['selectId', 'personalDetails', 'createAcc'];
+    const panels = panelIds.map(id => document.getElementById(id));
+
+    panels.forEach(panel => {
+        // Toggle 'hidden' class – show only the target panel
+        panel.classList.toggle('hidden', panel.id !== panelId);
+    });
 }
 
-// =========================
-// 2. Form Elements
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 2. Centralized DOM References
+// ───────────────────────────────────────────────────────────────
+/**
+ * Single source of truth for all important form elements.
+ * Reduces document.getElementById calls and makes refactoring easier.
+ */
 const formElements = {
-    // Panel 1: Select ID
+    // ── Select ID Panel ──
     selectIdNextBtn: document.getElementById('selectIdNextBtn'),
     idType: document.getElementById('idType'),
     idFile: document.getElementById('idFile'),
@@ -21,7 +33,7 @@ const formElements = {
     idImagePreview: document.getElementById('idImagePreview'),
     imagePreviewContainer: document.getElementById('imagePreviewContainer'),
 
-    // Panel 2: Personal Details
+    // ── Personal Details Panel ──
     firstName: document.getElementById('firstName'),
     middleName: document.getElementById('middleName'),
     lastName: document.getElementById('lastName'),
@@ -31,7 +43,7 @@ const formElements = {
     address: document.getElementById('address'),
     personalDetailsNextBtn: document.getElementById('personalDetailsNextBtn'),
 
-    // Panel 3: Create Account
+    // ── Create Account Panel ──
     createAccForm: document.getElementById('createAccForm'),
     email: document.getElementById('createAccEmail'),
     password: document.getElementById('password'),
@@ -40,102 +52,150 @@ const formElements = {
     formMessage: document.getElementById('formMessage'),
     resendBtn: document.getElementById('resendEmailBtn'),
 
-    // Navigation Back Buttons
+    // ── Back / Cancel Buttons ──
     personalDetailsBackBtn: document.getElementById('personalDetailsBackBtn'),
     selectIdBackBtn: document.getElementById('selectIdBackBtn'),
     createAccBackBtn: document.getElementById('createAccBackBtn'),
 
-    // Submit Button
+    // ── Submit Button ──
     createAccSubmitBtn: document.getElementById('createAccSubmitBtn')
 };
 
-// Last OCR results (populated after successful OCR call)
+// Store last successful OCR extraction (used during final submission)
 let lastOcrMeta = null;
 let lastOcrData = null;
 
-// =========================
-// 3. Validator Module
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 3. Reusable Validation Utilities (IIFE Module)
+// ───────────────────────────────────────────────────────────────
 const validator = (() => {
-    function getWrapper(el) { return el.closest('.label-and-input'); }
-    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
-    function showError(el, message) {
-        const errorEl = getErrorEl(el);
-        el.classList.add('error');
-        if (errorEl) { errorEl.textContent = message; errorEl.classList.add('show'); }
-    }
-    function clearError(el) {
-        const errorEl = getErrorEl(el);
-        el.classList.remove('error');
-        if (errorEl) { errorEl.textContent = ''; errorEl.classList.remove('show'); }
-    }
+    const getWrapper = el => el.closest('.label-and-input');
+    const getErrorEl = el => getWrapper(el)?.querySelector('.error-msg');
 
+    const showError = (el, message) => {
+        const errorEl = getErrorEl(el);
+        if (!errorEl) return;
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+    };
+
+    const clearError = (el) => {
+        const errorEl = getErrorEl(el);
+        if (!errorEl) return;
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+    };
+
+    // ── Specific field validators ─────────────────────────────────
     function validateText(input, message, rules = {}) {
         if (!input) return true;
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
-        if (!value || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters allowed'); return false;
+
+        if (!value || value === 'select') {
+            showError(input, message);
+            return false;
         }
-        clearError(input); return true;
+
+        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+            showError(input, rules.errorMessage || 'Only letters allowed');
+            return false;
+        }
+
+        clearError(input);
+        return true;
     }
 
     function validateNumber(input, message, rules = {}) {
         if (!input) return true;
         const value = input.value.trim();
-        if (!value) { showError(input, message); return false; }
-        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numbers allowed'); return false; }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `At least ${rules.minLength} digits required`); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Max ${rules.maxLength} digits`); return false; }
-        clearError(input); return true;
+        if (!value) return showError(input, message), false;
+        if (!/^\d+$/.test(value)) return showError(input, rules.errorMessage || 'Only numbers allowed'), false;
+
+        if (rules.minLength && value.length < rules.minLength) {
+            showError(input, rules.errorMessage || `At least ${rules.minLength} digits required`);
+            return false;
+        }
+        if (rules.maxLength && value.length > rules.maxLength) {
+            showError(input, rules.errorMessage || `Max ${rules.maxLength} digits`);
+            return false;
+        }
+
+        clearError(input);
+        return true;
     }
 
     function validateEmail(input, message) {
         if (!input) return true;
         const value = input.value.trim();
-        if (!value) { showError(input, message); return false; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Invalid email'); return false; }
-        clearError(input); return true;
+        if (!value) return showError(input, message), false;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(input, 'Invalid email format');
+            return false;
+        }
+        clearError(input);
+        return true;
     }
 
     function validatePassword(input, message) {
         if (!input) return true;
         const value = input.value.trim();
-        if (!value) { showError(input, message); return false; }
-        if (value.length < 8 || value.length > 16) { showError(input, 'Password 8–16 chars'); return false; }
-        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { showError(input, 'Password must have letters & numbers'); return false; }
-        clearError(input); return true;
+        if (!value) return showError(input, message), false;
+        if (value.length < 8 || value.length > 16) return showError(input, 'Password must be 8–16 characters'), false;
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+            showError(input, 'Password must contain letters and numbers');
+            return false;
+        }
+        clearError(input);
+        return true;
     }
 
-    function validatePasswordMatches(passwordInput, reTypeInput) {
-        const password = passwordInput.value.trim();
-        const reType = reTypeInput.value.trim();
-        if (!reType) { showError(reTypeInput, 'Re-type password'); return false; }
-        if (password !== reType) { showError(reTypeInput, 'Passwords do not match'); return false; }
-        clearError(reTypeInput); return true;
+    function validatePasswordMatches(pwdInput, retypeInput) {
+        const pwd = pwdInput.value.trim();
+        const retype = retypeInput.value.trim();
+        if (!retype) return showError(retypeInput, 'Please re-type password'), false;
+        if (pwd !== retype) return showError(retypeInput, 'Passwords do not match'), false;
+        clearError(retypeInput);
+        return true;
     }
 
     function validateSelect(input, message) {
         if (!input) return true;
-        const value = input.value.trim();
-        if (!value || value === 'select') { showError(input, message); return false; }
-        clearError(input); return true;
+        const value = input.value?.trim();
+        if (!value || value === 'select') {
+            showError(input, message);
+            return false;
+        }
+        clearError(input);
+        return true;
     }
 
     function validateCheckbox(input, message) {
-        if (!input.checked) { showError(input, message); return false; }
-        clearError(input); return true;
+        if (!input.checked) {
+            showError(input, message);
+            return false;
+        }
+        clearError(input);
+        return true;
     }
 
     function validateFile(input, message, options = {}) {
-        if (!input || input.files.length === 0) { showError(input, message); return false; }
+        if (!input || !input.files?.length) return showError(input, message), false;
+
         const file = input.files[0];
-        if (options.accept?.length && !options.accept.some(a => file.name.toLowerCase().endsWith(a.toLowerCase()))) {
-            showError(input, options.errorMessage || `Allowed: ${options.accept.join(', ')}`); return false;
+        if (options.accept?.length && !options.accept.some(ext => file.name.toLowerCase().endsWith(ext.toLowerCase()))) {
+            showError(input, options.errorMessage || `Allowed formats: ${options.accept.join(', ')}`);
+            return false;
         }
-        if (file.size > 5 * 1024 * 1024) { showError(input, 'File > 5MB'); return false; }
-        clearError(input); return true;
+        if (file.size > 5 * 1024 * 1024) {
+            showError(input, 'File size exceeds 5MB limit');
+            return false;
+        }
+
+        clearError(input);
+        return true;
     }
 
     return {
@@ -151,399 +211,415 @@ const validator = (() => {
     };
 })();
 
-// =========================
-// 4. Validation Config
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 4. Validation Rules per Field
+// ───────────────────────────────────────────────────────────────
 const validationConfig = [
-    { el: formElements.firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: formElements.lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: formElements.sex, type: 'select', message: 'Please select sex' },
-    { el: formElements.contactNo, type: 'number', message: 'Contact no. is required', rules: { minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-    { el: formElements.email, type: 'email', message: 'Email is required' },
-    { el: formElements.address, type: 'text', message: 'Address is required' },
-    { el: formElements.agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
-    { el: formElements.idType, type: 'select', message: 'Please select type of ID' },
-    { el: formElements.idFile, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
-    { el: formElements.password, type: 'password', message: 'Please enter a password' },
-    { el: formElements.reTypePassword, type: 'password', message: 'Please re-type your password' }
+    { el: formElements.firstName,      type: 'text',     message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true } },
+    { el: formElements.lastName,       type: 'text',     message: 'Last name is required',  rules: { lettersOnly: true, normalizeSpaces: true } },
+    { el: formElements.sex,            type: 'select',   message: 'Please select sex' },
+    { el: formElements.contactNo,      type: 'number',   message: 'Contact number is required', rules: { minLength: 11, maxLength: 11 } },
+    { el: formElements.address,        type: 'text',     message: 'Address is required' },
+    { el: formElements.email,          type: 'email',    message: 'Email is required' },
+    { el: formElements.password,       type: 'password', message: 'Password is required' },
+    { el: formElements.reTypePassword, type: 'password', message: 'Please re-type password' },
+    { el: formElements.agreeCheckBox,  type: 'checkbox', message: 'You must agree to the terms' },
+    { el: formElements.idType,         type: 'select',   message: 'Please select ID type' },
+    { el: formElements.idFile,         type: 'file',     message: 'Please upload ID document', rules: { accept: ['.jpg', '.png', '.pdf'] } }
 ];
 
-// =========================
-// 5. Validate Field Helper
-// =========================
-function validateField(config) {
-    const { el, type, message, rules } = config;
+// ───────────────────────────────────────────────────────────────
+// 5. Field Validation Helper
+// ───────────────────────────────────────────────────────────────
+function validateField({ el, type, message, rules }) {
     if (!el) return true;
+
     switch (type) {
-        case 'number': return validator.number(el, message, rules);
-        case 'text': return validator.text(el, message, rules);
-        case 'email': return validator.email(el, message);
-        case 'file': return validator.file(el, message, rules);
-        case 'checkbox': return validator.checkbox(el, message);
-        case 'select': return validator.select(el, message);
+        case 'text':     return validator.text(el, message, rules);
+        case 'number':   return validator.number(el, message, rules);
+        case 'email':    return validator.email(el, message);
         case 'password': return validator.password(el, message);
+        case 'select':   return validator.select(el, message);
+        case 'checkbox': return validator.checkbox(el, message);
+        case 'file':     return validator.file(el, message, rules);
+        default:         return true;
     }
 }
 
-// =========================
-// 6. Real-time Validation
-// =========================
+function validateStep(fields) {
+    return fields.every(field => {
+        const config = validationConfig.find(c => c.el === field);
+        return config ? validateField(config) : true;
+    });
+}
+
+// ───────────────────────────────────────────────────────────────
+// 6. Real-time & Blur Validation Setup
+// ───────────────────────────────────────────────────────────────
 function setupRealtimeValidation() {
-    validationConfig.forEach(config => {
-        const { el, type } = config;
+    validationConfig.forEach(({ el, type }) => {
         if (!el) return;
-        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
-        targets.forEach(target => {
-            target.addEventListener('blur', () => validateField(config));
-            target.addEventListener('input', () => validator.clear(target));
-        });
+
+        // Clear error when user starts typing/changing
+        el.addEventListener('input', () => validator.clear(el));
+
+        // Validate when user leaves the field
+        el.addEventListener('blur', () => validateField(validationConfig.find(c => c.el === el)));
     });
 
-    formElements.reTypePassword?.addEventListener('blur', () => validator.matchPassword(formElements.password, formElements.reTypePassword));
-    formElements.reTypePassword?.addEventListener('input', () => validator.clear(formElements.reTypePassword));
-
+    // Special handling: phone number → digits only
     formElements.contactNo?.addEventListener('input', () => {
         formElements.contactNo.value = formElements.contactNo.value.replace(/\D/g, '');
         validator.clear(formElements.contactNo);
     });
+
+    // Re-type password match check
+    const retype = formElements.reTypePassword;
+    retype?.addEventListener('input', () => validator.clear(retype));
+    retype?.addEventListener('blur', () => validator.matchPassword(formElements.password, retype));
 }
 
-function validateStep(fields) {
-    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
-}
-
-// =========================
-// 7. OCR / ID Preview Logic
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 7. ID Upload + OCR Processing
+// ───────────────────────────────────────────────────────────────
 formElements.idFile.addEventListener('change', function () {
-    const file = this.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            if (formElements.idImagePreview) formElements.idImagePreview.src = e.target.result;
-            if (formElements.imagePreviewContainer) formElements.imagePreviewContainer.style.display = 'block';
-        }
-        reader.readAsDataURL(file);
-        processOCR(); // <-- triggers OCR immediately
-    }
+    const file = this.files?.[0];
+    if (!file) return;
+
+    // Show image preview
+    const reader = new FileReader();
+    reader.onload = e => {
+        if (formElements.idImagePreview) formElements.idImagePreview.src = e.target.result;
+        if (formElements.imagePreviewContainer) formElements.imagePreviewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    // Auto-trigger OCR when file is selected
+    processOCR();
 });
 
+/**
+ * Sends uploaded ID to backend for OCR processing and fingerprint verification
+ * Updates UI and enables Next button only on success
+ */
 async function processOCR() {
-    // 1. Initial Validation
-    if (!formElements.idFile.files[0] || !formElements.idType.value) {
-        formElements.ocrStatus.textContent = "Please select an ID type and upload a photo.";
+    if (!formElements.idFile.files?.[0] || !formElements.idType.value) {
+        formElements.ocrStatus.textContent = "Select ID type and upload document first.";
         formElements.ocrStatus.className = 'ocr-status-error';
         formElements.ocrStatus.style.display = 'block';
         return;
     }
 
-    // 2. Loading State - NOW WITH PROGRESS BAR ANIMATION
+    // ── Loading / Processing UI ───────────────────────────────────
     formElements.selectIdNextBtn.disabled = true;
     formElements.selectIdNextBtn.textContent = "Processing...";
 
     formElements.ocrStatus.className = 'ocr-status-processing';
     formElements.ocrStatus.style.display = 'block';
-    
-    // Progress bar + text (indeterminate animation)
     formElements.ocrStatus.innerHTML = `
-        <div class="progress-container">
-            <div class="progress-bar"></div>
-        </div>
-        <div style="text-align: center; font-weight: bold; margin-top: 8px;">
-            Checking ID fingerprints...
+        <div class="progress-container"><div class="progress-bar"></div></div>
+        <div style="text-align:center; font-weight:bold; margin-top:8px;">
+            Verifying document...
         </div>
     `;
 
     const formData = new FormData();
     formData.append('file', formElements.idFile.files[0]);
     formData.append('idType', formElements.idType.value);
-    // include debug flag when running locally to get per-type hits and raw text
-    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) formData.append('debug', '1');
 
-    let result = null;
+    // Enable debug mode on localhost
+    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        formData.append('debug', '1');
+    }
+
     try {
         const response = await fetch('/Banwa/server/api/auth/ocr_process.php', {
             method: 'POST',
-            body: formData  // formData should contain 'idFile' (File) and 'idType' (string)
+            body: formData
         });
-        result = await response.json();
 
-        if (result && result.success) {
-            const d = result.data || {};
-            // Prefer provider meta but fall back to counting extracted fields when legacy response lacks meta
-            const hitsMap = result.meta?.hits_map || {};
-            let fieldsCount = (typeof result.meta?.fields_count === 'number') ? result.meta.fields_count : 0;
-            if (!fieldsCount) {
-                fieldsCount = Object.values(d).filter(v => v && String(v).trim().length > 0).length;
-            }
-            const selectedType = formElements.idType.value;
-            const selectedHits = hitsMap[selectedType] || 0;
+        const result = await response.json();
 
-            // If selected ID type has no fingerprint hits and extracted fields are minimal, treat as failed verification
-            if (selectedHits < 1 && fieldsCount < 2) {
-                formElements.ocrStatus.className = 'ocr-status-error';
-                formElements.ocrStatus.textContent = `Selected ID type (${selectedType}) not confidently detected. Please upload the correct ID or proceed manually.`;
-                formElements.selectIdNextBtn.disabled = false;
-                formElements.selectIdNextBtn.textContent = "Retry Verification";
-                // Make Retry explicitly refresh the page so user can re-upload/clear state
-                formElements.selectIdNextBtn.onclick = () => window.location.reload();
-                return; // stop successful branch
-            }
-            // Populate the next panel's fields
-            formElements.firstName.value = d.firstName || "";
-            formElements.middleName.value = d.middleName || "";
-            formElements.lastName.value = d.lastName || "";
-            formElements.address.value = d.address || "";
-
-            // Store OCR results for later submission / verification
-            lastOcrData = d;
-            lastOcrMeta = result.meta || null;
-
-            // Show Success UI
-            const detected = result.meta?.detected_type || "Document";
-            formElements.ocrStatus.className = 'ocr-status-success';
-            formElements.ocrStatus.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa fa-check-circle"></i>
-                    <span>Verified: <strong>${detected}</strong></span>
-                </div>
-            `;
-
-            // THE FIX: Transition the button to "Next Step" mode
-            formElements.selectIdNextBtn.disabled = false;
-            formElements.selectIdNextBtn.textContent = "Next: Personal Details";
-            
-            // Change the click event so it switches panels instead of running OCR again
-            formElements.selectIdNextBtn.onclick = () => {
-                switchPanel('personalDetails');
-                // Reset button for next time (in case they come back)
-                resetVerifyButton(); 
-            };
-        } else {
-            // Error handling (mismatch, blur, etc.)
-            formElements.ocrStatus.className = 'ocr-status-error';
-            formElements.ocrStatus.textContent = result.error || "Verification failed.";
-            formElements.selectIdNextBtn.disabled = false;
-            formElements.selectIdNextBtn.textContent = "Retry Verification";
+        if (!result?.success) {
+            throw new Error(result.error || 'OCR processing failed');
         }
-    } catch (error) {
-        console.error("OCR Error:", error);
+
+        const data = result.data || {};
+        const meta = result.meta || {};
+        const hits = meta.hits_map?.[formElements.idType.value] || 0;
+        const fieldsCount = meta.fields_count ?? Object.values(data).filter(v => !!v?.trim()).length;
+
+        // Basic quality gate: must match type and extract reasonable data
+        if (hits < 1 && fieldsCount < 2) {
+            formElements.ocrStatus.className = 'ocr-status-error';
+            formElements.ocrStatus.textContent = `Selected ID type (${formElements.idType.value}) not recognized. Try another document or proceed manually.`;
+            formElements.selectIdNextBtn.textContent = "Retry Verification";
+            formElements.selectIdNextBtn.onclick = () => location.reload();
+            return;
+        }
+
+        // Auto-fill personal details from OCR
+        formElements.firstName.value = data.firstName || '';
+        formElements.middleName.value = data.middleName || '';
+        formElements.lastName.value = data.lastName || '';
+        formElements.address.value = data.address || '';
+
+        lastOcrData = data;
+        lastOcrMeta = meta;
+
+        // Success UI
+        const detected = meta.detected_type || 'Document';
+        formElements.ocrStatus.className = 'ocr-status-success';
+        formElements.ocrStatus.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa fa-check-circle"></i>
+                <span>Verified: <strong>${detected}</strong></span>
+            </div>
+        `;
+
+        // Enable next step
+        formElements.selectIdNextBtn.disabled = false;
+        formElements.selectIdNextBtn.textContent = "Next: Personal Details";
+        formElements.selectIdNextBtn.onclick = () => {
+            switchPanel('personalDetails');
+            resetVerifyButton(); // restore original behavior if user goes back
+        };
+
+    } catch (err) {
+        console.error("OCR process failed:", err);
         formElements.ocrStatus.className = 'ocr-status-error';
-        formElements.ocrStatus.textContent = "Server offline. You can proceed manually.";
+        formElements.ocrStatus.textContent = err.message.includes('offline')
+            ? "Server unavailable. You can proceed manually."
+            : "Verification failed. Try again or proceed manually.";
+
         formElements.selectIdNextBtn.disabled = false;
         formElements.selectIdNextBtn.textContent = "Proceed Manually";
         formElements.selectIdNextBtn.onclick = () => switchPanel('personalDetails');
     }
-
-        // Safe log: only print if backend responded
-        if (typeof result !== 'undefined' && result !== null) {
-            console.log("Full Backend Response:", result); // Look at 'meta' and 'data' here
-        }
 }
 
-// Helper to reset the button back to OCR mode if the user changes their selection
+/** Resets "Next" button back to OCR trigger mode */
 function resetVerifyButton() {
     formElements.selectIdNextBtn.textContent = "Verify ID";
     formElements.selectIdNextBtn.onclick = processOCR;
 }
 
-// =========================
-// 8. Navigation Buttons
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 8. Navigation Button Handlers
+// ───────────────────────────────────────────────────────────────
 function setupNavigationButtons() {
-    formElements.selectIdBackBtn?.addEventListener('click', e => { e.preventDefault(); window.location.href = '/Banwa/client/pages/auth/signin.php'; });
+    // Back to login
+    formElements.selectIdBackBtn?.addEventListener('click', e => {
+        e.preventDefault();
+        window.location.href = '/Banwa/client/pages/auth/signin.php';
+    });
+
+    // Back one step
     formElements.personalDetailsBackBtn?.addEventListener('click', () => switchPanel('selectId'));
     formElements.createAccBackBtn?.addEventListener('click', () => switchPanel('personalDetails'));
 
-    formElements.selectIdNextBtn?.addEventListener('click', async () => {
-        const stepFields = [formElements.idType, formElements.idFile];
-        if (!validateStep(stepFields)) return;
-        // Only run verification here. Do not auto-navigate; `processOCR` will enable
-        // and set the button's onclick to proceed when verification succeeds.
-        await processOCR();
+    // Verify ID → triggers OCR
+    formElements.selectIdNextBtn?.addEventListener('click', () => {
+        if (validateStep([formElements.idType, formElements.idFile])) {
+            processOCR();
+        }
     });
 
+    // Personal details → create account
     formElements.personalDetailsNextBtn?.addEventListener('click', () => {
-        const stepFields = [
+        const fields = [
             formElements.firstName,
             formElements.lastName,
             formElements.sex,
             formElements.contactNo,
             formElements.address
         ];
-        if (validateStep(stepFields)) switchPanel('createAcc');
+        if (validateStep(fields)) switchPanel('createAcc');
     });
-
 }
 
-// =========================
-// 9. Account Submission & Resend
-// =========================
-let allData = null;
+// ───────────────────────────────────────────────────────────────
+// 9. Final Account Creation + Email Resend Logic
+// ───────────────────────────────────────────────────────────────
+let signupData = null;
 let resendCount = 0;
 const MAX_RESENDS = 3;
 
 function startResendCooldown() {
-    const submitBtn = document.getElementById('createAccSubmitBtn');
-    if (submitBtn) submitBtn.style.display = 'none';
+    formElements.createAccSubmitBtn?.style.setProperty('display', 'none');
+
     const btn = formElements.resendBtn;
     btn.disabled = true;
-    let countdown = 90;
-    btn.textContent = `Resend available in ${countdown}s`;
-    const interval = setInterval(() => {
-        countdown--;
-        btn.textContent = `Resend available in ${countdown}s`;
-        if (countdown <= 0) {
+    let seconds = 90;
+
+    const tick = () => {
+        btn.textContent = `Resend available in ${seconds}s`;
+        if (--seconds <= 0) {
             clearInterval(interval);
-            if (resendCount < MAX_RESENDS) { btn.disabled = false; btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`; }
-            else btn.remove();
+            if (resendCount < MAX_RESENDS) {
+                btn.disabled = false;
+                btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
+            } else {
+                btn.remove();
+            }
         }
-    }, 1000);
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
 }
 
 async function resendVerificationEmail() {
-    if (!allData || resendCount >= MAX_RESENDS) return;
+    if (!signupData || resendCount >= MAX_RESENDS) return;
+
     formElements.resendBtn.disabled = true;
+
     const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: allData.email,
+        email: signupData.email,
         options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
     });
+
     if (error) {
         formElements.formMessage.style.color = 'red';
-        formElements.formMessage.textContent = 'Failed to resend verification email. Please try again later.';
+        formElements.formMessage.textContent = 'Failed to resend email. Try again later.';
         formElements.resendBtn.disabled = false;
         return;
     }
+
     resendCount++;
     formElements.formMessage.style.color = 'green';
-    formElements.formMessage.textContent = `Verification email resent (${resendCount}/${MAX_RESENDS}). Please check your inbox and spam folder.`;
+    formElements.formMessage.textContent = `Email resent (${resendCount}/${MAX_RESENDS}). Check inbox/spam.`;
     startResendCooldown();
 }
 
-formElements.resendBtn.addEventListener('click', resendVerificationEmail);
-
 function setupAccountSubmission() {
     formElements.formMessage.style.display = 'none';
+    formElements.resendBtn.addEventListener('click', resendVerificationEmail);
+
     formElements.createAccForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        formElements.formMessage.textContent = '';
-        const stepFields = [formElements.password, formElements.reTypePassword, formElements.email, formElements.agreeCheckBox];
-        if (!validateStep(stepFields) ||
-            !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
+
+        const required = [formElements.email, formElements.password, formElements.reTypePassword, formElements.agreeCheckBox];
+        if (!validateStep(required) || !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
             return;
         }
-        // Confirm with modal instead of native confirm()
-        const confirmed = await showSubmitConfirmation();
-        if (!confirmed) return;
 
-        allData = {
-            fullname: `${formElements.firstName.value} ${formElements.middleName.value} ${formElements.lastName.value} ${formElements.suffix.value}`.trim(),
+        if (!(await showSubmitConfirmation())) return;
+
+        signupData = {
+            fullname: [formElements.firstName.value, formElements.middleName.value, formElements.lastName.value, formElements.suffix.value]
+                .filter(Boolean).join(' ').trim(),
             sex: formElements.sex.value,
             contactNo: formElements.contactNo.value,
             address: formElements.address.value,
             idType: formElements.idType.value,
-            email: formElements.email.value,
+            email: formElements.email.value.trim(),
             password: formElements.password.value,
-            agreeCheckBox: formElements.agreeCheckBox.checked
-            ,
-            // attach OCR metadata and extracted fields (if available)
+            agreeCheckBox: formElements.agreeCheckBox.checked,
             ocrMeta: lastOcrMeta,
             ocrData: lastOcrData
         };
 
         try {
-            const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+            // Prevent duplicate signups
+            const checkRes = await fetch('/Banwa/server/api/shared/check_email.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: allData.email })
+                body: JSON.stringify({ email: signupData.email })
             });
-            const dbCheck = await respCheck.json();
-            if (dbCheck.exists) {
+            const { exists } = await checkRes.json();
+
+            if (exists) {
                 formElements.formMessage.style.display = 'block';
                 formElements.formMessage.style.color = 'red';
-                formElements.formMessage.textContent = 'An account with this email already exists.';
+                formElements.formMessage.textContent = 'Email already registered.';
                 return;
             }
 
+            // Supabase signup
             const { data, error } = await supabase.auth.signUp({
-                email: allData.email,
-                password: allData.password,
-                options: { data: allData, emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+                email: signupData.email,
+                password: signupData.password,
+                options: {
+                    data: signupData,
+                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+                }
             });
 
-            if (error) {
-                formElements.formMessage.style.display = 'block';
-                formElements.formMessage.style.color = 'red';
-                if (error.message.toLowerCase().includes('already')) {
-                    formElements.formMessage.textContent = 'An account with this email already exists.';
-                } else {
-                    formElements.formMessage.textContent = 'An error occurred: ' + error.message;
-                }
-                return;
-            }
+            if (error) throw error;
 
+            // Success feedback
             formElements.formMessage.style.display = 'block';
             formElements.formMessage.style.color = 'green';
             formElements.formMessage.innerHTML = `
                 Account created successfully.<br>
-                Please verify your email to activate your account.<br><br>
-                If you don’t receive the email within 1–2 minutes:
-                <br>
-                1. Make sure the email address is correct<br>
-                2. Check your Spam / Promotions folder<br>
-                3. You can resend the verification email
+                Please check your email to verify your account.<br><br>
+                <strong>Tips if email is missing:</strong><br>
+                • Confirm email address is correct<br>
+                • Check spam / promotions folder<br>
+                • You can resend the email below
             `;
 
             formElements.resendBtn.classList.add('show');
             startResendCooldown();
 
-            // Fire-and-forget: send OCR meta to server-side verifier to apply DB updates
+            // Fire-and-forget: send OCR data to backend for verification & DB update
             (async () => {
                 try {
-                    const supabaseUserId = data?.user?.id || data?.user?.user_metadata?.id || null;
-                    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                    const userId = data?.user?.id;
+                    if (!userId) return;
+
+                    const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
                     const payload = {
-                        supabase_user_id: supabaseUserId,
-                        email: allData.email,
-                        ocrMeta: allData.ocrMeta,
-                        ocrData: allData.ocrData,
-                        debug: isLocal // request debug info only on local dev
+                        supabase_user_id: userId,
+                        email: signupData.email,
+                        ocrMeta: signupData.ocrMeta,
+                        ocrData: signupData.ocrData,
+                        debug: isLocal
                     };
+
                     const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
+
                     const verifyResult = await resp.json();
-                    console.log('verify_ocr result', verifyResult);
-                    if (verifyResult.debug_info) console.error('verify_ocr debug:', verifyResult.debug_info);
-                    if (verifyResult.success && verifyResult.verified) {
-                        formElements.formMessage.innerHTML += '<br><small>Identity verification applied automatically.</small>';
-                    } else if (verifyResult.success && !verifyResult.verified) {
-                        formElements.formMessage.innerHTML += `<br><small>OCR verification recorded (issues: ${verifyResult.reasons.join(', ') || 'none'}).</small>`;
+                    console.log('OCR verification result:', verifyResult);
+
+                    if (verifyResult.success) {
+                        let msg = '<br><small>Identity verification processed.';
+                        if (verifyResult.verified) msg += ' Verified automatically.</small>';
+                        else if (verifyResult.reasons?.length) msg += ` Issues: ${verifyResult.reasons.join(', ')}</small>`;
+                        formElements.formMessage.innerHTML += msg;
                     }
                 } catch (err) {
-                    console.warn('verify_ocr call failed', err);
+                    console.warn('OCR post-verification failed', err);
                 }
             })();
 
         } catch (err) {
             formElements.formMessage.style.display = 'block';
             formElements.formMessage.style.color = 'red';
-            formElements.formMessage.textContent = 'An error occurred. ' + (err.message || err);
+            formElements.formMessage.textContent = err.message?.includes('already')
+                ? 'Account with this email already exists.'
+                : 'An error occurred during registration.';
+            console.error('Signup failed:', err);
         }
     });
 }
 
-// =========================
-// Submit Confirmation Modal
-// =========================
-// Use modal provided in PHP template. This function shows it and returns a Promise.
+// ───────────────────────────────────────────────────────────────
+// 10. Custom Submit Confirmation Modal
+// ───────────────────────────────────────────────────────────────
+/**
+ * Shows custom confirmation modal (or falls back to native confirm)
+ * @returns {Promise<boolean>}
+ */
 function showSubmitConfirmation() {
     const modal = document.getElementById('submitConfirmModal');
     if (!modal) {
-        // Fallback to native confirm if template missing
         return Promise.resolve(confirm('Are you sure you want to submit this application?'));
     }
 
@@ -551,60 +627,65 @@ function showSubmitConfirmation() {
     const btnCancel = modal.querySelector('.btn-cancel');
     const btnConfirm = modal.querySelector('.btn-confirm');
 
-    let resolvePromise;
-    const p = new Promise(res => { resolvePromise = res; });
-
-    // Show modal (remove hidden class)
     modal.style.display = 'block';
     modal.setAttribute('aria-hidden', 'false');
 
-    // Fade-in handled by CSS animation on modal-box; set focus
-    const firstFocusable = btnCancel || btnConfirm;
-    firstFocusable && firstFocusable.focus();
+    return new Promise(resolve => {
+        const close = (value) => {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            document.removeEventListener('keydown', trapFocus);
+            backdrop.removeEventListener('click', backdropClick);
+            btnCancel.removeEventListener('click', onCancel);
+            btnConfirm.removeEventListener('click', onConfirm);
+            resolve(value);
+        };
 
-    // Focus trap
-    function handleKey(e) {
-        if (e.key === 'Escape') {
-            close(false);
-        } else if (e.key === 'Tab') {
-            const focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled && el.offsetParent !== null);
-            if (focusable.length === 0) return;
-            const idx = focusable.indexOf(document.activeElement);
+        const onCancel = () => close(false);
+        const onConfirm = () => close(true);
+        const backdropClick = e => { if (e.target === backdrop) close(false); };
+
+        function trapFocus(e) {
+            if (e.key === 'Escape') return close(false);
+            if (e.key !== 'Tab') return;
+
+            const focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                .filter(el => el.offsetParent !== null && !el.disabled);
+
+            if (!focusable.length) return;
+
+            const current = document.activeElement;
+            const index = focusable.indexOf(current);
+
             if (e.shiftKey) {
-                if (idx === 0) { focusable[focusable.length - 1].focus(); e.preventDefault(); }
+                if (index <= 0) {
+                    focusable[focusable.length - 1].focus();
+                    e.preventDefault();
+                }
             } else {
-                if (idx === focusable.length - 1) { focusable[0].focus(); e.preventDefault(); }
+                if (index >= focusable.length - 1 || index === -1) {
+                    focusable[0].focus();
+                    e.preventDefault();
+                }
             }
         }
-    }
 
-    function close(val) {
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
-        document.removeEventListener('keydown', handleKey);
-        backdrop.removeEventListener('click', backdropClick);
-        btnCancel.removeEventListener('click', onCancel);
-        btnConfirm.removeEventListener('click', onConfirm);
-        resolvePromise(val);
-    }
+        btnCancel.addEventListener('click', onCancel);
+        btnConfirm.addEventListener('click', onConfirm);
+        backdrop.addEventListener('click', backdropClick);
+        document.addEventListener('keydown', trapFocus);
 
-    function onCancel() { close(false); }
-    function onConfirm() { close(true); }
-    function backdropClick(e) { if (e.target === backdrop) close(false); }
-
-    document.addEventListener('keydown', handleKey);
-    backdrop.addEventListener('click', backdropClick);
-    btnCancel.addEventListener('click', onCancel);
-    btnConfirm.addEventListener('click', onConfirm);
-
-    return p;
+        (btnCancel || btnConfirm)?.focus();
+    });
 }
 
-// =========================
-// 10. Initialize
-// =========================
+// ───────────────────────────────────────────────────────────────
+// 11. Initialization
+// ───────────────────────────────────────────────────────────────
 function initialize() {
+    // Start on first step
     switchPanel('selectId');
+
     setupRealtimeValidation();
     setupNavigationButtons();
     setupAccountSubmission();

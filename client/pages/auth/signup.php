@@ -97,12 +97,16 @@
                             </div>
 
                             <div class="buttons-container">
-                                <button type="button" id="selectIdBackBtn">Back</button>
-                                <button type="button" id="selectIdNextBtn">Next</button>
+                            <p class="login-prompt">
+                                Already have an account? 
+                                <a href="./signin.php" class="login-link">Login Now</a>
+                            </p>
+                            
+                            <button type="button" id="selectIdNextBtn">Next</button>
                             </div>
                         </form>
                     </div>
-
+<!-- <button type="button" id="selectIdNextBtn">Next</button> -->
                     <div class="personal-details-container hidden" id="personalDetails">
                         <form class="form" id="personalDetailsForm">
                             <h5>Personal Information</h5>
