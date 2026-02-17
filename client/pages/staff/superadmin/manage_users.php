@@ -50,14 +50,26 @@ if ($_SESSION['role_id'] != 2) {
             <ul class="list">
                 <li class="items">
                     <a class="links" href="../superadmin/dashboard.php">
-                        <img src="../../../img/home-icon.svg" alt="Home" class="icon">
+                        <img src="../../../img/home-icon.svg" alt="dashboard" class="icon">
                         <p class="links-name">Dashboard</p>
                     </a>
                 </li>
                 <li class="items">
                     <a class="links" href="../superadmin/manage_users.php">
-                        <img src="../../../img/users-icon.svg" alt="Users" class="icon">
+                        <img src="../../../img/users-icon.svg" alt="manage users" class="icon">
                         <p class="links-name">Manage Users</p>
+                    </a>
+                </li>
+                <li class="items">
+                    <a class="links" href="../superadmin/audits.php">
+                        <img src="../../../img/file-search-corner-icon.svg" alt="audit" class="icon">
+                        <p class="links-name">Audits</p>
+                    </a>
+                </li>
+                <li class="items">
+                    <a class="links" href="../superadmin/archives.php">
+                        <img src="../../../img/archive-icon.svg" alt="audit" class="icon">
+                        <p class="links-name">Audits</p>
                     </a>
                 </li>
             </ul>
@@ -67,12 +79,6 @@ if ($_SESSION['role_id'] != 2) {
                     <a class="links" id="signoutBtn" href="#">
                         <img src="../../../img/log-out-icon.svg" alt="Logout" class="icon">
                         <p class="links-name">Logout</p>
-                    </a>
-                </li>
-                <li class="items">
-                    <a class="links" href="../superadmin/dashboard.php">
-                        <img src="../../../img/home-icon.svg" alt="Home" class="icon">
-                        <p class="links-name" id="userStatus"></p>
                     </a>
                 </li>
             </ul>
@@ -223,6 +229,7 @@ if ($_SESSION['role_id'] != 2) {
 
     <script src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/manage_users.js"></script>
+    <script src="../../../scripts/archives.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
