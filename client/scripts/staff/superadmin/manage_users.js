@@ -37,10 +37,13 @@ setInterval(() => {
 
     const finish = () => { isRefreshing = false; };
 
-    fetchUsers().finally(finish); // call your existing fetch function
+    fetchUsers().finally(finish);
 
 }, 5000);
 
+/**
+ * Fetches all users and populates the table
+ */
 async function fetchUsers() {
     const tbody = document.getElementById('usersTableBody');
 
@@ -58,7 +61,6 @@ async function fetchUsers() {
             return;
         }
 
-        // Filter out archived users
         const activeUsers = users.filter(user => !user.is_archived);
 
         if (activeUsers.length === 0) {
@@ -67,12 +69,18 @@ async function fetchUsers() {
         }
 
         activeUsers.forEach(user => {
+            const isSuspended = user.status === 'suspended';
+
+            const suspendButton = isSuspended
+                ? `<button class="buttons unsuspend-btn" data-id="${user.user_id}">Unsuspend</button>`
+                : `<button class="buttons suspend-btn" data-id="${user.user_id}">Suspend</button>`;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${user.user_id}</td>
                 <td>${user.full_name}</td>
                 <td>${user.email}</td>
-                <td>lorem ipsum</td>
+                <td>${user.status}</td>
                 <td>${user.role_id}</td>
                 <td>
                     <div class="action-buttons">
@@ -88,7 +96,7 @@ async function fetchUsers() {
                                 data-id="${user.user_id}">
                             Archive
                         </button>
-                        <button class="buttons suspend-btn">Suspend</button>
+                        ${suspendButton}
                     </div>
                 </td>
             `;
@@ -104,6 +112,149 @@ async function fetchUsers() {
 document.addEventListener('DOMContentLoaded', fetchUsers);
 
 /**
+ * Suspends a user account after confirmation
+ * @param {string} userId - ID of the user to suspend
+ */
+async function suspendUser(userId) {
+    const confirmResult = await Swal.fire({
+        title: 'Suspend this user?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, suspend',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+        const response = await fetch("/Banwa/server/api/staff/superadmin/suspend_user.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user_id: userId })
+        });
+        if (!response.ok) throw new Error("Request failed");
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || "Failed to suspend");
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'User suspended',
+            timer: 2000,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+
+        fetchUsers();
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+    }
+}
+
+/**
+ * Unsuspends a user account after confirmation
+ * @param {string} userId - ID of the user to unsuspend
+ */
+async function unsuspendUser(userId) {
+    const confirmResult = await Swal.fire({
+        title: 'Unsuspend this user?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, unsuspend',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+        const response = await fetch("/Banwa/server/api/staff/superadmin/unsuspend_user.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user_id: userId })
+        });
+        if (!response.ok) throw new Error("Request failed");
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || "Failed to unsuspend");
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'User unsuspended',
+            timer: 2000,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+
+        fetchUsers();
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+    }
+}
+
+
+/**
+ * Delegates click events for suspend/unsuspend buttons in user table
+ * @param {Event} e - Click event
+ */
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('suspend-btn')) suspendUser(e.target.dataset.id);
+    if (e.target.classList.contains('unsuspend-btn')) unsuspendUser(e.target.dataset.id);
+});
+
+
+/**
  * Handles edit button click to populate edit form
  * @param {Event} e - Click event
  */
@@ -115,7 +266,6 @@ document.addEventListener('click', (e) => {
     document.getElementById('editModal').classList.add('active');
 
     const form = document.getElementById('editForm');
-
     form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
     form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
     form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
@@ -284,7 +434,6 @@ function realtimeValidation(config) {
 
     const password = config.find(c => c.el.name === 'password')?.el;
     const retype = config.find(c => c.el.name === 'retypePassword')?.el;
-
     if (password && retype) {
         retype.addEventListener('blur', () => validator.matchPassword(password, retype));
         retype.addEventListener('input', () => validator.clear(retype));
@@ -304,15 +453,11 @@ function initializeForm(form, submitCallback) {
         e.preventDefault();
 
         const fields = config.map(c => c.el);
-
         let valid = validateStep(fields, config);
-
         const password = config.find(c => c.el.name === 'password')?.el;
         const retype = config.find(c => c.el.name === 'retypePassword')?.el;
         if (password && retype) valid = valid && validator.matchPassword(password, retype);
-
         if (!valid) return;
-
         if (submitCallback) await submitCallback(form, fields);
     });
 }
@@ -357,6 +502,7 @@ async function handleCreateFormSubmit(form) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
+
         const dbCheck = await respCheck.json();
         if (dbCheck.exists) {
             formMessage.style.display = 'block';
@@ -442,7 +588,6 @@ async function handleUpdateFormSubmit(form) {
         });
 
         const result = await resp.json();
-
         if (!resp.ok || result.error) {
             throw new Error(result.error || 'Failed to update user');
         }
