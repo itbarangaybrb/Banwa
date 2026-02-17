@@ -29,7 +29,19 @@ document.addEventListener('click', (e) => {
  * Fetches all users and populates the table
  * Does not autofill form fields
  */
-document.addEventListener('DOMContentLoaded', async () => {
+let isRefreshing = false;
+setInterval(() => {
+    if (isRefreshing) return;
+
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    fetchUsers().finally(finish); // call your existing fetch function
+
+}, 5000);
+
+async function fetchUsers() {
     const tbody = document.getElementById('usersTableBody');
 
     try {
@@ -42,11 +54,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         tbody.innerHTML = '';
 
         if (!Array.isArray(users) || users.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5">No users found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No users found</td></tr>`;
             return;
         }
 
-        users.forEach(user => {
+        // Filter out archived users
+        const activeUsers = users.filter(user => !user.is_archived);
+
+        if (activeUsers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No users found</td></tr>`;
+            return;
+        }
+
+        activeUsers.forEach(user => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${user.user_id}</td>
@@ -64,7 +84,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 data-role="${user.role_id}">
                             Edit
                         </button>
-                        <button class="buttons delete-btn">Archive</button>
+                        <button class="buttons delete-btn"
+                                data-id="${user.user_id}">
+                            Archive
+                        </button>
                         <button class="buttons suspend-btn">Suspend</button>
                     </div>
                 </td>
@@ -74,9 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Failed to fetch users:', err);
-        tbody.innerHTML = `<tr><td colspan="5">Error loading users</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading users</td></tr>`;
     }
-});
+};
+
+document.addEventListener('DOMContentLoaded', fetchUsers);
 
 /**
  * Handles edit button click to populate edit form
@@ -449,54 +474,6 @@ async function handleUpdateFormSubmit(form) {
 }
 
 /**
- * Initializes table search filtering
- * Filters by ID, name, email, and role
- */
-function handleSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const tbody = document.getElementById('usersTableBody');
-
-    if (!searchInput || !tbody) return;
-
-    searchInput.addEventListener('change', () => {
-        const keyword = searchInput.value.toLowerCase().trim();
-        const rows = tbody.querySelectorAll('tr');
-        let visibleCount = 0;
-
-        // Remove existing "No users found" row
-        const existingNoUsersRow = tbody.querySelector('.no-users-row');
-        if (existingNoUsersRow) {
-            tbody.removeChild(existingNoUsersRow);
-        }
-
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length === 0) return; // skip non-data rows
-
-            const rowText = Array.from(cells)
-                .map(td => td.textContent.toLowerCase())
-                .join(' ');
-
-            if (rowText.includes(keyword)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // If no rows visible, show "No users found"
-        if (visibleCount === 0) {
-            const tr = document.createElement('tr');
-            tr.classList.add('no-users-row');
-            tr.innerHTML = `<td colspan="6" style="text-align:center;">No users found</td>`;
-            tbody.appendChild(tr);
-        }
-    });
-}
-
-
-/**
  * Automatically initializes create and edit forms and table search on page load
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -505,11 +482,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const editForm = document.getElementById('editForm');
     if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
-
-    handleSearch();
-
-    const exportBtn = document.querySelector('[data-modal="exportUsers"]');
-    exportBtn.addEventListener('click', () => {
-        exportTableAsPDF('usersTable', 'users_export.pdf');
-    });
 });

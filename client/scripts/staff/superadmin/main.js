@@ -85,3 +85,121 @@ function exportTableAsPDF(tableId, filename) {
 
     doc.save(filename);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const exportBtn = document.querySelector('[data-modal="exportUsers"]');
+    exportBtn.addEventListener('click', () => {
+        exportTableAsPDF('usersTable', 'users_export.pdf');
+    });
+});
+
+let isRefreshing = false;
+setInterval(() => {
+    if (isRefreshing) return;
+
+    isRefreshing = true;
+
+    const finish = () => { isRefreshing = false; };
+
+    fetchAuditLogs().finally(finish); // call your existing fetch function
+
+}, 10000);
+
+/**
+ * Fetch audit logs from the server and render them into the audit table
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response');
+            return;
+        }
+
+        console.log('Audit Logs:', logs);
+
+        // Example: render to table
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>${log.id}</td>
+                <td>${log.action}</td>
+                <td>${log.full_name}</td>
+                <td>${log.table_name}</td>
+                <td>${log.record_id}</td>
+                <td>${log.role_id}</td>
+                <td>${log.created_at}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', fetchAuditLogs());
+
+/**
+ * Initializes table search filtering
+ * Filters by ID, name, email, and role
+ */
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const tbody = document.getElementById('usersTableBody') || document.getElementById('auditTableBody');
+
+    if (!searchInput || !tbody) return;
+
+    searchInput.addEventListener('change', () => {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+
+        // Remove existing "No users found" row
+        const existingNoUsersRow = tbody.querySelector('.no-users-row');
+        if (existingNoUsersRow) {
+            tbody.removeChild(existingNoUsersRow);
+        }
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 0) return; // skip non-data rows
+
+            const rowText = Array.from(cells)
+                .map(td => td.textContent.toLowerCase())
+                .join(' ');
+
+            if (rowText.includes(keyword)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // If no rows visible, show "No users found"
+        if (visibleCount === 0) {
+            const tr = document.createElement('tr');
+            tr.classList.add('no-users-row');
+            tr.innerHTML = `<td colspan="6" style="text-align:center;">No users found</td>`;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', handleSearch());

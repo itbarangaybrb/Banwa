@@ -1141,6 +1141,7 @@ function getConstructionSDSSReport() {
 /**
  * Evaluate a single construction site against SDSS rules
  */
+
 function evaluateConstructionSDSS($construction, $pdo) {
     $lat = $construction['latitude'];
     $lng = $construction['longitude'];
@@ -1158,13 +1159,11 @@ function evaluateConstructionSDSS($construction, $pdo) {
     elseif (strpos($typeOfWork, 'repair') !== false) $projectType = 'repair';
     elseif (strpos($typeOfWork, 'demolition') !== false) $projectType = 'demolition';
     
-    // Minimum workers required
-    $minWorkersRequired = [
-        'major' => 10,
-        'minor' => 3,
-        'repair' => 2,
-        'demolition' => 5
-    ];
+    // UPDATED: Get nature of activity
+    $natureOfActivity = strtolower($construction['nature_of_activity'] ?? '');
+    
+    // UPDATED: Get minimum workers based on BOTH type_of_work AND nature_of_activity
+    $minWorkersRequired = getMinimumWorkersForConstruction($projectType, $natureOfActivity);
     
     $constructionData = [
         'construction' => $construction,
@@ -1226,23 +1225,24 @@ function evaluateConstructionSDSS($construction, $pdo) {
         $maxSeverity = $maxSeverity ?? 'HIGH';
     }
     
-    // Rule 3: Worker adequacy
+    // Rule 3: Worker adequacy (UPDATED to consider nature_of_activity)
     $workers = intval($construction['number_of_workers'] ?? 0);
-    $minRequired = $minWorkersRequired[$projectType] ?? 3;
     
-    if ($workers < $minRequired) {
+    if ($workers < $minWorkersRequired['minimum']) {
         $constructionData['warnings'][] = [
             'type' => 'Inadequate Workforce',
-            'description' => "{$projectType} construction requires minimum {$minRequired} workers (current: {$workers})",
-            'severity' => 'MEDIUM',
+            'description' => "{$projectType} construction with '{$natureOfActivity}' activity requires minimum {$minWorkersRequired['minimum']} workers (current: {$workers})",
+            'severity' => $minWorkersRequired['severity'],
+            'reason' => $minWorkersRequired['reason'],
             'actions' => [
-                "Increase workforce to minimum {$minRequired} workers",
+                "Increase workforce to minimum {$minWorkersRequired['minimum']} workers",
                 'Ensure proper supervision and safety coverage',
                 'Verify all workers have safety training',
-                'Implement buddy system for safety'
+                'Implement buddy system for safety',
+                $minWorkersRequired['additional_requirement']
             ]
         ];
-        $maxSeverity = $maxSeverity ?? 'MEDIUM';
+        $maxSeverity = $maxSeverity ?? $minWorkersRequired['severity'];
     }
     
     // Return only if there are warnings
@@ -1254,6 +1254,85 @@ function evaluateConstructionSDSS($construction, $pdo) {
     
     return $constructionData;
 }
+
+/**
+ * NEW FUNCTION: Get minimum workers based on type of work AND nature of activity
+ */
+function getMinimumWorkersForConstruction($projectType, $natureOfActivity) {
+    $baseMinimum = [
+        'major' => 10,
+        'minor' => 3,
+        'repair' => 2,
+        'demolition' => 5
+    ];
+    
+    $minimum = $baseMinimum[$projectType] ?? 3;
+    $severity = 'MEDIUM';
+    $reason = "Standard requirement for {$projectType} construction";
+    $additionalRequirement = "Follow standard construction safety protocols";
+    
+    // Adjust based on nature of activity
+    if (strpos($natureOfActivity, 'excavation') !== false) {
+        $minimum = max($minimum, 4);
+        $severity = 'HIGH';
+        $reason = "Excavation work requires additional workers for cave-in safety monitoring";
+        $additionalRequirement = "Assign dedicated safety spotter for excavation work";
+        
+    } elseif (strpos($natureOfActivity, 'structural') !== false || 
+              strpos($natureOfActivity, 'foundation') !== false) {
+        $minimum = max($minimum, 5);
+        $severity = 'HIGH';
+        $reason = "Structural work requires adequate crew for load bearing and stability";
+        $additionalRequirement = "Ensure structural engineer on-site supervision";
+        
+    } elseif (strpos($natureOfActivity, 'roofing') !== false || 
+              strpos($natureOfActivity, 'height') !== false) {
+        $minimum = max($minimum, 3);
+        $severity = 'HIGH';
+        $reason = "Work at height requires safety spotters and emergency response team";
+        $additionalRequirement = "Implement fall protection systems and assign safety monitor";
+        
+    } elseif (strpos($natureOfActivity, 'demolition') !== false) {
+        $minimum = max($minimum, 6);
+        $severity = 'CRITICAL';
+        $reason = "Demolition work is high-risk and requires adequate crew for safe controlled collapse";
+        $additionalRequirement = "Establish safety perimeter and assign evacuation coordinator";
+        
+    } elseif (strpos($natureOfActivity, 'electrical') !== false || 
+              strpos($natureOfActivity, 'plumbing') !== false ||
+              strpos($natureOfActivity, 'mechanical') !== false) {
+        $minimum = max($minimum, 2);
+        $severity = 'MEDIUM';
+        $reason = "Specialized work requires licensed professionals with assistant";
+        $additionalRequirement = "Verify workers have appropriate licenses and certifications";
+        
+    } elseif (strpos($natureOfActivity, 'painting') !== false || 
+              strpos($natureOfActivity, 'finishing') !== false) {
+        $minimum = max($minimum - 1, 2);
+        $severity = 'MEDIUM';
+        $reason = "Finishing work standard crew size";
+        $additionalRequirement = "Ensure adequate ventilation for paint/chemical fumes";
+        
+    } elseif (strpos($natureOfActivity, 'installation') !== false) {
+        $minimum = max($minimum, 2);
+        $severity = 'MEDIUM';
+        $reason = "Installation requires minimum team for equipment handling";
+        $additionalRequirement = "Follow manufacturer installation guidelines";
+    }
+    
+    // For major projects, always require minimum 10 workers
+    if ($projectType === 'major') {
+        $minimum = max($minimum, 10);
+    }
+    
+    return [
+        'minimum' => $minimum,
+        'severity' => $severity,
+        'reason' => $reason,
+        'additional_requirement' => $additionalRequirement
+    ];
+}
+
 
 /**
  * Get distance from point to fault line
@@ -1604,7 +1683,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     // ==================== COMBINED FUNCTIONS ====================
     
-    // Get all markers (combined)
+    
+    // Get all markers (combined) - FIXED TO RETURN COMPLETE DATA
     if ($_POST['action'] === 'get_all_markers') {
         $allMarkers = [];
         
@@ -1612,54 +1692,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $houses = getHousePolygons();
         foreach ($houses as $house) {
             if ($house['center_lat'] && $house['center_lng']) {
-                $allMarkers[] = [
-                    'id' => $house['house_id'],
-                    'type' => 'household',
-                    'name' => $house['address'] ?: "House #{$house['house_id']}",
-                    'address' => $house['address'],
-                    'latitude' => $house['center_lat'],
-                    'longitude' => $house['center_lng']
-                ];
+                $house['type'] = 'household';
+                $house['name'] = $house['address'] ?: "House #{$house['house_id']}";
+                $house['latitude'] = $house['center_lat'];
+                $house['longitude'] = $house['center_lng'];
+                $allMarkers[] = $house;
             }
         }
         
-        // Get businesses
+        // Get businesses - RETURN ALL FIELDS
         $businesses = getBusinessMarkers();
         foreach ($businesses as $business) {
-            $allMarkers[] = [
-                'id' => $business['id'],
-                'type' => 'business',
-                'name' => $business['business_name'],
-                'address' => $business['address_of_business'],
-                'latitude' => $business['latitude'],
-                'longitude' => $business['longitude']
-            ];
+            $business['type'] = 'business';
+            $business['name'] = $business['business_name'];
+            $business['address'] = $business['address_of_business'];
+            $allMarkers[] = $business;
         }
         
-        // Get construction
+        // Get construction - RETURN ALL FIELDS
         $constructions = getConstructionMarkers();
         foreach ($constructions as $construction) {
-            $allMarkers[] = [
-                'id' => $construction['id'],
-                'type' => 'construction',
-                'name' => $construction['nature_of_work'] ?? 'Construction Project',
-                'address' => $construction['construction_address'],
-                'latitude' => $construction['latitude'],
-                'longitude' => $construction['longitude']
-            ];
+            $construction['type'] = 'construction';
+            $construction['name'] = $construction['nature_of_work'] ?? 'Construction Project';
+            $construction['address'] = $construction['construction_address'];
+            $allMarkers[] = $construction;
         }
         
-        // Get utilities
+        // Get utilities - RETURN ALL FIELDS
         $utilities = getUtilitiesMarkers();
         foreach ($utilities as $utility) {
-            $allMarkers[] = [
-                'id' => $utility['id'],
-                'type' => 'utility',
-                'name' => $utility['nature_of_work'] ?? 'Utility Work',
-                'address' => $utility['address_of_utility'],
-                'latitude' => $utility['latitude'],
-                'longitude' => $utility['longitude']
-            ];
+            $utility['type'] = 'utility';
+            $utility['name'] = $utility['nature_of_work'] ?? 'Utility Work';
+            $utility['address'] = $utility['address_of_utility'];
+            $allMarkers[] = $utility;
         }
         
         echo json_encode(['success' => true, 'markers' => $allMarkers]);

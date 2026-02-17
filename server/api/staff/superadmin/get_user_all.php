@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../../configs/database.php';
 
 try {
-    $stmt = $pdo->query("SELECT user_id, full_name, email, role_id FROM users");
+    $stmt = $pdo->query("SELECT user_id, full_name, email, role_id, is_archived FROM users");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode($users);
