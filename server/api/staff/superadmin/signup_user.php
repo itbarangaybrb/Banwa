@@ -1,8 +1,19 @@
 <?php
+/**
+ * Includes database configuration and audit log functions.
+ * Sets response type to JSON.
+ */
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
 header('Content-Type: application/json');
 
+/**
+ * Creates a new user in the database.
+ * Validates required fields from input JSON.
+ * Begins a transaction, inserts the user, sets session variables for audit,
+ * writes an audit log, commits the transaction, and returns a success response.
+ * Rolls back the transaction and returns a 500 error if an exception occurs.
+ */
 try {
     $data = json_decode(file_get_contents("php://input"), true);
 
@@ -17,7 +28,6 @@ try {
 
     $pdo->beginTransaction();
 
-    // Insert user
     $stmt = $pdo->prepare("
         INSERT INTO users (supabase_user_id, email, full_name, role_id)
         VALUES (:uid, :email, :name, :role)
@@ -30,9 +40,7 @@ try {
         ':role' => $role_id
     ]);
 
-    // $userRecord = $stmt->fetch(PDO::FETCH_ASSOC);
     $recordId = $pdo->lastInsertId();
-    // $recordId = $userRecord['user_id'] ?? null;
 
     // Temporarily set session for audit
     if (session_status() === PHP_SESSION_NONE) session_start();
@@ -40,13 +48,12 @@ try {
     $_SESSION['role_id'] = $role_id;
     $_SESSION['full_name'] = $full_name;
 
-    // Write audit log
     writeAuditLog(
         $pdo,
         'CREATE',
         'users',
         $recordId,
-        null, // old data
+        null,
         [
             'supabase_user_id' => $supabase_user_id,
             'email' => $email,
