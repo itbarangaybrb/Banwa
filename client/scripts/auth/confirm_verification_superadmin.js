@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const user = data.session.user;
-        const supabaseUserId = user.id;
         const metadata = user.user_metadata;
 
         if (!user.email_confirmed_at) {
@@ -23,17 +22,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const payload = {
-            user_id: supabaseUserId,
+            supabase_user_id: user.id, // important for audit
             email: user.email,
-            fullname: metadata.fullname,
-            role_id: metadata.role
+            full_name: metadata.fullname,
+            role_id: parseInt(metadata.role, 10) || 1 // ensure number
         };
 
         const resp = await fetch("/Banwa/server/api/staff/superadmin/signup_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify(payload) // send the full payload
+            body: JSON.stringify(payload)
         });
 
         const result = await resp.json();

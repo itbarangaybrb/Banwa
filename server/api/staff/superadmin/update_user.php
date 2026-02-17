@@ -1,82 +1,92 @@
 <?php
+/**
+ * Includes database configuration and audit log functions.
+ * Sets response type to JSON and starts a session if none exists.
+ */
 require_once __DIR__ . '/../../../configs/database.php';
-
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
 header('Content-Type: application/json');
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+/**
+ * Checks if the user is authenticated by verifying the session role.
+ * Returns 401 Unauthorized if not authenticated.
+ */
+if (!isset($_SESSION['role_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
+/**
+ * Ensures the request method is POST.
+ * Returns 405 Method Not Allowed if a different HTTP method is used.
+ */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
+/**
+ * Updates the user's information in the database, updates the session, 
+ * writes an audit log, and returns a success response.
+ * Rolls back the transaction and returns a 500 error if a PDO exception occurs.
+ */
 $data = json_decode(file_get_contents("php://input"), true);
-
-if (!$data) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON input']);
-    exit;
-}
-
-$user_id  = $data['user_id'] ?? null;
-$fullName = trim($data['full_name'] ?? '');
-$email    = trim($data['email'] ?? '');
-$role_id  = $data['role_id'] ?? null;
-
-if (!$user_id || !$fullName || !$email || !$role_id) {
-    http_response_code(400);
-    echo json_encode(['error' => 'All fields are required']);
-    exit;
-}
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid email format']);
-    exit;
-}
+$user_id  = $data['user_id'];
+$fullName = trim($data['full_name']);
+$email    = trim($data['email']);
+$role_id  = $data['role_id'];
 
 try {
 
-    // Check duplicate email (except current user)
-    $checkStmt = $pdo->prepare(
-        "SELECT user_id FROM users WHERE email = :email AND user_id != :user_id"
-    );
-    $checkStmt->execute([
-        ':email' => $email,
-        ':user_id' => $user_id
-    ]);
+    $pdo->beginTransaction();
+    $oldStmt = $pdo->prepare("SELECT * FROM users WHERE user_id = :user_id");
+    $oldStmt->execute([':user_id' => $user_id]);
+    $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    if ($checkStmt->fetch()) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Email already in use']);
-        exit;
-    }
-
-    // Update user
-    $stmt = $pdo->prepare(
-        "UPDATE users 
-         SET full_name = :full_name,
-             email = :email,
-             role_id = :role_id
-         WHERE user_id = :user_id"
-    );
+    $stmt = $pdo->prepare("
+        UPDATE users 
+        SET full_name = :full_name,
+            email = :email,
+            role_id = :role_id
+        WHERE user_id = :user_id
+    ");
 
     $stmt->execute([
         ':full_name' => $fullName,
-        ':email' => $email,
-        ':role_id' => $role_id,
-        ':user_id' => $user_id
+        ':email'     => $email,
+        ':role_id'   => $role_id,
+        ':user_id'   => $user_id
     ]);
+
+    $newData = [
+        'full_name' => $fullName,
+        'email'     => $email,
+        'role_id'   => $role_id
+    ];
+
+    $_SESSION['full_name'] = $fullName;
+
+    writeAuditLog(
+        $pdo,
+        'UPDATE',
+        'users',
+        $user_id,
+        $oldData,
+        $newData
+    );
+
+    $pdo->commit();
 
     echo json_encode(['success' => true]);
-
 } catch (PDOException $e) {
+
+    $pdo->rollBack();
+
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Server error',
-        'details' => $e->getMessage() // remove in production
-    ]);
+    echo json_encode(['error' => 'Server error']);
 }
