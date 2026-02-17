@@ -83,6 +83,7 @@ if ($_SESSION['role_id'] != 2) {
     </main>
 
     <script type="module" src="../../../scripts/auth/signout.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
 </body>
 
 </html>

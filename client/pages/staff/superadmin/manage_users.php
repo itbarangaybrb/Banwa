@@ -15,8 +15,6 @@ if ($_SESSION['role_id'] != 2) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users</title>
 
-
-
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/manage_users.css">
 </head>

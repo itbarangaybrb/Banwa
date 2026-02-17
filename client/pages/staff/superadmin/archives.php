@@ -85,8 +85,6 @@ if ($_SESSION['role_id'] != 2) {
 
     <main class="main">
         <section class="sections">
-            <div class="divider"></div>
-
             <div class="row containers">
                 <div class="search-container">
                     <input type="text" id="searchInput" placeholder="Search users...">
@@ -121,7 +119,6 @@ if ($_SESSION['role_id'] != 2) {
                             <th>Actions</th>
                         </tr>
                     </thead>
-
                     <tbody id="archiveTableBody"></tbody>
                 </table>
             </div>
@@ -131,8 +128,8 @@ if ($_SESSION['role_id'] != 2) {
     <script src="../../../scripts/staff/superadmin/main.js"></script>
     <script src="../../../scripts/archives.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>

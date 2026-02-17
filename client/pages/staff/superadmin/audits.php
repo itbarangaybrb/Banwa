@@ -27,7 +27,7 @@ if ($_SESSION['role_id'] != 2) {
 
     <header class="header">
         <h1>
-            Audit
+            Audits
         </h1>
 
         <p id="userStatus"></p>
@@ -85,8 +85,6 @@ if ($_SESSION['role_id'] != 2) {
 
     <main class="main">
         <section class="sections">
-            <div class="divider"></div>
-
             <div class="row containers">
                 <div class="search-container">
                     <input type="text" id="searchInput" placeholder="Search users...">
@@ -106,7 +104,7 @@ if ($_SESSION['role_id'] != 2) {
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Actions</th>
+                            <th>Activity</th>
                             <th id="nameFilter">
                                 <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
@@ -116,7 +114,7 @@ if ($_SESSION['role_id'] != 2) {
                             <th>Table</th>
                             <th>Record ID</th>
                             <th>Role ID</th>
-                            <th>Create At</th>
+                            <th>Created At</th>
                         </tr>
                     </thead>
 
