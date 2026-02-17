@@ -195,22 +195,172 @@ const incidentIcon = L.divIcon({
     iconSize: [15, 15] 
 });
 
-// ==================== MODAL FUNCTIONS ====================
+// ==================== MODAL FUNCTIONS (SweetAlert2) ====================
 
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+// showModal and closeModal are kept as no-ops for backward compatibility
+// All detail views now use SweetAlert2 directly.
+function showModal(modalId) { /* replaced by showSwal detail calls */ }
+function closeModal(modalId = 'detail-modal') { Swal.close(); }
+
+// Badge colour helpers used by detail modals
+function getTypeBadgeStyle(type) {
+    const styles = {
+        construction: 'background:#ffc107;color:#333;',
+        business:     'background:#9C27B0;color:#fff;',
+        utility:      'background:#2196F3;color:#fff;',
+        household:    'background:#28a745;color:#fff;',
+        flood:        'background:#ff4444;color:#fff;'
+    };
+    return styles[type] || 'background:#666;color:#fff;';
+}
+
+function detailBadge(label, type) {
+    return `<span style="padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;${getTypeBadgeStyle(type)}">${label}</span>`;
+}
+
+function detailRow(label, value) {
+    return `
+        <tr>
+            <td style="padding:9px 12px;font-weight:600;color:#555;font-size:13px;
+                       border-bottom:1px solid #f0f0f0;white-space:nowrap;width:35%;">${label}</td>
+            <td style="padding:9px 12px;color:#333;font-size:13px;
+                       border-bottom:1px solid #f0f0f0;">${value}</td>
+        </tr>`;
+}
+
+function detailTable(rows) {
+    return `<table style="width:100%;border-collapse:collapse;margin-top:12px;">${rows}</table>`;
+}
+
+function showDetailSwal(title, badgeLabel, badgeType, tableRows) {
+    showSwal({
+        html: `
+            <div style="text-align:left;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">
+                    <h3 style="margin:0;font-size:17px;color:#00247c;flex:1;">${title}</h3>
+                    ${detailBadge(badgeLabel, badgeType)}
+                </div>
+                ${detailTable(tableRows)}
+            </div>`,
+        width: 600,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+function displayDetailsInModal(data, type) {
+    let title = '';
+    let tableRows = '';
+
+    if (type === 'construction') {
+        title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Construction Site';
+        const status = data.agreed === '1' ? 'Approved' : 'Pending';
+        const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
+        tableRows = [
+            detailRow('Homeowner', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''} ${data.suffix||''}`.trim()),
+            detailRow('Contact Number', data.contact_no_owner || 'Not specified'),
+            detailRow('Construction Address', data.construction_address || 'Not specified'),
+            detailRow('Type of Work', data.type_of_work || 'Not specified'),
+            detailRow('Nature of Work', data.nature_of_work || data.nature_of_activity || 'Not specified'),
+            detailRow('Contractor', data.contractor_name || 'Not specified'),
+            detailRow('Contractor Contact', data.contractor_contact_number || 'Not specified'),
+            detailRow('Workers', data.number_of_workers || '0'),
+            detailRow('Work Period', `${formatDate(data.start_date)} → ${formatDate(data.end_date)} (${data.number_of_working_days || 0} days)`),
+            detailRow('Details', data.details_of_work || 'Not specified'),
+            detailRow('Status', `<span style="color:${statusColor};font-weight:bold;">${status}</span>`)
+        ].join('');
+        showDetailSwal(title, 'Construction', 'construction', tableRows);
+
+    } else if (type === 'business') {
+        title = data.business_name || 'Unnamed Business';
+        const statusColor = data.status === 'approved' ? '#28a745' : data.status === 'disapproved' ? '#dc3545' : '#ff9800';
+        tableRows = [
+            detailRow('Business Name', data.business_name || 'Not specified'),
+            detailRow('Business Address', data.address_of_business || 'Not specified'),
+            detailRow('Business Type', data.type_of_business || 'Not specified'),
+            detailRow('Nature of Business', data.nature_of_business || 'Not specified'),
+            detailRow('Owner Name', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''}`.trim()),
+            detailRow('Business Contact', data.telephone_no_business || 'Not specified'),
+            detailRow('Owner Contact', data.telephone_no_owner || 'Not specified'),
+            detailRow('Email', data.email_address || 'Not specified'),
+            detailRow('Employees', data.no_of_employees || '0'),
+            detailRow('Structure Type', data.type_of_structure || 'Not specified'),
+            detailRow('Status', `<span style="color:${statusColor};font-weight:bold;text-transform:capitalize;">${data.status || 'Pending'}</span>`)
+        ].join('');
+        showDetailSwal(title, 'Business', 'business', tableRows);
+
+    } else if (type === 'utility') {
+        title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Utility Work';
+        const status = data.agreed === '1' ? 'Approved' : 'Pending';
+        const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
+        tableRows = [
+            detailRow('Applicant', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''} ${data.suffix||''}`.trim()),
+            detailRow('Contact Number', data.owner_contact_no || 'Not specified'),
+            detailRow('Utility Address', data.address_of_utility || 'Not specified'),
+            detailRow('Provider', data.provider || 'Not specified'),
+            detailRow('Nature of Work', data.nature_of_work || 'Not specified'),
+            detailRow('Request Date', formatDate(data.request_date)),
+            detailRow('Work Date', formatDate(data.date_of_work)),
+            detailRow('Status', `<span style="color:${statusColor};font-weight:bold;">${status}</span>`)
+        ].join('');
+        showDetailSwal(title, 'Utility', 'utility', tableRows);
+
+    } else if (type === 'household') {
+        title = data.title || 'Household Marker';
+        tableRows = [
+            detailRow('Title', data.title || 'Not specified'),
+            detailRow('Description', data.description || 'Not specified'),
+            detailRow('Location', data.location || 'Not specified'),
+            detailRow('Marker Type', data.marker_type || 'household'),
+            detailRow('Created By', data.created_by || 'Unknown'),
+            detailRow('Created Date', formatDate(data.created_at)),
+            detailRow('Coordinates', `${data.latitude || ''}, ${data.longitude || ''}`)
+        ].join('');
+        showDetailSwal(title, 'Household', 'household', tableRows);
     }
 }
 
-function closeModal(modalId = 'detail-modal') {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
+function displayFloodDetailsInModal(data) {
+    const riskColor = getFloodRiskColor(data.risk_level);
+    let properties = {};
+    try { properties = data.properties ? JSON.parse(data.properties) : {}; }
+    catch (e) { console.warn('Could not parse flood properties:', e); }
+
+    const title = data.hazard_name || 'Flood Hazard Area';
+    const tableRows = [
+        detailRow('Hazard Name', data.hazard_name || 'Not specified'),
+        detailRow('Risk Level', `<span style="color:${riskColor};font-weight:bold;font-size:15px;">${(data.risk_level||'medium').toUpperCase()}</span>`),
+        detailRow('Description', data.description || 'Not specified'),
+        detailRow('Last Flood Date', formatDate(properties.last_flood_date) || 'Not recorded'),
+        detailRow('Reported By', properties.reported_by || 'Barangay Office'),
+        detailRow('Date Identified', formatDate(properties.date_identified)),
+        detailRow('Safety Advice', getFloodSafetyAdvice(data.risk_level)),
+        detailRow('Last Updated', formatDate(data.updated_at))
+    ].join('');
+    showDetailSwal(title, `${(data.risk_level||'medium').toUpperCase()} RISK`, 'flood', tableRows);
+}
+
+function displayHouseDetailsInModal(data) {
+    let coordinateInfo = 'Not available';
+    if (data.coordinates) {
+        try {
+            const coords = JSON.parse(data.coordinates);
+            coordinateInfo = `${coords.length} vertices`;
+        } catch (e) { coordinateInfo = 'Invalid coordinate data'; }
     }
+
+    const title = `${data.house_number ? 'House #' + data.house_number : 'House'} — ${data.address || ''}`;
+    const tableRows = [
+        detailRow('House Number', data.house_number || 'Not specified'),
+        detailRow('Address', data.address || 'Not specified'),
+        detailRow('Street Name', data.street_name || 'Not specified'),
+        detailRow('Area', `${data.area_sqm || '0'} sqm`),
+        detailRow('Center Coordinates', `${data.center_lat || 'N/A'}, ${data.center_lng || 'N/A'}`),
+        detailRow('Polygon Vertices', coordinateInfo),
+        detailRow('Created', formatDate(data.created_at)),
+        detailRow('Last Updated', formatDate(data.updated_at))
+    ].join('');
+    showDetailSwal(title, 'Household', 'household', tableRows);
 }
 
 // ==================== HAZARD LAYER TOGGLES ====================
@@ -1265,357 +1415,77 @@ function createHousePopup(data) {
     `;
 }
 
-// View details functions
+// View details functions — show Swal loading, then fire detail Swal on success
 async function viewMapDetails(id, type) {
+    showSwal({
+        title: 'Loading Details',
+        html: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
     try {
         const formData = new FormData();
         formData.append('action', `get_${type}_details`);
         formData.append('id', id);
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData
-        });
-        
+        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
         const data = await response.json();
-        
         if (data.success) {
             displayDetailsInModal(data.data, type);
+        } else {
+            showSwal({ icon: 'error', title: 'Error', text: 'Could not load details.' });
         }
     } catch (error) {
         console.error('Error loading details:', error);
+        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load details.' });
     }
 }
 
 async function viewFloodDetails(id) {
+    showSwal({
+        title: 'Loading Details',
+        html: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
     try {
         const formData = new FormData();
         formData.append('action', 'get_flood_details');
         formData.append('id', id);
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData
-        });
-        
+        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
         const data = await response.json();
-        
         if (data.success) {
             displayFloodDetailsInModal(data.data);
+        } else {
+            showSwal({ icon: 'error', title: 'Error', text: 'Could not load flood details.' });
         }
     } catch (error) {
         console.error('Error loading flood details:', error);
+        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load flood details.' });
     }
 }
 
 async function viewHouseDetails(id) {
+    showSwal({
+        title: 'Loading Details',
+        html: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
     try {
         const formData = new FormData();
         formData.append('action', 'get_house_details');
         formData.append('id', id);
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData
-        });
-        
+        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
         const data = await response.json();
-        
         if (data.success) {
             displayHouseDetailsInModal(data.data);
+        } else {
+            showSwal({ icon: 'error', title: 'Error', text: 'Could not load house details.' });
         }
     } catch (error) {
         console.error('Error loading house details:', error);
+        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load house details.' });
     }
-}
-
-function displayDetailsInModal(data, type) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    
-    let title = '';
-    let content = '';
-    
-    switch(type) {
-        case 'construction':
-            title = `Construction Site - ${data.first_name || ''} ${data.last_name || ''}`;
-            content = createConstructionModalContent(data);
-            break;
-        case 'business':
-            title = `Business - ${data.business_name || 'Unnamed'}`;
-            content = createBusinessModalContent(data);
-            break;
-        case 'utility':
-            title = `Utility Work - ${data.first_name || ''} ${data.last_name || ''}`;
-            content = createUtilityModalContent(data);
-            break;
-        case 'household':
-            title = `Household - ${data.title || 'Marker'}`;
-            content = createHouseholdModalContent(data);
-            break;
-    }
-    
-    modalTitle.textContent = title;
-    modalContent.innerHTML = content;
-    showModal('detail-modal');
-}
-
-function displayFloodDetailsInModal(data) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    
-    modalTitle.textContent = `Flood Hazard - ${data.hazard_name || 'Unnamed'}`;
-    modalContent.innerHTML = createFloodModalContent(data);
-    showModal('detail-modal');
-}
-
-function displayHouseDetailsInModal(data) {
-    const modalTitle = document.getElementById('modal-title');
-    const modalContent = document.getElementById('modal-content');
-    
-    modalTitle.textContent = `House ${data.house_number || ''} - ${data.address || ''}`;
-    modalContent.innerHTML = createHouseModalContent(data);
-    showModal('detail-modal');
-}
-
-// Create modal content functions
-function createConstructionModalContent(data) {
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>Homeowner Name</td>
-                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
-            </tr>
-            <tr>
-                <td>Contact Number</td>
-                <td>${data.contact_no_owner || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Construction Address</td>
-                <td>${data.construction_address || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Type of Work</td>
-                <td>${data.type_of_work || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Contractor</td>
-                <td>${data.contractor_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Work Period</td>
-                <td>${formatDate(data.start_date)} to ${formatDate(data.end_date)} (${data.number_of_working_days || 0} days)</td>
-            </tr>
-            <tr>
-                <td>Status</td>
-                <td><span class="status-${data.agreed === '1' ? 'approved' : 'pending'}">${data.agreed === '1' ? 'Approved' : 'Pending'}</span></td>
-            </tr>
-        </table>
-    `;
-}
-
-function createBusinessModalContent(data) {
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>Business Name</td>
-                <td>${data.business_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Business Address</td>
-                <td>${data.address_of_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Business Type</td>
-                <td>${data.type_of_business || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Owner Name</td>
-                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''}</td>
-            </tr>
-            <tr>
-                <td>Contact Number</td>
-                <td>${data.telephone_no_business || data.telephone_no_owner || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Number of Employees</td>
-                <td>${data.no_of_employees || '0'}</td>
-            </tr>
-            <tr>
-                <td>Status</td>
-                <td><span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></td>
-            </tr>
-        </table>
-    `;
-}
-
-function createUtilityModalContent(data) {
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>Applicant Name</td>
-                <td>${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}</td>
-            </tr>
-            <tr>
-                <td>Contact Number</td>
-                <td>${data.owner_contact_no || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Utility Address</td>
-                <td>${data.address_of_utility || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Provider</td>
-                <td>${data.provider || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Nature of Work</td>
-                <td>${data.nature_of_work || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Work Date</td>
-                <td>${formatDate(data.date_of_work)}</td>
-            </tr>
-            <tr>
-                <td>Status</td>
-                <td><span class="status-${data.agreed === '1' ? 'approved' : 'pending'}">${data.agreed === '1' ? 'Approved' : 'Pending'}</span></td>
-            </tr>
-        </table>
-    `;
-}
-
-function createHouseholdModalContent(data) {
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>Title</td>
-                <td>${data.title || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Description</td>
-                <td>${data.description || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Location</td>
-                <td>${data.location || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Marker Type</td>
-                <td>${data.marker_type || 'household'}</td>
-            </tr>
-            <tr>
-                <td>Created By</td>
-                <td>${data.created_by || 'Unknown'}</td>
-            </tr>
-            <tr>
-                <td>Created Date</td>
-                <td>${formatDate(data.created_at)}</td>
-            </tr>
-            <tr>
-                <td>Coordinates</td>
-                <td>${data.latitude || ''}, ${data.longitude || ''}</td>
-            </tr>
-        </table>
-    `;
-}
-
-function createFloodModalContent(data) {
-    const riskColor = getFloodRiskColor(data.risk_level);
-    
-    // Parse properties JSON if it exists
-    let properties = {};
-    try {
-        properties = data.properties ? JSON.parse(data.properties) : {};
-    } catch (e) {
-        console.warn('Could not parse flood properties:', e);
-    }
-    
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>Hazard Name</td>
-                <td>${data.hazard_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Risk Level</td>
-                <td><span style="color: ${riskColor}; font-weight: bold;">${(data.risk_level || 'medium').toUpperCase()}</span></td>
-            </tr>
-            <tr>
-                <td>Description</td>
-                <td>${data.description || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Last Flood Date</td>
-                <td>${formatDate(properties.last_flood_date) || 'Not recorded'}</td>
-            </tr>
-            <tr>
-                <td>Reported By</td>
-                <td>${properties.reported_by || 'Barangay Office'}</td>
-            </tr>
-            <tr>
-                <td>Date Identified</td>
-                <td>${formatDate(properties.date_identified)}</td>
-            </tr>
-            <tr>
-                <td>Safety Advice</td>
-                <td>${getFloodSafetyAdvice(data.risk_level)}</td>
-            </tr>
-            <tr>
-                <td>Last Updated</td>
-                <td>${formatDate(data.updated_at)}</td>
-            </tr>
-        </table>
-    `;
-}
-
-function createHouseModalContent(data) {
-    // Parse coordinates to display polygon info
-    let coordinateInfo = 'Not available';
-    if (data.coordinates) {
-        try {
-            const coords = JSON.parse(data.coordinates);
-            coordinateInfo = `${coords.length} vertices`;
-        } catch (e) {
-            coordinateInfo = 'Invalid coordinate data';
-        }
-    }
-    
-    return `
-        <table class="detail-table">
-            <tr>
-                <td>House Number</td>
-                <td>${data.house_number || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Address</td>
-                <td>${data.address || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Street Name</td>
-                <td>${data.street_name || 'Not specified'}</td>
-            </tr>
-            <tr>
-                <td>Area</td>
-                <td>${data.area_sqm || '0'} square meters</td>
-            </tr>
-            <tr>
-                <td>Center Coordinates</td>
-                <td>Latitude: ${data.center_lat || 'N/A'}, Longitude: ${data.center_lng || 'N/A'}</td>
-            </tr>
-            <tr>
-                <td>Polygon Data</td>
-                <td>${coordinateInfo}</td>
-            </tr>
-            <tr>
-                <td>Created</td>
-                <td>${formatDate(data.created_at)}</td>
-            </tr>
-            <tr>
-                <td>Last Updated</td>
-                <td>${formatDate(data.updated_at)}</td>
-            </tr>
-        </table>
-    `;
 }
 
 // ==================== HELPER FUNCTIONS ====================
@@ -1842,14 +1712,48 @@ async function loadFloodData() {
     }
 }
 
+function createFloodPanes() {
+    // Create dedicated Leaflet panes for each flood risk level with explicit z-index.
+    // This is the only reliable way to guarantee click-through order in Leaflet:
+    // low (bottom) -> medium (middle) -> high (top and always clickable).
+    // Leaflet's default overlay pane sits at z-index 400.
+    if (!map.getPane('floodLowPane')) {
+        map.createPane('floodLowPane');
+        map.getPane('floodLowPane').style.zIndex = 390;
+        map.getPane('floodLowPane').style.pointerEvents = 'auto';
+    }
+    if (!map.getPane('floodMediumPane')) {
+        map.createPane('floodMediumPane');
+        map.getPane('floodMediumPane').style.zIndex = 391;
+        map.getPane('floodMediumPane').style.pointerEvents = 'auto';
+    }
+    if (!map.getPane('floodHighPane')) {
+        map.createPane('floodHighPane');
+        map.getPane('floodHighPane').style.zIndex = 392;
+        map.getPane('floodHighPane').style.pointerEvents = 'auto';
+    }
+}
+
 function renderFloodAreas(hazards) {
     // Clear existing flood layer
     if (floodLayer) {
         map.removeLayer(floodLayer);
     }
     
+    // Ensure dedicated panes exist for each risk level
+    createFloodPanes();
+    
     // Create new layer group
     floodLayer = L.layerGroup();
+    
+    // Map each risk level to its dedicated pane.
+    // Each pane has a different z-index so HIGH is always physically on top in the DOM,
+    // meaning click events reach it first regardless of geometry overlap.
+    const riskPaneMap = {
+        'low':    'floodLowPane',
+        'medium': 'floodMediumPane',
+        'high':   'floodHighPane'
+    };
     
     hazards.forEach(hazard => {
         try {
@@ -1860,26 +1764,28 @@ function renderFloodAreas(hazards) {
             
             const geoJson = JSON.parse(hazard.geometry);
             const style = getFloodAreaStyle(hazard.risk_level);
+            const paneName = riskPaneMap[(hazard.risk_level || '').toLowerCase()] || 'floodLowPane';
             
             const layer = L.geoJSON(geoJson, {
                 style: style,
-                onEachFeature: function(feature, layer) {
+                pane: paneName,
+                onEachFeature: function(feature, featureLayer) {
+                    featureLayer.options.pane = paneName;
                     const popupContent = createFloodPopup(hazard);
-                    layer.bindPopup(popupContent);
+                    featureLayer.bindPopup(popupContent);
                     
-                    layer.on('mouseover', function() {
+                    featureLayer.on('mouseover', function() {
                         this.setStyle({
                             fillOpacity: style.fillOpacity + 0.2,
                             weight: style.weight + 2
                         });
-                        this.bringToFront();
                     });
                     
-                    layer.on('mouseout', function() {
+                    featureLayer.on('mouseout', function() {
                         this.setStyle(style);
                     });
                     
-                    layer.hazardData = hazard;
+                    featureLayer.hazardData = hazard;
                 }
             });
             
@@ -1992,6 +1898,15 @@ function renderHousePolygons() {
         map.removeLayer(housePolygonsLayer);
     }
     
+    // Create a dedicated pane for house polygons sitting above flood layers
+    // but below the default overlay pane (markers, fault line etc. at 400).
+    // This means flood zones are still clickable in any area not covered by a house footprint.
+    if (!map.getPane('housePane')) {
+        map.createPane('housePane');
+        map.getPane('housePane').style.zIndex = 380;
+        map.getPane('housePane').style.pointerEvents = 'auto';
+    }
+    
     housePolygonsLayer = L.layerGroup();
     
     housePolygonsData.forEach(house => {
@@ -2006,7 +1921,8 @@ function renderHousePolygons() {
                     weight: 2,
                     fillColor: '#00247c',
                     fillOpacity: 0.1,
-                    interactive: true
+                    interactive: true,
+                    pane: 'housePane'
                 });
                 
                 polygon.addTo(housePolygonsLayer);
@@ -2194,11 +2110,12 @@ async function getFloodHousesSummary() {
                 reportHTML += `
                     <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
                                 padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #00247c;">Affected Households (Sorted by Coverage %):</h4>
-                        <div style="max-height: 400px; overflow-y: auto;">
+                        <h4 style="margin: 0 0 5px 0; color: #00247c;">Affected Households (Sorted by Coverage %):</h4>
+                        <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any row to expand details.</p>
+                        <div style="max-height: 500px; overflow-y: auto;">
                 `;
                 
-                sortedHouses.forEach(house => {
+                sortedHouses.forEach((house, idx) => {
                     const impactColors = {
                         'Minimally Affected': '#ffc107',
                         'Partially Affected': '#ff9800',
@@ -2207,51 +2124,59 @@ async function getFloodHousesSummary() {
                     };
                     const color = impactColors[house.impact_level] || '#666';
                     const coveragePercent = parseFloat(house.flood_coverage_percent || 0).toFixed(1);
+                    const cardId = `flood-house-${idx}`;
                     
                     reportHTML += `
-                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
-                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                                <div>
-                                    <strong style="font-size: 16px; color: #333;">
+                        <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${color}; 
+                                    border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
+                            <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                                 style="display: flex; justify-content: space-between; align-items: center;
+                                        padding: 12px 15px; cursor: pointer; background: #f8f9fa;
+                                        user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                    <span style="background: ${color}; color: white; padding: 2px 8px; 
+                                                 border-radius: 10px; font-size: 11px; font-weight: bold; white-space: nowrap;">
+                                        ${coveragePercent}%
+                                    </span>
+                                    <strong style="font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         ${house.address || 'Address not specified'}
                                     </strong>
-                                    ${house.street_name ? `<div style="font-size: 13px; color: #666; margin-top: 3px;">
-                                         ${house.street_name}
-                                    </div>` : ''}
                                 </div>
-                                <span style="background: ${color}; color: white; padding: 4px 12px; 
-                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
-                                    ${house.impact_level} (${coveragePercent}%)
-                                </span>
-                            </div>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-                                        gap: 10px; font-size: 13px; color: #555;">
-                                <div>
-                                    <strong>Flood Risk:</strong> 
-                                    <span style="color: ${color}; font-weight: bold;">
-                                        ${(house.risk_level || 'Unknown').toUpperCase()}
+                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                    <span style="font-size: 11px; color: ${color}; font-weight: bold;">
+                                        ${house.impact_level || ''}
                                     </span>
+                                    <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
                                 </div>
-                                <div>
-                                    <strong>Coverage:</strong> 
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span>${coveragePercent}%</span>
-                                        <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                            <div style="height: 100%; width: ${coveragePercent}%; background: ${color};"></div>
+                            </div>
+                            <div id="${cardId}" style="display: none; padding: 15px; background: white; border-top: 1px solid #f0f0f0;">
+                                ${house.street_name ? `<div style="font-size: 13px; color: #666; margin-bottom: 10px;">${house.street_name}</div>` : ''}
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+                                            gap: 10px; font-size: 13px; color: #555;">
+                                    <div>
+                                        <strong>Flood Risk:</strong> 
+                                        <span style="color: ${color}; font-weight: bold;">
+                                            ${(house.risk_level || 'Unknown').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <strong>Coverage:</strong>
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                            <span>${coveragePercent}%</span>
+                                            <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${coveragePercent}%; background: ${color};"></div>
+                                            </div>
                                         </div>
                                     </div>
+                                    ${house.area_sqm ? `<div><strong>Area:</strong> ${house.area_sqm} sqm</div>` : ''}
                                 </div>
-                                ${house.area_sqm ? `<div><strong>Area:</strong> ${house.area_sqm} sqm</div>` : ''}
+                                ${house.hazard_description ? `
+                                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; 
+                                                border-radius: 4px; font-size: 13px; color: #555;">
+                                        <strong>Hazard Info:</strong> ${house.hazard_description}
+                                    </div>
+                                ` : ''}
                             </div>
-                            
-                            ${house.hazard_description ? `
-                                <div style="margin-top: 12px; padding: 10px; background: white; 
-                                            border-radius: 4px; font-size: 13px; color: #555;">
-                                    <strong>Hazard Info:</strong> ${house.hazard_description}
-                                </div>
-                            ` : ''}
                         </div>
                     `;
                 });
@@ -2393,60 +2318,67 @@ async function showFaultLineRiskAssessment() {
                 reportHTML += `
                     <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
                                 padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #00247c;">Structures at Risk (Sorted by Distance):</h4>
-                        <div style="max-height: 400px; overflow-y: auto;">
+                        <h4 style="margin: 0 0 5px 0; color: #00247c;">Structures at Risk (Sorted by Distance):</h4>
+                        <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any row to expand details.</p>
+                        <div style="max-height: 500px; overflow-y: auto;">
                 `;
                 
-                sortedStructures.forEach(structure => {
+                sortedStructures.forEach((structure, idx) => {
                     const riskColors = {
                         'medium': '#ffc107',
                         'high': '#ff9800',
                         'critical': '#dc3545'
                     };
                     const color = riskColors[structure.risk_level] || '#666';
+                    const cardId = `fault-struct-${idx}`;
                     
                     reportHTML += `
-                        <div style="border-left: 4px solid ${color}; background: #f8f9fa; 
-                                    padding: 15px; margin-bottom: 12px; border-radius: 4px;">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                                <div>
-                                    <strong style="font-size: 16px; color: #333;">
+                        <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${color}; 
+                                    border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
+                            <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                                 style="display: flex; justify-content: space-between; align-items: center;
+                                        padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                    <span style="background: ${color}; color: white; padding: 2px 8px; 
+                                                 border-radius: 10px; font-size: 11px; font-weight: bold; white-space: nowrap;">
+                                        ${structure.distance_meters}m
+                                    </span>
+                                    <strong style="font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                         ${structure.address || structure.street_name || 'Address not specified'}
                                     </strong>
-                                    ${structure.house_number ? `<div style="font-size: 13px; color: #666; margin-top: 3px;">
-                                        House #${structure.house_number}
-                                    </div>` : ''}
                                 </div>
-                                <span style="background: ${color}; color: white; padding: 4px 12px; 
-                                             border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap;">
-                                    ${structure.risk_level.toUpperCase()} - ${structure.distance_meters}m
-                                </span>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                    <span style="font-size: 11px; color: ${color}; font-weight: bold;">
+                                        ${structure.risk_level.toUpperCase()}
+                                    </span>
+                                    <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
+                                </div>
                             </div>
-                            
-                            <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                                <strong>Distance from Fault Line:</strong> 
-                                <span style="color: ${color}; font-weight: bold; font-size: 18px;">
-                                    ${structure.distance_meters}m
-                                </span>
-                                <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 12px;">Distance:</span>
-                                    <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
-                                        <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
-                                                    background: ${color};"></div>
+                            <div id="${cardId}" style="display: none; padding: 15px; background: white; border-top: 1px solid #f0f0f0;">
+                                ${structure.house_number ? `<div style="font-size: 13px; color: #666; margin-bottom: 10px;">House #${structure.house_number}</div>` : ''}
+                                <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                                    <strong>Distance from Fault Line:</strong>
+                                    <span style="color: ${color}; font-weight: bold; font-size: 18px; margin-left: 6px;">
+                                        ${structure.distance_meters}m
+                                    </span>
+                                    <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                                        <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
+                                            <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
+                                                        background: ${color};"></div>
+                                        </div>
+                                        <span style="font-size: 12px; color: #888;">/200m</span>
                                     </div>
-                                    <span style="font-size: 12px;">/200m</span>
                                 </div>
+                                ${structure.requirements && structure.requirements.length > 0 ? `
+                                    <div style="background: #fff3cd; border-left: 3px solid #856404; 
+                                                padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                        <strong style="color: #856404;">Required Actions:</strong>
+                                        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                                            ${structure.requirements.map(req => `<li>${req}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
                             </div>
-                            
-                            ${structure.requirements && structure.requirements.length > 0 ? `
-                                <div style="background: #fff3cd; border-left: 3px solid #856404; 
-                                            padding: 10px; border-radius: 4px; margin-top: 12px;">
-                                    <strong style="color: #856404;">Required Actions:</strong>
-                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
-                                        ${structure.requirements.map(req => `<li>${req}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            ` : ''}
                         </div>
                     `;
                 });
@@ -2755,7 +2687,9 @@ function displayBusinessSDSSReport(data) {
     // Show all warnings - sort by severity
     const sortedWarnings = [...medium, ...high, ...critical];
     
-    sortedWarnings.forEach(item => {
+    reportHTML += `<p style="font-size: 12px; color: #888; margin: 0 0 12px 0;">Click any row to expand details.</p>`;
+
+    sortedWarnings.forEach((item, idx) => {
         if (!item || !item.business || !item.warnings) return;
         
         const business = item.business;
@@ -2769,25 +2703,34 @@ function displayBusinessSDSSReport(data) {
         const borderColor = highestSeverity === 'CRITICAL' ? '#8B0000' : 
                            highestSeverity === 'HIGH' ? '#dc3545' : '#ffc107';
         const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
+        const cardId = `biz-card-${idx}`;
         
         reportHTML += `
-            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
-                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <strong style="font-size: 18px; color: #333;">
-                        ${business.business_name || 'Unnamed Business'}
-                    </strong>
-                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
-                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
-                        ${highestSeverity}
-                    </span>
+            <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${borderColor}; 
+                        border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
+                <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                     style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
+                    <div style="flex: 1; min-width: 0;">
+                        <strong style="font-size: 14px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${business.business_name || 'Unnamed Business'}
+                        </strong>
+                        <span style="font-size: 12px; color: #888;">${business.address_of_business || ''}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
+                        <span style="background: ${borderColor}; color: white; padding: 2px 8px; 
+                                     border-radius: 10px; font-size: 11px; font-weight: bold;">
+                            ${highestSeverity}
+                        </span>
+                        <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
+                    </div>
                 </div>
-                
-                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                    <div><strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
-                    <div><strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
-                    <div><strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
-                </div>
+                <div id="${cardId}" style="display: none; padding: 15px; background: ${bgColor}; border-top: 1px solid #f0f0f0;">
+                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                        <div><strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
+                        <div><strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
+                        <div><strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
+                    </div>
         `;
         
         // Display all warnings for this business
@@ -2815,7 +2758,7 @@ function displayBusinessSDSSReport(data) {
             `;
         });
         
-        reportHTML += `</div>`;
+        reportHTML += `</div></div>`;
     });
     
     reportHTML += `
@@ -2917,7 +2860,9 @@ function displayConstructionSDSSReport(data) {
     // Show all warnings - sort by severity
     const sortedWarnings = [...medium, ...high, ...critical];
     
-    sortedWarnings.forEach(item => {
+    reportHTML += `<p style="font-size: 12px; color: #888; margin: 0 0 12px 0;">Click any row to expand details.</p>`;
+
+    sortedWarnings.forEach((item, idx) => {
         if (!item || !item.construction || !item.warnings) return;
         
         const site = item.construction;
@@ -2933,25 +2878,35 @@ function displayConstructionSDSSReport(data) {
         const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
         
         const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
+        const cardId = `con-card-${idx}`;
         
         reportHTML += `
-            <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; 
-                        padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <strong style="font-size: 18px; color: #333;">
-                        ${owner}
-                    </strong>
-                    <span style="background: ${borderColor}; color: white; padding: 4px 12px; 
-                                 border-radius: 3px; font-size: 12px; font-weight: bold;">
-                        ${highestSeverity}
-                    </span>
+            <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${borderColor}; 
+                        border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
+                <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                     style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
+                    <div style="flex: 1; min-width: 0;">
+                        <strong style="font-size: 14px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${owner}
+                        </strong>
+                        <span style="font-size: 12px; color: #888;">${site.construction_address || ''}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
+                        <span style="background: ${borderColor}; color: white; padding: 2px 8px; 
+                                     border-radius: 10px; font-size: 11px; font-weight: bold;">
+                            ${highestSeverity}
+                        </span>
+                        <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
+                    </div>
                 </div>
-                
-                <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                    <div><strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
-                    <div><strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
-                    <div><strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
-                </div>
+                <div id="${cardId}" style="display: none; padding: 15px; background: ${bgColor}; border-top: 1px solid #f0f0f0;">
+                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
+                        <div><strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
+                        <div><strong>Type of Work:</strong> ${site.type_of_work || 'N/A'}</div>
+                        <div><strong>Nature of Activity:</strong> <span style="color: #00247c; font-weight: 600;">${site.nature_of_activity || 'N/A'}</span></div>
+                        <div><strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
+                    </div>
         `;
         
         // Display all warnings for this construction site
@@ -2979,7 +2934,7 @@ function displayConstructionSDSSReport(data) {
             `;
         });
         
-        reportHTML += `</div>`;
+        reportHTML += `</div></div>`;
     });
     
     reportHTML += `
@@ -3054,18 +3009,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    document.addEventListener('click', function(e) {
-        const modal = document.getElementById('detail-modal');
-        if (e.target === modal) {
-            closeModal('detail-modal');
-        }
-    });
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal('detail-modal');
-        }
-    });
+    // SweetAlert2 handles its own backdrop click and Escape key natively.
+    // No additional listeners needed for modal close.
     
     const householdLink = document.querySelector('.dropdown-content a[data-type="household"]');
     if (householdLink) {
@@ -3076,7 +3021,16 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==================== MAP INITIALIZATION ====================
 
 map.whenReady(function() {
-    // Add barangay boundary polygon
+    // Create a dedicated pane for the boundary polygon that sits BELOW all flood panes.
+    // pointerEvents: 'none' ensures the boundary fill never intercepts clicks meant for
+    // flood zones, markers, or other interactive layers drawn above it.
+    if (!map.getPane('boundaryPane')) {
+        map.createPane('boundaryPane');
+        map.getPane('boundaryPane').style.zIndex = 300;
+        map.getPane('boundaryPane').style.pointerEvents = 'none';
+    }
+
+    // Add barangay boundary polygon into the non-interactive boundary pane
     const barangayBoundary = L.geoJSON(blueRidgeGeoJSON, {
         style: {
             color: '#00247C',
@@ -3084,7 +3038,8 @@ map.whenReady(function() {
             fillColor: '#667eea',
             fillOpacity: 0.1,
             dashArray: '5, 5'
-        }
+        },
+        pane: 'boundaryPane'
     }).addTo(map);
     
     // ============= ADD FAULT LINE (CORRECTED COORDINATES) =============
@@ -3289,6 +3244,8 @@ function setupSoftBoundary() {
         }
     });
     
+    // Add second boundary polygon to the non-interactive boundary pane (same pane as above).
+    // interactive: false also disables click/hover on this layer entirely.
     L.geoJSON(blueRidgeGeoJSON, {
         style: {
             color: '#00247C',
@@ -3297,6 +3254,8 @@ function setupSoftBoundary() {
             fillOpacity: 0.1,
             dashArray: '5, 5'
         },
+        pane: 'boundaryPane',
+        interactive: false,
         onEachFeature: function(feature, layer) {
             layer.bindPopup(`<strong>${feature.properties.name}</strong><br>Barangay Boundary`);
         }
@@ -3467,72 +3426,68 @@ function displaySDSSRulesReport(data) {
     // Group rules by category
     const floodRules = [];
     const seismicRules = [];
+    const constructionRules = [];
+    const businessRules = [];
     
     for (const [key, rule] of Object.entries(rules)) {
-        if (rule.category === 'Flood Hazard') {
-            floodRules.push({ key, ...rule });
-        } else if (rule.category === 'Seismic Hazard') {
-            seismicRules.push({ key, ...rule });
-        }
+        if (rule.category === 'Flood Hazard') floodRules.push({ key, ...rule });
+        else if (rule.category === 'Seismic Hazard') seismicRules.push({ key, ...rule });
+        else if (rule.category === 'Construction Safety') constructionRules.push({ key, ...rule });
+        else if (rule.category === 'Business Safety') businessRules.push({ key, ...rule });
     }
+    
+    const renderCategory = (title, icon, rulesArr, totalHouses) => {
+        if (rulesArr.length === 0) return '';
+        return `
+            <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; 
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <h4 style="color: #00247c; margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas ${icon}"></i> ${title}
+                </h4>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any rule to expand details.</p>
+                <div style="display: grid; gap: 8px;">
+                    ${rulesArr.map((rule, i) => createRuleCard(rule, totalHouses, `${title.replace(/\s/g,'')}-${i}`)).join('')}
+                </div>
+            </div>
+        `;
+    };
     
     // Build HTML content
     let htmlContent = `
         <div style="max-width: 900px; margin: 0 auto;">
             <!-- Summary Section -->
-            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
+            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;
                         box-shadow: 0 10px 30px rgba(0, 36, 124, 0.3);">
                 <h3 style="margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-list-check"></i>
                     SDSS Rules Summary Report
                 </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Houses</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Total Houses</div>
                         <div style="font-size: 32px; font-weight: bold;">${summary.total_houses}</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Rule Violations</div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Total Violations</div>
                         <div style="font-size: 32px; font-weight: bold;">${summary.total_rule_violations}</div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Rules Evaluated</div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Rules Evaluated</div>
                         <div style="font-size: 32px; font-weight: bold;">${summary.rules_evaluated}</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Note about multiple violations -->
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; 
-                        border-radius: 8px; margin-bottom: 25px; color: #856404;">
+                        border-radius: 8px; margin-bottom: 20px; color: #856404; font-size: 13px;">
                 <i class="fas fa-info-circle"></i>
-                <strong>Note:</strong> A single house may violate multiple rules (e.g., both flood and fault line risks). 
-                Therefore, total violations may exceed total houses.
+                <strong>Note:</strong> A house may violate multiple rules simultaneously. Total violations may exceed total houses.
             </div>
             
-            <!-- Flood Hazard Rules -->
-            <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; 
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                <h4 style="color: #00247c; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-water"></i>
-                    Flood Hazard Rules
-                </h4>
-                <div style="display: grid; gap: 15px;">
-                    ${floodRules.map(rule => createRuleCard(rule, summary.total_houses)).join('')}
-                </div>
-            </div>
-            
-            <!-- Seismic Hazard Rules -->
-            <div style="background: white; border-radius: 12px; padding: 25px; 
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                <h4 style="color: #00247c; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Seismic Hazard Rules (Fault Line)
-                </h4>
-                <div style="display: grid; gap: 15px;">
-                    ${seismicRules.map(rule => createRuleCard(rule, summary.total_houses)).join('')}
-                </div>
-            </div>
+            ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
+            ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
+            ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
+            ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
         </div>
     `;
     
@@ -3548,53 +3503,48 @@ function displaySDSSRulesReport(data) {
 }
 
 /**
- * Create a rule card HTML
+ * Create a collapsible rule card HTML
  */
-function createRuleCard(rule, totalHouses) {
+function createRuleCard(rule, totalHouses, cardId) {
     const severityColors = {
         'CRITICAL': { bg: '#ffebee', border: '#f44336', text: '#c62828' },
-        'HIGH': { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
-        'MEDIUM': { bg: '#e8f5e9', border: '#4caf50', text: '#2e7d32' }
+        'HIGH':     { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
+        'MEDIUM':   { bg: '#e8f5e9', border: '#4caf50', text: '#2e7d32' }
     };
     
     const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
+    const pct = totalHouses > 0 ? ((rule.count / totalHouses) * 100).toFixed(1) : '0.0';
+    const uid = `rule-${cardId}-${rule.key || Math.random().toString(36).slice(2)}`;
     
     return `
-        <div style="border: 2px solid ${colors.border}; border-radius: 10px; 
-                    background: ${colors.bg}; padding: 20px; transition: all 0.3s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 16px; color: #333; margin-bottom: 6px;">
-                        ${rule.name}
-                    </div>
-                    <div style="color: #666; font-size: 14px; line-height: 1.5;">
-                        ${rule.description}
-                    </div>
-                </div>
-                <div style="text-align: center; margin-left: 20px;">
-                    <div style="background: white; border-radius: 50%; width: 70px; height: 70px; 
+        <div style="border: 2px solid ${colors.border}; border-radius: 8px; overflow: hidden;">
+            <div onclick="(function(el){var b=document.getElementById('${uid}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+                 style="display: flex; justify-content: space-between; align-items: center;
+                        padding: 14px 18px; cursor: pointer; background: ${colors.bg}; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                    <div style="background: white; border-radius: 50%; width: 48px; height: 48px; flex-shrink: 0;
                                 display: flex; flex-direction: column; align-items: center; justify-content: center;
-                                box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 3px solid ${colors.border};">
-                        <div style="font-size: 26px; font-weight: bold; color: ${colors.text};">
-                            ${rule.count}
-                        </div>
-                        <div style="font-size: 10px; color: #666; text-transform: uppercase; margin-top: 2px;">
-                            Houses
-                        </div>
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid ${colors.border};">
+                        <span style="font-size: 18px; font-weight: bold; color: ${colors.text}; line-height: 1;">${rule.count}</span>
+                        <span style="font-size: 9px; color: #888; text-transform: uppercase;">Houses</span>
+                    </div>
+                    <div style="min-width: 0;">
+                        <div style="font-weight: 600; font-size: 14px; color: #333;">${rule.name}</div>
+                        <span style="background: ${colors.text}; color: white; padding: 2px 7px; 
+                                     border-radius: 10px; font-size: 11px; font-weight: 600;">${rule.severity}</span>
                     </div>
                 </div>
+                <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999; flex-shrink: 0; margin-left: 10px;">▼</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; 
-                        border-top: 1px solid ${colors.border}40;">
-                <span style="background: ${colors.text}; color: white; padding: 4px 10px; 
-                            border-radius: 20px; font-size: 12px; font-weight: 600;">
-                    ${rule.severity}
-                </span>
-                <span style="color: #666; font-size: 13px;">
-                    ${rule.count > 0 ? 
-                        `${((rule.count / totalHouses) * 100).toFixed(1)}% of total houses` : 
-                        'No violations detected'}
-                </span>
+            <div id="${uid}" style="display: none; padding: 16px 18px; background: white; border-top: 1px solid ${colors.border}40;">
+                <p style="margin: 0 0 10px 0; color: #555; font-size: 14px; line-height: 1.5;">${rule.description}</p>
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666;">
+                    <span>${rule.count > 0 ? `${pct}% of total houses affected` : 'No violations detected'}</span>
+                    ${rule.count > 0 ? `
+                    <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; max-width: 150px;">
+                        <div style="height: 100%; width: ${Math.min(100, parseFloat(pct))}%; background: ${colors.border};"></div>
+                    </div>` : ''}
+                </div>
             </div>
         </div>
     `;
