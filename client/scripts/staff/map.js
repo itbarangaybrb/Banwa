@@ -30,6 +30,105 @@ let searchTimeout = null;
 // Modal state
 let currentMarkerData = null;
 
+// ==================== NAVIGATION BAR EXPAND/COLLAPSE WITH HOVER AND CLICK ====================
+
+function initNavbar() {
+    const sideNav = document.querySelector('.side_nav');
+    const navHeader = document.querySelector('.nav_header');
+    let hoverTimer;
+    
+    if (sideNav) {
+        // Hover to expand temporarily
+        sideNav.addEventListener('mouseenter', function() {
+            clearTimeout(hoverTimer);
+            // Only add hover class if not pinned
+            if (!this.classList.contains('pinned')) {
+                this.classList.add('expanded');
+            }
+        });
+        
+        sideNav.addEventListener('mouseleave', function() {
+            // Small delay before collapsing to prevent accidental closes
+            hoverTimer = setTimeout(() => {
+                // Remove expanded class but keep pinned if it exists
+                if (!this.classList.contains('pinned')) {
+                    this.classList.remove('expanded');
+                }
+            }, 300);
+        });
+        
+        // Click logo/header to toggle pin/unpin
+        if (navHeader) {
+            navHeader.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                if (sideNav.classList.contains('pinned')) {
+                    // Unpin
+                    sideNav.classList.remove('pinned');
+                    sideNav.classList.remove('expanded');
+                } else {
+                    // Pin - remove expanded class first then add pinned
+                    sideNav.classList.remove('expanded');
+                    sideNav.classList.add('pinned');
+                }
+            });
+        }
+        
+        // Close on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sideNav.classList.contains('pinned')) {
+                sideNav.classList.remove('pinned');
+                sideNav.classList.remove('expanded');
+            }
+        });
+        
+        // On mobile, close when clicking outside
+        if (window.innerWidth <= 768) {
+            document.addEventListener('click', function(e) {
+                if (!sideNav.contains(e.target) && 
+                    !document.querySelector('.mobile-menu-btn')?.contains(e.target)) {
+                    sideNav.classList.remove('active');
+                    sideNav.classList.remove('expanded');
+                    sideNav.classList.remove('pinned');
+                }
+            });
+        }
+    }
+}
+
+// ==================== SWEETALERT2 CUSTOM CONFIGURATION ====================
+// Default SweetAlert2 configuration for consistent styling
+const swalDefaultConfig = {
+    confirmButtonColor: '#00247c', // Navy blue
+    cancelButtonColor: '#666666',   // Gray
+    background: '#ffffff',           // White
+    color: '#333333',                // Dark gray for text
+    iconColor: '#00247c',            // Navy blue for icons
+    showCloseButton: true,
+    closeButtonHtml: '&times;',
+    customClass: {
+        container: 'swal-navy-container',
+        popup: 'swal-navy-popup',
+        header: 'swal-navy-header',
+        title: 'swal-navy-title',
+        closeButton: 'swal-navy-close',
+        icon: 'swal-navy-icon',
+        content: 'swal-navy-content',
+        htmlContainer: 'swal-navy-html',
+        confirmButton: 'swal-navy-confirm',
+        cancelButton: 'swal-navy-cancel',
+        footer: 'swal-navy-footer'
+    }
+};
+
+// Helper function to show SweetAlert with custom config
+function showSwal(options) {
+    return Swal.fire({
+        ...swalDefaultConfig,
+        ...options
+    });
+}
+
 // Helper function to check if control is on map (Leaflet doesn't have hasControl)
 function hasControl(control) {
     if (!control || !control._map) return false;
@@ -300,13 +399,71 @@ function updateAllVisibility() {
     updateHousePolygonVisibility();
 }
 
+// ==================== CONSTRUCTION SUB-FILTER ====================
+
+// Map nature_of_activity values to filter types
+const natureToSubtypeMap = {
+    'Major Renovation': 'major',
+    'Major Construction': 'major',
+    'New Construction': 'major',
+    'Minor Renovation': 'minor',
+    'Minor Construction': 'minor',
+    'Repair': 'repair',
+    'Maintenance': 'repair',
+    'Demolition': 'demolition',
+    'Complete Demolition': 'demolition',
+    'Partial Demolition': 'demolition'
+};
+
+function filterConstructionByType(subtype, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    constructionSubFilter = subtype;
+    
+    document.querySelectorAll('.sub-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    const clickedBtn = event ? event.currentTarget : 
+        document.querySelector(`.sub-filter-btn[data-subtype="${subtype}"]`);
+    
+    if (clickedBtn) {
+        clickedBtn.classList.add('active');
+    }
+    
+    if (activeFilter === 'construction') {
+        updateMarkerVisibility();
+    }
+}
+
+// Helper function to determine if a construction marker should be shown
+function shouldShowConstructionMarker(marker) {
+    if (constructionSubFilter === 'all') {
+        return true;
+    }
+    
+    // Get the nature_of_activity from marker data
+    const nature = marker.nature_of_work || (marker.construction_data ? 
+                   (marker.construction_data.nature_of_work || marker.construction_data.nature_of_activity) : '') || '';
+    const mappedType = natureToSubtypeMap[nature] || 'other';
+    
+    return mappedType === constructionSubFilter;
+}
+
 function updateMarkerVisibility() {
     // Note: householdMarkers array is kept empty - only house polygons are used
     
     constructionMarkers.forEach(marker => {
         if (activeFilter === 'construction') {
-            if (!map.hasLayer(marker)) {
+            // Check if marker should be visible based on construction sub-filter
+            const shouldShow = shouldShowConstructionMarker(marker);
+            
+            if (shouldShow && !map.hasLayer(marker)) {
                 marker.addTo(map);
+            } else if (!shouldShow && map.hasLayer(marker)) {
+                map.removeLayer(marker);
             }
         } else {
             if (map.hasLayer(marker)) {
@@ -347,31 +504,6 @@ function updateHousePolygonVisibility() {
         } else {
             map.removeLayer(housePolygonsLayer);
         }
-    }
-}
-
-// ==================== CONSTRUCTION SUB-FILTER ====================
-
-function filterConstructionByType(subtype, event) {
-    if (event) {
-        event.stopPropagation();
-    }
-    
-    constructionSubFilter = subtype;
-    
-    document.querySelectorAll('.sub-filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const clickedBtn = event ? event.currentTarget : 
-        document.querySelector(`.sub-filter-btn[data-subtype="${subtype}"]`);
-    
-    if (clickedBtn) {
-        clickedBtn.classList.add('active');
-    }
-    
-    if (activeFilter === 'construction') {
-        updateMarkerVisibility();
     }
 }
 
@@ -436,7 +568,11 @@ function performSearch() {
             marker.risk_level || '',
             marker.address || '',
             marker.house_number || '',
-            marker.street_name || ''
+            marker.street_name || '',
+            marker.nature_of_work || '',
+            marker.nature_of_activity || '',
+            marker.type_of_work || '',
+            marker.type_of_business || ''
         ];
         
         let matchScore = 0;
@@ -452,7 +588,7 @@ function performSearch() {
             } else if (searchTerm.length >= 3) {
                 const words = searchTerm.split(' ');
                 words.forEach(word => {
-                    if (fieldLower.includes(word)) {
+                    if (word.length > 2 && fieldLower.includes(word)) {
                         matchScore += 5;
                     }
                 });
@@ -560,10 +696,8 @@ function clearSearch() {
         resultsContainer.innerHTML = '';
     }
     
-    if (activeSearchMarker) {
-        map.removeLayer(activeSearchMarker);
-        activeSearchMarker = null;
-    }
+    // Remove active search marker
+    removeActiveSearchMarker();
     
     // Restore visibility based on current states
     updateAllVisibility();
@@ -597,9 +731,257 @@ function clearSearch() {
     map.closePopup();
 }
 
+function removeActiveSearchMarker() {
+    if (activeSearchMarker) {
+        if (activeSearchMarker.marker && map.hasLayer(activeSearchMarker.marker)) {
+            map.removeLayer(activeSearchMarker.marker);
+        }
+        if (activeSearchMarker.highlight && map.hasLayer(activeSearchMarker.highlight)) {
+            map.removeLayer(activeSearchMarker.highlight);
+        }
+        if (activeSearchMarker.circle && map.hasLayer(activeSearchMarker.circle)) {
+            map.removeLayer(activeSearchMarker.circle);
+        }
+        if (activeSearchMarker instanceof L.Marker || 
+            activeSearchMarker instanceof L.Polygon || 
+            activeSearchMarker instanceof L.GeoJSON) {
+            map.removeLayer(activeSearchMarker);
+        }
+        activeSearchMarker = null;
+    }
+}
+
 function highlightSearchResult(markerData) {
+    // First, hide all current markers
     hideAllMarkers();
-    showOnlySearchedMarker(markerData);
+    
+    // Try to find the actual marker object
+    let targetMarker = null;
+    const type = getMarkerTypeFromData(markerData);
+    
+    // Search in the appropriate markers array
+    if (type === 'construction') {
+        targetMarker = constructionMarkers.find(m => 
+            m.construction_data && m.construction_data.id === markerData.id
+        );
+    } else if (type === 'business') {
+        targetMarker = businessMarkers.find(m => 
+            m.business_data && m.business_data.id === markerData.id
+        );
+    } else if (type === 'utility') {
+        targetMarker = utilityMarkers.find(m => 
+            m.utility_data && m.utility_data.id === markerData.id
+        );
+    }
+    
+    if (targetMarker) {
+        // We found the actual marker, highlight it
+        highlightExistingMarker(targetMarker, markerData);
+    } else {
+        // Fallback: create a temporary highlight
+        createTemporaryHighlight(markerData);
+    }
+}
+
+// Helper function to get marker type from data
+function getMarkerTypeFromData(markerData) {
+    return markerData.marker_type || markerData.type ||
+           (markerData.construction_id ? 'construction' : 
+            markerData.id ? 'business' : 
+            markerData.utility_id ? 'utility' : 
+            markerData.hazard_id ? 'flood' :
+            markerData.house_id ? 'household' : 'household');
+}
+
+function highlightExistingMarker(marker, markerData) {
+    // Get the marker's position
+    const latLng = marker.getLatLng();
+    
+    // Remove any existing highlight
+    removeActiveSearchMarker();
+    
+    // Create a pulsing circle highlight
+    const highlightCircle = L.circleMarker(latLng, {
+        radius: 25,
+        color: '#00247c',
+        weight: 3,
+        fillColor: '#00247c',
+        fillOpacity: 0.2,
+        className: 'search-highlight-pulse'
+    }).addTo(map);
+    
+    // Store both the marker and highlight for cleanup
+    activeSearchMarker = {
+        marker: marker,
+        highlight: highlightCircle,
+        originalPopup: marker.getPopup()
+    };
+    
+    // Show the marker if it's not already on the map
+    if (!map.hasLayer(marker)) {
+        marker.addTo(map);
+    }
+    
+    // Bring marker to front
+    marker.bringToFront();
+    
+    // FORCE ZOOM - First fly to location with zoom
+    console.log('Zooming to:', latLng); // Debug log
+    map.flyTo(latLng, 20, {  // Increased zoom to 20 for closer view
+        duration: 1.5,        // Slightly longer duration
+        easeLinearity: 0.25
+    });
+    
+    // Open popup after fly with a slight delay
+    setTimeout(() => {
+        let popupContent = '';
+        const type = getMarkerTypeFromData(markerData);
+        
+        if (type === 'construction') {
+            popupContent = createConstructionPopup(markerData);
+        } else if (type === 'business') {
+            popupContent = createBusinessPopup(markerData);
+        } else if (type === 'utility') {
+            popupContent = createUtilityPopup(markerData);
+        } else {
+            popupContent = createHousePopup(markerData);
+        }
+        
+        marker.bindPopup(popupContent).openPopup();
+    }, 600); // Slightly longer delay to ensure fly completes
+    
+    // Update active state in search results
+    updateSearchResultActiveState(markerData);
+    
+    // Hide the search results container
+    const resultsContainer = document.getElementById('search-results');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+}
+
+function createTemporaryHighlight(markerData) {
+    const type = getMarkerTypeFromData(markerData);
+    
+    if (type === 'flood') {
+        showFloodAreaHighlight(markerData);
+        return;
+    }
+    
+    // For house polygons, show the polygon
+    if (type === 'household' && markerData.coordinates) {
+        showHousePolygonHighlight(markerData);
+        return;
+    }
+    
+    const lat = parseFloat(markerData.latitude || markerData.center_lat);
+    const lng = parseFloat(markerData.longitude || markerData.center_lng);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error('Invalid coordinates for marker:', markerData);
+        showSwal({
+            icon: 'error',
+            title: 'Error',
+            text: 'Could not find location for this marker',
+            confirmButtonColor: '#00247c'
+        });
+        return;
+    }
+    
+    console.log('Creating temporary marker at:', lat, lng); // Debug log
+    
+    // Remove any existing highlight
+    removeActiveSearchMarker();
+    
+    const highlightIcon = L.divIcon({
+        className: 'highlighted-marker',
+        html: `
+            <div style="
+                position: relative;
+                width: 40px;
+                height: 40px;
+            ">
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: #00247c;
+                    border-radius: 50%;
+                    opacity: 0.3;
+                    animation: searchPulse 1.5s infinite;
+                "></div>
+                <div style="
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    width: 20px;
+                    height: 20px;
+                    ${type === 'construction' ? 'background: #ffc107;' : ''}
+                    ${type === 'business' ? 'background: #9C27B0;' : ''}
+                    ${type === 'household' || !type ? 'background: #28a745;' : ''}
+                    ${type === 'utility' ? 'background: #2196F3;' : ''}
+                    border: 2px solid white;
+                    border-radius: 50%;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                "></div>
+            </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    });
+    
+    activeSearchMarker = L.marker([lat, lng], { 
+        icon: highlightIcon,
+        zIndexOffset: 1000
+    }).addTo(map);
+    
+    // FORCE ZOOM
+    map.flyTo([lat, lng], 20, {
+        duration: 1.5,
+        easeLinearity: 0.25
+    });
+    
+    // Open popup after fly
+    setTimeout(() => {
+        let popupContent = '';
+        
+        if (type === 'construction') {
+            popupContent = createConstructionPopup(markerData);
+        } else if (type === 'business') {
+            popupContent = createBusinessPopup(markerData);
+        } else if (type === 'utility') {
+            popupContent = createUtilityPopup(markerData);
+        } else {
+            popupContent = createHousePopup(markerData);
+        }
+        
+        activeSearchMarker.bindPopup(popupContent).openPopup();
+    }, 600);
+    
+    updateSearchResultActiveState(markerData);
+    
+    // Hide the search results container
+    const resultsContainer = document.getElementById('search-results');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+}
+
+function updateSearchResultActiveState(markerData) {
+    document.querySelectorAll('.search-result-item').forEach(item => {
+        item.classList.remove('active');
+        const resultIndex = searchResults.findIndex(result => result.marker === markerData);
+        if (parseInt(item.dataset.index) === resultIndex) {
+            item.classList.add('active');
+        }
+    });
+    
+    const resultsContainer = document.getElementById('search-results');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
 }
 
 function hideAllMarkers() {
@@ -638,107 +1020,9 @@ function hideAllMarkers() {
     if (housePolygonsLayer && map.hasLayer(housePolygonsLayer)) {
         map.removeLayer(housePolygonsLayer);
     }
-}
-
-function showOnlySearchedMarker(markerData) {
-    if (activeSearchMarker) {
-        map.removeLayer(activeSearchMarker);
-    }
     
-    const type = markerData.marker_type || markerData.type ||
-                (markerData.construction_id ? 'construction' : 
-                 markerData.id ? 'business' : 
-                 markerData.utility_id ? 'utility' : 
-                 markerData.hazard_id ? 'flood' :
-                 markerData.house_id ? 'household' : 'household');
-    
-    if (type === 'flood') {
-        showFloodAreaHighlight(markerData);
-        return;
-    }
-    
-    // For house polygons, show the polygon instead of a marker
-    if (type === 'household' && markerData.coordinates) {
-        showHousePolygonHighlight(markerData);
-        return;
-    }
-    
-    const lat = parseFloat(markerData.latitude || markerData.center_lat);
-    const lng = parseFloat(markerData.longitude || markerData.center_lng);
-    
-    const highlightIcon = L.divIcon({
-        className: 'highlighted-marker',
-        html: `
-            <div style="
-                position: relative;
-                width: 30px;
-                height: 30px;
-            ">
-                <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: #ffeb3b;
-                    border-radius: 50%;
-                    box-shadow: 0 0 15px rgba(255, 235, 59, 0.8);
-                    animation: pulse 2s infinite;
-                "></div>
-                <div style="
-                    position: absolute;
-                    top: 5px;
-                    left: 5px;
-                    width: 20px;
-                    height: 20px;
-                    ${type === 'construction' ? 'background: #ffc107;' : ''}
-                    ${type === 'business' ? 'background: #9C27B0;' : ''}
-                    ${type === 'household' || !type ? 'background: #28a745;' : ''}
-                    ${type === 'utility' ? 'background: #2196F3;' : ''}
-                    ${type === 'incident' ? 'background: #f44336;' : ''}
-                    border: 2px solid white;
-                    border-radius: 50%;
-                "></div>
-            </div>
-        `,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
-    });
-    
-    activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon }).addTo(map);
-    
-    map.flyTo([lat, lng], 18, {
-        duration: 1
-    });
-    
-    let popupContent = '';
-    
-    if (type === 'construction') {
-        popupContent = createConstructionPopup(markerData);
-    } else if (type === 'business') {
-        popupContent = createBusinessPopup(markerData);
-    } else if (type === 'utility') {
-        popupContent = createUtilityPopup(markerData);
-    } else {
-        popupContent = createHousePopup(markerData);
-    }
-    
-    setTimeout(() => {
-        activeSearchMarker.bindPopup(popupContent).openPopup();
-    }, 500);
-    
-    document.querySelectorAll('.search-result-item').forEach(item => {
-        item.classList.remove('active');
-        const resultIndex = searchResults.findIndex(result => result.marker === markerData);
-        if (parseInt(item.dataset.index) === resultIndex) {
-            item.classList.add('active');
-        }
-    });
-    
-    const resultsContainer = document.getElementById('search-results');
-    if (resultsContainer) {
-        resultsContainer.style.display = 'none';
-    }
+    // Remove active search marker if it exists
+    removeActiveSearchMarker();
 }
 
 function showHousePolygonHighlight(houseData) {
@@ -747,35 +1031,44 @@ function showHousePolygonHighlight(houseData) {
         const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
         latLngCoords.push(latLngCoords[0]);
         
-        activeSearchMarker = L.polygon(latLngCoords, {
-            color: '#ffeb3b',
+        // Remove any existing highlight
+        removeActiveSearchMarker();
+        
+        const polygon = L.polygon(latLngCoords, {
+            color: '#00247c',
             weight: 4,
-            fillColor: '#ffeb3b',
-            fillOpacity: 0.3,
-            interactive: true
+            fillColor: '#00247c',
+            fillOpacity: 0.2,
+            interactive: true,
+            className: 'search-highlight-pulse'
         }).addTo(map);
         
-        const bounds = activeSearchMarker.getBounds();
+        activeSearchMarker = polygon;
+        
+        const bounds = polygon.getBounds();
+        console.log('Fitting bounds to polygon:', bounds); // Debug log
+        
+        // Force fit bounds with padding
         map.fitBounds(bounds, {
             padding: [50, 50],
-            maxZoom: 18
+            maxZoom: 20,
+            duration: 1.5
         });
         
-        const popupContent = createHousePopup(houseData);
-        activeSearchMarker.bindPopup(popupContent).openPopup();
+        // Open popup after a short delay
+        setTimeout(() => {
+            const popupContent = createHousePopup(houseData);
+            polygon.bindPopup(popupContent).openPopup();
+        }, 600);
         
-        document.querySelectorAll('.search-result-item').forEach(item => {
-            item.classList.remove('active');
-            const resultIndex = searchResults.findIndex(result => result.marker.house_id == houseData.house_id);
-            if (parseInt(item.dataset.index) === resultIndex) {
-                item.classList.add('active');
-            }
-        });
+        updateSearchResultActiveState(houseData);
         
+        // Hide the search results container
         const resultsContainer = document.getElementById('search-results');
         if (resultsContainer) {
             resultsContainer.style.display = 'none';
         }
+        
     } catch (e) {
         console.error('Error highlighting house polygon:', e);
     }
@@ -786,7 +1079,12 @@ function showFloodAreaHighlight(hazardData) {
         loadFullFloodDetailsForHighlight(hazardData.hazard_id);
     } catch (e) {
         console.error('Error highlighting flood area:', e);
-        alert('Error displaying flood hazard area');
+        showSwal({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error displaying flood hazard area',
+            confirmButtonColor: '#00247c'
+        });
     }
 }
 
@@ -812,7 +1110,8 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
                 const highlightStyle = getFloodAreaStyle(hazard.risk_level);
                 highlightStyle.fillOpacity += 0.2;
                 highlightStyle.weight += 3;
-                highlightStyle.color = '#000000';
+                highlightStyle.color = '#00247c';
+                highlightStyle.className = 'search-highlight-pulse';
                 
                 activeSearchMarker = L.geoJSON(geoJson, {
                     style: highlightStyle
@@ -829,18 +1128,7 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
                 const popupContent = createFloodPopup(hazard);
                 activeSearchMarker.bindPopup(popupContent).openPopup();
                 
-                document.querySelectorAll('.search-result-item').forEach(item => {
-                    item.classList.remove('active');
-                    const resultIndex = searchResults.findIndex(result => result.marker.hazard_id == hazardId);
-                    if (parseInt(item.dataset.index) === resultIndex) {
-                        item.classList.add('active');
-                    }
-                });
-                
-                const resultsContainer = document.getElementById('search-results');
-                if (resultsContainer) {
-                    resultsContainer.style.display = 'none';
-                }
+                updateSearchResultActiveState({ hazard_id: hazardId });
             }
         }
     } catch (e) {
@@ -864,7 +1152,7 @@ function createConstructionPopup(data) {
             </div>
             <div class="popup-section">
                 <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
-                <p><strong>Nature:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
                 <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
             </div>
             <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
@@ -936,7 +1224,7 @@ function createFloodPopup(data) {
         <div class="popup-content">
             <h4>
                 <span>${data.hazard_name || 'Flood Hazard Area'}</span>
-                <span class="flood-risk-badge" style="background: ${riskColor}; color: white;">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
+                <span class="flood-risk-badge" style="background: ${riskColor};">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
             </h4>
             <div class="popup-section flood-popup-section">
                 <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
@@ -1423,8 +1711,12 @@ async function loadAllMarkers() {
                             title: construction.name || 'Construction Site'
                         }).bindPopup(popupContent);
                         
+                        // Store the original data with the marker
+                        marker.construction_data = construction;
+                        marker.nature_of_work = construction.nature_of_work || construction.nature_of_activity;
+                        
                         constructionMarkers.push(marker);
-                        if (activeFilter === 'construction') {
+                        if (activeFilter === 'construction' && shouldShowConstructionMarker(marker)) {
                             marker.addTo(map);
                         }
                     }
@@ -1447,6 +1739,9 @@ async function loadAllMarkers() {
                             icon: businessIcon,
                             title: business.name || 'Business'
                         }).bindPopup(popupContent);
+                        
+                        // Store the original data with the marker
+                        marker.business_data = business;
                         
                         businessMarkers.push(marker);
                         if (activeFilter === 'business') {
@@ -1473,6 +1768,9 @@ async function loadAllMarkers() {
                             title: utility.name || 'Utility Work'
                         }).bindPopup(popupContent);
                         
+                        // Store the original data with the marker
+                        marker.utility_data = utility;
+                        
                         utilityMarkers.push(marker);
                         if (activeFilter === 'utility') {
                             marker.addTo(map);
@@ -1494,7 +1792,12 @@ async function loadAllMarkers() {
 
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
-        alert('Error loading markers. Please check browser console for details.');
+        showSwal({
+            icon: 'error',
+            title: 'Error Loading Markers',
+            text: 'Please check browser console for details.',
+            confirmButtonColor: '#00247c'
+        });
     }
 }
 
@@ -1699,10 +2002,10 @@ function renderHousePolygons() {
                 latLngCoords.push(latLngCoords[0]);
                 
                 const polygon = L.polygon(latLngCoords, {
-                    color: '#3388ff',
+                    color: '#00247c',
                     weight: 2,
-                    fillColor: '#3388ff',
-                    fillOpacity: 0.3,
+                    fillColor: '#00247c',
+                    fillOpacity: 0.1,
                     interactive: true
                 });
                 
@@ -1780,10 +2083,9 @@ async function getFloodHousesSummary() {
         // Display comprehensive flood risk report
         let reportHTML = `
             <div style="max-width: 900px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                     <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                         ⚠️ Flood Risk Assessment Report
+                        Flood Risk Assessment Report
                     </h3>
                     <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
                         ${data.summary.total}
@@ -1798,7 +2100,7 @@ async function getFloodHousesSummary() {
             reportHTML += `
                 <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
                             padding: 30px; text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <div style="font-size: 48px; margin-bottom: 15px;">✓</div>
                     <h3 style="color: #155724; margin: 0 0 10px 0;">No Flood Risk Detected</h3>
                     <p style="color: #155724; margin: 0; font-size: 14px;">
                         All households are currently outside flood hazard zones.
@@ -1810,20 +2112,20 @@ async function getFloodHousesSummary() {
             reportHTML += `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
                             gap: 15px; margin-bottom: 25px;">
-                    <div style="background: #fff9c4; border-left: 4px solid #f9a825; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #f9a825; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ffc107; margin-bottom: 5px;">
                             ${data.summary.minimally_affected}
                         </div>
                         <div style="font-size: 13px; color: #666;">Minimally Affected (1-24%)</div>
                     </div>
-                    <div style="background: #fff3e0; border-left: 4px solid #ef6c00; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ef6c00; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
                             ${data.summary.partially_affected}
                         </div>
                         <div style="font-size: 13px; color: #666;">Partially Affected (25-74%)</div>
                     </div>
-                    <div style="background: #ffebee; border-left: 4px solid #c62828; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #c62828; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
                             ${data.summary.fully_affected}
                         </div>
                         <div style="font-size: 13px; color: #666;">Fully Affected (75-100%)</div>
@@ -1843,7 +2145,7 @@ async function getFloodHousesSummary() {
                 
                 reportHTML += `
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                        <h4 style="margin: 0 0 15px 0; color: #333;">By Flood Risk Level:</h4>
+                        <h4 style="margin: 0 0 15px 0; color: #00247c;">By Flood Risk Level:</h4>
                         <div style="display: grid; gap: 10px;">
                 `;
                 
@@ -1890,17 +2192,17 @@ async function getFloodHousesSummary() {
                 });
                 
                 reportHTML += `
-                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
                                 padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #333;"> Affected Households (Sorted by Coverage %):</h4>
+                        <h4 style="margin: 0 0 15px 0; color: #00247c;">Affected Households (Sorted by Coverage %):</h4>
                         <div style="max-height: 400px; overflow-y: auto;">
                 `;
                 
                 sortedHouses.forEach(house => {
                     const impactColors = {
-                        'Minimally Affected': '#f9a825',
-                        'Partially Affected': '#ef6c00',
-                        'Fully Affected': '#c62828',
+                        'Minimally Affected': '#ffc107',
+                        'Partially Affected': '#ff9800',
+                        'Fully Affected': '#dc3545',
                         'Affected': '#ff9800'
                     };
                     const color = impactColors[house.impact_level] || '#666';
@@ -1947,7 +2249,7 @@ async function getFloodHousesSummary() {
                             ${house.hazard_description ? `
                                 <div style="margin-top: 12px; padding: 10px; background: white; 
                                             border-radius: 4px; font-size: 13px; color: #555;">
-                                    <strong>ℹ️ Hazard Info:</strong> ${house.hazard_description}
+                                    <strong>Hazard Info:</strong> ${house.hazard_description}
                                 </div>
                             ` : ''}
                         </div>
@@ -1962,9 +2264,9 @@ async function getFloodHousesSummary() {
         }
         
         reportHTML += `
-                <div style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 20px; 
+                <div style="background: #f8f9fa; border-left: 4px solid #00247c; padding: 20px; 
                             border-radius: 8px; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #1565c0;"> Recommendations:</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #00247c;">Recommendations:</h4>
                     <ul style="margin: 5px 0; padding-left: 20px; color: #555; font-size: 14px;">
                         <li>Households in high-risk zones should prepare evacuation plans</li>
                         <li>Install flood barriers and elevate important items</li>
@@ -1975,17 +2277,19 @@ async function getFloodHousesSummary() {
             </div>
         `;
         
-        Swal.fire({
-            title: '',
+        showSwal({
             html: reportHTML,
             width: 950,
             showConfirmButton: false,
-            showCloseButton: true
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-wide'
+            }
         });
         
     } catch (error) {
         console.error('Error in flood assessment:', error);
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error',
             text: 'Failed to generate flood risk assessment: ' + error.message
@@ -2000,7 +2304,7 @@ async function showFaultLineRiskAssessment() {
         console.log('Fetching fault line risk assessment...');
         
         // Show loading indicator
-        Swal.fire({
+        showSwal({
             title: 'Analyzing Fault Line Risk',
             html: 'Please wait while we assess structures near the fault line...',
             allowOutsideClick: false,
@@ -2031,16 +2335,15 @@ async function showFaultLineRiskAssessment() {
         // Display comprehensive fault line risk report
         let reportHTML = `
             <div style="max-width: 900px; text-align: left;">
-                <div style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); 
-                            color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                     <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        ⚠️ Fault Line Proximity Risk Assessment
+                        Fault Line Proximity Risk Assessment
                     </h3>
                     <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
                         ${data.summary.total_at_risk}
                     </div>
                     <div style="font-size: 16px; opacity: 0.95;">
-                        Structures Within Risk Zone (&lt;200m from Fault Line)
+                        Structures Within Risk Zone (<200m from Fault Line)
                     </div>
                 </div>
         `;
@@ -2049,7 +2352,7 @@ async function showFaultLineRiskAssessment() {
             reportHTML += `
                 <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
                             padding: 30px; text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                    <div style="font-size: 48px; margin-bottom: 15px;">✓</div>
                     <h3 style="color: #155724; margin: 0 0 10px 0;">No Structures at Risk</h3>
                     <p style="color: #155724; margin: 0; font-size: 14px;">
                         All structures are at safe distances from the fault line.
@@ -2061,23 +2364,23 @@ async function showFaultLineRiskAssessment() {
             reportHTML += `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
                             gap: 15px; margin-bottom: 25px;">
-                    <div style="background: #fff9c4; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ffc107; margin-bottom: 5px;">
                             ${data.summary.medium_risk}
                         </div>
                         <div style="font-size: 13px; color: #666;">Medium Risk (100-200m)</div>
                     </div>
-                    <div style="background: #ffebee; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
                             ${data.summary.high_risk}
                         </div>
                         <div style="font-size: 13px; color: #666;">High Risk (50-100m)</div>
                     </div>
-                    <div style="background: #ffebee; border-left: 4px solid #8B0000; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #8B0000; margin-bottom: 5px;">
+                    <div style="background: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
                             ${data.summary.critical}
                         </div>
-                        <div style="font-size: 13px; color: #666;">Critical (&lt;50m)</div>
+                        <div style="font-size: 13px; color: #666;">Critical (<50m)</div>
                     </div>
                 </div>
             `;
@@ -2088,17 +2391,17 @@ async function showFaultLineRiskAssessment() {
                 const sortedStructures = [...data.structures].sort((a, b) => a.distance_meters - b.distance_meters);
                 
                 reportHTML += `
-                    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; 
+                    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
                                 padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #333;">📍 Structures at Risk (Sorted by Distance):</h4>
+                        <h4 style="margin: 0 0 15px 0; color: #00247c;">Structures at Risk (Sorted by Distance):</h4>
                         <div style="max-height: 400px; overflow-y: auto;">
                 `;
                 
                 sortedStructures.forEach(structure => {
                     const riskColors = {
-                        'medium': '#ff9800',
-                        'high': '#dc3545',
-                        'critical': '#8B0000'
+                        'medium': '#ffc107',
+                        'high': '#ff9800',
+                        'critical': '#dc3545'
                     };
                     const color = riskColors[structure.risk_level] || '#666';
                     
@@ -2121,7 +2424,7 @@ async function showFaultLineRiskAssessment() {
                             </div>
                             
                             <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                                <strong>📏 Distance from Fault Line:</strong> 
+                                <strong>Distance from Fault Line:</strong> 
                                 <span style="color: ${color}; font-weight: bold; font-size: 18px;">
                                     ${structure.distance_meters}m
                                 </span>
@@ -2138,7 +2441,7 @@ async function showFaultLineRiskAssessment() {
                             ${structure.requirements && structure.requirements.length > 0 ? `
                                 <div style="background: #fff3cd; border-left: 3px solid #856404; 
                                             padding: 10px; border-radius: 4px; margin-top: 12px;">
-                                    <strong style="color: #856404;">⚠️ Required Actions:</strong>
+                                    <strong style="color: #856404;">Required Actions:</strong>
                                     <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
                                         ${structure.requirements.map(req => `<li>${req}</li>`).join('')}
                                     </ul>
@@ -2158,30 +2461,32 @@ async function showFaultLineRiskAssessment() {
         reportHTML += `
                 <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 20px; 
                             border-radius: 8px; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #856404;">📋 Legal Requirements:</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">Legal Requirements:</h4>
                     <ul style="margin: 5px 0; padding-left: 20px; color: #666; font-size: 14px;">
-                        <li><strong>Critical Zone (&lt;50m):</strong> Construction ALLOWED with enhanced seismic standards. Mandatory structural engineer certification, geological survey, and reinforced foundation required.</li>
+                        <li><strong>Critical Zone (<50m):</strong> Construction ALLOWED with enhanced seismic standards. Mandatory structural engineer certification, geological survey, and reinforced foundation required.</li>
                         <li><strong>High Risk (50-100m):</strong> Seismic design standards mandatory. Structural engineer certification required.</li>
                         <li><strong>Medium Risk (100-200m):</strong> Enhanced foundation design recommended. Standard building codes with seismic provisions apply.</li>
                     </ul>
                     <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">
-                        📞 Contact the Barangay Engineering Office for compliance assessment and permits.
+                        Contact the Barangay Engineering Office for compliance assessment and permits.
                     </p>
                 </div>
             </div>
         `;
         
-        Swal.fire({
-            title: '',
+        showSwal({
             html: reportHTML,
             width: 950,
             showConfirmButton: false,
-            showCloseButton: true
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal-wide'
+            }
         });
         
     } catch (error) {
         console.error('Error in fault line assessment:', error);
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error',
             text: 'Failed to generate fault line assessment: ' + error.message
@@ -2197,7 +2502,7 @@ async function showAllBusinessesSDSSReport() {
         console.log('Using URL:', MAP_HANDLER_URL);
         
         // Show loading indicator
-        Swal.fire({
+        showSwal({
             title: 'Generating Report',
             html: 'Please wait while we analyze business safety compliance...',
             allowOutsideClick: false,
@@ -2256,7 +2561,7 @@ async function showAllBusinessesSDSSReport() {
         console.error('Error in business SDSS:', error);
         console.error('Error stack:', error.stack);
         
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error Generating Report',
             html: `
@@ -2290,7 +2595,7 @@ async function showAllConstructionSDSSReport() {
         console.log('Using URL:', MAP_HANDLER_URL);
         
         // Show loading indicator
-        Swal.fire({
+        showSwal({
             title: 'Generating Report',
             html: 'Please wait while we analyze construction site safety...',
             allowOutsideClick: false,
@@ -2349,7 +2654,7 @@ async function showAllConstructionSDSSReport() {
         console.error('Error in construction SDSS:', error);
         console.error('Error stack:', error.stack);
         
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error Generating Report',
             html: `
@@ -2380,7 +2685,7 @@ async function showAllConstructionSDSSReport() {
 function displayBusinessSDSSReport(data) {
     if (!data || !data.summary || !data.warnings) {
         console.error('Invalid data structure:', data);
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error',
             text: 'Invalid data structure received'
@@ -2391,11 +2696,11 @@ function displayBusinessSDSSReport(data) {
     const { summary, warnings } = data;
     
     if (warnings.length === 0) {
-        Swal.fire({
+        showSwal({
             title: 'Business Safety Compliance',
             html: `
                 <div style="text-align: center; padding: 30px;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
                     <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
                         <strong style="font-size: 20px; color: #155724;">All businesses compliant</strong>
                         <p style="margin-top: 15px; font-size: 14px; color: #666;">
@@ -2405,7 +2710,7 @@ function displayBusinessSDSSReport(data) {
                 </div>
             `,
             confirmButtonText: 'OK',
-            confirmButtonColor: '#28a745'
+            confirmButtonColor: '#00247c'
         });
         return;
     }
@@ -2416,10 +2721,9 @@ function displayBusinessSDSSReport(data) {
     
     let reportHTML = `
         <div style="max-width: 900px; text-align: left;">
-            <div style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); 
-                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                 <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                    🏢 Business Safety Compliance Report
+                    Business Safety Compliance Report
                 </h3>
                 <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
                     ${warnings.length}
@@ -2480,9 +2784,9 @@ function displayBusinessSDSSReport(data) {
                 </div>
                 
                 <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                    <div>📍 <strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
-                    <div>🏪 <strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
-                    <div>👥 <strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
+                    <div><strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
+                    <div><strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
+                    <div><strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
                 </div>
         `;
         
@@ -2494,14 +2798,14 @@ function displayBusinessSDSSReport(data) {
             reportHTML += `
                 <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
                     <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠️ ${warning.type}
+                        ⚠ ${warning.type}
                     </div>
                     <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
                         ${warning.description}
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                            ${warning.severity === 'CRITICAL' ? 'IMMEDIATE ACTIONS:' : 'Required Actions:'}
                         </div>
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
                             ${warning.actions.map(action => `<li>${action}</li>`).join('')}
@@ -2519,19 +2823,21 @@ function displayBusinessSDSSReport(data) {
                 <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
                     For business permits and safety compliance:
                 </p>
-                <div style="font-weight: bold; color: #333; font-size: 16px;">
-                    📞 Barangay Blue Ridge B Business Permits Office
+                <div style="font-weight: bold; color: #00247c; font-size: 16px;">
+                    Barangay Blue Ridge B Business Permits Office
                 </div>
             </div>
         </div>
     `;
     
-    Swal.fire({
-        title: '',
+    showSwal({
         html: reportHTML,
         width: 950,
         showConfirmButton: false,
-        showCloseButton: true
+        showCloseButton: true,
+        customClass: {
+            popup: 'swal-wide'
+        }
     });
 }
 
@@ -2541,7 +2847,7 @@ function displayBusinessSDSSReport(data) {
 function displayConstructionSDSSReport(data) {
     if (!data || !data.summary || !data.warnings) {
         console.error('Invalid data structure:', data);
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error',
             text: 'Invalid data structure received'
@@ -2552,11 +2858,11 @@ function displayConstructionSDSSReport(data) {
     const { summary, warnings } = data;
     
     if (warnings.length === 0) {
-        Swal.fire({
+        showSwal({
             title: 'Construction Site Safety',
             html: `
                 <div style="text-align: center; padding: 30px;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
                     <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
                         <strong style="font-size: 20px; color: #155724;">All construction sites compliant</strong>
                         <p style="margin-top: 15px; font-size: 14px; color: #666;">
@@ -2566,7 +2872,7 @@ function displayConstructionSDSSReport(data) {
                 </div>
             `,
             confirmButtonText: 'OK',
-            confirmButtonColor: '#28a745'
+            confirmButtonColor: '#00247c'
         });
         return;
     }
@@ -2577,10 +2883,9 @@ function displayConstructionSDSSReport(data) {
     
     let reportHTML = `
         <div style="max-width: 900px; text-align: left;">
-            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); 
-                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
                 <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                    🏗️ Construction Site Safety Report
+                    Construction Site Safety Report
                 </h3>
                 <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
                     ${warnings.length}
@@ -2643,9 +2948,9 @@ function displayConstructionSDSSReport(data) {
                 </div>
                 
                 <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                    <div>📍 <strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
-                    <div>🔨 <strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
-                    <div>👷 <strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
+                    <div><strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
+                    <div><strong>Type:</strong> ${site.type_of_work || 'N/A'}</div>
+                    <div><strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
                 </div>
         `;
         
@@ -2657,14 +2962,14 @@ function displayConstructionSDSSReport(data) {
             reportHTML += `
                 <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
                     <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠️ ${warning.type}
+                        ⚠ ${warning.type}
                     </div>
                     <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
                         ${warning.description}
                     </div>
                     <div style="margin-top: 10px;">
                         <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${warning.severity === 'CRITICAL' ? '🚨 IMMEDIATE ACTIONS:' : '✅ Required Actions:'}
+                            ${warning.severity === 'CRITICAL' ? 'IMMEDIATE ACTIONS:' : 'Required Actions:'}
                         </div>
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
                             ${warning.actions.map(action => `<li>${action}</li>`).join('')}
@@ -2682,19 +2987,21 @@ function displayConstructionSDSSReport(data) {
                 <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
                     For construction permits and safety compliance:
                 </p>
-                <div style="font-weight: bold; color: #333; font-size: 16px;">
-                    📞 Barangay Blue Ridge B Engineering Office
+                <div style="font-weight: bold; color: #00247c; font-size: 16px;">
+                    Barangay Blue Ridge B Engineering Office
                 </div>
             </div>
         </div>
     `;
     
-    Swal.fire({
-        title: '',
+    showSwal({
         html: reportHTML,
         width: 950,
         showConfirmButton: false,
-        showCloseButton: true
+        showCloseButton: true,
+        customClass: {
+            popup: 'swal-wide'
+        }
     });
 }
 
@@ -2702,6 +3009,9 @@ function displayConstructionSDSSReport(data) {
 // ==================== EVENT LISTENERS ====================
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize navbar with hover and click functionality
+    initNavbar();
+    
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', handleSearchInput);
@@ -2801,12 +3111,11 @@ map.whenReady(function() {
     faultLine.bindPopup(`
         <div style="max-width: 300px;">
             <h4 style="color: #ff0000; margin-bottom: 10px;">
-                <i class="fas fa-exclamation-triangle"></i> FAULT LINE
+                FAULT LINE
             </h4>
-            <p><strong>⚠️ Seismic Hazard Zone</strong></p>
+            <p><strong>Seismic Hazard Zone</strong></p>
             <p>This area has been identified as having potential seismic activity.</p>
             <p style="font-size: 0.9em; color: #666;">
-                <i class="fas fa-info-circle"></i> 
                 Construction and development in this area should follow earthquake-resistant guidelines.
             </p>
         </div>
@@ -2897,12 +3206,11 @@ map.whenReady(function() {
     warningMarker.bindPopup(`
         <div style="max-width: 250px;">
             <h4 style="color: #ff0000; margin-bottom: 8px;">
-                <i class="fas fa-exclamation-triangle"></i> EARTHQUAKE RISK AREA
+                EARTHQUAKE RISK AREA
             </h4>
             <p><strong>Fault Line Detected</strong></p>
             <p>Special precautions required for construction and development.</p>
             <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
-                <i class="fas fa-shield-alt"></i> 
                 Ensure structures meet seismic design standards.
             </p>
         </div>
@@ -3022,8 +3330,8 @@ function addBoundaryNotification() {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        background: rgba(255, 193, 7, 0.95);
-        color: #333;
+        background: #00247c;
+        color: white;
         padding: 12px 20px;
         border-radius: 8px;
         font-family: "Inter", sans-serif;
@@ -3035,7 +3343,7 @@ function addBoundaryNotification() {
         transition: all 0.3s ease;
         max-width: 300px;
         text-align: center;
-        border-left: 4px solid #ffc107;
+        border-left: 4px solid #ffffff;
         pointer-events: none;
     `;
     
@@ -3132,20 +3440,20 @@ async function showSDSSRulesReport() {
         if (result.status === 'success') {
             displaySDSSRulesReport(result.data);
         } else {
-            Swal.fire({
+            showSwal({
                 icon: 'error',
                 title: 'Error',
                 text: result.message || 'Failed to load SDSS rules summary',
-                confirmButtonColor: '#667eea'
+                confirmButtonColor: '#00247c'
             });
         }
     } catch (error) {
         console.error('Error fetching SDSS rules summary:', error);
-        Swal.fire({
+        showSwal({
             icon: 'error',
             title: 'Error',
             text: 'Failed to fetch SDSS rules summary',
-            confirmButtonColor: '#667eea'
+            confirmButtonColor: '#00247c'
         });
     }
 }
@@ -3172,9 +3480,8 @@ function displaySDSSRulesReport(data) {
     let htmlContent = `
         <div style="max-width: 900px; margin: 0 auto;">
             <!-- Summary Section -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
-                        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px;
+                        box-shadow: 0 10px 30px rgba(0, 36, 124, 0.3);">
                 <h3 style="margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-list-check"></i>
                     SDSS Rules Summary Report
@@ -3206,7 +3513,7 @@ function displaySDSSRulesReport(data) {
             <!-- Flood Hazard Rules -->
             <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; 
                         box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                <h4 style="color: #2196F3; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                <h4 style="color: #00247c; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-water"></i>
                     Flood Hazard Rules
                 </h4>
@@ -3218,7 +3525,7 @@ function displaySDSSRulesReport(data) {
             <!-- Seismic Hazard Rules -->
             <div style="background: white; border-radius: 12px; padding: 25px; 
                         box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                <h4 style="color: #ff5722; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                <h4 style="color: #00247c; margin: 0 0 20px 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-exclamation-triangle"></i>
                     Seismic Hazard Rules (Fault Line)
                 </h4>
@@ -3229,14 +3536,12 @@ function displaySDSSRulesReport(data) {
         </div>
     `;
     
-    Swal.fire({
-        title: '',
+    showSwal({
         html: htmlContent,
         width: '95%',
         showCloseButton: true,
         showConfirmButton: false,
         customClass: {
-            container: 'sdss-rules-modal',
             popup: 'sdss-rules-popup'
         }
     });

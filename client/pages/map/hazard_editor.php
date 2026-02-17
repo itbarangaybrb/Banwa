@@ -712,6 +712,9 @@ if (file_exists($databasePath)) {
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     
     <script>
+
+        const HAZARD_HANDLER_URL = '/Banwa/server/handlers/map/hazard_handler.php';
+
         // Global variables
         let editorMap;
         let drawingPoints = [];
@@ -1259,7 +1262,7 @@ if (file_exists($databasePath)) {
         // Load existing hazards from database
         async function loadExistingHazards() {
             try {
-                const response = await fetch('hazard_handler.php', {
+                const response = await fetch(HAZARD_HANDLER_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -1315,7 +1318,8 @@ if (file_exists($databasePath)) {
                                 fillOpacity: 0.3,
                                 color: color,
                                 weight: 2
-                            }
+                            },
+                            interactive: false,
                         }).addTo(existingHazardsLayer);
                         
                         // Store hazard data on layer
@@ -1452,7 +1456,7 @@ if (file_exists($databasePath)) {
                 
                 showStatus('Saving hazard...', 'info');
                 
-                const response = await fetch('hazard_handler.php', {
+                const response = await fetch(HAZARD_HANDLER_URL, {
                     method: 'POST',
                     body: formData
                 });
