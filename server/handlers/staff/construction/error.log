@@ -174,3 +174,48 @@ Stack trace:
 #0 C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php(51): handleGetApplicationDetails(Object(PDO))
 #1 {main}
   thrown in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 615
+[15-Feb-2026 15:28:49 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 165
+[15-Feb-2026 15:28:49 UTC] SQL Error in handleCreateApplication: SQLSTATE[HY093]: Invalid parameter number: :requirement_upload_json
+[15-Feb-2026 15:54:17 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 15:54:17 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 15:54:17 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 15:56:46 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 15:56:46 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 15:56:46 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:20:54 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 16:20:54 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:20:54 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:40:10 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 16:40:10 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:40:10 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:48:55 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 16:48:55 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:48:55 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:56:16 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[15-Feb-2026 16:56:16 UTC] CR1 Check - Has file upload: No
+[15-Feb-2026 16:56:16 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 11:57:01 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[17-Feb-2026 11:57:01 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 11:57:01 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 12:13:49 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[17-Feb-2026 12:13:49 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 12:13:49 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 12:29:11 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Banwa\Banwa\server\handlers\staff\construction\construction_handler.php on line 163
+[17-Feb-2026 12:29:11 UTC] No files uploaded for application 24, skipping OCR queue.
+[17-Feb-2026 12:29:11 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 12:29:11 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:00:53 UTC] OCR job queued for application 25 with 1 files
+[17-Feb-2026 13:00:53 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:00:53 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:18:09 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"Screenshot 2026-02-07 143954.png","saved_filename":"const_69946a91d72ae_Screenshot 2026-02-07 143954.png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69946a91d72ae_Screenshot 2026-02-07 143954.png"}]
+[17-Feb-2026 13:18:09 UTC] OCR job queued for application 26 with 1 files
+[17-Feb-2026 13:18:09 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:18:09 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:47:07 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"Screenshot 2026-02-07 143954.png","saved_filename":"const_6994715b3188f_Screenshot 2026-02-07 143954.png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_6994715b3188f_Screenshot 2026-02-07 143954.png"}]
+[17-Feb-2026 13:47:07 UTC] OCR job queued for application 27 with 1 files
+[17-Feb-2026 13:47:07 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:47:07 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:54:27 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"Screenshot 2026-02-07 143954.png","saved_filename":"const_699473136d80e_Screenshot 2026-02-07 143954.png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_699473136d80e_Screenshot 2026-02-07 143954.png"}]
+[17-Feb-2026 13:54:27 UTC] OCR job queued for application 28 with 1 files
+[17-Feb-2026 13:54:27 UTC] CR1 Check - Has file upload: No
+[17-Feb-2026 13:54:27 UTC] CR1 Check - Has file upload: No

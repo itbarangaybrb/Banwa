@@ -247,7 +247,7 @@ if ($_SESSION['role_id'] != 1) {
 
                     <div class="label-and-input">
                         <label for="requirementUpload" class="required-field">Building Plan or Blueprint <span style="color: #BB1B1B;">*</span></label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept="image/*,.pdf">
+                        <input type="file" id="requirementUpload" name="requirementUpload[]" accept="image/*,.pdf" multiple>
                         <div class="error-msg"></div>
                     </div>
 

@@ -53,6 +53,27 @@ try {
         case 'get_requirements':
             handleGetRequirements($pdo);
             break;
+        case 're_run_ocr':
+            $appId = (int)($_POST['id'] ?? 0);
+            if ($appId <= 0) {
+                echo json_encode(["status" => "error", "message" => "Invalid ID"]);
+                exit;
+            }
+
+            // Fetch current files
+            $stmt = $pdo->prepare("SELECT requirement_upload_json FROM construction_applications WHERE id = :id");
+            $stmt->execute([':id' => $appId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $files = json_decode($row['requirement_upload_json'] ?? '[]', true);
+
+            if (empty($files)) {
+                echo json_encode(["status" => "error", "message" => "No files found"]);
+                exit;
+            }
+
+            queueOCRJob($pdo, $appId, $files);
+            echo json_encode(["status" => "success", "message" => "OCR re-run queued"]);
+            break;
 
         default:
             echo json_encode(["status" => "error", "message" => "Invalid action"]);
@@ -127,34 +148,39 @@ function handleCreateApplication($pdo)
         $latitude = get_input('latitude2');
         $longitude = get_input('longitude2');
 
-        // Agreement - IMPORTANT: Changed from 'agreeCheckBox' to 'agreed' to match frontend
+        // Agreement
         $agreeCheckBox = (int)(get_input('agreed') ?? 0);
 
-        // Application Date - use POST value or current date
+        // Application Date
         $applicationDate = get_input('applicationDate') ?? getCurrentDateString();
 
-        // File upload - Single file upload only, no requirements array
-        $requirementUpload = null;
-        if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/uploads/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-                // Add .htaccess for security
-                file_put_contents($uploadDir . '.htaccess', "Deny from all\n");
-            }
+        // === FILE UPLOAD HANDLING (MULTIPLE FILES ONLY) ===
+        $uploadDir = __DIR__ . '/uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-            $originalName = basename($_FILES['requirementUpload']['name']);
-            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-            $fileName = time() . '_' . uniqid() . '.' . $extension;
-
-            if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
-                $requirementUpload = $fileName;
-            } else {
-                throw new Exception("Failed to upload file. Please try again.");
+        $uploadedFiles = [];
+        if (!empty($_FILES['requirementUpload']['name'][0])) {
+            foreach ($_FILES['requirementUpload']['tmp_name'] as $key => $tmpName) {
+                if ($_FILES['requirementUpload']['error'][$key] === 0) {
+                    $originalName = basename($_FILES['requirementUpload']['name'][$key]);
+                    $savedName = uniqid('const_') . '_' . $originalName;
+                    $targetPath = $uploadDir . $savedName;
+                    if (move_uploaded_file($tmpName, $targetPath)) {
+                        $uploadedFiles[] = [
+                            'filename' => $originalName,
+                            'saved_filename' => $savedName,
+                            'file_url' => '/Banwa/server/handlers/staff/construction/uploads/' . $savedName
+                        ];
+                    }
+                }
             }
         }
 
-        // Validate required fields
+        // Always create JSON (empty array if no files)
+        $filesJson = json_encode($uploadedFiles);
+        error_log("=== CREATE DEBUG === Uploaded files count: " . count($uploadedFiles) . " | JSON: " . $filesJson);
+
+        // === VALIDATION ===
         $requiredFields = [
             'firstName' => $firstName,
             'lastName' => $lastName,
@@ -163,7 +189,7 @@ function handleCreateApplication($pdo)
             'natureOfActivity' => $natureOfActivity,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'constructionAddress' => $constructionAddress
+            'constructionAddress' => $constructionAddress    
         ];
 
         foreach ($requiredFields as $field => $value) {
@@ -172,23 +198,23 @@ function handleCreateApplication($pdo)
             }
         }
 
-        // MODIFIED: Removed requirements field from SQL
+        // === INSERT QUERY (removed old requirement_upload column) ===
         $sql = "INSERT INTO construction_applications (
             supabase_user_id, first_name, middle_name, last_name, suffix,
             contact_no_owner, owner_address, type_of_work, nature_of_activity, 
             details_of_work, start_date, end_date, number_of_working_days, 
             number_of_workers, contractor_name, contractor_contact_number, 
             application_method, construction_address, latitude, longitude, 
-            requirement_upload, agreed, application_date, 
-            status, created_at, updated_at
+            agreed, application_date, 
+            status, created_at, updated_at, requirement_upload_json
         ) VALUES (
             :supabase_user_id, :first_name, :middle_name, :last_name, :suffix,
             :contact_no_owner, :owner_address, :type_of_work, :nature_of_activity, 
             :details_of_work, :start_date, :end_date, :number_of_working_days, 
             :number_of_workers, :contractor_name, :contractor_contact_number, 
             :application_method, :construction_address, :latitude, :longitude, 
-            :requirement_upload, :agreed, :application_date, 
-            'Pending', NOW(), NOW()
+            :agreed, :application_date, 
+            'Pending', NOW(), NOW(), :requirement_upload_json
         ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
@@ -213,13 +239,24 @@ function handleCreateApplication($pdo)
             ':construction_address' => $constructionAddress,
             ':latitude' => $latitude,
             ':longitude' => $longitude,
-            ':requirement_upload' => $requirementUpload,
             ':agreed' => $agreeCheckBox,
-            ':application_date' => $applicationDate
+            ':application_date' => $applicationDate,
+            ':requirement_upload_json' => $filesJson
         ]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
+
+        // === QUEUE OCR JOB AFTER SUCCESSFUL INSERT ===
+        if (!empty($uploadedFiles)) {
+            try {
+                queueOCRJob($pdo, $applicationId, $uploadedFiles);
+                error_log("OCR job queued for application {$applicationId} with " . count($uploadedFiles) . " files");
+            } catch (Exception $qE) {
+                error_log("Queue OCR error for application {$applicationId}: " . $qE->getMessage());
+            }
+        } else {
+            error_log("No files uploaded for application {$applicationId}, skipping OCR queue.");}
 
         // Create initial DSS evaluation
         createInitialDSSEvaluation($pdo, $applicationId);
@@ -234,6 +271,17 @@ function handleCreateApplication($pdo)
         error_log("General Error in handleCreateApplication: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => "Error: " . $e->getMessage()]);
     }
+}
+
+function queueOCRJob($pdo, $applicationId, $files) {
+    $payload = json_encode([
+        'application_id' => $applicationId,
+        'files' => $files
+    ]);
+
+    $stmt = $pdo->prepare("INSERT INTO ocr_jobs (job_type, payload, status, created_at) 
+                           VALUES ('construction_application_files', :payload::json, 'pending', NOW())");
+    $stmt->execute([':payload' => $payload]);
 }
 
 /**
@@ -411,23 +459,56 @@ function handleUpdateApplication($pdo)
         $params[':dss_status'] = $currentDSSStatus;
 
         // Handle file upload if provided
-        if (isset($_FILES['requirementUpload']) && $_FILES['requirementUpload']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/uploads/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
-                file_put_contents($uploadDir . '.htaccess', "Deny from all\n");
-            }
-            $originalName = basename($_FILES['requirementUpload']['name']);
-            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-            $fileName = time() . '_' . uniqid() . '.' . $extension;
+        $uploadDir = __DIR__ . '/uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-            if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'], $uploadDir . $fileName)) {
-                $updateFields[] = "requirement_upload = :requirement_upload";
-                $params[':requirement_upload'] = $fileName;
-            } else {
-                throw new Exception("Failed to move uploaded file.");
+        $uploadedFiles = [];
+        if (!empty($_FILES['requirementUpload']['name'][0])) {
+            foreach ($_FILES['requirementUpload']['tmp_name'] as $key => $tmpName) {
+                if ($_FILES['requirementUpload']['error'][$key] === 0) {
+                    $originalName = basename($_FILES['requirementUpload']['name'][$key]);
+                    $savedName = uniqid('const_') . '_' . $originalName;
+                    $targetPath = $uploadDir . $savedName;
+                    if (move_uploaded_file($tmpName, $targetPath)) {
+                        $uploadedFiles[] = [
+                            'filename' => $originalName,
+                            'saved_filename' => $savedName,
+                            'file_url' => '/Banwa/server/handlers/staff/construction/uploads/' . $savedName
+                        ];
+                    }
+                }
             }
         }
+
+        // Fetch current requirement_upload_json to preserve existing files
+        $currentStmt = $pdo->prepare("SELECT requirement_upload_json FROM construction_applications WHERE id = :id");
+        $currentStmt->execute([':id' => $applicationId]);
+        $currentRow = $currentStmt->fetch(PDO::FETCH_ASSOC);
+        $currentFiles = json_decode($currentRow['requirement_upload_json'] ?? '[]', true);
+
+        // If new files were uploaded, append them to existing files
+        if (!empty($uploadedFiles)) {
+            $allFiles = array_merge($currentFiles, $uploadedFiles);
+            $filesJson = json_encode($allFiles);
+
+            // Queue OCR job with ALL current files (so everything gets re-processed)
+            queueOCRJob($pdo, $applicationId, $allFiles);
+        } else {
+            // No new files → just preserve the existing JSON
+            $filesJson = json_encode($currentFiles);
+        }
+
+        // Always update the column (preserves old files if no new upload)
+        $updateFields[] = "requirement_upload_json = :requirement_upload_json";
+        $params[':requirement_upload_json'] = $filesJson;
+
+        // Store as JSON in the new column
+        $filesJson = json_encode($uploadedFiles);
+        error_log("=== CREATE DEBUG === Uploaded files count: " . count($uploadedFiles) . " | JSON: " . $filesJson);
+
+        if (!empty($uploadedFiles)) {
+        queueOCRJob($pdo, $newAppId, $uploadedFiles);  // $newAppId = lastInsertId or updated id
+    }
 
         // If no fields to update, return early
         if (count($updateFields) <= 3) { // Only dss_status, updated_at, and status were added
@@ -558,6 +639,7 @@ function handleGetApplicationDetails($pdo)
             LEFT JOIN construction_evaluations ce ON ca.id = ce.application_id
             WHERE ca.id = :id
         ");
+
         $stmt->execute([':id' => $applicationId]);
         $application = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -565,6 +647,34 @@ function handleGetApplicationDetails($pdo)
             echo json_encode(["status" => "error", "message" => "Application not found"]);
             return;
         }
+
+        // --- FIX THIS SECTION IN construction_handler.php ---
+        // 1. Get the raw value from the database first
+        $rawUploadData = $application['requirement_upload_json'] ?? ''; 
+
+        // 2. NOW you can initialize it as an array
+        $application['requirement_upload_json'] = [];
+
+        // 3. Decode the raw string we saved in step 1
+        if (is_string($rawUploadData) && trim($rawUploadData) !== '' && trim($rawUploadData) !== 'null') {
+            $decoded = json_decode($rawUploadData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $application['requirement_upload_json'] = $decoded;
+            }
+        }
+        
+        $ocrStmt = $pdo->prepare("
+            SELECT filename, saved_filename, file_url, ocr_result, created_at 
+            FROM construction_ocr_results 
+            WHERE application_id = :id 
+            ORDER BY created_at DESC
+        ");
+        $ocrStmt->execute([':id' => $application['id']]);
+        $ocrResults = $ocrStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $application['ocr_results'] = $ocrResults ?: [];
+        // ... rest unchanged
+
 
         // MODIFIED: Removed requirements decoding
         if (isset($application['evaluation_details']) && $application['evaluation_details']) {
