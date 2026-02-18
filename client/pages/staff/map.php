@@ -236,20 +236,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../../scripts/staff/map.js"></script>
     
-    <!-- Detail Modal -->
-    <div id="detail-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Marker Details</h3>
-                <button class="close-modal" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="modal-content">
-                    <!-- Content will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
 
 </body>
 
