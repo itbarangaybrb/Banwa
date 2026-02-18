@@ -1,8 +1,11 @@
+/**
+ * Initialize side navigation toggle controls
+ * Handles open and close menu button behavior
+ */
 const openMenu = document.getElementById('openMenu');
 const closeMenu = document.getElementById('closeMenu');
 const nav = document.getElementById('sideNav');
 
-// Initial state
 nav.classList.remove('open');
 openMenu.style.display = 'inline-flex';
 closeMenu.style.display = 'none';
@@ -19,14 +22,23 @@ closeMenu.addEventListener('click', () => {
     openMenu.style.display = 'inline-flex';
 });
 
+/**
+ * Hide page loader after full window load
+ * Ensures loader is removed when all resources are ready
+ */
 window.addEventListener("load", () => {
     const loader = document.getElementById("page-loader");
     if (loader) loader.style.display = "none";
 });
 
+
+/**
+ * Display page loader when navigating via anchor links
+ * Prevents interaction during page transition
+ */
 document.addEventListener("click", (e) => {
     const link = e.target.closest("a");
-    const submit = e.target.closest("button[type=submit]");
+    // const submit = e.target.closest("button[type=submit]");
     const loader = document.getElementById("page-loader");
 
     if (
@@ -42,6 +54,10 @@ document.addEventListener("click", (e) => {
     }
 });
 
+/**
+ * Display page loader on form submission
+ * Ensures loader appears unless submission is prevented
+ */
 document.addEventListener("submit", (e) => {
     if (e.defaultPrevented) return;
 
@@ -56,9 +72,8 @@ document.addEventListener("submit", (e) => {
  */
 function exportTableAsPDF(tableId, filename) {
     const { jsPDF } = window.jspdf;
-    // Create PDF in landscape orientation
     const doc = new jsPDF({
-        orientation: 'landscape', // change from default 'portrait'
+        orientation: 'landscape',
         unit: 'pt',
         format: 'a4'
     });
@@ -66,17 +81,21 @@ function exportTableAsPDF(tableId, filename) {
     const table = document.getElementById(tableId);
     if (!table) return alert('Table not found');
 
-    // Map rows, skip action buttons column
+    const headerRow = table.querySelector('thead tr');
+    const headers = Array.from(headerRow.querySelectorAll('th'));
+    const actionsIndex = headers.findIndex(th =>
+        th.innerText.trim().toLowerCase() === 'actions'
+    );
+
     const rows = Array.from(table.querySelectorAll('tr')).map(tr =>
         Array.from(tr.querySelectorAll('th, td'))
-            .slice(0, -1) // exclude last column (actions)
+            .filter((cell, index) => index !== actionsIndex)
             .map(cell => cell.innerText)
     );
 
-    // Add table to PDF
     doc.autoTable({
-        head: [rows[0]], // table header
-        body: rows.slice(1), // table body
+        head: [rows[0]],
+        body: rows.slice(1),
         startY: 20,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -86,23 +105,29 @@ function exportTableAsPDF(tableId, filename) {
     doc.save(filename);
 }
 
+/**
+ * Initialize export button for users table
+ * Binds click event to trigger PDF export
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.querySelector('[data-modal="exportUsers"]');
+    if (!exportBtn) return;
     exportBtn.addEventListener('click', () => {
         exportTableAsPDF('usersTable', 'users_export.pdf');
     });
 });
 
+
+/**
+ * Set interval to periodically refresh audit logs
+ * Prevents overlapping fetch requests using refresh flag
+ */
 let isRefreshing = false;
 setInterval(() => {
     if (isRefreshing) return;
-
     isRefreshing = true;
-
     const finish = () => { isRefreshing = false; };
-
-    fetchAuditLogs().finally(finish); // call your existing fetch function
-
+    fetchAuditLogs().finally(finish);
 }, 10000);
 
 /**
@@ -124,9 +149,8 @@ async function fetchAuditLogs() {
             return;
         }
 
-        console.log('Audit Logs:', logs);
+        // console.log('Audit Logs:', logs);
 
-        // Example: render to table
         const tbody = document.getElementById('auditTableBody');
         if (!tbody) return;
 
@@ -153,6 +177,10 @@ async function fetchAuditLogs() {
     }
 }
 
+/**
+ * Fetch audit logs on DOM content loaded
+ * Ensures initial audit table population
+ */
 document.addEventListener('DOMContentLoaded', fetchAuditLogs());
 
 /**
@@ -170,7 +198,6 @@ function handleSearch() {
         const rows = tbody.querySelectorAll('tr');
         let visibleCount = 0;
 
-        // Remove existing "No users found" row
         const existingNoUsersRow = tbody.querySelector('.no-users-row');
         if (existingNoUsersRow) {
             tbody.removeChild(existingNoUsersRow);
@@ -192,7 +219,6 @@ function handleSearch() {
             }
         });
 
-        // If no rows visible, show "No users found"
         if (visibleCount === 0) {
             const tr = document.createElement('tr');
             tr.classList.add('no-users-row');
@@ -202,4 +228,7 @@ function handleSearch() {
     });
 }
 
+/**
+ * Initialize table search handler on DOM content loaded
+ */
 document.addEventListener('DOMContentLoaded', handleSearch());

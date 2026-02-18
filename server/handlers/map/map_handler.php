@@ -1101,7 +1101,7 @@ function getConstructionSDSSReport() {
     try {
         // Get all construction with coordinates
         $sql = "SELECT id, first_name, middle_name, last_name, construction_address,
-                       type_of_work, nature_of_work, number_of_workers, 
+                       type_of_work, nature_of_work, nature_of_activity, number_of_workers, 
                        number_of_working_days, latitude, longitude
                 FROM construction_applications
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
@@ -1229,9 +1229,10 @@ function evaluateConstructionSDSS($construction, $pdo) {
     $workers = intval($construction['number_of_workers'] ?? 0);
     
     if ($workers < $minWorkersRequired['minimum']) {
+        $activityLabel = $natureOfActivity ?: 'general';
         $constructionData['warnings'][] = [
             'type' => 'Inadequate Workforce',
-            'description' => "{$projectType} construction with '{$natureOfActivity}' activity requires minimum {$minWorkersRequired['minimum']} workers (current: {$workers})",
+            'description' => ucfirst($projectType) . " construction with '" . ucfirst($activityLabel) . "' activity requires a minimum of {$minWorkersRequired['minimum']} workers (currently declared: {$workers}). Reason: {$minWorkersRequired['reason']}",
             'severity' => $minWorkersRequired['severity'],
             'reason' => $minWorkersRequired['reason'],
             'actions' => [
@@ -1407,20 +1408,20 @@ function getSDSSRulesSummary() {
             ],
             'FAULT_CRITICAL' => [
                 'name' => 'Fault Line Critical Zone (<50m)',
-                'description' => 'Houses within 50m of fault line - enhanced seismic standards mandatory',
+                'description' => 'Houses within 50m of fault line — enhanced seismic standards mandatory',
                 'severity' => 'CRITICAL',
                 'count' => 0,
                 'category' => 'Seismic Hazard'
             ],
             'FAULT_HIGH_RISK' => [
-                'name' => 'Fault Line High Risk (50-100m)',
+                'name' => 'Fault Line High Risk (50–100m)',
                 'description' => 'Houses requiring seismic design standards and structural certification',
                 'severity' => 'HIGH',
                 'count' => 0,
                 'category' => 'Seismic Hazard'
             ],
             'FAULT_MEDIUM_RISK' => [
-                'name' => 'Fault Line Medium Risk (100-200m)',
+                'name' => 'Fault Line Medium Risk (100–200m)',
                 'description' => 'Houses requiring enhanced foundation and earthquake preparedness',
                 'severity' => 'MEDIUM',
                 'count' => 0,
@@ -1453,6 +1454,140 @@ function getSDSSRulesSummary() {
                 $rules['FAULT_MEDIUM_RISK']['count']++;
             }
         }
+        
+        // ---- Construction Safety Rules ----
+        // Count construction applications that violate simple rules
+        $conSql = "SELECT id, number_of_workers, number_of_working_days, type_of_work,
+                          nature_of_activity, start_date, end_date, latitude, longitude
+                   FROM construction_applications
+                   WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $conStmt = $pdo->query($conSql);
+        $constructions = $conStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $conNoWorkers = 0;
+        $conFloodZone = 0;
+        $conExceedsDays = 0;
+        $conFaultZone = 0;
+        
+        foreach ($constructions as $con) {
+            // Rule: No workers declared
+            $workers = intval($con['number_of_workers'] ?? 0);
+            if ($workers === 0) $conNoWorkers++;
+            
+            // Rule: Construction in any flood zone
+            if ($con['latitude'] && $con['longitude']) {
+                $floodRisk = checkPointInFloodZone($con['latitude'], $con['longitude']);
+                if ($floodRisk) $conFloodZone++;
+                
+                // Rule: Construction within fault critical zone
+                $dist = getDistanceToFaultLine($con['latitude'], $con['longitude']);
+                if ($dist < 50) $conFaultZone++;
+            }
+            
+            // Rule: Working days exceed 90 days without major classification
+            $days = intval($con['number_of_working_days'] ?? 0);
+            $typeOfWork = strtolower($con['type_of_work'] ?? '');
+            if ($days > 90 && strpos($typeOfWork, 'major') === false) {
+                $conExceedsDays++;
+            }
+        }
+        
+        $rules['CON_NO_WORKERS'] = [
+            'name' => 'No Workers Declared',
+            'description' => 'Construction applications with zero workers listed — required for safety planning and inspection scheduling',
+            'severity' => 'HIGH',
+            'count' => $conNoWorkers,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_FLOOD_ZONE'] = [
+            'name' => 'Construction in Flood Zone',
+            'description' => 'Active construction sites located within any flood hazard area — flood-resistant methods required',
+            'severity' => 'HIGH',
+            'count' => $conFloodZone,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_FAULT_ZONE'] = [
+            'name' => 'Construction in Fault Critical Zone (<50m)',
+            'description' => 'Construction sites within 50m of the fault line — mandatory seismic design and structural engineer certification',
+            'severity' => 'CRITICAL',
+            'count' => $conFaultZone,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_EXCESS_DAYS'] = [
+            'name' => 'Long Duration Non-Major Construction (>90 days)',
+            'description' => 'Non-major construction projects running longer than 90 working days — may require permit renewal or reclassification',
+            'severity' => 'MEDIUM',
+            'count' => $conExceedsDays,
+            'category' => 'Construction Safety'
+        ];
+        
+        // ---- Business Safety Rules ----
+        $bizSql = "SELECT id, no_of_employees, type_of_business, nature_of_business,
+                          latitude, longitude
+                   FROM business_applications
+                   WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $bizStmt = $pdo->query($bizSql);
+        $businesses = $bizStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $bizFloodZone = 0;
+        $bizFaultZone = 0;
+        $bizHighOccupancy = 0;
+        $bizHazardousType = 0;
+        
+        foreach ($businesses as $biz) {
+            if ($biz['latitude'] && $biz['longitude']) {
+                // Rule: Business in any flood zone
+                $floodRisk = checkPointInFloodZone($biz['latitude'], $biz['longitude']);
+                if ($floodRisk) $bizFloodZone++;
+                
+                // Rule: Business in fault critical zone
+                $dist = getDistanceToFaultLine($biz['latitude'], $biz['longitude']);
+                if ($dist < 50) $bizFaultZone++;
+            }
+            
+            // Rule: High occupancy (>50 employees)
+            $emp = intval($biz['no_of_employees'] ?? 0);
+            if ($emp > 50) $bizHighOccupancy++;
+            
+            // Rule: Potentially hazardous business type (fuel, chemicals, welding, LPG)
+            $bizType = strtolower($biz['type_of_business'] ?? '') . ' ' . strtolower($biz['nature_of_business'] ?? '');
+            $hazardKeywords = ['fuel', 'lpg', 'gasoline', 'chemical', 'welding', 'petroleum', 'flammable', 'paint store'];
+            foreach ($hazardKeywords as $keyword) {
+                if (strpos($bizType, $keyword) !== false) {
+                    $bizHazardousType++;
+                    break;
+                }
+            }
+        }
+        
+        $rules['BIZ_FLOOD_ZONE'] = [
+            'name' => 'Business in Flood Zone',
+            'description' => 'Registered businesses located within any flood hazard area — emergency plan and flood mitigation measures required',
+            'severity' => 'HIGH',
+            'count' => $bizFloodZone,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_FAULT_ZONE'] = [
+            'name' => 'Business in Fault Critical Zone (<50m)',
+            'description' => 'Businesses within 50m of the fault line — building must meet enhanced seismic standards and have earthquake evacuation plan',
+            'severity' => 'CRITICAL',
+            'count' => $bizFaultZone,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_HIGH_OCCUPANCY'] = [
+            'name' => 'High Occupancy Business (>50 Employees)',
+            'description' => 'Businesses with more than 50 employees — subject to stricter BFP fire safety inspections, adequate exits, and regular safety drills',
+            'severity' => 'MEDIUM',
+            'count' => $bizHighOccupancy,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_HAZARDOUS'] = [
+            'name' => 'Potentially Hazardous Business Type',
+            'description' => 'Businesses dealing with fuel, LPG, chemicals, welding, or flammable materials — require special permits, fire suppression systems, and hazmat protocols',
+            'severity' => 'HIGH',
+            'count' => $bizHazardousType,
+            'category' => 'Business Safety'
+        ];
         
         // Calculate totals
         $totalHouses = count($houses);
