@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Starts a session, sets response type to JSON, and includes database configuration.
  */
@@ -28,9 +29,21 @@ if (empty($supabase_user_id)) {
  * Handles any PDO exceptions with an internal server error response.
  */
 try {
-    $stmt = $pdo->prepare("SELECT user_id, full_name, role_id FROM users WHERE supabase_user_id = :supabase_user_id");
+    $stmt = $pdo->prepare("SELECT user_id, full_name, role_id, status, suspend_reason FROM users WHERE supabase_user_id = :supabase_user_id");
     $stmt->execute([":supabase_user_id" => $supabase_user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user['status'] === 'suspended') {
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['supabase_user_id'] = $supabase_user_id;
+        $_SESSION['role_id'] = $user['role_id'];
+        echo json_encode([
+            "success" => true,
+            "redirect" => "/Banwa/client/pages/auth/suspended.php",
+            "reason" => $user['suspend_reason'] ?? "Your account is temporarily suspended."
+        ]);
+        exit;
+    }
 
     if ($user) {
         $_SESSION['user_id'] = $user['user_id'];

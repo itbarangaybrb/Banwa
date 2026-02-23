@@ -1,3 +1,6 @@
+
+import { initSocket, sockets } from '../../utils/socketUtils.js';
+
 /**
  * Initialize side navigation toggle controls
  * Handles open and close menu button behavior
@@ -108,30 +111,21 @@ function exportTableAsPDF(tableId, filename) {
 /**
  * Initialize export button for users table
  * Binds click event to trigger PDF export
+ *
+ * @returns {void}
  */
-document.addEventListener('DOMContentLoaded', () => {
+function initExportButton() {
     const exportBtn = document.querySelector('[data-modal="exportUsers"]');
     if (!exportBtn) return;
     exportBtn.addEventListener('click', () => {
         exportTableAsPDF('usersTable', 'users_export.pdf');
     });
-});
-
-
-/**
- * Set interval to periodically refresh audit logs
- * Prevents overlapping fetch requests using refresh flag
- */
-let isRefreshing = false;
-setInterval(() => {
-    if (isRefreshing) return;
-    isRefreshing = true;
-    const finish = () => { isRefreshing = false; };
-    fetchAuditLogs().finally(finish);
-}, 10000);
+}
 
 /**
- * Fetch audit logs from the server and render them into the audit table
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
  * @async
  * @returns {Promise<void>}
  */
@@ -148,8 +142,6 @@ async function fetchAuditLogs() {
             console.error('Invalid audit log response');
             return;
         }
-
-        // console.log('Audit Logs:', logs);
 
         const tbody = document.getElementById('auditTableBody');
         if (!tbody) return;
@@ -178,18 +170,43 @@ async function fetchAuditLogs() {
 }
 
 /**
- * Fetch audit logs on DOM content loaded
- * Ensures initial audit table population
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
  */
-document.addEventListener('DOMContentLoaded', fetchAuditLogs());
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id}</td>
+        <td>${log.action}</td>
+        <td>${log.full_name}</td>
+        <td>${log.table_name}</td>
+        <td>${log.record_id}</td>
+        <td>${log.role_id}</td>
+        <td>${log.created_at}</td>
+    `;
+
+    tbody.prepend(tr);
+}
 
 /**
  * Initializes table search filtering
  * Filters by ID, name, email, and role
+ * @returns {void}
  */
 function handleSearch() {
     const searchInput = document.getElementById('searchInput');
-    const tbody = document.getElementById('usersTableBody') || document.getElementById('auditTableBody');
+    const tbody = document.getElementById('usersTableBody') || document.getElementById('auditTableBody') || document.getElementById('archiveTableBody');
 
     if (!searchInput || !tbody) return;
 
@@ -229,6 +246,20 @@ function handleSearch() {
 }
 
 /**
- * Initialize table search handler on DOM content loaded
+ * Initialize page features after DOM is fully loaded
+ * - Fetch initial audit log snapshot
+ * - Setup search filtering
+ * - Initialize PDF export button
+ * - Initialize WebSocket connection for real-time audit updates
  */
-document.addEventListener('DOMContentLoaded', handleSearch());
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
+    handleSearch();
+    initExportButton();
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") appendAuditRow(data.payload);
+        });
+    }
+});
