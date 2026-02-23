@@ -1,25 +1,18 @@
-:root {
-    --h5: 30px;
-    --h5-lh: 38px;
-
-    --txt3: 16;
-    --txt3-lh: 24px;
-
-    --regular: 400;
-    --bold: 700;
-}
+/* Inherits variables from main.css */
 
 .row {
     display: flex;
     justify-content: space-between;
+    align-items: center; /* Ensures vertical alignment */
 }
 
 .divider {
     height: 1px;
-    background-color: #C4C4C4;
+    background-color: var(--border-blue);
     margin: 16px 0;
 }
 
+/* Search bar modernizations */
 .search-container {
     position: relative;
     display: flex;
@@ -29,28 +22,43 @@
 }
 
 .search-container input {
-    height: 32px;
-    border-radius: 4px;
-    border: 1px solid gray;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border-blue);
     width: 100%;
-    padding: 4px 8px;
+    padding: 4px 12px 4px 36px; /* Space for an icon on the left if needed */
+    transition: all 0.2s ease;
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Blue focus ring */
 }
 
 .search-container img {
     position: absolute;
-    right: 8px;
+    right: 12px;
     cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
 }
 
+.search-container img:hover {
+    opacity: 1;
+}
+
+/* Form Card Styling */
 .form-container .form {
     margin: auto;
     max-width: 680px;
     display: flex;
     flex-direction: column;
-    row-gap: 32px;
-    padding: 32px 24px;
-    border-radius: 16px;
-    background-color: white;
+    row-gap: 24px;
+    padding: 40px 32px;
+    border-radius: 12px;
+    background-color: var(--white);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05); /* Floating card effect */
     position: absolute;
     bottom: 0;
     left: 0;
@@ -63,18 +71,26 @@
     font-size: var(--h5);
     line-height: var(--h5-lh);
     font-weight: var(--bold);
+    color: var(--primary-blue); /* Title in theme blue */
+    margin-bottom: 8px;
 }
 
 .form-container .form .inputs-container {
     display: flex;
     flex-direction: column;
-    row-gap: 16px;
+    row-gap: 20px;
 }
 
 .form-container .form .inputs-container .label-and-input {
     display: flex;
     flex-direction: column;
-    row-gap: 4px;
+    row-gap: 6px;
+}
+
+.form-container .form .inputs-container .label-and-input label {
+    font-size: 14px;
+    font-weight: var(--medium);
+    color: var(--text-main);
 }
 
 .form-container .form .inputs-container .label-and-input select,
@@ -82,19 +98,33 @@
 .form-container .form .inputs-container .label-and-input input[type="text"],
 .form-container .form .inputs-container .label-and-input textarea,
 .form-container .form .inputs-container .label-and-input input[type="password"] {
-    padding: 12px 8px;
-    border-radius: 8px;
-    border: 1px solid #C4C4C4;
+    padding: 12px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-blue);
     width: 100%;
-    background-color: #f5f5f5;
+    background-color: var(--white); /* White background instead of grey */
+    color: var(--text-main);
+    transition: all 0.2s ease;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
 }
 
+/* Input Focus States */
+.form-container .form .inputs-container .label-and-input select:focus,
+.form-container .form .inputs-container .label-and-input input[type="email"]:focus,
+.form-container .form .inputs-container .label-and-input input[type="text"]:focus,
+.form-container .form .inputs-container .label-and-input textarea:focus,
+.form-container .form .inputs-container .label-and-input input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Clean blue glow */
+}
+
 .form-container .form .inputs-container .label-and-input .error-msg {
-    color: red;
+    color: #e74c3c; /* A softer, professional red */
     font-size: 12px;
+    margin-top: 4px;
     display: none;
 }
 
@@ -103,121 +133,151 @@
 }
 
 .form-container .form .inputs-container .label-and-input .error {
-    outline: 1px solid red;
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15) !important;
 }
 
+/* Buttons */
 .form-container .form .buttons-container {
     margin-left: auto;
     width: max-content;
+    display: flex;
+    gap: 12px; /* Adds space between buttons */
 }
 
 .reason-buttons-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .form-container .form .buttons-container button,
 .reason-buttons-container .reason-btn {
-    border-radius: 8px;
+    border-radius: 6px;
     border: transparent;
-    transition: background-color 200ms ease;
-    font-weight: 500;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .reason-buttons-container .reason-btn {
-    padding: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
 }
 
 .form-container .form .buttons-container button {
-    padding: 16px;
+    padding: 12px 24px;
 }
 
+/* Secondary Button (Cancel/Back) */
 .form-container .form .buttons-container button:nth-child(1),
 .reason-buttons-container .reason-btn {
-    background-color: #dbdbdb;
-    color: black;
-    border: 1px solid #c9c9c9;
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+    border: 1px solid var(--border-blue);
 }
 
 .form-container .form .buttons-container button:nth-child(1):hover,
 .reason-buttons-container .reason-btn:hover {
-    background-color: #c9c9c9;
+    background-color: var(--border-blue);
 }
 
+/* Primary Button (Submit/Next) */
 .form-container .form .buttons-container button:nth-child(2) {
-    background-color: #00247C;
-    color: white;
-    margin-left: 4px;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    margin-left: 0; /* Handled by parent gap */
+    box-shadow: 0 2px 4px rgba(25, 49, 107, 0.2);
 }
 
 .form-container .form .buttons-container button:nth-child(2):hover {
-    background-color: #00164d;
+    background-color: var(--primary-blue-hover);
+    box-shadow: 0 4px 6px rgba(25, 49, 107, 0.3);
+    transform: translateY(-1px);
 }
 
+/* Modal Updates */
 .modal {
     display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .modal.active {
-    display: block;
-    position: absolute;
+    display: flex; /* Changed to flex to center content */
+    align-items: center;
+    justify-content: center;
+    position: fixed; /* Fixed is better than absolute for modals */
     top: 0;
     bottom: 0;
     right: 0;
     left: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(15, 30, 66, 0.6); /* Tinted dark blue overlay */
     z-index: 999;
+    opacity: 1;
 }
 
 .buttons {
-    padding: 7px 12px;
-    border-radius: 4px;
-    border: 1px solid #C4C4C4;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-blue);
     cursor: pointer;
+    background-color: var(--white);
+    color: var(--text-main);
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .buttons:hover {
-    background-color: rgb(223, 223, 223);
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+    border-color: var(--accent-blue);
 }
 
+/* SweetAlert overrides using the new theme */
 .swal-popup {
-    color: black;
+    color: var(--text-main);
     padding: 32px 24px;
-    border-radius: 16px;
-    background-color: white;
+    border-radius: 12px;
+    background-color: var(--white);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
 }
 
-.swal-title {}
+.swal-title {
+    color: var(--primary-blue);
+}
 
 .swal2-actions {
-    gap: 8px;
+    gap: 12px;
 }
 
 .swal-confirm-btn,
 .swal-cancel-btn {
-    padding: 16px;
-    border-radius: 8px;
+    padding: 12px 24px;
+    border-radius: 6px;
     border: transparent;
-    transition: background-color 200ms ease;
-    font-weight: 500;
+    transition: all 0.2s ease;
+    font-weight: 600;
 }
 
 .swal-confirm-btn {
-    background-color: #00247C;
-    color: white;
-    margin-left: 4px;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    box-shadow: 0 2px 4px rgba(25, 49, 107, 0.2);
 }
 
 .swal-confirm-btn:hover {
-    background-color: #00164d;
+    background-color: var(--primary-blue-hover);
+    transform: translateY(-1px);
 }
 
 .swal-cancel-btn {
-    background-color: #dbdbdb;
-    color: black;
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+    border: 1px solid var(--border-blue);
 }
 
 .swal-cancel-btn:hover {
-    background-color: #c9c9c9;
+    background-color: var(--border-blue);
 }
