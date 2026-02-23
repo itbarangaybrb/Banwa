@@ -286,16 +286,18 @@ function detailTable(rows) {
 function showDetailSwal(title, badgeLabel, badgeType, tableRows) {
     showSwal({
         html: `
-            <div style="text-align:left;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">
-                    <h3 style="margin:0;font-size:17px;color:#00247c;flex:1;">${title}</h3>
-                    ${detailBadge(badgeLabel, badgeType)}
+            <div class="rpt-body">
+                <div class="rpt-header">
+                    <h3 style="font-size:17px;margin:0;">${title}</h3>
+                    <div style="margin-top:8px;">${detailBadge(badgeLabel, badgeType)}</div>
                 </div>
-                ${detailTable(tableRows)}
+                <div class="rpt-content">
+                    ${detailTable(tableRows)}
+                </div>
             </div>`,
-        width: 600,
         showConfirmButton: false,
-        showCloseButton: true
+        showCloseButton: true,
+        customClass: { popup: 'unified-modal-popup' }
     });
 }
 
@@ -575,6 +577,10 @@ function selectFilterType(type, event) {
         }
     });
     
+    // Clear any active search highlight when switching filters
+    removeActiveSearchMarker();
+    map.closePopup();
+
     activateFilter(type);
 }
 
@@ -1263,19 +1269,21 @@ function createConstructionPopup(data) {
                 <span>Construction Site</span>
                 <span class="construction-badge">Construction</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
-                <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                    <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
+                    <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
+                    <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
+                    <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
-                <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
-                <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1287,18 +1295,20 @@ function createBusinessPopup(data) {
                 <span>${data.business_name || 'Business'}</span>
                 <span class="business-badge">Business</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
-                <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
-                <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
+                    <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
+                    <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
+                    <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
-                <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1310,18 +1320,20 @@ function createUtilityPopup(data) {
                 <span>Utility Work</span>
                 <span class="utility-badge">Utility</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
-                <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                    <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
+                    <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                    <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
-                <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1344,19 +1356,21 @@ function createFloodPopup(data) {
                 <span>${data.hazard_name || 'Flood Hazard Area'}</span>
                 <span class="flood-risk-badge" style="background: ${riskColor};">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
             </h4>
-            <div class="popup-section flood-popup-section">
-                <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
-                <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
-                <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
+            <div class="popup-body">
+                <div class="popup-section flood-popup-section">
+                    <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
+                    <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
+                    <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
+                    <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
+                    <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
+                    View Flood Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
-                <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
-                <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
-                View Flood Details
-            </button>
         </div>
     `;
 }
@@ -1368,17 +1382,19 @@ function createHousePopup(data) {
                 <span>${data.house_number ? 'House #' + data.house_number : 'House'}</span>
                 <span class="household-badge">Household</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
-                <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
+                    <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
+                    <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
-                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
-                View Full Details
-            </button>
         </div>
     `;
 }

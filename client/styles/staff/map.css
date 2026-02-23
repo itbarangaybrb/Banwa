@@ -780,37 +780,82 @@ body {
 }
 
 /* ==================== POPUP STYLES ==================== */
-.leaflet-popup-content {
-  font-family: "Inter", sans-serif;
-  max-width: 400px !important;
-  max-height: 500px;
-  overflow-y: auto;
-  padding: 15px;
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+  border: none !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }
 
-.leaflet-popup-content-wrapper {
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e0e0e0;
+.leaflet-popup-content {
+  font-family: "Inter", sans-serif !important;
+  width: 320px !important;
+  max-width: 320px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+
+.leaflet-popup-close-button {
+  position: absolute !important;
+  top: 10px !important;
+  right: 12px !important;
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 18px !important;
+  line-height: 26px !important;
+  text-align: center !important;
+  color: rgba(255,255,255,0.9) !important;
+  background: rgba(0,0,0,0.2) !important;
+  border-radius: 50% !important;
+  z-index: 10 !important;
+  padding: 0 !important;
+  font-weight: 400 !important;
+  transition: background 0.2s !important;
+}
+
+.leaflet-popup-close-button:hover {
+  background: rgba(0,0,0,0.4) !important;
+  color: #fff !important;
 }
 
 .popup-content {
-  max-width: 380px;
+  width: 100%;
 }
 
 .popup-content h4 {
-  color: #00247c; /* Navy blue */
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #00247c; /* Navy blue */
+  background: #00247c;
+  color: #fff;
+  margin: 0;
+  padding: 14px 40px 14px 16px;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.2em;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.popup-content h4 span:first-child {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popup-body {
+  padding: 14px 16px 6px;
 }
 
 .popup-section {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -821,16 +866,17 @@ body {
 }
 
 .popup-content p {
-  margin: 6px 0;
-  font-size: 0.95em;
-  line-height: 1.4;
+  margin: 5px 0;
+  font-size: 12.5px;
+  line-height: 1.45;
   color: #333333;
 }
 
 .popup-content strong {
-  color: #00247c; /* Navy blue */
+  color: #00247c;
   font-weight: 600;
 }
+
 
 .household-badge,
 .business-badge,
@@ -876,6 +922,28 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: #cc0000;
+}
+
+.popup-body .view-details-btn {
+  display: block;
+  margin: 12px 0 4px 0;
+  padding: 9px 18px;
+  background: #00247c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background 0.2s;
+  text-decoration: none;
+  width: 100%;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+}
+
+.popup-body .view-details-btn:hover {
+  background: #001a5c;
 }
 
 .view-details-btn {
@@ -1230,11 +1298,11 @@ body {
 
 /* ==================== FLOOD POPUP ==================== */
 .flood-popup-section {
-  background: #f8f8f8; /* Very light gray */
-  padding: 10px;
+  background: #f0f4ff;
+  padding: 8px 10px;
   border-radius: 5px;
-  margin: 10px 0;
-  border-left: 4px solid #00247c; /* Navy blue */
+  margin: 0 0 8px 0;
+  border-left: 4px solid #00247c;
 }
 
 .flood-risk-high {
@@ -1542,14 +1610,15 @@ body {
 .swal2-confirm { background: #00247c !important; }
 .swal2-cancel  { background: #666 !important; }
 
-/* ── Unified modal size for ALL report / risk / SDSS / affected-records modals ── */
+/* ── Unified modal size for ALL report / risk / SDSS / detail / affected-records modals ── */
 .unified-modal-popup,
 .report-modal-popup,
 .sdss-rules-popup,
 .swal-wide {
   width: 860px !important;
   max-width: 95vw !important;
-  min-height: 520px !important;
+  height: min(88vh, 640px) !important;
+  min-height: unset !important;
 }
 
 /* ────────────────────────────────────────────────
