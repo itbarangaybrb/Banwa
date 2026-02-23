@@ -29,44 +29,47 @@ function loadAnalytics() {
             const totals4 = res.data_by_suspensions.map(x => x.total);
             const percentages4 = res.data_by_suspensions.map(x => x.percentage);
 
-            // Generate dynamic colors for suspensions
-            // Softer, lighter colors
             const dateColors = [
-                '#3b5ca8', // lighter blue
-                '#5a7fcf',
-                '#7aa8f2',
-                '#33c1cc', // lighter teal
-                '#ffb84d', // light orange
-                '#c0c0c0'  // light gray
+                '#bdc3c7',
+                '#95a5a6',
+                '#7f8c8d',
+                '#5d6d7e',
+                '#34495e',
+                '#2c3e50',
+                '#00247C'
             ];
 
             const roleColors = [
-                '#3b5ca8',
-                '#5a7fcf',
-                '#7aa8f2',
-                '#33d1b8', // light teal-green
-                '#ff8570', // light coral
-                '#d0d0d0'  // silver/light gray
+                '#bdc3c7',
+                '#d35400',
+                '#16a085',
+                '#7f8c8d',
+                '#5d6d7e',
+                '#34495e',
+                '#2c3e50',
+                '#00247C'
             ];
 
             const statusColors = [
-                '#3b5ca8',
-                '#4d6580', // lighter navy
-                '#66a3cc',
-                '#66c2ff', // sky blue
-                '#ff9c33', // lighter orange
-                '#a0a0a0'  // gray
+                '#bdc3c7',
+                '#95a5a6',
+                '#7f8c8d',
+                '#5d6d7e',
+                '#34495e',
+                '#2c3e50',
+                '#00247C'
             ];
 
             const suspensionColors = [
-                '#3b5ca8',
-                '#4d7399',
-                '#66a3cc',
-                '#66b2d6',
-                '#66d9ff',
-                '#ffc266', // light orange
-                '#ff7f66', // light tomato
-                '#b0b0b0'  // light gray
+                '#bdc3c7',
+                '#d35400',
+                '#16a085',
+                '#95a5a6',
+                '#7f8c8d',
+                '#5d6d7e',
+                '#34495e',
+                '#2c3e50',
+                '#00247C'
             ];
 
             // Destroy previous charts if they exist
@@ -86,7 +89,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Users',
                                 data: values1,
-                                backgroundColor: dateColors.map(c => c + '90'),
+                                backgroundColor: dateColors.map(c => c + '98'),
                                 borderWidth: 2,
                                 tension: 0.4,
                                 fill: true
@@ -118,7 +121,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Roles',
                                 data: values2,
-                                backgroundColor: roleColors.map(c => c + '90'),
+                                backgroundColor: roleColors.map(c => c + '98'),
                                 borderWidth: 1,
                                 borderRadius: '4'
                             }]
@@ -148,7 +151,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Status',
                                 data: totals3,
-                                backgroundColor: statusColors.map(c => c + '90'),
+                                backgroundColor: statusColors.map(c => c + '98'),
                                 borderWidth: 1
                             }]
                         },
@@ -178,7 +181,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Suspensions',
                                 data: totals4,
-                                backgroundColor: suspensionColors.map(c => c + '90'),
+                                backgroundColor: suspensionColors.map(c => c + '98'),
                                 borderWidth: 1,
                                 borderRadius: 4
                             }]

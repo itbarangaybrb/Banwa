@@ -220,3 +220,7 @@ table thead tr th .th-content {
         transform: rotate(360deg);
     }
 }
+
+.th-filter {
+    cursor: pointer;
+}

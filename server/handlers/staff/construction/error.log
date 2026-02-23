@@ -219,3 +219,9 @@ Stack trace:
 [17-Feb-2026 13:54:27 UTC] OCR job queued for application 28 with 1 files
 [17-Feb-2026 13:54:27 UTC] CR1 Check - Has file upload: No
 [17-Feb-2026 13:54:27 UTC] CR1 Check - Has file upload: No
+[23-Feb-2026 12:33:56 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[23-Feb-2026 12:33:57 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 3:             FROM construction_applications
+                         ^

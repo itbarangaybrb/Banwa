@@ -106,16 +106,18 @@ if ($_SESSION['role_id'] != 2) {
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th id="nameFilter">
+                            <th id="nameFilter" class="th-filter">
                                 <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
                                     Name
                                 </span>
                             </th>
-                            <th id="emailFilter"> <span class="th-content">
+                            <th id="emailFilter" class="th-filter"> 
+                                <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
                                     Email Address
-                                </span></th>
+                                </span>
+                            </th>
                             <th>Status</th>
                             <th>Role</th>
                             <th>Details</th>

@@ -245,6 +245,44 @@ function handleSearch() {
     });
 }
 
+function makeTableSortable(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const headers = table.querySelectorAll('th');
+    headers.forEach((th, index) => {
+        if (!th.id) return;
+
+        let asc = true;
+
+        th.addEventListener('click', () => {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                const cellA = a.children[index].textContent.trim().toLowerCase();
+                const cellB = b.children[index].textContent.trim().toLowerCase();
+
+                if (cellA < cellB) return asc ? -1 : 1;
+                if (cellA > cellB) return asc ? 1 : -1;
+                return 0;
+            });
+
+            // Remove existing rows and append sorted
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+
+            asc = !asc; // toggle sort order
+
+            // Optionally toggle arrow icon
+            const img = th.querySelector('img');
+            if (img) {
+                img.style.transform = asc ? 'rotate(0deg)' : 'rotate(180deg)';
+            }
+        });
+    });
+}
+
 /**
  * Initialize page features after DOM is fully loaded
  * - Fetch initial audit log snapshot
@@ -262,4 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.type === "new_audit_log") appendAuditRow(data.payload);
         });
     }
+
+    makeTableSortable('usersTable');
+    makeTableSortable('auditTable');
+    makeTableSortable('archiveTable');
 });

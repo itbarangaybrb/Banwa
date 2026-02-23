@@ -104,10 +104,10 @@ if ($_SESSION['role_id'] != 2) {
                         <tr>
                             <th>ID</th>
                             <th>Activity</th>
-                            <th id="nameFilter">
+                            <th id="nameFilter" class="th-filter">
                                 <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
-                                    Full Name
+                                    Name
                                 </span>
                             </th>
                             <th>Table</th>
