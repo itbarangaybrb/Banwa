@@ -1,8 +1,14 @@
+
+import { initSocket, sockets } from '../../utils/socketUtils.js';
+
+/**
+ * Initialize side navigation toggle controls
+ * Handles open and close menu button behavior
+ */
 const openMenu = document.getElementById('openMenu');
 const closeMenu = document.getElementById('closeMenu');
 const nav = document.getElementById('sideNav');
 
-// Initial state
 nav.classList.remove('open');
 openMenu.style.display = 'inline-flex';
 closeMenu.style.display = 'none';
@@ -19,14 +25,23 @@ closeMenu.addEventListener('click', () => {
     openMenu.style.display = 'inline-flex';
 });
 
+/**
+ * Hide page loader after full window load
+ * Ensures loader is removed when all resources are ready
+ */
 window.addEventListener("load", () => {
     const loader = document.getElementById("page-loader");
     if (loader) loader.style.display = "none";
 });
 
+
+/**
+ * Display page loader when navigating via anchor links
+ * Prevents interaction during page transition
+ */
 document.addEventListener("click", (e) => {
     const link = e.target.closest("a");
-    const submit = e.target.closest("button[type=submit]");
+    // const submit = e.target.closest("button[type=submit]");
     const loader = document.getElementById("page-loader");
 
     if (
@@ -42,6 +57,10 @@ document.addEventListener("click", (e) => {
     }
 });
 
+/**
+ * Display page loader on form submission
+ * Ensures loader appears unless submission is prevented
+ */
 document.addEventListener("submit", (e) => {
     if (e.defaultPrevented) return;
 
@@ -56,9 +75,8 @@ document.addEventListener("submit", (e) => {
  */
 function exportTableAsPDF(tableId, filename) {
     const { jsPDF } = window.jspdf;
-    // Create PDF in landscape orientation
     const doc = new jsPDF({
-        orientation: 'landscape', // change from default 'portrait'
+        orientation: 'landscape',
         unit: 'pt',
         format: 'a4'
     });
@@ -66,17 +84,21 @@ function exportTableAsPDF(tableId, filename) {
     const table = document.getElementById(tableId);
     if (!table) return alert('Table not found');
 
-    // Map rows, skip action buttons column
+    const headerRow = table.querySelector('thead tr');
+    const headers = Array.from(headerRow.querySelectorAll('th'));
+    const actionsIndex = headers.findIndex(th =>
+        th.innerText.trim().toLowerCase() === 'actions'
+    );
+
     const rows = Array.from(table.querySelectorAll('tr')).map(tr =>
         Array.from(tr.querySelectorAll('th, td'))
-            .slice(0, -1) // exclude last column (actions)
+            .filter((cell, index) => index !== actionsIndex)
             .map(cell => cell.innerText)
     );
 
-    // Add table to PDF
     doc.autoTable({
-        head: [rows[0]], // table header
-        body: rows.slice(1), // table body
+        head: [rows[0]],
+        body: rows.slice(1),
         startY: 20,
         theme: 'grid',
         headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
@@ -85,3 +107,159 @@ function exportTableAsPDF(tableId, filename) {
 
     doc.save(filename);
 }
+
+/**
+ * Initialize export button for users table
+ * Binds click event to trigger PDF export
+ *
+ * @returns {void}
+ */
+function initExportButton() {
+    const exportBtn = document.querySelector('[data-modal="exportUsers"]');
+    if (!exportBtn) return;
+    exportBtn.addEventListener('click', () => {
+        exportTableAsPDF('usersTable', 'users_export.pdf');
+    });
+}
+
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response');
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>${log.id}</td>
+                <td>${log.action}</td>
+                <td>${log.full_name}</td>
+                <td>${log.table_name}</td>
+                <td>${log.record_id}</td>
+                <td>${log.role_id}</td>
+                <td>${log.created_at}</td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id}</td>
+        <td>${log.action}</td>
+        <td>${log.full_name}</td>
+        <td>${log.table_name}</td>
+        <td>${log.record_id}</td>
+        <td>${log.role_id}</td>
+        <td>${log.created_at}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
+/**
+ * Initializes table search filtering
+ * Filters by ID, name, email, and role
+ * @returns {void}
+ */
+function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const tbody = document.getElementById('usersTableBody') || document.getElementById('auditTableBody') || document.getElementById('archiveTableBody');
+
+    if (!searchInput || !tbody) return;
+
+    searchInput.addEventListener('change', () => {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const rows = tbody.querySelectorAll('tr');
+        let visibleCount = 0;
+
+        const existingNoUsersRow = tbody.querySelector('.no-users-row');
+        if (existingNoUsersRow) {
+            tbody.removeChild(existingNoUsersRow);
+        }
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 0) return; // skip non-data rows
+
+            const rowText = Array.from(cells)
+                .map(td => td.textContent.toLowerCase())
+                .join(' ');
+
+            if (rowText.includes(keyword)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (visibleCount === 0) {
+            const tr = document.createElement('tr');
+            tr.classList.add('no-users-row');
+            tr.innerHTML = `<td colspan="6" style="text-align:center;">No users found</td>`;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+/**
+ * Initialize page features after DOM is fully loaded
+ * - Fetch initial audit log snapshot
+ * - Setup search filtering
+ * - Initialize PDF export button
+ * - Initialize WebSocket connection for real-time audit updates
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
+    handleSearch();
+    initExportButton();
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") appendAuditRow(data.payload);
+        });
+    }
+});

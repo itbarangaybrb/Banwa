@@ -12,25 +12,6 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 try {
-    // $pdo = null;
-
-    // // Check if the constants are defined (from database.php)
-    // if (defined('DB_HOST') && defined('DB_PORT') && defined('DB_NAME') && defined('DB_USER') && defined('DB_PASS')) {
-    //     $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
-    //     $pdo = new PDO($dsn, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    //     error_log("DB_CONNECTION: Using defined constants for connection.");
-    // } else {
-    //     // Fallback: If constants are not defined, use hardcoded defaults (common for PostgreSQL)
-    //     error_log("DB_CONNECTION: Constants not defined. Using fallback defaults.");
-    //     $fallback_db_host = 'localhost';
-    //     $fallback_db_port = '5432';
-    //     $fallback_db_name = 'capstone'; // Common default from other files
-    //     $fallback_db_user = 'postgres';
-    //     $fallback_db_pass = '$Xz_11182025'; // Common default from other files
-
-    //     $dsn = "pgsql:host=" . $fallback_db_host . ";port=" . $fallback_db_port . ";dbname=" . $fallback_db_name;
-    //     $pdo = new PDO($dsn, $fallback_db_user, $fallback_db_pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    // }
 
     $appId = $_GET['id'] ?? null;
 

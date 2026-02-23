@@ -16,7 +16,8 @@ if ($_SESSION['role_id'] != 2) {
     <title>Dashboard</title>
 
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
-    <link rel="stylesheet" href="../../../styles/staff/superadmin/manage_users.css">
+    <link rel="stylesheet" href="../../../styles/staff/superadmin/dashboard.css">
+    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
 </head>
 
 <body>
@@ -41,14 +42,26 @@ if ($_SESSION['role_id'] != 2) {
             <ul class="list">
                 <li class="items">
                     <a class="links" href="../superadmin/dashboard.php">
-                        <img src="../../../img/home-icon.svg" alt="Home" class="icon">
+                        <img src="../../../img/home-icon.svg" alt="dashboard" class="icon">
                         <p class="links-name">Dashboard</p>
                     </a>
                 </li>
                 <li class="items">
                     <a class="links" href="../superadmin/manage_users.php">
-                        <img src="../../../img/users-icon.svg" alt="Users" class="icon">
+                        <img src="../../../img/users-icon.svg" alt="manage users" class="icon">
                         <p class="links-name">Manage Users</p>
+                    </a>
+                </li>
+                <li class="items">
+                    <a class="links" href="../superadmin/audits.php">
+                        <img src="../../../img/file-search-corner-icon.svg" alt="audit" class="icon">
+                        <p class="links-name">Audits</p>
+                    </a>
+                </li>
+                <li class="items">
+                    <a class="links" href="../superadmin/archives.php">
+                        <img src="../../../img/archive-icon.svg" alt="audit" class="icon">
+                        <p class="links-name">Audits</p>
                     </a>
                 </li>
             </ul>
@@ -60,23 +73,38 @@ if ($_SESSION['role_id'] != 2) {
                         <p class="links-name">Logout</p>
                     </a>
                 </li>
-                <li class="items">
-                    <a class="links" href="../superadmin/dashboard.php">
-                        <img src="../../../img/home-icon.svg" alt="Home" class="icon">
-                        <p class="links-name" id="userStatus"></p>
-                    </a>
-                </li>
             </ul>
         </nav>
     </aside>
 
     <main class="main">
         <section class="sections">
-            <h1>COMING SOON ....</h1>
+            <div class="analytics-container-1">
+                <div class="analytics-row">
+                    <div class="charts">
+                        <canvas id="chart1"></canvas>
+                    </div>
+                    <div class="charts">
+                        <canvas id="chart2"></canvas>
+                    </div>
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
+                </div>
+                <div class="analytics-row">
+                    <div class="charts">
+                        <canvas id="chart4"></canvas>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/dashboard.js"></script>
+
 </body>
 
 </html>

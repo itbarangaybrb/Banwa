@@ -456,3 +456,83 @@ body {
         left: 100%;
     }
 }
+
+.buttons-container {
+    margin-top: 1.5rem;
+}
+
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.login-link,
+.text-primary {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.login-link:hover,
+.text-primary:hover {
+    text-decoration: underline;
+}
+.buttons-container {
+  display: flex;
+  align-items: center;           /* vertically centers both items */
+  justify-content: space-between; /* pushes login text left, button right */
+  flex-wrap: wrap;               /* allows wrapping on very small screens */
+  gap: 310px;                     /* space if they wrap */
+  margin-top: 24px;              /* breathing room from the file input */
+  width: 100%;
+}
+
+.login-prompt {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #555;
+  white-space: nowrap;           /* prevents text from wrapping awkwardly */
+}
+
+.login-link {
+  color: #0066cc;                /* or your brand color */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+#selectIdNextBtn {
+  padding: 12px 32px;
+  background-color: #00247C;     /* or your primary button color */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 80px;              /* prevents button from being too narrow */
+  text-align: center;
+}
+
+#selectIdNextBtn:hover {
+  background-color: #00164d;
+}
+
+/* Optional: on very small screens, stack them vertically again */
+@media (max-width: 480px) {
+  .buttons-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  #selectIdNextBtn {
+    width: 100%;
+  }
+  
+  .login-prompt {
+    text-align: center;
+  }
+}

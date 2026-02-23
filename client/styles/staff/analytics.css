@@ -8,17 +8,37 @@ body {
     background: #f5f7fa;
 }
 
-.analytics-container {
+.analytics-container,
+.analytics-container-1 {
     display: flex;
-    gap: 16px;
 }
 
+.analytics-container {
+    gap: 12px;
+}
+
+.analytics-container-1 {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.analytics-container-1 .analytics-row {
+    display: flex;
+    gap: 8px;
+}
+
+.analytics-container-1 .analytics-row .charts,
 .analytics-container .charts {
     flex: 1;
     min-width: 0;
     height: 320px;
+    padding: 16px;
+    border: 1px solid #C4C4C4;
+    border-radius: 8px;
+    background-color: white;
 }
 
+.analytics-container-1 canvas,
 .analytics-container canvas {
     width: 100% !important;
     height: 100% !important;

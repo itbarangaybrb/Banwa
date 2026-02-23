@@ -20,3 +20,4 @@
 {"timestamp":"2026-02-04 21:10:10","application_id":"71","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
 {"timestamp":"2026-02-04 21:11:56","application_id":"70","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
 {"timestamp":"2026-02-05 03:27:18","application_id":"71","dss_status":"Pre-Approved","score":5,"max_score":6,"probability":83.33,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-02-15 16:24:38","application_id":66,"dss_status":"Pre-Approved","score":6,"max_score":6,"probability":100,"passed_rules":6,"failed_rules":0}

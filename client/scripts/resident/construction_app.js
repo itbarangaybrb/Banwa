@@ -520,10 +520,22 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('constructionLotNo', document.getElementById('constructionLotNo').value);
         formData.append('constructionStreet', document.getElementById('constructionStreet').value);
 
-        // File Upload
-        const fileInput = document.getElementById('requirementUpload');
-        if (fileInput.files.length > 0) {
-            formData.append('requirementUpload', fileInput.files[0]);
+        const requirementUploadInput = document.getElementById('requirementUpload');
+        if (requirementUploadInput && requirementUploadInput.files.length > 0) {
+            for (let i = 0; i < requirementUploadInput.files.length; i++) {
+                formData.append('requirementUpload[]', requirementUploadInput.files[i]);
+            }
+            console.log(`[UPLOAD SUCCESS] Sending ${requirementUploadInput.files.length} file(s) for construction`);
+        } else {
+            console.warn('[UPLOAD WARNING] No file selected!');
+        }
+
+        // Additional files (if user selected any)
+        const additionalFilesInput = document.getElementById('additionalFiles');
+        if (additionalFilesInput && additionalFilesInput.files.length > 0) {
+            for (let i = 0; i < additionalFilesInput.files.length; i++) {
+                formData.append('requirementUpload[]', additionalFilesInput.files[i]);
+            }
         }
 
         const latitudeEl = document.getElementById('latitude2');

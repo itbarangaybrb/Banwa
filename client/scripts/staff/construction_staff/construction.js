@@ -753,165 +753,202 @@ function submitUpdate(event) {
 }
 
 /**
- * Displays detailed application information in a modal view
- * Shows construction details, owner information, documents, and assessment data
- * Handles file previews for uploaded documents
- * 
+ * Displays detailed application information in a modal view.
+ * Fetches fresh data and renders styled document previews and OCR result lists.
  * @param {number} appId - The application ID to view details for
  */
-function viewDetails(appId) {
-    const app = applications.find(a => a.id == appId);
-    if (!app) return;
-
-    // 1. Prepare Data
-    const constructionAddress = app.construction_address || 'Not specified';
-
-    // Parse requirements list safely
-    let reqs = app.requirements;
-    if (typeof reqs === 'string') {
-        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
-    }
-    const requirementsList = (Array.isArray(reqs) && reqs.length > 0)
-        ? reqs.map(r => `<span class="badge-req">✓ ${r}</span>`).join(' ')
-        : '<span style="color:#999;">No requirements logged</span>';
-
-    // 2. File Viewing Logic
-    let fileHtml = '<div class="file-viewer-box"><p style="color:#666;">No document uploaded.</p></div>';
-
-    // Normalize uploaded files - support `requirement_upload_json` or legacy `requirement_upload`
-    let uploadedFiles = [];
-    if (app.requirement_upload_json) {
-        if (Array.isArray(app.requirement_upload_json)) uploadedFiles = app.requirement_upload_json;
-        else {
-            try { uploadedFiles = JSON.parse(app.requirement_upload_json); } catch (e) { uploadedFiles = []; }
-        }
-    }
-    if (!uploadedFiles.length && app.requirement_upload) {
-        try {
-            const parsed = JSON.parse(app.requirement_upload);
-            if (Array.isArray(parsed)) uploadedFiles = parsed;
-            else uploadedFiles = [app.requirement_upload];
-        } catch (e) {
-            uploadedFiles = [app.requirement_upload];
-        }
-    }
-
-    if (uploadedFiles.length > 0) {
-        const filename = uploadedFiles[0];
-        const filePath = `${UPLOADS_BASE_PATH}${filename}`;
-        const fileExt = (filename || '').split('.').pop().toLowerCase();
-
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-            fileHtml = `
-                <div class="file-viewer-box">
-                    <p style="margin-bottom:10px; font-weight:bold; color:#19316b;">Attached Document</p>
-                    <a href="${filePath}" target="_blank">
-                        <img src="${filePath}" alt="Document Preview" class="file-thumbnail" title="Click to enlarge">
-                    </a>
-                    <br>
-                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-expand"></i> View Full Image</a>
-                </div>`;
-        }
-        else {
-            const isPdf = fileExt === 'pdf';
-            const iconClass = isPdf ? 'fa-file-pdf' : 'fa-file-alt';
-            const iconColor = isPdf ? '#dc3545' : '#6c757d';
-            fileHtml = `
-                <div class="file-viewer-box">
-                    <i class="fas ${iconClass} fa-3x" style="color:${iconColor}; margin-bottom:10px;"></i>
-                    <p style="margin-bottom:10px; font-weight:bold;">${filename}</p>
-                    <a href="${filePath}" target="_blank" class="btn-view-doc"><i class="fas fa-external-link-alt"></i> Open Document</a>
-                </div>`;
-        }
-    }
-
-    // 3. Status Colors
-    let statusColor = '#6c757d';
-    let statusBg = '#e2e3e5';
-    switch (app.status) {
-        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
-        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
-        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
-        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
-    }
-
-    // 4. Build Professional HTML Structure
-    const content = `
-        <div class="details-container">
-            <div class="details-header-card">
-                <div class="details-title">
-                    <h2>${app.nature_of_activity}</h2>
-                    <div class="details-id">Application ID: #${app.id}</div>
-                </div>
-                <div style="text-align:right;">
-                    <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
-                        ${app.status}
-                    </span>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">Date: ${app.application_date}</div>
-                </div>
-            </div>
-
-            <div class="details-grid">
-                <div class="col-left">
-                    <div class="detail-card">
-                        <h3>Construction Information</h3>
-                        <div class="detail-row"><span class="detail-label">Nature</span> <span class="detail-value">${app.nature_of_activity}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contractor</span> <span class="detail-value">${app.contractor_name}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contractor Contact</span> <span class="detail-value">${app.contractor_contact_number}</span></div>
-                        <div class="detail-row"><span class="detail-label">Type of Work</span> <span class="detail-value">${app.type_of_work}</span></div>
-                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${constructionAddress}</span></div>
-                        <div class="detail-row"><span class="detail-label">Details</span> <span class="detail-value">${app.details_of_work || 'N/A'}</span></div>
-                    </div>
-
-                    <div class="detail-card" style="margin-top:20px;">
-                        <h3>Owner Details</h3>
-                        <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
-                        <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.contact_no_owner}</span></div>
-                        <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.owner_address}</span></div>
-                    </div>
-                </div>
-
-                <div class="col-right">
-                    <div class="detail-card">
-                        <h3>Schedule & Workforce</h3>
-                        <div class="detail-row"><span class="detail-label">Start Date</span> <span class="detail-value">${app.start_date}</span></div>
-                        <div class="detail-row"><span class="detail-label">End Date</span> <span class="detail-value">${app.end_date}</span></div>
-                        <div class="detail-row"><span class="detail-label">Working Days</span> <span class="detail-value">${app.number_of_working_days}</span></div>
-                        <div class="detail-row"><span class="detail-label">Workers</span> <span class="detail-value">${app.number_of_workers}</span></div>
-                    </div>
-
-                    <div class="detail-card" style="margin-top:20px;">
-                        <h3>Documents & Files</h3>
-                        <div style="margin-bottom:15px;">
-                            <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
-                            <div style="font-size:12px; line-height:1.6;">${requirementsList}</div>
-                        </div>
-                        ${fileHtml}
-                    </div>
-
-                    <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-                        <h3>Assessment</h3>
-                        ${app.amount_due > 0 ? `
-                        <div class="detail-row"><span class="detail-label">Amount Due</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">₱${app.amount_due}</span></div>
-                        <div class="detail-row"><span class="detail-label">Payment Status</span> <span class="detail-value">${app.payment_status}</span></div>
-                        <div class="detail-row"><span class="detail-label">OR Number</span> <span class="detail-value">${app.or_number || 'Pending'}</span></div>
-                        ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>'}
-                    </div>
-                </div>
-            </div>
-
-            ${app.approval_comments || app.disapproval_reason ? `
-            <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
-                <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
-            </div>
-            ` : ''}
-        </div>
-    `;
-
-    document.getElementById('modalBody').innerHTML = content;
+async function viewDetails(appId) {
+    // 1. Show modal with loading state immediately
     openModal('detailsModal');
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            <p style="margin-top: 15px; color: #666; font-weight: 500;">Loading application details and OCR results...</p>
+        </div>`;
+
+    try {
+        // 2. Fetch the specific details from the server
+        const response = await fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_application_details&application_id=${appId}`);
+        const data = await response.json();
+
+        if (data.status !== 'success') throw new Error(data.message || 'Failed to fetch details');
+
+        const app = data.application;
+
+        // === 3. AGGRESSIVE FILE EXTRACTION ===
+        // Merged logic to handle all possible formats from the DB
+        let files = [];
+        const possibleFields = [app.requirement_upload_json, app.requirement_upload, app.documents, app.files];
+        
+        for (let field of possibleFields) {
+            if (!field) continue;
+            if (Array.isArray(field)) {
+                files = field;
+                break;
+            }
+            if (typeof field === 'string' && field.trim() !== '') {
+                try {
+                    const parsed = JSON.parse(field);
+                    files = Array.isArray(parsed) ? parsed : [parsed];
+                    break;
+                } catch (e) {
+                    // Fallback if it's just a single filename string
+                    if (field.includes('.')) {
+                        files = [{ filename: field }];
+                        break;
+                    }
+                }
+            }
+        }
+
+        const ocrRuns = Array.isArray(app.ocr_results) ? app.ocr_results : [];
+        const constructionAddress = app.construction_address || 'Not specified';
+
+        // Status Styling
+        let statusColor = '#6c757d', statusBg = '#e2e3e5';
+        switch (app.status) {
+            case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+            case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+            case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+            case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+        }
+
+        // === 4. GENERATE DOCUMENTS HTML ===
+        let documentsHtml = '';
+        if (files.length > 0) {
+            documentsHtml = files.map(file => {
+                const fileName = file.filename || file.name || "Document";
+                const ext = fileName.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(ext);
+                const isPdf = ext === 'pdf';
+                const url = file.file_url || (UPLOADS_BASE_PATH + fileName);
+
+                let previewContent = '';
+                if (isImage) {
+                    // Integrated the 'onerror' fallback here
+                    previewContent = `
+                        <img src="${url}" alt="Preview" style="width:100%; height:160px; object-fit:contain; background:#e9ecef; border-radius:4px; border:1px solid #dee2e6; cursor:pointer;" 
+                             onclick="window.open('${url}')"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'height:160px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f4f4f4; border-radius:4px; border:1px solid #dee2e6;\'><i class=\'fas fa-image-slash fa-3x\' style=\'color:#adb5bd;\'></i><span style=\'font-size:11px; color:#999; margin-top:5px;\'>Image Not Found</span></div>';">`;
+                } else if (isPdf) {
+                    previewContent = `<div style="height:160px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f4f4f4; border-radius:4px; border:1px solid #dee2e6;"><i class="fas fa-file-pdf fa-4x" style="color:#dc3545;"></i><span style="font-size:12px; margin-top:5px; color:#666;">PDF Document</span></div>`;
+                } else {
+                    previewContent = `<div style="height:160px; display:flex; justify-content:center; align-items:center; background:#f4f4f4; border-radius:4px; border:1px solid #dee2e6;"><i class="fas fa-file-alt fa-4x" style="color:#6c757d;"></i></div>`;
+                }
+
+                return `
+                    <div style="background:#f8f9fa; border:1px dashed #ced4da; padding:15px; border-radius:8px; margin-bottom:20px; text-align:center;">
+                        <h4 style="margin:0 0 10px 0; color:#19316b; font-size:14px; overflow-wrap: break-word;">${fileName}</h4>
+                        <div style="margin-bottom:12px;">${previewContent}</div>
+                        <a href="${url}" target="_blank" class="btn-primary" style="display:inline-block; padding:8px 20px; text-decoration:none; font-size:13px; border-radius:4px; background-color: #19316b; color: white;">
+                            <i class="fas fa-expand"></i> View Full File
+                        </a>
+                    </div>`;
+            }).join('');
+        } else {
+            documentsHtml = `<div style="padding: 20px; text-align: center; color: #666; background: #f8f9fa; border-radius: 8px; border: 1px dashed #ccc;">No documents uploaded yet.</div>`;
+        }
+
+        // === 5. GENERATE OCR RESULTS HTML ===
+        let ocrHtml = `<h3 style="color: #777; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px;">OCR RESULTS (${ocrRuns.length} RUNS)</h3>`;
+        
+        if (ocrRuns.length > 0) {
+            ocrHtml += `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">`;
+            ocrHtml += ocrRuns.map((run, idx) => {
+                const isLatest = idx === 0;
+                const runDate = new Date(run.created_at).toLocaleString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true
+                });
+
+                let parsedOCR = { text: 'No text content', detected: [] };
+                try { 
+                    parsedOCR = typeof run.ocr_result === 'string' ? JSON.parse(run.ocr_result) : run.ocr_result || {}; 
+                } catch(e) {}
+                
+                return `
+                    <details ${isLatest ? 'open' : ''} style="margin-bottom: 10px; border: 1px solid ${isLatest ? '#bbdefb' : '#e9ecef'}; border-radius: 6px; background:${isLatest ? '#f0f7ff' : '#f8f9fa'}; overflow:hidden;">
+                        <summary style="padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600; outline: none; display: flex; align-items: center;">
+                            <i class="fas fa-play" style="font-size: 10px; margin-right: 10px; color: ${isLatest ? '#1976d2' : '#999'};"></i>
+                            Run: ${runDate} ${isLatest ? '<span style="color:#1976d2; margin-left:8px;">(Latest)</span>' : ''}
+                        </summary>
+                        <div style="padding: 15px; background: #fff; border-top: 1px solid #eee; font-size: 13px;">
+                            <div style="margin-bottom:8px;"><strong>File:</strong> <a href="${run.file_url}" target="_blank" style="color:#1976d2;">${run.filename || 'View Source'}</a></div>
+                            <div style="margin-bottom:8px;"><strong>Detected:</strong> <span style="color:#28a745;">${(parsedOCR.detected || []).join(', ') || 'None'}</span></div>
+                            <div style="background:#2c3e50; color:#ecf0f1; padding:12px; border-radius:4px; font-family:monospace; white-space:pre-wrap; max-height:150px; overflow-y:auto;">${parsedOCR.text}</div>
+                        </div>
+                    </details>`;
+            }).join('');
+            ocrHtml += `</div>`;
+        } else {
+            ocrHtml += `<div style="padding: 20px; text-align: center; color: #666; background: #f8f9fa; border-radius: 8px;">No OCR runs found.</div>`;
+        }
+
+        ocrHtml += `
+            <div style="margin-top: 15px; text-align: right;">
+                <button class="btn-secondary" onclick="reRunOCR(${app.id})" style="padding: 8px 16px; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Re-run OCR Analysis
+                </button>
+            </div>`;
+
+        // === 6. FINAL HTML ASSEMBLY ===
+        modalBody.innerHTML = `
+            <div class="details-container" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="details-header-card" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div class="details-title">
+                        <h2 style="margin: 0; color: #19316b;">${app.nature_of_activity || 'Application'}</h2>
+                        <div class="details-id" style="color: #777; font-size: 14px;">Application ID: #${app.id}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
+                            ${app.status}
+                        </span>
+                        <div style="font-size:12px; color:#666; margin-top:5px;">Date: ${app.application_date || app.created_at}</div>
+                    </div>
+                </div>
+
+                <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="col-left" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="detail-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <h3 style="margin-top:0; color: #19316b; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Construction Information</h3>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Nature:</span> <span>${app.nature_of_activity}</span></div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Contractor:</span> <span>${app.contractor_name || 'N/A'}</span></div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Type of Work:</span> <span>${app.type_of_work}</span></div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Address:</span> <span>${constructionAddress}</span></div>
+                        </div>
+
+                        <div class="detail-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <h3 style="margin-top:0; color: #19316b; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Owner Details</h3>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Name:</span> <span>${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Contact:</span> <span>${app.contact_no_owner}</span></div>
+                        </div>
+
+                        <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <h2 style="margin-top: 0; color: #555; font-size: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; text-transform:uppercase;">Documents & Files</h2>
+                            ${documentsHtml}
+                        </div>
+                    </div>
+
+                    <div class="col-right" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            ${ocrHtml}
+                        </div>
+
+                        <div class="detail-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #17a2b8;">
+                            <h3 style="margin-top:0; font-size:16px;">Assessment</h3>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Amount Due:</span> <span style="color:#0c5460; font-weight:bold;">₱${app.amount_due || '0.00'}</span></div>
+                            <div style="display: flex; justify-content: space-between; font-size:14px;"><span style="font-weight: 600; color: #555;">Payment Status:</span> <span>${app.payment_status || 'Unpaid'}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+    } catch (error) {
+        console.error('View Details Error:', error);
+        modalBody.innerHTML = `<div style="text-align:center; padding:40px;"><p style="color:red;">${error.message}</p></div>`;
+    }
 }
+
 
 /**
  * Loads application options into the summary select dropdown
@@ -927,127 +964,6 @@ function loadSummarySelect() {
     });
 }
 
-/**
- * Updates the summary display with detailed application information
- * Generates a professional report view with formatted data
- */
-// function updateSummary() {
-//     const appId = document.getElementById('summaryApplicationSelect').value;
-//     const summaryOutput = document.getElementById('summaryOutput');
-
-//     if (!appId) {
-//         summaryOutput.innerHTML = `
-//             <div class="placeholder-state">
-//                 <i class="fas fa-file-invoice fa-3x"></i>
-//                 <p>Select a construction application from the list above to view the full report.</p>
-//             </div>`;
-//         return;
-//     }
-
-//     const app = applications.find(a => a.id == appId);
-//     if (!app) return;
-
-//     // --- 1. Data Processing ---
-
-//     // Status Badge Color Logic
-//     let statusColor = '#6c757d';
-//     let statusBg = '#e2e3e5';
-
-//     switch (app.status) {
-//         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
-//         case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
-//         case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
-//         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
-//     }
-
-//     // Requirements Formatting
-//     let reqs = app.requirements;
-//     if (typeof reqs === 'string') {
-//         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
-//     }
-//     const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
-//         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
-//         : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
-
-//     // Formatted Dates & Money
-//     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
-//         year: 'numeric', month: 'long', day: 'numeric'
-//     });
-
-//     const amountDue = app.amount_due
-//         ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
-//         : '₱0.00';
-
-//     const paymentStatus = app.payment_status || 'Unpaid';
-
-//     // --- 2. Build HTML Structure ---
-
-//     summaryOutput.innerHTML = `
-//         <div class="report-header">
-//             <div class="report-title">
-//                 <h1>Construction Permit Profile</h1>
-//                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
-//             </div>
-//             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
-//                 ${app.status}
-//             </div>
-//         </div>
-
-//         <div class="report-grid">
-//             <div class="report-column">
-//                 <div class="report-section">
-//                     <h3>Construction Details</h3>
-//                     <div class="info-row"><span class="info-label">Activity</span> <span class="info-value">${app.nature_of_activity}</span></div>
-//                     <div class="info-row"><span class="info-label">Type of Work</span> <span class="info-value">${app.type_of_work}</span></div>
-//                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.construction_address}</span></div>
-//                     <div class="info-row"><span class="info-label">Work Details</span> <span class="info-value">${app.details_of_work || 'N/A'}</span></div>
-//                 </div>
-
-//                 <div class="report-section">
-//                     <h3>Ownership</h3>
-//                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
-//                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.contact_no_owner}</span></div>
-//                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.address_owner}</span></div>
-//                 </div>
-//             </div>
-
-//             <div class="report-column">
-//                 <div class="report-section">
-//                     <h3>Schedule & Workforce</h3>
-//                     <div class="info-row"><span class="info-label">Start Date</span> <span class="info-value">${app.start_date}</span></div>
-//                     <div class="info-row"><span class="info-label">End Date</span> <span class="info-value">${app.end_date}</span></div>
-//                     <div class="info-row"><span class="info-label">Working Days</span> <span class="info-value">${app.number_of_working_days}</span></div>
-//                     <div class="info-row"><span class="info-label">Workers</span> <span class="info-value">${app.number_of_workers}</span></div>
-//                     <div style="margin-top:15px;">
-//                         <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
-//                         <ul class="doc-list">${requirementsHtml}</ul>
-//                     </div>
-//                 </div>
-
-//                 <div class="financial-box">
-//                     <h3 style="border:none; margin:0 0 10px 0;">Financial Status</h3>
-//                     <div class="info-row"><span class="info-label">Payment Status</span> <span class="info-value">${paymentStatus}</span></div>
-//                     <div class="info-row"><span class="info-label">OR Number</span> <span class="info-value">${app.or_number || '--'}</span></div>
-//                     <div class="financial-total">
-//                         <span>Total Assessment</span>
-//                         <span>${amountDue}</span>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-
-//         ${app.approval_comments ? `
-//         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
-//             <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
-//             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
-//         </div>` : ''}
-
-//         <div class="report-actions">
-//             <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
-//             <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
-//         </div>
-//     `;
-// }
 
 /**
  * Updates the summary display with detailed application information
@@ -1609,6 +1525,26 @@ function updateApplicationDate() {
     if (dateInput) {
         dateInput.value = getCurrentDateString();
     }
+}
+
+function reRunOCR(appId) {
+    if (!confirm('Re-run OCR on all uploaded documents for this application?')) return;
+
+    fetch(CONSTRUCTION_HANDLER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.status === 'success' ? 'OCR re-run queued successfully!' : 'Error: ' + data.message);
+        // Reload the details to see new status
+        viewDetails(appId); // Call the new fetch-based function
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Network error while queuing OCR re-run.');
+    });
 }
 
 // Wait for the DOM content to fully load before running the script

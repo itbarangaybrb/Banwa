@@ -42,39 +42,6 @@
     cursor: pointer;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-table thead tr th {
-    padding: 8px;
-}
-
-table tbody tr {
-    border-top: 1px solid #C4C4C4;
-}
-
-table tbody tr:hover {
-    background-color: #c9c9c9;
-}
-
-table tbody tr td:last-child {
-    width: 1%;
-}
-
-table tbody tr td {
-    padding: 8px;
-    white-space: nowrap;
-}
-
-table thead tr th .th-content {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
 .form-container .form {
     margin: auto;
     max-width: 680px;
@@ -113,6 +80,7 @@ table thead tr th .th-content {
 .form-container .form .inputs-container .label-and-input select,
 .form-container .form .inputs-container .label-and-input input[type="email"],
 .form-container .form .inputs-container .label-and-input input[type="text"],
+.form-container .form .inputs-container .label-and-input textarea,
 .form-container .form .inputs-container .label-and-input input[type="password"] {
     padding: 12px 8px;
     border-radius: 8px;
@@ -143,20 +111,37 @@ table thead tr th .th-content {
     width: max-content;
 }
 
-.form-container .form .buttons-container button {
-    padding: 16px;
+.reason-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.form-container .form .buttons-container button,
+.reason-buttons-container .reason-btn {
     border-radius: 8px;
     border: transparent;
     transition: background-color 200ms ease;
     font-weight: 500;
 }
 
-.form-container .form .buttons-container button:nth-child(1) {
-    background-color: #dbdbdb;
-    color: black;
+.reason-buttons-container .reason-btn {
+    padding: 8px;
 }
 
-.form-container .form .buttons-container button:nth-child(1):hover {
+.form-container .form .buttons-container button {
+    padding: 16px;
+}
+
+.form-container .form .buttons-container button:nth-child(1),
+.reason-buttons-container .reason-btn {
+    background-color: #dbdbdb;
+    color: black;
+    border: 1px solid #c9c9c9;
+}
+
+.form-container .form .buttons-container button:nth-child(1):hover,
+.reason-buttons-container .reason-btn:hover {
     background-color: #c9c9c9;
 }
 

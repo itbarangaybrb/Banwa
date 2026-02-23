@@ -1,8 +1,10 @@
 <?php
+// DB connection — provides the global $pdo variable used by all functions below
 require_once __DIR__ . '/../../configs/database.php';
 
 // ==================== UTILITY FUNCTIONS ====================
 
+// Fetches all utility applications that have coordinates (for map markers)
 function getUtilitiesMarkers()
 {
     global $pdo;
@@ -21,8 +23,8 @@ function getUtilitiesMarkers()
     }
 }
 
-function getConstructionMarkers()
-{
+// Fetches all construction applications that have coordinates
+function getConstructionMarkers(){
     global $pdo;
     try {
         $sql = "SELECT id, first_name, middle_name, last_name, suffix, contact_no_owner,
@@ -42,8 +44,8 @@ function getConstructionMarkers()
     }
 }
 
-function getBusinessMarkers()
-{
+// Fetches all business applications that have coordinates
+function getBusinessMarkers(){
     global $pdo;
     try {
         $sql = "SELECT id, business_name, type_of_business, nature_of_business,
@@ -64,8 +66,8 @@ function getBusinessMarkers()
     }
 }
 
-function getGenericMarkers()
-{
+// Fetches generic custom markers from the marker table
+function getGenericMarkers(){
     global $pdo;
     try {
         $sql = "SELECT marker_id as id, title, description, location, marker_type,
@@ -81,8 +83,8 @@ function getGenericMarkers()
     }
 }
 
-function getUtilitiesById($id)
-{
+// Fetches a single utility application by ID for the detail modal
+function getUtilitiesById($id){
     global $pdo;
     try {
         $sql = "SELECT * FROM utility_applications WHERE id = :id";
@@ -95,8 +97,8 @@ function getUtilitiesById($id)
     }
 }
 
-function getConstructionById($id)
-{
+// Fetches a single construction application by ID
+function getConstructionById($id){
     global $pdo;
     try {
         $sql = "SELECT * FROM construction_applications WHERE id = :id";
@@ -109,8 +111,8 @@ function getConstructionById($id)
     }
 }
 
-function getBusinessById($id)
-{
+// Fetches a single business application by ID
+function getBusinessById($id){
     global $pdo;
     try {
         $sql = "SELECT * FROM business_applications WHERE id = :id";
@@ -123,8 +125,8 @@ function getBusinessById($id)
     }
 }
 
-function getGenericById($id)
-{
+// Fetches a single generic marker by marker_id
+function getGenericById($id){
     global $pdo;
     try {
         $sql = "SELECT * FROM marker WHERE marker_id = :id";
@@ -139,6 +141,8 @@ function getGenericById($id)
 
 // ==================== FLOOD HAZARD FUNCTIONS ====================
 
+// Returns all flood hazard polygons ordered by risk level (high → low).
+// Converts PostGIS GeoJSON geometry to Leaflet-friendly [lat, lng] arrays.
 function getAllFloodHazards()
 {
     global $pdo;
@@ -176,8 +180,8 @@ function getAllFloodHazards()
     }
 }
 
-function getFloodDetails($id)
-{
+// Fetches a single flood hazard by ID for the detail modal
+function getFloodDetails($id){
     global $pdo;
     try {
         $sql = "SELECT hazard_id, hazard_type, hazard_name, risk_level, description,
@@ -193,8 +197,9 @@ function getFloodDetails($id)
     }
 }
 
-function getHousesInFloodAreas($riskLevel = null)
-{
+// Uses PostGIS ST_Intersects to find houses overlapping flood zones.
+// Calculates coverage percentage and impact level per house.
+function getHousesInFloodAreas($riskLevel = null){
     global $pdo;
     try {
         $sql = "WITH house_geoms AS (
@@ -262,8 +267,8 @@ function getHousesInFloodAreas($riskLevel = null)
     }
 }
 
-function getFloodAffectedHousesSummary()
-{
+// Aggregates flood impact stats (total, fully/partially/minimally affected, by risk level)
+function getFloodAffectedHousesSummary(){
     global $pdo;
     try {
         $sql = "WITH house_geoms AS (
@@ -423,6 +428,7 @@ function checkPointInFloodZone($lat, $lng)
 }
 
 // IMPROVED: SDSS evaluation for business with precise flood detection
+// Checks if a business is in a flood zone and returns approve/deny/conditions status
 function sdss_evaluateBusiness($businessId)
 {
     $business = getBusinessById($businessId);
@@ -489,6 +495,7 @@ function sdss_evaluateBusiness($businessId)
 }
 
 // IMPROVED: SDSS evaluation for construction with precise flood detection
+// Same logic as business evaluation but for construction applications
 function sdss_evaluateConstruction($constructionId)
 {
     $construction = getConstructionById($constructionId);
@@ -554,7 +561,7 @@ function sdss_evaluateConstruction($constructionId)
     ];
 }
 
-// NEW: Complete SDSS evaluation for ALL businesses
+// Runs sdss_evaluateBusiness() for every business and compiles an aggregate report
 function sdss_evaluateAllBusinesses()
 {
     $businesses = getBusinessMarkers();
@@ -615,7 +622,7 @@ function sdss_evaluateAllBusinesses()
     return $results;
 }
 
-// NEW: Complete SDSS evaluation for ALL construction applications
+// Runs sdss_evaluateConstruction() for every construction site and compiles a report
 function sdss_evaluateAllConstruction()
 {
     $constructions = getConstructionMarkers();
@@ -678,6 +685,7 @@ function sdss_evaluateAllConstruction()
 
 // ==================== HOUSE POLYGON FUNCTIONS ====================
 
+// Fetches all house polygons with their vertex coordinates and metadata
 function getHousePolygons()
 {
     global $pdo;
@@ -695,8 +703,8 @@ function getHousePolygons()
     }
 }
 
-function getHouseById($houseId)
-{
+// Fetches a single house polygon by house_id for the detail modal
+function getHouseById($houseId){
     global $pdo;
     try {
         $sql = "SELECT * FROM house_polygons WHERE house_id = :id";
@@ -712,7 +720,8 @@ function getHouseById($houseId)
 // ==================== NEW FAULT LINE ASSESSMENT FUNCTIONS ====================
 
 /**
- * Get fault line risk assessment for all structures
+ * Calculates distance from every house to the fault line and categorises risk:
+ * critical (<50m), high (50–100m), medium (100–200m)
  */
 function getFaultLineAssessment() {
     global $pdo;
@@ -766,10 +775,12 @@ function getFaultLineAssessment() {
                 $risk_level = 'critical';
                 $critical_count++;
                 $requirements = [
-                    'Construction prohibited within 50m of fault line',
-                    'Existing structures require immediate seismic assessment',
-                    'Special engineering evaluation mandatory',
-                    'Seismic retrofitting required'
+                    'CRITICAL ZONE: Construction allowed with enhanced seismic standards',
+                    'Mandatory structural engineer certification required',
+                    'Special seismic design and geological survey mandatory',
+                    'Reinforced foundation with deep pile requirements',
+                    'Use earthquake-resistant materials and construction methods',
+                    'Building insurance and regular structural inspections required'
                 ];
             } elseif ($minDistance < 100) {
                 $risk_level = 'high';
@@ -840,7 +851,8 @@ function getFaultLineAssessment() {
 }
 
 /**
- * Calculate distance from a point to a line segment (in meters)
+ * Returns the shortest distance (metres) from a point to a line segment
+ * using cross-track/along-track geometry.
  */
 function calculateDistanceToLineSegment($pointLat, $pointLng, $line1Lat, $line1Lng, $line2Lat, $line2Lng) {
     // Convert to radians
@@ -884,7 +896,7 @@ function calculateDistanceToLineSegment($pointLat, $pointLng, $line1Lat, $line1L
 }
 
 /**
- * Calculate bearing between two points
+ * Returns the initial bearing (degrees) from point 1 to point 2
  */
 function calculateBearing($lat1, $lon1, $lat2, $lon2) {
     $lat1 = deg2rad($lat1);
@@ -903,7 +915,7 @@ function calculateBearing($lat1, $lon1, $lat2, $lon2) {
 }
 
 /**
- * Calculate Haversine distance between two points (in meters)
+ * Returns the great-circle distance (metres) between two lat/lng points using the Haversine formula
  */
 function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
     $R = 6371000; // Earth radius in meters
@@ -928,7 +940,7 @@ function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
 // ==================== NEW BUSINESS SDSS REPORT FUNCTIONS ====================
 
 /**
- * Get SDSS report for all businesses
+ * Evaluates all businesses with coordinates against SDSS rules and returns a full report
  */
 function getBusinessSDSSReport() {
     global $pdo;
@@ -974,7 +986,7 @@ function getBusinessSDSSReport() {
 }
 
 /**
- * Evaluate a single business against SDSS rules
+ * Checks a single business against flood zone and fault line rules; returns warnings array
  */
 function evaluateBusinessSDSS($business, $pdo) {
     $lat = $business['latitude'];
@@ -1031,15 +1043,17 @@ function evaluateBusinessSDSS($business, $pdo) {
     // Rule 2: Fault line proximity check
     if ($faultLineDistance < 50) {
         $businessData['warnings'][] = [
-            'type' => 'Fault Line Critical Violation',
-            'description' => "Business within {$faultLineDistance}m of fault line (prohibited zone)",
+            'type' => 'Fault Line Critical Zone Warning',
+            'description' => "Business within {$faultLineDistance}m of fault line (CRITICAL ZONE - Special Requirements)",
             'severity' => 'CRITICAL',
             'actions' => [
-                'Business operations within 50m of fault line are PROHIBITED',
-                'Immediate structural assessment required',
-                'Seismic retrofitting mandatory',
+                'CRITICAL ZONE: Business operations allowed ONLY with enhanced safety measures',
+                'Mandatory structural assessment and seismic compliance certification',
+                'Seismic retrofitting of building required',
+                'Emergency evacuation plan and earthquake drills mandatory',
                 'Special permits and engineering certification needed',
-                'Consider relocation'
+                'Building insurance covering earthquake damage required',
+                'Regular safety inspections and structural monitoring'
             ]
         ];
         $maxSeverity = 'CRITICAL';
@@ -1097,7 +1111,7 @@ function getConstructionSDSSReport() {
     try {
         // Get all construction with coordinates
         $sql = "SELECT id, first_name, middle_name, last_name, construction_address,
-                       type_of_work, nature_of_work, number_of_workers, 
+                       type_of_work, nature_of_work, nature_of_activity, number_of_workers, 
                        number_of_working_days, latitude, longitude
                 FROM construction_applications
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
@@ -1137,6 +1151,7 @@ function getConstructionSDSSReport() {
 /**
  * Evaluate a single construction site against SDSS rules
  */
+
 function evaluateConstructionSDSS($construction, $pdo) {
     $lat = $construction['latitude'];
     $lng = $construction['longitude'];
@@ -1154,13 +1169,11 @@ function evaluateConstructionSDSS($construction, $pdo) {
     elseif (strpos($typeOfWork, 'repair') !== false) $projectType = 'repair';
     elseif (strpos($typeOfWork, 'demolition') !== false) $projectType = 'demolition';
     
-    // Minimum workers required
-    $minWorkersRequired = [
-        'major' => 10,
-        'minor' => 3,
-        'repair' => 2,
-        'demolition' => 5
-    ];
+    // UPDATED: Get nature of activity
+    $natureOfActivity = strtolower($construction['nature_of_activity'] ?? '');
+    
+    // UPDATED: Get minimum workers based on BOTH type_of_work AND nature_of_activity
+    $minWorkersRequired = getMinimumWorkersForConstruction($projectType, $natureOfActivity);
     
     $constructionData = [
         'construction' => $construction,
@@ -1193,15 +1206,17 @@ function evaluateConstructionSDSS($construction, $pdo) {
     // Rule 2: Fault line setback
     if ($faultLineDistance < 50) {
         $constructionData['warnings'][] = [
-            'type' => 'Fault Line Setback Violation',
-            'description' => "Construction within {$faultLineDistance}m of fault line (PROHIBITED)",
+            'type' => 'Fault Line Critical Zone Warning',
+            'description' => "Construction within {$faultLineDistance}m of fault line (CRITICAL ZONE - Special Requirements)",
             'severity' => 'CRITICAL',
             'actions' => [
-                'CONSTRUCTION PROHIBITED within 50m of fault line',
-                'Stop all work immediately',
-                'Relocate construction site',
-                'Legal action may be taken for violations',
-                'Consult with city engineer'
+                'CRITICAL ZONE: Construction allowed ONLY with enhanced seismic standards',
+                'Mandatory structural engineer certification and seismic design approval',
+                'Reinforced foundation with deep pile requirements',
+                'Use of earthquake-resistant materials and construction methods',
+                'Building Insurance and geological survey required',
+                'Regular structural integrity inspections mandatory',
+                'Emergency preparedness and evacuation plan required'
             ]
         ];
         $maxSeverity = 'CRITICAL';
@@ -1220,23 +1235,25 @@ function evaluateConstructionSDSS($construction, $pdo) {
         $maxSeverity = $maxSeverity ?? 'HIGH';
     }
     
-    // Rule 3: Worker adequacy
+    // Rule 3: Worker adequacy (UPDATED to consider nature_of_activity)
     $workers = intval($construction['number_of_workers'] ?? 0);
-    $minRequired = $minWorkersRequired[$projectType] ?? 3;
     
-    if ($workers < $minRequired) {
+    if ($workers < $minWorkersRequired['minimum']) {
+        $activityLabel = $natureOfActivity ?: 'general';
         $constructionData['warnings'][] = [
             'type' => 'Inadequate Workforce',
-            'description' => "{$projectType} construction requires minimum {$minRequired} workers (current: {$workers})",
-            'severity' => 'MEDIUM',
+            'description' => ucfirst($projectType) . " construction with '" . ucfirst($activityLabel) . "' activity requires a minimum of {$minWorkersRequired['minimum']} workers (currently declared: {$workers}). Reason: {$minWorkersRequired['reason']}",
+            'severity' => $minWorkersRequired['severity'],
+            'reason' => $minWorkersRequired['reason'],
             'actions' => [
-                "Increase workforce to minimum {$minRequired} workers",
+                "Increase workforce to minimum {$minWorkersRequired['minimum']} workers",
                 'Ensure proper supervision and safety coverage',
                 'Verify all workers have safety training',
-                'Implement buddy system for safety'
+                'Implement buddy system for safety',
+                $minWorkersRequired['additional_requirement']
             ]
         ];
-        $maxSeverity = $maxSeverity ?? 'MEDIUM';
+        $maxSeverity = $maxSeverity ?? $minWorkersRequired['severity'];
     }
     
     // Return only if there are warnings
@@ -1248,6 +1265,85 @@ function evaluateConstructionSDSS($construction, $pdo) {
     
     return $constructionData;
 }
+
+/**
+ * NEW FUNCTION: Get minimum workers based on type of work AND nature of activity
+ */
+function getMinimumWorkersForConstruction($projectType, $natureOfActivity) {
+    $baseMinimum = [
+        'major' => 10,
+        'minor' => 3,
+        'repair' => 2,
+        'demolition' => 5
+    ];
+    
+    $minimum = $baseMinimum[$projectType] ?? 3;
+    $severity = 'MEDIUM';
+    $reason = "Standard requirement for {$projectType} construction";
+    $additionalRequirement = "Follow standard construction safety protocols";
+    
+    // Adjust based on nature of activity
+    if (strpos($natureOfActivity, 'excavation') !== false) {
+        $minimum = max($minimum, 4);
+        $severity = 'HIGH';
+        $reason = "Excavation work requires additional workers for cave-in safety monitoring";
+        $additionalRequirement = "Assign dedicated safety spotter for excavation work";
+        
+    } elseif (strpos($natureOfActivity, 'structural') !== false || 
+              strpos($natureOfActivity, 'foundation') !== false) {
+        $minimum = max($minimum, 5);
+        $severity = 'HIGH';
+        $reason = "Structural work requires adequate crew for load bearing and stability";
+        $additionalRequirement = "Ensure structural engineer on-site supervision";
+        
+    } elseif (strpos($natureOfActivity, 'roofing') !== false || 
+              strpos($natureOfActivity, 'height') !== false) {
+        $minimum = max($minimum, 3);
+        $severity = 'HIGH';
+        $reason = "Work at height requires safety spotters and emergency response team";
+        $additionalRequirement = "Implement fall protection systems and assign safety monitor";
+        
+    } elseif (strpos($natureOfActivity, 'demolition') !== false) {
+        $minimum = max($minimum, 6);
+        $severity = 'CRITICAL';
+        $reason = "Demolition work is high-risk and requires adequate crew for safe controlled collapse";
+        $additionalRequirement = "Establish safety perimeter and assign evacuation coordinator";
+        
+    } elseif (strpos($natureOfActivity, 'electrical') !== false || 
+              strpos($natureOfActivity, 'plumbing') !== false ||
+              strpos($natureOfActivity, 'mechanical') !== false) {
+        $minimum = max($minimum, 2);
+        $severity = 'MEDIUM';
+        $reason = "Specialized work requires licensed professionals with assistant";
+        $additionalRequirement = "Verify workers have appropriate licenses and certifications";
+        
+    } elseif (strpos($natureOfActivity, 'painting') !== false || 
+              strpos($natureOfActivity, 'finishing') !== false) {
+        $minimum = max($minimum - 1, 2);
+        $severity = 'MEDIUM';
+        $reason = "Finishing work standard crew size";
+        $additionalRequirement = "Ensure adequate ventilation for paint/chemical fumes";
+        
+    } elseif (strpos($natureOfActivity, 'installation') !== false) {
+        $minimum = max($minimum, 2);
+        $severity = 'MEDIUM';
+        $reason = "Installation requires minimum team for equipment handling";
+        $additionalRequirement = "Follow manufacturer installation guidelines";
+    }
+    
+    // For major projects, always require minimum 10 workers
+    if ($projectType === 'major') {
+        $minimum = max($minimum, 10);
+    }
+    
+    return [
+        'minimum' => $minimum,
+        'severity' => $severity,
+        'reason' => $reason,
+        'additional_requirement' => $additionalRequirement
+    ];
+}
+
 
 /**
  * Get distance from point to fault line
@@ -1280,8 +1376,383 @@ function getDistanceToFaultLine($lat, $lng) {
     return round($minDistance);
 }
 
-// ==================== POST REQUEST HANDLER ====================
+// ==================== SDSS RULES SUMMARY FUNCTION ====================
 
+/**
+ * Get summary of all SDSS rules and count of houses affected by each rule
+ */
+function getSDSSRulesSummary() {
+    global $pdo;
+    
+    try {
+        // Get all houses
+        $sql = "SELECT house_id, address, street_name, house_number, 
+                       center_lat, center_lng
+                FROM house_polygons
+                WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
+        $stmt = $pdo->query($sql);
+        $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Initialize rule counters
+        $rules = [
+            'FLOOD_HIGH_RISK' => [
+                'name' => 'High Flood Risk Zone',
+                'description' => 'Houses located in high flood risk areas requiring immediate mitigation',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FLOOD_MEDIUM_RISK' => [
+                'name' => 'Medium Flood Risk Zone',
+                'description' => 'Houses in moderate flood zones requiring preparedness measures',
+                'severity' => 'HIGH',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FLOOD_LOW_RISK' => [
+                'name' => 'Low Flood Risk Zone',
+                'description' => 'Houses in low flood risk areas with standard precautions',
+                'severity' => 'MEDIUM',
+                'count' => 0,
+                'category' => 'Flood Hazard'
+            ],
+            'FAULT_CRITICAL' => [
+                'name' => 'Fault Line Critical Zone (<50m)',
+                'description' => 'Houses within 50m of fault line — enhanced seismic standards mandatory',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ],
+            'FAULT_HIGH_RISK' => [
+                'name' => 'Fault Line High Risk (50–100m)',
+                'description' => 'Houses requiring seismic design standards and structural certification',
+                'severity' => 'HIGH',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ],
+            'FAULT_MEDIUM_RISK' => [
+                'name' => 'Fault Line Medium Risk (100–200m)',
+                'description' => 'Houses requiring enhanced foundation and earthquake preparedness',
+                'severity' => 'MEDIUM',
+                'count' => 0,
+                'category' => 'Seismic Hazard'
+            ]
+        ];
+        
+        // Count houses for each rule
+        foreach ($houses as $house) {
+            $lat = $house['center_lat'];
+            $lng = $house['center_lng'];
+            
+            // Check flood zones
+            $floodRisk = checkPointInFloodZone($lat, $lng);
+            if ($floodRisk) {
+                $riskLevel = strtoupper($floodRisk['risk_level']);
+                $ruleKey = "FLOOD_{$riskLevel}_RISK";
+                if (isset($rules[$ruleKey])) {
+                    $rules[$ruleKey]['count']++;
+                }
+            }
+            
+            // Check fault line proximity
+            $faultDistance = getDistanceToFaultLine($lat, $lng);
+            if ($faultDistance < 50) {
+                $rules['FAULT_CRITICAL']['count']++;
+            } elseif ($faultDistance < 100) {
+                $rules['FAULT_HIGH_RISK']['count']++;
+            } elseif ($faultDistance < 200) {
+                $rules['FAULT_MEDIUM_RISK']['count']++;
+            }
+        }
+        
+        // ---- Construction Safety Rules ----
+        // Count construction applications that violate simple rules
+        $conSql = "SELECT id, number_of_workers, number_of_working_days, type_of_work,
+                          nature_of_activity, start_date, end_date, latitude, longitude
+                   FROM construction_applications
+                   WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $conStmt = $pdo->query($conSql);
+        $constructions = $conStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $conNoWorkers = 0;
+        $conFloodZone = 0;
+        $conExceedsDays = 0;
+        $conFaultZone = 0;
+        
+        foreach ($constructions as $con) {
+            // Rule: No workers declared
+            $workers = intval($con['number_of_workers'] ?? 0);
+            if ($workers === 0) $conNoWorkers++;
+            
+            // Rule: Construction in any flood zone
+            if ($con['latitude'] && $con['longitude']) {
+                $floodRisk = checkPointInFloodZone($con['latitude'], $con['longitude']);
+                if ($floodRisk) $conFloodZone++;
+                
+                // Rule: Construction within fault critical zone
+                $dist = getDistanceToFaultLine($con['latitude'], $con['longitude']);
+                if ($dist < 50) $conFaultZone++;
+            }
+            
+            // Rule: Working days exceed 90 days without major classification
+            $days = intval($con['number_of_working_days'] ?? 0);
+            $typeOfWork = strtolower($con['type_of_work'] ?? '');
+            if ($days > 90 && strpos($typeOfWork, 'major') === false) {
+                $conExceedsDays++;
+            }
+        }
+        
+        $rules['CON_NO_WORKERS'] = [
+            'name' => 'No Workers Declared',
+            'description' => 'Construction applications with zero workers listed — required for safety planning and inspection scheduling',
+            'severity' => 'HIGH',
+            'count' => $conNoWorkers,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_FLOOD_ZONE'] = [
+            'name' => 'Construction in Flood Zone',
+            'description' => 'Active construction sites located within any flood hazard area — flood-resistant methods required',
+            'severity' => 'HIGH',
+            'count' => $conFloodZone,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_FAULT_ZONE'] = [
+            'name' => 'Construction in Fault Critical Zone (<50m)',
+            'description' => 'Construction sites within 50m of the fault line — mandatory seismic design and structural engineer certification',
+            'severity' => 'CRITICAL',
+            'count' => $conFaultZone,
+            'category' => 'Construction Safety'
+        ];
+        $rules['CON_EXCESS_DAYS'] = [
+            'name' => 'Long Duration Non-Major Construction (>90 days)',
+            'description' => 'Non-major construction projects running longer than 90 working days — may require permit renewal or reclassification',
+            'severity' => 'MEDIUM',
+            'count' => $conExceedsDays,
+            'category' => 'Construction Safety'
+        ];
+        
+        // ---- Business Safety Rules ----
+        $bizSql = "SELECT id, no_of_employees, type_of_business, nature_of_business,
+                          latitude, longitude
+                   FROM business_applications
+                   WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $bizStmt = $pdo->query($bizSql);
+        $businesses = $bizStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $bizFloodZone = 0;
+        $bizFaultZone = 0;
+        $bizHighOccupancy = 0;
+        $bizHazardousType = 0;
+        
+        foreach ($businesses as $biz) {
+            if ($biz['latitude'] && $biz['longitude']) {
+                // Rule: Business in any flood zone
+                $floodRisk = checkPointInFloodZone($biz['latitude'], $biz['longitude']);
+                if ($floodRisk) $bizFloodZone++;
+                
+                // Rule: Business in fault critical zone
+                $dist = getDistanceToFaultLine($biz['latitude'], $biz['longitude']);
+                if ($dist < 50) $bizFaultZone++;
+            }
+            
+            // Rule: High occupancy (>50 employees)
+            $emp = intval($biz['no_of_employees'] ?? 0);
+            if ($emp > 50) $bizHighOccupancy++;
+            
+            // Rule: Potentially hazardous business type (fuel, chemicals, welding, LPG)
+            $bizType = strtolower($biz['type_of_business'] ?? '') . ' ' . strtolower($biz['nature_of_business'] ?? '');
+            $hazardKeywords = ['fuel', 'lpg', 'gasoline', 'chemical', 'welding', 'petroleum', 'flammable', 'paint store'];
+            foreach ($hazardKeywords as $keyword) {
+                if (strpos($bizType, $keyword) !== false) {
+                    $bizHazardousType++;
+                    break;
+                }
+            }
+        }
+        
+        $rules['BIZ_FLOOD_ZONE'] = [
+            'name' => 'Business in Flood Zone',
+            'description' => 'Registered businesses located within any flood hazard area — emergency plan and flood mitigation measures required',
+            'severity' => 'HIGH',
+            'count' => $bizFloodZone,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_FAULT_ZONE'] = [
+            'name' => 'Business in Fault Critical Zone (<50m)',
+            'description' => 'Businesses within 50m of the fault line — building must meet enhanced seismic standards and have earthquake evacuation plan',
+            'severity' => 'CRITICAL',
+            'count' => $bizFaultZone,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_HIGH_OCCUPANCY'] = [
+            'name' => 'High Occupancy Business (>50 Employees)',
+            'description' => 'Businesses with more than 50 employees — subject to stricter BFP fire safety inspections, adequate exits, and regular safety drills',
+            'severity' => 'MEDIUM',
+            'count' => $bizHighOccupancy,
+            'category' => 'Business Safety'
+        ];
+        $rules['BIZ_HAZARDOUS'] = [
+            'name' => 'Potentially Hazardous Business Type',
+            'description' => 'Businesses dealing with fuel, LPG, chemicals, welding, or flammable materials — require special permits, fire suppression systems, and hazmat protocols',
+            'severity' => 'HIGH',
+            'count' => $bizHazardousType,
+            'category' => 'Business Safety'
+        ];
+        
+        // Calculate totals
+        $totalHouses = count($houses);
+        $totalAffected = 0;
+        foreach ($rules as $rule) {
+            $totalAffected += $rule['count'];
+        }
+        
+        // Note: A house can be affected by multiple rules (e.g., both flood and fault line)
+        // So totalAffected can be > totalHouses
+        
+        return [
+            'status' => 'success',
+            'data' => [
+                'summary' => [
+                    'total_houses' => $totalHouses,
+                    'total_rule_violations' => $totalAffected,
+                    'rules_evaluated' => count($rules)
+                ],
+                'rules' => $rules
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Error in getSDSSRulesSummary: " . $e->getMessage());
+        return [
+            'status' => 'error',
+            'message' => 'Failed to generate SDSS rules summary: ' . $e->getMessage()
+        ];
+    }
+}
+
+// ==================== RULE AFFECTED DATA ====================
+
+// Fetches the specific records (houses, businesses, or construction) that violate a given SDSS rule key
+function getRuleAffectedData($ruleKey) {
+    global $pdo;
+    try {
+        $records = [];
+        $label = '';
+
+        // ── Flood / Fault house rules ──
+        if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK'])) {
+            $sql = "SELECT house_id, address, street_name, house_number, center_lat, center_lng FROM house_polygons WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
+            $houses = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($houses as $h) {
+                $match = false;
+                if (strpos($ruleKey, 'FLOOD') === 0) {
+                    $risk = checkPointInFloodZone($h['center_lat'], $h['center_lng']);
+                    $expected = strtolower(str_replace(['FLOOD_','_RISK'], '', $ruleKey));
+                    $match = $risk && strtolower($risk['risk_level']) === $expected;
+                    if ($match) $h['detail'] = ucfirst($expected) . ' flood risk zone';
+                } else {
+                    $dist = round(getDistanceToFaultLine($h['center_lat'], $h['center_lng']), 1);
+                    $match = ($ruleKey === 'FAULT_CRITICAL' && $dist < 50) ||
+                             ($ruleKey === 'FAULT_HIGH_RISK' && $dist >= 50 && $dist < 100) ||
+                             ($ruleKey === 'FAULT_MEDIUM_RISK' && $dist >= 100 && $dist < 200);
+                    if ($match) $h['detail'] = "{$dist}m from fault line";
+                }
+                if ($match) {
+                    $records[] = [
+                        'type'    => 'household',
+                        'id'      => $h['house_id'],
+                        'name'    => $h['house_number'] ? 'House #' . $h['house_number'] : ($h['address'] ?: 'Unnamed House'),
+                        'address' => $h['address'] ?: $h['street_name'] ?: 'No address',
+                        'lat'     => $h['center_lat'],
+                        'lng'     => $h['center_lng'],
+                        'detail'  => $h['detail'] ?? ''
+                    ];
+                }
+            }
+            $label = 'Household';
+        }
+
+        // ── Construction rules ──
+        elseif (strpos($ruleKey, 'CON_') === 0) {
+            $sql = "SELECT id, first_name, last_name, construction_address, nature_of_work, type_of_work,
+                           number_of_workers, number_of_working_days, latitude, longitude
+                    FROM construction_applications WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+            $cons = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($cons as $c) {
+                $match = false; $detail = '';
+                if ($ruleKey === 'CON_NO_WORKERS' && intval($c['number_of_workers'] ?? 0) === 0) {
+                    $match = true; $detail = '0 workers declared';
+                } elseif ($ruleKey === 'CON_FLOOD_ZONE') {
+                    $risk = checkPointInFloodZone($c['latitude'], $c['longitude']);
+                    if ($risk) { $match = true; $detail = ucfirst($risk['risk_level']) . ' flood zone'; }
+                } elseif ($ruleKey === 'CON_FAULT_ZONE') {
+                    $dist = round(getDistanceToFaultLine($c['latitude'], $c['longitude']), 1);
+                    if ($dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
+                } elseif ($ruleKey === 'CON_EXCESS_DAYS') {
+                    $days = intval($c['number_of_working_days'] ?? 0);
+                    if ($days > 90 && strpos(strtolower($c['type_of_work'] ?? ''), 'major') === false) {
+                        $match = true; $detail = "{$days} working days";
+                    }
+                }
+                if ($match) $records[] = [
+                    'type'    => 'construction',
+                    'id'      => $c['id'],
+                    'name'    => trim(($c['first_name'] ?? '') . ' ' . ($c['last_name'] ?? '')) ?: 'Unnamed',
+                    'address' => $c['construction_address'] ?: 'No address',
+                    'lat'     => $c['latitude'],
+                    'lng'     => $c['longitude'],
+                    'detail'  => $detail
+                ];
+            }
+            $label = 'Construction';
+        }
+
+        // ── Business rules ──
+        elseif (strpos($ruleKey, 'BIZ_') === 0) {
+            $sql = "SELECT id, business_name, address_of_business, type_of_business, nature_of_business, no_of_employees, latitude, longitude
+                    FROM business_applications WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+            $bizs = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($bizs as $b) {
+                $match = false; $detail = '';
+                if ($ruleKey === 'BIZ_FLOOD_ZONE') {
+                    $risk = checkPointInFloodZone($b['latitude'], $b['longitude']);
+                    if ($risk) { $match = true; $detail = ucfirst($risk['risk_level']) . ' flood zone'; }
+                } elseif ($ruleKey === 'BIZ_FAULT_ZONE') {
+                    $dist = round(getDistanceToFaultLine($b['latitude'], $b['longitude']), 1);
+                    if ($dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
+                } elseif ($ruleKey === 'BIZ_HIGH_OCCUPANCY' && intval($b['no_of_employees'] ?? 0) > 50) {
+                    $match = true; $detail = ($b['no_of_employees']) . ' employees';
+                } elseif ($ruleKey === 'BIZ_HAZARDOUS') {
+                    $bizType = strtolower($b['type_of_business'] ?? '') . ' ' . strtolower($b['nature_of_business'] ?? '');
+                    foreach (['fuel','lpg','gasoline','chemical','welding','petroleum','flammable','paint store'] as $kw) {
+                        if (strpos($bizType, $kw) !== false) { $match = true; $detail = "Contains: $kw"; break; }
+                    }
+                }
+                if ($match) $records[] = [
+                    'type'    => 'business',
+                    'id'      => $b['id'],
+                    'name'    => $b['business_name'] ?: 'Unnamed Business',
+                    'address' => $b['address_of_business'] ?: 'No address',
+                    'lat'     => $b['latitude'],
+                    'lng'     => $b['longitude'],
+                    'detail'  => $detail
+                ];
+            }
+            $label = 'Business';
+        }
+
+        return ['success' => true, 'records' => $records, 'label' => $label];
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+// ==================== POST REQUEST HANDLER ====================
+// All API calls come in as POST with an 'action' field.
+// Each block handles one action, returns JSON, and exits immediately.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
 
@@ -1467,9 +1938,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
+    // ==================== SDSS RULES SUMMARY ====================
+    
+    // SDSS Rules Summary
+    if ($_POST['action'] === 'get_sdss_rules_summary') {
+        $result = getSDSSRulesSummary();
+        echo json_encode($result);
+        exit;
+    }
+
     // ==================== COMBINED FUNCTIONS ====================
     
-    // Get all markers (combined)
+    
+    // Get all markers (combined) - FIXED TO RETURN COMPLETE DATA
     if ($_POST['action'] === 'get_all_markers') {
         $allMarkers = [];
         
@@ -1477,57 +1958,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $houses = getHousePolygons();
         foreach ($houses as $house) {
             if ($house['center_lat'] && $house['center_lng']) {
-                $allMarkers[] = [
-                    'id' => $house['house_id'],
-                    'type' => 'household',
-                    'name' => $house['address'] ?: "House #{$house['house_id']}",
-                    'address' => $house['address'],
-                    'latitude' => $house['center_lat'],
-                    'longitude' => $house['center_lng']
-                ];
+                $house['type'] = 'household';
+                $house['name'] = $house['address'] ?: "House #{$house['house_id']}";
+                $house['latitude'] = $house['center_lat'];
+                $house['longitude'] = $house['center_lng'];
+                $allMarkers[] = $house;
             }
         }
         
-        // Get businesses
+        // Get businesses - RETURN ALL FIELDS
         $businesses = getBusinessMarkers();
         foreach ($businesses as $business) {
-            $allMarkers[] = [
-                'id' => $business['id'],
-                'type' => 'business',
-                'name' => $business['business_name'],
-                'address' => $business['address_of_business'],
-                'latitude' => $business['latitude'],
-                'longitude' => $business['longitude']
-            ];
+            $business['type'] = 'business';
+            $business['name'] = $business['business_name'];
+            $business['address'] = $business['address_of_business'];
+            $allMarkers[] = $business;
         }
         
-        // Get construction
+        // Get construction - RETURN ALL FIELDS
         $constructions = getConstructionMarkers();
         foreach ($constructions as $construction) {
-            $allMarkers[] = [
-                'id' => $construction['id'],
-                'type' => 'construction',
-                'name' => $construction['nature_of_work'] ?? 'Construction Project',
-                'address' => $construction['construction_address'],
-                'latitude' => $construction['latitude'],
-                'longitude' => $construction['longitude']
-            ];
+            $construction['type'] = 'construction';
+            $construction['name'] = $construction['nature_of_work'] ?? 'Construction Project';
+            $construction['address'] = $construction['construction_address'];
+            $allMarkers[] = $construction;
         }
         
-        // Get utilities
+        // Get utilities - RETURN ALL FIELDS
         $utilities = getUtilitiesMarkers();
         foreach ($utilities as $utility) {
-            $allMarkers[] = [
-                'id' => $utility['id'],
-                'type' => 'utility',
-                'name' => $utility['nature_of_work'] ?? 'Utility Work',
-                'address' => $utility['address_of_utility'],
-                'latitude' => $utility['latitude'],
-                'longitude' => $utility['longitude']
-            ];
+            $utility['type'] = 'utility';
+            $utility['name'] = $utility['nature_of_work'] ?? 'Utility Work';
+            $utility['address'] = $utility['address_of_utility'];
+            $allMarkers[] = $utility;
         }
         
         echo json_encode(['success' => true, 'markers' => $allMarkers]);
+        exit;
+    }
+
+    // ==================== SDSS RULE AFFECTED DATA ====================
+
+    if ($_POST['action'] === 'get_rule_affected_data') {
+        $ruleKey = $_POST['rule_key'] ?? '';
+        $result = getRuleAffectedData($ruleKey);
+        echo json_encode($result);
         exit;
     }
 
