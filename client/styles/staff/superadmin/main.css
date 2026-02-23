@@ -10,23 +10,27 @@
     --h6-lh: 32px;
     --txt1: 20px;
     --txt1-lh: 30px;
-    --txt3: 16px; /* Fixed missing px */
+    --txt3: 16px;
     --txt3-lh: 24px;
 
     --regular: 400;
-    --medium: 500; /* Fixed typo from mediium */
+    --medium: 500;
     --semibold: 600;
     --bold: 700;
 
-    /* Theme Colors: Shades of Blue and White */
-    --primary-blue: #19316b;       /* Deep Navy for main branding/buttons */
-    --primary-blue-hover: #12234d; /* Darker navy for hovers */
-    --accent-blue: #3498db;        /* Bright blue for focus states and highlights */
-    --light-blue: #f0f7ff;         /* Very soft blue for hover backgrounds */
-    --border-blue: #dbeafe;        /* Soft blue-grey for borders */
-    --text-main: #1e293b;          /* Dark slate for readable text */
-    --text-muted: #64748b;         /* Lighter slate for secondary text */
-    --bg-main: #f8fafc;            /* Clean, cool off-white for the app background */
+    /* Enhanced Blue & White Theme – MUCH MORE BLUE */
+    --primary-blue: #19316b;
+    --primary-blue-hover: #12234d;
+    --nav-active-blue: #1e40af;     /* Stronger blue for active nav items */
+    --accent-blue: #3498db;
+    --light-blue: #f0f7ff;
+    --soft-blue: #e0f0ff;           /* New: richer hover/sidebar tint */
+    --nav-bg: #f0f7ff;              /* Dedicated light blue for sidebar */
+    --border-blue: #dbeafe;
+    --border-accent: #bfdbfe;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-main: #f8fafc;
     --white: #ffffff;
 }
 
@@ -50,7 +54,7 @@ body {
     margin-inline: auto;
 }
 
-/* Header styling */
+/* Header – subtle blue accent */
 .header {
     width: 100%;
     padding: 16px 24px;
@@ -60,14 +64,14 @@ body {
     right: 0;
     z-index: 10;
     background-color: var(--white);
-    border-bottom: 1px solid var(--border-blue);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Added subtle shadow */
+    border-bottom: 1px solid var(--border-accent);
+    box-shadow: 0 2px 8px rgba(25, 49, 107, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Sidebar styling */
+/* Sidebar – now clearly blue-dominant */
 .aside {
     position: fixed;
     top: 72px;
@@ -75,9 +79,9 @@ body {
     bottom: 0;
     z-index: 9;
     padding: 16px 8px;
-    background-color: var(--white);
-    border-right: 1px solid var(--border-blue);
-    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+    background-color: var(--nav-bg);
+    border-right: 1px solid var(--border-accent);
+    box-shadow: 2px 0 8px rgba(25, 49, 107, 0.06);
     display: flex;
     flex-direction: column;
     row-gap: 8px;
@@ -86,10 +90,15 @@ body {
 .aside .menuToggle {
     padding: 8px;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: all 0.2s ease;
     border-radius: 8px;
     width: max-content;
     color: var(--text-muted);
+}
+
+.aside .menuToggle:hover {
+    background-color: var(--soft-blue);
+    color: var(--primary-blue);
 }
 
 .aside > .icon {
@@ -111,7 +120,7 @@ body {
 }
 
 .aside .nav {
-    background: var(--white);
+    background: transparent;
     transition: width 0.3s ease;
     overflow: hidden;
     display: flex;
@@ -120,29 +129,37 @@ body {
     height: 100%;
 }
 
-.aside .nav.open {
-    width: max-content;
-}
-
 .aside .nav .list {
     width: 100%;
     display: flex;
     flex-direction: column;
-    row-gap: 4px; /* Reduced slightly for cleaner look */
+    row-gap: 4px;
 }
 
+/* Navigation items – heavily blue-enhanced */
 .aside .nav .list .items {
     display: inline-flex;
     background-color: transparent;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 8px;
 }
 
-/* Modern hover states replacing grey */
 .aside .nav .list .items:hover,
 .aside .menuToggle:hover {
-    background-color: var(--light-blue);
+    background-color: var(--soft-blue);
     color: var(--primary-blue);
+    transform: translateX(4px);
+}
+
+/* ACTIVE STATE – strong blue (your main request) */
+.aside .nav .list .items.active {
+    background-color: var(--nav-active-blue);
+    color: var(--white);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+}
+
+.aside .nav .list .items.active .links {
+    color: var(--white);
 }
 
 .aside .nav .list .items .links {
@@ -156,8 +173,9 @@ body {
     transition: color 0.2s ease;
 }
 
-.aside .nav .list .items:hover .links {
-    color: var(--primary-blue);
+.aside .nav .list .items:hover .links,
+.aside .nav .list .items.active .links {
+    color: inherit;
 }
 
 .aside .nav .list .items .links .links-name {
@@ -183,7 +201,7 @@ body {
     margin-left: 65px;
 }
 
-/* Upgraded Table Styling */
+/* Table – stronger blue header */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -191,12 +209,12 @@ table {
     background-color: var(--white);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Soft card shadow */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 table thead {
-    background-color: var(--light-blue);
-    color: var(--primary-blue);
+    background-color: var(--soft-blue);
+    color: var(--nav-active-blue);
 }
 
 table thead tr th {
@@ -211,7 +229,7 @@ table tbody tr {
 }
 
 table tbody tr:hover {
-    background-color: var(--light-blue); /* Light blue hover instead of grey */
+    background-color: var(--light-blue);
 }
 
 table tbody tr td {
@@ -230,11 +248,11 @@ table thead tr th .th-content {
     gap: 6px;
 }
 
-/* Loader Updates */
+/* Loader – blue accent */
 #page-loader {
     position: fixed;
     inset: 0;
-    background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+    background: rgba(240, 247, 255, 0.95);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -246,13 +264,11 @@ table thead tr th .th-content {
     width: 40px;
     height: 40px;
     border: 4px solid var(--border-blue);
-    border-top: 4px solid var(--accent-blue); /* Blue spinning accent */
+    border-top: 4px solid var(--accent-blue);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }

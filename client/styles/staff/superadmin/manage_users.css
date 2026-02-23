@@ -3,16 +3,16 @@
 .row {
     display: flex;
     justify-content: space-between;
-    align-items: center; /* Ensures vertical alignment */
+    align-items: center;
 }
 
 .divider {
     height: 1px;
-    background-color: var(--border-blue);
+    background-color: var(--border-accent);
     margin: 16px 0;
 }
 
-/* Search bar modernizations */
+/* Search bar – bluer focus */
 .search-container {
     position: relative;
     display: flex;
@@ -26,14 +26,14 @@
     border-radius: 6px;
     border: 1px solid var(--border-blue);
     width: 100%;
-    padding: 4px 12px 4px 36px; /* Space for an icon on the left if needed */
+    padding: 4px 12px 4px 36px;
     transition: all 0.2s ease;
 }
 
 .search-container input:focus {
     outline: none;
     border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Blue focus ring */
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
 .search-container img {
@@ -48,7 +48,7 @@
     opacity: 1;
 }
 
-/* Form Card Styling */
+/* Form Card – floating blue shadow */
 .form-container .form {
     margin: auto;
     max-width: 680px;
@@ -58,7 +58,7 @@
     padding: 40px 32px;
     border-radius: 12px;
     background-color: var(--white);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05); /* Floating card effect */
+    box-shadow: 0 10px 30px -8px rgba(25, 49, 107, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     position: absolute;
     bottom: 0;
     left: 0;
@@ -71,7 +71,7 @@
     font-size: var(--h5);
     line-height: var(--h5-lh);
     font-weight: var(--bold);
-    color: var(--primary-blue); /* Title in theme blue */
+    color: var(--primary-blue);
     margin-bottom: 8px;
 }
 
@@ -102,7 +102,7 @@
     border-radius: 6px;
     border: 1px solid var(--border-blue);
     width: 100%;
-    background-color: var(--white); /* White background instead of grey */
+    background-color: var(--white);
     color: var(--text-main);
     transition: all 0.2s ease;
     -webkit-appearance: none;
@@ -110,7 +110,6 @@
     appearance: none;
 }
 
-/* Input Focus States */
 .form-container .form .inputs-container .label-and-input select:focus,
 .form-container .form .inputs-container .label-and-input input[type="email"]:focus,
 .form-container .form .inputs-container .label-and-input input[type="text"]:focus,
@@ -118,11 +117,11 @@
 .form-container .form .inputs-container .label-and-input input[type="password"]:focus {
     outline: none;
     border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); /* Clean blue glow */
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
 .form-container .form .inputs-container .label-and-input .error-msg {
-    color: #e74c3c; /* A softer, professional red */
+    color: #e74c3c;
     font-size: 12px;
     margin-top: 4px;
     display: none;
@@ -142,7 +141,7 @@
     margin-left: auto;
     width: max-content;
     display: flex;
-    gap: 12px; /* Adds space between buttons */
+    gap: 12px;
 }
 
 .reason-buttons-container {
@@ -170,7 +169,7 @@
     padding: 12px 24px;
 }
 
-/* Secondary Button (Cancel/Back) */
+/* Secondary */
 .form-container .form .buttons-container button:nth-child(1),
 .reason-buttons-container .reason-btn {
     background-color: var(--light-blue);
@@ -180,14 +179,13 @@
 
 .form-container .form .buttons-container button:nth-child(1):hover,
 .reason-buttons-container .reason-btn:hover {
-    background-color: var(--border-blue);
+    background-color: var(--soft-blue);
 }
 
-/* Primary Button (Submit/Next) */
+/* Primary – deep blue */
 .form-container .form .buttons-container button:nth-child(2) {
     background-color: var(--primary-blue);
     color: var(--white);
-    margin-left: 0; /* Handled by parent gap */
     box-shadow: 0 2px 4px rgba(25, 49, 107, 0.2);
 }
 
@@ -197,7 +195,7 @@
     transform: translateY(-1px);
 }
 
-/* Modal Updates */
+/* Modal – deeper blue overlay */
 .modal {
     display: none;
     opacity: 0;
@@ -205,15 +203,12 @@
 }
 
 .modal.active {
-    display: flex; /* Changed to flex to center content */
+    display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed; /* Fixed is better than absolute for modals */
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    background-color: rgba(15, 30, 66, 0.6); /* Tinted dark blue overlay */
+    position: fixed;
+    inset: 0;
+    background-color: rgba(25, 49, 107, 0.65);
     z-index: 999;
     opacity: 1;
 }
@@ -235,13 +230,13 @@
     border-color: var(--accent-blue);
 }
 
-/* SweetAlert overrides using the new theme */
+/* SweetAlert – blue theme */
 .swal-popup {
     color: var(--text-main);
     padding: 32px 24px;
     border-radius: 12px;
     background-color: var(--white);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 15px 30px rgba(25, 49, 107, 0.15);
 }
 
 .swal-title {
@@ -279,5 +274,5 @@
 }
 
 .swal-cancel-btn:hover {
-    background-color: var(--border-blue);
+    background-color: var(--soft-blue);
 }
