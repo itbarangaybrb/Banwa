@@ -1,0 +1,663 @@
+/* Signup Modal Styles */
+.signup-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.signup-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    scrollbar-width: none;
+}
+
+.signup-modal.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    background: #00247C;
+    color: white;
+    padding: 20px 30px;
+    border-radius: 16px 16px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Auth Toggle */
+.auth-toggle {
+    display: flex;
+    gap: 10px;
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 30px;
+    background: transparent;
+    color: #666;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+}
+
+.toggle-btn.active {
+    background: #00247C;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 36, 124, 0.2);
+}
+
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    text-align: center;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: #ddd;
+    z-index: 1;
+}
+
+.step.completed:not(:last-child)::after {
+    background: #00247C;
+}
+
+.step.active:not(:last-child)::after {
+    background: linear-gradient(90deg, #00247C 50%, #ddd 50%);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+    background: #00247C;
+    color: white;
+    box-shadow: 0 0 0 3px rgba(0, 36, 124, 0.2);
+}
+
+.step.completed .step-number {
+    background: #28a745;
+    color: white;
+}
+
+.step.completed .step-number::after {
+    content: '✓';
+    font-size: 20px;
+}
+
+.step-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.step.active .step-label {
+    color: #00247C;
+    font-weight: 600;
+}
+
+.step.completed .step-label {
+    color: #28a745;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 30px;
+}
+
+/* Auth Panels */
+.auth-panel {
+    display: block;
+}
+
+.auth-panel.hidden {
+    display: none;
+}
+
+/* Form Panels */
+.form-panel {
+    display: block;
+}
+
+.form-panel.hidden {
+    display: none;
+}
+
+/* Import existing form styles from signup.css */
+.select-id-container,
+.personal-details-container,
+.create-account-container {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.select-id-container .form,
+.personal-details-container .form,
+.create-account-container .form {
+    margin-inline: auto;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.select-id-container .form .form2,
+.personal-details-container .form .form2,
+.create-account-container .form .form2 {
+    font-size: 30px;
+    line-height: 38px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #00247C;
+}
+
+.select-id-container .form p {
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.inputs-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+}
+
+.label-and-input {
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+}
+
+.label-and-input label {
+    font-weight: 500;
+    color: #333;
+}
+
+.label-and-input label > i {
+    color: #999;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.label-and-input input[type="text"],
+.label-and-input input[type="email"],
+.label-and-input input[type="password"],
+.label-and-input input[type="tel"],
+.label-and-input select,
+.label-and-input textarea {
+    padding: 12px 8px;
+    border-radius: 8px;
+    border: 1px solid #C4C4C4;
+    width: 100%;
+    background-color: #f5f5f5;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-size: 15px;
+}
+
+.label-and-input input[type="file"] {
+    padding: 10px 0;
+}
+
+.label-and-input textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Error Styles */
+.error-msg {
+    color: #BB1B1B;
+    font-size: 12px;
+    display: none;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+.error {
+    border: 1px solid #BB1B1B !important;
+}
+
+/* Button Styles */
+.buttons-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.buttons-container button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px;
+}
+
+.buttons-container button[type="button"]:first-child {
+    background-color: #dbdbdb;
+    color: #333;
+}
+
+.buttons-container button[type="button"]:first-child:hover {
+    background-color: #c9c9c9;
+}
+
+.buttons-container button[type="button"]:last-child,
+.buttons-container button[type="submit"] {
+    background-color: #00247C;
+    color: white;
+}
+
+.buttons-container button[type="button"]:last-child:hover,
+.buttons-container button[type="submit"]:hover {
+    background-color: #00164d;
+}
+
+.buttons-container button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Image Preview */
+#imagePreviewContainer {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+#idImagePreview {
+    max-width: 100%;
+    display: block;
+}
+
+/* OCR Status */
+#ocrStatus {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.ocr-status-processing {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #bbdefb;
+}
+
+.ocr-status-success {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+}
+
+.ocr-status-error {
+    background-color: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+}
+
+/* Progress Bar for OCR */
+.progress-container {
+    width: 100%;
+    height: 16px;
+    background-color: #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 40%;
+    background-color: #00247C;
+    position: relative;
+    animation: progressMove 2s linear infinite;
+}
+
+@keyframes progressMove {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+/* Login Form Styles - Direct from signin.css */
+.login-container {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #000000E5;
+}
+
+.login-container .form {
+    margin-inline: auto;
+    max-width: 480px;
+}
+
+.login-container .form .header-and-parag {
+    text-align: center;
+}
+
+.login-container .form .header-and-parag img {
+    max-width: 25%;
+    height: auto;
+    object-fit: cover;
+    display: block;
+    margin-inline: auto;
+    margin-bottom: 4px;
+}
+
+.login-container .form .header-and-parag h4 {
+    margin-bottom: 4px;
+    font-size: 36px;
+    line-height: 44px;
+    font-weight: 700;
+    color: #234188;
+}
+
+.login-container .form .header-and-parag p {
+    font-size: 18px;
+    line-height: 28px;
+    font-weight: 400;
+    color: #000000E5;
+}
+
+.login-container .form .form-message {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.login-container .form .inputs-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+    margin-block: 24px;
+}
+
+.login-container .form .inputs-container a {
+    margin-left: auto;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    color: #00247C;
+    text-decoration: none;
+}
+
+.login-container .form .inputs-container a:hover {
+    text-decoration: underline;
+}
+
+.login-container .form .inputs-container .label-and-input {
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
+}
+
+.login-container .form .inputs-container .label-and-input input[type="email"],
+.login-container .form .inputs-container .label-and-input input[type="password"] {
+    padding: 12px 8px;
+    border-radius: 8px;
+    border: 1px solid #C4C4C4;
+    width: 100%;
+    background-color: #f5f5f5;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.login-container .form .buttons-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+    align-items: center;
+}
+
+.login-container .form .buttons-container p {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+}
+
+.login-container .form .buttons-container p a {
+    color: #00247C;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.login-container .form .buttons-container p a:hover {
+    text-decoration: underline;
+}
+
+.login-container .form .buttons-container button {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+    background-color: #00247C;
+    color: white;
+    width: 100%;
+    cursor: pointer;
+}
+
+.login-container .form .buttons-container button:hover {
+    background-color: #00164d;
+}
+
+/* Submit Confirmation Modal */
+#submitConfirmModal.modal-hidden { display: none; }
+#submitConfirmModal .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+#submitConfirmModal .modal-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 520px;
+    width: 92%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transform: translateY(8px);
+    opacity: 0;
+    animation: modal-fade-in 180ms ease-out forwards;
+}
+#submitConfirmModal .modal-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #00247C;
+    font-size: 18px;
+}
+#submitConfirmModal .modal-body {
+    margin-bottom: 16px;
+    color: #333;
+    min-height: auto;
+    padding: 0;
+}
+#submitConfirmModal .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+#submitConfirmModal .btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 0;
+    cursor: pointer;
+}
+#submitConfirmModal .btn-cancel {
+    background: #f2f2f2;
+}
+#submitConfirmModal .btn-confirm {
+    background: #00247C;
+    color: #fff;
+}
+@keyframes modal-fade-in {
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Resend Button */
+#resendEmailBtn {
+    display: none;
+    background-color: #28a745 !important;
+}
+
+#resendEmailBtn.show {
+    display: inline-block;
+}
+
+#resendEmailBtn:hover {
+    background-color: #218838 !important;
+}
+
+/* Form Message */
+#formMessage {
+    display: block;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+    }
+    
+    .modal-header h2 {
+        font-size: 20px;
+    }
+    
+    .progress-steps {
+        padding: 15px 20px;
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .step-label {
+        font-size: 12px;
+    }
+    
+    .modal-body {
+        padding: 20px 15px;
+    }
+    
+    .buttons-container button {
+        padding: 10px 18px;
+        font-size: 14px;
+    }
+    
+    .login-container .form .header-and-parag h4 {
+        font-size: 30px;
+        line-height: 38px;
+    }
+}

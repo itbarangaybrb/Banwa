@@ -38,6 +38,8 @@ if ($_SESSION['role_id'] != 1) {
 
 <head>
     <title>Home</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
     <link rel="stylesheet" href="../../styles/resident/home.css">
 </head>
 

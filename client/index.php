@@ -4,9 +4,11 @@
 <head>
     <title>Home - Banwa Residential Management</title>
     <meta name="description" content="Professional residential management system with elegant design and user-friendly interface">
+    <link rel="icon" type="image/png" sizes="32x32" href="../client/img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../client/img/browser-icon.svg">
     <link rel="stylesheet" href="../client/styles/global.css">
-    <link rel="stylesheet" href="../client/styles/index.css">
     <link rel="stylesheet" href="../client/styles/resident/home.css">
+    <link rel="stylesheet" href="../client/styles/auth/signup-modal.css">
 </head>
 
 <body>
@@ -20,7 +22,7 @@
 
             <div class="user_profile">
                 <div class="auth_buttons">
-                    <a href="pages/auth/signup.php" class="sign-btn">Get Started</a>
+                    <button class="sign-btn" id="getStartedBtn">Get Started</button>
                 </div>
                 <div class="time_date" id="live_datetime">
                     <div class="time-display">
@@ -69,7 +71,7 @@
                                     <span class="hours-status"></span>
                                     <div class="hours-tooltip">
                                         <div class="hours-schedule">
-                                            <h4>Office Hours</h4>
+                                            <h4>Barangay Office Hours</h4>
                                             <div class="schedule-item">
                                                 <span class="days">Monday - Friday</span>
                                                 <span class="time">8:00 AM - 5:00 PM</span>
@@ -456,7 +458,229 @@
         </section>
     </main>
 
+    <!-- Auth Modal (Signup/Login) -->
+    <div id="authModal" class="signup-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Welcome to BANWA</h2>
+                <div class="subtitle">Barangay Blue Ridge B Management System</div>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            
+            <!-- Auth Toggle -->
+            <div class="auth-toggle">
+                <button class="toggle-btn active" id="showSignupBtn">Sign Up</button>
+                <button class="toggle-btn" id="showLoginBtn">Log In</button>
+            </div>
+            
+            <!-- Signup Panel (with progress steps) -->
+            <div class="auth-panel" id="signupPanel">
+                <!-- Progress Steps -->
+                <div class="progress-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Identity</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Personal Info</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Account</div>
+                    </div>
+                </div>
+                
+                <!-- Modal Body - Contains the signup forms -->
+                <div class="modal-body">
+                    <!-- Select ID Panel (Step 1) -->
+                    <div class="form-panel" id="selectId">
+                        <form class="form" id="selectIdForm">
+                            <h2 class="form2">Identity Verification</h2>
+                            <p>Please upload a valid ID to autofill your information.</p>
+
+                            <div class="inputs-container">
+                                <div class="label-and-input" id="idTypeWrapper">
+                                    <label>Type of ID <span style="color: #BB1B1B;">*</span></label>
+                                    <select name="idType" id="idType" required>
+                                        <option value="" disabled selected>Select ID Type</option>
+                                        <option value="National">National ID (PhilSys)</option>
+                                        <option value="Quezon">Quezon City ID</option>
+                                    </select>
+                                    <div class="error-msg"></div>
+                                </div>
+
+                                <div class="label-and-input" id="idFileWrapper">
+                                    <label for="idFile">
+                                        Upload ID File <span style="color: #BB1B1B;">*</span><br>
+                                        <i>(Clear image of the front of your ID)</i>
+                                    </label>
+                                    <input id="idFile" name="idFile" type="file" accept="image/png, image/jpeg, image/jpg" required />
+                                    <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                                        <img id="idImagePreview" src="#" alt="ID Preview" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
+                                    </div>
+                                    <div class="error-msg"></div>
+                                </div>
+
+                                <div id="ocrStatus" style="display:none;"></div>
+                            </div>
+
+                            <div class="buttons-container">
+                                <button type="button" id="selectIdBackBtn">Back</button>
+                                <button type="button" id="selectIdNextBtn">Next</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Personal Details Panel (Step 2) -->
+                    <div class="form-panel hidden" id="personalDetails">
+                        <form class="form" id="personalDetailsForm">
+                            <h2 class="form2">Personal Information</h2>
+                            <div class="inputs-container">
+                                <div class="label-and-input">
+                                    <label for="firstName">First name <span style="color: #BB1B1B;">*</span></label>
+                                    <input id="firstName" name="firstName" type="text" required>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="middleName">Middle name <i>(Optional)</i></label>
+                                    <input id="middleName" name="middleName" type="text">
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="lastName">Last name <span style="color: #BB1B1B;">*</span></label>
+                                    <input id="lastName" name="lastName" type="text" required>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="suffix">Suffix <i>(Optional)</i></label>
+                                    <input id="suffix" name="suffix" type="text">
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="sex">Sex <span style="color: #BB1B1B;">*</span></label>
+                                    <select id="sex" name="sex" required>
+                                        <option value="">Select</option>
+                                        <option value="female">Female</option>
+                                        <option value="male">Male</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="contactNo">Contact no. <span style="color: #BB1B1B;">*</span></label>
+                                    <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="address">Address</label>
+                                    <textarea id="address" name="address"></textarea>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="buttons-container">
+                                <button type="button" id="personalDetailsBackBtn">Back</button>
+                                <button type="button" id="personalDetailsNextBtn">Next</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Create Account Panel (Step 3) -->
+                    <div class="form-panel hidden" id="createAcc">
+                        <form class="form" id="createAccForm">
+                            <h2 class="form2">Create Account</h2>
+
+                            <span id="formMessage"></span>
+
+                            <div class="inputs-container">
+                                <div class="label-and-input">
+                                    <label for="createAccEmail">Email <span style="color: #BB1B1B;">*</span></label>
+                                    <input type="email" name="createAccEmail" id="createAccEmail" required />
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="password">Password <span style="color: #BB1B1B;">*</span></label>
+                                    <input type="password" name="password" id="password" autocomplete="false" required />
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="reTypePassword">Re-type password <span style="color: #BB1B1B;">*</span></label>
+                                    <input type="password" name="reTypePassword" id="reTypePassword" autocomplete="false" required />
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label>
+                                        <input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
+                                    </label>
+                                    <div class="error-msg"></div>
+                                </div>
+                            </div>
+
+                            <div class="buttons-container">
+                                <button type="button" id="createAccBackBtn">Back</button>
+                                <button type="submit" id="createAccSubmitBtn">Submit</button>
+                                <button type="button" id="resendEmailBtn">Resend verification email</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Panel -->
+            <div class="auth-panel hidden" id="loginPanel">
+                <div class="modal-body">
+                    <div class="login-container">
+                        <form class="form" id="loginForm">
+                            <!-- <div class="header-and-parag">
+                                <img src="../client/img/banwalogo.png" alt="Barangay Blue Ridge B Logo">
+                                <h4>Sign in to BBRB</h4>
+                            </div> -->
+
+                            <div id="loginFormMessage" class="form-message"></div>
+
+                            <div class="inputs-container">
+                                <div class="label-and-input">
+                                    <label for="loginEmail">Email</label>
+                                    <input type="email" id="loginEmail" name="email">
+                                    <div class="error-msg"></div>
+                                </div>
+                                <div class="label-and-input">
+                                    <label for="loginPassword">Password</label>
+                                    <input type="password" id="loginPassword" name="password" autocomplete="false">
+                                    <div class="error-msg"></div>
+                                </div>
+                                <a href="../auth/forgot_pass.php">Forgot password?</a>
+                            </div>
+
+                            <div class="buttons-container">
+                                <button type="submit" id="loginSubmitBtn" class="login-btn">Log in</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Confirmation Modal -->
+    <div id="submitConfirmModal" aria-hidden="true" class="modal-hidden">
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+            <div class="modal-box" role="document">
+                <div class="modal-title">Submit Application</div>
+                <div class="modal-body">Are you sure you want to submit this application? This will create your account and send a verification email.</div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel">Cancel</button>
+                    <button class="btn btn-confirm">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../client/scripts/resident/nav.js" defer></script>
     <script src="../client/scripts/resident/home.js" defer></script>
+    <script type="module" src="../client/scripts/auth/signup-modal.js"></script>
+    <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
+
     </body>
 </html>
