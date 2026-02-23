@@ -237,13 +237,13 @@ function rptWarningBlock(warning) {
         </div>`;
 }
 
-/** Fires the unified report Swal */
+/** Fires the unified report Swal — fixed size for all report/risk/SDSS modals */
 function showReportSwal(html, onOpen) {
     showSwal({
         html,
         showConfirmButton: false,
         showCloseButton: true,
-        customClass: { popup: 'report-modal-popup' },
+        customClass: { popup: 'unified-modal-popup' },
         didOpen: (popup) => {
             attachAccordionHandler(popup);
             if (onOpen) onOpen(popup);
@@ -1158,8 +1158,7 @@ function showHousePolygonHighlight(houseData) {
             weight: 4,
             fillColor: '#00247c',
             fillOpacity: 0.2,
-            interactive: true,
-            className: 'search-highlight-pulse'
+            interactive: true
         }).addTo(map);
         
         activeSearchMarker = polygon;
@@ -1230,7 +1229,7 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
                 highlightStyle.fillOpacity += 0.2;
                 highlightStyle.weight += 3;
                 highlightStyle.color = '#00247c';
-                highlightStyle.className = 'search-highlight-pulse';
+                // no pulse animation
                 
                 activeSearchMarker = L.geoJSON(geoJson, {
                     style: highlightStyle
@@ -1769,27 +1768,27 @@ function renderFloodAreas(hazards) {
 function getFloodAreaStyle(riskLevel) {
     const styles = {
         'high': {
-            fillColor: '#cc0000',
-            color: '#990000',
-            fillOpacity: 0.4,
+            fillColor: '#dc3545',
+            color: '#b02030',
+            fillOpacity: 0.45,
             weight: 2,
             opacity: 0.9,
             dashArray: null
         },
         'medium': {
-            fillColor: '#0077cc',
-            color: '#005599',
-            fillOpacity: 0.35,
+            fillColor: '#ff9800',
+            color: '#c97000',
+            fillOpacity: 0.4,
             weight: 2,
-            opacity: 0.8,
+            opacity: 0.85,
             dashArray: '5, 3'
         },
         'low': {
-            fillColor: '#44aadd',
-            color: '#2288bb',
-            fillOpacity: 0.25,
+            fillColor: '#ffc107',
+            color: '#c99500',
+            fillOpacity: 0.35,
             weight: 1,
-            opacity: 0.7,
+            opacity: 0.8,
             dashArray: '3, 3'
         },
     };
@@ -1810,15 +1809,15 @@ function addFloodLegend() {
         div.innerHTML = `
             <h4>Flood Risk Levels</h4>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #cc0000; opacity: 0.6;"></div>
+                <div class="flood-legend-color" style="background: #dc3545; opacity: 0.85;"></div>
                 <span class="flood-legend-text">High Risk</span>
             </div>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #cc7400; opacity: 0.55;"></div>
+                <div class="flood-legend-color" style="background: #ff9800; opacity: 0.8;"></div>
                 <span class="flood-legend-text">Medium Risk</span>
             </div>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #dbc500; opacity: 0.45;"></div>
+                <div class="flood-legend-color" style="background: #ffc107; opacity: 0.75;"></div>
                 <span class="flood-legend-text">Low Risk</span>
             </div>
         `;
@@ -3091,15 +3090,16 @@ function displaySDSSRulesReport(data) {
         html: htmlContent,
         showCloseButton: true,
         showConfirmButton: false,
-        customClass: { popup: 'sdss-rules-popup' },
-        // Must disable sanitization so onclick attrs in the HTML string are preserved
+        customClass: { popup: 'unified-modal-popup' },
         didOpen: (popup) => {
             attachAccordionHandler(popup);
             popup.addEventListener('click', (e) => {
                 const btn = e.target.closest('[data-rule-key]');
                 if (btn) {
                     e.stopPropagation();
-                    showRuleAffectedData(btn.dataset.ruleKey, btn.dataset.ruleName);
+                    // Close SDSS rules modal first, then open affected records
+                    Swal.close();
+                    setTimeout(() => showRuleAffectedData(btn.dataset.ruleKey, btn.dataset.ruleName, true), 200);
                 }
             });
         }
@@ -3165,8 +3165,73 @@ function createRuleCard(rule, totalHouses, cardId) {
 /**
  * Fetch and display the records affected by a specific rule
  */
-async function showRuleAffectedData(ruleKey, ruleName) {
-    showSwal({ title: 'Loading...', html: 'Fetching affected records...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+// Track highlighted affected polygons
+let affectedHighlightLayers = [];
+
+function clearAffectedHighlights() {
+    affectedHighlightLayers.forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+    affectedHighlightLayers = [];
+}
+
+async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
+    // Remove any existing affected panel
+    const oldPanel = document.getElementById('affected-side-panel');
+    if (oldPanel) oldPanel.remove();
+
+    // Build panel immediately with loading state
+    const panel = document.createElement('div');
+    panel.id = 'affected-side-panel';
+    panel.className = 'affected-side-panel';
+
+    const restoreMap = () => {
+        clearAffectedHighlights();
+        updateAllVisibility();
+        if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) floodLayer.addTo(map);
+        if (faultLineActive) {
+            if (faultLine && !map.hasLayer(faultLine)) faultLine.addTo(map);
+            if (warningMarker && !map.hasLayer(warningMarker)) warningMarker.addTo(map);
+        }
+    };
+
+    const closePanel = () => {
+        panel.classList.remove('open');
+        setTimeout(() => { if (panel.parentNode) panel.remove(); }, 300);
+        restoreMap();
+    };
+
+    const backBtn = fromSDSS ? `
+        <button id="affected-back-btn"
+            style="display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+                   background:#f0f4ff;color:#00247c;border:1.5px solid #00247c;
+                   border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+                   font-family:inherit;margin-bottom:0;width:100%;">
+            <i class="fas fa-arrow-left"></i> Back to SDSS Rules
+        </button>` : '';
+
+    panel.innerHTML = `
+        <div class="affected-panel-header">
+            <button class="affected-panel-close" id="affected-panel-close-btn">&times;</button>
+            <div style="font-size:11px;opacity:0.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Affected Records</div>
+            <h3 style="margin:0 0 ${fromSDSS ? '10px' : '0'};font-size:15px;font-weight:700;padding-right:28px;">${ruleName}</h3>
+            ${backBtn}
+        </div>
+        <div class="affected-panel-body" id="affected-panel-body">
+            <div style="padding:28px;text-align:center;color:#888;font-size:13px;">Loading...</div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+    requestAnimationFrame(() => panel.classList.add('open'));
+
+    document.getElementById('affected-panel-close-btn').onclick = closePanel;
+    if (fromSDSS) {
+        document.getElementById('affected-back-btn').onclick = () => {
+            closePanel();
+            setTimeout(() => showSDSSRulesReport(), 320);
+        };
+    }
+    document.addEventListener('keydown', function escH(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escH); }
+    });
 
     try {
         const formData = new FormData();
@@ -3175,73 +3240,90 @@ async function showRuleAffectedData(ruleKey, ruleName) {
         const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
         const result = await response.json();
 
+        const bodyEl = document.getElementById('affected-panel-body');
+        if (!bodyEl) return;
+
         if (!result.success) {
-            showSwal({ icon: 'error', title: 'Error', text: result.message || 'Failed to load data' });
+            bodyEl.innerHTML = `<div style="padding:20px;color:#cc0000;font-size:13px;">Error: ${result.message || 'Failed to load data'}</div>`;
             return;
         }
 
         const records = result.records || [];
 
+        // ── Highlight matching polygons/markers on map ──────────────────────
+        clearAffectedHighlights();
+        hideAllMarkers();
+
+        records.forEach(r => {
+            if (r.type === 'household') {
+                const houseData = housePolygonsData.find(h => String(h.house_id) === String(r.id));
+                if (houseData && houseData.coordinates) {
+                    try {
+                        const coords = JSON.parse(houseData.coordinates);
+                        const latLngs = coords.map(c => [c[1], c[0]]);
+                        latLngs.push(latLngs[0]);
+                        const poly = L.polygon(latLngs, {
+                            color: '#dc3545', weight: 3,
+                            fillColor: '#dc3545', fillOpacity: 0.35,
+                            interactive: true, pane: 'housePane'
+                        }).addTo(map);
+                        poly.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                        affectedHighlightLayers.push(poly);
+                        return;
+                    } catch(e) { console.warn('Polygon parse error', e); }
+                }
+                const lat = parseFloat(r.lat || r.center_lat), lng = parseFloat(r.lng || r.center_lng);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
+                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                    affectedHighlightLayers.push(m);
+                }
+            } else {
+                const lat = parseFloat(r.lat || r.latitude), lng = parseFloat(r.lng || r.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
+                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="construction-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                    affectedHighlightLayers.push(m);
+                }
+            }
+        });
+
+        if (affectedHighlightLayers.length > 0) {
+            const grp = L.featureGroup(affectedHighlightLayers);
+            if (grp.getBounds().isValid()) {
+                map.fitBounds(grp.getBounds(), { padding: [40, 40], maxZoom: 19 });
+            }
+        }
+
+        // ── Build record list ───────────────────────────────────────────────
         if (records.length === 0) {
-            showSwal({ icon: 'info', title: 'No Records', text: 'No affected records found for this rule.' });
+            bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
             return;
         }
 
-        const rows = records.map((r, i) => {
-            const uid = `ra-${ruleKey}-${i}`;
-            return `
-                <tr style="border-bottom: 1px solid #f0f0f0; cursor: pointer;"
-                    onclick="(function(){
-                        Swal.close();
-                        setTimeout(() => {
-                            const d = ${JSON.stringify(r)};
-                            if(d.type==='household') viewHouseDetails(d.id);
-                            else viewMapDetails(d.id, d.type);
-                        }, 300);
-                    })()">
-                    <td style="padding: 10px 12px; font-weight: 600; color: #00247c; font-size: 13px;">${r.name}</td>
-                    <td style="padding: 10px 12px; color: #555; font-size: 13px;">${r.address}</td>
-                    <td style="padding: 10px 12px; font-size: 12px;">
-                        <span style="background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; color: #333;">${r.detail}</span>
-                    </td>
-                    <td style="padding: 10px 12px;">
-                        <span style="background: #00247c; color: white; font-size: 11px; font-weight: 600; 
-                                     padding: 2px 8px; border-radius: 10px; text-transform: uppercase;">${r.type}</span>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        showSwal({
-            html: `
-                <div style="text-align: left;">
-                    <div style="background: #00247c; color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">
-                        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">Rule Violation</div>
-                        <div style="font-size: 17px; font-weight: 700;">${ruleName}</div>
-                        <div style="font-size: 13px; margin-top: 6px; opacity: 0.9;">${records.length} record${records.length !== 1 ? 's' : ''} detected</div>
-                    </div>
-                    <p style="font-size: 12px; color: #888; margin: 0 0 12px 0;">Click any row to view full details.</p>
-                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f5f5f5; position: sticky; top: 0;">
-                                    <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #555; font-weight: 600;">Name</th>
-                                    <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #555; font-weight: 600;">Address</th>
-                                    <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #555; font-weight: 600;">Detail</th>
-                                    <th style="padding: 10px 12px; text-align: left; font-size: 12px; color: #555; font-weight: 600;">Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                        </table>
-                    </div>
+        const rows = records.map(r => `
+            <div class="affected-record-row" onclick="(function(){
+                const d=${JSON.stringify(r)};
+                if(d.type==='household') viewHouseDetails(d.id);
+                else viewMapDetails(d.id,d.type);
+            })()">
+                <div class="affected-record-name">${r.name}</div>
+                <div class="affected-record-addr">${r.address}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                    <span class="affected-record-detail">${r.detail}</span>
+                    <span class="affected-record-type">${r.type}</span>
                 </div>
-            `,
-            width: 860,
-            showConfirmButton: false,
-            showCloseButton: true
-        });
+            </div>`).join('');
+
+        bodyEl.innerHTML = `
+            <div class="affected-panel-count">${records.length} record${records.length !== 1 ? 's' : ''} highlighted on map</div>
+            <div class="affected-panel-hint">Click a row to view full details</div>
+            <div class="affected-records-list">${rows}</div>
+        `;
+
     } catch (e) {
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to fetch affected records.' });
+        const bodyEl = document.getElementById('affected-panel-body');
+        if (bodyEl) bodyEl.innerHTML = `<div style="padding:20px;color:#cc0000;font-size:13px;">Failed to fetch affected records.</div>`;
     }
 }
 
@@ -3254,6 +3336,7 @@ window.displayBusinessSDSSReport = displayBusinessSDSSReport;
 window.displayConstructionSDSSReport = displayConstructionSDSSReport;
 window.showSDSSRulesReport = showSDSSRulesReport;
 window.showRuleAffectedData = showRuleAffectedData;
+window.clearAffectedHighlights = clearAffectedHighlights;
 
 // Popup detail button handlers - must be on window so Leaflet popup onclick attributes can reach them
 window.viewMapDetails = viewMapDetails;
