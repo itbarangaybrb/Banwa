@@ -1,25 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 :root {
+    /* Typography */
     --h4: 36px;
     --h4-lh: 44px;
-
     --h5: 30px;
     --h5-lh: 38px;
-
     --h6: 24px;
     --h6-lh: 32px;
-
     --txt1: 20px;
     --txt1-lh: 30px;
-
-    --txt3: 16;
+    --txt3: 16px;
     --txt3-lh: 24px;
 
     --regular: 400;
-    --mediium: 500;
+    --medium: 500;
     --semibold: 600;
     --bold: 700;
+
+    /* Enhanced Blue & White Theme – MUCH MORE BLUE */
+    --primary-blue: #19316b;
+    --primary-blue-hover: #12234d;
+    --nav-active-blue: #1e40af;     /* Stronger blue for active nav items */
+    --accent-blue: #3498db;
+    --light-blue: #f0f7ff;
+    --soft-blue: #e0f0ff;           /* New: richer hover/sidebar tint */
+    --nav-bg: #f0f7ff;              /* Dedicated light blue for sidebar */
+    --border-blue: #dbeafe;
+    --border-accent: #bfdbfe;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-main: #f8fafc;
+    --white: #ffffff;
 }
 
 *,
@@ -32,15 +44,17 @@
 
 body {
     font-family: "Inter", sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
 }
 
 .sections {
-    /* max-width: 1440px; */
     width: 100%;
     padding: 24px 24px;
     margin-inline: auto;
 }
 
+/* Header – subtle blue accent */
 .header {
     width: 100%;
     padding: 16px 24px;
@@ -48,38 +62,46 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1;
-    border-bottom: 1px solid grey;
+    z-index: 10;
+    background-color: var(--white);
+    border-bottom: 1px solid var(--border-accent);
+    box-shadow: 0 2px 8px rgba(25, 49, 107, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+/* Sidebar – now clearly blue-dominant */
 .aside {
     position: fixed;
     top: 72px;
     left: 0;
     bottom: 0;
-    z-index: 2;
+    z-index: 9;
     padding: 16px 8px;
-    border-right: 1px solid grey;
-
+    background-color: var(--nav-bg);
+    border-right: 1px solid var(--border-accent);
+    box-shadow: 2px 0 8px rgba(25, 49, 107, 0.06);
     display: flex;
     flex-direction: column;
     row-gap: 8px;
-
-    background-color: white;
 }
 
 .aside .menuToggle {
     padding: 8px;
     cursor: pointer;
-    transition: ease background-color 0.2s;
+    transition: all 0.2s ease;
     border-radius: 8px;
     width: max-content;
+    color: var(--text-muted);
 }
 
-.aside>.icon {
+.aside .menuToggle:hover {
+    background-color: var(--soft-blue);
+    color: var(--primary-blue);
+}
+
+.aside > .icon {
     width: 100%;
     height: auto;
     object-fit: contain;
@@ -93,11 +115,12 @@ body {
 .aside .divider {
     width: 100%;
     height: 1px;
-    background-color: grey;
+    background-color: var(--border-blue);
+    margin: 8px 0;
 }
 
 .aside .nav {
-    background: white;
+    background: transparent;
     transition: width 0.3s ease;
     overflow: hidden;
     display: flex;
@@ -106,41 +129,58 @@ body {
     height: 100%;
 }
 
-.aside .nav.open {
-    width: max-content;
-}
-
 .aside .nav .list {
     width: 100%;
     display: flex;
     flex-direction: column;
-    row-gap: 8px;
+    row-gap: 4px;
 }
 
+/* Navigation items – heavily blue-enhanced */
 .aside .nav .list .items {
     display: inline-flex;
-    background-color: white;
-    transition: ease background-color 0.2s;
+    background-color: transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 8px;
 }
 
 .aside .nav .list .items:hover,
 .aside .menuToggle:hover {
-    background-color: rgb(228, 228, 228);
+    background-color: var(--soft-blue);
+    color: var(--primary-blue);
+    transform: translateX(4px);
+}
+
+/* ACTIVE STATE – strong blue (your main request) */
+.aside .nav .list .items.active {
+    background-color: var(--nav-active-blue);
+    color: var(--white);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+}
+
+.aside .nav .list .items.active .links {
+    color: var(--white);
 }
 
 .aside .nav .list .items .links {
     display: flex;
     align-items: center;
-    padding: 8px;
+    padding: 10px 12px;
     text-decoration: none;
-    color: black;
+    color: var(--text-main);
+    font-weight: 500;
     width: 100%;
+    transition: color 0.2s ease;
+}
+
+.aside .nav .list .items:hover .links,
+.aside .nav .list .items.active .links {
+    color: inherit;
 }
 
 .aside .nav .list .items .links .links-name {
     white-space: nowrap;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, margin 0.2s ease;
 }
 
 .aside .nav:not(.open) .list .items .links .links-name {
@@ -153,7 +193,7 @@ body {
 .aside .nav.open .list .items .links .links-name {
     opacity: 1;
     width: auto;
-    margin-left: 8px;
+    margin-left: 12px;
 }
 
 .main {
@@ -161,43 +201,58 @@ body {
     margin-left: 65px;
 }
 
+/* Table – stronger blue header */
 table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
+    background-color: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+table thead {
+    background-color: var(--soft-blue);
+    color: var(--nav-active-blue);
 }
 
 table thead tr th {
-    padding: 8px;
+    padding: 12px 16px;
+    font-weight: var(--semibold);
+    border-bottom: 2px solid var(--border-blue);
 }
 
 table tbody tr {
-    border-top: 1px solid #C4C4C4;
+    border-bottom: 1px solid var(--border-blue);
+    transition: background-color 0.2s ease;
 }
 
 table tbody tr:hover {
-    background-color: #c9c9c9;
+    background-color: var(--light-blue);
+}
+
+table tbody tr td {
+    padding: 12px 16px;
+    white-space: nowrap;
+    color: var(--text-main);
 }
 
 table tbody tr td:last-child {
     width: 1%;
 }
 
-table tbody tr td {
-    padding: 8px;
-    white-space: nowrap;
-}
-
 table thead tr th .th-content {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
+/* Loader – blue accent */
 #page-loader {
     position: fixed;
     inset: 0;
-    background: white;
+    background: rgba(240, 247, 255, 0.95);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -208,14 +263,16 @@ table thead tr th .th-content {
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid #ddd;
-    border-top: 4px solid #333;
+    border: 4px solid var(--border-blue);
+    border-top: 4px solid var(--accent-blue);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
+}
+
+.th-filter {
+    cursor: pointer;
 }

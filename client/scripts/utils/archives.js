@@ -1,3 +1,4 @@
+import { initSocket, sockets } from './socketUtils.js';
 /**
  * Archives a record in a specified table by sending a POST request to the server.
  * Displays a success or error message using SweetAlert and refreshes the archive list.
@@ -28,7 +29,14 @@ async function archiveRecord(tableName, recordId) {
             timer: 2000
         });
 
+        const row = document
+            .querySelector(`button.delete-btn[data-id="${recordId}"]`)
+            ?.closest('tr');
+
+        if (row) row.remove();
+
         fetchArchives();
+
     } else {
         Swal.fire({
             icon: 'error',
@@ -83,7 +91,8 @@ async function restoreRecord(archiveId) {
             showConfirmButton: false,
             timer: 2000
         });
-        fetchArchives();
+
+       fetchArchives();
     } else {
         await Swal.fire({
             icon: 'error',
@@ -97,18 +106,15 @@ async function restoreRecord(archiveId) {
  * Periodically fetches the latest archives every 10 seconds.
  * Ensures that only one fetch operation runs at a time to prevent overlapping requests.
  */
-let archiveRefreshing = false;
-setInterval(() => {
-    if (archiveRefreshing) return;
+document.addEventListener('DOMContentLoaded', () => {
+    if (!sockets["archives"]) {
+        initSocket("archives", "ws://localhost:8081", data => {
+            if (data.type === "archives_update") fetchArchives();
+        });
 
-    archiveRefreshing = true;
-
-    const finish = () => { archiveRefreshing = false; };
-
-    fetchArchives().finally(finish);
-
-}, 10000);
-
+        fetchArchives();
+    }
+});
 /**
  * Fetches all archived records from the server and populates the archive table in the DOM.
  * Handles empty results and errors gracefully by displaying appropriate messages.
@@ -130,7 +136,6 @@ async function fetchArchives() {
             tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">No archives found</td></tr>`;
             return;
         }
-
 
         archives.forEach(item => {
             const tr = document.createElement('tr');
@@ -159,8 +164,6 @@ async function fetchArchives() {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">Error loading users</td></tr>`;
     }
 }
-
-document.addEventListener('DOMContentLoaded', fetchArchives);
 
 /**
  * Handles user interactions for restore and archive buttons.

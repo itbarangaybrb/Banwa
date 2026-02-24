@@ -247,3 +247,28 @@ DETAIL:  Key (application_id)=(65) already exists.
 DETAIL:  Key (application_id)=(66) already exists.
 [17-Feb-2026 14:14:14 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(66) already exists.
+[24-Feb-2026 13:39:35 UTC] R1 Check - Required: []
+[24-Feb-2026 13:39:35 UTC] R1 Check - Submitted: ["DTI"]
+[24-Feb-2026 13:39:35 UTC] R1 Check - Missing: []
+[24-Feb-2026 13:39:35 UTC] R1 Check - Required: []
+[24-Feb-2026 13:39:35 UTC] R1 Check - Submitted: ["DTI"]
+[24-Feb-2026 13:39:35 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Required: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Submitted: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Required: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Submitted: []
+[24-Feb-2026 14:45:09 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:45:39 UTC] R1 Check - Required: []
+[24-Feb-2026 14:45:39 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[24-Feb-2026 14:45:39 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:45:39 UTC] R1 Check - Required: []
+[24-Feb-2026 14:45:39 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[24-Feb-2026 14:45:39 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:48:18 UTC] PHP Parse error:  syntax error, unexpected token "private", expecting end of file in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_dss.php on line 748
+[24-Feb-2026 14:50:28 UTC] R1 Check - Required: []
+[24-Feb-2026 14:50:28 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[24-Feb-2026 14:50:28 UTC] R1 Check - Missing: []
+[24-Feb-2026 14:50:28 UTC] R1 Check - Required: []
+[24-Feb-2026 14:50:28 UTC] R1 Check - Submitted: ["SEC","DTI"]
+[24-Feb-2026 14:50:28 UTC] R1 Check - Missing: []

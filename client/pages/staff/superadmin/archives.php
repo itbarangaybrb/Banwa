@@ -91,8 +91,7 @@ if ($_SESSION['role_id'] != 2) {
                     <img src="../../../img/search-icon.svg" alt="Search" class="icon">
                 </div>
 
-                <div class="filters-container">
-                    <button class="buttons" type="button" data-modal="manageColumnsModal">Manage Columns</button>
+                <div class="buttons-container">
                     <button class="buttons" type="button" data-modal="exportUsers">Export As PDF</button>
                 </div>
             </div>
@@ -107,14 +106,29 @@ if ($_SESSION['role_id'] != 2) {
                             <th>Table</th>
                             <th>Record ID</th>
                             <th id="nameFilter">
-                                <span class="th-content">
+                                <span class="th-content" class="th-filter">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
-                                    Full Name
+                                    Name
                                 </span>
                             </th>
-                            <th>Email</th>
-                            <th>Archived At</th>
-                            <th>Restored At</th>
+                            <th id="emailFilter">
+                                <span class="th-content" class="th-filter">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Email Address
+                                </span>
+                            </th>
+                            <th id="archiveAtFilter" class="th-filter">
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Archived At
+                                </span>
+                            </th>
+                            <th id="restorAtFilter" class="th-filter">
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Restored At
+                                </span>
+                            </th>
                             <th>Role ID</th>
                             <th>Actions</th>
                         </tr>
@@ -125,10 +139,10 @@ if ($_SESSION['role_id'] != 2) {
         </section>
     </main>
 
-    <script src="../../../scripts/staff/superadmin/main.js"></script>
-    <script src="../../../scripts/archives.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
+    <script type="module" src="../../../scripts/utils/archives.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Decision Support System Rule Engine for business permit application evaluation
  * Implements a Rete algorithm-based expert system to assess permit eligibility
@@ -164,6 +165,42 @@ class DSSRuleEngine
             ],
             'action' => 'mark_valid_contact',
             'priority' => 5
+        ];
+
+        $this->rules[] = [
+            'id' => 'R7',
+            'name' => 'Uploaded Requirements Must Exactly Match Selected Requirements',
+            'conditions' => [
+                'function' => function ($data) {
+
+                    $selected = $data['selected_requirements'] ?? [];
+                    $uploadedRaw = $data['requirements'] ?? [];
+
+                    if (!is_array($selected) || !is_array($uploadedRaw)) {
+                        return false;
+                    }
+
+                    // Normalize uploaded OCR results
+                    $uploaded = [];
+                    foreach ($uploadedRaw as $doc) {
+                        $normalized = $this->normalizeDocumentType($doc);
+                        if ($normalized !== null) {
+                            $uploaded[] = $normalized;
+                        }
+                    }
+
+                    $selected = array_unique($selected);
+                    $uploaded = array_unique($uploaded);
+
+                    sort($selected);
+                    sort($uploaded);
+
+                    // STRICT bidirectional comparison
+                    return $selected === $uploaded;
+                }
+            ],
+            'action' => 'mark_requirements_verified',
+            'priority' => 12
         ];
     }
 
@@ -479,7 +516,69 @@ class DSSRuleEngine
                 $evaluationDetails['recommendations'][] =
                     "Please provide valid contact information (11-digit phone number and valid email address).";
                 break;
+
+            case 'R7':
+                $selected = $data['selected_requirements'] ?? [];
+                $uploaded = $data['requirements'] ?? [];
+                $missing = [];
+
+                foreach ($selected as $req) {
+                    $found = false;
+                    foreach ($uploaded as $up) {
+                        similar_text(strtolower($req), strtolower($up), $percentMatch);
+                        if ($percentMatch >= 70) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) $missing[] = $req;
+                }
+
+                if (!empty($missing)) {
+                    $evaluationDetails['recommendations'][] =
+                        "The uploaded documents do not match the selected requirements. Missing or mismatched: " .
+                        implode(', ', $missing) . ". Staff review recommended.";
+                }
+                break;
         }
+    }
+
+    /**
+     * Normalizes a raw document text string into a standardized document type.
+     *
+     * This method is typically used for OCR or user-submitted document labels.
+     * It performs a case-insensitive keyword match against a predefined mapping
+     * of known document identifiers and returns a canonical document name.
+     *
+     * Example:
+     *  - "Securities and Exchange Commission Certificate" → "SEC"
+     *  - "DTI Registration" → "DTI"
+     *
+     * If no known keyword is detected, the function returns null.
+     *
+     * @param string $text Raw document text or OCR-extracted content.
+     * @return string|null Normalized document type if matched, otherwise null.
+     */
+    private function normalizeDocumentType($text)
+    {
+        $text = strtolower($text);
+
+        $map = [
+            'sec' => 'SEC',
+            'securities and exchange commission' => 'SEC',
+            'dti' => 'DTI',
+            'department of trade and industry' => 'DTI',
+            'tct' => 'TCT',
+            'lease contract' => 'Lease Contract',
+        ];
+
+        foreach ($map as $keyword => $normalized) {
+            if (strpos($text, $keyword) !== false) {
+                return $normalized;
+            }
+        }
+
+        return null;
     }
 }
 

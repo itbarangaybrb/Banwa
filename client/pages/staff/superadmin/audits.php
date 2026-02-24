@@ -91,8 +91,7 @@ if ($_SESSION['role_id'] != 2) {
                     <img src="../../../img/search-icon.svg" alt="Search" class="icon">
                 </div>
 
-                <div class="filters-container">
-                    <button class="buttons" type="button" data-modal="manageColumnsModal">Manage Columns</button>
+                <div class="buttons-container">
                     <button class="buttons" type="button" data-modal="exportUsers">Export As PDF</button>
                 </div>
             </div>
@@ -105,10 +104,10 @@ if ($_SESSION['role_id'] != 2) {
                         <tr>
                             <th>ID</th>
                             <th>Activity</th>
-                            <th id="nameFilter">
+                            <th id="nameFilter" class="th-filter">
                                 <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
-                                    Full Name
+                                    Name
                                 </span>
                             </th>
                             <th>Table</th>
@@ -124,7 +123,7 @@ if ($_SESSION['role_id'] != 2) {
         </section>
     </main>
 
-    <script src="../../../scripts/staff/superadmin/main.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

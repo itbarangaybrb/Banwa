@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Initializes session and sets response type.
  * Includes database configuration for PDO access.
@@ -12,7 +13,11 @@ require_once __DIR__ . '/../../../configs/database.php';
  * If a database error occurs, returns HTTP 500 with an error message.
  */
 try {
-    $stmt = $pdo->query("SELECT user_id, full_name, email, role_id, is_archived, status FROM users");
+    $stmt = $pdo->query("
+        SELECT user_id, full_name, email, role_id, is_archived, status, reason_details
+        FROM users
+        ORDER BY full_name DESC
+    ");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode($users);

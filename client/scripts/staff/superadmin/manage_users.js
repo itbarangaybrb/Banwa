@@ -1,4 +1,5 @@
 import supabase from "../../../../server/api/supabase.js";
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 
 /**
  * Handles opening and closing of modals
@@ -26,23 +27,12 @@ document.addEventListener('click', (e) => {
 });
 
 /**
- * Fetches all users and populates the table
- * Does not autofill form fields
- */
-let isRefreshing = false;
-setInterval(() => {
-    if (isRefreshing) return;
-
-    isRefreshing = true;
-
-    const finish = () => { isRefreshing = false; };
-
-    fetchUsers().finally(finish);
-
-}, 5000);
-
-/**
- * Fetches all users and populates the table
+ * Fetch all users from the server
+ * Filters archived users
+ * Dynamically renders user rows into the table body
+ *
+ * @async
+ * @returns {Promise<void>}
  */
 async function fetchUsers() {
     const tbody = document.getElementById('usersTableBody');
@@ -82,6 +72,7 @@ async function fetchUsers() {
                 <td>${user.email}</td>
                 <td>${user.status}</td>
                 <td>${user.role_id}</td>
+                <td>${user.reason_details || ''}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="buttons edit-btn"
@@ -109,73 +100,19 @@ async function fetchUsers() {
     }
 };
 
-document.addEventListener('DOMContentLoaded', fetchUsers);
-
 /**
- * Suspends a user account after confirmation
- * @param {string} userId - ID of the user to suspend
+ * Initialize WebSocket connection for real-time user updates
+ * Fetches initial user list after socket setup
  */
-async function suspendUser(userId) {
-    const confirmResult = await Swal.fire({
-        title: 'Suspend this user?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, suspend',
-        cancelButtonText: 'Cancel',
-        buttonsStyling: false,
-        customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
-        }
-    });
-
-    if (!confirmResult.isConfirmed) return;
-
-    try {
-        const response = await fetch("/Banwa/server/api/staff/superadmin/suspend_user.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ user_id: userId })
-        });
-        if (!response.ok) throw new Error("Request failed");
-        const data = await response.json();
-        if (!data.success) throw new Error(data.message || "Failed to suspend");
-
-        await Swal.fire({
-            icon: 'success',
-            title: 'User suspended',
-            timer: 2000,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
+document.addEventListener('DOMContentLoaded', () => {
+    if (!sockets["users"]) {
+        initSocket("users", "ws://localhost:8081", data => {
+            if (data.type === "users_update") fetchUsers();
         });
 
         fetchUsers();
-    } catch (err) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err.message,
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
     }
-}
+});
 
 /**
  * Unsuspends a user account after confirmation
@@ -243,19 +180,9 @@ async function unsuspendUser(userId) {
     }
 }
 
-
 /**
- * Delegates click events for suspend/unsuspend buttons in user table
- * @param {Event} e - Click event
- */
-document.addEventListener('click', e => {
-    if (e.target.classList.contains('suspend-btn')) suspendUser(e.target.dataset.id);
-    if (e.target.classList.contains('unsuspend-btn')) unsuspendUser(e.target.dataset.id);
-});
-
-
-/**
- * Handles edit button click to populate edit form
+ * Handles clicks on edit buttons to populate the edit form modal.
+ * Opens the edit modal and fills form fields with the button's data attributes.
  * @param {Event} e - Click event
  */
 document.addEventListener('click', (e) => {
@@ -273,6 +200,108 @@ document.addEventListener('click', (e) => {
     form.dataset.userId = btn.dataset.id;
 });
 
+/**
+ * Handles clicks on suspend and unsuspend buttons.
+ * Opens suspend modal for suspend buttons or calls unsuspendUser directly for unsuspend buttons.
+ * @param {Event} e - Click event
+ */
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('suspend-btn')) {
+        const userId = e.target.dataset.id;
+        const form = document.getElementById('suspendForm');
+        if (!form) return;
+
+        form.dataset.userId = userId;
+        form.closest('.modal')?.classList.add('active'); // open modal
+    }
+
+    if (e.target.classList.contains('unsuspend-btn')) {
+        const userId = e.target.dataset.id;
+        unsuspendUser(userId); // keep immediate
+    }
+});
+
+/**
+ * Object containing predefined suspension reason templates.
+ * Each key is a main reason, and its value is an array of detailed templates.
+ * @type {Object<string, string[]>}
+ */
+const reasonTemplates = {
+    "Violation of Terms of Service": [
+        "User submitted content that violates platform guidelines.",
+        "User repeatedly ignored community standards.",
+        "User posted prohibited or restricted material."
+    ],
+    "Fraudulent Activity": [
+        "User attempted to manipulate system records.",
+        "User provided falsified information during verification.",
+        "User engaged in deceptive financial activity."
+    ],
+    "Suspicious or Unusual Activity": [
+        "User exhibited irregular login or access patterns.",
+        "User performed actions that suggest account compromise.",
+        "User displayed behavior inconsistent with normal activity."
+    ],
+    "Harassment or Abuse": [
+        "User sent abusive or threatening messages.",
+        "User engaged in repeated harassment of another member.",
+        "User used offensive or discriminatory language."
+    ],
+    "Repeated Policy Violations": [
+        "User has repeatedly failed to comply with platform rules.",
+        "User ignored previous warnings regarding policy violations.",
+        "User continues prohibited activity despite sanctions."
+    ],
+    "Unauthorized Data Access or Misuse": [
+        "User accessed data they were not authorized to view.",
+        "User misused confidential or private information.",
+        "User attempted to bypass security controls."
+    ],
+    "Impersonation or Identity Misrepresentation": [
+        "User created an account pretending to be someone else.",
+        "User provided false identity information.",
+        "User impersonated staff or other members to deceive."
+    ],
+    "Failure to Meet Verification Requirements": [
+        "User did not submit required verification documents.",
+        "User provided incomplete or invalid verification information.",
+        "User failed to complete identity confirmation within the allowed period."
+    ]
+};
+
+/**
+ * Initializes suspend reason templates.
+ * Populates the reasonTemplates container with buttons for the selected reason.
+ * Clicking a button fills the suspendReasonDetails textarea with the corresponding template.
+ */
+function initializeSuspendTemplates() {
+    const select = document.getElementById('suspendReason');
+    const textarea = document.getElementById('suspendReasonDetails');
+    const container = document.getElementById('reasonTemplates');
+
+    if (!select || !textarea || !container) return;
+
+    select.addEventListener('change', () => {
+        const selected = select.value;
+        container.innerHTML = '';
+
+        if (!reasonTemplates[selected]) return;
+
+        reasonTemplates[selected].forEach(template => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.classList.add('reason-btn');
+            btn.textContent = template;
+
+            btn.addEventListener('click', () => {
+                textarea.value = template;
+                validator.clear(textarea);
+            });
+
+            container.appendChild(btn);
+        });
+    });
+}
 
 /**
  * Validator for form input fields
@@ -387,6 +416,14 @@ function createValidationConfig(form) {
                 config.push({ el: input, type: 'select', message: 'Please select role' });
                 break;
 
+            // Suspend form fields
+            case 'suspendReason':
+                config.push({ el: input, type: 'select', message: 'Please select a reason' });
+                break;
+            case 'suspendReasonDetails':
+                config.push({ el: input, type: 'text', message: 'Please provide details', rules: { normalizeSpaces: true } });
+                break;
+
             default:
                 break;
         }
@@ -476,6 +513,8 @@ async function handleCreateFormSubmit(form) {
         text: 'You are about to create this account.',
         icon: 'warning',
         showCancelButton: true,
+        timer: 3000,
+        timerProgressBar: true,
         confirmButtonText: 'Yes, create it',
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
@@ -496,7 +535,6 @@ async function handleCreateFormSubmit(form) {
 
 
     try {
-        // Check email exists
         const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -511,7 +549,6 @@ async function handleCreateFormSubmit(form) {
             return;
         }
 
-        // Supabase signup
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -609,11 +646,99 @@ async function handleUpdateFormSubmit(form) {
                 popup: ''
             }
         });
+
+        fetchUsers();
     } catch (err) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
             text: err.message || 'Update failed.'
+        });
+    }
+}
+
+/**
+ * Handles submission of the suspend user form.
+ * Validates inputs, shows confirmation dialog, sends suspend request to the server,
+ * and provides success/error feedback using SweetAlert2.
+ * @async
+ * @param {HTMLFormElement} form - The suspend form element being submitted
+ */
+async function handleSuspendFormSubmit(form) {
+    const reasonInput = form.querySelector('[name="suspendReason"]');
+    const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+    if (!validator.select(reasonInput, 'Please select a reason')) return;
+
+    const confirmResult = await Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to suspend this account.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, suspend it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+        const resp = await fetch('/Banwa/server/api/staff/superadmin/suspend_user.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                user_id: form.dataset.userId,
+                reason: reasonInput.value.trim(),
+                details: detailsInput.value.trim()
+            })
+        });
+
+        if (!resp.ok) throw new Error('Request failed');
+
+        const result = await resp.json();
+        if (!result.success) throw new Error(result.message || 'Failed to suspend');
+
+        form.closest('.modal')?.classList.remove('active');
+        form.reset();
+        validator.clear(reasonInput);
+        validator.clear(detailsInput);
+
+        await Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'User suspended!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+
+        fetchUsers();
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message || 'Failed to suspend user',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
         });
     }
 }
@@ -627,4 +752,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const editForm = document.getElementById('editForm');
     if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
+
+    const suspendForm = document.getElementById('suspendForm');
+    if (suspendForm) {
+        initializeForm(suspendForm, handleSuspendFormSubmit);
+        initializeSuspendTemplates();
+    }
 });

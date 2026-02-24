@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sets response type to JSON and includes necessary configuration and audit log functions.
  * Starts a session for authentication checks.
@@ -38,21 +39,50 @@ if (!$input || !isset($input['user_id'])) {
  * Handles any PDO exceptions with an error message.
  */
 $userId = $input['user_id'];
+$reason = $input['reason'] ?? null;
+$details = $input['details'] ?? null;
+$now = new DateTime();
+
+switch ($reason) {
+    case 'Fraudulent Activity':
+        $now->modify('+1 year');
+        break;
+    case 'Harassment or Abuse':
+        $now->modify('+30 days');
+        break;
+    case 'Violation of Terms of Service':
+    case 'Repeated Policy Violations':
+    case 'Unauthorized Data Access or Misuse':
+    case 'Impersonation or Identity Misrepresentation':
+    case 'Failure to Meet Verification Requirements':
+    case 'Suspicious or Unusual Activity':
+        $now->modify('+7 days');
+        break;
+    default:
+        $now->modify('+3 days');
+        break;
+}
+
+$suspendedUntil = $now->format('Y-m-d H:i:s');
 
 try {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
     $stmt->execute([$userId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $oldUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$user) {
+    if (!$oldUser) {
         echo json_encode(["success" => false, "message" => "User not found"]);
         exit;
     }
 
-    $stmt = $pdo->prepare("UPDATE users SET status = 'suspended' WHERE user_id = ?");
-    $stmt->execute([$userId]);
+    $stmt = $pdo->prepare("UPDATE users SET status = 'suspended', suspend_reason = ?, reason_details = ?, suspended_until = ? WHERE user_id = ?");
+    $stmt->execute([$reason, $details,  $suspendedUntil, $userId]);
 
-    writeAuditLog($pdo, 'SUSPEND', 'users', $userId, $user, null, 'USER');
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $newUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    writeAuditLog($pdo, 'SUSPEND', 'users', $userId, $oldUser, $newUser, 'USER');
 
     echo json_encode(["success" => true]);
 } catch (PDOException $e) {

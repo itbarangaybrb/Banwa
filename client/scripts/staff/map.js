@@ -177,22 +177,22 @@ osmLayer.addTo(map);
 // Icons
 const constructionIcon = L.divIcon({ 
     className: 'construction-marker', 
-    iconSize: [15, 15] 
+    iconSize: [22, 22] 
 });
 
 const businessIcon = L.divIcon({ 
     className: 'business-marker', 
-    iconSize: [15, 15] 
+    iconSize: [22, 22] 
 });
 
 const utilityIcon = L.divIcon({ 
     className: 'utility-marker', 
-    iconSize: [12, 12] 
+    iconSize: [18, 18] 
 });
 
 const incidentIcon = L.divIcon({ 
     className: 'incident-marker', 
-    iconSize: [15, 15] 
+    iconSize: [22, 22] 
 });
 
 // ==================== MODAL FUNCTIONS (SweetAlert2) ====================
@@ -202,16 +202,67 @@ const incidentIcon = L.divIcon({
 function showModal(modalId) { /* replaced by showSwal detail calls */ }
 function closeModal(modalId = 'detail-modal') { Swal.close(); }
 
+// ── Shared helpers for the 4 unified report modals ──────────────────────────
+
+/** Builds one accordion row used in all report lists */
+function rptRow(id, badgeText, badgeColor, name, rightLabel, bodyHTML) {
+    return `
+        <div class="rpt-row" style="border-left-color:${badgeColor};">
+            <div class="rpt-row-head" data-accordion-toggle="${id}">
+                <div class="rpt-row-left">
+                    <span class="rpt-badge" style="background:${badgeColor};">${badgeText}</span>
+                    <span class="rpt-name">${name}</span>
+                </div>
+                <div class="rpt-row-right">
+                    <span class="rpt-severity" style="color:${badgeColor};">${rightLabel}</span>
+                    <span class="rpt-arrow acc-arrow">▼</span>
+                </div>
+            </div>
+            <div class="rpt-row-body" id="${id}">${bodyHTML}</div>
+        </div>`;
+}
+
+/** Builds a single warning block inside an expanded row */
+function rptWarningBlock(warning) {
+    const c = warning.severity === 'CRITICAL' ? '#990000'
+             : warning.severity === 'HIGH'     ? '#cc0000' : '#555';
+    return `
+        <div style="background:#f8f8f8;border-left:3px solid ${c};padding:10px 12px;border-radius:4px;margin-bottom:8px;">
+            <div style="color:${c};font-weight:700;margin-bottom:4px;">⚠ ${warning.type}</div>
+            <div style="color:#555;margin-bottom:6px;">${warning.description}</div>
+            <div style="font-weight:700;color:#333;margin-bottom:4px;font-size:11px;">${warning.severity === 'CRITICAL' ? 'IMMEDIATE ACTIONS:' : 'REQUIRED ACTIONS:'}</div>
+            <ul style="margin:0;padding-left:16px;color:#555;">
+                ${warning.actions.map(a => `<li>${a}</li>`).join('')}
+            </ul>
+        </div>`;
+}
+
+/** Fires the unified report Swal — fixed size for all report/risk/SDSS modals */
+function showReportSwal(html, onOpen) {
+    showSwal({
+        html,
+        showConfirmButton: false,
+        showCloseButton: true,
+        customClass: { popup: 'unified-modal-popup' },
+        didOpen: (popup) => {
+            attachAccordionHandler(popup);
+            if (onOpen) onOpen(popup);
+        }
+    });
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 // Badge colour helpers used by detail modals
 function getTypeBadgeStyle(type) {
     const styles = {
-        construction: 'background:#ffc107;color:#333;',
-        business:     'background:#9C27B0;color:#fff;',
-        utility:      'background:#2196F3;color:#fff;',
-        household:    'background:#28a745;color:#fff;',
-        flood:        'background:#ff4444;color:#fff;'
+        construction: 'background:#00247c;color:#fff;',
+        business:     'background:#00247c;color:#fff;',
+        utility:      'background:#00247c;color:#fff;',
+        household:    'background:#00247c;color:#fff;',
+        flood:        'background:#cc0000;color:#fff;'
     };
-    return styles[type] || 'background:#666;color:#fff;';
+    return styles[type] || 'background:#555555;color:#fff;';
 }
 
 function detailBadge(label, type) {
@@ -235,16 +286,18 @@ function detailTable(rows) {
 function showDetailSwal(title, badgeLabel, badgeType, tableRows) {
     showSwal({
         html: `
-            <div style="text-align:left;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #f0f0f0;">
-                    <h3 style="margin:0;font-size:17px;color:#00247c;flex:1;">${title}</h3>
-                    ${detailBadge(badgeLabel, badgeType)}
+            <div class="rpt-body">
+                <div class="rpt-header">
+                    <h3 style="font-size:17px;margin:0;">${title}</h3>
+                    <div style="margin-top:8px;">${detailBadge(badgeLabel, badgeType)}</div>
                 </div>
-                ${detailTable(tableRows)}
+                <div class="rpt-content">
+                    ${detailTable(tableRows)}
+                </div>
             </div>`,
-        width: 600,
         showConfirmButton: false,
-        showCloseButton: true
+        showCloseButton: true,
+        customClass: { popup: 'unified-modal-popup' }
     });
 }
 
@@ -524,6 +577,10 @@ function selectFilterType(type, event) {
         }
     });
     
+    // Clear any active search highlight when switching filters
+    removeActiveSearchMarker();
+    map.closePopup();
+
     activateFilter(type);
 }
 
@@ -944,70 +1001,40 @@ function getMarkerTypeFromData(markerData) {
 }
 
 function highlightExistingMarker(marker, markerData) {
-    // Get the marker's position
     const latLng = marker.getLatLng();
-    
-    // Remove any existing highlight
     removeActiveSearchMarker();
-    
-    // Create a pulsing circle highlight
-    const highlightCircle = L.circleMarker(latLng, {
-        radius: 25,
+
+    // Single pulse ring
+    const pulseRing = L.circleMarker(latLng, {
+        radius: 28,
         color: '#00247c',
         weight: 3,
         fillColor: '#00247c',
-        fillOpacity: 0.2,
-        className: 'search-highlight-pulse'
+        fillOpacity: 0.1,
+        className: 'search-pulse-ring'
     }).addTo(map);
-    
-    // Store both the marker and highlight for cleanup
-    activeSearchMarker = {
-        marker: marker,
-        highlight: highlightCircle,
-        originalPopup: marker.getPopup()
-    };
-    
-    // Show the marker if it's not already on the map
-    if (!map.hasLayer(marker)) {
-        marker.addTo(map);
-    }
-    
-    // Bring marker to front
-    marker.bringToFront();
-    
-    // FORCE ZOOM - First fly to location with zoom
-    console.log('Zooming to:', latLng); // Debug log
-    map.flyTo(latLng, 20, {  // Increased zoom to 20 for closer view
-        duration: 1.5,        // Slightly longer duration
-        easeLinearity: 0.25
-    });
-    
-    // Open popup after fly with a slight delay
-    setTimeout(() => {
-        let popupContent = '';
+
+    activeSearchMarker = { marker, highlight: pulseRing };
+
+    if (!map.hasLayer(marker)) marker.addTo(map);
+    // L.Marker doesn't have bringToFront — use setZIndexOffset instead
+    if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
+
+    map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
+
+    map.once('moveend', () => {
         const type = getMarkerTypeFromData(markerData);
-        
-        if (type === 'construction') {
-            popupContent = createConstructionPopup(markerData);
-        } else if (type === 'business') {
-            popupContent = createBusinessPopup(markerData);
-        } else if (type === 'utility') {
-            popupContent = createUtilityPopup(markerData);
-        } else {
-            popupContent = createHousePopup(markerData);
-        }
-        
-        marker.bindPopup(popupContent).openPopup();
-    }, 600); // Slightly longer delay to ensure fly completes
-    
-    // Update active state in search results
+        let popupContent = '';
+        if (type === 'construction')  popupContent = createConstructionPopup(markerData);
+        else if (type === 'business') popupContent = createBusinessPopup(markerData);
+        else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else                          popupContent = createHousePopup(markerData);
+        marker.bindPopup(popupContent, { autoPan: true }).openPopup();
+    });
+
     updateSearchResultActiveState(markerData);
-    
-    // Hide the search results container
     const resultsContainer = document.getElementById('search-results');
-    if (resultsContainer) {
-        resultsContainer.style.display = 'none';
-    }
+    if (resultsContainer) resultsContainer.style.display = 'none';
 }
 
 function createTemporaryHighlight(markerData) {
@@ -1018,7 +1045,6 @@ function createTemporaryHighlight(markerData) {
         return;
     }
     
-    // For house polygons, show the polygon
     if (type === 'household' && markerData.coordinates) {
         showHousePolygonHighlight(markerData);
         return;
@@ -1028,95 +1054,44 @@ function createTemporaryHighlight(markerData) {
     const lng = parseFloat(markerData.longitude || markerData.center_lng);
     
     if (isNaN(lat) || isNaN(lng)) {
-        console.error('Invalid coordinates for marker:', markerData);
-        showSwal({
-            icon: 'error',
-            title: 'Error',
-            text: 'Could not find location for this marker',
-            confirmButtonColor: '#00247c'
-        });
+        showSwal({ icon: 'error', title: 'Error', text: 'Could not find location for this marker', confirmButtonColor: '#00247c' });
         return;
     }
     
-    console.log('Creating temporary marker at:', lat, lng); // Debug log
-    
-    // Remove any existing highlight
     removeActiveSearchMarker();
-    
+
+    // Animated pin icon
+    const markerColor = '#00247c';
     const highlightIcon = L.divIcon({
-        className: 'highlighted-marker',
+        className: '',
         html: `
-            <div style="
-                position: relative;
-                width: 40px;
-                height: 40px;
-            ">
-                <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: #00247c;
-                    border-radius: 50%;
-                    opacity: 0.3;
-                    animation: searchPulse 1.5s infinite;
-                "></div>
-                <div style="
-                    position: absolute;
-                    top: 10px;
-                    left: 10px;
-                    width: 20px;
-                    height: 20px;
-                    ${type === 'construction' ? 'background: #ffc107;' : ''}
-                    ${type === 'business' ? 'background: #9C27B0;' : ''}
-                    ${type === 'household' || !type ? 'background: #28a745;' : ''}
-                    ${type === 'utility' ? 'background: #2196F3;' : ''}
-                    border: 2px solid white;
-                    border-radius: 50%;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                "></div>
+            <div class="search-pin-wrapper">
+                <div class="search-pin-pulse"></div>
+                <div class="search-pin-dot" style="background:${markerColor};"></div>
             </div>
         `,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
+        iconSize: [48, 48],
+        iconAnchor: [24, 24],
+        popupAnchor: [0, -24]
     });
-    
-    activeSearchMarker = L.marker([lat, lng], { 
-        icon: highlightIcon,
-        zIndexOffset: 1000
-    }).addTo(map);
-    
-    // FORCE ZOOM
-    map.flyTo([lat, lng], 20, {
-        duration: 1.5,
-        easeLinearity: 0.25
-    });
-    
-    // Open popup after fly
-    setTimeout(() => {
+
+    activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon, zIndexOffset: 1000 }).addTo(map);
+
+    // Fly then open popup after animation
+    map.flyTo([lat, lng], 19, { duration: 1.2, easeLinearity: 0.2 });
+
+    map.once('moveend', () => {
         let popupContent = '';
-        
-        if (type === 'construction') {
-            popupContent = createConstructionPopup(markerData);
-        } else if (type === 'business') {
-            popupContent = createBusinessPopup(markerData);
-        } else if (type === 'utility') {
-            popupContent = createUtilityPopup(markerData);
-        } else {
-            popupContent = createHousePopup(markerData);
-        }
-        
-        activeSearchMarker.bindPopup(popupContent).openPopup();
-    }, 600);
-    
+        if (type === 'construction')  popupContent = createConstructionPopup(markerData);
+        else if (type === 'business') popupContent = createBusinessPopup(markerData);
+        else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else                          popupContent = createHousePopup(markerData);
+        activeSearchMarker.bindPopup(popupContent, { autoPan: true }).openPopup();
+    });
+
     updateSearchResultActiveState(markerData);
-    
-    // Hide the search results container
     const resultsContainer = document.getElementById('search-results');
-    if (resultsContainer) {
-        resultsContainer.style.display = 'none';
-    }
+    if (resultsContainer) resultsContainer.style.display = 'none';
 }
 
 function updateSearchResultActiveState(markerData) {
@@ -1189,8 +1164,7 @@ function showHousePolygonHighlight(houseData) {
             weight: 4,
             fillColor: '#00247c',
             fillOpacity: 0.2,
-            interactive: true,
-            className: 'search-highlight-pulse'
+            interactive: true
         }).addTo(map);
         
         activeSearchMarker = polygon;
@@ -1205,11 +1179,11 @@ function showHousePolygonHighlight(houseData) {
             duration: 1.5
         });
         
-        // Open popup after a short delay
-        setTimeout(() => {
+        // Open popup after animation finishes
+        map.once('moveend', () => {
             const popupContent = createHousePopup(houseData);
-            polygon.bindPopup(popupContent).openPopup();
-        }, 600);
+            polygon.bindPopup(popupContent, { autoPan: true }).openPopup();
+        });
         
         updateSearchResultActiveState(houseData);
         
@@ -1261,7 +1235,7 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
                 highlightStyle.fillOpacity += 0.2;
                 highlightStyle.weight += 3;
                 highlightStyle.color = '#00247c';
-                highlightStyle.className = 'search-highlight-pulse';
+                // no pulse animation
                 
                 activeSearchMarker = L.geoJSON(geoJson, {
                     style: highlightStyle
@@ -1295,19 +1269,21 @@ function createConstructionPopup(data) {
                 <span>Construction Site</span>
                 <span class="construction-badge">Construction</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
-                <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                    <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
+                    <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
+                    <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
+                    <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
-                <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
-                <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1319,18 +1295,20 @@ function createBusinessPopup(data) {
                 <span>${data.business_name || 'Business'}</span>
                 <span class="business-badge">Business</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
-                <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
-                <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
+                    <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
+                    <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
+                    <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
-                <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1342,18 +1320,20 @@ function createUtilityPopup(data) {
                 <span>Utility Work</span>
                 <span class="utility-badge">Utility</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
-                <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                    <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
+                    <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                    <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
-                <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1376,19 +1356,21 @@ function createFloodPopup(data) {
                 <span>${data.hazard_name || 'Flood Hazard Area'}</span>
                 <span class="flood-risk-badge" style="background: ${riskColor};">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
             </h4>
-            <div class="popup-section flood-popup-section">
-                <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
-                <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
-                <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
+            <div class="popup-body">
+                <div class="popup-section flood-popup-section">
+                    <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
+                    <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
+                    <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
+                    <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
+                    <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
+                    View Flood Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
-                <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
-                <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
-                View Flood Details
-            </button>
         </div>
     `;
 }
@@ -1400,17 +1382,19 @@ function createHousePopup(data) {
                 <span>${data.house_number ? 'House #' + data.house_number : 'House'}</span>
                 <span class="household-badge">Household</span>
             </h4>
-            <div class="popup-section">
-                <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
-                <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
+            <div class="popup-body">
+                <div class="popup-section">
+                    <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
+                    <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
+                </div>
+                <div class="popup-section">
+                    <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
+                    <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
+                </div>
+                <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
+                    View Full Details
+                </button>
             </div>
-            <div class="popup-section">
-                <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
-                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
-            </div>
-            <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
-                View Full Details
-            </button>
         </div>
     `;
 }
@@ -1512,11 +1496,11 @@ function getFloodSafetyAdvice(riskLevel) {
 
 function getFloodRiskColor(riskLevel) {
     const colors = {
-        'high': '#ff0000',
-        'medium': '#ff9900',
-        'low': '#ffff00',
+        'high':   '#cc0000',
+        'medium': '#555555',
+        'low':    '#888888',
     };
-    return colors[riskLevel] || '#666666';
+    return colors[riskLevel] || '#555555';
 }
 
 // ==================== DATA LOADING FUNCTIONS ====================
@@ -1800,27 +1784,27 @@ function renderFloodAreas(hazards) {
 function getFloodAreaStyle(riskLevel) {
     const styles = {
         'high': {
-            fillColor: '#ff0000',
-            color: '#cc0000',
-            fillOpacity: 0.3,
+            fillColor: '#dc3545',
+            color: '#b02030',
+            fillOpacity: 0.45,
             weight: 2,
-            opacity: 0.8,
+            opacity: 0.9,
             dashArray: null
         },
         'medium': {
-            fillColor: '#ff9900',
-            color: '#cc6600',
-            fillOpacity: 0.25,
+            fillColor: '#ff9800',
+            color: '#c97000',
+            fillOpacity: 0.4,
             weight: 2,
-            opacity: 0.7,
+            opacity: 0.85,
             dashArray: '5, 3'
         },
         'low': {
-            fillColor: '#ffff00',
-            color: '#cccc00',
-            fillOpacity: 0.2,
+            fillColor: '#ffc107',
+            color: '#c99500',
+            fillOpacity: 0.35,
             weight: 1,
-            opacity: 0.6,
+            opacity: 0.8,
             dashArray: '3, 3'
         },
     };
@@ -1841,15 +1825,15 @@ function addFloodLegend() {
         div.innerHTML = `
             <h4>Flood Risk Levels</h4>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ff0000; opacity: 0.3;"></div>
+                <div class="flood-legend-color" style="background: #dc3545; opacity: 0.85;"></div>
                 <span class="flood-legend-text">High Risk</span>
             </div>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ff9900; opacity: 0.25;"></div>
+                <div class="flood-legend-color" style="background: #ff9800; opacity: 0.8;"></div>
                 <span class="flood-legend-text">Medium Risk</span>
             </div>
             <div class="flood-legend-item">
-                <div class="flood-legend-color" style="background: #ffff00; opacity: 0.2;"></div>
+                <div class="flood-legend-color" style="background: #ffc107; opacity: 0.75;"></div>
                 <span class="flood-legend-text">Low Risk</span>
             </div>
         `;
@@ -1995,204 +1979,93 @@ async function getFloodHousesSummary() {
         }
         
         const data = result.data;
-        
-        // Display comprehensive flood risk report
-        let reportHTML = `
-            <div style="max-width: 900px; text-align: left;">
-                <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        Flood Risk Assessment Report
-                    </h3>
-                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
-                        ${data.summary.total}
-                    </div>
-                    <div style="font-size: 16px; opacity: 0.95;">
-                        Households in Flood-Prone Areas
-                    </div>
-                </div>
-        `;
-        
+
+        // ── Build flood report with unified layout ──────────────────────────
+        const riskColors = { low:'#ffc107', medium:'#ff9800', high:'#dc3545' };
+        const impactColors = {
+            'Minimally Affected':'#ffc107', 'Partially Affected':'#ff9800',
+            'Fully Affected':'#dc3545', 'Affected':'#ff9800'
+        };
+
+        let bodyHTML = '';
+
         if (data.summary.total === 0) {
-            reportHTML += `
-                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
-                            padding: 30px; text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">✓</div>
-                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Flood Risk Detected</h3>
-                    <p style="color: #155724; margin: 0; font-size: 14px;">
-                        All households are currently outside flood hazard zones.
-                    </p>
-                </div>
-            `;
+            bodyHTML = `<div style="text-align:center;padding:28px 0;">
+                <div style="font-size:42px;margin-bottom:10px;">✓</div>
+                <h3 style="color:#00247c;margin:0 0 6px;">No Flood Risk Detected</h3>
+                <p style="color:#666;margin:0;font-size:13px;">All households are outside flood hazard zones.</p>
+            </div>`;
         } else {
-            // Impact Level Summary - Sorted from lowest to highest impact
-            reportHTML += `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-                            gap: 15px; margin-bottom: 25px;">
-                    <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ffc107; margin-bottom: 5px;">
-                            ${data.summary.minimally_affected}
-                        </div>
-                        <div style="font-size: 13px; color: #666;">Minimally Affected (1-24%)</div>
+            // Risk-level bar rows
+            const riskOrder = {low:1,medium:2,high:3};
+            const sortedRisks = [...(data.summary.by_risk_level||[])].filter(r=>r.risk_level)
+                .sort((a,b)=>(riskOrder[a.risk_level.toLowerCase()]||9)-(riskOrder[b.risk_level.toLowerCase()]||9));
+            const riskBars = sortedRisks.map(item => {
+                const c = riskColors[item.risk_level.toLowerCase()]||'#888';
+                const pct = data.summary.total > 0 ? (item.count/data.summary.total*100).toFixed(0) : 0;
+                return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+                    <span style="background:${c};color:#fff;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700;min-width:62px;text-align:center;">${item.risk_level.toUpperCase()}</span>
+                    <span style="font-size:17px;font-weight:700;color:${c};min-width:24px;">${item.count}</span>
+                    <div style="flex:1;height:7px;background:#e8e8e8;border-radius:3px;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:${c};"></div>
                     </div>
-                    <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
-                            ${data.summary.partially_affected}
-                        </div>
-                        <div style="font-size: 13px; color: #666;">Partially Affected (25-74%)</div>
+                    <span style="font-size:11px;color:#aaa;min-width:30px;">${pct}%</span>
+                </div>`;
+            }).join('');
+
+            // Accordion house rows
+            const sortedHouses = [...(data.houses||[])].sort((a,b)=>(parseFloat(a.flood_coverage_percent)||0)-(parseFloat(b.flood_coverage_percent)||0));
+            const houseRows = sortedHouses.map((h,i)=>{
+                const c = impactColors[h.impact_level]||'#888';
+                const pct = parseFloat(h.flood_coverage_percent||0).toFixed(1);
+                const body = `
+                    <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
+                        <div><strong>Risk:</strong> <span style="color:${c};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
+                        <div><strong>Coverage:</strong> ${pct}%</div>
+                        ${h.area_sqm?`<div><strong>Area:</strong> ${h.area_sqm} sqm</div>`:''}
                     </div>
-                    <div style="background: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
-                            ${data.summary.fully_affected}
-                        </div>
-                        <div style="font-size: 13px; color: #666;">Fully Affected (75-100%)</div>
+                    ${h.street_name?`<div style="color:#888;margin-bottom:4px;">${h.street_name}</div>`:''}
+                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;"><strong>Hazard:</strong> ${h.hazard_description}</div>`:''}`;
+                return rptRow(`fh-${i}`, `${pct}%`, c, h.address||'Address not specified', h.impact_level||'', body);
+            }).join('');
+
+            bodyHTML = `
+                <div class="rpt-stats">
+                    <div class="rpt-stat" style="border-left-color:#888;">
+                        <div class="rpt-stat-num" style="color:#555;">${data.summary.minimally_affected}</div>
+                        <div class="rpt-stat-label">Minimally Affected (1–24%)</div>
+                    </div>
+                    <div class="rpt-stat" style="border-left-color:#ff9800;">
+                        <div class="rpt-stat-num" style="color:#e67e00;">${data.summary.partially_affected}</div>
+                        <div class="rpt-stat-label">Partially Affected (25–74%)</div>
+                    </div>
+                    <div class="rpt-stat" style="border-left-color:#dc3545;">
+                        <div class="rpt-stat-num" style="color:#dc3545;">${data.summary.fully_affected}</div>
+                        <div class="rpt-stat-label">Fully Affected (75–100%)</div>
                     </div>
                 </div>
-            `;
-            
-            // Risk Level Breakdown - Sorted from lowest to highest risk
-            if (data.summary.by_risk_level && data.summary.by_risk_level.length > 0) {
-                // Sort risk levels from lowest to highest
-                const riskOrder = {'low': 2, 'medium': 3, 'high': 4};
-                const sortedRisks = [...data.summary.by_risk_level].sort((a, b) => {
-                    const orderA = riskOrder[a.risk_level?.toLowerCase()] || 999;
-                    const orderB = riskOrder[b.risk_level?.toLowerCase()] || 999;
-                    return orderA - orderB;
-                });
-                
-                reportHTML += `
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-                        <h4 style="margin: 0 0 15px 0; color: #00247c;">By Flood Risk Level:</h4>
-                        <div style="display: grid; gap: 10px;">
-                `;
-                
-                sortedRisks.forEach(item => {
-                    if (item.risk_level) {
-                        const colors = {
-                            'low': '#ffc107',
-                            'medium': '#ff9800',
-                            'high': '#dc3545'
-                        };
-                        const color = colors[item.risk_level.toLowerCase()] || '#666';
-                        
-                        reportHTML += `
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="background: ${color}; color: white; padding: 8px 15px; 
-                                           border-radius: 5px; font-weight: bold; min-width: 100px; text-align: center;">
-                                    ${item.risk_level.toUpperCase()}
-                                </div>
-                                <div style="font-size: 24px; font-weight: bold; color: ${color};">
-                                    ${item.count}
-                                </div>
-                                <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
-                                    <div style="height: 100%; background: ${color}; 
-                                               width: ${(item.count / data.summary.total * 100)}%;"></div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                reportHTML += `
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Detailed List - Sorted by coverage percentage (lowest to highest)
-            if (data.houses && data.houses.length > 0) {
-                // Sort houses by flood coverage percentage (lowest to highest)
-                const sortedHouses = [...data.houses].sort((a, b) => {
-                    const percentA = parseFloat(a.flood_coverage_percent) || 0;
-                    const percentB = parseFloat(b.flood_coverage_percent) || 0;
-                    return percentA - percentB;
-                });
-                
-                reportHTML += `
-                    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
-                                padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 5px 0; color: #00247c;">Affected Households (Sorted by Coverage %):</h4>
-                        <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any row to expand details.</p>
-                        <div style="max-height: 500px; overflow-y: auto;">
-                `;
-                
-                sortedHouses.forEach((house, idx) => {
-                    const impactColors = {
-                        'Minimally Affected': '#ffc107',
-                        'Partially Affected': '#ff9800',
-                        'Fully Affected': '#dc3545',
-                        'Affected': '#ff9800'
-                    };
-                    const color = impactColors[house.impact_level] || '#666';
-                    const coveragePercent = parseFloat(house.flood_coverage_percent || 0).toFixed(1);
-                    const cardId = `flood-house-${idx}`;
-                    
-                    reportHTML += `
-                        <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${color}; 
-                                    border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
-                            <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
-                                 style="display: flex; justify-content: space-between; align-items: center;
-                                        padding: 12px 15px; cursor: pointer; background: #f8f9fa;
-                                        user-select: none;">
-                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                    <span style="background: ${color}; color: white; padding: 2px 8px; 
-                                                 border-radius: 10px; font-size: 11px; font-weight: bold; white-space: nowrap;">
-                                        ${coveragePercent}%
-                                    </span>
-                                    <strong style="font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        ${house.address || 'Address not specified'}
-                                    </strong>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <span style="font-size: 11px; color: ${color}; font-weight: bold;">
-                                        ${house.impact_level || ''}
-                                    </span>
-                                    <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
-                                </div>
-                            </div>
-                            <div id="${cardId}" style="display: none; padding: 15px; background: white; border-top: 1px solid #f0f0f0;">
-                                ${house.street_name ? `<div style="font-size: 13px; color: #666; margin-bottom: 10px;">${house.street_name}</div>` : ''}
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-                                            gap: 10px; font-size: 13px; color: #555;">
-                                    <div>
-                                        <strong>Flood Risk:</strong> 
-                                        <span style="color: ${color}; font-weight: bold;">
-                                            ${(house.risk_level || 'Unknown').toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <strong>Coverage:</strong>
-                                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                            <span>${coveragePercent}%</span>
-                                            <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden;">
-                                                <div style="height: 100%; width: ${coveragePercent}%; background: ${color};"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    ${house.area_sqm ? `<div><strong>Area:</strong> ${house.area_sqm} sqm</div>` : ''}
-                                </div>
-                                ${house.hazard_description ? `
-                                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; 
-                                                border-radius: 4px; font-size: 13px; color: #555;">
-                                        <strong>Hazard Info:</strong> ${house.hazard_description}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                reportHTML += `
-                        </div>
-                    </div>
-                `;
-            }
+                ${riskBars?`<div style="background:#f8f9fa;border-radius:7px;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:12px;font-weight:600;color:#00247c;margin-bottom:10px;">By Flood Risk Level</div>
+                    ${riskBars}
+                </div>`:''}
+                <div class="rpt-list-box">
+                    <h4>Affected Households <span style="font-weight:400;color:#aaa;">(${sortedHouses.length})</span></h4>
+                    <p class="rpt-list-hint">Sorted by coverage % · click a row to expand</p>
+                    <div class="rpt-list-scroll">${houseRows}</div>
+                </div>`;
         }
-        
-        reportHTML += `
-                <div style="background: #f8f9fa; border-left: 4px solid #00247c; padding: 20px; 
-                            border-radius: 8px; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #00247c;">Recommendations:</h4>
-                    <ul style="margin: 5px 0; padding-left: 20px; color: #555; font-size: 14px;">
+
+        const reportHTML = `<div class="rpt-body">
+            <div class="rpt-header">
+                <h3>Flood Risk Assessment</h3>
+                <div class="rpt-big-num">${data.summary.total}</div>
+                <div class="rpt-subtitle">Households in Flood-Prone Areas</div>
+            </div>
+            <div class="rpt-content">
+                ${bodyHTML}
+                <div class="rpt-footer">
+                    <h4>Recommendations</h4>
+                    <ul>
                         <li>Households in high-risk zones should prepare evacuation plans</li>
                         <li>Install flood barriers and elevate important items</li>
                         <li>Monitor weather alerts during rainy season</li>
@@ -2200,17 +2073,9 @@ async function getFloodHousesSummary() {
                     </ul>
                 </div>
             </div>
-        `;
-        
-        showSwal({
-            html: reportHTML,
-            width: 950,
-            showConfirmButton: false,
-            showCloseButton: true,
-            customClass: {
-                popup: 'swal-wide'
-            }
-        });
+        </div>`;
+
+        showReportSwal(reportHTML);
         
     } catch (error) {
         console.error('Error in flood assessment:', error);
@@ -2256,165 +2121,89 @@ async function showFaultLineRiskAssessment() {
         }
         
         const data = result.data;
-        
-        // Display comprehensive fault line risk report
-        let reportHTML = `
-            <div style="max-width: 900px; text-align: left;">
-                <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                        Fault Line Proximity Risk Assessment
-                    </h3>
-                    <div style="font-size: 48px; font-weight: bold; margin: 15px 0;">
-                        ${data.summary.total_at_risk}
-                    </div>
-                    <div style="font-size: 16px; opacity: 0.95;">
-                        Structures Within Risk Zone (<200m from Fault Line)
-                    </div>
-                </div>
-        `;
-        
+
+        // ── Build fault line report with unified layout ──────────────────────
+        const riskColors = { medium: '#ffc107', high: '#ff9800', critical: '#dc3545' };
+
+        let bodyHTML = '';
+
         if (data.summary.total_at_risk === 0) {
-            reportHTML += `
-                <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 8px; 
-                            padding: 30px; text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">✓</div>
-                    <h3 style="color: #155724; margin: 0 0 10px 0;">No Structures at Risk</h3>
-                    <p style="color: #155724; margin: 0; font-size: 14px;">
-                        All structures are at safe distances from the fault line.
-                    </p>
-                </div>
-            `;
+            bodyHTML = `<div style="text-align:center;padding:28px 0;">
+                <div style="font-size:42px;margin-bottom:10px;">✓</div>
+                <h3 style="color:#00247c;margin:0 0 6px;">No Structures at Risk</h3>
+                <p style="color:#666;margin:0;font-size:13px;">All structures are at safe distances from the fault line.</p>
+            </div>`;
         } else {
-            // Risk Level Summary - Sorted from lowest to highest risk
-            reportHTML += `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-                            gap: 15px; margin-bottom: 25px;">
-                    <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ffc107; margin-bottom: 5px;">
-                            ${data.summary.medium_risk}
+            const sorted = [...(data.structures || [])].sort((a, b) => a.distance_meters - b.distance_meters);
+
+            const rows = sorted.map((s, i) => {
+                const c = riskColors[s.risk_level] || '#888';
+                const barPct = Math.min(100, (s.distance_meters / 200) * 100).toFixed(0);
+                const body = `
+                    <div style="margin-bottom:8px;">
+                        <strong>Distance:</strong> <span style="color:${c};font-weight:700;">${s.distance_meters}m</span> from fault line
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                            <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden;max-width:160px;">
+                                <div style="height:100%;width:${barPct}%;background:${c};"></div>
+                            </div>
+                            <span style="font-size:11px;color:#aaa;">/ 200m</span>
                         </div>
-                        <div style="font-size: 13px; color: #666;">Medium Risk (100-200m)</div>
                     </div>
-                    <div style="background: #f8f9fa; border-left: 4px solid #ff9800; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #ff9800; margin-bottom: 5px;">
-                            ${data.summary.high_risk}
-                        </div>
-                        <div style="font-size: 13px; color: #666;">High Risk (50-100m)</div>
+                    ${s.house_number ? `<div style="color:#888;margin-bottom:6px;">House #${s.house_number}</div>` : ''}
+                    ${s.requirements?.length ? `
+                    <div style="background:#f5f5f5;border-left:3px solid #00247c;padding:10px 12px;border-radius:4px;margin-top:6px;">
+                        <strong style="color:#00247c;font-size:11px;">REQUIRED ACTIONS:</strong>
+                        <ul style="margin:5px 0 0;padding-left:16px;font-size:12px;color:#555;">
+                            ${s.requirements.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>` : ''}`;
+                return rptRow(`fs-${i}`, `${s.distance_meters}m`, c,
+                    s.address || s.street_name || 'Address not specified',
+                    s.risk_level.toUpperCase(), body);
+            }).join('');
+
+            bodyHTML = `
+                <div class="rpt-stats">
+                    <div class="rpt-stat" style="border-left-color:#ffc107;">
+                        <div class="rpt-stat-num" style="color:#e6a800;">${data.summary.medium_risk}</div>
+                        <div class="rpt-stat-label">Medium (100–200m)</div>
                     </div>
-                    <div style="background: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; border-radius: 8px;">
-                        <div style="font-size: 32px; font-weight: bold; color: #dc3545; margin-bottom: 5px;">
-                            ${data.summary.critical}
-                        </div>
-                        <div style="font-size: 13px; color: #666;">Critical (<50m)</div>
+                    <div class="rpt-stat" style="border-left-color:#ff9800;">
+                        <div class="rpt-stat-num" style="color:#e67e00;">${data.summary.high_risk}</div>
+                        <div class="rpt-stat-label">High Risk (50–100m)</div>
+                    </div>
+                    <div class="rpt-stat" style="border-left-color:#dc3545;">
+                        <div class="rpt-stat-num" style="color:#dc3545;">${data.summary.critical}</div>
+                        <div class="rpt-stat-label">Critical (&lt;50m)</div>
                     </div>
                 </div>
-            `;
-            
-            // Detailed List - Sorted by distance (closest first - most dangerous)
-            if (data.structures && data.structures.length > 0) {
-                // Sort structures by distance (closest first)
-                const sortedStructures = [...data.structures].sort((a, b) => a.distance_meters - b.distance_meters);
-                
-                reportHTML += `
-                    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; 
-                                padding: 20px; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 5px 0; color: #00247c;">Structures at Risk (Sorted by Distance):</h4>
-                        <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any row to expand details.</p>
-                        <div style="max-height: 500px; overflow-y: auto;">
-                `;
-                
-                sortedStructures.forEach((structure, idx) => {
-                    const riskColors = {
-                        'medium': '#ffc107',
-                        'high': '#ff9800',
-                        'critical': '#dc3545'
-                    };
-                    const color = riskColors[structure.risk_level] || '#666';
-                    const cardId = `fault-struct-${idx}`;
-                    
-                    reportHTML += `
-                        <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${color}; 
-                                    border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
-                            <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
-                                 style="display: flex; justify-content: space-between; align-items: center;
-                                        padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
-                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                    <span style="background: ${color}; color: white; padding: 2px 8px; 
-                                                 border-radius: 10px; font-size: 11px; font-weight: bold; white-space: nowrap;">
-                                        ${structure.distance_meters}m
-                                    </span>
-                                    <strong style="font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        ${structure.address || structure.street_name || 'Address not specified'}
-                                    </strong>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                                    <span style="font-size: 11px; color: ${color}; font-weight: bold;">
-                                        ${structure.risk_level.toUpperCase()}
-                                    </span>
-                                    <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
-                                </div>
-                            </div>
-                            <div id="${cardId}" style="display: none; padding: 15px; background: white; border-top: 1px solid #f0f0f0;">
-                                ${structure.house_number ? `<div style="font-size: 13px; color: #666; margin-bottom: 10px;">House #${structure.house_number}</div>` : ''}
-                                <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                                    <strong>Distance from Fault Line:</strong>
-                                    <span style="color: ${color}; font-weight: bold; font-size: 18px; margin-left: 6px;">
-                                        ${structure.distance_meters}m
-                                    </span>
-                                    <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
-                                        <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; max-width: 200px;">
-                                            <div style="height: 100%; width: ${Math.min(100, (structure.distance_meters / 200) * 100)}%; 
-                                                        background: ${color};"></div>
-                                        </div>
-                                        <span style="font-size: 12px; color: #888;">/200m</span>
-                                    </div>
-                                </div>
-                                ${structure.requirements && structure.requirements.length > 0 ? `
-                                    <div style="background: #fff3cd; border-left: 3px solid #856404; 
-                                                padding: 10px; border-radius: 4px; margin-top: 10px;">
-                                        <strong style="color: #856404;">Required Actions:</strong>
-                                        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
-                                            ${structure.requirements.map(req => `<li>${req}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                reportHTML += `
-                        </div>
-                    </div>
-                `;
-            }
+                <div class="rpt-list-box">
+                    <h4>Structures at Risk <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
+                    <p class="rpt-list-hint">Sorted by distance · click a row to expand</p>
+                    <div class="rpt-list-scroll">${rows}</div>
+                </div>`;
         }
-        
-        reportHTML += `
-                <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 20px; 
-                            border-radius: 8px; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #856404;">Legal Requirements:</h4>
-                    <ul style="margin: 5px 0; padding-left: 20px; color: #666; font-size: 14px;">
-                        <li><strong>Critical Zone (<50m):</strong> Construction ALLOWED with enhanced seismic standards. Mandatory structural engineer certification, geological survey, and reinforced foundation required.</li>
-                        <li><strong>High Risk (50-100m):</strong> Seismic design standards mandatory. Structural engineer certification required.</li>
-                        <li><strong>Medium Risk (100-200m):</strong> Enhanced foundation design recommended. Standard building codes with seismic provisions apply.</li>
+
+        const reportHTML = `<div class="rpt-body">
+            <div class="rpt-header">
+                <h3>Fault Line Risk Assessment</h3>
+                <div class="rpt-big-num">${data.summary.total_at_risk}</div>
+                <div class="rpt-subtitle">Structures Within Risk Zone (&lt;200m from Fault Line)</div>
+            </div>
+            <div class="rpt-content">
+                ${bodyHTML}
+                <div class="rpt-footer">
+                    <h4>Legal Requirements</h4>
+                    <ul>
+                        <li><strong>Critical (&lt;50m):</strong> Mandatory structural engineer cert, geological survey &amp; reinforced foundation</li>
+                        <li><strong>High (50–100m):</strong> Seismic design standards &amp; structural engineer certification required</li>
+                        <li><strong>Medium (100–200m):</strong> Enhanced foundation recommended; standard codes with seismic provisions apply</li>
                     </ul>
-                    <p style="margin: 10px 0 0 0; font-size: 13px; color: #666;">
-                        Contact the Barangay Engineering Office for compliance assessment and permits.
-                    </p>
                 </div>
             </div>
-        `;
-        
-        showSwal({
-            html: reportHTML,
-            width: 950,
-            showConfirmButton: false,
-            showCloseButton: true,
-            customClass: {
-                popup: 'swal-wide'
-            }
-        });
+        </div>`;
+
+        showReportSwal(reportHTML);
         
     } catch (error) {
         console.error('Error in fault line assessment:', error);
@@ -2499,7 +2288,7 @@ async function showAllBusinessesSDSSReport() {
             html: `
                 <div style="text-align: left;">
                     <p><strong>Failed to generate business SDSS report:</strong></p>
-                    <p style="color: #dc3545; font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
                         ${error.message}
                     </p>
                     <p style="margin-top: 15px; font-size: 14px; color: #666;">
@@ -2592,7 +2381,7 @@ async function showAllConstructionSDSSReport() {
             html: `
                 <div style="text-align: left;">
                     <p><strong>Failed to generate construction SDSS report:</strong></p>
-                    <p style="color: #dc3545; font-family: monospace; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
                         ${error.message}
                     </p>
                     <p style="margin-top: 15px; font-size: 14px; color: #666;">
@@ -2617,171 +2406,76 @@ async function showAllConstructionSDSSReport() {
 function displayBusinessSDSSReport(data) {
     if (!data || !data.summary || !data.warnings) {
         console.error('Invalid data structure:', data);
-        showSwal({
-            icon: 'error',
-            title: 'Error',
-            text: 'Invalid data structure received'
-        });
+        showSwal({ icon: 'error', title: 'Error', text: 'Invalid data structure received' });
         return;
     }
-    
-    const { summary, warnings } = data;
-    
-    if (warnings.length === 0) {
-        showSwal({
-            title: 'Business Safety Compliance',
-            html: `
-                <div style="text-align: center; padding: 30px;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
-                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
-                        <strong style="font-size: 20px; color: #155724;">All businesses compliant</strong>
-                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                            Out of ${summary.total} total businesses analyzed, no safety violations detected.
-                        </p>
-                    </div>
-                </div>
-            `,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#00247c'
-        });
-        return;
-    }
-    
-    const critical = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'CRITICAL'));
-    const high = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'HIGH') && !critical.includes(w));
-    const medium = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
-    
-    let reportHTML = `
-        <div style="max-width: 900px; text-align: left;">
-            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                    Business Safety Compliance Report
-                </h3>
-                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                    ${warnings.length}
-                </div>
-                <div style="font-size: 14px; opacity: 0.9;">
-                    ${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings
-                </div>
-                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                    Out of ${summary.total} total businesses analyzed
-                </div>
-                
-                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
-                    </div>
-                </div>
-            </div>
-    `;
-    
-    // Show all warnings - sort by severity
-    const sortedWarnings = [...medium, ...high, ...critical];
-    
-    reportHTML += `<p style="font-size: 12px; color: #888; margin: 0 0 12px 0;">Click any row to expand details.</p>`;
 
-    sortedWarnings.forEach((item, idx) => {
-        if (!item || !item.business || !item.warnings) return;
-        
-        const business = item.business;
-        const itemWarnings = item.warnings;
-        
-        // Get highest severity
-        const hasCritical = itemWarnings.some(w => w.severity === 'CRITICAL');
-        const hasHigh = itemWarnings.some(w => w.severity === 'HIGH');
-        const highestSeverity = hasCritical ? 'CRITICAL' : (hasHigh ? 'HIGH' : 'MEDIUM');
-        
-        const borderColor = highestSeverity === 'CRITICAL' ? '#8B0000' : 
-                           highestSeverity === 'HIGH' ? '#dc3545' : '#ffc107';
-        const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
-        const cardId = `biz-card-${idx}`;
-        
-        reportHTML += `
-            <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${borderColor}; 
-                        border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
-                <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
-                     style="display: flex; justify-content: space-between; align-items: center;
-                            padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
-                    <div style="flex: 1; min-width: 0;">
-                        <strong style="font-size: 14px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${business.business_name || 'Unnamed Business'}
-                        </strong>
-                        <span style="font-size: 12px; color: #888;">${business.address_of_business || ''}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
-                        <span style="background: ${borderColor}; color: white; padding: 2px 8px; 
-                                     border-radius: 10px; font-size: 11px; font-weight: bold;">
-                            ${highestSeverity}
-                        </span>
-                        <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
-                    </div>
-                </div>
-                <div id="${cardId}" style="display: none; padding: 15px; background: ${bgColor}; border-top: 1px solid #f0f0f0;">
-                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                        <div><strong>Address:</strong> ${business.address_of_business || 'Not specified'}</div>
-                        <div><strong>Type:</strong> ${business.type_of_business || 'N/A'}</div>
-                        <div><strong>Employees:</strong> ${business.no_of_employees || 'N/A'}</div>
-                    </div>
-        `;
-        
-        // Display all warnings for this business
-        itemWarnings.forEach(warning => {
-            const warnColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
-                            warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-            
-            reportHTML += `
-                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                    <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠ ${warning.type}
-                    </div>
-                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                        ${warning.description}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${warning.severity === 'CRITICAL' ? 'IMMEDIATE ACTIONS:' : 'Required Actions:'}
-                        </div>
-                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                            ${warning.actions.map(action => `<li>${action}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `;
-        });
-        
-        reportHTML += `</div></div>`;
-    });
-    
-    reportHTML += `
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
-                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                    For business permits and safety compliance:
-                </p>
-                <div style="font-weight: bold; color: #00247c; font-size: 16px;">
-                    Barangay Blue Ridge B Business Permits Office
-                </div>
+    const { summary, warnings } = data;
+
+    // ── Zero warnings: clean all-clear modal ────────────────────────────────
+    if (warnings.length === 0) {
+        showReportSwal(`<div class="rpt-body">
+            <div class="rpt-header">
+                <h3>Business Safety Compliance</h3>
+                <div class="rpt-big-num">✓</div>
+                <div class="rpt-subtitle">All ${summary.total} businesses are compliant — no violations detected</div>
+            </div>
+            <div class="rpt-content" style="text-align:center;padding-top:10px;">
+                <p style="color:#555;font-size:13px;">No action required at this time.</p>
+            </div>
+        </div>`);
+        return;
+    }
+
+    // ── Categorise ───────────────────────────────────────────────────────────
+    const critical = warnings.filter(w => w.warnings?.some(x => x.severity === 'CRITICAL'));
+    const high     = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH')     && !critical.includes(w));
+    const medium   = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM')   && !critical.includes(w) && !high.includes(w));
+    const sorted   = [...medium, ...high, ...critical];
+
+    // ── Build accordion rows ─────────────────────────────────────────────────
+    const rows = sorted.map((item, idx) => {
+        if (!item?.business || !item?.warnings) return '';
+        const biz = item.business;
+        const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
+        const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
+        const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
+        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#555';
+
+        const body = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;font-size:12px;color:#555;">
+                <div><strong>Address:</strong> ${biz.address_of_business || '—'}</div>
+                <div><strong>Type:</strong> ${biz.type_of_business || '—'}</div>
+                <div><strong>Employees:</strong> ${biz.no_of_employees || '—'}</div>
+            </div>
+            ${item.warnings.map(w => rptWarningBlock(w)).join('')}`;
+
+        return rptRow(`biz-${idx}`, sev, c, biz.business_name || 'Unnamed Business',
+            `${item.warnings.length} warning${item.warnings.length !== 1 ? 's' : ''}`, body);
+    }).join('');
+
+    const reportHTML = `<div class="rpt-body">
+        <div class="rpt-header">
+            <h3>Business Safety Compliance Report</h3>
+            <div class="rpt-big-num">${warnings.length}</div>
+            <div class="rpt-subtitle">${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings · out of ${summary.total} analyzed</div>
+            <div class="rpt-chips">
+                <div class="rpt-chip"><span class="rpt-chip-num">${medium.length}</span><span class="rpt-chip-label">Medium</span></div>
+                <div class="rpt-chip"><span class="rpt-chip-num">${high.length}</span><span class="rpt-chip-label">High</span></div>
+                <div class="rpt-chip"><span class="rpt-chip-num">${critical.length}</span><span class="rpt-chip-label">Critical</span></div>
             </div>
         </div>
-    `;
-    
-    showSwal({
-        html: reportHTML,
-        width: 950,
-        showConfirmButton: false,
-        showCloseButton: true,
-        customClass: {
-            popup: 'swal-wide'
-        }
-    });
+        <div class="rpt-content">
+            <p class="rpt-list-hint" style="margin-bottom:10px;">Click a row to expand warnings &amp; required actions</p>
+            ${rows}
+            <div class="rpt-footer" style="text-align:center;border-left:none;background:#f8f9fa;margin-top:14px;">
+                <p style="margin:0 0 4px;color:#666;font-size:12px;">For permits &amp; compliance:</p>
+                <strong style="color:#00247c;">Barangay Blue Ridge B — Business Permits Office</strong>
+            </div>
+        </div>
+    </div>`;
+
+    showReportSwal(reportHTML);
 }
 
 /**
@@ -2790,178 +2484,99 @@ function displayBusinessSDSSReport(data) {
 function displayConstructionSDSSReport(data) {
     if (!data || !data.summary || !data.warnings) {
         console.error('Invalid data structure:', data);
-        showSwal({
-            icon: 'error',
-            title: 'Error',
-            text: 'Invalid data structure received'
-        });
+        showSwal({ icon: 'error', title: 'Error', text: 'Invalid data structure received' });
         return;
     }
-    
-    const { summary, warnings } = data;
-    
-    if (warnings.length === 0) {
-        showSwal({
-            title: 'Construction Site Safety',
-            html: `
-                <div style="text-align: center; padding: 30px;">
-                    <div style="font-size: 64px; margin-bottom: 20px;">✓</div>
-                    <div style="background: #d4edda; border: 2px solid #28a745; border-radius: 10px; padding: 25px;">
-                        <strong style="font-size: 20px; color: #155724;">All construction sites compliant</strong>
-                        <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                            Out of ${summary.total} total sites analyzed, no safety violations detected.
-                        </p>
-                    </div>
-                </div>
-            `,
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#00247c'
-        });
-        return;
-    }
-    
-    const critical = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'CRITICAL'));
-    const high = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'HIGH') && !critical.includes(w));
-    const medium = warnings.filter(w => w.warnings && w.warnings.some(warning => warning.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
-    
-    let reportHTML = `
-        <div style="max-width: 900px; text-align: left;">
-            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                <h3 style="margin: 0 0 10px 0; font-size: 24px;">
-                    Construction Site Safety Report
-                </h3>
-                <div style="font-size: 42px; font-weight: bold; margin: 10px 0;">
-                    ${warnings.length}
-                </div>
-                <div style="font-size: 14px; opacity: 0.9;">
-                    ${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings
-                </div>
-                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                    Out of ${summary.total} total sites analyzed
-                </div>
-                
-                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${medium.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Medium</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${high.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">High Risk</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; min-width: 100px;">
-                        <div style="font-size: 28px; font-weight: bold;">${critical.length}</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Critical</div>
-                    </div>
-                </div>
-            </div>
-    `;
-    
-    // Show all warnings - sort by severity
-    const sortedWarnings = [...medium, ...high, ...critical];
-    
-    reportHTML += `<p style="font-size: 12px; color: #888; margin: 0 0 12px 0;">Click any row to expand details.</p>`;
 
-    sortedWarnings.forEach((item, idx) => {
-        if (!item || !item.construction || !item.warnings) return;
-        
+    const { summary, warnings } = data;
+
+    // ── Zero warnings ────────────────────────────────────────────────────────
+    if (warnings.length === 0) {
+        showReportSwal(`<div class="rpt-body">
+            <div class="rpt-header">
+                <h3>Construction Site Safety</h3>
+                <div class="rpt-big-num">✓</div>
+                <div class="rpt-subtitle">All ${summary.total} sites are compliant — no violations detected</div>
+            </div>
+            <div class="rpt-content" style="text-align:center;padding-top:10px;">
+                <p style="color:#555;font-size:13px;">No action required at this time.</p>
+            </div>
+        </div>`);
+        return;
+    }
+
+    // ── Categorise ───────────────────────────────────────────────────────────
+    const critical = warnings.filter(w => w.warnings?.some(x => x.severity === 'CRITICAL'));
+    const high     = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH')     && !critical.includes(w));
+    const medium   = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM')   && !critical.includes(w) && !high.includes(w));
+    const sorted   = [...medium, ...high, ...critical];
+
+    // ── Build accordion rows ─────────────────────────────────────────────────
+    const rows = sorted.map((item, idx) => {
+        if (!item?.construction || !item?.warnings) return '';
         const site = item.construction;
-        const itemWarnings = item.warnings;
-        
-        // Get highest severity
-        const hasCritical = itemWarnings.some(w => w.severity === 'CRITICAL');
-        const hasHigh = itemWarnings.some(w => w.severity === 'HIGH');
-        const highestSeverity = hasCritical ? 'CRITICAL' : (hasHigh ? 'HIGH' : 'MEDIUM');
-        
-        const borderColor = highestSeverity === 'CRITICAL' ? '#8B0000' : 
-                           highestSeverity === 'HIGH' ? '#dc3545' : '#ffc107';
-        const bgColor = highestSeverity === 'CRITICAL' ? '#ffebee' : '#fffbeb';
-        
+        const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
+        const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
+        const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
+        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#555';
         const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
-        const cardId = `con-card-${idx}`;
-        
-        reportHTML += `
-            <div style="border: 1px solid #e0e0e0; border-left: 4px solid ${borderColor}; 
-                        border-radius: 6px; margin-bottom: 8px; overflow: hidden;">
-                <div onclick="(function(el){var b=document.getElementById('${cardId}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
-                     style="display: flex; justify-content: space-between; align-items: center;
-                            padding: 12px 15px; cursor: pointer; background: #f8f9fa; user-select: none;">
-                    <div style="flex: 1; min-width: 0;">
-                        <strong style="font-size: 14px; color: #333; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${owner}
-                        </strong>
-                        <span style="font-size: 12px; color: #888;">${site.construction_address || ''}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 10px;">
-                        <span style="background: ${borderColor}; color: white; padding: 2px 8px; 
-                                     border-radius: 10px; font-size: 11px; font-weight: bold;">
-                            ${highestSeverity}
-                        </span>
-                        <span class="acc-arrow" style="transition: transform 0.2s; display: inline-block; color: #999;">▼</span>
-                    </div>
-                </div>
-                <div id="${cardId}" style="display: none; padding: 15px; background: ${bgColor}; border-top: 1px solid #f0f0f0;">
-                    <div style="font-size: 14px; color: #555; margin-bottom: 15px;">
-                        <div><strong>Address:</strong> ${site.construction_address || 'Not specified'}</div>
-                        <div><strong>Type of Work:</strong> ${site.type_of_work || 'N/A'}</div>
-                        <div><strong>Nature of Activity:</strong> <span style="color: #00247c; font-weight: 600;">${site.nature_of_activity || 'N/A'}</span></div>
-                        <div><strong>Workers:</strong> ${site.number_of_workers || 'N/A'}</div>
-                    </div>
-        `;
-        
-        // Display all warnings for this construction site
-        itemWarnings.forEach(warning => {
-            const warnColor = warning.severity === 'CRITICAL' ? '#8B0000' : 
-                            warning.severity === 'HIGH' ? '#dc3545' : '#ffc107';
-            
-            reportHTML += `
-                <div style="background: white; padding: 15px; border-radius: 4px; margin-bottom: 12px;">
-                    <div style="color: ${warnColor}; font-weight: bold; margin-bottom: 8px;">
-                        ⚠ ${warning.type}
-                    </div>
-                    <div style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                        ${warning.description}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">
-                            ${warning.severity === 'CRITICAL' ? 'IMMEDIATE ACTIONS:' : 'Required Actions:'}
-                        </div>
-                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 13px; color: #555;">
-                            ${warning.actions.map(action => `<li>${action}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `;
-        });
-        
-        reportHTML += `</div></div>`;
-    });
-    
-    reportHTML += `
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; margin-top: 20px;">
-                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                    For construction permits and safety compliance:
-                </p>
-                <div style="font-weight: bold; color: #00247c; font-size: 16px;">
-                    Barangay Blue Ridge B Engineering Office
-                </div>
+
+        const body = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;font-size:12px;color:#555;">
+                <div><strong>Address:</strong> ${site.construction_address || '—'}</div>
+                <div><strong>Type of Work:</strong> ${site.type_of_work || '—'}</div>
+                <div><strong>Activity:</strong> <span style="color:#00247c;font-weight:600;">${site.nature_of_activity || '—'}</span></div>
+                <div><strong>Workers:</strong> ${site.number_of_workers || '—'}</div>
+            </div>
+            ${item.warnings.map(w => rptWarningBlock(w)).join('')}`;
+
+        return rptRow(`con-${idx}`, sev, c, owner,
+            `${item.warnings.length} warning${item.warnings.length !== 1 ? 's' : ''}`, body);
+    }).join('');
+
+    const reportHTML = `<div class="rpt-body">
+        <div class="rpt-header">
+            <h3>Construction Site Safety Report</h3>
+            <div class="rpt-big-num">${warnings.length}</div>
+            <div class="rpt-subtitle">${warnings.length === 1 ? 'Site' : 'Sites'} with Safety Warnings · out of ${summary.total} analyzed</div>
+            <div class="rpt-chips">
+                <div class="rpt-chip"><span class="rpt-chip-num">${medium.length}</span><span class="rpt-chip-label">Medium</span></div>
+                <div class="rpt-chip"><span class="rpt-chip-num">${high.length}</span><span class="rpt-chip-label">High</span></div>
+                <div class="rpt-chip"><span class="rpt-chip-num">${critical.length}</span><span class="rpt-chip-label">Critical</span></div>
             </div>
         </div>
-    `;
-    
-    showSwal({
-        html: reportHTML,
-        width: 950,
-        showConfirmButton: false,
-        showCloseButton: true,
-        customClass: {
-            popup: 'swal-wide'
-        }
-    });
+        <div class="rpt-content">
+            <p class="rpt-list-hint" style="margin-bottom:10px;">Click a row to expand warnings &amp; required actions</p>
+            ${rows}
+            <div class="rpt-footer" style="text-align:center;border-left:none;background:#f8f9fa;margin-top:14px;">
+                <p style="margin:0 0 4px;color:#666;font-size:12px;">For permits &amp; compliance:</p>
+                <strong style="color:#00247c;">Barangay Blue Ridge B — Engineering Office</strong>
+            </div>
+        </div>
+    </div>`;
+
+    showReportSwal(reportHTML);
 }
 
 
 // ==================== EVENT LISTENERS ====================
+
+// Shared helper: wires accordion toggle for any SweetAlert popup with data-accordion-toggle elements
+function attachAccordionHandler(popup) {
+    popup.addEventListener('click', (e) => {
+        const header = e.target.closest('[data-accordion-toggle]');
+        if (header) {
+            const uid = header.dataset.accordionToggle;
+            const body = document.getElementById(uid);
+            const arrow = header.querySelector('.acc-arrow');
+            if (body) {
+                const open = body.style.display !== 'none';
+                body.style.display = open ? 'none' : 'block';
+                if (arrow) arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+            }
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize navbar with hover and click functionality
@@ -2979,12 +2594,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.addEventListener('click', function(e) {
             const resultsContainer = document.getElementById('search-results');
-            const searchBox = document.querySelector('.search-box');
+            const searchBox = document.querySelector('.gm-search-box') || document.querySelector('.map-overlay--search');
             
             if (resultsContainer && 
                 !resultsContainer.contains(e.target) && 
                 e.target !== searchInput &&
-                !searchBox.contains(e.target)) {
+                (!searchBox || !searchBox.contains(e.target))) {
                 
                 resultsContainer.style.display = 'none';
             }
@@ -3055,7 +2670,7 @@ map.whenReady(function() {
     
     // Create fault line with correct coordinates
     faultLine = L.polyline(faultLineCoordinates, {
-        color: '#ff0000',
+        color: '#cc0000',
         weight: 4,
         opacity: 0.8,
         dashArray: '10, 10',
@@ -3065,7 +2680,7 @@ map.whenReady(function() {
     
     faultLine.bindPopup(`
         <div style="max-width: 300px;">
-            <h4 style="color: #ff0000; margin-bottom: 10px;">
+            <h4 style="color: #cc0000; margin-bottom: 10px;">
                 FAULT LINE
             </h4>
             <p><strong>Seismic Hazard Zone</strong></p>
@@ -3080,7 +2695,7 @@ map.whenReady(function() {
         this.setStyle({
             weight: 6,
             opacity: 1,
-            color: '#ff4444'
+            color: '#cc0000'
         });
     });
     
@@ -3109,7 +2724,7 @@ map.whenReady(function() {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(255, 0, 0, 0.3);
+                background: rgba(180, 0, 0, 0.3);
                 border-radius: 50%;
                 animation: pulse-fault 2s infinite;
             "></div>
@@ -3119,7 +2734,7 @@ map.whenReady(function() {
                 left: 5px;
                 width: 20px;
                 height: 20px;
-                background: rgba(255, 0, 0, 0.9);
+                background: rgba(180, 0, 0, 0.9);
                 border-radius: 50%;
                 border: 2px solid white;
                 display: flex;
@@ -3160,7 +2775,7 @@ map.whenReady(function() {
     
     warningMarker.bindPopup(`
         <div style="max-width: 250px;">
-            <h4 style="color: #ff0000; margin-bottom: 8px;">
+            <h4 style="color: #cc0000; margin-bottom: 8px;">
                 EARTHQUAKE RISK AREA
             </h4>
             <p><strong>Fault Line Detected</strong></p>
@@ -3261,7 +2876,7 @@ function setupSoftBoundary() {
         }
     }).addTo(map);
     
-    map.setMinZoom(15);
+    map.setMinZoom(18);
     map.setMaxZoom(20);
     
     addBoundaryNotification();
@@ -3439,12 +3054,11 @@ function displaySDSSRulesReport(data) {
     const renderCategory = (title, icon, rulesArr, totalHouses) => {
         if (rulesArr.length === 0) return '';
         return `
-            <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; 
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-                <h4 style="color: #00247c; margin: 0 0 12px 0; font-size: 18px; display: flex; align-items: center; gap: 10px;">
+            <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;">
+                <h4 style="color: #00247c; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
                     <i class="fas ${icon}"></i> ${title}
                 </h4>
-                <p style="margin: 0 0 15px 0; font-size: 12px; color: #888;">Click any rule to expand details.</p>
+                <p style="margin: 0 0 12px 0; font-size: 11px; color: #aaa;">Click any rule to expand details.</p>
                 <div style="display: grid; gap: 8px;">
                     ${rulesArr.map((rule, i) => createRuleCard(rule, totalHouses, `${title.replace(/\s/g,'')}-${i}`)).join('')}
                 </div>
@@ -3454,50 +3068,56 @@ function displaySDSSRulesReport(data) {
     
     // Build HTML content
     let htmlContent = `
-        <div style="max-width: 900px; margin: 0 auto;">
+        <div class="rpt-body">
             <!-- Summary Section -->
-            <div style="background: #00247c; color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px;
-                        box-shadow: 0 10px 30px rgba(0, 36, 124, 0.3);">
-                <h3 style="margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-list-check"></i>
-                    SDSS Rules Summary Report
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
-                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Total Houses</div>
-                        <div style="font-size: 32px; font-weight: bold;">${summary.total_houses}</div>
+            <div class="rpt-header">
+                <h3><i class="fas fa-list-check" style="margin-right:8px;"></i>SDSS Rules Summary Report</h3>
+                <div class="rpt-chips">
+                    <div class="rpt-chip">
+                        <span class="rpt-chip-num">${summary.total_houses}</span>
+                        <span class="rpt-chip-label">Total Houses</span>
                     </div>
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
-                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Total Violations</div>
-                        <div style="font-size: 32px; font-weight: bold;">${summary.total_rule_violations}</div>
+                    <div class="rpt-chip">
+                        <span class="rpt-chip-num">${summary.total_rule_violations}</span>
+                        <span class="rpt-chip-label">Total Violations</span>
                     </div>
-                    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
-                        <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">Rules Evaluated</div>
-                        <div style="font-size: 32px; font-weight: bold;">${summary.rules_evaluated}</div>
+                    <div class="rpt-chip">
+                        <span class="rpt-chip-num">${summary.rules_evaluated}</span>
+                        <span class="rpt-chip-label">Rules Evaluated</span>
                     </div>
                 </div>
             </div>
-            
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 20px; 
-                        border-radius: 8px; margin-bottom: 20px; color: #856404; font-size: 13px;">
-                <i class="fas fa-info-circle"></i>
-                <strong>Note:</strong> A house may violate multiple rules simultaneously. Total violations may exceed total houses.
+            <div class="rpt-content">
+                <div class="rpt-footer" style="margin-bottom:16px;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> A house may violate multiple rules simultaneously. Total violations may exceed total houses.
+                </div>
+
+                ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
+                ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
+                ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
+                ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
             </div>
-            
-            ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
-            ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
-            ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
-            ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
         </div>
     `;
     
-    showSwal({
+    Swal.fire({
+        ...swalDefaultConfig,
         html: htmlContent,
-        width: '95%',
         showCloseButton: true,
         showConfirmButton: false,
-        customClass: {
-            popup: 'sdss-rules-popup'
+        customClass: { popup: 'unified-modal-popup' },
+        didOpen: (popup) => {
+            attachAccordionHandler(popup);
+            popup.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-rule-key]');
+                if (btn) {
+                    e.stopPropagation();
+                    // Close SDSS rules modal first, then open affected records
+                    Swal.close();
+                    setTimeout(() => showRuleAffectedData(btn.dataset.ruleKey, btn.dataset.ruleName, true), 200);
+                }
+            });
         }
     });
 }
@@ -3507,18 +3127,19 @@ function displaySDSSRulesReport(data) {
  */
 function createRuleCard(rule, totalHouses, cardId) {
     const severityColors = {
-        'CRITICAL': { bg: '#ffebee', border: '#f44336', text: '#c62828' },
-        'HIGH':     { bg: '#fff3e0', border: '#ff9800', text: '#e65100' },
-        'MEDIUM':   { bg: '#e8f5e9', border: '#4caf50', text: '#2e7d32' }
+        'CRITICAL': { bg: '#f5f5f5', border: '#990000', text: '#990000' },
+        'HIGH':     { bg: '#f5f5f5', border: '#cc0000', text: '#cc0000' },
+        'MEDIUM':   { bg: '#f5f5f5', border: '#555555', text: '#555555' }
     };
     
     const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
     const pct = totalHouses > 0 ? ((rule.count / totalHouses) * 100).toFixed(1) : '0.0';
     const uid = `rule-${cardId}-${rule.key || Math.random().toString(36).slice(2)}`;
+    const safeKey = rule.key || '';
     
     return `
         <div style="border: 2px solid ${colors.border}; border-radius: 8px; overflow: hidden;">
-            <div onclick="(function(el){var b=document.getElementById('${uid}');var open=b.style.display!=='none';b.style.display=open?'none':'block';el.querySelector('.acc-arrow').style.transform=open?'rotate(0deg)':'rotate(180deg)';})(this)"
+            <div data-accordion-toggle="${uid}"
                  style="display: flex; justify-content: space-between; align-items: center;
                         padding: 14px 18px; cursor: pointer; background: ${colors.bg}; user-select: none;">
                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
@@ -3526,7 +3147,7 @@ function createRuleCard(rule, totalHouses, cardId) {
                                 display: flex; flex-direction: column; align-items: center; justify-content: center;
                                 box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 2px solid ${colors.border};">
                         <span style="font-size: 18px; font-weight: bold; color: ${colors.text}; line-height: 1;">${rule.count}</span>
-                        <span style="font-size: 9px; color: #888; text-transform: uppercase;">Houses</span>
+                        <span style="font-size: 9px; color: #888; text-transform: uppercase;">Found</span>
                     </div>
                     <div style="min-width: 0;">
                         <div style="font-weight: 600; font-size: 14px; color: #333;">${rule.name}</div>
@@ -3538,16 +3159,188 @@ function createRuleCard(rule, totalHouses, cardId) {
             </div>
             <div id="${uid}" style="display: none; padding: 16px 18px; background: white; border-top: 1px solid ${colors.border}40;">
                 <p style="margin: 0 0 10px 0; color: #555; font-size: 14px; line-height: 1.5;">${rule.description}</p>
-                <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666;">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666; margin-bottom: 12px;">
                     <span>${rule.count > 0 ? `${pct}% of total houses affected` : 'No violations detected'}</span>
                     ${rule.count > 0 ? `
                     <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; max-width: 150px;">
                         <div style="height: 100%; width: ${Math.min(100, parseFloat(pct))}%; background: ${colors.border};"></div>
                     </div>` : ''}
                 </div>
+                ${rule.count > 0 && safeKey ? `
+                <button data-rule-key="${safeKey}" data-rule-name="${rule.name.replace(/"/g, '&quot;')}"
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+                               background: #00247c; color: white; border: none; border-radius: 6px;
+                               font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">
+                    <i class="fas fa-list"></i> View ${rule.count} Affected Record${rule.count !== 1 ? 's' : ''}
+                </button>` : ''}
             </div>
         </div>
     `;
+}
+
+/**
+ * Fetch and display the records affected by a specific rule
+ */
+// Track highlighted affected polygons
+let affectedHighlightLayers = [];
+
+function clearAffectedHighlights() {
+    affectedHighlightLayers.forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+    affectedHighlightLayers = [];
+}
+
+async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
+    // Remove any existing affected panel
+    const oldPanel = document.getElementById('affected-side-panel');
+    if (oldPanel) oldPanel.remove();
+
+    // Build panel immediately with loading state
+    const panel = document.createElement('div');
+    panel.id = 'affected-side-panel';
+    panel.className = 'affected-side-panel';
+
+    const restoreMap = () => {
+        clearAffectedHighlights();
+        updateAllVisibility();
+        if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) floodLayer.addTo(map);
+        if (faultLineActive) {
+            if (faultLine && !map.hasLayer(faultLine)) faultLine.addTo(map);
+            if (warningMarker && !map.hasLayer(warningMarker)) warningMarker.addTo(map);
+        }
+    };
+
+    const closePanel = () => {
+        panel.classList.remove('open');
+        setTimeout(() => { if (panel.parentNode) panel.remove(); }, 300);
+        restoreMap();
+    };
+
+    const backBtn = fromSDSS ? `
+        <button id="affected-back-btn"
+            style="display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+                   background:#f0f4ff;color:#00247c;border:1.5px solid #00247c;
+                   border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+                   font-family:inherit;margin-bottom:0;width:100%;">
+            <i class="fas fa-arrow-left"></i> Back to SDSS Rules
+        </button>` : '';
+
+    panel.innerHTML = `
+        <div class="affected-panel-header">
+            <button class="affected-panel-close" id="affected-panel-close-btn">&times;</button>
+            <div style="font-size:11px;opacity:0.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Affected Records</div>
+            <h3 style="margin:0 0 ${fromSDSS ? '10px' : '0'};font-size:15px;font-weight:700;padding-right:28px;">${ruleName}</h3>
+            ${backBtn}
+        </div>
+        <div class="affected-panel-body" id="affected-panel-body">
+            <div style="padding:28px;text-align:center;color:#888;font-size:13px;">Loading...</div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+    requestAnimationFrame(() => panel.classList.add('open'));
+
+    document.getElementById('affected-panel-close-btn').onclick = closePanel;
+    if (fromSDSS) {
+        document.getElementById('affected-back-btn').onclick = () => {
+            closePanel();
+            setTimeout(() => showSDSSRulesReport(), 320);
+        };
+    }
+    document.addEventListener('keydown', function escH(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escH); }
+    });
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_rule_affected_data');
+        formData.append('rule_key', ruleKey);
+        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+
+        const bodyEl = document.getElementById('affected-panel-body');
+        if (!bodyEl) return;
+
+        if (!result.success) {
+            bodyEl.innerHTML = `<div style="padding:20px;color:#cc0000;font-size:13px;">Error: ${result.message || 'Failed to load data'}</div>`;
+            return;
+        }
+
+        const records = result.records || [];
+
+        // ── Highlight matching polygons/markers on map ──────────────────────
+        clearAffectedHighlights();
+        hideAllMarkers();
+
+        records.forEach(r => {
+            if (r.type === 'household') {
+                const houseData = housePolygonsData.find(h => String(h.house_id) === String(r.id));
+                if (houseData && houseData.coordinates) {
+                    try {
+                        const coords = JSON.parse(houseData.coordinates);
+                        const latLngs = coords.map(c => [c[1], c[0]]);
+                        latLngs.push(latLngs[0]);
+                        const poly = L.polygon(latLngs, {
+                            color: '#dc3545', weight: 3,
+                            fillColor: '#dc3545', fillOpacity: 0.35,
+                            interactive: true, pane: 'housePane'
+                        }).addTo(map);
+                        poly.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                        affectedHighlightLayers.push(poly);
+                        return;
+                    } catch(e) { console.warn('Polygon parse error', e); }
+                }
+                const lat = parseFloat(r.lat || r.center_lat), lng = parseFloat(r.lng || r.center_lng);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
+                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                    affectedHighlightLayers.push(m);
+                }
+            } else {
+                const lat = parseFloat(r.lat || r.latitude), lng = parseFloat(r.lng || r.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
+                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="construction-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                    affectedHighlightLayers.push(m);
+                }
+            }
+        });
+
+        if (affectedHighlightLayers.length > 0) {
+            const grp = L.featureGroup(affectedHighlightLayers);
+            if (grp.getBounds().isValid()) {
+                map.fitBounds(grp.getBounds(), { padding: [40, 40], maxZoom: 19 });
+            }
+        }
+
+        // ── Build record list ───────────────────────────────────────────────
+        if (records.length === 0) {
+            bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
+            return;
+        }
+
+        const rows = records.map(r => `
+            <div class="affected-record-row" onclick="(function(){
+                const d=${JSON.stringify(r)};
+                if(d.type==='household') viewHouseDetails(d.id);
+                else viewMapDetails(d.id,d.type);
+            })()">
+                <div class="affected-record-name">${r.name}</div>
+                <div class="affected-record-addr">${r.address}</div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                    <span class="affected-record-detail">${r.detail}</span>
+                    <span class="affected-record-type">${r.type}</span>
+                </div>
+            </div>`).join('');
+
+        bodyEl.innerHTML = `
+            <div class="affected-panel-count">${records.length} record${records.length !== 1 ? 's' : ''} highlighted on map</div>
+            <div class="affected-panel-hint">Click a row to view full details</div>
+            <div class="affected-records-list">${rows}</div>
+        `;
+
+    } catch (e) {
+        const bodyEl = document.getElementById('affected-panel-body');
+        if (bodyEl) bodyEl.innerHTML = `<div style="padding:20px;color:#cc0000;font-size:13px;">Failed to fetch affected records.</div>`;
+    }
 }
 
 // Make functions globally available
@@ -3558,3 +3351,11 @@ window.showAllConstructionSDSSReport = showAllConstructionSDSSReport;
 window.displayBusinessSDSSReport = displayBusinessSDSSReport;
 window.displayConstructionSDSSReport = displayConstructionSDSSReport;
 window.showSDSSRulesReport = showSDSSRulesReport;
+window.showRuleAffectedData = showRuleAffectedData;
+window.clearAffectedHighlights = clearAffectedHighlights;
+
+// Popup detail button handlers - must be on window so Leaflet popup onclick attributes can reach them
+window.viewMapDetails = viewMapDetails;
+window.viewFloodDetails = viewFloodDetails;
+window.viewHouseDetails = viewHouseDetails;
+window.closeModal = closeModal;
