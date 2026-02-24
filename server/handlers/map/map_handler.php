@@ -1851,7 +1851,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // ==================== HOUSE POLYGON FUNCTIONS ====================
     
     if ($_POST['action'] === 'get_houses') {
-        echo json_encode(['success' => true, 'houses' => getHousePolygons()]);
+        $houses = getHousePolygons();
+        echo json_encode(['success' => true, 'houses' => $houses, 'count' => count($houses)]);
         exit;
     }
 
@@ -2003,6 +2004,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $ruleKey = $_POST['rule_key'] ?? '';
         $result = getRuleAffectedData($ruleKey);
         echo json_encode($result);
+        exit;
+    }
+
+    // ==================== BOUNDARY MANAGEMENT ====================
+
+    if ($_POST['action'] === 'get_boundaries') {
+        try {
+            $stmt = $pdo->query("SELECT * FROM barangay_boundaries ORDER BY created_at DESC");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'boundaries' => $rows]);
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    if ($_POST['action'] === 'save_boundary') {
+        $name      = trim($_POST['name']        ?? '');
+        $desc      = trim($_POST['description'] ?? '');
+        $coordsRaw = $_POST['coordinates']      ?? '';
+        if (!$name) {
+            echo json_encode(['success' => false, 'message' => 'Name is required']);
+            exit;
+        }
+        $coords = json_decode($coordsRaw, true);
+        if (!$coords || count($coords) < 3) {
+            echo json_encode(['success' => false, 'message' => 'At least 3 coordinate points required']);
+            exit;
+        }
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO barangay_boundaries (name, description, coordinates)
+                VALUES (:name, :desc, :coords)
+                RETURNING boundary_id
+            ");
+            $stmt->execute([':name' => $name, ':desc' => $desc ?: null, ':coords' => $coordsRaw]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'boundary_id' => $row['boundary_id']]);
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    if ($_POST['action'] === 'delete_boundary') {
+        $id = intval($_POST['boundary_id'] ?? 0);
+        if (!$id) { echo json_encode(['success' => false, 'message' => 'boundary_id required']); exit; }
+        try {
+            $stmt = $pdo->prepare("DELETE FROM barangay_boundaries WHERE boundary_id = :id");
+            $stmt->execute([':id' => $id]);
+            echo json_encode($stmt->rowCount()
+                ? ['success' => true]
+                : ['success' => false, 'message' => 'Boundary not found']);
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
         exit;
     }
 

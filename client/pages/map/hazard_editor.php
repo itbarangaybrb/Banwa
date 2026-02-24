@@ -714,6 +714,7 @@ if (file_exists($databasePath)) {
     <script>
 
         const HAZARD_HANDLER_URL = '/Banwa/server/handlers/map/hazard_handler.php';
+        const MAP_HANDLER_URL    = '/Banwa/server/handlers/map/map_handler.php';
 
         // Global variables
         let editorMap;
@@ -725,6 +726,7 @@ if (file_exists($databasePath)) {
         let lineLayers = [];
         let hazards = [];
         let existingHazardsLayer = L.layerGroup();
+        let boundaryLayer = null;
         let currentHazardId = null;
         let baseLayers = {};
         let currentLayer = 'street';
@@ -777,6 +779,9 @@ if (file_exists($databasePath)) {
             
             // Load existing hazards from database
             loadExistingHazards();
+            
+            // Load barangay boundary from database
+            loadBoundary();
             
             // Set up keyboard shortcuts
             setupKeyboardShortcuts();
@@ -1257,6 +1262,48 @@ if (file_exists($databasePath)) {
         function editSelected() {
             showStatus('Edit mode: Select a hazard from the list on the right.', 'info');
             document.getElementById('editBtn').classList.add('active');
+        }
+
+        // Load barangay boundary from database and draw it on the map
+        async function loadBoundary() {
+            try {
+                const fd = new FormData();
+                fd.append('action', 'get_boundaries');
+                const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (!data.success || !data.boundaries || !data.boundaries.length) return;
+
+                const b      = data.boundaries[0];
+                const coords = typeof b.coordinates === 'string'
+                    ? JSON.parse(b.coordinates)
+                    : b.coordinates;
+
+                // coords are stored as [lng, lat] — convert to Leaflet [lat, lng]
+                const latLngs = coords.map(c => [c[1], c[0]]);
+
+                // Create a non-interactive pane so the boundary never steals clicks
+                if (!editorMap.getPane('boundaryPane')) {
+                    editorMap.createPane('boundaryPane');
+                    editorMap.getPane('boundaryPane').style.zIndex    = 300;
+                    editorMap.getPane('boundaryPane').style.pointerEvents = 'none';
+                }
+
+                boundaryLayer = L.polygon(latLngs, {
+                    color:       '#00247C',
+                    weight:      3,
+                    dashArray:   '6, 5',
+                    fillColor:   '#667eea',
+                    fillOpacity: 0.08,
+                    interactive: false,
+                    pane:        'boundaryPane'
+                }).addTo(editorMap);
+
+                boundaryLayer.bindPopup(`<strong>${b.name}</strong><br>Barangay Boundary`);
+
+            } catch (e) {
+                console.warn('Could not load boundary:', e);
+            }
         }
 
         // Load existing hazards from database
