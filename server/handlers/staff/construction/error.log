@@ -225,3 +225,8 @@ LINE 2:                 FROM construction_applications ca
 [23-Feb-2026 12:33:57 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
 LINE 3:             FROM construction_applications
                          ^
+[25-Feb-2026 15:55:55 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
+[25-Feb-2026 16:01:45 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
+[25-Feb-2026 17:15:47 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
+[25-Feb-2026 17:15:55 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
+[25-Feb-2026 17:15:59 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)

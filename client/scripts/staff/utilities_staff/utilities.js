@@ -727,7 +727,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(`${UTILITY_HANDLER_URL}`, {
+    fetch(`${UTILITY_HANDLER_URL}?action=update_status`, {
         method: 'POST',
         body: formData
     })
@@ -1433,3 +1433,53 @@ window.onclick = function (event) {
 }
 
 document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
+
+// DO NOT REMOVE!!! - JEP
+// /**
+//  * Fetch audit logs from the server
+//  * Clears and re-renders the entire audit table
+//  *
+//  * @async
+//  * @returns {Promise<void>}
+//  */
+// async function fetchAuditLogs() {
+//     try {
+//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//             credentials: 'include',
+//             cache: 'no-store'
+//         });
+
+//         const logs = await resp.json();
+
+//         if (!Array.isArray(logs)) {
+//             console.error('Invalid audit log response');
+//             return;
+//         }
+
+//         const tbody = document.getElementById('auditTableBody');
+//         if (!tbody) return;
+
+//         tbody.innerHTML = '';
+
+//         logs.forEach(log => {
+//             const tr = document.createElement('tr');
+
+//             tr.innerHTML = `
+//                 <td>${log.id}</td>
+//                 <td>${log.action}</td>
+//                 <td>${log.full_name}</td>
+//                 <td>${log.table_name}</td>
+//                 <td>${log.record_id}</td>
+//                 <td>${log.role_id}</td>
+//                 <td>${log.created_at}</td>
+//             `;
+
+//             tbody.appendChild(tr);
+//         });
+
+//     } catch (err) {
+//         console.error('Failed to fetch audit logs:', err);
+//     }
+// }
+
+// fetchAuditLogs

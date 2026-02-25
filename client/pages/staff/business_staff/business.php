@@ -34,7 +34,7 @@
             <div>
                 <li>
                     <a href="#" class="nav_select active" data-tab="mapping">
-                        <i class="fas fa-chart-line nav_icon"></i>
+                        <i class="fa-regular fa-map nav_icon"></i>
                         <span class="nav_text">Mapping</span>
                     </a>
                 </li>
@@ -263,6 +263,20 @@
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
+
+                <!-- <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Activity</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div> -->
             </div>
 
             <div id="management" class="tab-pane">

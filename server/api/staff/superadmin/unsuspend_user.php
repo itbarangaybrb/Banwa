@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sets response type to JSON and includes database configuration and audit log functions.
  * Starts a session for authentication checks.

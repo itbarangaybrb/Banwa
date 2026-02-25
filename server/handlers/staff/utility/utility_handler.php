@@ -8,6 +8,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/utility/utility_dss.php';
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php'; // Add audit log function
 
 session_start();
 
@@ -144,7 +145,24 @@ function handleCreateApplication($pdo)
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
+        
+        // Get the newly created application data for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
+        $newStmt->execute([':id' => $applicationId]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+        
         createInitialDSSEvaluation($pdo, $applicationId);
+
+        // Write audit log for CREATE action
+        writeAuditLog(
+            $pdo,
+            'CREATE',
+            'utility_applications',
+            $applicationId,
+            null,
+            $newData,
+            'UTILITY_APPLICATION'
+        );
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Utility Application Created!"]);
     } catch (PDOException $e) {
@@ -200,6 +218,11 @@ function handleUpdateStatus($pdo)
     }
 
     try {
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $id]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
         $getStmt = $pdo->prepare("SELECT dss_status FROM utility_applications WHERE id = :id");
         $getStmt->execute([':id' => $id]);
         $currentApp = $getStmt->fetch(PDO::FETCH_ASSOC);
@@ -221,6 +244,22 @@ function handleUpdateStatus($pdo)
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
+
+        // Get new data after update for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
+        $newStmt->execute([':id' => $id]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Write audit log for status update
+        writeAuditLog(
+            $pdo,
+            strtoupper($newStatus),
+            'utility_applications',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
 
         echo json_encode([
             "status" => "success",
@@ -246,6 +285,11 @@ function handleUpdateApplication($pdo)
         if (!$applicationId) {
             throw new Exception("Application ID is required for update.");
         }
+
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $applicationId]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
@@ -349,6 +393,22 @@ function handleUpdateApplication($pdo)
         $stmt->execute($params);
 
         if ($stmt->rowCount() > 0) {
+            // Get new data after update for audit log
+            $newStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
+            $newStmt->execute([':id' => $applicationId]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Write audit log for UPDATE action
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'utility_applications',
+                $applicationId,
+                $oldData,
+                $newData,
+                'UTILITY_APPLICATION'
+            );
+
             triggerDSSevaluation($pdo, $applicationId);
             echo json_encode(["status" => "success", "message" => "Utility application updated successfully! DSS re-evaluation triggered."]);
         } else {

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
-    <link rel="stylesheet" href="../../../styles/staff/map.css" />
+    <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
 
 </head>
 
@@ -33,17 +33,13 @@
             <div>
                 <li>
                     <a href="#" class="nav_select active" data-tab="mapping">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="nav_text">Dashboard</span>
+                        <i class="fa-regular fa-map nav_icon"></i>
+                        <span class="nav_text">Mapping</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="nav_select" data-tab="dashboard">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-chart-line nav_icon"></i>
                         <span class="nav_text">Dashboard</span>
                     </a>
                 </li>
@@ -55,31 +51,15 @@
                 </li>
                 <li>
                     <a href="#" class="nav_select" data-tab="create">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-plus-circle nav_icon"></i>
                         <span class="nav_text">Create New</span>
                     </a>
                 </li>
-                <!-- Process tab remains available via actions inside Management; no separate nav item needed -->
                 <li>
                     <a href="#" class="nav_select" data-tab="summary">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
                     </a>
-                </li>
-            </div>
-            <div>
-                <li>
-                    <button class="nav_select_btn" id="userProfileBtn">
-                        <div class="user_image_container">
-                            <span class="user_avatar_sidebar">A</span>
-                        </div>
-                        <span class="nav_text">Profile</span>
-                    </button>
                 </li>
             </div>
         </ul>
@@ -282,6 +262,20 @@
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
+
+                <!-- <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Activity</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div> -->
             </div>
 
             <!-- Review Tab -->
@@ -546,6 +540,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../../../scripts/staff/map.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </body>
 
 </html>

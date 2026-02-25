@@ -8,6 +8,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/construction/construction_dss.php';
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php'; // Add audit log function
 
 session_start();
 
@@ -189,7 +190,7 @@ function handleCreateApplication($pdo)
             'natureOfActivity' => $natureOfActivity,
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'constructionAddress' => $constructionAddress    
+            'constructionAddress' => $constructionAddress
         ];
 
         foreach ($requiredFields as $field => $value) {
@@ -247,6 +248,22 @@ function handleCreateApplication($pdo)
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
 
+        // Get the newly created application data for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
+        $newStmt->execute([':id' => $applicationId]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Write audit log for CREATE action
+        writeAuditLog(
+            $pdo,
+            'CREATE',
+            'construction_applications',
+            $applicationId,
+            null,
+            $newData,
+            'CONSTRUCTION_APPLICATION'
+        );
+
         // === QUEUE OCR JOB AFTER SUCCESSFUL INSERT ===
         if (!empty($uploadedFiles)) {
             try {
@@ -256,7 +273,8 @@ function handleCreateApplication($pdo)
                 error_log("Queue OCR error for application {$applicationId}: " . $qE->getMessage());
             }
         } else {
-            error_log("No files uploaded for application {$applicationId}, skipping OCR queue.");}
+            error_log("No files uploaded for application {$applicationId}, skipping OCR queue.");
+        }
 
         // Create initial DSS evaluation
         createInitialDSSEvaluation($pdo, $applicationId);
@@ -273,7 +291,8 @@ function handleCreateApplication($pdo)
     }
 }
 
-function queueOCRJob($pdo, $applicationId, $files) {
+function queueOCRJob($pdo, $applicationId, $files)
+{
     $payload = json_encode([
         'application_id' => $applicationId,
         'files' => $files
@@ -325,6 +344,11 @@ function handleUpdateStatus($pdo)
     }
 
     try {
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $id]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
         $getStmt = $pdo->prepare("SELECT dss_status FROM construction_applications WHERE id = :id");
         $getStmt->execute([':id' => $id]);
         $currentApp = $getStmt->fetch(PDO::FETCH_ASSOC);
@@ -352,6 +376,22 @@ function handleUpdateStatus($pdo)
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
+        // Get new data after update for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
+        $newStmt->execute([':id' => $id]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Write audit log for status update
+        writeAuditLog(
+            $pdo,
+            strtoupper($newStatus),
+            'construction_applications',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
+
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
@@ -377,6 +417,11 @@ function handleUpdateApplication($pdo)
         if (!$applicationId) {
             throw new Exception("Application ID is required for update.");
         }
+
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $applicationId]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
@@ -502,13 +547,14 @@ function handleUpdateApplication($pdo)
         $updateFields[] = "requirement_upload_json = :requirement_upload_json";
         $params[':requirement_upload_json'] = $filesJson;
 
-        // Store as JSON in the new column
-        $filesJson = json_encode($uploadedFiles);
-        error_log("=== CREATE DEBUG === Uploaded files count: " . count($uploadedFiles) . " | JSON: " . $filesJson);
-
-        if (!empty($uploadedFiles)) {
-        queueOCRJob($pdo, $newAppId, $uploadedFiles);  // $newAppId = lastInsertId or updated id
-    }
+        // Remove the duplicate and incorrect code block that was causing the error
+        // The following lines have been removed:
+        // $filesJson = json_encode($uploadedFiles);
+        // error_log("=== CREATE DEBUG === Uploaded files count: " . count($uploadedFiles) . " | JSON: " . $filesJson);
+        // 
+        // if (!empty($uploadedFiles)) {
+        //     queueOCRJob($pdo, $newAppId, $uploadedFiles);  // $newAppId = lastInsertId or updated id
+        // }
 
         // If no fields to update, return early
         if (count($updateFields) <= 3) { // Only dss_status, updated_at, and status were added
@@ -530,6 +576,22 @@ function handleUpdateApplication($pdo)
         $stmt->execute($params);
 
         if ($stmt->rowCount() > 0) {
+            // Get new data after update for audit log
+            $newStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
+            $newStmt->execute([':id' => $applicationId]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Write audit log for UPDATE action
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'construction_applications',
+                $applicationId,
+                $oldData,
+                $newData,
+                'CONSTRUCTION_APPLICATION'
+            );
+
             triggerDSSevaluation($pdo, $applicationId);
             echo json_encode(["status" => "success", "message" => "Application updated successfully! DSS re-evaluation triggered."]);
         } else {
@@ -650,7 +712,7 @@ function handleGetApplicationDetails($pdo)
 
         // --- FIX THIS SECTION IN construction_handler.php ---
         // 1. Get the raw value from the database first
-        $rawUploadData = $application['requirement_upload_json'] ?? ''; 
+        $rawUploadData = $application['requirement_upload_json'] ?? '';
 
         // 2. NOW you can initialize it as an array
         $application['requirement_upload_json'] = [];
@@ -662,7 +724,7 @@ function handleGetApplicationDetails($pdo)
                 $application['requirement_upload_json'] = $decoded;
             }
         }
-        
+
         $ocrStmt = $pdo->prepare("
             SELECT filename, saved_filename, file_url, ocr_result, created_at 
             FROM construction_ocr_results 

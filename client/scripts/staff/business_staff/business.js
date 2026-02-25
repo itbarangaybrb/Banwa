@@ -356,12 +356,12 @@ function loadAnalyticsTab() {
             const labels1 = res.data_by_date.map(x => x.application_date);
             const values1 = res.data_by_date.map(x => x.total);
             const totals1 = values1.slice();
-            const percentages1 = values1.map(v => ((v / values1.reduce((a,b)=>a+b,0))*100).toFixed(2));
+            const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
 
             const labels2 = res.data_by_type.map(x => x.type_of_business);
             const values2 = res.data_by_type.map(x => x.total);
             const totals2 = values2.slice();
-            const percentages2 = values2.map(v => ((v / values2.reduce((a,b)=>a+b,0))*100).toFixed(2));
+            const percentages2 = values2.map(v => ((v / values2.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
 
             const labels3 = res.data_by_dss.map(x => x.dss_status);
             const totals3 = res.data_by_dss.map(x => x.total);
@@ -393,7 +393,7 @@ function loadAnalyticsTab() {
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const total = totals1[context.dataIndex];
                                     const percent = percentages1[context.dataIndex];
                                     return `${context.label}: ${total} (${percent}%)`;
@@ -422,7 +422,7 @@ function loadAnalyticsTab() {
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const total = totals2[context.dataIndex];
                                     const percent = percentages2[context.dataIndex];
                                     return `${context.label}: ${total} (${percent}%)`;
@@ -454,7 +454,7 @@ function loadAnalyticsTab() {
                         },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const total = totals3[context.dataIndex];
                                     const percent = percentages3[context.dataIndex];
                                     return `${context.label}: ${total} (${percent}%)`;
@@ -778,7 +778,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(`${BUSINESS_HANDLER_URL}`, {
+    fetch(`${BUSINESS_HANDLER_URL}?action=update_status`, {
         method: 'POST',
         body: formData
     })
@@ -2052,3 +2052,53 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
+
+// DO NOT REMOVE!!! - JEP
+// /**
+//  * Fetch audit logs from the server
+//  * Clears and re-renders the entire audit table
+//  *
+//  * @async
+//  * @returns {Promise<void>}
+//  */
+// async function fetchAuditLogs() {
+//     try {
+//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//             credentials: 'include',
+//             cache: 'no-store'
+//         });
+
+//         const logs = await resp.json();
+
+//         if (!Array.isArray(logs)) {
+//             console.error('Invalid audit log response');
+//             return;
+//         }
+
+//         const tbody = document.getElementById('auditTableBody');
+//         if (!tbody) return;
+
+//         tbody.innerHTML = '';
+
+//         logs.forEach(log => {
+//             const tr = document.createElement('tr');
+
+//             tr.innerHTML = `
+//                 <td>${log.id}</td>
+//                 <td>${log.action}</td>
+//                 <td>${log.full_name}</td>
+//                 <td>${log.table_name}</td>
+//                 <td>${log.record_id}</td>
+//                 <td>${log.role_id}</td>
+//                 <td>${log.created_at}</td>
+//             `;
+
+//             tbody.appendChild(tr);
+//         });
+
+//     } catch (err) {
+//         console.error('Failed to fetch audit logs:', err);
+//     }
+// }
+
+// fetchAuditLogs

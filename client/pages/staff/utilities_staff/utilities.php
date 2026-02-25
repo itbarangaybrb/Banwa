@@ -31,10 +31,14 @@
         <ul class="nav_list">
             <div>
                 <li>
-                    <a href="#" class="nav_select active" data-tab="dashboard">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                    <a href="#" class="nav_select active" data-tab="mapping">
+                        <i class="fa-regular fa-map nav_icon"></i>
+                        <span class="nav_text">Mapping</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav_select" data-tab="dashboard">
+                        <i class="fas fa-chart-line nav_icon"></i>
                         <span class="nav_text">Dashboard</span>
                     </a>
                 </li>
@@ -46,31 +50,15 @@
                 </li>
                 <li>
                     <a href="#" class="nav_select" data-tab="create">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-plus-circle nav_icon"></i>
                         <span class="nav_text">Create New</span>
                     </a>
                 </li>
-                <!-- Process functionality remains in the #process tab; removed duplicate nav link -->
                 <li>
                     <a href="#" class="nav_select" data-tab="summary">
-                        <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="13 2 13 9 20 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
                     </a>
-                </li>
-            </div>
-            <div>
-                <li>
-                    <button class="nav_select_btn" id="userProfileBtn">
-                        <div class="user_image_container">
-                            <span class="user_avatar_sidebar">A</span>
-                        </div>
-                        <span class="nav_text">Profile</span>
-                    </button>
                 </li>
             </div>
         </ul>
@@ -95,129 +83,173 @@
         <div class="staff-content">
             <div id="alert-container"></div>
 
-            <div id="dashboard" class="tab-pane active">
-                <!-- Mobile Menu Button -->
+            <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
                 </button>
 
+                <!-- Main map container -->
                 <div class="map-wrapper">
-                    <div class="map-header">
-                        <h2>Dashboard</h2>
+                    <!-- Leaflet renders the map inside this div -->
+                    <div id="map"></div>
+
+                    <!-- Search bar overlay -->
+                    <div class="map-overlay map-overlay--search">
+                        <div class="gm-search-box">
+                            <i class="fas fa-search gm-search-icon"></i>
+                            <input type="text" id="search-input" placeholder="Search by name, address, type, or hazard...">
+                            <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
+                        </div>
+                        <!-- Search results appear here dynamically -->
+                        <div id="search-results" class="search-results"></div>
                     </div>
 
-                    <div class="map-controls">
-                        <div class="search-container">
-                            <div class="search-box">
-                                <input type="text" id="search-input" placeholder="Search by name, address, or type...">
-                                <button onclick="performSearch()">
-                                    <i class="fas fa-search"></i> Search
-                                </button>
-                                <button onclick="clearSearch()" class="clear-btn">
-                                    <i class="fas fa-times"></i> Clear
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Filter panel overlay -->
+                    <div class="map-overlay map-overlay--filter">
+                        <div class="gm-panel">
+                            <div class="gm-panel-row">
 
-                        <div id="search-results" class="search-results"></div>
-
-                        <div class="filter-controls">
-                            <div class="filter-dropdown-container">
+                                <!-- Dropdown to switch marker layer type -->
                                 <div class="dropdown">
-                                    <button class="dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
-                                        <i class="fas fa-filter"></i>
+                                    <button class="gm-chip dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                                        <i class="fas fa-layer-group"></i>
                                         <span id="currentFilterText">Households</span>
                                         <i class="fas fa-chevron-down dropdown-arrow"></i>
                                     </button>
                                     <div class="dropdown-content" id="filterDropdown">
+                                        <!-- Each option filters the map to show that marker type -->
                                         <a href="#" data-type="household" onclick="selectFilterType('household', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background: #28a745;"></span>
+                                                <span class="filter-icon" style="background:#28a745;"></span>
                                                 <span>Households</span>
                                             </span>
                                         </a>
                                         <a href="#" data-type="business" onclick="selectFilterType('business', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background: #9C27B0;"></span>
+                                                <span class="filter-icon" style="background:#9C27B0;"></span>
                                                 <span>Businesses</span>
                                             </span>
                                         </a>
                                         <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background: #ffc107;"></span>
+                                                <span class="filter-icon" style="background:#ffc107;"></span>
                                                 <span>Construction</span>
                                             </span>
                                         </a>
                                         <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background: #2196F3;"></span>
+                                                <span class="filter-icon" style="background:#2196F3;"></span>
                                                 <span>Utilities</span>
                                             </span>
                                         </a>
                                     </div>
                                 </div>
 
-                                <div class="sub-filters" id="constructionSubFilters" style="display: none;">
-                                    <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
-                                    <div class="sub-filter-buttons">
-                                        <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
-                                            <i class="fas fa-layer-group"></i>
-                                            <span>All</span>
-                                        </button>
-                                        <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
-                                            <i class="fas fa-building"></i>
-                                            <span>Major</span>
-                                        </button>
-                                        <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
-                                            <i class="fas fa-home"></i>
-                                            <span>Minor</span>
-                                        </button>
-                                        <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
-                                            <i class="fas fa-tools"></i>
-                                            <span>Repair</span>
-                                        </button>
-                                        <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
-                                            <i class="fas fa-trash-alt"></i>
-                                            <span>Demolition</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                <!-- Toggle flood hazard layer on/off -->
+                                <button class="gm-chip gm-chip--toggle" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                                    <i class="fas fa-water"></i>
+                                    <span>Flood</span>
+                                    <span class="toggle-indicator"></span>
+                                </button>
 
-                                <div class="hazard-toggles">
-                                    <div class="hazard-toggle-container">
-                                        <button class="hazard-toggle-btn" id="floodToggleBtn" onclick="toggleFloodLayer()">
-                                            <i class="fas fa-water"></i>
-                                            <span>Flood Hazards</span>
-                                            <span class="toggle-indicator"></span>
-                                        </button>
-                                        <button class="hazard-toggle-btn" id="faultToggleBtn" onclick="toggleFaultLine()">
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                            <span>Fault Line</span>
-                                            <span class="toggle-indicator"></span>
-                                        </button>
-                                    </div>
+                                <!-- Toggle fault line hazard layer on/off -->
+                                <button class="gm-chip gm-chip--toggle" id="faultToggleBtn" onclick="toggleFaultLine()">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Fault Line</span>
+                                    <span class="toggle-indicator"></span>
+                                </button>
+                            </div>
+
+                            <!-- Sub-filters shown only when Construction is selected -->
+                            <div class="sub-filters" id="constructionSubFilters" style="display:none;">
+                                <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
+                                <div class="sub-filter-buttons">
+                                    <!-- Filter construction markers by sub-type -->
+                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                        <i class="fas fa-layer-group"></i><span>All</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                        <i class="fas fa-building"></i><span>Major</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                        <i class="fas fa-home"></i><span>Minor</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                        <i class="fas fa-tools"></i><span>Repair</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                        <i class="fas fa-trash-alt"></i><span>Demolition</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="map"></div>
-
-                <div id="detail-modal" class="modal">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="modal-title">Marker Details</h3>
-                            <button class="close-modal" onclick="closeModal('detail-modal')">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="modal-content">
-                                <!-- Content will be loaded here -->
+                    <!-- User info + map view controls (top-right) -->
+                    <div class="map-overlay map-overlay--topright">
+                        <div class="gm-topright-row">
+                            <!-- Shows current logged-in user and live date/time -->
+                            <div class="gm-user-pill">
+                                <div class="time_date" id="currentDateTime"></div>
+                                <div class="gm-user-divider"></div>
+                                <span class="gm-user-name">Kagawad Francesca</span>
+                                <div class="user_image" style="width:32px;height:32px;">
+                                    <i class="fas fa-user" style="font-size:16px;color:white;"></i>
+                                </div>
+                            </div>
+                            <!-- Map tile switcher buttons -->
+                            <div class="gm-icon-group">
+                                <button class="gm-icon-btn" onclick="toggleStreetMap()" title="Street Map View">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <button class="gm-icon-btn" onclick="toggleSatellite()" title="Satellite View">
+                                    <i class="fas fa-satellite"></i>
+                                </button>
+                                <!-- Resets map to default center and zoom -->
+                                <button class="gm-icon-btn" onclick="resetView()" title="Reset View">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    <!-- Action buttons for SDSS reports and risk assessments (bottom) -->
+                    <div class="map-overlay map-overlay--actions">
+                        <div class="gm-actions-bar">
+                            <!-- Shows summary of houses within flood zones -->
+                            <button class="gm-action-btn" onclick="getFloodHousesSummary()">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Flood Risk</span>
+                            </button>
+                            <!-- Shows structures near fault lines -->
+                            <button class="gm-action-btn" onclick="showFaultLineRiskAssessment()">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Fault Line Risk</span>
+                            </button>
+                            <!-- SDSS report for all businesses -->
+                            <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
+                                <i class="fas fa-building"></i>
+                                <span>Business SDSS</span>
+                            </button>
+                            <!-- SDSS report for all construction sites -->
+                            <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
+                                <i class="fas fa-hard-hat"></i>
+                                <span>Construction SDSS</span>
+                            </button>
+                            <!-- Shows the decision rules used by the SDSS -->
+                            <button class="gm-action-btn" onclick="showSDSSRulesReport()">
+                                <i class="fas fa-list-check"></i>
+                                <span>SDSS Rules</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard" class="tab-pane">
                 <div class="analytics-container">
                     <div class="charts">
                         <canvas id="chart1"></canvas>
@@ -229,6 +261,20 @@
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
+
+                <!-- <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Activity</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div> -->
             </div>
 
             <!-- Review Tab -->

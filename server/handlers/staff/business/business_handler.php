@@ -17,6 +17,8 @@ require_once __DIR__ . '/../../../configs/database.php';
 // require_once __DIR__ . '/../../../services/staff/business/business_analytics.php';
 // require_once __DIR__ . '/../../../services/staff/business/business_applications.php';
 require_once __DIR__ . '/../../../services/staff/business/business_dss.php';
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean();
@@ -307,6 +309,20 @@ function handleCreateApplication($pdo)
         createInitialDSSEvaluation($pdo, $applicationId);
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
+
+        $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+        $newStmt->execute([':id' => $applicationId]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        writeAuditLog(
+            $pdo,
+            'CREATE',
+            'business_applications',
+            $applicationId,
+            null,
+            $newData,
+            'BUSINESS_APPLICATION'
+        );
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -393,6 +409,27 @@ function handleUpdateStatus($pdo)
             "message" => "Status updated to " . $newStatus,
             "dss_status" => $currentDSSStatus
         ]);
+
+        $oldStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $id]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+        $newStmt->execute([':id' => $id]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        writeAuditLog(
+            $pdo,
+            strtoupper($newStatus),
+            'business_applications',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -597,6 +634,31 @@ function handleUpdateApplication($pdo)
         } else {
             http_response_code(404);
             echo json_encode(["status" => "error", "message" => "Application not found or not authorized to update."]);
+        }
+
+        $oldStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+        $oldStmt->execute([':id' => $applicationId]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        if ($stmt->rowCount() > 0) {
+            $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
+            $newStmt->execute([':id' => $applicationId]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'business_applications',
+                $applicationId,
+                $oldData,
+                $newData,
+                'BUSINESS_APPLICATION'
+            );
+
+            triggerDSSevaluation($pdo, $applicationId);
         }
     } catch (PDOException $e) {
         http_response_code(500);
