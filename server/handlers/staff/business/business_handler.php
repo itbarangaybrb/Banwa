@@ -813,6 +813,12 @@ function handleGetApplicationDetails($pdo)
 function handleAnalyzeDocuments($pdo)
 {
     try {
+        ini_set('max_execution_time', 180);   // Allow up to 3 minutes
+        set_time_limit(180);
+        ini_set('max_input_time', 180);
+        ini_set('memory_limit', '256M');
+        ob_clean();                    // Clear any warnings/notices
+        error_reporting(E_ALL);        // Make sure errors are logged
         // Log incoming request and cookie/session presence to help debug missing session
         $sessionCookieName = session_name();
         $sessionCookiePresent = isset($_COOKIE[$sessionCookieName]) ? 'yes' : 'no';
