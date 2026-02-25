@@ -135,29 +135,8 @@ function hasControl(control) {
     return control._map === map;
 }
 
-// Barangay boundary
-const blueRidgeGeoJSON = {
-    "type": "FeatureCollection",
-    "features": [{
-        "type": "Feature",
-        "properties": {"name": "Barangay Blue Ridge B"},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[
-                [121.07278956348526, 14.61639406374255],
-                [121.07392145567032, 14.61595803532421],
-                [121.07419772320655, 14.616251316435923],
-                [121.07617987565104, 14.616430399403944],
-                [121.07651515177966, 14.617647640629082],
-                [121.07800914220171, 14.617803363969443],
-                [121.07872851395038, 14.617316502559932],
-                [121.07891090415784, 14.617705811277993],
-                [121.07627821129921, 14.619295958728992],
-                [121.07449698388697, 14.62017411386342]
-            ]]
-        }
-    }]
-};
+// Barangay boundary — loaded from database on init
+let blueRidgeGeoJSON = null;
 
 // Tile layers
 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -286,18 +265,16 @@ function detailTable(rows) {
 function showDetailSwal(title, badgeLabel, badgeType, tableRows) {
     showSwal({
         html: `
-            <div class="rpt-body">
-                <div class="rpt-header">
-                    <h3 style="font-size:17px;margin:0;">${title}</h3>
-                    <div style="margin-top:8px;">${detailBadge(badgeLabel, badgeType)}</div>
+            <div style="text-align:left;padding:28px 32px 24px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #f0f0f0;">
+                    <h3 style="margin:0;font-size:17px;color:#00247c;flex:1;line-height:1.3;">${title}</h3>
+                    ${detailBadge(badgeLabel, badgeType)}
                 </div>
-                <div class="rpt-content">
-                    ${detailTable(tableRows)}
-                </div>
+                ${detailTable(tableRows)}
             </div>`,
+        width: 620,
         showConfirmButton: false,
-        showCloseButton: true,
-        customClass: { popup: 'unified-modal-popup' }
+        showCloseButton: true
     });
 }
 
@@ -402,9 +379,8 @@ function displayHouseDetailsInModal(data) {
         } catch (e) { coordinateInfo = 'Invalid coordinate data'; }
     }
 
-    const title = `${data.house_number ? 'House #' + data.house_number : 'House'} — ${data.address || ''}`;
+    const title = data.address || 'House';
     const tableRows = [
-        detailRow('House Number', data.house_number || 'Not specified'),
         detailRow('Address', data.address || 'Not specified'),
         detailRow('Street Name', data.street_name || 'Not specified'),
         detailRow('Area', `${data.area_sqm || '0'} sqm`),
@@ -577,10 +553,6 @@ function selectFilterType(type, event) {
         }
     });
     
-    // Clear any active search highlight when switching filters
-    removeActiveSearchMarker();
-    map.closePopup();
-
     activateFilter(type);
 }
 
@@ -835,7 +807,7 @@ function performSearch() {
                              marker.applicant_name ||
                              marker.hazard_name ||
                              marker.address ||
-                             (marker.house_number ? `House #${marker.house_number}` : 'Unnamed Marker');
+                             marker.address || 'Unnamed Marker';
                 
                 const subtitle = marker.description || 
                                marker.address_of_construction || 
@@ -1269,21 +1241,19 @@ function createConstructionPopup(data) {
                 <span>Construction Site</span>
                 <span class="construction-badge">Construction</span>
             </h4>
-            <div class="popup-body">
-                <div class="popup-section">
-                    <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                    <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
-                    <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
-                </div>
-                <div class="popup-section">
-                    <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
-                    <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
-                    <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
-                </div>
-                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
-                    View Full Details
-                </button>
+            <div class="popup-section">
+                <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
+                <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
             </div>
+            <div class="popup-section">
+                <p><strong>Work Type:</strong> ${data.type_of_work || 'Not specified'}</p>
+                <p><strong>Nature:</strong> ${data.nature_of_work || data.nature_of_activity || 'Not specified'}</p>
+                <p><strong>Dates:</strong> ${formatDate(data.start_date)} - ${formatDate(data.end_date)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'construction')">
+                View Full Details
+            </button>
         </div>
     `;
 }
@@ -1295,20 +1265,18 @@ function createBusinessPopup(data) {
                 <span>${data.business_name || 'Business'}</span>
                 <span class="business-badge">Business</span>
             </h4>
-            <div class="popup-body">
-                <div class="popup-section">
-                    <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
-                    <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
-                    <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                </div>
-                <div class="popup-section">
-                    <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
-                    <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
-                </div>
-                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
-                    View Full Details
-                </button>
+            <div class="popup-section">
+                <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
+                <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
+                <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
             </div>
+            <div class="popup-section">
+                <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
+                <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
+                View Full Details
+            </button>
         </div>
     `;
 }
@@ -1320,20 +1288,18 @@ function createUtilityPopup(data) {
                 <span>Utility Work</span>
                 <span class="utility-badge">Utility</span>
             </h4>
-            <div class="popup-body">
-                <div class="popup-section">
-                    <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                    <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
-                    <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
-                </div>
-                <div class="popup-section">
-                    <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
-                    <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
-                </div>
-                <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
-                    View Full Details
-                </button>
+            <div class="popup-section">
+                <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
+                <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
+                <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
             </div>
+            <div class="popup-section">
+                <p><strong>Nature of Work:</strong> ${data.nature_of_work || 'Not specified'}</p>
+                <p><strong>Work Date:</strong> ${formatDate(data.date_of_work)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'utility')">
+                View Full Details
+            </button>
         </div>
     `;
 }
@@ -1356,21 +1322,19 @@ function createFloodPopup(data) {
                 <span>${data.hazard_name || 'Flood Hazard Area'}</span>
                 <span class="flood-risk-badge" style="background: ${riskColor};">${(data.risk_level || 'medium').toUpperCase()} RISK</span>
             </h4>
-            <div class="popup-body">
-                <div class="popup-section flood-popup-section">
-                    <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
-                    <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
-                    <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
-                </div>
-                <div class="popup-section">
-                    <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
-                    <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
-                    <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
-                </div>
-                <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
-                    View Flood Details
-                </button>
+            <div class="popup-section flood-popup-section">
+                <p><strong>Risk Level:</strong> <span class="${riskClass}">${(data.risk_level || 'medium').toUpperCase()}</span></p>
+                <p><strong>Description:</strong> ${data.description || 'Flood-prone area'}</p>
+                <p><strong>Last Flood:</strong> ${formatDate(properties.last_flood_date) || 'Not recorded'}</p>
             </div>
+            <div class="popup-section">
+                <p><strong>Safety Advice:</strong> ${getFloodSafetyAdvice(data.risk_level)}</p>
+                <p><strong>Reported By:</strong> ${properties.reported_by || 'Barangay Office'}</p>
+                <p><strong>Identified:</strong> ${formatDate(properties.date_identified)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewFloodDetails(${data.hazard_id})">
+                View Flood Details
+            </button>
         </div>
     `;
 }
@@ -1379,22 +1343,19 @@ function createHousePopup(data) {
     return `
         <div class="popup-content">
             <h4>
-                <span>${data.house_number ? 'House #' + data.house_number : 'House'}</span>
+                <span>${data.address || 'House'}</span>
                 <span class="household-badge">Household</span>
             </h4>
-            <div class="popup-body">
-                <div class="popup-section">
-                    <p><strong>Address:</strong> ${data.address || 'Not specified'}</p>
-                    <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
-                </div>
-                <div class="popup-section">
-                    <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
-                    <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
-                </div>
-                <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
-                    View Full Details
-                </button>
+            <div class="popup-section">
+                <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
             </div>
+            <div class="popup-section">
+                <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
+                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
+            </div>
+            <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
+                View Full Details
+            </button>
         </div>
     `;
 }
@@ -2149,7 +2110,7 @@ async function showFaultLineRiskAssessment() {
                             <span style="font-size:11px;color:#aaa;">/ 200m</span>
                         </div>
                     </div>
-                    ${s.house_number ? `<div style="color:#888;margin-bottom:6px;">House #${s.house_number}</div>` : ''}
+                    ${s.address ? `<div style="color:#888;margin-bottom:6px;">${s.address}</div>` : ''}
                     ${s.requirements?.length ? `
                     <div style="background:#f5f5f5;border-left:3px solid #00247c;padding:10px 12px;border-radius:4px;margin-top:6px;">
                         <strong style="color:#00247c;font-size:11px;">REQUIRED ACTIONS:</strong>
@@ -2635,7 +2596,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== MAP INITIALIZATION ====================
 
-map.whenReady(function() {
+map.whenReady(async function() {
     // Create a dedicated pane for the boundary polygon that sits BELOW all flood panes.
     // pointerEvents: 'none' ensures the boundary fill never intercepts clicks meant for
     // flood zones, markers, or other interactive layers drawn above it.
@@ -2645,17 +2606,43 @@ map.whenReady(function() {
         map.getPane('boundaryPane').style.pointerEvents = 'none';
     }
 
-    // Add barangay boundary polygon into the non-interactive boundary pane
-    const barangayBoundary = L.geoJSON(blueRidgeGeoJSON, {
-        style: {
-            color: '#00247C',
-            weight: 3,
-            fillColor: '#667eea',
-            fillOpacity: 0.1,
-            dashArray: '5, 5'
-        },
-        pane: 'boundaryPane'
-    }).addTo(map);
+    // Load boundary from database
+    try {
+        const fd = new FormData();
+        fd.append('action', 'get_boundaries');
+        const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success && data.boundaries && data.boundaries.length > 0) {
+            const b      = data.boundaries[0];
+            const coords = typeof b.coordinates === 'string'
+                ? JSON.parse(b.coordinates)
+                : b.coordinates;
+            blueRidgeGeoJSON = {
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    properties: { name: b.name },
+                    geometry: { type: 'Polygon', coordinates: [coords] }
+                }]
+            };
+        }
+    } catch(e) {
+        console.warn('Could not load boundary from DB:', e);
+    }
+
+    // Draw boundary polygon if available
+    if (blueRidgeGeoJSON) {
+        L.geoJSON(blueRidgeGeoJSON, {
+            style: {
+                color: '#00247C',
+                weight: 3,
+                fillColor: '#667eea',
+                fillOpacity: 0.1,
+                dashArray: '5, 5'
+            },
+            pane: 'boundaryPane'
+        }).addTo(map);
+    }
     
     // ============= ADD FAULT LINE (CORRECTED COORDINATES) =============
     const faultLineCoordinates = [
@@ -2798,6 +2785,15 @@ map.whenReady(function() {
 // ==================== BOUNDARY FUNCTIONS ====================
 
 function setupSoftBoundary() {
+    // Always enforce zoom limits regardless of whether boundary is loaded
+    map.setMinZoom(18);
+    map.setMaxZoom(20);
+
+    if (!blueRidgeGeoJSON) {
+        console.warn('No boundary loaded — pan lock skipped');
+        addBoundaryNotification();
+        return;
+    }
     const bounds = L.geoJSON(blueRidgeGeoJSON).getBounds();
     const softBounds = bounds.pad(0.15);
     const warningBounds = bounds.pad(0.05);
@@ -2858,26 +2854,6 @@ function setupSoftBoundary() {
             }
         }
     });
-    
-    // Add second boundary polygon to the non-interactive boundary pane (same pane as above).
-    // interactive: false also disables click/hover on this layer entirely.
-    L.geoJSON(blueRidgeGeoJSON, {
-        style: {
-            color: '#00247C',
-            weight: 3,
-            fillColor: '#667eea',
-            fillOpacity: 0.1,
-            dashArray: '5, 5'
-        },
-        pane: 'boundaryPane',
-        interactive: false,
-        onEachFeature: function(feature, layer) {
-            layer.bindPopup(`<strong>${feature.properties.name}</strong><br>Barangay Boundary`);
-        }
-    }).addTo(map);
-    
-    map.setMinZoom(18);
-    map.setMaxZoom(20);
     
     addBoundaryNotification();
 }

@@ -295,31 +295,6 @@ function createInitialDSSEvaluation($pdo, $applicationId)
     }
 }
 
-/**
- * Fetches business applications with role-based access control
- * Staff users can see all applications, regular users only see their own
- * Includes DSS evaluation details and summary information
- * 
- * @param PDO $pdo Database connection object
- */
-// function handleFetchApplications($pdo)
-// {
-//     try {
-//         $sql = "SELECT ba.* 
-//                 FROM business_applications ba
-//                 ORDER BY ba.created_at DESC";
-//         $stmt = $pdo->prepare($sql);
-//         $stmt->execute();
-        
-//         $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-//         echo json_encode(["status" => "success", "data" => $applications]);
-        
-//     } catch (PDOException $e) {
-//         error_log("Fetch Error in handleFetchApplications: " . $e->getMessage());
-//         echo json_encode(["status" => "error", "message" => "Fetch Error: " . $e->getMessage()]);
-//     }
-// }
 
 /**
  * Returns a summary object for a given DSS status with icon, message, and color

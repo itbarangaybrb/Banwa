@@ -290,6 +290,20 @@ const validationConfig = [
     { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } }
 ];
 
+// ================== OCR VERIFICATION CONFIG (EDIT AS NEEDED) ==================
+// These are fallbacks only — the real matching happens in your analyze_files() $KEYWORDS array
+const requirementKeywords = {
+    'SEC': ['securities and exchange commission', 'sec registration', 'certificate of registration', 'articles of incorporation'],
+    'DTI': ['department of trade and industry', 'dti registration', 'business name registration'],
+    'TCT': ['transfer certificate of title', 'tct no.', "owner's duplicate copy"],
+    'Lease Contract': ['contract of lease', 'lease agreement', 'lessor', 'lessee'],
+    'Previous Business Permit': ['business permit', "mayor's permit", 'barangay business clearance', 'business clearance']
+    // ← ADD MORE HERE when you add new requirement types
+};
+
+// let documentVerificationDone = false;
+// const BUSINESS_NAME_FIELD = document.getElementById('businessName');
+
 /**
  * Validates a single form field based on its configuration
  * @param {Object} config - Validation configuration object
@@ -401,10 +415,16 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     ].filter(Boolean);
 
     if (!validator.address(businessLotNo, businessStreet)) return;
+        if (!validateStep(stepFields)) return;
 
-    if (!validateStep(stepFields)) return;
+        // Soft reminder if not verified
+        if (requirementUpload.files.length > 0 && !documentVerificationDone) {
+            if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
+                return;
+            }
+        }
 
-    switchPanel('waiver');
+        switchPanel('waiver');
 });
 
 /**
@@ -691,6 +711,131 @@ newSummaryForm.addEventListener('submit', async function (e) {
             });
     }
 });
+
+// ====================== OCR DOCUMENT VERIFICATION ======================
+
+let documentVerificationDone = false;
+const BUSINESS_NAME_FIELD = document.getElementById('businessName');
+
+// Show section + auto-verify exactly 1 second after file selection
+requirementUpload.addEventListener('change', () => {
+    if (requirementUpload.files.length > 0) {
+        document.getElementById('verificationSection').style.display = 'block';
+        setTimeout(verifyUploadedDocuments, 1000);
+    }
+});
+
+document.getElementById('verifyDocumentsBtn').addEventListener('click', verifyUploadedDocuments);
+
+async function verifyUploadedDocuments() {
+    const verifyBtn = document.getElementById('verifyDocumentsBtn');
+    const resultsDiv = document.getElementById('verificationResults');
+
+    const selectedReqs = Array.from(document.querySelectorAll('input[name="requirements"]:checked'))
+        .map(cb => cb.value);
+
+    if (selectedReqs.length === 0) {
+        resultsDiv.innerHTML = `<p style="color:#e74c3c;">Please select at least one requirement first.</p>`;
+        return;
+    }
+
+    verifyBtn.textContent = '🔍 Running OCR...';
+    verifyBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('action', 'analyze_documents');
+
+    for (let file of requirementUpload.files) {
+        formData.append('documents[]', file);
+    }
+    selectedReqs.forEach(req => formData.append('requirements[]', req));
+
+    try {
+        const res = await fetch(BUSINESS_HANDLER_URL, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.status === 'success' && data.analysis) {
+            renderVerificationResults(data.analysis, selectedReqs);
+            documentVerificationDone = true;
+        } else {
+            throw new Error(data.message || 'OCR service returned error');
+        }
+    } catch (err) {
+        console.error('OCR Error:', err);
+        resultsDiv.innerHTML = `
+            <p style="color:#e74c3c; font-weight:600;">❌ OCR Verification Failed</p>
+            <p style="color:#666; font-size:0.9em;">Error: ${err.message}</p>
+            <p style="color:#e67e22;">You can still submit — staff will review manually.</p>
+        `;
+    } finally {
+        verifyBtn.textContent = 'Re-Verify Documents with OCR';
+        verifyBtn.disabled = false;
+    }
+}
+
+function renderVerificationResults(analysis, selectedReqs) {
+    const div = document.getElementById('verificationResults');
+    let html = `<strong style="color:#1e40af;">OCR Results:</strong><br><br>`;
+
+    const businessName = (BUSINESS_NAME_FIELD.value || '').toLowerCase().trim();
+    let overallGood = true;
+    let debugSnippet = 'No text extracted from any file.';   // ← SAFE DEFAULT
+
+    selectedReqs.forEach(reqType => {
+        let reqMatched = false;
+        let nameMatched = false;
+
+        analysis.results.forEach(result => {
+            const textLower = (result.text || '').toLowerCase();
+            if (textLower) debugSnippet = textLower.substring(0, 350) + '...';
+
+            // Backend keyword detection
+            if (result.detected && result.detected.includes(reqType)) {
+                reqMatched = true;
+            }
+
+            // Extra business name cross-check
+            if (businessName && textLower.includes(businessName)) {
+                nameMatched = true;
+            }
+        });
+
+        const statusIcon = reqMatched ? '✅' : '⚠️';
+        const statusColor = reqMatched ? '#16a34a' : '#ea580c';
+
+        const nameStatus = businessName 
+            ? (nameMatched ? `<span style="color:#16a34a;">✓ Business name found</span>` 
+                           : `<span style="color:#ea580c;">⚠️ Business name NOT found</span>`)
+            : '';
+
+        html += `
+            <div style="background:#fff; padding:12px; margin:8px 0; border-radius:8px; border-left:4px solid ${statusColor};">
+                <strong>${reqType}</strong> ${statusIcon}<br>
+                ${nameStatus}<br>
+                ${!reqMatched ? `<small style="color:#666;">Keywords not detected — staff will review.</small>` : ''}
+            </div>`;
+
+        if (!reqMatched) overallGood = false;
+    });
+
+    if (overallGood) {
+        html += `<p style="color:#16a34a; margin-top:15px; font-weight:600;">🎉 All documents look valid!</p>`;
+    } else {
+        html += `<p style="color:#ea580c; margin-top:12px;">Some documents need staff review but you can proceed.</p>`;
+    }
+
+    // Debug info (always safe now)
+    html += `<details style="margin-top:15px; font-size:0.8em; color:#64748b;">
+        <summary>Debug: Extracted text snippet</summary>
+        <pre style="background:#f1f5f9; padding:10px; overflow:auto; font-size:0.75em; white-space:pre-wrap;">${debugSnippet}</pre>
+    </details>`;
+
+    div.innerHTML = html;
+}
 
 /**
  * Opens an interactive map modal for location selection

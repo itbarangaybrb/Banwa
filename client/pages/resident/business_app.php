@@ -257,7 +257,22 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                 </div>
-                <!-- OCR now runs asynchronously on upload; no resident-side OCR button -->
+                
+                <!-- NEW: OCR Document Verification Section -->
+                <div class="label-and-input verification-container" id="verificationSection" style="display:none; margin-top:20px; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+                    <label class="label" style="margin-bottom:12px; display:block;">
+                        📋 OCR Document Verification
+                    </label>
+                    <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
+                    
+                    <button type="button" id="verifyDocumentsBtn" class="btn-secondary" style="width:100%; padding:12px;">
+                        Re-Verify Documents with OCR
+                    </button>
+                    
+                    <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">
+                        Auto-checks 1 second after upload. Business name is also cross-checked in the documents.
+                    </small>
+                </div>
 
                 <div class="buttons-container">
                     <button type="button" id="businessBackBtn">Back</button>

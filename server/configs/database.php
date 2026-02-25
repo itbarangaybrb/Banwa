@@ -7,7 +7,7 @@
 $host = 'localhost';
 $db   = 'capstone';
 $user = 'postgres';
-$pass = 'lancelance';
+$pass = '080702';
 $port = '5432';
 
 if (!extension_loaded('pdo_pgsql')) {
