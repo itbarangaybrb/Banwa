@@ -384,7 +384,7 @@ function handleUpdateStatus($pdo)
         // Write audit log for status update
         writeAuditLog(
             $pdo,
-            strtoupper($newStatus),
+            'STATUS UPDATED',
             'construction_applications',
             $id,
             $oldData,

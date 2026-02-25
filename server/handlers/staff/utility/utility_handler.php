@@ -145,12 +145,12 @@ function handleCreateApplication($pdo)
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
-        
+
         // Get the newly created application data for audit log
         $newStmt = $pdo->prepare("SELECT * FROM utility_applications WHERE id = :id");
         $newStmt->execute([':id' => $applicationId]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         createInitialDSSEvaluation($pdo, $applicationId);
 
         // Write audit log for CREATE action
@@ -253,7 +253,7 @@ function handleUpdateStatus($pdo)
         // Write audit log for status update
         writeAuditLog(
             $pdo,
-            strtoupper($newStatus),
+            'STATUS UPDATED',
             'utility_applications',
             $id,
             $oldData,

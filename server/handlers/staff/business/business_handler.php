@@ -423,7 +423,7 @@ function handleUpdateStatus($pdo)
 
         writeAuditLog(
             $pdo,
-            strtoupper($newStatus),
+            'STATUS UPDATED',
             'business_applications',
             $id,
             $oldData,
