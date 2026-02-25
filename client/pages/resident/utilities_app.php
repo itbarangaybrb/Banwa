@@ -38,7 +38,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <section class="sections">
         <div class="header-and-parag">
-            <h4>Utiliies Clearance</h4>
+            <h4>Utilies Clearance</h4>
             <p>Select a size from the navigation menu to view product details.</p>
         </div>
 
