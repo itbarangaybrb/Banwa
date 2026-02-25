@@ -301,6 +301,15 @@ const requirementKeywords = {
     // ← ADD MORE HERE when you add new requirement types
 };
 
+// ================== PER-REQUIREMENT NAME CHECKING RULES ==================
+const requirementNameRules = {
+    'DTI': 'business',           // must contain business name
+    'TCT': 'owner',              // must contain owner name
+    'Lease Contract': 'owner',   // must contain owner name
+    'SEC': 'either',             // business OR owner name
+    'Previous Business Permit': 'either'
+};
+
 // let documentVerificationDone = false;
 // const BUSINESS_NAME_FIELD = document.getElementById('businessName');
 
@@ -717,6 +726,15 @@ newSummaryForm.addEventListener('submit', async function (e) {
 let documentVerificationDone = false;
 const BUSINESS_NAME_FIELD = document.getElementById('businessName');
 
+// Get full owner name for cross-checking
+function getFullOwnerName() {
+    const first = (document.getElementById('firstName').value || '').trim();
+    const middle = (document.getElementById('middleName').value || '').trim();
+    const last = (document.getElementById('lastName').value || '').trim();
+    const suffix = (document.getElementById('suffix').value || '').trim();
+    return [first, middle, last, suffix].filter(Boolean).join(' ').toLowerCase();
+}
+
 // Show section + auto-verify exactly 1 second after file selection
 requirementUpload.addEventListener('change', () => {
     if (requirementUpload.files.length > 0) {
@@ -739,31 +757,46 @@ async function verifyUploadedDocuments() {
         return;
     }
 
-    verifyBtn.textContent = '🔍 Running OCR...';
+    const total = requirementUpload.files.length;
+    if (total > 5) {
+        alert("Maximum 5 files allowed for verification.");
+        return;
+    }
+
+    verifyBtn.textContent = `Processing file 1 of ${total}...`;
     verifyBtn.disabled = true;
 
-    const formData = new FormData();
-    formData.append('action', 'analyze_documents');
-
-    for (let file of requirementUpload.files) {
-        formData.append('documents[]', file);
-    }
-    selectedReqs.forEach(req => formData.append('requirements[]', req));
+    let allResults = { results: [] };
 
     try {
-        const res = await fetch(BUSINESS_HANDLER_URL, {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-        const data = await res.json();
+        for (let i = 0; i < total; i++) {
+            const file = requirementUpload.files[i];
+            verifyBtn.textContent = `OCR on file ${i+1}/${total}: ${file.name}`;
 
-        if (data.status === 'success' && data.analysis) {
-            renderVerificationResults(data.analysis, selectedReqs);
-            documentVerificationDone = true;
-        } else {
-            throw new Error(data.message || 'OCR service returned error');
+            const formData = new FormData();
+            formData.append('action', 'analyze_documents');
+            formData.append('requirementUpload[]', file);   // ← matches your main upload name
+            selectedReqs.forEach(r => formData.append('requirements[]', r));
+
+            const res = await fetch(BUSINESS_HANDLER_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            const raw = await res.text();
+            if (!raw.trim()) throw new Error('Empty response from server');
+
+            const data = JSON.parse(raw);
+
+            if (data.status === 'success' && data.analysis) {
+                allResults.results = allResults.results.concat(data.analysis.results || []);
+            }
         }
+
+        renderVerificationResults(allResults, selectedReqs);
+        documentVerificationDone = true;
+
     } catch (err) {
         console.error('OCR Error:', err);
         resultsDiv.innerHTML = `
@@ -777,65 +810,75 @@ async function verifyUploadedDocuments() {
     }
 }
 
+
 function renderVerificationResults(analysis, selectedReqs) {
     const div = document.getElementById('verificationResults');
-    let html = `<strong style="color:#1e40af;">OCR Results:</strong><br><br>`;
+    let html = `<strong style="color:#1e40af;">OCR Results (per file):</strong><br><br>`;
 
     const businessName = (BUSINESS_NAME_FIELD.value || '').toLowerCase().trim();
+    const ownerName = getFullOwnerName();
     let overallGood = true;
-    let debugSnippet = 'No text extracted from any file.';   // ← SAFE DEFAULT
 
-    selectedReqs.forEach(reqType => {
-        let reqMatched = false;
-        let nameMatched = false;
+    analysis.results.forEach((result, index) => {
+        const filename = result.filename || `File ${index + 1}`;
+        const textLower = (result.text || '').toLowerCase();
+        const detected = result.detected || [];
 
-        analysis.results.forEach(result => {
-            const textLower = (result.text || '').toLowerCase();
-            if (textLower) debugSnippet = textLower.substring(0, 350) + '...';
+        let fileStatus = [];
 
-            // Backend keyword detection
-            if (result.detected && result.detected.includes(reqType)) {
-                reqMatched = true;
+        selectedReqs.forEach(reqType => {
+            const rule = requirementNameRules[reqType] || 'either';
+            let nameMatched = false;
+
+            // Smart name check based on rule
+            if (rule === 'business' && businessName) {
+                nameMatched = textLower.includes(businessName);
+            } else if (rule === 'owner' && ownerName) {
+                nameMatched = textLower.includes(ownerName);
+            } else if (rule === 'either') {
+                nameMatched = (businessName && textLower.includes(businessName)) ||
+                              (ownerName && textLower.includes(ownerName));
             }
 
-            // Extra business name cross-check
-            if (businessName && textLower.includes(businessName)) {
-                nameMatched = true;
-            }
+            // Keyword detection from backend
+            const keywordMatched = detected.includes(reqType);
+
+            const finalMatch = keywordMatched && nameMatched;
+
+            if (!finalMatch) overallGood = false;
+
+            fileStatus.push(`
+                <div style="margin:4px 0;">
+                    <strong>${reqType}</strong>: 
+                    ${keywordMatched ? '✅ Keywords' : '⚠️ Keywords'} 
+                    ${nameMatched ? '✅ Name' : '⚠️ Name'}
+                </div>
+            `);
         });
 
-        const statusIcon = reqMatched ? '✅' : '⚠️';
-        const statusColor = reqMatched ? '#16a34a' : '#ea580c';
-
-        const nameStatus = businessName 
-            ? (nameMatched ? `<span style="color:#16a34a;">✓ Business name found</span>` 
-                           : `<span style="color:#ea580c;">⚠️ Business name NOT found</span>`)
-            : '';
-
         html += `
-            <div style="background:#fff; padding:12px; margin:8px 0; border-radius:8px; border-left:4px solid ${statusColor};">
-                <strong>${reqType}</strong> ${statusIcon}<br>
-                ${nameStatus}<br>
-                ${!reqMatched ? `<small style="color:#666;">Keywords not detected — staff will review.</small>` : ''}
+            <div style="background:#fff; padding:14px; margin:10px 0; border-radius:8px; border:1px solid #e2e8f0;">
+                <strong>${filename}</strong><br>
+                ${fileStatus.join('')}
+                
+                <details style="margin-top:10px; font-size:0.82em; color:#64748b;">
+                    <summary>Show extracted text</summary>
+                    <pre style="background:#f8fafc; padding:10px; overflow:auto; max-height:180px; font-size:0.78em;">
+${(result.text || 'No text extracted').substring(0, 900)}${(result.text || '').length > 900 ? '...' : ''}
+                    </pre>
+                </details>
             </div>`;
-
-        if (!reqMatched) overallGood = false;
     });
 
     if (overallGood) {
-        html += `<p style="color:#16a34a; margin-top:15px; font-weight:600;">🎉 All documents look valid!</p>`;
+        html += `<p style="color:#16a34a; margin-top:15px; font-weight:600;">🎉 All requirements verified with correct names!</p>`;
     } else {
-        html += `<p style="color:#ea580c; margin-top:12px;">Some documents need staff review but you can proceed.</p>`;
+        html += `<p style="color:#ea580c; margin-top:12px;">Some requirements need staff review but you can proceed.</p>`;
     }
-
-    // Debug info (always safe now)
-    html += `<details style="margin-top:15px; font-size:0.8em; color:#64748b;">
-        <summary>Debug: Extracted text snippet</summary>
-        <pre style="background:#f1f5f9; padding:10px; overflow:auto; font-size:0.75em; white-space:pre-wrap;">${debugSnippet}</pre>
-    </details>`;
 
     div.innerHTML = html;
 }
+
 
 /**
  * Opens an interactive map modal for location selection
