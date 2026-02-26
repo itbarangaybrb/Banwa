@@ -182,51 +182,59 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set first thumbnail as active by default
         thumbs[0].classList.add('active');
     }
-    
+
     // ======================
-    // 3. SERVICES SECTION
+    // SERVICE CARDS - OPEN MODAL (UPDATED)
     // ======================
-    const serviceCards = document.querySelectorAll('.service-card');
-    const allDetails = document.querySelectorAll('.service-instructions');
-    
-    // Hide all service details initially except default
-    allDetails.forEach(detail => {
-        if (detail.id !== 'defaultDetails') {
-            detail.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        const serviceCards = document.querySelectorAll('.service-h-card');
+        const authModal = document.getElementById('authModal');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        
+        // Function to open modal (USING CLASS, NOT STYLE)
+        function openModal() {
+            if (authModal) {
+                authModal.classList.add('show');  // Add the 'show' class
+                document.body.style.overflow = 'hidden';
+                console.log('Modal opened - show class added');
+            }
         }
-    });
-    
-    // Add click event to each service card
-    serviceCards.forEach(card => {
-        card.addEventListener('click', function() {
-            const serviceType = this.getAttribute('data-service');
-            
-            // Hide all details
-            allDetails.forEach(detail => {
-                detail.style.display = 'none';
-            });
-            
-            // Show the selected service details
-            const selectedDetails = document.getElementById(serviceType + 'Details');
-            if (selectedDetails) {
-                selectedDetails.style.display = 'block';
-            }
-            
-            // Add active class to selected card
-            serviceCards.forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-        });
         
-        // Add keyboard support
-        card.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
+        // Function to close modal
+        function closeModal() {
+            if (authModal) {
+                authModal.classList.remove('show');  // Remove the 'show' class
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Get Started button
+        if (getStartedBtn) {
+            getStartedBtn.addEventListener('click', openModal);
+        }
+        
+        // Service cards
+        serviceCards.forEach((card) => {
+            card.addEventListener('click', function(e) {
                 e.preventDefault();
-                this.click();
-            }
+                openModal();
+            });
         });
         
-        // Make cards focusable
-        card.setAttribute('tabindex', '0');
+        // Close button
+        const closeBtn = document.getElementById('closeModalBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        
+        // Click outside to close
+        if (authModal) {
+            authModal.addEventListener('click', function(e) {
+                if (e.target === authModal) {
+                    closeModal();
+                }
+            });
+        }
     });
     
     // ======================
@@ -248,20 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    // Optional: Add a function to show default service details
-    window.showDefaultService = function() {
-        allDetails.forEach(detail => {
-            detail.style.display = 'none';
-        });
-        const defaultDetails = document.getElementById('defaultDetails');
-        if (defaultDetails) {
-            defaultDetails.style.display = 'block';
-        }
-        serviceCards.forEach(card => {
-            card.classList.remove('active');
-        });
-    };
 });
 
 // Barangay Officials Carousel - SIMPLE SINGLE CARD LOOP
@@ -271,6 +265,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const indicators = document.querySelectorAll('.indicator');
     const prevBtn = document.querySelector('.carousel-nav.prev');
     const nextBtn = document.querySelector('.carousel-nav.next');
+    
+    // Only run if elements exist
+    if (!carouselTrack || !officialCards.length) return;
     
     let currentIndex = 0;
     const totalSlides = officialCards.length;
@@ -293,9 +290,11 @@ document.addEventListener('DOMContentLoaded', function() {
         officialCards[currentIndex].classList.add('active');
         
         // Update indicators
-        indicators.forEach((indicator, index) => {
-            indicator.classList.toggle('active', index === currentIndex);
-        });
+        if (indicators.length) {
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentIndex);
+            });
+        }
         
         // Re-enable animation
         setTimeout(() => {
@@ -304,26 +303,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Next button
-    nextBtn.addEventListener('click', function() {
-        currentIndex = (currentIndex + 1) % totalSlides;
-        updateCarousel();
-    });
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            currentIndex = (currentIndex + 1) % totalSlides;
+            updateCarousel();
+        });
+    }
     
     // Previous button
-    prevBtn.addEventListener('click', function() {
-        currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-        updateCarousel();
-    });
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        });
+    }
     
     // Indicators
-    indicators.forEach((indicator, index) => {
-        indicator.addEventListener('click', function() {
-            if (!isAnimating && currentIndex !== index) {
-                currentIndex = index;
-                updateCarousel();
-            }
+    if (indicators.length) {
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', function() {
+                if (!isAnimating && currentIndex !== index) {
+                    currentIndex = index;
+                    updateCarousel();
+                }
+            });
         });
-    });
+    }
     
     // Auto-rotate
     let carouselInterval = setInterval(() => {
@@ -333,17 +338,110 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Pause on hover
     const carouselContainer = document.querySelector('.officials-carousel');
-    carouselContainer.addEventListener('mouseenter', () => {
-        clearInterval(carouselInterval);
-    });
-    
-    carouselContainer.addEventListener('mouseleave', () => {
-        carouselInterval = setInterval(() => {
-            currentIndex = (currentIndex + 1) % totalSlides;
-            updateCarousel();
-        }, 4000);
-    });
+    if (carouselContainer) {
+        carouselContainer.addEventListener('mouseenter', () => {
+            clearInterval(carouselInterval);
+        });
+        
+        carouselContainer.addEventListener('mouseleave', () => {
+            carouselInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % totalSlides;
+                updateCarousel();
+            }, 4000);
+        });
+    }
     
     // Initialize
     updateCarousel();
+});
+
+// ======================
+// 5. FAQ ACCORDION
+// ======================
+document.addEventListener('DOMContentLoaded', function() {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+            // Toggle active class on question
+            this.classList.toggle('active');
+            
+            // Get the answer element
+            const answer = this.nextElementSibling;
+            
+            // Toggle active class on answer
+            if (answer) {
+                answer.classList.toggle('active');
+            }
+            
+            // Close other open FAQs (optional - remove if you want multiple open)
+            faqQuestions.forEach(otherQuestion => {
+                if (otherQuestion !== this && otherQuestion.classList.contains('active')) {
+                    otherQuestion.classList.remove('active');
+                    if (otherQuestion.nextElementSibling) {
+                        otherQuestion.nextElementSibling.classList.remove('active');
+                    }
+                }
+            });
+        });
+    });
+});
+
+// ======================
+// 6. AUTH MODAL FUNCTIONALITY
+// ======================
+document.addEventListener('DOMContentLoaded', function() {
+    const authModal = document.getElementById('authModal');
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    
+    if (getStartedBtn) {
+        getStartedBtn.addEventListener('click', function() {
+            if (authModal) {
+                authModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        });
+    }
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function() {
+            if (authModal) {
+                authModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    if (authModal) {
+        authModal.addEventListener('click', function(e) {
+            if (e.target === authModal) {
+                authModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    
+    // Toggle between signup and login
+    const showSignupBtn = document.getElementById('showSignupBtn');
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    const signupPanel = document.getElementById('signupPanel');
+    const loginPanel = document.getElementById('loginPanel');
+    
+    if (showSignupBtn && showLoginBtn && signupPanel && loginPanel) {
+        showSignupBtn.addEventListener('click', function() {
+            showSignupBtn.classList.add('active');
+            showLoginBtn.classList.remove('active');
+            signupPanel.classList.remove('hidden');
+            loginPanel.classList.add('hidden');
+        });
+        
+        showLoginBtn.addEventListener('click', function() {
+            showLoginBtn.classList.add('active');
+            showSignupBtn.classList.remove('active');
+            loginPanel.classList.remove('hidden');
+            signupPanel.classList.add('hidden');
+        });
+    }
 });
