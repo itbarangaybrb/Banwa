@@ -71,7 +71,8 @@
                                     <span class="hours-status"></span>
                                     <div class="hours-tooltip">
                                         <div class="hours-schedule">
-                                            <h4>Barangay Office Hours</h4>
+                                            <h4>Onsite Office Hours</h4>
+                                            
                                             <div class="schedule-item">
                                                 <span class="days">Monday - Friday</span>
                                                 <span class="time">8:00 AM - 5:00 PM</span>
@@ -107,110 +108,127 @@
                 <p>Your gateway to convenient access and management of municipal services.</p>
         </section> -->
 
-        <section data-theme="white">
+        <section data-theme="white" class="services-section">
             <div class="cont">
-                <div class="quick_align">
-                    <h2>Our Services</h2>
+                <!-- Section Header with 24/7 prominence -->
+                <div class="services-header">
+                    <div class="header-badge">
+                        <span class="live-chip">
+                            <span class="pulse-dot"></span>
+                            ONLINE 24/7
+                        </span>
+                        <h2>Barangay Services</h2>
+                    </div>
+                    <p class="header-description">All services available online 24 hours a day, 7 days a week.</p>
                 </div>
-                
-                <!-- Service Details Panel -->
-                <div class="service-details-panel" id="serviceDetails">
 
-                    <div class="services-grid">
-                        <!-- Construction Clearance Card -->
-                        <div class="service-card" data-service="construction">
-                            <h6 class="service-text">Construction Clearance</h6>
+                <!-- 3 Horizontal Cards -->
+                <div class="services-horizontal">
+                    <!-- Card 1: Construction Clearance -->
+                    <button class="service-h-card" id="getStartedBtn">
+                        <div class="card-icon-wrapper">
+                            <div class="card-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M2 20L22 20" stroke-linecap="round"/>
+                                    <rect x="4" y="9" width="16" height="11" rx="1" stroke="currentColor"/>
+                                    <path d="M8 6L12 3L16 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
                         </div>
                         
-                        <!-- Business Clearance Card -->
-                        <div class="service-card" data-service="business">
-                            <h6 class="service-text">Business Clearance</h6>
-                        </div>
-                        
-                        <!-- Utilities Services Card -->
-                        <div class="service-card" data-service="utilities">
-                            <h6 class="service-text">Utilities Services</h6>
-                        </div>
-                    </div>
+                        <h3>Construction Clearance</h3>
+                        <p class="card-subtitle">For home repairs, renovations, and new construction</p>
 
-                    <div class="details-content">
-                        <div id="constructionDetails" class="service-instructions" style="display: none;">
-                            <h3>Construction Clearance</h3>
-                            <p>Submit construction-related requests for barangay monitoring and documentation.</p>
-                            <button class="close-btn" onclick="showDefaultService()">
-                                Back to Services
-                            </button>
-                            
-                            <div class="instructions-list">
-                                <h4>Requirements:</h4>
-                                <ul>
-                                    <li>Notify the barangay about house repairs, renovations, or construction</li>
-                                    <li>Submit basic details (location, type of work, duration)</li>
-                                    <li>Complying with barangay guidelines for safe construction</li>
-                                    <li>Help maintain community awareness on ongoing works</li>
-                                </ul>
+                        <div class="card-preview-content">
+                            <div class="preview-header">
+                                <span class="preview-title">Requirements</span>
+                                <span class="preview-count">4 items</span>
                             </div>
-                            
-                            <div class="action-buttons">
-                                <a href="pages/auth/signin.php" class="apply-btn">Request</a>
+                            <ul class="preview-list">
+                                <li>✓ Valid government ID</li>
+                                <li>✓ Proof of ownership</li>
+                                <li>✓ Construction plan</li>
+                                <li>✓ Community tax cert</li>
+                            </ul>
+                            <div class="preview-footer">
+                                <span class="preview-cta">Proceed →</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Card 2: Business Clearance -->
+                    <button class="service-h-card">
+                        <!-- same content, just change opening/closing tags -->
+                        <div class="card-icon-wrapper">
+                            <div class="card-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="7" width="18" height="14" rx="2" stroke="currentColor"/>
+                                    <path d="M16 3L16 7" stroke="currentColor" stroke-linecap="round"/>
+                                    <path d="M8 3L8 7" stroke="currentColor" stroke-linecap="round"/>
+                                    <path d="M8 13L16 13" stroke="currentColor" stroke-linecap="round"/>
+                                </svg>
                             </div>
                         </div>
                         
-                        <div id="businessDetails" class="service-instructions" style="display: none;">
-                            <h3>Business Clearance</h3>
-                            <p>Apply for business permits and clearances to operate within the barangay.</p>
-                            <button class="close-btn" onclick="showDefaultService()">
-                                Back to Services
-                            </button>
-                            
-                            <div class="instructions-list">
-                                <h4>Requirements:</h4>
-                                <ul>
-                                    <li>Valid business registration documents</li>
-                                    <li>Proof of business location within barangay</li>
-                                    <li>Barangay clearance application form</li>
-                                    <li>Payment of necessary fees</li>
-                                    <li>Compliance with barangay ordinances</li>
-                                </ul>
+                        <h3>Business Clearance</h3>
+                        <p class="card-subtitle">Permits for new businesses and renewals</p>
+
+                        <div class="card-preview-content">
+                            <div class="preview-header">
+                                <span class="preview-title">Requirements</span>
+                                <span class="preview-count">4 items</span>
                             </div>
-                            
-                            <div class="action-buttons">
-                                <a href="pages/auth/signin.php" class="apply-btn">Request</a>
+                            <ul class="preview-list">
+                                <li>✓ Valid government ID</li>
+                                <li>✓ DTI/SEC registration</li>
+                                <li>✓ Proof of location</li>
+                                <li>✓ Community tax cert</li>
+                            </ul>
+                            <div class="preview-footer">
+                                <span class="preview-cta">Proceed →</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Card 3: Utilities Services -->
+                    <button class="service-h-card">
+                        <!-- same content, just change opening/closing tags -->
+                        <div class="card-icon-wrapper">
+                            <div class="card-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="5" stroke="currentColor"/>
+                                    <path d="M12 2L12 7" stroke="currentColor" stroke-linecap="round"/>
+                                    <path d="M12 17L12 22" stroke="currentColor" stroke-linecap="round"/>
+                                    <path d="M22 12L17 12" stroke="currentColor" stroke-linecap="round"/>
+                                    <path d="M7 12L2 12" stroke="currentColor" stroke-linecap="round"/>
+                                </svg>
                             </div>
                         </div>
                         
-                        <div id="utilitiesDetails" class="service-instructions" style="display: none;">
-                            <h3>Utilities Services</h3>
-                            <p>Request utility connections, repairs, and maintenance services.</p>
-                            <button class="close-btn" onclick="showDefaultService()">
-                                Back to Services
-                            </button>
-                            
-                            <div class="instructions-list">
-                                <h4>Available Services:</h4>
-                                <ul>
-                                    <li>Water connection and disconnection requests</li>
-                                    <li>Electrical service applications</li>
-                                    <li>Internet and cable TV installations</li>
-                                    <li>Utility repair and maintenance requests</li>
-                                    <li>Billing inquiries and payment assistance</li>
-                                </ul>
+                        <h3>Utilities Services</h3>
+                        <p class="card-subtitle">Water, electricity, and emergency reports</p>
+
+                        <div class="card-preview-content">
+                            <div class="preview-header">
+                                <span class="preview-title">Services</span>
+                                <span class="preview-count">10+ options</span>
                             </div>
-                            
-                            <div class="action-buttons">
-                                <a href="pages/auth/signin.php" class="apply-btn">Request</a>
+                            <ul class="preview-list">
+                                <li>💧 Water connection</li>
+                                <li>⚡ Electrical repair</li>
+                                <li>🚨 Emergency reports</li>
+                                <li>📋 Billing inquiries</li>
+                            </ul>
+                            <div class="preview-footer">
+                                <span class="preview-cta">Proceed →</span>
                             </div>
                         </div>
-                        
-                        <div id="defaultDetails" class="service-instructions">
-                            <div class="welcome-message">
-                                <i class="fas fa-handshake"></i>
-                                <h3>Welcome to Our Services</h3>
-                                <p>Select a service above to view detailed information, requirements, and application procedures.</p>
-                                <p>Each service has specific instructions and links to help you complete your application efficiently.</p>
-                            </div>
-                        </div>
-                    </div>
+                    </button>
+                </div>
+
+                <!-- 24/7 Floating Notice (Optional) -->
+                <div class="always-open-note">
+                    <span><strong>Applications submitted outside office hours will be processed the next business day.</strong></span>
                 </div>
             </div>
         </section>
@@ -442,7 +460,160 @@
             </div>
         </section>
 
-        <section data-theme="white">
+        <section data-theme="white" class="faq-section">
+        <div class="cont">
+            <div class="quick_align">
+                <h2>Frequently Asked Questions</h2>
+                <p class="faq-subtitle">Find answers to common questions about our services</p>
+            </div>
+            
+            <div class="faq-container">
+                <!-- FAQ Category: General -->
+                <div class="faq-category">
+                    <h3 class="category-title">General Questions</h3>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What is BANWA?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>BANWA (Barangay Blue Ridge B Management System) is an online platform that allows residents to access barangay services, submit applications for clearances, report issues, and stay updated with barangay announcements from anywhere, anytime.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Is the website available 24/7?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Yes!</strong> While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week. You can submit applications, request documents, and report issues at any time.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Do I need to create an account to use the services?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Yes, you need to register for an account to access most services. This helps us verify your identity and ensure the security of your information. The registration process is simple and only takes a few minutes.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FAQ Category: Clearances -->
+                <div class="faq-category">
+                    <h3 class="category-title">Clearances & Permits</h3>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How long does it take to process a clearance?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Online clearance applications are typically processed within a few working days. You'll receive a notification via BANWA website once your clearance is ready for pickup or if there are any issues with your application.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What requirements do I need for Business Clearance?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <ul>
+                                <li>SEC (Securities and Exchange Commission) Registration</li>
+                                <li>DTI (Department of Trade and Industry) Registration</li>
+                                <li>TCT (Transfer Certificate of Title)</li>
+                                <li>Lease Contract</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can I track my application status?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Yes! After logging in, you can view the status of all your applications in your dashboard. Status updates include: Pending, Under Review, Approved, Ready for Pickup, and Completed.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FAQ Category: Technical -->
+                <div class="faq-category">
+                    <h3 class="category-title">Technical Support</h3>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>I forgot my password. How can I reset it?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Click on the "Forgot password?" link on the login page. Enter your registered email address, and we'll send you instructions to reset your password. If you don't receive the email within a few minutes, check your spam folder.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What file formats are accepted for ID upload?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>We accept JPG, JPEG, and PNG file formats. The maximum file size is 5MB. Make sure the image is clear and all information on the ID is readable.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Who can I contact for technical issues?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>For technical support, you can:<br>
+                            • Email us at support@banwa-bbrb.gov.ph<br>
+                            • Call our technical support hotline: +63 946 456 6986<br>
+                            • Visit the barangay hall during office hours and ask for the IT support staff</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FAQ Category: Payments -->
+                <div class="faq-category">
+                    <h3 class="category-title">Payments & Fees</h3>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What payment methods are accepted?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Currently, we accept:<br>
+                            • Cash payments at the barangay hall<br>
+                            • GCash (through our official account)<br>
+                            • Bank transfer receipt<br>
+                            Online payment options will be expanded soon!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Are there any fees for using the online system?</span>
+                            <span class="faq-icon">▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances and permits you apply for, just as you would when applying in person.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <section data-theme="blue">
             <div class="cont">
                 <div class="contact-content">
                     <div class="story-text">

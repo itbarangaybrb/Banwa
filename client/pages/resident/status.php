@@ -33,55 +33,32 @@ if ($_SESSION['role_id'] != 1) {
     include '_layout/nav.php';
     ?>
 
-    <section class="sections">
-        <div class="header-and-parag">
-            <h4>Current Status</h4>
-            <p>Track your ongoing applications</p>
-        </div>
+<section class="sections">
+    <div class="header-and-parag">
+        <h4>Current Status</h4>
+        <p>Track your ongoing applications and payment history</p>
+    </div>
 
-        <div class="containers status-table-container">
-            <table class="status-table">
-                <thead>
-                    <tr>
-                        <th style="width: 20%;">Reference Number</th>
-                        <th style="width: 35%;">Details</th>
-                        <th style="width: 20%;">Status</th>
-                        <th style="width: 25%;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="applicationTableBody">
-                    <tr>
-                        <td colspan="4" style="text-align:center; padding: 20px;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+    <!-- Tabs -->
+    <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="applications">Applications</button>
+        <button class="tab-btn" data-tab="payments">Payment History</button>
+    </div>
 
-    <section class="sections">
-        <div class="header-and-parag">
-            <h4>Payment History</h4>
-            <p>Past and Pending Payments</p>
-        </div>
+    <!-- Single Table -->
+    <div class="containers status-table-container">
+        <table class="status-table" id="mainStatusTable">
+            <thead id="tableHeader">
+                <!-- JS fills this -->
+            </thead>
+            <tbody id="mainTableBody">
+                <tr><td colspan="4" style="text-align:center; padding: 60px;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
 
-        <div class="containers status-table-container">
-            <table class="status-table">
-                <thead>
-                    <tr>
-                        <th style="width: 20%;">Transaction ID</th>
-                        <th style="width: 35%;">Details</th>
-                        <th style="width: 20%;">Status</th>
-                        <th style="width: 25%;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="paymentTableBody">
-                    <tr>
-                        <td colspan="4" style="text-align:center; padding: 20px;">Loading...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+    <!-- Modal -->
 
     <div class="modal" id="editModal">
         <div class="modal-content">

@@ -665,3 +665,54 @@ body {
 .remarks-close-btn-secondary:hover {
     background-color: #5a6268;
 }
+
+/* ============== TAB NAVIGATION ============== */
+.tab-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    max-width: 927px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tab-btn {
+    padding: 14px 32px;
+    border: none;
+    background: #f8f9fa;
+    color: #555;
+    font-weight: 600;
+    font-size: 15px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 180px;
+}
+
+.tab-btn.active {
+    background: var(--color-blue-2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 36, 124, 0.25);
+}
+
+.tab-btn:hover:not(.active) {
+    background: #e9ecef;
+    color: #333;
+}
+
+/* Underline accent */
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--color-blue-1);
+}
+
+/* Make sure the table container still looks perfect */
+.containers.status-table-container {
+    margin-top: 0;
+}
