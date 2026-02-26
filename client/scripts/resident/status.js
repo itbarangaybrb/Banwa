@@ -75,6 +75,57 @@ window.onclick = function (event) {
     else if (event.target == remarksModal) closeRemarksModal();
 };
 
+// =============================================
+// NEW: TAB SYSTEM FOR SINGLE TABLE VIEW
+ // =============================================
+let currentTab = 'applications';
+
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    if (!tabButtons.length) return;
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            currentTab = btn.dataset.tab;
+            loadCurrentTab();
+        });
+    });
+}
+
+async function loadCurrentTab() {
+    const tableBody = document.getElementById('mainTableBody');
+    const header = document.getElementById('tableHeader');
+
+    if (!tableBody || !header) return;
+
+    tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 60px;">Loading...</td></tr>`;
+
+    if (currentTab === 'applications') {
+        header.innerHTML = `
+            <tr>
+                <th style="width: 20%;">Reference Number</th>
+                <th style="width: 35%;">Details</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 25%;">Action</th>
+            </tr>
+        `;
+        await loadApplications();  
+    } else {
+        header.innerHTML = `
+            <tr>
+                <th style="width: 20%;">Transaction ID</th>
+                <th style="width: 35%;">Details</th>
+                <th style="width: 20%;">Status</th>
+                <th style="width: 25%;">Action</th>
+            </tr>
+        `;
+        await loadPayments();       
+    }
+}
+
 /**
  * Fetches application data and opens the edit modal with a simplified form
  * Supports Business, Construction, Utilities, and Incident Reports application types
@@ -799,7 +850,7 @@ async function handleSubmitPayment(event, appId) {
  * Sorts applications by most recent status update or request date
  */
 async function loadApplications() {
-    const tableBody = document.getElementById('applicationTableBody');
+    const tableBody = document.getElementById('mainTableBody');
     if (!tableBody) return;
 
     try {
@@ -933,7 +984,7 @@ async function loadApplications() {
  * Sorts payments by most recent payment date
  */
 async function loadPayments() {
-    const tableBody = document.getElementById('paymentTableBody');
+    const tableBody = document.getElementById('mainTableBody');
     if (!tableBody) return;
 
     try {
@@ -997,8 +1048,8 @@ async function loadPayments() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadApplications();
-    loadPayments();
+    initTabs();
+    loadCurrentTab();        // loads "Applications" tab by default
 });
 
 
