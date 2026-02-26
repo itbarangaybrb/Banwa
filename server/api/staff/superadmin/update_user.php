@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Includes database configuration and audit log functions.
  * Sets response type to JSON and starts a session if none exists.
@@ -40,6 +41,10 @@ $user_id  = $data['user_id'];
 $fullName = trim($data['full_name']);
 $email    = trim($data['email']);
 $role_id  = $data['role_id'];
+$lot_no   = trim($data['lot_no'] ?? '');
+$street   = trim($data['street'] ?? '');
+$latitude = trim($data['latitude'] ?? '');
+$longitude = trim($data['longitude'] ?? '');
 
 try {
 
@@ -52,7 +57,11 @@ try {
         UPDATE users 
         SET full_name = :full_name,
             email = :email,
-            role_id = :role_id
+            role_id = :role_id,
+            lot_no = :lot_no,
+            street = :street,
+            latitude = :latitude,
+            longitude = :longitude
         WHERE user_id = :user_id
     ");
 
@@ -60,13 +69,21 @@ try {
         ':full_name' => $fullName,
         ':email'     => $email,
         ':role_id'   => $role_id,
+        ':lot_no'    => $lot_no,
+        ':street'    => $street,
+        ':latitude'  => $latitude,
+        ':longitude' => $longitude,
         ':user_id'   => $user_id
     ]);
 
     $newData = [
         'full_name' => $fullName,
         'email'     => $email,
-        'role_id'   => $role_id
+        'role_id'   => $role_id,
+        'lot_no'    => $lot_no, 
+        'street'    => $street,  
+        'latitude'  => $latitude,
+        'longitude' => $longitude
     ];
 
     $_SESSION['full_name'] = $fullName;

@@ -112,7 +112,7 @@ if ($_SESSION['role_id'] != 2) {
                                     Name
                                 </span>
                             </th>
-                            <th id="emailFilter" class="th-filter"> 
+                            <th id="emailFilter" class="th-filter">
                                 <span class="th-content">
                                     <img src="../../../img/arrow-down-up-icon.svg" alt="">
                                     Email Address
@@ -173,11 +173,39 @@ if ($_SESSION['role_id'] != 2) {
                         <input type="password" id="retypePassword" name="retypePassword" autocomplete="new-password">
                         <div class="error-msg"></div>
                     </div>
+                    <div class="label-and-input">
+                        <label for="lotNo">Lot No. <span id="createLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <input type="text" id="lotNo" name="lotNo" maxlength="10">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="createStreet">Street Name <span id="createStreetRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <select name="street" id="createStreet">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
+                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
+                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
+                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
+                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
+                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
                 </div>
 
                 <div class="buttons-container">
-                    <button type="button" class="cancel-btn">Cancel</button>
-                    <button type="submit">Create</button>
+                    <button type="button" class="buttons cancel-btn">Cancel</button>
+                    <button type="submit" class="buttons">Create</button>
                 </div>
             </form>
         </div>
@@ -213,11 +241,42 @@ if ($_SESSION['role_id'] != 2) {
                         </select>
                         <div class="error-msg"></div>
                     </div>
+                    <div class="label-and-input">
+                        <label for="editLotNo">Lot No. <span id="editLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <input type="text" id="editLotNo" name="editLotNo" maxlength="10">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
+                        <label for="editStreet">Street Name <span id="editStreetRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <select name="street" id="editStreet">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
+                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
+                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
+                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
+                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
+                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
+                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
+                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
+                        </select>
+                        <div class="error-msg"></div>
+                    </div>
+                    <input type="hidden" id="editLatitude" name="latitude">
+                    <input type="hidden" id="editLongitude" name="longitude">
                 </div>
 
                 <div class="buttons-container">
-                    <button type="button" class="cancel-btn">Cancel</button>
-                    <button type="submit">Update</button>
+                    <button type="button" class="buttons cancel-btn">Cancel</button>
+                    <button type="button" class="buttons delete-btn" id="editArchiveBtn">Archive</button>
+                    <button type="submit" class="buttons">Update</button>
+                    <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button>
+                    <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button>
                 </div>
             </form>
         </div>
@@ -254,8 +313,8 @@ if ($_SESSION['role_id'] != 2) {
                 </div>
 
                 <div class="buttons-container">
-                    <button type="button" class="cancel-btn">Cancel</button>
-                    <button type="submit">Update</button>
+                    <button type="button" class="buttons" id="suspendBackBtn">Back</button>
+                    <button type="submit" class="buttons suspend-btn">Suspend</button>
                 </div>
             </form>
         </div>

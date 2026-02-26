@@ -22,10 +22,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const payload = {
-            supabase_user_id: user.id, // important for audit
+            supabase_user_id: user.id,
             email: user.email,
             full_name: metadata.fullname,
-            role_id: parseInt(metadata.role, 10) || 1 // ensure number
+            role_id: parseInt(metadata.role, 10) || 1,
+            lot_no: metadata.lot_no || '',
+            street: metadata.street || '',
+            latitude: metadata.latitude || '',
+            longitude: metadata.longitude || ''
         };
 
         const resp = await fetch("/Banwa/server/api/staff/superadmin/signup_user.php", {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Includes database configuration and audit log functions.
  * Sets response type to JSON.
@@ -25,19 +26,27 @@ try {
     $email = $data['email'];
     $full_name = $data['full_name'];
     $role_id = intval($data['role_id']);
+    $lot_no   = $data['lot_no'] ?? '';
+    $street   = $data['street'] ?? '';
+    $latitude  = $data['latitude'] ?? '';
+    $longitude = $data['longitude'] ?? '';
 
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare("
-        INSERT INTO users (supabase_user_id, email, full_name, role_id)
-        VALUES (:uid, :email, :name, :role)
+        INSERT INTO users (supabase_user_id, email, full_name, role_id, lot_no, street, latitude, longitude)
+        VALUES (:uid, :email, :name, :role, :lot_no, :street, :latitude, :longitude)
     ");
 
     $stmt->execute([
-        ':uid' => $supabase_user_id,
-        ':email' => $email,
-        ':name' => $full_name,
-        ':role' => $role_id
+        ':uid'       => $supabase_user_id,
+        ':email'     => $email,
+        ':name'      => $full_name,
+        ':role'      => $role_id,
+        ':lot_no'    => $lot_no,
+        ':street'    => $street,
+        ':latitude'  => $latitude,
+        ':longitude' => $longitude
     ]);
 
     $recordId = $pdo->lastInsertId();
@@ -56,9 +65,13 @@ try {
         null,
         [
             'supabase_user_id' => $supabase_user_id,
-            'email' => $email,
-            'full_name' => $full_name,
-            'role_id' => $role_id
+            'email'            => $email,
+            'full_name'        => $full_name,
+            'role_id'          => $role_id,
+            'lot_no'           => $lot_no,
+            'street'           => $street,
+            'latitude'         => $latitude,
+            'longitude'        => $longitude
         ],
         'USER CREATION'
     );

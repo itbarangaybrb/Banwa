@@ -35,8 +35,8 @@ $details = $user['reason_details'] ?? "Your account is temporarily suspended.";
 </head>
 <body>
   <div style="text-align: center;">
-    <h2 style="color: red; margin-bottom: 24px;">Account Suspended</h2>
-    <p style="margin-bottom: 8px;"><?php echo htmlspecialchars($reason); ?></p>
+    <h1 style="color: red; margin-bottom: 56px;">Account Suspended</h1>
+    <h3 style="margin-bottom: 8px;"><?php echo htmlspecialchars($reason); ?></h3>
     <p><?php echo htmlspecialchars($details); ?></p>
   </div>
 </body>

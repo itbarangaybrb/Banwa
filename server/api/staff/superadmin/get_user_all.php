@@ -14,7 +14,8 @@ require_once __DIR__ . '/../../../configs/database.php';
  */
 try {
     $stmt = $pdo->query("
-        SELECT user_id, full_name, email, role_id, is_archived, status, reason_details
+        SELECT user_id, full_name, email, role_id, is_archived, status, reason_details, 
+            street, lot_no
         FROM users
         ORDER BY full_name DESC
     ");

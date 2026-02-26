@@ -151,7 +151,7 @@
     margin-top: 8px;
 }
 
-.form-container .form .buttons-container button,
+/* .form-container .form .buttons-container button,
 .reason-buttons-container .reason-btn {
     border-radius: 6px;
     border: transparent;
@@ -167,10 +167,10 @@
 
 .form-container .form .buttons-container button {
     padding: 12px 24px;
-}
+} */
 
 /* Secondary */
-.form-container .form .buttons-container button:nth-child(1),
+/* .form-container .form .buttons-container button:nth-child(1),
 .reason-buttons-container .reason-btn {
     background-color: var(--light-blue);
     color: var(--primary-blue);
@@ -180,10 +180,10 @@
 .form-container .form .buttons-container button:nth-child(1):hover,
 .reason-buttons-container .reason-btn:hover {
     background-color: var(--soft-blue);
-}
+} */
 
 /* Primary – deep blue */
-.form-container .form .buttons-container button:nth-child(2) {
+/* .form-container .form .buttons-container button:nth-child(2) {
     background-color: var(--primary-blue);
     color: var(--white);
     box-shadow: 0 2px 4px rgba(25, 49, 107, 0.2);
@@ -193,7 +193,7 @@
     background-color: var(--primary-blue-hover);
     box-shadow: 0 4px 6px rgba(25, 49, 107, 0.3);
     transform: translateY(-1px);
-}
+} */
 
 /* Modal – deeper blue overlay */
 .modal {
@@ -224,10 +224,28 @@
     transition: all 0.2s ease;
 }
 
-.buttons:hover {
+.buttons:hover:not(.suspend-btn):not(.unsuspend-btn) {
     background-color: var(--light-blue);
     color: var(--primary-blue);
     border-color: var(--accent-blue);
+}
+
+.suspend-btn {
+    background-color: var(--suspend-red); 
+    color: var(--white);
+}
+
+.suspend-btn:hover {
+    background-color: #991b1b; /* Darker red on hover */
+}
+
+.unsuspend-btn {
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+}
+
+.unsuspend-btn:hover {
+    background-color: var(--soft-blue);
 }
 
 /* SweetAlert – blue theme */

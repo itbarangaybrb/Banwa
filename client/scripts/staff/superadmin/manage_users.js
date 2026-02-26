@@ -1,5 +1,6 @@
 import supabase from "../../../../server/api/supabase.js";
 import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 
 /**
  * Handles opening and closing of modals
@@ -80,14 +81,12 @@ async function fetchUsers() {
                                 data-id="${user.user_id}"
                                 data-fullname="${user.full_name}"
                                 data-email="${user.email}"
-                                data-role="${user.role_id}">
-                            Edit
+                                data-role="${user.role_id}"
+                                data-status="${user.status}"
+                                data-street="${user.street || ''}"
+                                data-lotno="${user.lot_no || ''}">
+                            Manage
                         </button>
-                        <button class="buttons delete-btn"
-                                data-id="${user.user_id}">
-                            Archive
-                        </button>
-                        ${suspendButton}
                     </div>
                 </td>
             `;
@@ -196,8 +195,20 @@ document.addEventListener('click', (e) => {
     form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
     form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
     form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
+    form.querySelector('[name="street"]').value = btn.dataset.street || '';
+    form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
 
     form.dataset.userId = btn.dataset.id;
+
+    const isSuspended = btn.dataset.status === 'suspended';
+    const suspendBtn = document.getElementById('editSuspendBtn');
+    const unsuspendBtn = document.getElementById('editUnsuspendBtn');
+    suspendBtn.style.display = isSuspended ? 'none' : '';
+    unsuspendBtn.style.display = isSuspended ? '' : 'none';
+
+    document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
+    suspendBtn.dataset.id = btn.dataset.id;
+    unsuspendBtn.dataset.id = btn.dataset.id;
 });
 
 /**
@@ -212,13 +223,30 @@ document.addEventListener('click', e => {
         if (!form) return;
 
         form.dataset.userId = userId;
-        form.closest('.modal')?.classList.add('active'); // open modal
+        document.getElementById('editModal')?.classList.remove('active');
+        form.closest('.modal')?.classList.add('active');
     }
 
     if (e.target.classList.contains('unsuspend-btn')) {
         const userId = e.target.dataset.id;
-        unsuspendUser(userId); // keep immediate
+        document.getElementById('editModal')?.classList.remove('active');
+        unsuspendUser(userId);
     }
+
+    if (e.target.id === 'editArchiveBtn') {
+        const userId = e.target.dataset.id;
+        document.getElementById('editModal')?.classList.remove('active');
+        archiveUser(userId);
+    }
+});
+
+/**
+ * Handles back button click in suspend modal.
+ * Closes suspend modal and reopens edit modal.
+ */
+document.getElementById('suspendBackBtn').addEventListener('click', () => {
+    document.getElementById('suspendModal').classList.remove('active');
+    document.getElementById('editModal').classList.add('active');
 });
 
 /**
@@ -365,12 +393,42 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    function validateAddress(lotInput, streetInput, latId, lngId) {
+        const lot = lotInput.value.trim();
+        const street = streetInput.value.trim();
+
+        if (!lot) { showError(lotInput, 'Lot no. is required'); return false; }
+        if (!street || street === 'select') { showError(streetInput, 'Street is required'); return false; }
+
+        const fullAddress = `${lot} ${street}`;
+        const match = addressCoordinates.find(a => a.address === fullAddress);
+
+        if (!match) {
+            showError(streetInput, 'Street does not exist for this lot');
+            return false;
+        }
+
+        clearError(lotInput);
+        clearError(streetInput);
+
+        const latEl = document.getElementById(latId);
+        const lngEl = document.getElementById(lngId);
+        if (latEl && lngEl) {
+            latEl.value = match.lat.toFixed(6);
+            lngEl.value = match.lng.toFixed(6);
+        }
+
+        return true;
+    }
+
+    // Update the return statement to expose it:
     return {
         text: validateText,
         email: validateEmail,
         password: validatePassword,
         matchPassword: validatePasswordMatches,
         select: validateSelect,
+        address: validateAddress,
         clear: clearError
     };
 })();
@@ -403,6 +461,39 @@ function createValidationConfig(form) {
                 break;
             case 'retypePassword':
                 config.push({ el: input, type: 'password', message: 'Please re-type password' });
+                break;
+            case 'street':   // ← NEW
+                config.push({
+                    el: input,
+                    type: 'select',
+                    message: 'Please select street',
+                    conditional: () => {
+                        const roleEl = form.querySelector('[name="role"]') ?? form.querySelector('[name="editRole"]');
+                        return roleEl?.value === '1';
+                    }
+                });
+                break;
+            case 'lotNo':
+                config.push({
+                    el: input,
+                    type: 'text',
+                    message: 'Lot no. is required',
+                    conditional: () => {
+                        const roleEl = form.querySelector('[name="role"]');
+                        return roleEl?.value === '1';
+                    }
+                });
+                break;
+            case 'editLotNo':
+                config.push({
+                    el: input,
+                    type: 'text',
+                    message: 'Lot no. is required',
+                    conditional: () => {
+                        const roleEl = form.querySelector('[name="editRole"]');
+                        return roleEl?.value === '1';
+                    }
+                });
                 break;
 
             // Edit form fields
@@ -438,6 +529,7 @@ function createValidationConfig(form) {
  */
 function validateField(config) {
     if (!config || !config.el) return false;
+    if (config.conditional && !config.conditional()) return true;
     const { el, type, message } = config;
     switch (type) {
         case 'text': return validator.text(el, message);
@@ -447,7 +539,6 @@ function validateField(config) {
         default: return true;
     }
 }
-
 /**
  * Validates all fields in a step
  * @param {Array} fields - Array of input elements
@@ -474,6 +565,35 @@ function realtimeValidation(config) {
     if (password && retype) {
         retype.addEventListener('blur', () => validator.matchPassword(password, retype));
         retype.addEventListener('input', () => validator.clear(retype));
+    }
+
+    // Address blur validation — only fires for resident role
+    const lotNo = config.find(c => c.el.name === 'lotNo')?.el;
+    const street = config.find(c => c.el.name === 'street' && c.el.closest('#createForm'))?.el;
+    if (lotNo && street) {
+        [lotNo, street].forEach(el => {
+            el.addEventListener('blur', () => {
+                const roleEl = document.getElementById('role');
+                if (roleEl?.value === '1' && lotNo.value && street.value) {
+                    validator.address(lotNo, street, 'latitude', 'longitude');
+                }
+            });
+            el.addEventListener('input', () => validator.clear(el));
+        });
+    }
+
+    const editLotNo = config.find(c => c.el.name === 'editLotNo')?.el;
+    const editStreet = config.find(c => c.el.name === 'street' && c.el.closest('#editForm'))?.el;
+    if (editLotNo && editStreet) {
+        [editLotNo, editStreet].forEach(el => {
+            el.addEventListener('blur', () => {
+                const roleEl = document.getElementById('editRole');
+                if (roleEl?.value === '1' && editLotNo.value && editStreet.value) {
+                    validator.address(editLotNo, editStreet, 'editLatitude', 'editLongitude');
+                }
+            });
+            el.addEventListener('input', () => validator.clear(el));
+        });
     }
 }
 
@@ -508,6 +628,13 @@ async function handleCreateFormSubmit(form) {
     const formMessage = form.querySelector('#formMessage');
     if (formMessage) { formMessage.style.display = 'none'; }
 
+    const roleEl = form.querySelector('[name="role"]');
+    if (roleEl?.value === '1') {
+        const lotEl = form.querySelector('[name="lotNo"]');
+        const streetEl = form.querySelector('[name="street"]');
+        if (!validator.address(lotEl, streetEl, 'latitude', 'longitude')) return;
+    }
+
     const confirmResult = await Swal.fire({
         title: 'Are you sure?',
         text: 'You are about to create this account.',
@@ -532,7 +659,10 @@ async function handleCreateFormSubmit(form) {
     const role = form.querySelector('[name="role"]').value;
     const email = form.querySelector('[name="email"]').value;
     const password = form.querySelector('[name="password"]').value;
-
+    const street = form.querySelector('[name="street"]').value;
+    const lotNo = form.querySelector('[name="lotNo"]').value;
+    const latitude = form.querySelector('[name="latitude"]').value;
+    const longitude = form.querySelector('[name="longitude"]').value;
 
     try {
         const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
@@ -555,7 +685,11 @@ async function handleCreateFormSubmit(form) {
             options: {
                 data: {
                     fullname: fullName,
-                    role: role
+                    role: role,
+                    street: street,
+                    lot_no: lotNo,
+                    latitude: latitude,
+                    longitude: longitude
                 },
                 emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification_superadmin.php"
             }
@@ -591,6 +725,13 @@ async function handleCreateFormSubmit(form) {
  * @param {HTMLFormElement} form - Edit form element
  */
 async function handleUpdateFormSubmit(form) {
+    const roleEl = form.querySelector('[name="editRole"]');
+    if (roleEl?.value === '1') {
+        const lotEl = form.querySelector('[name="editLotNo"]');
+        const streetEl = form.querySelector('[name="street"]');
+        if (!validator.address(lotEl, streetEl, 'editLatitude', 'editLongitude')) return;
+    }
+
     const confirmResult = await Swal.fire({
         title: 'Are you sure?',
         text: 'You are about to update this account.',
@@ -613,7 +754,11 @@ async function handleUpdateFormSubmit(form) {
         user_id: form.dataset.userId,
         full_name: form.querySelector('[name="editFullName"]').value.trim(),
         email: form.querySelector('[name="editEmail"]').value.trim(),
-        role_id: form.querySelector('[name="editRole"]').value.trim()
+        role_id: form.querySelector('[name="editRole"]').value.trim(),
+        street: form.querySelector('[name="street"]').value.trim(),
+        lot_no: form.querySelector('[name="editLotNo"]').value.trim(),
+        latitude: document.getElementById('editLatitude').value.trim(),
+        longitude: document.getElementById('editLongitude').value.trim()
     };
 
     try {
