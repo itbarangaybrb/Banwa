@@ -68,20 +68,6 @@
 
     <div class="main-wrapper">
 
-        <header class="top-header">
-            <div class="header-left">
-                <h1>Business Application Management</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-greeting">
-                    <p class="username">Admin</p>
-                    <div class="user_image">
-                        <span class="user_avatar_header">A</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <div class="staff-content">
             <div id="alert-container"></div>
 
@@ -195,6 +181,7 @@
                         <div class="gm-topright-row">
                             <!-- Shows current logged-in user and live date/time -->
                             <div class="gm-user-pill">
+                                <span class="gm-page-title">Business Application Management</span>
                                 <div class="time_date" id="currentDateTime"></div>
                                 <div class="gm-user-divider"></div>
                                 <span class="gm-user-name">Kagawad Francesca</span>

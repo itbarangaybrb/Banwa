@@ -51,6 +51,12 @@ function initializeSidebarNav() {
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
+            // After transition completes, tell Leaflet to redraw to new size
+            setTimeout(function () {
+                if (typeof map !== 'undefined' && map) {
+                    map.invalidateSize();
+                }
+            }, 320);
         });
     }
 
@@ -62,7 +68,34 @@ function initializeSidebarNav() {
         });
     });
 
+    // Add overlay for map grayout effect when sidebar is expanded
+    initializeMapOverlay();
+
     loadAnalyticsTab();
+}
+
+/**
+ * Creates and initializes the overlay element for the map grayout effect
+ * when the sidebar is expanded (similar to Google Maps sidebar behavior)
+ */
+function initializeMapOverlay() {
+    const mainWrapper = document.querySelector('.main-wrapper');
+    if (!mainWrapper) return;
+
+    // Create the overlay element if it doesn't exist
+    if (!document.querySelector('.modal-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        mainWrapper.insertBefore(overlay, mainWrapper.firstChild);
+
+        // Close sidebar when clicking on the overlay
+        overlay.addEventListener('click', function () {
+            const sideNav = document.querySelector('.side_nav');
+            if (sideNav && sideNav.classList.contains('expanded')) {
+                sideNav.classList.remove('expanded');
+            }
+        });
+    }
 }
 
 /**
