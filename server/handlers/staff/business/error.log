@@ -351,3 +351,37 @@ Stack trace:
 [25-Feb-2026 18:47:00 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [25-Feb-2026 18:47:06 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [25-Feb-2026 18:47:06 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[27-Feb-2026 11:10:29 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[27-Feb-2026 11:10:29 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[27-Feb-2026 11:10:41 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[27-Feb-2026 11:10:41 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[27-Feb-2026 11:13:44 UTC] PHP Fatal error:  Maximum execution time of 180 seconds exceeded in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 100
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(100): curl_exec(Object(CurlHandle))
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(889): analyze_files(Array, Array)
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(59): handleAnalyzeDocuments(Object(PDO))
+#3 {main}
+[27-Feb-2026 11:14:14 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[27-Feb-2026 11:14:14 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[27-Feb-2026 11:14:57 UTC] R1 Check - Required: []
+[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:14:57 UTC] R1 Check - Missing: []
+[27-Feb-2026 11:14:57 UTC] R1 Check - Required: []
+[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:14:57 UTC] R1 Check - Missing: []
+[27-Feb-2026 11:14:57 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(70) already exists.
+[27-Feb-2026 11:14:57 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(70) already exists.
+[27-Feb-2026 11:15:07 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[27-Feb-2026 11:15:07 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[27-Feb-2026 11:15:15 UTC] R1 Check - Required: []
+[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:15:15 UTC] R1 Check - Missing: []
+[27-Feb-2026 11:15:15 UTC] R1 Check - Required: []
+[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:15:15 UTC] R1 Check - Missing: []
+[27-Feb-2026 11:15:15 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(71) already exists.
+[27-Feb-2026 11:15:15 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(71) already exists.

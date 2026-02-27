@@ -3,6 +3,18 @@ const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_han
 const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/business/uploads/';
 let applications = [];
 
+// ===============================================
+// GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
+// ===============================================
+const swalTopConfig = {
+    target: document.body,
+    backdrop: true,
+    allowOutsideClick: false,
+    customClass: {
+        container: 'sweetalert-top'
+    }
+};
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'business';
 let mapFilterVisible = true;
@@ -494,7 +506,7 @@ function openUpdateModal(appId) {
     const app = applications.find(a => a.id == appId);
 
     if (!app) {
-        alert("Application data not found.");
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
         return;
     }
 
@@ -510,7 +522,6 @@ function openUpdateModal(appId) {
     if (existingDSSSection) existingDSSSection.remove();
 
     addBasicDSSSection(app);
-
     fetchDSSEvaluation(appId, app);
 
     document.getElementById('updateModal').classList.add('active');
@@ -778,25 +789,37 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(`${BUSINESS_HANDLER_URL}?action=update_status`, {
+    fetch(`${BUSINESS_HANDLER_URL}`, {
         method: 'POST',
         body: formData
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                closeModal('updateModal');
-                alert('Application updated successfully!');
-                loadManagementTable();
-                loadProcessTable();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error updating application:', error);
-            alert('Error updating application. Please try again.');
-        });
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeModal('updateModal');
+            Swal.fire({
+                ...swalTopConfig,
+                icon: 'success',
+                title: 'Success',
+                text: 'Application updated successfully!',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            loadManagementTable();
+            loadProcessTable();
+        } else {
+            Swal.fire({
+                ...swalTopConfig,
+                icon: 'error',
+                title: 'Update Failed',
+                text: data.message || 'An unknown error occurred.'
+            });
+        }
+    })
+    .catch(err => {
+        console.error('Submit update error:', err);
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
+    });
 }
 
 /**
@@ -1115,15 +1138,29 @@ function viewDetails(appId) {
                                                 });
                                         }, 800);
                                     } else {
-                                        alert('OCR re-run failed: ' + (data.message || 'Unknown'));
+                                        Swal.fire({
+                                            ...swalTopConfig,
+                                            icon: 'error',
+                                            title: 'OCR Failed',
+                                            text: data.message || 'Unknown error'
+                                        });
                                     }
                                 });
                         } else {
-                            alert('OCR re-run failed: ' + (data.message || 'Unknown'));
-                        }
+                                Swal.fire({
+                                        ...swalTopConfig,
+                                        icon: 'error',
+                                        title: 'OCR Failed',
+                                        text: data.message || 'Unknown error'
+                                    });                        }
                     } catch (err) {
                         console.error(err);
-                        alert('Network error while running OCR');
+                        Swal.fire({
+                            ...swalTopConfig,
+                            icon: 'error',
+                            title: 'Network Error',
+                            text: 'Could not run OCR. Please try again.'
+                        });
                     } finally {
                         rerunBtn.disabled = false;
                         rerunBtn.textContent = original;
@@ -1268,15 +1305,37 @@ function updateSummary() {
  * @param {number} appId - The application ID to archive
  */
 function archiveApplication(appId) {
-    if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${BUSINESS_HANDLER_URL}?action=archive&id=${appId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showAlert('Archived successfully', 'success');
-                loadManagementTable();
-            }
-        });
+    Swal.fire({
+        ...swalTopConfig,
+        title: 'Are you sure?',
+        text: "You want to archive this application? This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, archive it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`${BUSINESS_HANDLER_URL}?action=archive&id=${appId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            ...swalTopConfig,
+                            title: 'Archived!',
+                            text: 'Application has been archived successfully.',
+                            icon: 'success',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                        loadManagementTable();
+                    } else {
+                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Error', text: data.message || 'Failed to archive.' });
+                    }
+                })
+                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
+        }
+    });
 }
 
 /**
@@ -1353,7 +1412,7 @@ function showAlert(message, type) {
 function printSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     if (!appId) {
-        alert('Please select an application to print.');
+        Swal.fire({ ...swalTopConfig, icon: 'warning', title: 'No Application Selected', text: 'Please select an application to print.' });
         return;
     }
 
@@ -1660,9 +1719,9 @@ function downloadSummary(appId) {
 function generateClearance(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) {
-        showAlert('Application data not found for ID: ' + appId, 'danger');
-        return;
-    }
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
+            return;
+        }
 
     const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`;
     const businessName = app.business_name;
@@ -1977,7 +2036,7 @@ function generateClearance(appId) {
  */
 function createApplication(event) {
     event.preventDefault();
-    alert('Create functionality not implemented yet');
+    Swal.fire({ ...swalTopConfig, icon: 'info', title: 'Coming Soon', text: 'Create functionality is not implemented yet.' });
 }
 
 /**
@@ -2051,7 +2110,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
+// Enhanced styles - SweetAlert2 forced to front layer
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .hidden { display: none !important; }
+        
+        /* FORCE SWEETALERT TO ALWAYS BE ON TOP OF MODALS */
+        .swal2-container,
+        .sweetalert-top {
+            z-index: 2147483647 !important;
+        }
+        .swal2-popup {
+            z-index: 2147483647 !important;
+        }
+        .swal2-backdrop {
+            z-index: 2147483646 !important;
+        }
+    </style>
+`);
 
 // DO NOT REMOVE!!! - JEP
 // /**

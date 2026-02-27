@@ -230,3 +230,7 @@ LINE 3:             FROM construction_applications
 [25-Feb-2026 17:15:47 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
 [25-Feb-2026 17:15:55 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
 [25-Feb-2026 17:15:59 UTC] Error in handleUpdateStatus: SQLSTATE[22001]: String data, right truncated: 7 ERROR:  value too long for type character varying(20)
+[27-Feb-2026 09:58:24 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"leaseContract.jpg","saved_filename":"const_69a16ac0eae55_leaseContract.jpg","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a16ac0eae55_leaseContract.jpg"}]
+[27-Feb-2026 09:58:25 UTC] OCR job queued for application 29 with 1 files
+[27-Feb-2026 09:58:25 UTC] CR1 Check - Has file upload: No
+[27-Feb-2026 09:58:25 UTC] CR1 Check - Has file upload: No
