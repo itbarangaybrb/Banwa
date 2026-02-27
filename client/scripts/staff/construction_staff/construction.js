@@ -3,6 +3,18 @@ const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/cons
 const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
 let applications = [];
 
+// ===============================================
+// GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
+// ===============================================
+const swalTopConfig = {
+    target: document.body,
+    backdrop: true,
+    allowOutsideClick: false,
+    customClass: {
+        container: 'sweetalert-top'
+    }
+};
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'construction';
 let mapFilterVisible = true;
@@ -455,8 +467,8 @@ function openUpdateModal(appId) {
     // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
 
-    if (!app) {
-        alert("Application data not found.");
+if (!app) {
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
         return;
     }
 
@@ -731,25 +743,29 @@ function toggleAmountField() {
  */
 function submitUpdate(event) {
     event.preventDefault();
-
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(`${CONSTRUCTION_HANDLER_URL}`, {
-        method: 'POST',
-        body: formData
-    })
+    fetch(`${CONSTRUCTION_HANDLER_URL}`, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 closeModal('updateModal');
-                alert('Application updated successfully!');
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
                 loadManagementTable();
                 loadProcessTable();
             } else {
-                alert('Error: ' + data.message);
+                Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Update Failed', text: data.message || 'An unknown error occurred.' });
             }
-        });
+        })
+        .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' }));
 }
 
 /**
@@ -1087,16 +1103,71 @@ function updateSummary() {
  * @param {number} appId - The application ID to archive
  */
 function archiveApplication(appId) {
-    if (!confirm('Are you sure you want to archive this application?')) return;
-    fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showAlert('Archived successfully', 'success');
-                loadManagementTable();
-            }
-        });
+    Swal.fire({
+        ...swalTopConfig,
+        title: 'Are you sure?',
+        text: "You want to archive this application? This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, archive it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            ...swalTopConfig,
+                            title: 'Archived!',
+                            text: 'Application has been archived successfully.',
+                            icon: 'success',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                        loadManagementTable();
+                    } else {
+                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Error', text: data.message || 'Failed to archive.' });
+                    }
+                })
+                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
+        }
+    });
 }
+// function archiveApplication(appId) {
+//     Swal.fire({
+//         title: 'Are you sure?',
+//         text: "You want to archive this application? This action cannot be undone.",
+//         icon: 'warning',
+//         showCancelButton: true,
+//         confirmButtonColor: '#d33',
+//         cancelButtonColor: '#3085d6',
+//         confirmButtonText: 'Yes, archive it!'
+//     }).then((result) => {
+//         if (result.isConfirmed) {
+//             fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`)
+//                 .then(res => res.json())
+//                 .then(data => {
+//                     if (data.status === 'success') {
+//                         Swal.fire({
+//                             title: 'Archived!',
+//                             text: 'Application has been archived successfully.',
+//                             icon: 'success',
+//                             timer: 2500
+//                         });
+//                         loadManagementTable();
+//                     } else {
+//                         Swal.fire('Error', data.message || 'Failed to archive.', 'error');
+//                     }
+//                 })
+//                 .catch(err => {
+//                     console.error('Archive error:', err);
+//                     Swal.fire('Error', 'Network error occurred.', 'error');
+//                 });
+//         }
+//     });
+// }
 
 /**
  * Opens a modal dialog by adding the 'active' class
@@ -1172,7 +1243,7 @@ function showAlert(message, type) {
 function printSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     if (!appId) {
-        alert('Please select an application to print.');
+        Swal.fire({ ...swalTopConfig, icon: 'warning', title: 'No Application Selected', text: 'Please select an application to print.' });
         return;
     }
 
@@ -1485,8 +1556,7 @@ function downloadSummary(appId) {
  */
 function createApplication(event) {
     event.preventDefault();
-    alert('Create functionality not implemented yet');
-    // You'll need to implement this based on your form fields
+    Swal.fire({ ...swalTopConfig, icon: 'info', title: 'Coming Soon', text: 'Create functionality is not implemented yet.' });
 }
 
 /**
@@ -1528,22 +1598,38 @@ function updateApplicationDate() {
 }
 
 function reRunOCR(appId) {
-    if (!confirm('Re-run OCR on all uploaded documents for this application?')) return;
-
-    fetch(CONSTRUCTION_HANDLER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.status === 'success' ? 'OCR re-run queued successfully!' : 'Error: ' + data.message);
-        // Reload the details to see new status
-        viewDetails(appId); // Call the new fetch-based function
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Network error while queuing OCR re-run.');
+    Swal.fire({
+        ...swalTopConfig,
+        title: 'Re-run OCR Analysis?',
+        text: 'This will re-process all uploaded documents. Continue?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Re-run',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(CONSTRUCTION_HANDLER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        ...swalTopConfig,
+                        icon: 'success',
+                        title: 'Queued!',
+                        text: 'OCR re-run has been queued successfully.',
+                        timer: 2500
+                    });
+                    viewDetails(appId);
+                } else {
+                    Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Failed to queue OCR re-run.' });
+                }
+            })
+            .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
+        }
     });
 }
 
@@ -1563,7 +1649,24 @@ window.onclick = function (event) {
     });
 }
 
-document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
+// Enhanced styles - SweetAlert2 forced to front layer
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .hidden { display: none !important; }
+        
+        /* FORCE SWEETALERT TO ALWAYS BE ON TOP OF MODALS */
+        .swal2-container,
+        .sweetalert-top {
+            z-index: 2147483647 !important;
+        }
+        .swal2-popup {
+            z-index: 2147483647 !important;
+        }
+        .swal2-backdrop {
+            z-index: 2147483646 !important;
+        }
+    </style>
+`);
 
 // DO NOT REMOVE!!! - JEP
 // /**

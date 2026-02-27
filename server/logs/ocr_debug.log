@@ -59,3 +59,41 @@
 2026-02-25T18:46:53+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_utilities_app.php (1).png, retrying with SSL verify disabled.
 2026-02-25T18:47:01+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_utilities_app.php.png, retrying with SSL verify disabled.
 2026-02-25T18:47:07+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_business_app.php (7).png, retrying with SSL verify disabled.
+2026-02-27T11:10:41+00:00 - SSL error for 1770239407_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:12:26+00:00 - ERROR for 1770239407_valid_id_test.jpg: array (
+  'ParsedResults' => 
+  array (
+  ),
+  'OCRExitCode' => 6,
+  'IsErroredOnProcessing' => true,
+  'ErrorMessage' => 
+  array (
+    0 => 'E101: Timed out waiting for results',
+  ),
+  'ProcessingTimeInMilliseconds' => '2556',
+)
+2026-02-27T11:12:26+00:00 - SSL error for 1770262033_localhost_8080_Banwa_client_pages_resident_construction_app.php.png, retrying with SSL verify disabled.
+2026-02-27T11:13:47+00:00 - SSL error for leaseContract.jpg, retrying with SSL verify disabled.
+2026-02-27T11:14:15+00:00 - SSL error for 1770236327_localhost_8080_Banwa_client_pages_staff_business_staff_business.php (1).png, retrying with SSL verify disabled.
+2026-02-27T11:14:17+00:00 - ERROR for 1770236327_localhost_8080_Banwa_client_pages_staff_business_staff_business.php (1).png: array (
+  'OCRExitCode' => 3,
+  'IsErroredOnProcessing' => true,
+  'ErrorMessage' => 
+  array (
+    0 => 'File failed validation. File size exceeds the maximum permissible file size limit of 1024 KB',
+  ),
+  'ErrorDetails' => '',
+  'ProcessingTimeInMilliseconds' => '0',
+)
+2026-02-27T11:14:18+00:00 - SSL error for 1770236842_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-27T11:14:26+00:00 - SSL error for Screenshot 2026-02-07 143954.png, retrying with SSL verify disabled.
+2026-02-27T11:14:29+00:00 - SSL error for 1770236946_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-27T11:14:34+00:00 - SSL error for 1770237026_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-27T11:14:38+00:00 - SSL error for 1770237330_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-27T11:14:43+00:00 - SSL error for 1770237577_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:14:46+00:00 - SSL error for 1770237751_Barangay-Blue-Ridge-B-Business-Clearance.pdf, retrying with SSL verify disabled.
+2026-02-27T11:14:49+00:00 - SSL error for 1770237792_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:14:52+00:00 - SSL error for 1770238793_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:14:54+00:00 - SSL error for 1770239514_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:15:08+00:00 - SSL error for 1770239407_valid_id_test.jpg, retrying with SSL verify disabled.
+2026-02-27T11:15:11+00:00 - SSL error for 1770262033_localhost_8080_Banwa_client_pages_resident_construction_app.php.png, retrying with SSL verify disabled.
