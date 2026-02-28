@@ -66,23 +66,23 @@
     </aside>
 
     <div class="main-wrapper">
-
-        <header class="top-header">
-            <div class="header-left">
-                <h1>Business Application Management</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-greeting">
-                    <p class="username">Admin</p>
-                    <div class="user_image">
-                        <span class="user_avatar_header">A</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="staff-content">
+        <div id="alert-container"></div>
+        <!-- <div class="staff-content">
             <div id="alert-container"></div>
+                 <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Activity</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div>
+        </div> -->
 
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -194,6 +194,7 @@
                         <div class="gm-topright-row">
                             <!-- Shows current logged-in user and live date/time -->
                             <div class="gm-user-pill">
+                                <span class="gm-page-title">Business Application Management</span>
                                 <div class="time_date" id="currentDateTime"></div>
                                 <div class="gm-user-divider"></div>
                                 <span class="gm-user-name">Kagawad Francesca</span>
@@ -249,37 +250,57 @@
                     </div>
                 </div>
             </div>
-
+<!-- Dashboard tab with analytics charts -->
             <div id="dashboard" class="tab-pane">
-                <div class="analytics-container">
-                    <div class="charts">
-                        <canvas id="chart1"></canvas>
+                        <header class="top-header">
+                            <div class="header-left">
+                                <h1>Business Application Management</h1>
+                            </div>
+                            <div class="header-right">
+                                <div class="user-greeting">
+                                    <p class="username">Admin</p>
+                                    <div class="user_image">
+                                        <span class="user_avatar_header">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+                
+                    <div class="page-header">
+                        <h1>Dashboard</h1>
+                        <p class="page-description">Overview of business applications and analytics</p>
                     </div>
-                    <div class="charts">
-                        <canvas id="chart2"></canvas>
-                    </div>
-                    <div class="charts">
-                        <canvas id="chart3"></canvas>
+                    <div class="analytics-container">
+                        <div class="charts">
+                            <canvas id="chart1"></canvas>
+                        </div>
+                        <div class="charts">
+                            <canvas id="chart2"></canvas>
+                        </div>
+                        <div class="charts">
+                            <canvas id="chart3"></canvas>
+                        </div>
                     </div>
                 </div>
-
-                <!-- <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Activity</th>
-                                <th>Created At</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="auditTableBody"></tbody>
-                    </table>
-                </div> -->
-            </div>
-
+<!-- Management tab with application table and search -->
             <div id="management" class="tab-pane">
-                <h2>Review Business Applications</h2>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Business Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h1>Review Business Applications</h1>
+                    <p class="page-description">Manage and process all submitted applications</p>
+                </div>
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
@@ -305,34 +326,125 @@
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody">
-                            <tr>
-                                <td colspan="6" class="loading">
-                                    <div class="spinner"></div>Loading...
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="tableBody"></tbody>
                     </table>
                 </div>
             </div>
-
+<!-- Create New Application form with validation and OCR verification -->
             <div id="create" class="tab-pane">
-                <h2>Create New Business Application</h2>
-                <p class="form-description">Fill in the details to create a new business application</p>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Business Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h1>Create New Business Application</h1>
+                    <p class="page-description">Fill in the details to register a new business</p>
+                </div>
 
                 <form id="createForm" onsubmit="createApplication(event)">
 
-                    <div class="section-title">Business Information</div>
+                    <div class="section-title"><strong>Owner Information</strong></div>
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="businessName">Business Name*</label>
+                            <label for="firstName">First Name <span style="color:#BB1B1B;">*</span></label>
+                            <input type="text" id="firstName" name="firstName" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="middleName">Middle Name <i>(Optional)</i></label>
+                            <input type="text" id="middleName" name="middleName">
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lastName">Last Name <span style="color:#BB1B1B;">*</span></label>
+                            <input type="text" id="lastName" name="lastName" required>
+                            <div class="error-msg"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="suffix">Suffix <i>(Optional)</i></label>
+                            <input type="text" id="suffix" name="suffix">
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contactNoOwner">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                            <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
+                            <div class="error-msg"></div>
+                        </div>
+                    </div>
+
+                    <div class="section-title"><strong>Owner Address</strong></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                            <input type="tel" id="lotNo" name="lotNo" maxlength="2" pattern="[0-9]{1,2}" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="street">Street Name <span style="color:#BB1B1B;">*</span></label>
+                            <select name="street" id="street" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields from your original owner code -->
+                    <input type="hidden" id="latitude1" name="latitude" 
+                        pattern="-?\d{1,2}\.\d{6,8}" 
+                        title="Enter latitude in decimal format (e.g., 14.617500)"
+                        value="<?php echo isset($_POST['latitude1']) ? htmlspecialchars($_POST['latitude']) : ''; ?>">
+
+                    <input type="hidden" id="longitude1" name="longitude" 
+                        pattern="-?\d{1,3}\.\d{6,8}" 
+                        title="Enter longitude in decimal format (e.g., 121.075600)"
+                        value="<?php echo isset($_POST['longitude1']) ? htmlspecialchars($_POST['longitude']) : ''; ?>">
+
+                    <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
+                    
+                    <div class="section-title"><strong>Business Information</strong></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="businessName">Business Name <span style="color:#BB1B1B;">*</span></label>
                             <input type="text" id="businessName" name="businessName" required>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Type of Business *</label>
+                        <label>What type of business? <span style="color:#BB1B1B;">*</span></label>
                         <div class="radio-group">
                             <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship" required> Single Proprietorship</label>
                             <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
@@ -343,7 +455,7 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="natureOfBusinessSelect">Nature of Business *</label>
+                            <label for="natureOfBusinessSelect">Nature of Business <span style="color:#BB1B1B;">*</span></label>
                             <select name="natureOfBusiness" id="natureOfBusinessSelect" required>
                                 <option value="" disabled selected>Select</option>
                                 <option value="Manufacturing">Manufacturing</option>
@@ -357,24 +469,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="natureOfBusinessSpecify">Specify Details</label>
-                            <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
-                            <div class="error-msg"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="addressOfBusiness">Address of Business *</label>
-                            <input type="text" name="addressOfBusiness" id="addressOfBusiness" required>
+                            <label for="natureOfBusinessSpecify">Specify Details <span style="color:#BB1B1B;">*</span></label>
+                            <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify" required>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Status of Business Address *</label>
+                        <label>What is the status of the business address? <span style="color:#BB1B1B;">*</span></label>
                         <div class="radio-group">
-                            <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
+                            <label><input type="radio" name="businessStatus" value="Owned" required> Owned</label>
                             <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
                             <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
                             <label><input type="radio" name="businessStatus" value="Others"> Others</label>
@@ -384,59 +488,71 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="telephoneNoBusiness">Business Telephone *</label>
-                            <input type="tel" id="telephoneNoBusiness" name="telephoneNoBusiness" required>
+                            <label for="contactNoBusiness">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                            <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}" required>
                             <div class="error-msg"></div>
                         </div>
 
                         <div class="form-group">
-                            <label for="emailAddress">Email Address *</label>
+                            <label for="emailAddress">Email Address <span style="color:#BB1B1B;">*</span></label>
                             <input type="email" id="emailAddress" name="emailAddress" required>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
-                    <div class="section-title">Owner Information</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="firstName">Owner First Name *</label>
-                            <input type="text" id="firstName" name="firstName" required>
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="middleName">Owner Middle Name</label>
-                            <input type="text" id="middleName" name="middleName">
-                            <div class="error-msg"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lastName">Owner Last Name *</label>
-                            <input type="text" id="lastName" name="lastName" required>
+                            <label for="noOfEmployees">How many employees does the business have? <span style="color:#BB1B1B;">*</span></label>
+                            <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}" required>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
+                    <div class="section-title"><strong>Business Address</strong></div>
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="telephoneNoOwner">Owner Telephone *</label>
-                            <input type="tel" id="telephoneNoOwner" name="telephoneNoOwner" required>
+                            <label for="businessLotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                            <input type="tel" id="businessLotNo" name="businessLotNo" maxlength="2" pattern="[0-9]{1,2}" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="businessStreet">Street Name <span style="color:#BB1B1B;">*</span></label>
+                            <select name="businessStreet" id="businessStreet" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
+                            </select>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="addressOwner">Owner Address *</label>
-                            <input type="text" id="addressOwner" name="addressOwner" required>
-                            <div class="error-msg"></div>
-                        </div>
+                    <input type="hidden" id="latitude2" name="latitude2" value="">
+                    <input type="hidden" id="longitude2" name="longitude2" value="">
+
+                    <div class="form-group">
+                        <button type="button" class="map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
+                        <div class="map-preview" id="map-preview-2" style="margin-top:10px;display:none;height:200px;"></div>
                     </div>
 
-                    <div class="section-title">Business Structure</div>
+                    <div class="section-title"><strong>Business Structure</strong></div>
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="typeOfStructureSelect">Structure Type *</label>
+                            <label for="typeOfStructureSelect">Structure Type <span style="color:#BB1B1B;">*</span></label>
                             <select id="typeOfStructureSelect" name="typeOfStructureSelect" required>
                                 <option value="" disabled selected>Select Structure Type</option>
                                 <option value="Residence">Residence</option>
@@ -450,26 +566,32 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="typeOfStructureSpecify">Specify Details</label>
-                            <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
+                            <label for="typeOfStructureSpecify">Specify Details <span style="color:#BB1B1B;">*</span></label>
+                            <input type="text" id="typeOfStructureSpecify" name="typeOfStructureSpecify" required>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="noOfEmployees">Number of Employees *</label>
-                            <input type="number" id="noOfEmployees" name="noOfEmployees" min="0" max="99" required>
+                            <label for="natureOfApplication">Nature of application <span style="color:#BB1B1B;">*</span></label>
+                            <select name="natureOfApplication" id="natureOfApplication" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="New">New</option>
+                                <option value="Renew">Renew</option>
+                                <option value="Closure">Closure</option>
+                            </select>
                             <div class="error-msg"></div>
                         </div>
                     </div>
 
-                    <div class="section-title">Requirements (Photocopy Only)</div>
+                    <div class="section-title"><strong>Requirements (Photocopy Only)</strong></div>
+
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <label><input type="checkbox" name="requirements" value="SEC"> SEC</label>
-                            <label><input type="checkbox" name="requirements" value="DTI"> DTI</label>
-                            <label><input type="checkbox" name="requirements" value="TCT"> TCT</label>
+                            <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
+                            <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
+                            <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                             <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                             <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
                         </div>
@@ -477,18 +599,21 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="requirementUpload">Attachment/s *</label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                        <label for="requirementUpload">Attachment/s <span style="color:#BB1B1B;">*</span></label>
+                        <input type="file" id="requirementUpload" name="requirementUpload[]" multiple accept=".pdf,.jpg,.jpeg,.png">
                         <div class="error-msg"></div>
                     </div>
 
-                    <div class="form-group">
-                        <input type="date" id="applicationDate" name="applicationDate" hidden readonly>
-                        <div class="error-msg"></div>
+                    <!-- OCR Verification Section (kept exactly as you had) -->
+                    <div class="verification-container" id="verificationSection" style="display:none; margin:25px 0; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+                        <label class="label" style="margin-bottom:12px; display:block;">📋 OCR Document Verification</label>
+                        <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
+                        <button type="button" id="verifyDocumentsBtn" class="btn-secondary" style="width:100%; padding:12px;">Re-Verify Documents with OCR</button>
+                        <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">Auto-checks 1 second after upload. Business name is also cross-checked.</small>
                     </div>
 
                     <div class="button-group">
-                        <button type="submit" class="btn-primary">Create Application</button>
+                        <button type="submit" class="btn-primary">Submit Application</button>
                         <button type="reset" class="btn-secondary">Clear Form</button>
                     </div>
                 </form>
@@ -519,26 +644,43 @@
                     </table>
                 </div>
             </div>
-
-            <div id="summary" class="tab-pane">
-                <div class="summary-controls">
-                    <h2>Generate Business Summary</h2>
-                    <div class="control-row">
-                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
-                            <option value="">-- Select Business Application --</option>
-                        </select>
-                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+<!-- Generate Business Summary with export options -->
+        <div id="summary" class="tab-pane">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Business Application Management</h1>
                     </div>
-                </div>
-
-                <div id="summaryOutput" class="summary-report-container">
-                    <div class="placeholder-state">
-                        <i class="fas fa-file-invoice fa-3x"></i>
-                        <p>Select a business from the list above to view the full report.</p>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
                     </div>
+                </header>
+            <div class="page-header">
+                <h1>Generate Business Summary</h1>
+                <p class="page-description">View or export complete business profiles</p>
+            </div>
+
+            <div class="summary-controls">
+                <div class="control-row">
+                    <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                        <option value="">-- Select Business Application --</option>
+                    </select>
+                    <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
                 </div>
             </div>
 
+            <div id="summaryOutput" class="summary-report-container">
+                <div class="placeholder-state">
+                    <i class="fas fa-file-invoice fa-3x"></i>
+                    <p>Select a business from the list above to view the full report.</p>
+                </div>
+            </div>
+        </div>
+            
             <div id="detailsModal" class="staff-modal">
                 <div class="staff-modal-content">
                     <div class="staff-modal-header">

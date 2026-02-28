@@ -9,7 +9,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f5f7fa;
     min-height: 100vh;
-    display: flex;
+    overflow: hidden;
 }
 
 /* SIDEBAR STYLES */
@@ -21,7 +21,7 @@ body {
     width: 70px;
     background: linear-gradient(135deg, #19316b, #19316b);
     color: white;
-    transition: all 0.3s ease;
+    transition: width 0.3s ease;
     z-index: 2000;
     box-shadow: 2px 0 15px rgba(0, 0, 0, 0.4);
     overflow: hidden;
@@ -30,6 +30,23 @@ body {
 .side_nav.expanded {
     width: 325px;
     box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Override map_staff.css :hover expansion - sidebar only expands on click */
+.side_nav:hover {
+    width: 70px !important;
+}
+.side_nav:hover .nav_text {
+    opacity: 0;
+}
+.side_nav.expanded .nav_text {
+    opacity: 1;
+}
+.side_nav:hover .company_name {
+    opacity: 0;
+}
+.side_nav.expanded .company_name {
+    opacity: 1;
 }
 
 .nav_header {
@@ -176,8 +193,9 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    transition: margin-left 0.3s ease;
+        width: calc(100% - 70px);
 }
+
 
 .side_nav.expanded~.main-wrapper {
     margin-left: 325px;
@@ -185,26 +203,12 @@ body {
 
 /* TOP HEADER */
 .top-header {
-    position: fixed;
-    top: 0;
-    left: 70px;
-    right: 0;
-    background: #f4f4f4;
-    color: #19316b;
-    padding: 0 5%;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    z-index: 3000;
-    height: 70px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: calc(100vw - 70px);
-    margin: 0 auto;
-    transition: left 0.3s ease;
-}
-
-.side_nav.expanded~.main-wrapper .top-header {
-    left: 325px;
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
 }
 
 .header-left h1 {
@@ -293,11 +297,13 @@ body {
 .tab-pane {
     display: none;
     animation: fadeIn 0.3s ease-in;
+    flex: 1;
     height: 100%;
 }
 
 .tab-pane.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes fadeIn {
@@ -1133,7 +1139,6 @@ h2 {
     margin-left: 70px;
     /* Width of the collapsed sidebar */
     width: calc(100% - 70px);
-    transition: all 0.3s ease;
     padding: 20px;
 }
 
@@ -1282,30 +1287,72 @@ h2 {
 }
 
 /* OCR Result Card */
-.ocr-runs .ocr-run {
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-}
+.ocr-runs .ocr-run { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+.ocr-runs .latest { border-color: #4CAF50; background: #f8fff8; }
+.ocr-run-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+.ocr-text pre { background: #f5f5f5; padding: 10px; border-radius: 4px; white-space: pre-wrap; max-height: 200px; overflow: auto; }
+/* ===== MAP FULLSCREEN FIX (applied from business.css fixes) ===== */
 
-.ocr-runs .latest {
-    border-color: #4CAF50;
-    background: #f8fff8;
-}
-
-.ocr-run-header {
+/* staff-content fills full height */
+.staff-content {
+    margin-left: 0;
+    padding: 0;
+    flex: 1;
+    overflow: hidden;
+    height: 100vh;
+    width: 100%;
     display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    margin-bottom: 8px;
+    flex-direction: column;
 }
 
-.ocr-text pre {
-    background: #f5f5f5;
-    padding: 10px;
-    border-radius: 4px;
-    white-space: pre-wrap;
-    max-height: 200px;
-    overflow: auto;
+/* #mapping tab is position:fixed to fill viewport beside sidebar */
+#mapping {
+    display: none;
+    position: fixed !important;
+    top: 0;
+    left: 70px;
+    right: 0;
+    bottom: 0;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden;
+    z-index: 1;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent;
+}
+
+#mapping.active {
+    display: block !important;
+}
+
+/* When sidebar is expanded */
+body:has(.side_nav.expanded) #mapping {
+    left: 325px;
+}
+
+/* Override map_staff.css top:70px — fill full height from top */
+.map-wrapper {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.map-wrapper #map {
+    position: absolute;
+    inset: 0;
+    height: 100% !important;
+    width: 100% !important;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* tab-pane active override for mapping */
+#mapping.active {
+    display: block !important;
 }

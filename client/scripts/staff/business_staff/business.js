@@ -51,6 +51,12 @@ function initializeSidebarNav() {
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
+            // After transition completes, tell Leaflet to redraw to new size
+            setTimeout(function () {
+                if (typeof map !== 'undefined' && map) {
+                    map.invalidateSize();
+                }
+            }, 320);
         });
     }
 
@@ -62,7 +68,34 @@ function initializeSidebarNav() {
         });
     });
 
+    // Add overlay for map grayout effect when sidebar is expanded
+    initializeMapOverlay();
+
     loadAnalyticsTab();
+}
+
+/**
+ * Creates and initializes the overlay element for the map grayout effect
+ * when the sidebar is expanded (similar to Google Maps sidebar behavior)
+ */
+function initializeMapOverlay() {
+    const mainWrapper = document.querySelector('.main-wrapper');
+    if (!mainWrapper) return;
+
+    // Create the overlay element if it doesn't exist
+    if (!document.querySelector('.modal-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        mainWrapper.insertBefore(overlay, mainWrapper.firstChild);
+
+        // Close sidebar when clicking on the overlay
+        overlay.addEventListener('click', function () {
+            const sideNav = document.querySelector('.side_nav');
+            if (sideNav && sideNav.classList.contains('expanded')) {
+                sideNav.classList.remove('expanded');
+            }
+        });
+    }
 }
 
 /**
@@ -2031,12 +2064,183 @@ function generateClearance(appId) {
     };
 }
 
+
 /**
  * Creates a new business application
  */
-function createApplication(event) {
+async function createApplication(event) {
     event.preventDefault();
-    Swal.fire({ ...swalTopConfig, icon: 'info', title: 'Coming Soon', text: 'Create functionality is not implemented yet.' });
+
+    const form = document.getElementById('createForm');
+
+    // ==================== CLIENT-SIDE VALIDATION ====================
+    let isValid = true;
+    const errorMsgs = form.querySelectorAll('.error-msg');
+    errorMsgs.forEach(msg => msg.textContent = ''); // Clear previous errors
+
+    // Helper to show error
+    function showError(input, message) {
+        const errorDiv = input.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains('error-msg')) {
+            errorDiv.textContent = message;
+        }
+        isValid = false;
+    }
+
+    // Required text/email/tel inputs
+    const requiredInputs = form.querySelectorAll('input[required]:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select[required]');
+    requiredInputs.forEach(input => {
+        if (!input.value.trim()) {
+            showError(input, 'This field is required');
+        }
+    });
+
+    // Radio groups: typeOfBusiness, businessStatus
+    if (!form.querySelector('input[name="typeOfBusiness"]:checked')) {
+        showError(form.querySelector('input[name="typeOfBusiness"]'), 'Please select a business type');
+    }
+    if (!form.querySelector('input[name="businessStatus"]:checked')) {
+        showError(form.querySelector('input[name="businessStatus"]'), 'Please select business address status');
+    }
+
+    // Phone patterns
+    const phoneInputs = [document.getElementById('contactNoOwner'), document.getElementById('contactNoBusiness')];
+    phoneInputs.forEach(input => {
+        if (input.value && !/^\d{1,11}$/.test(input.value)) {
+            showError(input, 'Invalid phone number (1-11 digits only)');
+        }
+    });
+
+    // Email
+    const email = document.getElementById('emailAddress');
+    if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+        showError(email, 'Invalid email format');
+    }
+
+    // Number of employees / lot nos
+    const numInputs = [document.getElementById('noOfEmployees'), document.getElementById('lotNo'), document.getElementById('businessLotNo')];
+    numInputs.forEach(input => {
+        if (input.value && !/^\d{1,2}$/.test(input.value)) {
+            showError(input, 'Must be 1-2 digits');
+        }
+    });
+
+    // Checkboxes: requirements (optional, but if none warn?)
+    const reqChecks = form.querySelectorAll('input[name="requirements"]:checked');
+    if (reqChecks.length === 0) {
+        showError(form.querySelector('.checkbox-group'), 'Please select at least one requirement');
+    }
+
+    // File upload validation
+    const fileInput = document.getElementById('requirementUpload');
+    if (fileInput.files.length === 0) {
+        showError(fileInput, 'Please upload at least one attachment');
+    } else {
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        Array.from(fileInput.files).forEach(file => {
+            if (!allowedTypes.includes(file.type)) {
+                showError(fileInput, 'Invalid file type. Only PDF, JPG, JPEG, PNG allowed.');
+            }
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                showError(fileInput, 'File too large. Max 5MB per file.');
+            }
+        });
+    }
+
+    // Coordinates (if required, but hidden so optional)
+    const lat = document.getElementById('latitude2');
+    const lng = document.getElementById('longitude2');
+    if (lat.value && !/^-?\d{1,2}\.\d{6,8}$/.test(lat.value)) {
+        showError(lat, 'Invalid latitude format');
+    }
+    if (lng.value && !/^-?\d{1,3}\.\d{6,8}$/.test(lng.value)) {
+        showError(lng, 'Invalid longitude format');
+    }
+
+    if (!isValid) {
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Please fix the highlighted errors before submitting.'
+        });
+        return;
+    }
+
+    // ==================== PREPARE FORM DATA ====================
+    const formData = new FormData(form);
+
+    // Append action
+    formData.append('action', 'create');
+
+    // Append radios if not already (FormData handles checked ones)
+    const typeOfBusiness = document.querySelector('input[name="typeOfBusiness"]:checked')?.value;
+    if (typeOfBusiness) formData.set('typeOfBusiness', typeOfBusiness);
+
+    const businessStatusVal = document.querySelector('input[name="businessStatus"]:checked')?.value;
+    if (businessStatusVal) formData.set('businessStatus', businessStatusVal);
+
+    // Append checkboxes as JSON array
+    const requirements = Array.from(form.querySelectorAll('input[name="requirements"]:checked'))
+        .map(checkbox => checkbox.value);
+    if (requirements.length > 0) {
+        formData.set('requirements', JSON.stringify(requirements));
+    }
+
+    // Set application date
+    const applicationDate = document.getElementById('applicationDate');
+    if (applicationDate) {
+        applicationDate.value = new Date().toISOString().split('T')[0];
+        formData.set('applicationDate', applicationDate.value);
+    }
+
+    // ==================== SUBMIT ====================
+    Swal.fire({
+        ...swalTopConfig,
+        title: 'Submitting Application...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const resp = await fetch(BUSINESS_HANDLER_URL, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        if (!resp.ok) {
+            throw new Error(`HTTP error! status: ${resp.status}`);
+        }
+
+        const data = await resp.json();
+
+        if (data.status === 'success') {
+            Swal.fire({
+                ...swalTopConfig,
+                icon: 'success',
+                title: 'Application Created',
+                text: data.message || 'Your business application has been submitted successfully!',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                form.reset();
+                // Optional: refresh applications if on management tab
+                if (document.getElementById('management')?.classList.contains('active')) {
+                    fetchApplications();
+                }
+            });
+        } else {
+            throw new Error(data.message || 'Failed to create application');
+        }
+    } catch (err) {
+        console.error('Submission error:', err);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Submission Failed',
+            text: err.message || 'An error occurred while submitting the application. Please try again.'
+        });
+    }
 }
 
 /**

@@ -52,6 +52,12 @@ function initializeSidebarNav() {
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
+            // Redraw Leaflet map after sidebar transition
+            setTimeout(function () {
+                if (typeof map !== 'undefined' && map) {
+                    map.invalidateSize();
+                }
+            }, 320);
         });
     }
 
