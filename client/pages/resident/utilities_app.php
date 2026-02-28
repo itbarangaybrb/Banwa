@@ -107,24 +107,23 @@ if ($_SESSION['role_id'] != 1) {
             </form>
         </div>
 
-
         <!-- ==================== Utiliies Form ==================== -->
         <div class="containers utilities-container hidden" id="utilities">
             <form class="form" id="utilitiesForms">
                 <h6>Utilities Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label for="requestDate">When is the request date? <span style="color: #BB1B1B;">*</span></label>
+                        <label for="requestDate">Request Date <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" name="requestDate" id="requestDate">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="dateOfWork">When will the work be done? <span style="color: #BB1B1B;">*</span></label>
+                        <label for="dateOfWork">Date of Work <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" name="dateOfWork" id="dateOfWork">
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
-                        <label for="natureOfWork">Nature of the work? (What kind of work will be done?) <span style="color: #BB1B1B;">*</span></label>
+                        <label for="natureOfWork">What kind of work will be done? <span style="color: #BB1B1B;">*</span></label>
                         <div class="select-and-icon">
                             <select name="natureOfWork" id="natureOfWork">
                                 <option value="select">Select</option>

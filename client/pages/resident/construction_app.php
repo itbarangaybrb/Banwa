@@ -77,12 +77,12 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoOwner">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="lotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -121,7 +121,7 @@ if ($_SESSION['role_id'] != 1) {
                 <h6>Construction Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label class="label" for="natureOfActivity">Nature of Activity (What kind of work will be done?) <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="natureOfActivity">What kind of work will be done? <span style="color: #BB1B1B;">*</span></label>
                         <select name="natureOfActivity" id="natureOfActivity">
                             <option value="" disabled selected>Select</option>
                             <option value="Demolition">Demolition</option>
@@ -154,7 +154,7 @@ if ($_SESSION['role_id'] != 1) {
                     </div> -->
 
                     <div class="label-and-input">
-                        <label for="detailsOfWork" class="required-field">Details of Work <span style="color: #BB1B1B;">*</span></label>
+                        <label for="detailsOfWork" class="required-field">Please describe the work to be done <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="detailsOfWork" name="detailsOfWork" rows="3"></textarea>
                         <div class="error-msg"></div>
                     </div>
@@ -190,7 +190,7 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="contractorContactNumber">Contractor’s Contact Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contractorContactNumber">Contractor's Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contractorContactNumber" name="contractorContactNumber" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -266,7 +266,6 @@ if ($_SESSION['role_id'] != 1) {
             </form>
         </div>
 
-
         <!-- ==================== Waiver Form ==================== -->
         <div class="containers waiver-container hidden" id="waiver">
             <form class="form" id="waiverUtilitiesForm">
@@ -337,7 +336,7 @@ if ($_SESSION['role_id'] != 1) {
                                 <p>Application Method:</p> <span id="sumApplicationMethod"></span>
                             </div>
                             <div>
-                                <p>Address of Contruction:</p> <span id="sumAddressConstruction"></span>
+                                <p>Address of Construction:</p> <span id="sumAddressConstruction"></span>
                             </div>
                             <div>
                                 <p>Requirements Upload:</p> <span id="sumRequirementUpload"></span>

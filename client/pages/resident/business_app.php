@@ -62,12 +62,12 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoOwner">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="lotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -129,14 +129,14 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">What type of business Type? <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label">What is your type of business? <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship"> Single Proprietorship</label>
                         <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
                         <label><input type="radio" name="typeOfBusiness" value="Corporation"> Corporation</label>
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfBusinessSelect">Nature of Business <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="natureOfBusinessSelect">What kind of business do you have? <span style="color: #BB1B1B;">*</span></label>
                         <select name="natureOfBusiness" id="natureOfBusinessSelect">
                             <option value="" disabled selected>Select</option>
                             <option value="Manufacturing">Manufacturing</option>
@@ -149,12 +149,12 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfBusinessSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="natureOfBusinessSpecify">Please describe your business <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label">What is the status of the business address? <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label">Do you own, rent, or lease your business location? <span style="color: #BB1B1B;">*</span></label>
                         <label><input type="radio" name="businessStatus" value="Owned"> Owned</label>
                         <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
                         <label><input type="radio" name="businessStatus" value="Rent-Free"> Rent-Free</label>
@@ -172,7 +172,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="noOfEmployees">How many employees does the business have? <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="noOfEmployees">How many employees do you have? <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -215,7 +215,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="typeOfStructureSelect">Structure Type <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="typeOfStructureSelect">What kind of structure is the business in? <span style="color: #BB1B1B;">*</span></label>
                         <select id="typeOfStructureSelect" name="typeOfStructureSelect">
                             <option value="" disabled selected>Select Structure Type</option>
                             <option value="Residence">Residence</option>
@@ -228,12 +228,12 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="typeOfStructureSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="typeOfStructureSpecify">Please describe the structure <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" name="typeOfStructureSpecify" id="typeOfStructureSpecify">
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="natureOfApplication">Nature of application <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="natureOfApplication">What is your application for? <span style="color: #BB1B1B;">*</span></label>
                         <select name="natureOfApplication" id="natureOfApplication">
                             <option value="" disabled selected>Select</option>
                             <option value="New">New</option>
