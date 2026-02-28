@@ -240,9 +240,10 @@
                     <select id="statusApplications" style="width: max-content;">
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
-                        <option value="Pre-approved">Pre-approved</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Under Investigation">Under Investigation</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
                     <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
                 </div>

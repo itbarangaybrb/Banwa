@@ -100,7 +100,7 @@ body {
     justify-content: space-between;
 }
 
-.nav_list > div {
+.nav_list>div {
     list-style: none;
 }
 
@@ -179,7 +179,7 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-.side_nav.expanded ~ .main-wrapper {
+.side_nav.expanded~.main-wrapper {
     margin-left: 325px;
 }
 
@@ -203,7 +203,7 @@ body {
     transition: left 0.3s ease;
 }
 
-.side_nav.expanded ~ .main-wrapper .top-header {
+.side_nav.expanded~.main-wrapper .top-header {
     left: 325px;
 }
 
@@ -304,6 +304,7 @@ body {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -353,6 +354,10 @@ select {
     font-family: inherit;
     transition: border-color 0.3s ease;
     background: white;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 input[type="text"]:focus,
@@ -379,7 +384,7 @@ textarea {
     padding: 10px 16px;
     border-radius: 6px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     margin-bottom: 12px;
     color: #fff;
     opacity: 1;
@@ -387,19 +392,19 @@ textarea {
 
 .message.success {
     background: linear-gradient(180deg, #34c759, #28a745);
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .message.error {
     background: linear-gradient(180deg, #ff3b30, #e53935);
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .message.info {
     background: linear-gradient(180deg, #2089ff, #1467d6);
 }
 
-.message + .message {
+.message+.message {
     margin-left: 8px;
 }
 
@@ -803,8 +808,13 @@ h2 {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* ASSESSMENT AMOUNT STYLING */
@@ -845,7 +855,7 @@ h2 {
         overflow-y: visible;
     }
 
-    .nav_list > div {
+    .nav_list>div {
         display: flex;
         list-style: none;
     }
@@ -932,6 +942,7 @@ h2 {
         padding: 12px 10px;
     }
 }
+
 /* PROMPT TAG STYLES */
 .prompt-container {
     position: relative;
@@ -987,8 +998,17 @@ h2 {
     align-items: center;
 }
 
-.details-title h2 { margin: 0; font-size: 20px; color: #333; }
-.details-id { color: #666; font-size: 14px; margin-top: 4px; }
+.details-title h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.details-id {
+    color: #666;
+    font-size: 14px;
+    margin-top: 4px;
+}
 
 /* Grid Layout for the Content */
 .details-grid {
@@ -1024,8 +1044,18 @@ h2 {
     border-bottom: 1px dashed #f5f5f5;
     padding-bottom: 5px;
 }
-.detail-label { font-weight: 600; color: #555; }
-.detail-value { font-weight: 500; color: #000; text-align: right; max-width: 60%; }
+
+.detail-label {
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-value {
+    font-weight: 500;
+    color: #000;
+    text-align: right;
+    max-width: 60%;
+}
 
 /* File Viewer Box */
 .file-viewer-box {
@@ -1042,12 +1072,14 @@ h2 {
     max-height: 200px;
     border-radius: 4px;
     margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: transform 0.2s;
 }
 
-.file-thumbnail:hover { transform: scale(1.02); }
+.file-thumbnail:hover {
+    transform: scale(1.02);
+}
 
 .btn-view-doc {
     background: #19316b;
@@ -1060,11 +1092,16 @@ h2 {
     transition: background 0.3s;
 }
 
-.btn-view-doc:hover { background: #0f1e42; color: white; }
+.btn-view-doc:hover {
+    background: #0f1e42;
+    color: white;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .details-grid { grid-template-columns: 1fr; }
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Compact Action Buttons */
@@ -1075,7 +1112,7 @@ h2 {
 }
 
 /* Make the icon-only buttons smaller/circular */
-.action-buttons .btn-info, 
+.action-buttons .btn-info,
 .action-buttons .btn-delete {
     padding: 8px 10px;
     border-radius: 4px;
@@ -1087,17 +1124,20 @@ h2 {
 .action-buttons .btn-warning,
 .action-buttons .btn-success {
     font-weight: 600;
-    min-width: 100px; /* Ensure text fits */
+    min-width: 100px;
+    /* Ensure text fits */
 }
+
 .main-wrapper {
-    margin-left: 70px; /* Width of the collapsed sidebar */
+    margin-left: 70px;
+    /* Width of the collapsed sidebar */
     width: calc(100% - 70px);
     transition: all 0.3s ease;
     padding: 20px;
 }
 
 /* If sidebar is expanded, push content further */
-.side_nav.expanded + .main-wrapper {
+.side_nav.expanded+.main-wrapper {
     margin-left: 325px;
     width: calc(100% - 325px);
 }
