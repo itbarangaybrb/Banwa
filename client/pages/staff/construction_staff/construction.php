@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
-
 </head>
 
 <body>
@@ -281,9 +280,19 @@
             <!-- Review Tab -->
             <div id="management" class="tab-pane">
                 <h2>Review Construction Applications</h2>
+
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
+                    <select id="statusApplications" style="width: max-content;">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Pre-approved">Pre-approved</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
                 </div>
+
                 <div class="table-responsive">
                     <table id="applicationsTable">
                         <thead>
@@ -539,9 +548,16 @@
     <script src="../../../scripts/staff/construction_staff/construction.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../../../scripts/staff/map.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <script src="../../../scripts/staff/map.js"></script>
+    <script type="module" src="../../../scripts/staff/export.js"></script>
+    <script type="module" src="../../../scripts/staff/filter.js"></script>
+
+    <script type="module" src="../../../scripts/utils/archives.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>
 
 </html>
