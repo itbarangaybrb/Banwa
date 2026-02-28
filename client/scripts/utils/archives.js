@@ -1,12 +1,15 @@
 import { initSocket, sockets } from './socketUtils.js';
+import { fetchUsers } from '../staff/superadmin/manage_users.js';
+
 /**
  * Archives a record in a specified table by sending a POST request to the server.
- * Displays a success or error message using SweetAlert and refreshes the archive list.
+ * Displays a success or error message using SweetAlert and refreshes both the 
+ * active users table and the archive list.
  *
  * @param {string} tableName - The name of the table containing the record to archive.
- * @param {number|string} recordId - The ID of the record to archive.
+ * @param {number|string}  - The ID of the record to archive.
  */
-async function archiveRecord(tableName, recordId) {
+export async function archiveRecord(tableName, recordId) {
     const response = await fetch("/Banwa/server/api/shared/archive_record.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,16 +29,51 @@ async function archiveRecord(tableName, recordId) {
             icon: 'success',
             title: 'Archived successfully',
             showConfirmButton: false,
-            timer: 2000
+            timer: 3000,
+            timerProgressBar: true,
         });
 
+        // Remove the row from the users table if we're on the users page
         const row = document
-            .querySelector(`button.delete-btn[data-id="${recordId}"]`)
+            .querySelector(`button.edit-btn[data-id="${recordId}"]`)
             ?.closest('tr');
 
         if (row) row.remove();
 
+        // Refresh the archives table
         fetchArchives();
+
+        // Also refresh the users table to ensure consistency
+        if (typeof window.fetchUsers === 'function') {
+            window.fetchUsers();
+        }
+
+        // Notify via WebSocket that archives have been updated
+        if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
+            sockets["archives"].send(JSON.stringify({
+                type: "archives_update",
+                action: "archive",
+                tableName: tableName,
+                recordId: recordId
+            }));
+        }
+
+        // Also notify users update
+        if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
+            sockets["users"].send(JSON.stringify({
+                type: "users_update",
+                action: "archive",
+                recordId: recordId
+            }));
+        }
+
+        // Also notify audit update
+        if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+            sockets["audit"].send(JSON.stringify({
+                type: "new_audit_log",
+                action: "new_audit_log",
+            }));
+        }
 
     } else {
         Swal.fire({
@@ -49,7 +87,7 @@ async function archiveRecord(tableName, recordId) {
 /**
  * Restores an archived record by sending a POST request to the server.
  * Confirms the action with the user and displays a success or error message.
- * Refreshes the archive list after restoration.
+ * Refreshes both the archive list and users table after restoration.
  *
  * @param {number|string} archiveId - The ID of the archive record to restore.
  */
@@ -89,10 +127,39 @@ async function restoreRecord(archiveId) {
             icon: 'success',
             title: 'Restored successfully',
             showConfirmButton: false,
-            timer: 2000
+            timer: 3000,
+            timerProgressBar: true,
         });
 
-       fetchArchives();
+        // Refresh the archives table
+        fetchArchives();
+        fetchUsers();
+
+        // Notify via WebSocket that archives have been updated
+        if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
+            sockets["archives"].send(JSON.stringify({
+                type: "archives_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
+        // Also notify users update
+        if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
+            sockets["users"].send(JSON.stringify({
+                type: "users_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
+        // Also notify audit update - ADDED THIS SECTION
+        if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+            sockets["audit"].send(JSON.stringify({
+                type: "new_audit_log",
+                action: "new_audit_log",
+            }));
+        }
     } else {
         await Swal.fire({
             icon: 'error',
@@ -101,20 +168,6 @@ async function restoreRecord(archiveId) {
         });
     }
 }
-
-/**
- * Periodically fetches the latest archives every 10 seconds.
- * Ensures that only one fetch operation runs at a time to prevent overlapping requests.
- */
-document.addEventListener('DOMContentLoaded', () => {
-    if (!sockets["archives"]) {
-        initSocket("archives", "ws://localhost:8081", data => {
-            if (data.type === "archives_update") fetchArchives();
-        });
-
-        fetchArchives();
-    }
-});
 /**
  * Fetches all archived records from the server and populates the archive table in the DOM.
  * Handles empty results and errors gracefully by displaying appropriate messages.
@@ -170,33 +223,86 @@ async function fetchArchives() {
  * Triggers restoreRecord or archiveRecord based on the clicked button and confirms actions via SweetAlert.
  */
 document.addEventListener('click', async (e) => {
+    // Handle restore button clicks
     if (e.target.classList.contains('restore-btn')) {
         const archiveId = e.target.dataset.id;
+
+        if (!archiveId || archiveId === 'undefined') {
+            console.error('Invalid archive ID:', archiveId);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Invalid archive ID. Please try again.',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal-popup',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm-btn',
+                    cancelButton: 'swal-cancel-btn'
+                }
+            });
+            return;
+        }
+
         await restoreRecord(archiveId);
+        fetchArchives();
         return;
     }
 
-    if (!e.target.classList.contains('delete-btn')) return;
+    // Handle archive button clicks
+    if (e.target.classList.contains('archive-btn')) {
+        const userId = e.target.dataset.id;
 
-    const userId = e.target.dataset.id;
-
-    const confirmResult = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'This user will be archived.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, archive it',
-        cancelButtonText: 'Cancel',
-        buttonsStyling: false,
-        customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+        if (!userId || userId === 'undefined') {
+            console.error('Invalid user ID:', userId);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Invalid user ID. Please try again.',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal-popup',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm-btn',
+                    cancelButton: 'swal-cancel-btn'
+                }
+            });
+            return;
         }
-    });
 
-    if (!confirmResult.isConfirmed) return;
+        const confirmResult = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'This user will be archived.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
 
-    await archiveRecord('users', userId);
+        if (!confirmResult.isConfirmed) return;
+
+        await archiveRecord('users', userId);
+        fetchArchives();
+        return;
+    }
+});
+
+/**
+ * Initializes WebSocket connection and fetches archives on page load.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    if (!sockets["archives"]) {
+        initSocket("archives", "ws://localhost:8081", data => {
+            if (data.type === "archives_update") fetchArchives();
+        });
+
+        fetchArchives();
+    }
 });

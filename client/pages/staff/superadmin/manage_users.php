@@ -273,7 +273,7 @@ if ($_SESSION['role_id'] != 2) {
 
                 <div class="buttons-container">
                     <button type="button" class="buttons cancel-btn">Cancel</button>
-                    <button type="button" class="buttons delete-btn" id="editArchiveBtn">Archive</button>
+                    <button type="button" class="buttons archive-btn" id="editArchiveBtn">Archive</button>
                     <button type="submit" class="buttons">Update</button>
                     <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button>
                     <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button>

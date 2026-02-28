@@ -1,15 +1,28 @@
 import supabase from "../../../../server/api/supabase.js";
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
+import { archiveRecord } from '../../utils/archives.js';
 
 /**
- * Handles opening and closing of modals
+ * Handles all click interactions in the user management interface.
+ * Manages modal toggling, form cancellation, and user action buttons.
+ * 
+ * - Modal triggers: Opens modals via data-modal attributes
+ * - Cancel buttons: Closes modals and resets forms with validation clearing
+ * - Edit buttons: Populates and opens the edit modal with user data
+ * - Suspend buttons: Opens suspend modal for setting suspension period
+ * - Unsuspend buttons: Directly unsuspends the user
+ * - Archive buttons: Directly archives the user
+ * - Back button: Returns from suspend modal to edit modal
+ * 
  * @param {Event} e - Click event
  */
 document.addEventListener('click', (e) => {
+    // Handle modal opening via data-modal attribute
     const modalId = e.target.dataset.modal;
     if (modalId) document.getElementById(modalId)?.classList.add('active');
 
+    // Handle cancel button clicks - close modal, reset form, clear validation
     if (e.target.classList.contains('cancel-btn')) {
         const modal = e.target.closest('.modal');
         modal?.classList.remove('active');
@@ -18,13 +31,151 @@ document.addEventListener('click', (e) => {
         if (form) {
             form.reset();
 
-            // Clear validation states
             form.querySelectorAll('input, select, textarea').forEach(input => {
                 validator.clear(input);
             });
         }
     }
 
+    // Handle edit button clicks
+    if (e.target.classList.contains('edit-btn')) {
+        const btn = e.target;
+
+        document.getElementById('editModal').classList.add('active');
+
+        const form = document.getElementById('editForm');
+        form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
+        form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
+        form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
+        form.querySelector('[name="street"]').value = btn.dataset.street || '';
+        form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
+
+        form.dataset.userId = btn.dataset.id;
+
+        const isSuspended = btn.dataset.status === 'suspended';
+        const suspendBtn = document.getElementById('editSuspendBtn');
+        const unsuspendBtn = document.getElementById('editUnsuspendBtn');
+
+        // Set the data-id on the suspend button
+        suspendBtn.dataset.id = btn.dataset.id;
+        unsuspendBtn.dataset.id = btn.dataset.id;
+
+        console.log('Suspend button after setting:', suspendBtn.dataset);
+
+        suspendBtn.style.display = isSuspended ? 'none' : '';
+        unsuspendBtn.style.display = isSuspended ? '' : 'none';
+
+        document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
+    }
+
+    // Handle suspend button clicks
+    if (e.target.classList.contains('suspend-btn')) {
+        if (e.target.type === 'submit' || e.target.closest('#suspendForm')) return;
+
+        const userId = e.target.dataset.id;
+
+        const form = document.getElementById('suspendForm');
+        if (!form) return;
+
+        if (!userId || userId === 'undefined') {
+            console.error('Invalid userId in click handler:', userId);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Invalid user ID. Please try again.',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal-popup',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm-btn',
+                    cancelButton: 'swal-cancel-btn'
+                }
+            });
+            return;
+        }
+
+        form.dataset.userId = userId;
+        form.reset();
+
+        const reasonInput = form.querySelector('[name="suspendReason"]');
+        const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+        if (reasonInput) validator.clear(reasonInput);
+        if (detailsInput) validator.clear(detailsInput);
+
+        document.getElementById('editModal')?.classList.remove('active');
+        form.closest('.modal')?.classList.add('active');
+    }
+
+    // Handle unsuspend button clicks
+    if (e.target.classList.contains('unsuspend-btn')) {
+        const userId = e.target.dataset.id;
+        document.getElementById('editModal')?.classList.remove('active');
+        unsuspendUser(userId);
+    }
+
+    // Handle archive button clicks
+    if (e.target.id === 'editArchiveBtn') {
+        const userId = e.target.dataset.id;
+        document.getElementById('editModal')?.classList.remove('active');
+
+        // Show confirmation dialog before archiving
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This user will be archived.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await archiveRecord('users', userId);
+                // Explicitly refresh users table after archiving
+                fetchUsers();
+            }
+        });
+    }
+
+    // Handle suspend modal back button
+    if (e.target.id === 'suspendBackBtn') {
+        document.getElementById('suspendModal').classList.remove('active');
+        document.getElementById('editModal').classList.add('active');
+    }
+});
+
+/**
+ * Initialize WebSocket connection and form handlers on page load.
+ * Sets up real-time updates for user list changes and initializes
+ * all forms with validation and submission handlers.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize WebSocket for real-time updates
+    if (!sockets["users"]) {
+        initSocket("users", "ws://localhost:8081", data => {
+            if (data.type === "users_update") fetchUsers();
+        });
+
+        fetchUsers();
+    }
+
+    // Initialize forms with validation
+    const createForm = document.getElementById('createForm');
+    if (createForm) initializeForm(createForm, handleCreateFormSubmit);
+
+    const editForm = document.getElementById('editForm');
+    if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
+
+    const suspendForm = document.getElementById('suspendForm');
+    if (suspendForm) {
+        initializeForm(suspendForm, handleSuspendFormSubmit);
+        initializeSuspendTemplates();
+    }
 });
 
 /**
@@ -35,8 +186,9 @@ document.addEventListener('click', (e) => {
  * @async
  * @returns {Promise<void>}
  */
-async function fetchUsers() {
+export async function fetchUsers() {
     const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
 
     try {
         const resp = await fetch('/Banwa/server/api/staff/superadmin/get_user_all.php', {
@@ -98,20 +250,6 @@ async function fetchUsers() {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading users</td></tr>`;
     }
 };
-
-/**
- * Initialize WebSocket connection for real-time user updates
- * Fetches initial user list after socket setup
- */
-document.addEventListener('DOMContentLoaded', () => {
-    if (!sockets["users"]) {
-        initSocket("users", "ws://localhost:8081", data => {
-            if (data.type === "users_update") fetchUsers();
-        });
-
-        fetchUsers();
-    }
-});
 
 /**
  * Unsuspends a user account after confirmation
@@ -178,76 +316,6 @@ async function unsuspendUser(userId) {
         });
     }
 }
-
-/**
- * Handles clicks on edit buttons to populate the edit form modal.
- * Opens the edit modal and fills form fields with the button's data attributes.
- * @param {Event} e - Click event
- */
-document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('edit-btn')) return;
-
-    const btn = e.target;
-
-    document.getElementById('editModal').classList.add('active');
-
-    const form = document.getElementById('editForm');
-    form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
-    form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
-    form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
-    form.querySelector('[name="street"]').value = btn.dataset.street || '';
-    form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
-
-    form.dataset.userId = btn.dataset.id;
-
-    const isSuspended = btn.dataset.status === 'suspended';
-    const suspendBtn = document.getElementById('editSuspendBtn');
-    const unsuspendBtn = document.getElementById('editUnsuspendBtn');
-    suspendBtn.style.display = isSuspended ? 'none' : '';
-    unsuspendBtn.style.display = isSuspended ? '' : 'none';
-
-    document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
-    suspendBtn.dataset.id = btn.dataset.id;
-    unsuspendBtn.dataset.id = btn.dataset.id;
-});
-
-/**
- * Handles clicks on suspend and unsuspend buttons.
- * Opens suspend modal for suspend buttons or calls unsuspendUser directly for unsuspend buttons.
- * @param {Event} e - Click event
- */
-document.addEventListener('click', e => {
-    if (e.target.classList.contains('suspend-btn')) {
-        const userId = e.target.dataset.id;
-        const form = document.getElementById('suspendForm');
-        if (!form) return;
-
-        form.dataset.userId = userId;
-        document.getElementById('editModal')?.classList.remove('active');
-        form.closest('.modal')?.classList.add('active');
-    }
-
-    if (e.target.classList.contains('unsuspend-btn')) {
-        const userId = e.target.dataset.id;
-        document.getElementById('editModal')?.classList.remove('active');
-        unsuspendUser(userId);
-    }
-
-    if (e.target.id === 'editArchiveBtn') {
-        const userId = e.target.dataset.id;
-        document.getElementById('editModal')?.classList.remove('active');
-        archiveUser(userId);
-    }
-});
-
-/**
- * Handles back button click in suspend modal.
- * Closes suspend modal and reopens edit modal.
- */
-document.getElementById('suspendBackBtn').addEventListener('click', () => {
-    document.getElementById('suspendModal').classList.remove('active');
-    document.getElementById('editModal').classList.add('active');
-});
 
 /**
  * Object containing predefined suspension reason templates.
@@ -421,7 +489,6 @@ const validator = (() => {
         return true;
     }
 
-    // Update the return statement to expose it:
     return {
         text: validateText,
         email: validateEmail,
@@ -462,7 +529,7 @@ function createValidationConfig(form) {
             case 'retypePassword':
                 config.push({ el: input, type: 'password', message: 'Please re-type password' });
                 break;
-            case 'street':   // ← NEW
+            case 'street':
                 config.push({
                     el: input,
                     type: 'select',
@@ -539,6 +606,7 @@ function validateField(config) {
         default: return true;
     }
 }
+
 /**
  * Validates all fields in a step
  * @param {Array} fields - Array of input elements
@@ -810,8 +878,28 @@ async function handleUpdateFormSubmit(form) {
  * @param {HTMLFormElement} form - The suspend form element being submitted
  */
 async function handleSuspendFormSubmit(form) {
+    const userId = form.dataset.userId;
+
+    if (!userId || userId === 'undefined') {
+        console.error('Invalid userId:', userId);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'User ID is missing. Please try again.',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+        return;
+    }
+
     const reasonInput = form.querySelector('[name="suspendReason"]');
     const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+
     if (!validator.select(reasonInput, 'Please select a reason')) return;
 
     const confirmResult = await Swal.fire({
@@ -833,15 +921,17 @@ async function handleSuspendFormSubmit(form) {
     if (!confirmResult.isConfirmed) return;
 
     try {
+        const payload = {
+            user_id: userId,
+            reason: reasonInput.value.trim(),
+            details: detailsInput.value.trim()
+        };
+
         const resp = await fetch('/Banwa/server/api/staff/superadmin/suspend_user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({
-                user_id: form.dataset.userId,
-                reason: reasonInput.value.trim(),
-                details: detailsInput.value.trim()
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!resp.ok) throw new Error('Request failed');
@@ -851,8 +941,11 @@ async function handleSuspendFormSubmit(form) {
 
         form.closest('.modal')?.classList.remove('active');
         form.reset();
+
         validator.clear(reasonInput);
         validator.clear(detailsInput);
+
+        delete form.dataset.userId;
 
         await Swal.fire({
             toast: true,
@@ -873,6 +966,7 @@ async function handleSuspendFormSubmit(form) {
 
         fetchUsers();
     } catch (err) {
+        console.error('Error in suspend:', err);
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -887,20 +981,3 @@ async function handleSuspendFormSubmit(form) {
         });
     }
 }
-
-/**
- * Automatically initializes create and edit forms and table search on page load
- */
-document.addEventListener('DOMContentLoaded', () => {
-    const createForm = document.getElementById('createForm');
-    if (createForm) initializeForm(createForm, handleCreateFormSubmit);
-
-    const editForm = document.getElementById('editForm');
-    if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
-
-    const suspendForm = document.getElementById('suspendForm');
-    if (suspendForm) {
-        initializeForm(suspendForm, handleSuspendFormSubmit);
-        initializeSuspendTemplates();
-    }
-});
