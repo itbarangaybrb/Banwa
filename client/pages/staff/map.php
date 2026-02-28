@@ -100,6 +100,12 @@
                                     <span>Utilities</span>
                                 </span>
                             </a>
+                            <a href="#" data-type="incident" onclick="selectFilterType('incident', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#cc0000;"></span>
+                                    <span>Incidents</span>
+                                </span>
+                            </a>
                         </div>
                     </div>
 
@@ -117,6 +123,9 @@
                         <span class="toggle-indicator"></span>
                     </button>
                 </div>
+
+                <!-- Sub-filters shown only when Incident is selected — fully built by loadIncidentSubFilters() in map.js -->
+                <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
 
                 <!-- Sub-filters shown only when Construction is selected -->
                 <div class="sub-filters" id="constructionSubFilters" style="display:none;">
@@ -193,6 +202,11 @@
                 <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                     <i class="fas fa-hard-hat"></i>
                     <span>Construction SDSS</span>
+                </button>
+                <!-- Summary report for all incident reports -->
+                <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Incident Report</span>
                 </button>
                 <!-- Shows the decision rules used by the SDSS -->
                 <button class="gm-action-btn" onclick="showSDSSRulesReport()">

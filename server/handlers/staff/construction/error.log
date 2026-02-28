@@ -234,3 +234,12 @@ LINE 3:             FROM construction_applications
 [27-Feb-2026 09:58:25 UTC] OCR job queued for application 29 with 1 files
 [27-Feb-2026 09:58:25 UTC] CR1 Check - Has file upload: No
 [27-Feb-2026 09:58:25 UTC] CR1 Check - Has file upload: No
+[28-Feb-2026 17:22:25 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[28-Feb-2026 17:22:30 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[28-Feb-2026 17:39:49 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^

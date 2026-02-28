@@ -6,6 +6,7 @@ let constructionMarkers = [];
 let businessMarkers = [];
 let householdMarkers = []; // Will not be used anymore - keeping for compatibility
 let utilityMarkers = [];
+let incidentMarkers = [];
 let housePolygonsLayer = null;
 let housePolygonsData = [];
 let faultLine = null;
@@ -20,6 +21,7 @@ let floodLegend = null;
 // Filter state
 let activeFilter = 'household';
 let constructionSubFilter = 'all';
+let incidentSubFilter = 'all';
 
 // Search variables
 let allMarkersData = [];
@@ -169,9 +171,9 @@ const utilityIcon = L.divIcon({
     iconSize: [18, 18] 
 });
 
-const incidentIcon = L.divIcon({ 
-    className: 'incident-marker', 
-    iconSize: [22, 22] 
+const incidentIcon = L.divIcon({
+    className: 'incident-marker',
+    iconSize: [22, 22]
 });
 
 // ==================== MODAL FUNCTIONS (SweetAlert2) ====================
@@ -239,6 +241,7 @@ function getTypeBadgeStyle(type) {
         business:     'background:#00247c;color:#fff;',
         utility:      'background:#00247c;color:#fff;',
         household:    'background:#00247c;color:#fff;',
+        incident:     'background:#cc0000;color:#fff;',
         flood:        'background:#cc0000;color:#fff;'
     };
     return styles[type] || 'background:#555555;color:#fff;';
@@ -334,6 +337,68 @@ function displayDetailsInModal(data, type) {
             detailRow('Status', `<span style="color:${statusColor};font-weight:bold;">${status}</span>`)
         ].join('');
         showDetailSwal(title, 'Utility', 'utility', tableRows);
+
+    } else if (type === 'incident') {
+        title = data.incident_type || 'Incident Report';
+        const statusColor = data.status === 'Resolved' ? '#28a745' : data.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+        const dssColor = data.dss_status === 'High Priority' ? '#cc0000' : data.dss_status === 'Medium Priority' ? '#ff9800' : '#555';
+
+        // Parse witnesses JSON
+        let witnessRows = '';
+        if (data.witness_data_json) {
+            try {
+                const witnesses = typeof data.witness_data_json === 'string'
+                    ? JSON.parse(data.witness_data_json) : data.witness_data_json;
+                if (Array.isArray(witnesses) && witnesses.length) {
+                    witnessRows = witnesses.map((w, i) =>
+                        detailRow(`Witness ${i + 1}`,
+                            `${w.full_name || w.name || '—'}${w.contact ? ' · ' + w.contact : ''}${w.address ? ' · ' + w.address : ''}`)
+                    ).join('');
+                }
+            } catch(e) {}
+        }
+
+        tableRows = [
+            // ── Incident Info ──
+            `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Incident Information</td></tr>`,
+            detailRow('Incident Type', data.incident_type || 'Not specified'),
+            detailRow('Date / Time', formatDate(data.incident_timestamp)),
+            detailRow('Date Reported', formatDate(data.date_reported)),
+            detailRow('Description', data.description || 'Not specified'),
+            detailRow('Status', `<span style="color:${statusColor};font-weight:700;">${data.status || 'Pending'}</span>`),
+            detailRow('DSS Status', `<span style="color:${dssColor};font-weight:700;">${data.dss_status || 'Pending Evaluation'}</span>`),
+            // ── Victim ──
+            `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Victim</td></tr>`,
+            detailRow('Full Name', data.vic_full_name || 'Not specified'),
+            detailRow('Address', data.vic_address || 'Not specified'),
+            detailRow('Contact', data.vic_contact || 'Not specified'),
+            detailRow('Gender', data.vic_gender || 'Not specified'),
+            detailRow('Date of Birth', data.vic_dob ? formatDate(data.vic_dob) : 'Not specified'),
+            detailRow('Citizenship', data.vic_citizenship || 'Not specified'),
+            detailRow('Occupation', data.vic_occupation || 'Not specified'),
+            // ── Suspect ──
+            `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Suspect</td></tr>`,
+            detailRow('Full Name', data.sus_full_name || 'Unknown'),
+            detailRow('Address', data.sus_address || 'Not specified'),
+            detailRow('Contact', data.sus_contact || 'Not specified'),
+            detailRow('Gender', data.sus_gender || 'Not specified'),
+            detailRow('Description', data.sus_description || 'Not specified'),
+            // ── Reporter ──
+            `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Reporter</td></tr>`,
+            detailRow('Full Name', data.rp_full_name || 'Not specified'),
+            detailRow('Address', data.rp_address || 'Not specified'),
+            detailRow('Contact', data.rp_contact || 'Not specified'),
+            detailRow('Relationship to Victim', data.rp_relationship || 'Not specified'),
+            // ── Witnesses ──
+            witnessRows ? `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Witnesses</td></tr>` + witnessRows : '',
+            // ── Resolution ──
+            `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Resolution</td></tr>`,
+            detailRow('Resolution Details', data.resolution_details || 'Not specified'),
+            detailRow('Update Comments', data.update_comments || 'Not specified'),
+            data.approval_comments ? detailRow('Approval Comments', data.approval_comments) : '',
+            data.disapproval_comments ? detailRow('Disapproval Comments', data.disapproval_comments) : ''
+        ].join('');
+        showDetailSwal(title, 'Incident', 'incident', tableRows);
 
     } else if (type === 'household') {
         title = data.title || 'Household Marker';
@@ -532,18 +597,18 @@ function selectFilterType(type, event) {
         'household': 'Households',
         'business': 'Businesses',
         'construction': 'Construction',
-        'utility': 'Utilities'
+        'utility': 'Utilities',
+        'incident': 'Incidents'
     };
     
     document.getElementById('currentFilterText').textContent = filterTextMap[type] || 'Filter';
     
     const subFilters = document.getElementById('constructionSubFilters');
-    if (subFilters) {
-        if (type === 'construction') {
-            subFilters.style.display = 'block';
-        } else {
-            subFilters.style.display = 'none';
-        }
+    const incidentSubFilters = document.getElementById('incidentSubFilters');
+    if (subFilters) subFilters.style.display = type === 'construction' ? 'block' : 'none';
+    if (incidentSubFilters) {
+        incidentSubFilters.style.display = type === 'incident' ? 'block' : 'none';
+        if (type === 'incident') loadIncidentSubFilters();
     }
     
     document.querySelectorAll('.dropdown-content a').forEach(link => {
@@ -674,6 +739,16 @@ function updateMarkerVisibility() {
             }
         }
     });
+
+    incidentMarkers.forEach(marker => {
+        if (activeFilter === 'incident') {
+            const show = shouldShowIncidentMarker(marker);
+            if (show && !map.hasLayer(marker)) marker.addTo(map);
+            else if (!show && map.hasLayer(marker)) map.removeLayer(marker);
+        } else {
+            if (map.hasLayer(marker)) map.removeLayer(marker);
+        }
+    });
 }
 
 function updateHousePolygonVisibility() {
@@ -751,7 +826,11 @@ function performSearch() {
             marker.nature_of_work || '',
             marker.nature_of_activity || '',
             marker.type_of_work || '',
-            marker.type_of_business || ''
+            marker.type_of_business || '',
+            marker.incident_type || '',
+            marker.vic_full_name || '',
+            marker.rp_full_name || '',
+            marker.vic_address || ''
         ];
         
         let matchScore = 0;
@@ -951,6 +1030,10 @@ function highlightSearchResult(markerData) {
         targetMarker = utilityMarkers.find(m => 
             m.utility_data && m.utility_data.id === markerData.id
         );
+    } else if (type === 'incident') {
+        targetMarker = incidentMarkers.find(m =>
+            m.incident_data && m.incident_data.id === markerData.id
+        );
     }
     
     if (targetMarker) {
@@ -966,6 +1049,7 @@ function highlightSearchResult(markerData) {
 function getMarkerTypeFromData(markerData) {
     return markerData.marker_type || markerData.type ||
            (markerData.construction_id ? 'construction' : 
+            markerData.incident_type !== undefined ? 'incident' :
             markerData.id ? 'business' : 
             markerData.utility_id ? 'utility' : 
             markerData.hazard_id ? 'flood' :
@@ -1000,6 +1084,7 @@ function highlightExistingMarker(marker, markerData) {
         if (type === 'construction')  popupContent = createConstructionPopup(markerData);
         else if (type === 'business') popupContent = createBusinessPopup(markerData);
         else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else if (type === 'incident') popupContent = createIncidentPopup(markerData);
         else                          popupContent = createHousePopup(markerData);
         marker.bindPopup(popupContent, { autoPan: true }).openPopup();
     });
@@ -1057,6 +1142,7 @@ function createTemporaryHighlight(markerData) {
         if (type === 'construction')  popupContent = createConstructionPopup(markerData);
         else if (type === 'business') popupContent = createBusinessPopup(markerData);
         else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else if (type === 'incident') popupContent = createIncidentPopup(markerData);
         else                          popupContent = createHousePopup(markerData);
         activeSearchMarker.bindPopup(popupContent, { autoPan: true }).openPopup();
     });
@@ -1095,6 +1181,12 @@ function hideAllMarkers() {
     });
     
     utilityMarkers.forEach(marker => {
+        if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+        }
+    });
+
+    incidentMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
         }
@@ -1304,6 +1396,37 @@ function createUtilityPopup(data) {
     `;
 }
 
+function createIncidentPopup(data) {
+    const statusColor = data.status === 'Resolved' ? '#28a745'
+                      : data.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+    const dssColor = data.dss_status === 'High Priority' ? '#cc0000'
+                   : data.dss_status === 'Medium Priority' ? '#ff9800' : '#555';
+    return `
+        <div class="popup-content">
+            <h4>
+                <span>${data.incident_type || 'Incident'}</span>
+                <span class="incident-badge">Incident</span>
+            </h4>
+            <div class="popup-section">
+                <p><strong>Date:</strong> ${formatDate(data.incident_timestamp)}</p>
+                <p><strong>Location:</strong> ${data.vic_address || data.rp_address || 'Not specified'}</p>
+                <p><strong>Description:</strong> ${data.description ? data.description.substring(0, 80) + (data.description.length > 80 ? '…' : '') : 'Not specified'}</p>
+            </div>
+            <div class="popup-section">
+                <p><strong>Victim:</strong> ${data.vic_full_name || 'Not specified'}</p>
+                <p><strong>Reporter:</strong> ${data.rp_full_name || 'Not specified'}</p>
+            </div>
+            <div class="popup-section">
+                <p><strong>Status:</strong> <span style="color:${statusColor};font-weight:600;">${data.status || 'Pending'}</span></p>
+                <p><strong>DSS:</strong> <span style="color:${dssColor};font-weight:600;">${data.dss_status || 'Pending Evaluation'}</span></p>
+            </div>
+            <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'incident')">
+                View Full Details
+            </button>
+        </div>
+    `;
+}
+
 function createFloodPopup(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
     const riskClass = `flood-risk-${data.risk_level || 'medium'}`;
@@ -1370,7 +1493,13 @@ async function viewMapDetails(id, type) {
     });
     try {
         const formData = new FormData();
-        formData.append('action', `get_${type}_details`);
+        const actionMap = {
+            construction: 'get_construction_details',
+            business:     'get_business_details',
+            utility:      'get_utilities_details',
+            incident:     'get_incident_details'
+        };
+        formData.append('action', actionMap[type] || `get_${type}_details`);
         formData.append('id', id);
         const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
         const data = await response.json();
@@ -1504,6 +1633,7 @@ async function loadAllMarkers() {
             ...(data.markers || []).filter(m => m.type === 'construction'),
             ...(data.markers || []).filter(m => m.type === 'business'),
             ...(data.markers || []).filter(m => m.type === 'utility'),
+            ...(data.markers || []).filter(m => m.type === 'incident'),
             ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
         ];
 
@@ -1511,6 +1641,7 @@ async function loadAllMarkers() {
         const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
         const businessMarkersList = (data.markers || []).filter(m => m.type === 'business');
         const utilityMarkersList = (data.markers || []).filter(m => m.type === 'utility');
+        const incidentMarkersList = (data.markers || []).filter(m => m.type === 'incident');
 
         // Load construction markers
         constructionMarkersList.forEach(construction => {
@@ -1593,6 +1724,31 @@ async function loadAllMarkers() {
                     }
                 } catch (error) {
                     console.error('Error processing utility marker:', error);
+                }
+            }
+        });
+
+        // Load incident markers
+        incidentMarkersList.forEach(incident => {
+            if (incident.latitude && incident.longitude) {
+                try {
+                    const lat = parseFloat(incident.latitude);
+                    const lng = parseFloat(incident.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const popupContent = createIncidentPopup(incident);
+                        const marker = L.marker([lat, lng], {
+                            icon: incidentIcon,
+                            title: incident.incident_type || 'Incident'
+                        }).bindPopup(popupContent);
+                        marker.incident_data = incident;
+                        marker.incident_type = incident.incident_type || '';
+                        incidentMarkers.push(marker);
+                        if (activeFilter === 'incident' && shouldShowIncidentMarker(marker)) {
+                            marker.addTo(map);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error processing incident marker:', error);
                 }
             }
         });
@@ -1890,6 +2046,7 @@ function clearAllMarkers() {
     constructionMarkers.forEach(marker => map.removeLayer(marker));
     businessMarkers.forEach(marker => map.removeLayer(marker));
     utilityMarkers.forEach(marker => map.removeLayer(marker));
+    incidentMarkers.forEach(marker => map.removeLayer(marker));
     
     if (floodLayer) {
         map.removeLayer(floodLayer);
@@ -1908,6 +2065,7 @@ function clearAllMarkers() {
     constructionMarkers = [];
     businessMarkers = [];
     utilityMarkers = [];
+    incidentMarkers = [];
     floodLayer = null;
     floodLegend = null;
 }
@@ -2519,6 +2677,232 @@ function displayConstructionSDSSReport(data) {
     showReportSwal(reportHTML);
 }
 
+
+// ==================== INCIDENT SUB-FILTER ====================
+
+// Track whether sub-filter panel is expanded
+let incidentFiltersExpanded = false;
+
+async function loadIncidentSubFilters() {
+    const panel = document.getElementById('incidentSubFilters');
+    if (!panel) return;
+
+    const typeIcons = {
+        'theft':       'fas fa-user-secret',
+        'assault':     'fas fa-fist-raised',
+        'vandalism':   'fas fa-spray-can',
+        'disturbance': 'fas fa-volume-up',
+        'robbery':     'fas fa-mask',
+        'drug':        'fas fa-pills',
+        'trespassing': 'fas fa-door-open',
+        'fraud':       'fas fa-file-contract',
+        'harassment':  'fas fa-comment-slash',
+        'fire':        'fas fa-fire'
+    };
+
+    let types = [];
+    try {
+        const fd = new FormData();
+        fd.append('action', 'get_incident_types');
+        const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+        types = data.success ? (data.types || []) : [];
+    } catch(e) {
+        console.warn('Could not load incident types:', e);
+    }
+
+    // Build type buttons for the expanded section
+    const typeButtons = types.map(type => {
+        const key = type.toLowerCase().split(' ')[0];
+        const icon = Object.entries(typeIcons).find(([k]) => key.includes(k))?.[1] || 'fas fa-exclamation-circle';
+        return `<button class="sub-filter-btn" data-incident-subtype="${type}"
+            onclick="filterIncidentByType(this.dataset.incidentSubtype, event)">
+            <i class="${icon}"></i><span>${type}</span>
+        </button>`;
+    }).join('');
+
+    const currentLabel = incidentSubFilter === 'all' ? 'All types' : incidentSubFilter;
+
+    panel.innerHTML = `
+        <div class="sub-filters-bar">
+            <button class="sub-filter-btn active" data-incident-subtype="all"
+                onclick="filterIncidentByType('all', event)">
+                <i class="fas fa-layer-group"></i><span>All</span>
+            </button>
+            <span class="sub-filter-active-label" id="incidentActiveLabel">
+                ${incidentSubFilter !== 'all' ? '<strong>' + incidentSubFilter + '</strong>' : 'Showing all types'}
+            </span>
+            <button class="sub-filter-toggle-btn" id="incidentToggleBtn"
+                onclick="toggleIncidentFilters()" title="Show / hide incident types">
+                <i class="fas fa-filter"></i> Types
+                <span class="toggle-arrow">▾</span>
+            </button>
+        </div>
+        <div class="sub-filter-expanded" id="incidentTypeList">
+            ${typeButtons}
+        </div>`;
+
+    // Restore expanded state if it was open
+    if (incidentFiltersExpanded) {
+        document.getElementById('incidentTypeList').classList.add('open');
+        document.getElementById('incidentToggleBtn').classList.add('open');
+    }
+}
+
+function toggleIncidentFilters() {
+    const list   = document.getElementById('incidentTypeList');
+    const btn    = document.getElementById('incidentToggleBtn');
+    if (!list || !btn) return;
+    incidentFiltersExpanded = !incidentFiltersExpanded;
+    list.classList.toggle('open', incidentFiltersExpanded);
+    btn.classList.toggle('open', incidentFiltersExpanded);
+}
+
+
+function filterIncidentByType(subtype, event) {
+    if (event) event.stopPropagation();
+    incidentSubFilter = subtype;
+    document.querySelectorAll('[data-incident-subtype]').forEach(btn => btn.classList.remove('active'));
+    const clickedBtn = event ? event.currentTarget
+        : document.querySelector(`[data-incident-subtype="${subtype}"]`);
+    if (clickedBtn) clickedBtn.classList.add('active');
+    // Update active label
+    const label = document.getElementById('incidentActiveLabel');
+    if (label) label.innerHTML = subtype === 'all' ? 'Showing all types' : `<strong>${subtype}</strong>`;
+    if (activeFilter === 'incident') updateMarkerVisibility();
+}
+
+function shouldShowIncidentMarker(marker) {
+    if (incidentSubFilter === 'all') return true;
+    const type = (marker.incident_type ||
+                  (marker.incident_data ? marker.incident_data.incident_type : '') || '').toLowerCase();
+    return type === incidentSubFilter.toLowerCase();
+}
+
+// ==================== INCIDENT SUMMARY REPORT ====================
+
+async function showIncidentSummaryReport() {
+    showSwal({
+        title: 'Loading Incident Report',
+        html: 'Analyzing incident data...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_all_incidents');
+        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
+        const data = await response.json();
+        if (!data.success) throw new Error('Failed to load incident data');
+
+        const incidents = data.incidents || [];
+        const geotagged = incidents.filter(i => i.latitude && i.longitude).length;
+
+        if (incidents.length === 0) {
+            showReportSwal(`<div class="rpt-body">
+                <div class="rpt-header">
+                    <h3>Incident Report Summary</h3>
+                    <div class="rpt-big-num">0</div>
+                    <div class="rpt-subtitle">No incident reports on record</div>
+                </div>
+                <div class="rpt-content" style="text-align:center;padding-top:10px;">
+                    <p style="color:#555;font-size:13px;">No incidents with location data found.</p>
+                </div>
+            </div>`);
+            return;
+        }
+
+        // Group by type
+        const byType = {};
+        incidents.forEach(inc => {
+            const t = inc.incident_type || 'Other';
+            byType[t] = (byType[t] || 0) + 1;
+        });
+
+        // Group by status
+        const pending = incidents.filter(i => (i.status || 'Pending') === 'Pending').length;
+        const investigating = incidents.filter(i => i.status === 'Under Investigation').length;
+        const resolved = incidents.filter(i => i.status === 'Resolved').length;
+
+        // Type breakdown bars
+        const typeColors = ['#cc0000','#e65c00','#c0392b','#8e44ad','#2980b9','#16a085','#27ae60','#f39c12'];
+        const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+        const typeBars = sortedTypes.map(([type, count], i) => {
+            const color = typeColors[i % typeColors.length];
+            const pct = ((count / incidents.length) * 100).toFixed(0);
+            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <span style="min-width:130px;font-size:12px;font-weight:600;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${type}">${type}</span>
+                <span style="font-size:16px;font-weight:700;color:${color};min-width:24px;">${count}</span>
+                <div style="flex:1;height:8px;background:#e8e8e8;border-radius:4px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;"></div>
+                </div>
+                <span style="font-size:11px;color:#aaa;min-width:34px;">${pct}%</span>
+            </div>`;
+        }).join('');
+
+        // Accordion rows — most recent first
+        const sorted = [...incidents].sort((a, b) =>
+            new Date(b.incident_timestamp || b.date_reported || 0) -
+            new Date(a.incident_timestamp || a.date_reported || 0));
+
+        const rows = sorted.map((inc, i) => {
+            const sColor = inc.status === 'Resolved' ? '#28a745'
+                         : inc.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+            const body = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;font-size:12px;color:#555;margin-bottom:8px;">
+                    <div><strong>Victim:</strong> ${inc.vic_full_name || '—'}</div>
+                    <div><strong>Reporter:</strong> ${inc.rp_full_name || '—'}</div>
+                    <div><strong>Location:</strong> ${inc.vic_address || inc.rp_address || '—'}</div>
+                    <div><strong>Date:</strong> ${formatDate(inc.incident_timestamp)}</div>
+                    <div><strong>DSS:</strong> ${inc.dss_status || 'Pending'}</div>
+                    <div><strong>Status:</strong> <span style="color:${sColor};font-weight:700;">${inc.status || 'Pending'}</span></div>
+                </div>
+                ${inc.description ? `<div style="background:#f8f8f8;border-left:3px solid #cc0000;padding:8px 10px;border-radius:4px;font-size:12px;color:#555;">${inc.description}</div>` : ''}`;
+            return rptRow(`inc-${i}`, inc.incident_type || 'Incident', '#cc0000',
+                inc.vic_full_name || inc.rp_full_name || 'Unknown',
+                inc.status || 'Pending', body);
+        }).join('');
+
+        const reportHTML = `<div class="rpt-body">
+            <div class="rpt-header">
+                <h3>Incident Report Summary</h3>
+                <div class="rpt-big-num">${incidents.length}</div>
+                <div class="rpt-subtitle">Total Incidents on Record <span style="font-size:12px;font-weight:400;opacity:.7;">(${geotagged} with map location)</span></div>
+                <div class="rpt-chips">
+                    <div class="rpt-chip"><span class="rpt-chip-num">${pending}</span><span class="rpt-chip-label">Pending</span></div>
+                    <div class="rpt-chip"><span class="rpt-chip-num">${investigating}</span><span class="rpt-chip-label">Investigating</span></div>
+                    <div class="rpt-chip"><span class="rpt-chip-num">${resolved}</span><span class="rpt-chip-label">Resolved</span></div>
+                </div>
+            </div>
+            <div class="rpt-content">
+                <div style="background:#f8f9fa;border-radius:7px;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:12px;font-weight:600;color:#00247c;margin-bottom:10px;">By Incident Type</div>
+                    ${typeBars}
+                </div>
+                <div class="rpt-list-box">
+                    <h4>All Incidents <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
+                    <p class="rpt-list-hint">Most recent first · click a row to expand</p>
+                    <div class="rpt-list-scroll">${rows}</div>
+                </div>
+                <div class="rpt-footer">
+                    <h4>Recommendations</h4>
+                    <ul>
+                        <li>Increase patrol frequency in areas with repeat incidents</li>
+                        <li>Coordinate with PNP for all unresolved high-priority cases</li>
+                        <li>Conduct community awareness programs for the most common incident types</li>
+                        <li>Follow up on all "Under Investigation" cases within 30 days</li>
+                    </ul>
+                </div>
+            </div>
+        </div>`;
+
+        showReportSwal(reportHTML);
+
+    } catch (error) {
+        showSwal({ icon: 'error', title: 'Error', text: 'Failed to generate incident report: ' + error.message });
+    }
+}
 
 // ==================== EVENT LISTENERS ====================
 
@@ -3329,6 +3713,9 @@ window.displayConstructionSDSSReport = displayConstructionSDSSReport;
 window.showSDSSRulesReport = showSDSSRulesReport;
 window.showRuleAffectedData = showRuleAffectedData;
 window.clearAffectedHighlights = clearAffectedHighlights;
+window.showIncidentSummaryReport = showIncidentSummaryReport;
+window.filterIncidentByType = filterIncidentByType;
+window.loadIncidentSubFilters = loadIncidentSubFilters;
 
 // Popup detail button handlers - must be on window so Leaflet popup onclick attributes can reach them
 window.viewMapDetails = viewMapDetails;
