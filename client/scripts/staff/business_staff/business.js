@@ -2069,21 +2069,20 @@ function generateClearance(appId) {
  * Creates a new business application
  */
 async function createApplication(event) {
-    event.preventDefault();
+    event.preventDefault();           // ← Stops native form submit
+    event.stopImmediatePropagation(); // ← Prevents any other listeners
 
     const form = document.getElementById('createForm');
+    if (!form) return;
 
-    // ==================== CLIENT-SIDE VALIDATION ====================
+    // ==================== VALIDATION (your existing code) ====================
     let isValid = true;
     const errorMsgs = form.querySelectorAll('.error-msg');
-    errorMsgs.forEach(msg => msg.textContent = ''); // Clear previous errors
+    errorMsgs.forEach(msg => msg.textContent = '');
 
-    // Helper to show error
     function showError(input, message) {
         const errorDiv = input.nextElementSibling;
-        if (errorDiv && errorDiv.classList.contains('error-msg')) {
-            errorDiv.textContent = message;
-        }
+        if (errorDiv && errorDiv.classList.contains('error-msg')) errorDiv.textContent = message;
         isValid = false;
     }
 
@@ -2157,108 +2156,57 @@ async function createApplication(event) {
         showError(lng, 'Invalid longitude format');
     }
 
-    if (!isValid) {
-        Swal.fire({
-            ...swalTopConfig,
-            icon: 'error',
-            title: 'Validation Error',
-            text: 'Please fix the highlighted errors before submitting.'
-        });
+   if (!isValid) {
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Validation Error', text: 'Please fix the highlighted errors.' });
         return;
     }
 
-    // ==================== PREPARE FORM DATA ====================
-    const formData = new FormData(form);
-
-    // Append action
+    // ==================== FORM DATA ====================
+    const formData = new FormData();
     formData.append('action', 'create');
 
-    // Append radios if not already (FormData handles checked ones)
-    const typeOfBusiness = document.querySelector('input[name="typeOfBusiness"]:checked')?.value;
-    if (typeOfBusiness) formData.set('typeOfBusiness', typeOfBusiness);
-
-    const businessStatusVal = document.querySelector('input[name="businessStatus"]:checked')?.value;
-    if (businessStatusVal) formData.set('businessStatus', businessStatusVal);
-
-    // Append checkboxes as JSON array
-    const requirements = Array.from(form.querySelectorAll('input[name="requirements"]:checked'))
-        .map(checkbox => checkbox.value);
-    if (requirements.length > 0) {
-        formData.set('requirements', JSON.stringify(requirements));
+    for (let [key, value] of new FormData(form)) {
+        formData.append(key, value);
     }
 
-    // Set application date
-    const applicationDate = document.getElementById('applicationDate');
-    if (applicationDate) {
-        applicationDate.value = new Date().toISOString().split('T')[0];
-        formData.set('applicationDate', applicationDate.value);
-    }
+    const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked')?.value;
+    if (typeBiz) formData.set('typeOfBusiness', typeBiz);
 
+    const bizStatus = document.querySelector('input[name="businessStatus"]:checked')?.value;
+    if (bizStatus) formData.set('businessStatus', bizStatus);
 
-    // ==================== SUBMIT ====================
-    Swal.fire({
-        ...swalTopConfig,
-        title: 'Submitting Application...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    const reqs = Array.from(form.querySelectorAll('input[name="requirements"]:checked')).map(cb => cb.value);
+    if (reqs.length) formData.set('requirements', JSON.stringify(reqs));
+
+    const appDate = document.getElementById('applicationDate');
+    if (appDate) formData.set('applicationDate', appDate.value || new Date().toISOString().split('T')[0]);
+
+    // ==================== SUBMIT (only once) ====================
+    Swal.fire({ ...swalTopConfig, title: 'Submitting Application...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const formData = new FormData();
-        formData.append('action', 'create');   // ← Force this FIRST (critical fix)
-
-        // Copy all other form fields safely
-        const tempForm = new FormData(form);
-        for (let [key, value] of tempForm) {
-            if (key !== 'action') {
-                formData.append(key, value);
-            }
-        }
-
-        // Files - send as array (matches your PHP code)
-        const fileInput = document.getElementById('requirementUpload');
-        if (fileInput && fileInput.files.length > 0) {
-            for (let file of fileInput.files) {
-                formData.append('requirementUpload[]', file);
-            }
-        }
-
         const resp = await fetch(BUSINESS_HANDLER_URL, {
             method: 'POST',
             body: formData,
             credentials: 'include'
         });
 
-        if (!resp.ok) {
-            throw new Error(`HTTP error! status: ${resp.status}`);
-        }
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
         const data = await resp.json();
 
         if (data.status === 'success') {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Application Created',
-                text: data.message || 'Your business application has been submitted successfully!',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                form.reset();
-                if (document.getElementById('management')?.classList.contains('active')) {
-                    loadManagementTable();
-                }
-            });
+            Swal.fire({ ...swalTopConfig, icon: 'success', title: 'Success!', text: data.message || 'Application created!' })
+                .then(() => {
+                    form.reset();
+                    if (document.getElementById('management')?.classList.contains('active')) loadManagementTable();
+                });
         } else {
-            throw new Error(data.message || 'Failed to create application');
+            throw new Error(data.message || 'Unknown error');
         }
     } catch (err) {
         console.error('Submission error:', err);
-        Swal.fire({
-            ...swalTopConfig,
-            icon: 'error',
-            title: 'Submission Failed',
-            text: err.message || 'An error occurred while submitting the application. Please try again.'
-        });
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Submission Failed', text: err.message });
     }
 }
 
@@ -2352,6 +2300,17 @@ document.head.insertAdjacentHTML("beforeend", `
     </style>
 `);
 
+// ==================== ATTACH FORM SUBMIT (THIS WAS MISSING!) ====================
+document.addEventListener('DOMContentLoaded', function () {
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', createApplication);
+        console.log('✅ createApplication successfully attached to form');
+    } else {
+        console.error('❌ Form with id="createForm" not found in the HTML!');
+    }
+});
+
 // DO NOT REMOVE!!! - JEP
 // /**
 //  * Fetch audit logs from the server
@@ -2400,4 +2359,4 @@ document.head.insertAdjacentHTML("beforeend", `
 //     }
 // }
 
-// fetchAuditLogs
+// fetchAuditLog

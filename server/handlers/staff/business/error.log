@@ -725,3 +725,173 @@ Stack trace:
 #3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
 #4 {main}
   thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:03:58 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:03:58 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:03:58 UTC] Action received: NULL
+[01-Mar-2026 13:03:58 UTC] POST keys: 
+[01-Mar-2026 13:03:58 UTC] FILES keys: NONE
+[01-Mar-2026 13:04:38 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:04:38 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:04:38 UTC] Action received: NULL
+[01-Mar-2026 13:04:38 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:04:38 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:04:38 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:04:38 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:04:39 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:04:52 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:04:52 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:04:52 UTC] Action received: NULL
+[01-Mar-2026 13:04:52 UTC] POST keys: 
+[01-Mar-2026 13:04:52 UTC] FILES keys: NONE
+[01-Mar-2026 13:07:33 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:07:33 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:07:33 UTC] Action received: NULL
+[01-Mar-2026 13:07:33 UTC] POST keys: 
+[01-Mar-2026 13:07:33 UTC] FILES keys: NONE
+[01-Mar-2026 13:16:03 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:16:03 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:16:03 UTC] Action received: NULL
+[01-Mar-2026 13:16:03 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:16:03 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:16:03 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:16:03 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:16:04 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:20:29 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:20:29 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:20:29 UTC] Action received: NULL
+[01-Mar-2026 13:20:29 UTC] POST keys: 
+[01-Mar-2026 13:20:29 UTC] FILES keys: NONE
+[01-Mar-2026 13:21:05 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:21:05 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:21:05 UTC] Action received: NULL
+[01-Mar-2026 13:21:05 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:21:05 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:21:05 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:21:05 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:21:06 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:21:06 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:21:06 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:21:06 UTC] Action received: NULL
+[01-Mar-2026 13:21:06 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:21:06 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:21:06 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:21:06 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:21:07 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:27:14 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:27:14 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:27:14 UTC] Action received: NULL
+[01-Mar-2026 13:27:14 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:27:14 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:27:14 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:27:14 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:27:16 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:27:16 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:27:16 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:27:16 UTC] Action received: NULL
+[01-Mar-2026 13:27:16 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:27:16 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:27:16 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:27:16 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:27:17 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:27:21 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:27:21 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:27:21 UTC] Action received: NULL
+[01-Mar-2026 13:27:21 UTC] POST keys: 
+[01-Mar-2026 13:27:21 UTC] FILES keys: NONE
+[01-Mar-2026 13:27:58 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:27:58 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:27:58 UTC] Action received: NULL
+[01-Mar-2026 13:27:58 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:27:58 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:27:58 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:27:58 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:27:59 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["TCT"]', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(877): analyze_files(Array, '["TCT"]')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:33:23 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:33:23 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:33:23 UTC] Action received: NULL
+[01-Mar-2026 13:33:23 UTC] POST keys: 
+[01-Mar-2026 13:33:23 UTC] FILES keys: NONE
+[01-Mar-2026 13:33:57 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:33:57 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:33:57 UTC] Action received: NULL
+[01-Mar-2026 13:33:57 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:33:57 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:33:57 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:33:57 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:33:58 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["TCT"]', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(878): analyze_files(Array, '["TCT"]')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[01-Mar-2026 13:34:26 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:34:26 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:34:26 UTC] Action received: NULL
+[01-Mar-2026 13:34:26 UTC] POST keys: 
+[01-Mar-2026 13:34:26 UTC] FILES keys: NONE
+[01-Mar-2026 13:35:00 UTC] === CREATE REQUEST DEBUG ===
+[01-Mar-2026 13:35:00 UTC] PHP Warning:  Undefined variable $action in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 35
+[01-Mar-2026 13:35:00 UTC] Action received: NULL
+[01-Mar-2026 13:35:00 UTC] POST keys: action, firstName, middleName, lastName, suffix, contactNoOwner, lotNo, street, latitude, longitude, applicationDate, businessName, typeOfBusiness, natureOfBusiness, natureOfBusinessSpecify, businessStatus, contactNoBusiness, emailAddress, noOfEmployees, businessLotNo, businessStreet, latitude2, longitude2, typeOfStructureSelect, typeOfStructureSpecify, natureOfApplication, requirements
+[01-Mar-2026 13:35:00 UTC] FILES keys: requirementUpload
+[01-Mar-2026 13:35:00 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 13:35:00 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 13:35:01 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["Lease Contrac...', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(878): analyze_files(Array, '["Lease Contrac...')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(298): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(44): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
