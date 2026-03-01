@@ -668,59 +668,116 @@ body {
 /* ==================== SUB FILTERS ==================== */
 .sub-filters {
   margin-top: 0;
-  padding: 15px;
-  background: #f8f8f8; /* Very light gray */
+  padding: 8px 10px;
+  background: #f8f8f8;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.sub-filters h4 {
-  margin-bottom: 10px;
-  color: #00247c; /* Navy blue */
-  font-size: 0.9em;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sub-filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sub-filter-btn {
+/* Top row: "All" pill + active filter label + toggle button — always visible */
+.sub-filters-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background: white;
-  border: 1px solid #cccccc;
-  border-radius: 6px;
-  color: #555555;
-  cursor: pointer;
-  font-size: 0.85em;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  flex-wrap: nowrap;
+}
+
+.sub-filter-active-label {
+  font-size: 11px;
+  color: #888;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sub-filter-btn:hover {
-  background: #f0f0f0;
-  border-color: #00247c; /* Navy blue */
-  color: #00247c; /* Navy blue */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 36, 124, 0.1);
+.sub-filter-active-label strong {
+  color: #00247c;
 }
 
-.sub-filter-btn.active {
-  background: #00247c; /* Navy blue */
-  color: white;
-  border-color: #00247c; /* Navy blue */
+/* The "Show Types" toggle button */
+.sub-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #c0c0c0;
+  border-radius: 12px;
+  color: #555;
+  cursor: pointer;
+  font-size: 11px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 36, 124, 0.3);
+  white-space: nowrap;
+  transition: all 0.18s;
+  font-family: "Inter", sans-serif;
+  flex-shrink: 0;
+}
+.sub-filter-toggle-btn:hover {
+  border-color: #00247c;
+  color: #00247c;
+  background: #f0f4ff;
+}
+.sub-filter-toggle-btn .toggle-arrow {
+  font-size: 9px;
+  transition: transform 0.2s;
+}
+.sub-filter-toggle-btn.open .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* Hidden type list — scrollable row that slides in */
+.sub-filter-expanded {
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #00247c #eee;
+}
+.sub-filter-expanded.open {
+  display: flex;
+}
+
+.sub-filters h4 {
+  display: none; /* replaced by the always-visible bar */
+}
+
+.sub-filter-buttons {
+  display: none; /* only incidentSubFilterButtons uses new structure now */
+}
+
+/* Individual type buttons — more compact than before */
+.sub-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid #cccccc;
+  border-radius: 14px;
+  color: #555555;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.18s;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
+}
+.sub-filter-btn:hover {
+  background: #f0f4ff;
+  border-color: #00247c;
+  color: #00247c;
+}
+.sub-filter-btn.active {
+  background: #00247c;
+  color: white;
+  border-color: #00247c;
+  font-weight: 600;
 }
 
 /* (hazard-toggles replaced by .gm-chip--toggle overlay above) */

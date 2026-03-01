@@ -17,13 +17,11 @@ if ($_SESSION['role_id'] != 2) {
 
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/manage_users.css">
+    <link rel="stylesheet" href="../../../styles/components/loader.css">
 </head>
 
 <body>
-    <div id="page-loader">
-        <div class="spinner"></div>
-        <p>Loading…</p>
-    </div>
+    <?php include '../../../components/loader.php'; ?>
 
     <header class="header">
         <h1>
@@ -125,6 +123,8 @@ if ($_SESSION['role_id'] != 2) {
 
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
+
+    <script type="module" src="../../../scripts/components/loader.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>

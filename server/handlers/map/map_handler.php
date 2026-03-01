@@ -66,6 +66,79 @@ function getBusinessMarkers(){
     }
 }
 
+// Fetches all incident reports that have coordinates (for map markers)
+function getIncidentMarkers(){
+    global $pdo;
+    try {
+        $sql = "SELECT id, rp_full_name, rp_address, rp_contact, rp_relationship,
+                       vic_full_name, vic_address, vic_contact, vic_gender, vic_occupation, vic_citizenship, vic_dob,
+                       sus_full_name, sus_address, sus_contact, sus_gender, sus_description,
+                       incident_type, incident_timestamp, date_reported, description,
+                       status, dss_status, approval_comments, disapproval_comments,
+                       update_comments, resolution_details,
+                       latitude, longitude
+                FROM incident_reports
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                ORDER BY incident_timestamp DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getIncidentMarkers: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Fetches ALL incident reports (including non-geotagged) for the summary report
+function getAllIncidents(){
+    global $pdo;
+    try {
+        $sql = "SELECT id, rp_full_name, rp_address, rp_contact, rp_relationship,
+                       vic_full_name, vic_address, vic_contact, vic_gender,
+                       sus_full_name,
+                       incident_type, incident_timestamp, date_reported, description,
+                       status, dss_status, latitude, longitude
+                FROM incident_reports
+                ORDER BY incident_timestamp DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getAllIncidents: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Returns distinct incident types for dynamic sub-filter buttons
+function getIncidentTypes(){
+    global $pdo;
+    try {
+        $sql = "SELECT DISTINCT incident_type FROM incident_reports
+                WHERE incident_type IS NOT NULL AND incident_type <> ''
+                ORDER BY incident_type";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'incident_type');
+    } catch (PDOException $e) {
+        error_log("Database error in getIncidentTypes: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Fetches a single incident report by ID for the detail modal
+function getIncidentById($id){
+    global $pdo;
+    try {
+        $sql = "SELECT * FROM incident_reports WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error: " . $e->getMessage());
+        return null;
+    }
+}
+
 // Fetches generic custom markers from the marker table
 function getGenericMarkers(){
     global $pdo;
@@ -1758,6 +1831,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     // ==================== MARKER FUNCTIONS ====================
     
+    if ($_POST['action'] === 'get_incident_markers') {
+        echo json_encode(['success' => true, 'markers' => getIncidentMarkers()]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_all_incidents') {
+        echo json_encode(['success' => true, 'incidents' => getAllIncidents()]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_incident_types') {
+        echo json_encode(['success' => true, 'types' => getIncidentTypes()]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_incident_details') {
+        $data = getIncidentById($_POST['id'] ?? 0);
+        echo json_encode($data ? ['success' => true, 'data' => $data] : ['success' => false]);
+        exit;
+    }
+
     if ($_POST['action'] === 'get_utilities_markers') {
         echo json_encode(['success' => true, 'markers' => getUtilitiesMarkers()]);
         exit;
@@ -1994,6 +2088,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $allMarkers[] = $utility;
         }
         
+        // Get incidents
+        $incidents = getIncidentMarkers();
+        foreach ($incidents as $incident) {
+            $incident['type'] = 'incident';
+            $incident['name'] = $incident['incident_type'] ?? 'Incident';
+            $incident['address'] = $incident['vic_address'] ?? $incident['rp_address'] ?? '';
+            $allMarkers[] = $incident;
+        }
+
         echo json_encode(['success' => true, 'markers' => $allMarkers]);
         exit;
     }

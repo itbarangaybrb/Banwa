@@ -361,6 +361,10 @@ select {
     font-family: inherit;
     transition: border-color 0.3s ease;
     background: white;
+
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 input[type="text"]:focus,
@@ -1281,6 +1285,7 @@ h2 {
     padding-top: 10px;
     border-top: 1px dashed #ccc;
 }
+
 /* OCR Result Card */
 .ocr-runs .ocr-run { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
 .ocr-runs .latest { border-color: #4CAF50; background: #f8fff8; }

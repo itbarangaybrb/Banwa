@@ -18,9 +18,12 @@ if ($_SESSION['role_id'] != 2) {
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/dashboard.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+    <link rel="stylesheet" href="../../../styles/loader.css">
 </head>
 
 <body>
+    <?php include '../../../components/loader.php'; ?>
+
     <header class="header">
         <h1>
             Dashboard
@@ -101,9 +104,13 @@ if ($_SESSION['role_id'] != 2) {
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/dashboard.js"></script>
+
+    <script type="module" src="../../../scripts/utils/loader.js"></script>
+
 
 </body>
 
