@@ -949,7 +949,7 @@ async function initializeMapPicker(target) {
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
-        const response = await fetch('../../pages/staff/map_handler.php', { method: 'POST', body: formData });
+        const response = await fetch('/Banwa/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 

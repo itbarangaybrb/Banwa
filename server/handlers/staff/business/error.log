@@ -490,3 +490,9 @@ DETAIL:  Key (application_id)=(83) already exists.
 DETAIL:  Key (application_id)=(84) already exists.
 [01-Mar-2026 05:38:17 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(84) already exists.
+[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Submitted: ["[\"SEC\",\"DTI\"]"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Submitted: ["[\"SEC\",\"DTI\"]"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Permit"]
