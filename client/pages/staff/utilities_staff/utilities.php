@@ -65,21 +65,6 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="main-wrapper">
-        <header class="top-header">
-            <div class="header-left">
-                <h1>Utilities Application Management</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-greeting">
-                    <p class="username">Admin</p>
-                    <div class="user_image">
-                        <span class="user_avatar_header">A</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <div class="staff-content">
             <div id="alert-container"></div>
 
@@ -248,8 +233,26 @@
                     </div>
                 </div>
             </div>
-
+            <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-pane">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <p>Overview of utilities applications and activities</p>
+                </div>
+
                 <div class="analytics-container">
                     <div class="charts">
                         <canvas id="chart1"></canvas>
@@ -279,7 +282,23 @@
 
             <!-- Review Tab -->
             <div id="management" class="tab-pane">
-                <h2>Review Utilities Applications</h2>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Review Utilities Applications</h2>
+                    <p class="form-description">Search, filter, and manage all utilities applications</p>
+                </div>
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
@@ -290,7 +309,7 @@
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
-                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
+                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: 710px;">Export As PDF</button>
                 </div>
 
                 <div class="table-responsive">
@@ -320,8 +339,23 @@
 
             <!-- Create Tab -->
             <div id="create" class="tab-pane">
-                <h2>Create New Utilities Application</h2>
-                <p class="form-description">Fill in the details to create a new utilities application</p>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Create New Utilities Application</h2>
+                    <p class="form-description">Fill in the details to create a new utilities application</p>
+                </div>
 
                 <form id="createForm" onsubmit="createApplication(event)">
                     <!-- Applicant Information -->
@@ -388,8 +422,23 @@
 
             <!-- Process Tab -->
             <div id="process" class="tab-pane">
-                <h2>Process Applications</h2>
-                <p class="form-description">Review and update application status.</p>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Process Applications</h2>
+                    <p class="form-description">Review and update application status.</p>
+                </div>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -422,6 +471,19 @@
                 <div id="summaryOutput"></div>
             </div> -->
             <div id="summary" class="tab-pane">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
                 <div class="summary-controls">
                     <h2>Generate Utility Summary</h2>
                     <div class="control-row">
