@@ -1674,6 +1674,15 @@ document.head.insertAdjacentHTML("beforeend", `
     </style>
 `);
 
+document.addEventListener('DOMContentLoaded', function () {
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
+
+    navLogo.addEventListener('click', () => {
+        sideNav.classList.toggle('expanded');
+    });
+});
+
 // DO NOT REMOVE!!! - JEP
 // /**
 //  * Fetch audit logs from the server

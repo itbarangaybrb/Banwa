@@ -177,11 +177,11 @@ function handleCreateApplication($pdo)
         if (!is_array($requirements)) $requirements = [$requirements];
         $requirements = json_encode($requirements);
 
-        // ==================== COLLECT FILES FIRST ====================
+        // ==================== FILE UPLOAD ====================
         $uploadDir = __DIR__ . '/uploads/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-        $uploadedFiles = [];   // saved filenames only
+        $uploadedFiles = [];   // array of saved filenames
 
         if (isset($_FILES['requirementUpload']) && is_array($_FILES['requirementUpload']['name'])) {
             $file_count = count($_FILES['requirementUpload']['name']);
@@ -193,22 +193,15 @@ function handleCreateApplication($pdo)
                     $target_path = $uploadDir . $saved_name;
 
                     if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'][$i], $target_path)) {
-                        $uploadedFiles[] = [
-                            'original'   => $original,
-                            'saved'      => $saved_name,
-                            'mime'       => $_FILES['requirementUpload']['type'][$i],
-                            'size'       => filesize($target_path),
-                            'checksum'   => md5_file($target_path),
-                            'file_url'   => '/Banwa/server/handlers/staff/business/uploads/' . $saved_name
-                        ];
+                        $uploadedFiles[] = $saved_name;
                     }
                 }
             }
         }
 
-        $requirementUploadJson = !empty($uploadedFiles) ? json_encode(array_column($uploadedFiles, 'saved')) : json_encode([]);
+        $requirementUploadJson = !empty($uploadedFiles) ? json_encode($uploadedFiles) : json_encode([]);
 
-        // ==================== INSERT APPLICATION FIRST ====================
+        // ==================== INSERT APPLICATION ====================
         $sql = "INSERT INTO business_applications (
             supabase_user_id, business_name, type_of_business, nature_of_business, 
             nature_of_business_specify, address_of_business, latitude, longitude, 
@@ -259,37 +252,43 @@ function handleCreateApplication($pdo)
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
 
-        // ==================== NOW INSERT FILES WITH REAL ID ====================
+        // ==================== SAVE FILES TO DB ====================
         if (!empty($uploadedFiles)) {
-            foreach ($uploadedFiles as $file) {
+            foreach ($uploadedFiles as $idx => $saved_name) {
+                $original = basename($_FILES['requirementUpload']['name'][$idx]);
+                $mime = $_FILES['requirementUpload']['type'][$idx];
+                $size = filesize($uploadDir . $saved_name);
+                $checksum = md5_file($uploadDir . $saved_name);
+                $file_url = '/Banwa/server/handlers/staff/business/uploads/' . $saved_name;
+
                 // business_files
                 $pdo->prepare("
                     INSERT INTO business_files 
                     (application_id, filename, saved_filename, file_url, checksum, size_bytes, mime_type)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                ")->execute([
-                    $applicationId,
-                    $file['original'],
-                    $file['saved'],
-                    $file['file_url'],
-                    $file['checksum'],
-                    $file['size'],
-                    $file['mime']
-                ]);
+                ")->execute([$applicationId, $original, $saved_name, $file_url, $checksum, $size, $mime]);
 
-                // business_ocr_results (empty OCR for now - will be filled on re-verify)
+                // business_ocr_results (placeholder)
                 $pdo->prepare("
                     INSERT INTO business_ocr_results 
                     (application_id, filename, saved_filename, file_url, ocr_result)
                     VALUES (?, ?, ?, ?, ?::jsonb)
                 ")->execute([
                     $applicationId,
-                    $file['original'],
-                    $file['saved'],
-                    $file['file_url'],
+                    $original,
+                    $saved_name,
+                    $file_url,
                     json_encode(['detected' => [], 'text' => ''])
                 ]);
             }
+        }
+
+        // ==================== AUTO OCR ON CREATE ====================
+        if (!empty($uploadedFiles)) {
+            // Temporarily set the application_id so handleAnalyzeDocuments uses the stored files
+            $_POST['application_id'] = $applicationId;
+            handleAnalyzeDocuments($pdo);   // ← This runs the full OCR + merges detected requirements
+            unset($_POST['application_id']);
         }
 
         createInitialDSSEvaluation($pdo, $applicationId);

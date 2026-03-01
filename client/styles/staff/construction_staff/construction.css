@@ -33,7 +33,7 @@ body {
 }
 
 /* Override map_staff.css :hover expansion - sidebar only expands on click */
-.side_nav:hover {
+/* .side_nav:hover {
     width: 70px !important;
 }
 .side_nav:hover .nav_text {
@@ -47,7 +47,7 @@ body {
 }
 .side_nav.expanded .company_name {
     opacity: 1;
-}
+} */
 
 .nav_header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -60,7 +60,7 @@ body {
     padding-left: 16px;
 }
 
-.nav_logo {
+/* .nav_logo {
     width: 40px;
     height: 40px;
     background-color: rgba(255, 255, 255, 0.1);
@@ -83,7 +83,7 @@ body {
 
 .nav_logo:hover {
     background-color: rgba(255, 255, 255, 0.2);
-}
+} */
 
 .logo_title {
     display: flex;
@@ -133,11 +133,11 @@ body {
     white-space: nowrap;
 }
 
-.nav_select:hover {
+/* .nav_select:hover {
     background-color: rgba(52, 152, 219, 0.1);
     border-left-color: #3498db;
     color: white;
-}
+} */
 
 .nav_select.active {
     background-color: rgba(52, 152, 219, 0.2);
@@ -162,11 +162,11 @@ body {
     font-family: inherit;
 }
 
-.nav_select_btn:hover {
+/* .nav_select_btn:hover {
     background-color: rgba(52, 152, 219, 0.1);
     border-left-color: #3498db;
     color: white;
-}
+} */
 
 .nav_icon {
     font-size: 21px;
@@ -187,28 +187,45 @@ body {
 
 
 /* MAIN CONTENT WRAPPER */
-.main-wrapper {
-    margin-left: 70px;
+/* .main-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
     height: 100vh;
         width: calc(100% - 70px);
-}
+} */
 
 
-.side_nav.expanded~.main-wrapper {
+/* .side_nav.expanded~.main-wrapper {
     margin-left: 325px;
-}
+} */
 
 /* TOP HEADER */
-.top-header {
+/* .top-header {
     display: none !important;
     height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden !important;
     border: none !important;
+} */
+ .top-header {
+    position: fixed;
+    top: 0;
+    left: 70px;
+    right: 0;
+    background: #f4f4f4;
+    color: #19316b;
+    padding: 0 2%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    z-index: 3000;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: calc(100vw - 70px);
+    margin: 0 auto;
+    transition: left 0.3s ease;
 }
 
 .header-left h1 {
@@ -884,14 +901,24 @@ h2 {
         display: none;
     }
 
-    .side_nav.expanded .nav_text {
-        opacity: 1;
+    .side_nav.expanded {
+        width: 325px;
+        box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
     }
 
-    .main-wrapper {
+    .side_nav .nav_text {
+        opacity: 0; /* Default hidden */
+        transition: opacity 0.3s ease;
+    }
+
+    .side_nav.expanded .nav_text {
+        opacity: 1; /* Show on expanded only */
+    }
+
+    /* .main-wrapper {
         margin-left: 0;
         height: auto;
-    }
+    } */
 
     .top-header {
         left: 0 !important;
@@ -1135,18 +1162,18 @@ h2 {
     /* Ensure text fits */
 }
 
-.main-wrapper {
+/* .main-wrapper {
     margin-left: 70px;
-    /* Width of the collapsed sidebar */
+
     width: calc(100% - 70px);
     padding: 20px;
-}
+} */
 
 /* If sidebar is expanded, push content further */
-.side_nav.expanded+.main-wrapper {
+/* .side_nav.expanded+.main-wrapper {
     margin-left: 325px;
     width: calc(100% - 325px);
-}
+} */
 
 /* ADD TO business.css */
 
@@ -1355,4 +1382,219 @@ body:has(.side_nav.expanded) #mapping {
 /* tab-pane active override for mapping */
 #mapping.active {
     display: block !important;
+}
+/* ====================== FORCE SCROLLING + HEADER FIX (OVERRIDES) ====================== */
+
+/* Main wrapper full height */
+.main-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh !important;
+    overflow: hidden !important;
+    transition: left 0.3s ease;
+}
+
+/* When sidebar expanded */
+.side_nav.expanded ~ .main-wrapper {
+    left: 325px;
+}
+
+/* Tab base - flex column */
+.tab-pane {
+    display: none;
+    width: 100%;
+    height: 100% !important;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+.tab-pane.active {
+    display: flex !important;
+}
+
+/* Mapping full-screen */
+#mapping.active {
+    display: block !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Content tabs no padding */
+.tab-pane:not(#mapping) {
+    padding: 0 !important;
+    background: #f8f9fc;
+}
+
+/* Top header sticky */
+.tab-pane:not(#mapping) > .top-header {
+    flex-shrink: 0;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: #f4f4f4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin: 0 !important;
+}
+
+/* Page header sticky below top */
+.tab-pane:not(#mapping) > .page-header {
+    flex-shrink: 0;
+    position: sticky;
+    top: 60px;  /* adjust to your top-header height, usually 60-70px */
+    z-index: 99;
+    background: #f8f9fc;
+    margin-bottom: 20px;
+    padding: 0 30px 15px 30px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-left: 70px; /* align with content */
+    margin-top: 20px;
+}
+
+/* Dashboard: analytics scrolls */
+#dashboard .analytics-container {
+    margin-left: 70px; /* align with content */
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0 30px;
+}
+
+/* Management: table-responsive scrolls */
+#management .table-responsive {
+    margin-left: 70px; /* align with content */
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+}
+
+/* Management: search box non-scrolling */
+#management .search-box {
+    margin-left: 70px; /* align with content */
+    flex-shrink: 0;
+    padding: 0 30px 15px 30px;
+}
+
+/* Create: createForm scrolls */
+#create #createForm {
+    margin-left: 70px; /* align with content */
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    min-height: 0;
+    padding: 0 30px;
+}
+
+/* Summary: summaryOutput scrolls */
+#summary #summaryOutput {
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    min-height: 0;
+    padding: 0px;
+}
+
+/* Summary: controls non-scrolling */
+#summary .summary-controls {
+    margin-left: 70px; /* align with content */
+    margin-top: 10px;
+    flex-shrink: 0;
+    padding: 0 30px 15px 30px;
+}
+
+/* Force charts to have height for testing scroll */
+.analytics-container .charts {
+    min-height: 400px;  /* make tall to force scroll */
+    margin-bottom: 25px;
+}
+
+/* Page header styling */
+.page-header h1 {
+    color: #19316b;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 5px 0;
+}
+
+.page-description {
+    color: #64748b;
+    font-size: 0.97rem;
+    margin: 3px 0 0 0;
+}
+/* ====================== CLEAN SIDEBAR FIX (Click-only + Perfect Layout) ====================== */
+
+/* 1. Disable hover expansion completely (only click ☰ works) */
+/* .side_nav:hover {
+    width: 70px !important;
+} */
+.side_nav:not(.expanded):hover .nav_text,
+.side_nav:not(.expanded):hover .company_name {
+    opacity: 0 !important;
+}
+
+/* 2. Clean content shift (no more skew or cutoff) */
+.main-wrapper {
+    margin-left: 0 !important;
+    transition: margin-left 0.35s ease;
+}
+
+.side_nav.expanded ~ .main-wrapper,
+.side_nav.expanded + .main-wrapper {
+    margin-left: 325px !important;
+    width: calc(100% - 325px) !important;
+}
+
+/* 3. Top header follows sidebar perfectly */
+.top-header {
+    left: 70px !important;
+    width: calc(100% - 70px) !important;
+    transition: left 0.35s ease;
+}
+
+.side_nav.expanded ~ .main-wrapper .top-header,
+.side_nav.expanded + .main-wrapper .top-header {
+    width: calc(100% - 325px) !important;
+}
+
+/* 4. FIX TABLE SQUEEZE (this was the main problem) */
+.table-responsive {
+    overflow-x: auto !important;
+}
+
+#applicationsTable {
+    min-width: 1100px; /* prevents columns from crushing */
+}
+
+#applicationsTable th,
+#applicationsTable td {
+    white-space: nowrap !important;
+    padding: 14px 12px !important;
+    vertical-align: middle !important;
+}
+
+/* Make Applicant column wider and prevent name wrapping */
+#applicationsTable td:nth-child(2) {
+    min-width: 220px;
+    white-space: normal !important; /* allow full name on 2 lines if very long */
+    word-break: break-word;
+}
+
+/* Action buttons stay clean */
+.action-buttons {
+    white-space: nowrap;
+    gap: 6px !important;
+}
+
+.action-buttons button {
+    min-width: 80px;
+    padding: 7px 12px !important;
+    font-size: 0.88rem;
+}
+
+/* Dashboard charts stay perfect */
+.analytics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
+    padding: 20px;
 }

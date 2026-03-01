@@ -1121,16 +1121,17 @@ tbody tr:last-child td {
 /* Controls Section */
 .summary-controls {
     background: white;
-    padding: 20px;
+    padding: 20px 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .control-row {
     display: flex;
     gap: 10px;
     margin-top: 15px;
+    margin-bottom: 15px;
 }
 
 .control-row select {

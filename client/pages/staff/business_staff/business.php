@@ -659,7 +659,8 @@
                         </div>
                     </div>
                 </header>
-            <div class="page-header">
+                
+            <div class="page-header" id="summaryHeader">
                 <h1>Generate Business Summary</h1>
                 <p class="page-description">View or export complete business profiles</p>
             </div>

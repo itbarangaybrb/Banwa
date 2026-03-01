@@ -66,23 +66,6 @@
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <header class="top-header">
-            <div class="header-left">
-                <h1>Construction Application Management</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-greeting">
-                    <p class="username">Admin</p>
-                    <div class="user_image">
-                        <span class="user_avatar_header">A</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="staff-content">
-            <div id="alert-container"></div>
-
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
@@ -250,6 +233,23 @@
             </div>
 
             <div id="dashboard" class="tab-pane">
+                        <header class="top-header">
+                            <div class="header-left">
+                                <h1>Construction Application Management</h1>
+                            </div>
+                            <div class="header-right">
+                                <div class="user-greeting">
+                                    <p class="username">Admin</p>
+                                    <div class="user_image">
+                                        <span class="user_avatar_header">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+                <div class="page-header">
+                    <h1>Construction Dashboard</h1>
+                    <p class="page-description">Overview of construction applications and analytics</p>
+                </div>
                 <div class="analytics-container">
                     <div class="charts">
                         <canvas id="chart1"></canvas>
@@ -279,7 +279,24 @@
 
             <!-- Review Tab -->
             <div id="management" class="tab-pane">
-                <h2>Review Construction Applications</h2>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Construction Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                
+                <div class="page-header">
+                    <h1>Review Construction Applications</h1>
+                    <p class="page-description">Manage and review construction applications</p>
+                </div>
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
@@ -290,7 +307,7 @@
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
-                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
+                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: 800px;">Export As PDF</button>
                 </div>
 
                 <div class="table-responsive">
@@ -321,8 +338,23 @@
 
             <!-- Create Tab -->
             <div id="create" class="tab-pane">
-                <h2>Create New Construction Application</h2>
-                <p class="form-description">Fill in the details to create a new construction application</p>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Construction Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Create New Construction Application</h2>
+                    <p class="form-description">Fill in the details to create a new construction application</p>
+                </div>
                 <form id="createForm" onsubmit="createApplication(event)">
                     <!-- Owner Information -->
                     <div class="section-title">Owner Information</div>
@@ -463,6 +495,19 @@
                 </div>
             </div> -->
             <div id="summary" class="tab-pane">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Construction Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
                 <div class="summary-controls">
                     <h2>Generate Construction Summary</h2>
                     <div class="control-row">
