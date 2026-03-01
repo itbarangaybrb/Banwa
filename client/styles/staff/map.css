@@ -534,9 +534,7 @@ body {
 /* (search-box replaced by .gm-search-box overlay above) */
 
 .highlight {
-  background-color: #e0e0e0; /* Light gray */
   font-weight: bold;
-  padding: 1px 2px;
 }
 
 .search-count {
@@ -1212,15 +1210,24 @@ body {
 }
 
 .result-title {
-  font-weight: 600;
+  font-weight: 300;
   color: #333333;
   margin-bottom: 3px;
   font-size: 0.95em;
 }
 
+.result-title .highlight {
+  font-weight: 700;
+}
+
 .result-subtitle {
   color: #666666;
   font-size: 0.85em;
+  font-weight: 300;
+}
+
+.result-subtitle .highlight {
+  font-weight: 700;
 }
 
 .result-type {

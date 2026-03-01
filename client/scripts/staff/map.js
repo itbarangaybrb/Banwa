@@ -28,6 +28,7 @@ let allMarkersData = [];
 let searchResults = [];
 let activeSearchMarker = null;
 let searchTimeout = null;
+let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search
 
 // Modal state
 let currentMarkerData = null;
@@ -435,25 +436,80 @@ function displayFloodDetailsInModal(data) {
     showDetailSwal(title, `${(data.risk_level||'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
 
-function displayHouseDetailsInModal(data) {
-    let coordinateInfo = 'Not available';
-    if (data.coordinates) {
-        try {
-            const coords = JSON.parse(data.coordinates);
-            coordinateInfo = `${coords.length} vertices`;
-        } catch (e) { coordinateInfo = 'Invalid coordinate data'; }
-    }
-
+function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
-    const tableRows = [
-        detailRow('Address', data.address || 'Not specified'),
-        detailRow('Street Name', data.street_name || 'Not specified'),
-        detailRow('Area', `${data.area_sqm || '0'} sqm`),
-        detailRow('Center Coordinates', `${data.center_lat || 'N/A'}, ${data.center_lng || 'N/A'}`),
-        detailRow('Polygon Vertices', coordinateInfo),
-        detailRow('Created', formatDate(data.created_at)),
+
+    const sectionHeader = label =>
+        `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;
+             text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">${label}</td></tr>`;
+
+    const basicRows = [
+        detailRow('Address',      data.address    || 'Not specified'),
+        detailRow('Street Name',  data.street_name || 'Not specified'),
+        detailRow('Created',      formatDate(data.created_at)),
         detailRow('Last Updated', formatDate(data.updated_at))
     ].join('');
+
+    const typeBadge = (bg, label, textColor) =>
+        `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+                      background:${bg};color:${textColor||'#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
+    const statusBadge = (label, color) =>
+        `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+                      background:${color};color:#fff;display:inline-block;">${label}</span>`;
+    const viewBtn = (onclick) =>
+        `<button onclick="${onclick}"
+            style="padding:3px 10px;font-size:11px;font-weight:600;background:#00247c;color:#fff;
+                   border:none;border-radius:6px;cursor:pointer;margin-left:6px;font-family:inherit;">
+            View Details
+        </button>`;
+
+    let appRows = '';
+    const total = apps
+        ? (apps.businesses.length + apps.constructions.length + apps.utilities.length + apps.incidents.length)
+        : 0;
+
+    if (total === 0) {
+        appRows = `<tr><td colspan="2" style="padding:14px 12px;color:#888;font-size:13px;
+                        text-align:center;font-style:italic;">
+                    No applications connected to this household.</td></tr>`;
+    } else {
+        (apps.businesses || []).forEach(b => {
+            const sc = b.status === 'approved' ? '#28a745' : b.status === 'disapproved' ? '#dc3545' : '#ff9800';
+            appRows += detailRow(
+                typeBadge('#9C27B0', 'Business') + (b.business_name || 'Unnamed Business'),
+                `${b.type_of_business || '—'} &nbsp;${statusBadge(b.status || 'Pending', sc)}${viewBtn("viewMapDetails("+b.id+",'business')")}`
+            );
+        });
+        (apps.constructions || []).forEach(c => {
+            const sc = c.agreed === '1' ? '#28a745' : '#ff9800';
+            const name = ((c.first_name||'') + ' ' + (c.last_name||'')).trim();
+            appRows += detailRow(
+                typeBadge('#ffc107', 'Construction', '#333') + name,
+                `${c.type_of_work || c.nature_of_work || '—'} &nbsp;${statusBadge(c.agreed==='1'?'Approved':'Pending', sc)}${viewBtn("viewMapDetails("+c.id+",'construction')")}`
+            );
+        });
+        (apps.utilities || []).forEach(u => {
+            const sc = u.agreed === '1' ? '#28a745' : '#ff9800';
+            const name = ((u.first_name||'') + ' ' + (u.last_name||'')).trim();
+            appRows += detailRow(
+                typeBadge('#2196F3', 'Utility') + name,
+                `${u.nature_of_work || u.provider || '—'} &nbsp;${statusBadge(u.agreed==='1'?'Approved':'Pending', sc)}${viewBtn("viewMapDetails("+u.id+",'utility')")}`
+            );
+        });
+        (apps.incidents || []).forEach(i => {
+            const sc = i.status === 'Resolved' ? '#28a745' : i.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+            appRows += detailRow(
+                typeBadge('#cc0000', 'Incident') + (i.incident_type || 'Incident'),
+                `${i.vic_full_name ? 'Victim: '+i.vic_full_name : '—'} &nbsp;${statusBadge(i.status||'Open', sc)}${viewBtn("viewMapDetails("+i.id+",'incident')")}`
+            );
+        });
+    }
+
+    const tableRows = [
+        sectionHeader('Household Information'), basicRows,
+        sectionHeader('Connected Applications'), appRows
+    ].join('');
+
     showDetailSwal(title, 'Household', 'household', tableRows);
 }
 
@@ -660,26 +716,25 @@ const natureToSubtypeMap = {
 };
 
 function filterConstructionByType(subtype, event) {
-    if (event) {
-        event.stopPropagation();
-    }
-    
+    if (event) event.stopPropagation();
     constructionSubFilter = subtype;
-    
-    document.querySelectorAll('.sub-filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    const clickedBtn = event ? event.currentTarget : 
-        document.querySelector(`.sub-filter-btn[data-subtype="${subtype}"]`);
-    
-    if (clickedBtn) {
-        clickedBtn.classList.add('active');
-    }
-    
-    if (activeFilter === 'construction') {
-        updateMarkerVisibility();
-    }
+    document.querySelectorAll('[data-subtype]').forEach(btn => btn.classList.remove('active'));
+    const clickedBtn = event ? event.currentTarget
+        : document.querySelector(`[data-subtype="${subtype}"]`);
+    if (clickedBtn) clickedBtn.classList.add('active');
+    const label = document.getElementById('constructionActiveLabel');
+    if (label) label.innerHTML = subtype === 'all' ? 'Showing all types'
+        : `<strong>${subtype.charAt(0).toUpperCase() + subtype.slice(1)}</strong>`;
+    if (activeFilter === 'construction') updateMarkerVisibility();
+}
+
+function toggleConstructionFilters() {
+    const list = document.getElementById('constructionTypeList');
+    const btn  = document.getElementById('constructionToggleBtn');
+    if (!list || !btn) return;
+    constructionFiltersExpanded = !constructionFiltersExpanded;
+    list.classList.toggle('open', constructionFiltersExpanded);
+    btn.classList.toggle('open', constructionFiltersExpanded);
 }
 
 // Helper function to determine if a construction marker should be shown
@@ -698,51 +753,40 @@ function shouldShowConstructionMarker(marker) {
 
 function updateMarkerVisibility() {
     // Note: householdMarkers array is kept empty - only house polygons are used
-    
+
     constructionMarkers.forEach(marker => {
         if (activeFilter === 'construction') {
-            // Check if marker should be visible based on construction sub-filter
-            const shouldShow = shouldShowConstructionMarker(marker);
-            
-            if (shouldShow && !map.hasLayer(marker)) {
-                marker.addTo(map);
-            } else if (!shouldShow && map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
+            const shouldShow = shouldShowConstructionMarker(marker) && !marker.suppressedByHouse;
+            if (shouldShow && !map.hasLayer(marker)) marker.addTo(map);
+            else if (!shouldShow && map.hasLayer(marker)) map.removeLayer(marker);
         } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
+            if (map.hasLayer(marker)) map.removeLayer(marker);
         }
     });
-    
+
     businessMarkers.forEach(marker => {
         if (activeFilter === 'business') {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
+            const shouldShow = !marker.suppressedByHouse;
+            if (shouldShow && !map.hasLayer(marker)) marker.addTo(map);
+            else if (!shouldShow && map.hasLayer(marker)) map.removeLayer(marker);
         } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
+            if (map.hasLayer(marker)) map.removeLayer(marker);
         }
     });
-    
+
     utilityMarkers.forEach(marker => {
         if (activeFilter === 'utility') {
-            if (!map.hasLayer(marker)) {
-                marker.addTo(map);
-            }
+            const shouldShow = !marker.suppressedByHouse;
+            if (shouldShow && !map.hasLayer(marker)) marker.addTo(map);
+            else if (!shouldShow && map.hasLayer(marker)) map.removeLayer(marker);
         } else {
-            if (map.hasLayer(marker)) {
-                map.removeLayer(marker);
-            }
+            if (map.hasLayer(marker)) map.removeLayer(marker);
         }
     });
 
     incidentMarkers.forEach(marker => {
         if (activeFilter === 'incident') {
-            const show = shouldShowIncidentMarker(marker);
+            const show = shouldShowIncidentMarker(marker) && !marker.suppressedByHouse;
             if (show && !map.hasLayer(marker)) marker.addTo(map);
             else if (!show && map.hasLayer(marker)) map.removeLayer(marker);
         } else {
@@ -990,6 +1034,11 @@ function clearSearch() {
 }
 
 function removeActiveSearchMarker() {
+    // Cancel any in-flight moveend callback first to avoid stale circles/popups
+    if (pendingMoveEndHandler) {
+        map.off('moveend', pendingMoveEndHandler);
+        pendingMoveEndHandler = null;
+    }
     if (activeSearchMarker) {
         if (activeSearchMarker.marker && map.hasLayer(activeSearchMarker.marker)) {
             map.removeLayer(activeSearchMarker.marker);
@@ -1000,9 +1049,10 @@ function removeActiveSearchMarker() {
         if (activeSearchMarker.circle && map.hasLayer(activeSearchMarker.circle)) {
             map.removeLayer(activeSearchMarker.circle);
         }
-        if (activeSearchMarker instanceof L.Marker || 
-            activeSearchMarker instanceof L.Polygon || 
-            activeSearchMarker instanceof L.GeoJSON) {
+        if (activeSearchMarker instanceof L.Marker ||
+            activeSearchMarker instanceof L.Polygon ||
+            activeSearchMarker instanceof L.GeoJSON ||
+            activeSearchMarker instanceof L.CircleMarker) {
             map.removeLayer(activeSearchMarker);
         }
         activeSearchMarker = null;
@@ -1078,7 +1128,9 @@ function highlightExistingMarker(marker, markerData) {
 
     map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
 
-    map.once('moveend', () => {
+    if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+    pendingMoveEndHandler = () => {
+        pendingMoveEndHandler = null;
         const type = getMarkerTypeFromData(markerData);
         let popupContent = '';
         if (type === 'construction')  popupContent = createConstructionPopup(markerData);
@@ -1087,7 +1139,8 @@ function highlightExistingMarker(marker, markerData) {
         else if (type === 'incident') popupContent = createIncidentPopup(markerData);
         else                          popupContent = createHousePopup(markerData);
         marker.bindPopup(popupContent, { autoPan: true }).openPopup();
-    });
+    };
+    map.once('moveend', pendingMoveEndHandler);
 
     updateSearchResultActiveState(markerData);
     const resultsContainer = document.getElementById('search-results');
@@ -1137,15 +1190,18 @@ function createTemporaryHighlight(markerData) {
     // Fly then open popup after animation
     map.flyTo([lat, lng], 19, { duration: 1.2, easeLinearity: 0.2 });
 
-    map.once('moveend', () => {
+    if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+    pendingMoveEndHandler = () => {
+        pendingMoveEndHandler = null;
         let popupContent = '';
         if (type === 'construction')  popupContent = createConstructionPopup(markerData);
         else if (type === 'business') popupContent = createBusinessPopup(markerData);
         else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
         else if (type === 'incident') popupContent = createIncidentPopup(markerData);
         else                          popupContent = createHousePopup(markerData);
-        activeSearchMarker.bindPopup(popupContent, { autoPan: true }).openPopup();
-    });
+        if (activeSearchMarker) activeSearchMarker.bindPopup(popupContent, { autoPan: true }).openPopup();
+    };
+    map.once('moveend', pendingMoveEndHandler);
 
     updateSearchResultActiveState(markerData);
     const resultsContainer = document.getElementById('search-results');
@@ -1244,10 +1300,13 @@ function showHousePolygonHighlight(houseData) {
         });
         
         // Open popup after animation finishes
-        map.once('moveend', () => {
+        if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+        pendingMoveEndHandler = () => {
+            pendingMoveEndHandler = null;
             const popupContent = createHousePopup(houseData);
             polygon.bindPopup(popupContent, { autoPan: true }).openPopup();
-        });
+        };
+        map.once('moveend', pendingMoveEndHandler);
         
         updateSearchResultActiveState(houseData);
         
@@ -1473,7 +1532,6 @@ function createHousePopup(data) {
                 <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
             </div>
             <div class="popup-section">
-                <p><strong>Area:</strong> ${data.area_sqm || '0'} sqm</p>
                 <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
             </div>
             <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
@@ -1546,13 +1604,15 @@ async function viewHouseDetails(id) {
         didOpen: () => { Swal.showLoading(); }
     });
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_house_details');
-        formData.append('id', id);
-        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
-        const data = await response.json();
+        const fd1 = new FormData(); fd1.append('action', 'get_house_details');    fd1.append('id', id);
+        const fd2 = new FormData(); fd2.append('action', 'get_house_applications'); fd2.append('id', id);
+        const [res1, res2] = await Promise.all([
+            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd1 }),
+            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd2 })
+        ]);
+        const [data, appData] = await Promise.all([res1.json(), res2.json()]);
         if (data.success) {
-            displayHouseDetailsInModal(data.data);
+            displayHouseDetailsInModal(data.data, appData.success ? appData.applications : null);
         } else {
             showSwal({ icon: 'error', title: 'Error', text: 'Could not load house details.' });
         }
@@ -2040,6 +2100,51 @@ function renderHousePolygons() {
     if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
+
+    // Tag application markers by house address — suppress older duplicates
+    tagMarkersWithHouseAddress();
+}
+
+/**
+ * For each house, find all application markers whose address starts with the house address.
+ * Keep only the most recent one visible per house; mark all others suppressedByHouse = true.
+ */
+function tagMarkersWithHouseAddress() {
+    function markerAddress(m) {
+        if (m.construction_data) return (m.construction_data.construction_address || '').trim();
+        if (m.business_data)     return (m.business_data.address_of_business || '').trim();
+        if (m.utility_data)      return (m.utility_data.address_of_utility || '').trim();
+        if (m.incident_data)     return (m.incident_data.vic_address || m.incident_data.rp_address || '').trim();
+        return '';
+    }
+    function markerDate(m) {
+        const d = m.construction_data || m.business_data || m.utility_data || m.incident_data || {};
+        return new Date(d.updated_at || d.application_date || d.date_of_work || d.request_date || d.incident_timestamp || 0);
+    }
+
+    const allAppMarkers = [...constructionMarkers, ...businessMarkers, ...utilityMarkers, ...incidentMarkers];
+
+    // Reset all suppression flags
+    allAppMarkers.forEach(m => { m.suppressedByHouse = false; });
+
+    housePolygonsData.forEach(house => {
+        const houseAddr = (house.address || '').trim().toLowerCase();
+        if (houseAddr.length < 3) return;
+
+        const matched = allAppMarkers.filter(m => {
+            const a = markerAddress(m).toLowerCase();
+            return a.length > 0 && a.startsWith(houseAddr);
+        });
+
+        if (matched.length <= 1) return; // nothing to suppress
+
+        // Sort newest first — keep index 0, suppress the rest
+        matched.sort((a, b) => markerDate(b) - markerDate(a));
+        matched.slice(1).forEach(m => { m.suppressedByHouse = true; });
+    });
+
+    // Re-run visibility so suppressed markers disappear immediately
+    updateAllVisibility();
 }
 
 function clearAllMarkers() {
@@ -2108,68 +2213,91 @@ async function getFloodHousesSummary() {
 
         let bodyHTML = '';
 
-        if (data.summary.total === 0) {
+        // Houses list is now deduplicated (one row per house, worst impact wins)
+        const houses = data.houses || [];
+        const total  = houses.length; // use list length as the single source of truth
+
+        if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
                 <h3 style="color:#00247c;margin:0 0 6px;">No Flood Risk Detected</h3>
                 <p style="color:#666;margin:0;font-size:13px;">All households are outside flood hazard zones.</p>
             </div>`;
         } else {
-            // Risk-level bar rows
-            const riskOrder = {low:1,medium:2,high:3};
-            const sortedRisks = [...(data.summary.by_risk_level||[])].filter(r=>r.risk_level)
-                .sort((a,b)=>(riskOrder[a.risk_level.toLowerCase()]||9)-(riskOrder[b.risk_level.toLowerCase()]||9));
-            const riskBars = sortedRisks.map(item => {
-                const c = riskColors[item.risk_level.toLowerCase()]||'#888';
-                const pct = data.summary.total > 0 ? (item.count/data.summary.total*100).toFixed(0) : 0;
-                return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-                    <span style="background:${c};color:#fff;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700;min-width:62px;text-align:center;">${item.risk_level.toUpperCase()}</span>
-                    <span style="font-size:17px;font-weight:700;color:${c};min-width:24px;">${item.count}</span>
-                    <div style="flex:1;height:7px;background:#e8e8e8;border-radius:3px;overflow:hidden;">
-                        <div style="height:100%;width:${pct}%;background:${c};"></div>
-                    </div>
-                    <span style="font-size:11px;color:#aaa;min-width:30px;">${pct}%</span>
-                </div>`;
-            }).join('');
+            // Recount from the deduplicated list so everything matches
+            const fullyAffected    = houses.filter(h => h.impact_level === 'Fully Affected').length;
+            const partiallyAffected= houses.filter(h => h.impact_level === 'Partially Affected').length;
+            const minimallyAffected= houses.filter(h => h.impact_level === 'Minimally Affected').length;
+            const affectedNoPoly   = houses.filter(h => h.impact_level === 'Affected').length;
 
-            // Accordion house rows
-            const sortedHouses = [...(data.houses||[])].sort((a,b)=>(parseFloat(a.flood_coverage_percent)||0)-(parseFloat(b.flood_coverage_percent)||0));
+            // Risk-level bar rows — recount from list
+            const byRisk = {};
+            houses.forEach(h => {
+                const rl = (h.risk_level||'unknown').toLowerCase();
+                byRisk[rl] = (byRisk[rl]||0) + 1;
+            });
+            const riskOrder = {low:1,medium:2,high:3};
+            const riskBars = Object.entries(byRisk)
+                .sort((a,b)=>(riskOrder[a[0]]||9)-(riskOrder[b[0]]||9))
+                .map(([level, count]) => {
+                    const c = riskColors[level]||'#888';
+                    const pct = (count/total*100).toFixed(0);
+                    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+                        <span style="background:${c};color:#fff;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700;min-width:62px;text-align:center;">${level.toUpperCase()}</span>
+                        <span style="font-size:17px;font-weight:700;color:${c};min-width:24px;">${count}</span>
+                        <div style="flex:1;height:7px;background:#e8e8e8;border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:${pct}%;background:${c};"></div>
+                        </div>
+                        <span style="font-size:11px;color:#aaa;min-width:30px;">${pct}%</span>
+                    </div>`;
+                }).join('');
+
+            // Accordion house rows — sorted worst first
+            const impactRank = {'Fully Affected':4,'Affected':3,'Partially Affected':2,'Minimally Affected':1};
+            const sortedHouses = [...houses].sort((a,b) =>
+                (impactRank[b.impact_level]||0) - (impactRank[a.impact_level]||0) ||
+                (parseFloat(b.flood_coverage_percent)||0) - (parseFloat(a.flood_coverage_percent)||0)
+            );
             const houseRows = sortedHouses.map((h,i)=>{
-                const c = impactColors[h.impact_level]||'#888';
-                const pct = parseFloat(h.flood_coverage_percent||0).toFixed(1);
+                const c   = impactColors[h.impact_level]||'#888';
+                const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent||0).toFixed(1)+'%';
                 const body = `
                     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
-                        <div><strong>Risk:</strong> <span style="color:${c};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
-                        <div><strong>Coverage:</strong> ${pct}%</div>
+                        <div><strong>Risk Level:</strong> <span style="color:${riskColors[(h.risk_level||'').toLowerCase()]||'#888'};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
+                        <div><strong>Flood Coverage:</strong> ${pct}</div>
                         ${h.area_sqm?`<div><strong>Area:</strong> ${h.area_sqm} sqm</div>`:''}
                     </div>
-                    ${h.street_name?`<div style="color:#888;margin-bottom:4px;">${h.street_name}</div>`:''}
-                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;"><strong>Hazard:</strong> ${h.hazard_description}</div>`:''}`;
-                return rptRow(`fh-${i}`, `${pct}%`, c, h.address||'Address not specified', h.impact_level||'', body);
+                    ${h.street_name?`<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>`:''}
+                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Hazard Zone:</strong> ${h.hazard_description}</div>`:''}`;
+                return rptRow(`fh-${i}`, pct, c, h.address||'Address not specified', h.impact_level||'', body);
             }).join('');
 
             bodyHTML = `
                 <div class="rpt-stats">
-                    <div class="rpt-stat" style="border-left-color:#888;">
-                        <div class="rpt-stat-num" style="color:#555;">${data.summary.minimally_affected}</div>
+                    <div class="rpt-stat" style="border-left-color:#ffc107;">
+                        <div class="rpt-stat-num" style="color:#b38600;">${minimallyAffected}</div>
                         <div class="rpt-stat-label">Minimally Affected (1–24%)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
-                        <div class="rpt-stat-num" style="color:#e67e00;">${data.summary.partially_affected}</div>
+                        <div class="rpt-stat-num" style="color:#e67e00;">${partiallyAffected}</div>
                         <div class="rpt-stat-label">Partially Affected (25–74%)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
-                        <div class="rpt-stat-num" style="color:#dc3545;">${data.summary.fully_affected}</div>
+                        <div class="rpt-stat-num" style="color:#dc3545;">${fullyAffected}</div>
                         <div class="rpt-stat-label">Fully Affected (75–100%)</div>
                     </div>
+                    ${affectedNoPoly > 0 ? `<div class="rpt-stat" style="border-left-color:#888;">
+                        <div class="rpt-stat-num" style="color:#555;">${affectedNoPoly}</div>
+                        <div class="rpt-stat-label">In Flood Zone (no polygon)</div>
+                    </div>` : ''}
                 </div>
-                ${riskBars?`<div style="background:#f8f9fa;border-radius:7px;padding:12px 14px;margin-bottom:14px;">
+                <div style="background:#f8f9fa;border-radius:7px;padding:12px 14px;margin-bottom:14px;">
                     <div style="font-size:12px;font-weight:600;color:#00247c;margin-bottom:10px;">By Flood Risk Level</div>
                     ${riskBars}
-                </div>`:''}
+                </div>
                 <div class="rpt-list-box">
-                    <h4>Affected Households <span style="font-weight:400;color:#aaa;">(${sortedHouses.length})</span></h4>
-                    <p class="rpt-list-hint">Sorted by coverage % · click a row to expand</p>
+                    <h4>Affected Households <span style="font-weight:400;color:#aaa;">(${total})</span></h4>
+                    <p class="rpt-list-hint">Sorted by severity · click a row to expand</p>
                     <div class="rpt-list-scroll">${houseRows}</div>
                 </div>`;
         }
@@ -2177,7 +2305,7 @@ async function getFloodHousesSummary() {
         const reportHTML = `<div class="rpt-body">
             <div class="rpt-header">
                 <h3>Flood Risk Assessment</h3>
-                <div class="rpt-big-num">${data.summary.total}</div>
+                <div class="rpt-big-num">${total}</div>
                 <div class="rpt-subtitle">Households in Flood-Prone Areas</div>
             </div>
             <div class="rpt-content">
@@ -2682,6 +2810,7 @@ function displayConstructionSDSSReport(data) {
 
 // Track whether sub-filter panel is expanded
 let incidentFiltersExpanded = false;
+let constructionFiltersExpanded = false;
 
 async function loadIncidentSubFilters() {
     const panel = document.getElementById('incidentSubFilters');
@@ -2825,11 +2954,10 @@ async function showIncidentSummaryReport() {
         const investigating = incidents.filter(i => i.status === 'Under Investigation').length;
         const resolved = incidents.filter(i => i.status === 'Resolved').length;
 
-        // Type breakdown bars
-        const typeColors = ['#cc0000','#e65c00','#c0392b','#8e44ad','#2980b9','#16a085','#27ae60','#f39c12'];
+        // Type breakdown bars — all red
         const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
         const typeBars = sortedTypes.map(([type, count], i) => {
-            const color = typeColors[i % typeColors.length];
+            const color = '#cc0000';
             const pct = ((count / incidents.length) * 100).toFixed(0);
             return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
                 <span style="min-width:130px;font-size:12px;font-weight:600;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${type}">${type}</span>
@@ -3672,30 +3800,43 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
         }
 
         // ── Build record list ───────────────────────────────────────────────
-        if (records.length === 0) {
-            bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
-            return;
-        }
 
-        const rows = records.map(r => `
-            <div class="affected-record-row" onclick="(function(){
-                const d=${JSON.stringify(r)};
-                if(d.type==='household') viewHouseDetails(d.id);
-                else viewMapDetails(d.id,d.type);
-            })()">
-                <div class="affected-record-name">${r.name}</div>
-                <div class="affected-record-addr">${r.address}</div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-                    <span class="affected-record-detail">${r.detail}</span>
-                    <span class="affected-record-type">${r.type}</span>
-                </div>
-            </div>`).join('');
+if (records.length === 0) {
+    bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
+    return;
+}
 
-        bodyEl.innerHTML = `
-            <div class="affected-panel-count">${records.length} record${records.length !== 1 ? 's' : ''} highlighted on map</div>
-            <div class="affected-panel-hint">Click a row to view full details</div>
-            <div class="affected-records-list">${rows}</div>
-        `;
+// Sort records - households first, then by name/address
+const sortedRecords = [...records].sort((a, b) => {
+    // First sort by type (households first)
+    if (a.type === 'household' && b.type !== 'household') return -1;
+    if (a.type !== 'household' && b.type === 'household') return 1;
+    
+    // Then by name/address alphabetically
+    const nameA = (a.name || a.address || '').toLowerCase();
+    const nameB = (b.name || b.address || '').toLowerCase();
+    return nameA.localeCompare(nameB);
+});
+
+const rows = sortedRecords.map(r => `
+    <div class="affected-record-row" onclick="(function(){
+        const d=${JSON.stringify(r)};
+        if(d.type==='household') viewHouseDetails(d.id);
+        else viewMapDetails(d.id,d.type);
+    })()">
+        <div class="affected-record-name">${r.name}</div>
+        <div class="affected-record-addr">${r.address}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span class="affected-record-detail">${r.detail}</span>
+            <span class="affected-record-type">${r.type}</span>
+        </div>
+    </div>`).join('');
+
+bodyEl.innerHTML = `
+    <div class="affected-panel-count">${sortedRecords.length} record${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
+    <div class="affected-panel-hint">Click a row to view full details</div>
+    <div class="affected-records-list">${rows}</div>
+`;
 
     } catch (e) {
         const bodyEl = document.getElementById('affected-panel-body');

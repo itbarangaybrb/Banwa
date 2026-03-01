@@ -275,6 +275,7 @@ function getFloodDetails($id){
 function getHousesInFloodAreas($riskLevel = null){
     global $pdo;
     try {
+        // One row per house — worst impact/highest risk wins when a house overlaps multiple zones
         $sql = "WITH house_geoms AS (
                     SELECT 
                         house_id, address, street_name, house_number,
@@ -295,37 +296,64 @@ function getHousesInFloodAreas($riskLevel = null){
                         END as geom
                     FROM house_polygons
                     WHERE (coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
+                ),
+                raw_impacts AS (
+                    SELECT 
+                        hg.house_id, hg.address, hg.street_name, hg.house_number,
+                        hg.center_lat, hg.center_lng, hg.area_sqm, hg.coordinates,
+                        bh.hazard_id, bh.hazard_name, bh.risk_level,
+                        bh.description as hazard_description, bh.properties,
+                        CASE 
+                            WHEN hg.coordinates IS NOT NULL THEN
+                                LEAST(
+                                    ROUND(
+                                        (ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                         NULLIF(ST_Area(hg.geom::geography), 0) * 100)::numeric,
+                                        1
+                                    ),
+                                    100.0
+                                )
+                            ELSE 100
+                        END as flood_coverage_percent,
+                        CASE 
+                            WHEN hg.coordinates IS NULL THEN 'Affected'
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 'Partially Affected'
+                            ELSE 'Minimally Affected'
+                        END as impact_level,
+                        CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
+                        CASE 
+                            WHEN hg.coordinates IS NULL THEN 4
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 2
+                            ELSE 1
+                        END as impact_rank
+                    FROM house_geoms hg
+                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
+                    WHERE bh.hazard_type = 'flood'
+                ),
+                -- Keep only the worst row per house (highest risk then highest impact)
+                ranked AS (
+                    SELECT *, ROW_NUMBER() OVER (
+                        PARTITION BY house_id
+                        ORDER BY risk_rank DESC, impact_rank DESC, flood_coverage_percent DESC
+                    ) as rn
+                    FROM raw_impacts
                 )
                 SELECT 
-                    hg.house_id, hg.address, hg.street_name, hg.house_number,
-                    hg.center_lat, hg.center_lng, hg.area_sqm, hg.coordinates,
-                    bh.hazard_id, bh.hazard_name, bh.risk_level,
-                    bh.description as hazard_description, bh.properties,
-                    CASE 
-                        WHEN hg.coordinates IS NOT NULL THEN
-                            LEAST(
-                                ROUND(
-                                    (ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
-                                     NULLIF(ST_Area(hg.geom::geography), 0) * 100)::numeric,
-                                    1
-                                ),
-                                100.0
-                            )
-                        ELSE 100
-                    END as flood_coverage_percent,
-                    CASE 
-                        WHEN hg.coordinates IS NULL THEN 'Affected'
-                        WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
-                             NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
-                        WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
-                             NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 'Partially Affected'
-                        ELSE 'Minimally Affected'
-                    END as impact_level
-                FROM house_geoms hg
-                JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
-                WHERE bh.hazard_type = 'flood'
-                " . ($riskLevel ? "AND LOWER(bh.risk_level) = LOWER(:risk_level)" : "") . "
-                ORDER BY bh.risk_level, hg.address";
+                    house_id, address, street_name, house_number,
+                    center_lat, center_lng, area_sqm, coordinates,
+                    hazard_id, hazard_name, risk_level,
+                    hazard_description, properties,
+                    flood_coverage_percent, impact_level
+                FROM ranked
+                WHERE rn = 1
+                " . ($riskLevel ? "AND LOWER(risk_level) = LOWER(:risk_level)" : "") . "
+                ORDER BY risk_rank DESC, impact_rank DESC, address";
         
         $stmt = $pdo->prepare($sql);
         if ($riskLevel) {
@@ -340,7 +368,7 @@ function getHousesInFloodAreas($riskLevel = null){
     }
 }
 
-// Aggregates flood impact stats (total, fully/partially/minimally affected, by risk level)
+// Aggregates flood impact stats — one row per house (worst impact wins)
 function getFloodAffectedHousesSummary(){
     global $pdo;
     try {
@@ -364,7 +392,7 @@ function getFloodAffectedHousesSummary(){
                     FROM house_polygons
                     WHERE (coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
                 ),
-                flood_impacts AS (
+                raw_impacts AS (
                     SELECT 
                         hg.house_id,
                         bh.risk_level,
@@ -375,43 +403,59 @@ function getFloodAffectedHousesSummary(){
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 'Partially Affected'
                             ELSE 'Minimally Affected'
-                        END as impact_level
+                        END as impact_level,
+                        CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
+                        CASE 
+                            WHEN hg.coordinates IS NULL THEN 4
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                 NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 2
+                            ELSE 1
+                        END as impact_rank
                     FROM house_geoms hg
                     JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
                     WHERE bh.hazard_type = 'flood'
+                ),
+                -- One row per house: keep the worst risk + worst impact
+                deduped AS (
+                    SELECT DISTINCT ON (house_id)
+                        house_id, risk_level, impact_level
+                    FROM raw_impacts
+                    ORDER BY house_id, risk_rank DESC, impact_rank DESC
                 )
                 SELECT 
-                    COUNT(DISTINCT house_id) as total,
-                    COUNT(DISTINCT CASE WHEN impact_level = 'Fully Affected' THEN house_id END) as fully_affected,
-                    COUNT(DISTINCT CASE WHEN impact_level = 'Partially Affected' THEN house_id END) as partially_affected,
-                    COUNT(DISTINCT CASE WHEN impact_level = 'Minimally Affected' THEN house_id END) as minimally_affected,
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN impact_level = 'Fully Affected'    THEN 1 END) as fully_affected,
+                    COUNT(CASE WHEN impact_level = 'Partially Affected' THEN 1 END) as partially_affected,
+                    COUNT(CASE WHEN impact_level = 'Minimally Affected' THEN 1 END) as minimally_affected,
+                    COUNT(CASE WHEN impact_level = 'Affected'           THEN 1 END) as affected_no_polygon,
                     json_agg(
                         DISTINCT jsonb_build_object(
                             'risk_level', risk_level,
-                            'count', (SELECT COUNT(*) FROM flood_impacts fi2 WHERE fi2.risk_level = fi.risk_level)
+                            'count', (SELECT COUNT(*) FROM deduped d2 WHERE d2.risk_level = deduped.risk_level)
                         )
                     ) as by_risk_level
-                FROM flood_impacts fi";
+                FROM deduped";
         
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
         return [
-            'total' => (int)($result['total'] ?? 0),
-            'fully_affected' => (int)($result['fully_affected'] ?? 0),
-            'partially_affected' => (int)($result['partially_affected'] ?? 0),
-            'minimally_affected' => (int)($result['minimally_affected'] ?? 0),
-            'by_risk_level' => json_decode($result['by_risk_level'] ?? '[]', true)
+            'total'             => (int)($result['total'] ?? 0),
+            'fully_affected'    => (int)($result['fully_affected'] ?? 0),
+            'partially_affected'=> (int)($result['partially_affected'] ?? 0),
+            'minimally_affected'=> (int)($result['minimally_affected'] ?? 0),
+            'affected_no_polygon'=> (int)($result['affected_no_polygon'] ?? 0),
+            'by_risk_level'     => json_decode($result['by_risk_level'] ?? '[]', true)
         ];
     } catch (PDOException $e) {
         error_log("Database error: " . $e->getMessage());
         return [
-            'total' => 0,
-            'fully_affected' => 0,
-            'partially_affected' => 0,
-            'minimally_affected' => 0,
-            'by_risk_level' => []
+            'total' => 0, 'fully_affected' => 0,
+            'partially_affected' => 0, 'minimally_affected' => 0,
+            'affected_no_polygon' => 0, 'by_risk_level' => []
         ];
     }
 }
@@ -777,6 +821,77 @@ function getHousePolygons()
 }
 
 // Fetches a single house polygon by house_id for the detail modal
+
+// Returns all applications linked to a house by address prefix match
+function getHouseApplications($houseId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT address, street_name, house_number FROM house_polygons WHERE house_id = :id");
+        $stmt->execute([':id' => $houseId]);
+        $house = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$house) return ['businesses' => [], 'constructions' => [], 'utilities' => [], 'incidents' => []];
+
+        $fullAddress = trim($house['address'] ?? '');
+        $street      = trim($house['street_name'] ?? '');
+
+        if (strlen($fullAddress) < 3 && strlen($street) < 4) {
+            return ['businesses' => [], 'constructions' => [], 'utilities' => [], 'incidents' => []];
+        }
+
+        // Prefix match so "3 Milkyway Dr%" won't match "19 Milkyway Dr"
+        $useExact = strlen($fullAddress) >= 3;
+        $pattern  = $useExact ? ($fullAddress . '%') : ('%' . $street . '%');
+
+        $buildWhere = function(array $columns) use ($pattern, &$params) {
+            $clauses = [];
+            foreach ($columns as $col) {
+                $key = ':p_' . preg_replace('/[^a-z_]/i', '_', $col);
+                $params[$key] = $pattern;
+                $clauses[] = "$col LIKE $key";
+            }
+            return '(' . implode(' OR ', $clauses) . ')';
+        };
+
+        $params = [];
+        $where = $buildWhere(['address_of_business']);
+        $stmt = $pdo->prepare("SELECT id, business_name, type_of_business, status, address_of_business
+                               FROM business_applications WHERE $where ORDER BY business_name");
+        $stmt->execute($params);
+        $businesses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $params = [];
+        $where = $buildWhere(['construction_address']);
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, type_of_work, nature_of_work, agreed, construction_address
+                               FROM construction_applications WHERE $where ORDER BY id DESC");
+        $stmt->execute($params);
+        $constructions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $params = [];
+        $where = $buildWhere(['address_of_utility']);
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, nature_of_work, provider, agreed, address_of_utility
+                               FROM utility_applications WHERE $where ORDER BY id DESC");
+        $stmt->execute($params);
+        $utilities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $params = [];
+        $where = $buildWhere(['vic_address', 'rp_address']);
+        $stmt = $pdo->prepare("SELECT id, incident_type, vic_full_name, vic_address, status, incident_timestamp
+                               FROM incident_reports WHERE $where ORDER BY incident_timestamp DESC");
+        $stmt->execute($params);
+        $incidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'businesses'    => $businesses,
+            'constructions' => $constructions,
+            'utilities'     => $utilities,
+            'incidents'     => $incidents
+        ];
+    } catch (PDOException $e) {
+        error_log("getHouseApplications error: " . $e->getMessage());
+        return ['businesses' => [], 'constructions' => [], 'utilities' => [], 'incidents' => []];
+    }
+}
+
 function getHouseById($houseId){
     global $pdo;
     try {
@@ -1947,6 +2062,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'get_houses') {
         $houses = getHousePolygons();
         echo json_encode(['success' => true, 'houses' => $houses, 'count' => count($houses)]);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_house_applications') {
+        $apps = getHouseApplications($_POST['id'] ?? 0);
+        echo json_encode(['success' => true, 'applications' => $apps]);
         exit;
     }
 

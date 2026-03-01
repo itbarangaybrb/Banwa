@@ -129,12 +129,18 @@
 
                 <!-- Sub-filters shown only when Construction is selected -->
                 <div class="sub-filters" id="constructionSubFilters" style="display:none;">
-                    <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
-                    <div class="sub-filter-buttons">
-                        <!-- Filter construction markers by sub-type -->
+                    <div class="sub-filters-bar">
                         <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
                             <i class="fas fa-layer-group"></i><span>All</span>
                         </button>
+                        <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                        <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                            onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                            <i class="fas fa-filter"></i> Types
+                            <span class="toggle-arrow">▾</span>
+                        </button>
+                    </div>
+                    <div class="sub-filter-expanded" id="constructionTypeList">
                         <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
                             <i class="fas fa-building"></i><span>Major</span>
                         </button>
