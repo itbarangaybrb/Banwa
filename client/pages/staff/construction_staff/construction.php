@@ -66,6 +66,7 @@
 
     <!-- Main Content -->
     <div class="main-wrapper">
+        <div class="staff-content">
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
@@ -525,6 +526,7 @@
                     </div>
                 </div>
             </div>
+        </div>
 
             <!-- Modals -->
             <div id="detailsModal" class="modal">
