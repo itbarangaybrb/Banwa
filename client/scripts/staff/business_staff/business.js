@@ -2194,6 +2194,7 @@ async function createApplication(event) {
         formData.set('applicationDate', applicationDate.value);
     }
 
+
     // ==================== SUBMIT ====================
     Swal.fire({
         ...swalTopConfig,
@@ -2203,6 +2204,25 @@ async function createApplication(event) {
     });
 
     try {
+        const formData = new FormData();
+        formData.append('action', 'create');   // ← Force this FIRST (critical fix)
+
+        // Copy all other form fields safely
+        const tempForm = new FormData(form);
+        for (let [key, value] of tempForm) {
+            if (key !== 'action') {
+                formData.append(key, value);
+            }
+        }
+
+        // Files - send as array (matches your PHP code)
+        const fileInput = document.getElementById('requirementUpload');
+        if (fileInput && fileInput.files.length > 0) {
+            for (let file of fileInput.files) {
+                formData.append('requirementUpload[]', file);
+            }
+        }
+
         const resp = await fetch(BUSINESS_HANDLER_URL, {
             method: 'POST',
             body: formData,
@@ -2224,9 +2244,8 @@ async function createApplication(event) {
                 confirmButtonText: 'OK'
             }).then(() => {
                 form.reset();
-                // Optional: refresh applications if on management tab
                 if (document.getElementById('management')?.classList.contains('active')) {
-                    fetchApplications();
+                    loadManagementTable();
                 }
             });
         } else {

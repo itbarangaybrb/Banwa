@@ -285,12 +285,22 @@ function handleCreateApplication($pdo)
 
         // ==================== AUTO OCR ON CREATE ====================
         if (!empty($uploadedFiles)) {
-            // Temporarily set the application_id so handleAnalyzeDocuments uses the stored files
             $_POST['application_id'] = $applicationId;
-            handleAnalyzeDocuments($pdo);   // ← This runs the full OCR + merges detected requirements
+            
+            // ←←← CAPTURE OUTPUT SO IT DOESN'T POLLUTE THE MAIN RESPONSE
+            ob_start();
+            handleAnalyzeDocuments($pdo);
+            $ocrOutput = ob_get_clean();
+            
+            // Optional: log for debugging
+            if (!empty($ocrOutput)) {
+                error_log("Auto-OCR output: " . substr($ocrOutput, 0, 500));
+            }
+            
             unset($_POST['application_id']);
         }
 
+        // Always create the evaluation record **once** at the very end
         createInitialDSSEvaluation($pdo, $applicationId);
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
@@ -896,13 +906,13 @@ function handleAnalyzeDocuments($pdo)
             $updateReqStmt->execute([':reqs' => json_encode($mergedReqs), ':id' => $applicationId]);
 
             // Trigger DSS re-evaluation now that requirements have been updated
-            if (function_exists('createInitialDSSEvaluation')) {
-                try {
-                    createInitialDSSEvaluation($pdo, $applicationId);
-                } catch (Exception $e) {
-                    error_log('DSS re-evaluation failed after OCR analyze: ' . $e->getMessage());
-                }
-            }
+            // if (function_exists('createInitialDSSEvaluation')) {
+            //     // try {
+            //     //     createInitialDSSEvaluation($pdo, $applicationId);
+            //     // } catch (Exception $e) {
+            //     //     error_log('DSS re-evaluation failed after OCR analyze: ' . $e->getMessage());
+            //     // }
+            // }
         }
 
         echo json_encode(["status" => "success", "analysis" => $result]);

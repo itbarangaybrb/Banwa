@@ -33,3 +33,10 @@
 {"timestamp":"2026-03-01 05:36:51","application_id":83,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
 {"timestamp":"2026-03-01 05:38:01","application_id":84,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-03-01 08:47:29","application_id":78,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
+{"timestamp":"2026-03-01 12:13:04","application_id":85,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-01 12:24:54","application_id":"89","dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
+{"timestamp":"2026-03-01 12:25:15","application_id":90,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-01 12:26:24","application_id":91,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-01 12:28:01","application_id":92,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-01 12:30:14","application_id":93,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-01 12:36:55","application_id":94,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
