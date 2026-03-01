@@ -200,14 +200,14 @@ export async function fetchUsers() {
         tbody.innerHTML = '';
 
         if (!Array.isArray(users) || users.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No users found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
             return;
         }
 
         const activeUsers = users.filter(user => !user.is_archived);
 
         if (activeUsers.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">No users found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
             return;
         }
 

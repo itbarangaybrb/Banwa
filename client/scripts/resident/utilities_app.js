@@ -25,8 +25,7 @@ const middleName = document.getElementById('middleName');
 const suffix = document.getElementById('suffix');
 const lastName = document.getElementById('lastName');
 const contactNoOwner = document.getElementById('contactNoOwner');
-const lotNo = document.getElementById('lotNo');
-const street = document.getElementById('street');
+const addressOwner = document.getElementById('addressOwner');
 
 // Form element references for utilities information section
 const requestDate = document.getElementById('requestDate');
@@ -251,8 +250,7 @@ const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-    { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-    { el: street, type: 'select', message: 'Street is required' },
+    { el: addressOwner, type: 'text', message: 'Address is required' },
 
     { el: requestDate, type: 'date', message: 'Request date is required', rules: { todayOnly: true } },
     { el: dateOfWork, type: 'date', message: 'Date of work is required', rules: { futureOnly: true } },
@@ -298,14 +296,6 @@ function validateField(config) {
         });
     });
 
-    // Address validation for owner address
-    [lotNo, street].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (lotNo.value && street.value) validator.address(lotNo, street);
-        });
-        el.addEventListener('input', () => validator.clear(el));
-    });
-
     // Address validation for utilities address
     [utilityLotNo, utilityStreet].forEach(el => {
         el.addEventListener('blur', () => {
@@ -315,7 +305,7 @@ function validateField(config) {
     });
 
     // Input sanitization for numeric fields (remove non-digit characters)
-    [contactNoOwner, lotNo, utilityLotNo].forEach(el => {
+    [contactNoOwner, utilityLotNo].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
             validator.clear(el);
@@ -337,10 +327,8 @@ function validateStep(fields) {
  * Validates all owner fields and updates waiver display before proceeding
  */
 document.getElementById('nextToUtilities').addEventListener('click', () => {
-    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
-
+    const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
     if (!validateStep(stepFields)) return;
-    if (!validator.address(lotNo, street)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
     switchPanel('utilities');
@@ -368,7 +356,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumAddressOwner').textContent = addressOwner.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
         document.getElementById('sumReqDate').textContent = requestDate.value;
         document.getElementById('sumDateOfWork').textContent = dateOfWork.value;
@@ -447,7 +435,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('lastName', lastName.value);
         formData.append('suffix', suffix.value);
         formData.append('contactNoOwner', contactNoOwner.value);
-        formData.append('addressOwner', `${lotNo.value} ${street.value}`);
+        formData.append('addressOwner', addressOwner.value);
         formData.append('requestDate', requestDate.value);
         formData.append('dateOfWork', dateOfWork.value);
         formData.append('natureOfWork', natureOfWork.value);
@@ -638,16 +626,16 @@ async function initializeMapPicker(target) {
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                             // Only fill fields for the correct target
-                            if (target === '1') { // Owner
-                                const lotNo = document.getElementById('lotNo');
-                                const street = document.getElementById('street');
-                                lotNo.value = house.house_number || '';
-                                street.value = house.street_name || '';
-                                [lotNo, street].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
-                            }
+                            // if (target === '1') { // Owner
+                            //     const lotNo = document.getElementById('lotNo');
+                            //     const street = document.getElementById('street');
+                            //     lotNo.value = house.house_number || '';
+                            //     street.value = house.street_name || '';
+                            //     [lotNo, street].forEach(el => {
+                            //         el.dispatchEvent(new Event('input', { bubbles: true }));
+                            //         el.dispatchEvent(new Event('change', { bubbles: true }));
+                            //     });
+                            // }
 
                             if (target === '2') { // Utilities
                                 const utilityLot = document.getElementById('utilityLotNo');
@@ -743,6 +731,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.last_name) lastName.value = data.last_name;
         if (data.suffix) suffix.value = data.suffix;
         if (data.contact_no) contactNoOwner.value = data.contact_no;
+        if (data.address) addressOwner.value = data.address;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
     }

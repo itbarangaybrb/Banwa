@@ -11,7 +11,7 @@ if (empty($_SESSION['supabase_user_id'])) {
 $supabase_user_id = $_SESSION['supabase_user_id'];
 
 try {
-    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, suffix, contact_no FROM resident WHERE supabase_user_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT first_name, middle_name, last_name, suffix, contact_no, address FROM resident WHERE supabase_user_id = ? LIMIT 1");
     $stmt->execute([$supabase_user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

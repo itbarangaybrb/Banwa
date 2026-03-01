@@ -23,8 +23,7 @@ const middleName = document.getElementById('middleName');
 const suffix = document.getElementById('suffix');
 const lastName = document.getElementById('lastName');
 const contactNoOwner = document.getElementById('contactNoOwner');
-const lotNo = document.getElementById('lotNo');
-const street = document.getElementById('street');
+const addressOwner = document.getElementById('addressOwner');
 
 // Form element references for construction information section
 const typeOfWork = document.getElementById('typeOfWork');
@@ -274,8 +273,7 @@ const validationConfig = [
     { el: firstName, type: 'text', message: 'Please enter your first name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Please enter your last name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-    { el: lotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
-    { el: street, type: 'select', message: 'Please select the street' },
+    { el: addressOwner, type: 'text', message: 'Address is required' },
     { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
     { el: detailsOfWork, type: 'text', message: 'Please provide details of the work' },
@@ -327,14 +325,6 @@ function validateField(config) {
         });
     });
 
-    // Address validation for owner address
-    [lotNo, street].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (lotNo.value && street.value) validator.address(lotNo, street);
-        });
-        el.addEventListener('input', () => validator.clear(el));
-    });
-
     // Address validation for construction address
     [constructionLotNo, constructionStreet].forEach(el => {
         el.addEventListener('blur', () => {
@@ -366,9 +356,8 @@ function validateStep(fields) {
  * Validates all owner fields and updates waiver display before proceeding
  */
 document.getElementById('nextToConstruction').addEventListener('click', () => {
-    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+    const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
     if (!validateStep(stepFields)) return;
-    if (!validator.address(lotNo, street)) return;
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
     switchPanel('construction');
 });
@@ -421,7 +410,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumRequirementUpload').textContent = requirementUpload.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumAddressOwner').textContent = addressOwner.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
 
         switchPanel('summary');
@@ -503,8 +492,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('suffix', document.getElementById('suffix').value);
         formData.append('lastName', document.getElementById('lastName').value);
         formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
-        formData.append('lotNo', document.getElementById('lotNo').value);
-        formData.append('street', document.getElementById('street').value);
+        formData.append('addressOwner', document.getElementById('addressOwner').value);
 
         // Construction Details
         formData.append('typeOfWork', document.getElementById('typeOfWork').value);
@@ -721,16 +709,16 @@ async function initializeMapPicker(target) {
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                             // Only fill fields for the correct target
-                            if (target === '1') { // Owner
-                                const lotNo = document.getElementById('lotNo');
-                                const street = document.getElementById('street');
-                                lotNo.value = house.house_number || '';
-                                street.value = house.street_name || '';
-                                [lotNo, street].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
-                            }
+                            // if (target === '1') { // Owner
+                            //     const lotNo = document.getElementById('lotNo');
+                            //     const street = document.getElementById('street');
+                            //     lotNo.value = house.house_number || '';
+                            //     street.value = house.street_name || '';
+                            //     [lotNo, street].forEach(el => {
+                            //         el.dispatchEvent(new Event('input', { bubbles: true }));
+                            //         el.dispatchEvent(new Event('change', { bubbles: true }));
+                            //     });
+                            // }
 
                             if (target === '2') { // Construction
                                 const constructionLotNo = document.getElementById('constructionLotNo');
@@ -854,6 +842,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.last_name) lastName.value = data.last_name;
         if (data.suffix) suffix.value = data.suffix;
         if (data.contact_no) contactNoOwner.value = data.contact_no;
+        if (data.address) addressOwner.value = data.address;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
     }
@@ -881,6 +870,10 @@ function calculateTotalDays(startEl, endEl, outputEl) {
 }
 
 // Set up automatic calculation of working days when dates change
-[startDate, endDate].forEach(el => {
-    el.addEventListener('change', () => calculateTotalDays(startDate, endDate, numberOfWorkingDays));
+document.addEventListener('DOMContentLoaded', () => {
+    if (startDate && endDate) {
+        [startDate, endDate].forEach(el => {
+            el.addEventListener('change', () => calculateTotalDays(startDate, endDate, numberOfWorkingDays));
+        });
+    }
 });

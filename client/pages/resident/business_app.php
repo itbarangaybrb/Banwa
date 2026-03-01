@@ -67,29 +67,8 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label class="label" for="street">Street Name <span style="color: #BB1B1B;">*</span></label>
-                        <select name="street" id="street">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milky Way Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
+                        <label class="label" for="addressOwner">Full Address <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="addressOwner" name="addressOwner">
                         <div class="error-msg"></div>
                     </div>
                     <input type="hidden" id="latitude1" name="latitude" pattern="-?\d{1,2}\.\d{6,8}"
@@ -244,9 +223,9 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input" id="requirementsSection">
                         <label class="label">Requirements (Photocopy Only) <span style="color: #BB1B1B;">*</span></label>
-                            <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
-                            <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
-                            <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
+                        <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
                         <div class="error-msg"></div>
@@ -257,18 +236,18 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                 </div>
-                
+
                 <!-- NEW: OCR Document Verification Section -->
                 <div class="label-and-input verification-container" id="verificationSection" style="display:none; margin-top:20px; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
                     <label class="label" style="margin-bottom:12px; display:block;">
                         📋 OCR Document Verification
                     </label>
                     <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
-                    
+
                     <button type="button" id="verifyDocumentsBtn" class="btn-secondary" style="width:100%; padding:12px;">
                         Re-Verify Documents with OCR
                     </button>
-                    
+
                     <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">
                         Auto-checks 1 second after upload. Business name is also cross-checked in the documents.
                     </small>
@@ -383,7 +362,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/business_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <?php include '_layout/end.php'; ?>
 </body>
 

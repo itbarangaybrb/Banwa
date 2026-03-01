@@ -24,8 +24,7 @@ const middleName = document.getElementById('middleName');
 const suffix = document.getElementById('suffix');
 const lastName = document.getElementById('lastName');
 const contactNoOwner = document.getElementById('contactNoOwner');
-const lotNo = document.getElementById('lotNo');
-const street = document.getElementById('street');
+const addressOwner = document.getElementById('addressOwner');
 
 // Form element references for business information section
 const businessName = document.getElementById('businessName');
@@ -270,8 +269,7 @@ const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
-    { el: lotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
-    { el: street, type: 'select', message: 'Street is required' },
+    { el: addressOwner, type: 'text', message: 'Address is required' },
     { el: businessName, type: 'text', message: 'Business Name is required' },
     { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
     { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
@@ -351,14 +349,6 @@ function validateField(config) {
         });
     });
 
-    // Address validation for owner address
-    [lotNo, street].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (lotNo.value && street.value) validator.address(lotNo, street);
-        });
-        el.addEventListener('input', () => validator.clear(el));
-    });
-
     // Address validation for business address
     [businessLotNo, businessStreet].forEach(el => {
         el.addEventListener('blur', () => {
@@ -368,7 +358,7 @@ function validateField(config) {
     });
 
     // Input sanitization for numeric fields (remove non-digit characters)
-    [contactNoOwner, contactNoBusiness, lotNo, businessLotNo, noOfEmployees].forEach(el => {
+    [contactNoOwner, contactNoBusiness, businessLotNo, noOfEmployees].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
             validator.clear(el);
@@ -390,10 +380,8 @@ function validateStep(fields) {
  * Validates all owner fields and updates waiver display before proceeding
  */
 document.getElementById('nextToBusiness').addEventListener('click', () => {
-    const stepFields = [firstName, lastName, contactNoOwner, lotNo, street];
+    const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
     if (!validateStep(stepFields)) return;
-
-    if (!validator.address(lotNo, street)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
     switchPanel('business');
@@ -424,16 +412,16 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     ].filter(Boolean);
 
     if (!validator.address(businessLotNo, businessStreet)) return;
-        if (!validateStep(stepFields)) return;
+    if (!validateStep(stepFields)) return;
 
-        // Soft reminder if not verified
-        if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-            if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-                return;
-            }
+    // Soft reminder if not verified
+    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
+        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
+            return;
         }
+    }
 
-        switchPanel('waiver');
+    switchPanel('waiver');
 });
 
 /**
@@ -454,7 +442,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumEmail').textContent = emailAddress.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-        document.getElementById('sumAddressOwner').textContent = `${lotNo.value} ${street.value}`;
+        document.getElementById('sumAddressOwner').textContent = addressOwner.value;
         document.getElementById('sumStructureType').textContent = (typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value).trim();
         document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
         document.getElementById('sumEmployees').textContent = noOfEmployees.value;
@@ -634,8 +622,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('suffix', document.getElementById('suffix').value);
         formData.append('lastName', document.getElementById('lastName').value);
         formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
-        formData.append('lotNo', document.getElementById('lotNo').value);
-        formData.append('street', document.getElementById('street').value);
+        formData.append('addressOwner', document.getElementById('addressOwner').value);
 
         // Structure Details
         formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
@@ -771,7 +758,7 @@ async function verifyUploadedDocuments() {
     try {
         for (let i = 0; i < total; i++) {
             const file = requirementUpload.files[i];
-            verifyBtn.textContent = `OCR on file ${i+1}/${total}: ${file.name}`;
+            verifyBtn.textContent = `OCR on file ${i + 1}/${total}: ${file.name}`;
 
             const formData = new FormData();
             formData.append('action', 'analyze_documents');
@@ -837,7 +824,7 @@ function renderVerificationResults(analysis, selectedReqs) {
                 nameMatched = textLower.includes(ownerName);
             } else if (rule === 'either') {
                 nameMatched = (businessName && textLower.includes(businessName)) ||
-                              (ownerName && textLower.includes(ownerName));
+                    (ownerName && textLower.includes(ownerName));
             }
 
             // Keyword detection from backend
@@ -1010,16 +997,16 @@ async function initializeMapPicker(target) {
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                             // Only fill fields for the correct target
-                            if (target === '1') { // Owner
-                                const lotNo = document.getElementById('lotNo');
-                                const street = document.getElementById('street');
-                                lotNo.value = house.house_number || '';
-                                street.value = house.street_name || '';
-                                [lotNo, street].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
-                            }
+                            // if (target === '1') { // Owner
+                            //     const lotNo = document.getElementById('lotNo');
+                            //     const street = document.getElementById('street');
+                            //     lotNo.value = house.house_number || '';
+                            //     street.value = house.street_name || '';
+                            //     [lotNo, street].forEach(el => {
+                            //         el.dispatchEvent(new Event('input', { bubbles: true }));
+                            //         el.dispatchEvent(new Event('change', { bubbles: true }));
+                            //     });
+                            // }
 
                             if (target === '2') { // Business
                                 const businessLot = document.getElementById('businessLotNo');
@@ -1108,6 +1095,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.last_name) lastName.value = data.last_name;
         if (data.suffix) suffix.value = data.suffix;
         if (data.contact_no) contactNoOwner.value = data.contact_no;
+        if (data.address) addressOwner.value = data.address;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
     }

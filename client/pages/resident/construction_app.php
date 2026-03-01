@@ -82,29 +82,8 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="lotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="tel" name="lotNo" id="lotNo" maxlength="2" pattern="[0-9]{1,2}">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label class="label" for="street">Street Name <span style="color: #BB1B1B;">*</span></label>
-                        <select name="street" id="street">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milky Way Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
+                        <label class="label" for="addressOwner">Full Address <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="addressOwner" name="addressOwner">
                         <div class="error-msg"></div>
                     </div>
                 </div>
