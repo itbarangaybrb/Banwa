@@ -427,3 +427,66 @@ DETAIL:  Key (application_id)=(71) already exists.
 [28-Feb-2026 18:14:12 UTC] R1 Check - Missing: ["SEC","DTI","TCT","Lease Contract"]
 [28-Feb-2026 18:14:17 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [28-Feb-2026 18:14:17 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 04:57:31 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 04:57:31 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 04:57:51 UTC] R1 Check - Required: []
+[01-Mar-2026 04:57:51 UTC] R1 Check - Submitted: ["TCT"]
+[01-Mar-2026 04:57:51 UTC] R1 Check - Missing: []
+[01-Mar-2026 04:57:51 UTC] R1 Check - Required: []
+[01-Mar-2026 04:57:51 UTC] R1 Check - Submitted: ["TCT"]
+[01-Mar-2026 04:57:51 UTC] R1 Check - Missing: []
+[01-Mar-2026 04:58:01 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 04:58:01 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 04:58:19 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 04:58:19 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:06:24 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:06:24 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:13:57 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:13:57 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:14:12 UTC] PHP Fatal error:  Uncaught Error: Undefined constant "UPLOADS_BASE_PATH" in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php:154
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#1 {main}
+  thrown in C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php on line 154
+[01-Mar-2026 05:23:08 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:23:08 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:34:02 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:34:02 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:36:37 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:36:37 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:36:51 UTC] R1 Check - Required: []
+[01-Mar-2026 05:36:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[01-Mar-2026 05:36:51 UTC] R1 Check - Missing: []
+[01-Mar-2026 05:36:51 UTC] R1 Check - Required: []
+[01-Mar-2026 05:36:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[01-Mar-2026 05:36:51 UTC] R1 Check - Missing: []
+[01-Mar-2026 05:37:17 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:37:17 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:37:20 UTC] R1 Check - Required: []
+[01-Mar-2026 05:37:20 UTC] R1 Check - Submitted: ["Lease Contract"]
+[01-Mar-2026 05:37:20 UTC] R1 Check - Missing: []
+[01-Mar-2026 05:37:20 UTC] R1 Check - Required: []
+[01-Mar-2026 05:37:20 UTC] R1 Check - Submitted: ["Lease Contract"]
+[01-Mar-2026 05:37:20 UTC] R1 Check - Missing: []
+[01-Mar-2026 05:37:20 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(83) already exists.
+[01-Mar-2026 05:37:20 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(83) already exists.
+[01-Mar-2026 05:38:01 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:01 UTC] R1 Check - Submitted: ["[\"TCT\"]"]
+[01-Mar-2026 05:38:01 UTC] R1 Check - Missing: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:01 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:01 UTC] R1 Check - Submitted: ["[\"TCT\"]"]
+[01-Mar-2026 05:38:01 UTC] R1 Check - Missing: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:14 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[01-Mar-2026 05:38:14 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[01-Mar-2026 05:38:17 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:17 UTC] R1 Check - Submitted: ["[\"TCT\"]","TCT"]
+[01-Mar-2026 05:38:17 UTC] R1 Check - Missing: {"0":"SEC","1":"DTI","3":"Lease Contract"}
+[01-Mar-2026 05:38:17 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[01-Mar-2026 05:38:17 UTC] R1 Check - Submitted: ["[\"TCT\"]","TCT"]
+[01-Mar-2026 05:38:17 UTC] R1 Check - Missing: {"0":"SEC","1":"DTI","3":"Lease Contract"}
+[01-Mar-2026 05:38:17 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(84) already exists.
+[01-Mar-2026 05:38:17 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
+DETAIL:  Key (application_id)=(84) already exists.

@@ -79,6 +79,59 @@ function get_input($key)
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
+function ensureEvaluationTableExists($pdo) {
+    try {
+        $check = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'business_evaluations')");
+        if (!$check->fetchColumn()) {
+            $pdo->exec("
+                CREATE TABLE business_evaluations (
+                    id SERIAL PRIMARY KEY,
+                    application_id INTEGER NOT NULL,
+                    dss_status TEXT NOT NULL DEFAULT 'Pending Evaluation',
+                    evaluated_at TIMESTAMP,
+                    FOREIGN KEY (application_id) REFERENCES business_applications(id) ON DELETE CASCADE
+                );
+                CREATE INDEX idx_business_evaluations_app_id ON business_evaluations(application_id);
+            ");
+        }
+        return true;
+    } catch (Exception $e) {
+        error_log("Failed to create business_evaluations table: " . $e->getMessage());
+        return false;
+    }
+}
+// ==================== ENSURE FILES TABLE EXISTS ====================
+function ensureFilesTableExists($pdo) {
+    try {
+        $check = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'business_files')");
+        if (!$check->fetchColumn()) {
+            $pdo->exec("
+                CREATE TABLE business_files (
+                    id SERIAL PRIMARY KEY,
+                    application_id INTEGER NOT NULL,
+                    filename TEXT NOT NULL,
+                    saved_filename TEXT NOT NULL,
+                    file_url TEXT,
+                    checksum TEXT,
+                    size_bytes INTEGER,
+                    mime_type TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (application_id) REFERENCES business_applications(id) ON DELETE CASCADE
+                );
+                CREATE INDEX idx_business_files_app_id ON business_files(application_id);
+            ");
+        }
+        return true;
+    } catch (Exception $e) {
+        error_log("business_files table creation failed: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Call it near the bottom of the file (after ensureEvaluationTableExists)
+ensureEvaluationTableExists($pdo);
+ensureFilesTableExists($pdo);
+
 /**
  * Handles creation of new business applications with all required data and file uploads
  * Also creates initial DSS evaluation record for the application
@@ -117,82 +170,61 @@ function handleCreateApplication($pdo)
         $natureOfApplication = get_input('natureOfApplication');
 
         $rawStatus = $_POST['businessStatus'] ?? [];
-        if (!is_array($rawStatus)) {
-            $rawStatus = [$rawStatus];
-        }
+        if (!is_array($rawStatus)) $rawStatus = [$rawStatus];
         $businessStatus = json_encode($rawStatus);
 
         $requirements = isset($_POST['requirements']) ? $_POST['requirements'] : [];
-        if (!is_array($requirements)) {
-            $requirements = [$requirements];
-        }
+        if (!is_array($requirements)) $requirements = [$requirements];
         $requirements = json_encode($requirements);
 
-        // Accept multiple uploaded files under 'requirementUpload' and store filenames as JSON
-        $requirementUpload = null;
-        $uploadedFiles = [];
-        if (isset($_FILES['requirementUpload'])) {
-            $uploadDir = __DIR__ . '/uploads/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        // ==================== COLLECT FILES FIRST ====================
+        $uploadDir = __DIR__ . '/uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-            // Normalize to array
-            $names = is_array($_FILES['requirementUpload']['name']) ? $_FILES['requirementUpload']['name'] : [$_FILES['requirementUpload']['name']];
-            $tmps = is_array($_FILES['requirementUpload']['tmp_name']) ? $_FILES['requirementUpload']['tmp_name'] : [$_FILES['requirementUpload']['tmp_name']];
-            $errs = is_array($_FILES['requirementUpload']['error']) ? $_FILES['requirementUpload']['error'] : [$_FILES['requirementUpload']['error']];
+        $uploadedFiles = [];   // saved filenames only
 
-            foreach ($names as $i => $origName) {
-                if (!isset($tmps[$i]) || $errs[$i] !== UPLOAD_ERR_OK) continue;
-                $fileName = time() . '_' . basename($origName);
-                if (move_uploaded_file($tmps[$i], $uploadDir . $fileName)) {
-                    $uploadedFiles[] = $fileName;
-                }
-            }
-        }
+        if (isset($_FILES['requirementUpload']) && is_array($_FILES['requirementUpload']['name'])) {
+            $file_count = count($_FILES['requirementUpload']['name']);
+            for ($i = 0; $i < $file_count; $i++) {
+                if ($_FILES['requirementUpload']['error'][$i] === UPLOAD_ERR_OK) {
+                    $original = basename($_FILES['requirementUpload']['name'][$i]);
+                    $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+                    $saved_name = uniqid('biz_', true) . '.' . $ext;
+                    $target_path = $uploadDir . $saved_name;
 
-        if (!empty($uploadedFiles)) {
-            $requirementUpload = json_encode($uploadedFiles);
-        }
-
-        // If files were uploaded, either enqueue OCR work or run synchronously
-        $detectedTypesFromFiles = [];
-        if (!empty($uploadedFiles)) {
-            if (defined('OCR_ASYNC') && OCR_ASYNC) {
-                // Defer OCR processing to background worker; job will be created after application insert
-            } else {
-                // Build a faux $_FILES structure referencing the moved files in uploads/
-                $fakeFiles = ['name' => [], 'tmp_name' => [], 'error' => []];
-                foreach ($uploadedFiles as $f) {
-                    $fakeFiles['name'][] = $f;
-                    $fakeFiles['tmp_name'][] = __DIR__ . '/uploads/' . $f;
-                    $fakeFiles['error'][] = UPLOAD_ERR_OK;
-                }
-
-                // Analyze files using shared OCR service
-                $analysis = analyze_files($fakeFiles, $_POST['requirements'] ?? []);
-
-                if (isset($analysis['results']) && is_array($analysis['results'])) {
-                    foreach ($analysis['results'] as $res) {
-                        $detected = $res['detected'] ?? [];
-                        $detectedTypesFromFiles = array_merge($detectedTypesFromFiles, $detected);
+                    if (move_uploaded_file($_FILES['requirementUpload']['tmp_name'][$i], $target_path)) {
+                        $uploadedFiles[] = [
+                            'original'   => $original,
+                            'saved'      => $saved_name,
+                            'mime'       => $_FILES['requirementUpload']['type'][$i],
+                            'size'       => filesize($target_path),
+                            'checksum'   => md5_file($target_path),
+                            'file_url'   => '/Banwa/server/handlers/staff/business/uploads/' . $saved_name
+                        ];
                     }
                 }
             }
         }
 
+        $requirementUploadJson = !empty($uploadedFiles) ? json_encode(array_column($uploadedFiles, 'saved')) : json_encode([]);
+
+        // ==================== INSERT APPLICATION FIRST ====================
         $sql = "INSERT INTO business_applications (
             supabase_user_id, business_name, type_of_business, nature_of_business, 
             nature_of_business_specify, address_of_business, latitude, longitude, 
             business_status, telephone_no_business, email_address, first_name, 
             middle_name, last_name, suffix, telephone_no_owner, address_owner,
             type_of_structure, type_of_structure_specify, no_of_employees,
-            requirements, requirement_upload, requirement_upload_json, application_date, nature_of_application, status
+            requirements, requirement_upload, requirement_upload_json, application_date, 
+            nature_of_application, status
         ) VALUES (
             :supabase_user_id, :business_name, :type_of_business, :nature_of_business, 
             :nature_of_business_specify, :address_of_business, :latitude, :longitude, 
             :business_status::json, :telephone_no_business, :email_address, :first_name, 
             :middle_name, :last_name, :suffix, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
-            :requirements::json, :requirement_upload, :requirement_upload_json::jsonb, :application_date, :nature_of_application, 'Pending'
+            :requirements::json, :requirement_upload, :requirement_upload_json::jsonb, 
+            :application_date, :nature_of_application, 'Pending'
         ) RETURNING id";
 
         $stmt = $pdo->prepare($sql);
@@ -218,111 +250,52 @@ function handleCreateApplication($pdo)
             ':type_of_structure_specify' => $typeOfStructureSpecify,
             ':no_of_employees' => $noOfEmployees ?: 0,
             ':requirements' => $requirements,
-            ':requirement_upload' => $requirementUpload,
-            ':requirement_upload_json' => $requirementUpload ? $requirementUpload : json_encode([]),
+            ':requirement_upload' => $requirementUploadJson,
+            ':requirement_upload_json' => $requirementUploadJson,
             ':application_date' => $applicationDate,
             ':nature_of_application' => $natureOfApplication
         ]);
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $applicationId = $result['id'];
-        // Persist per-file metadata and merge detected types into application requirements
+
+        // ==================== NOW INSERT FILES WITH REAL ID ====================
         if (!empty($uploadedFiles)) {
-            foreach ($uploadedFiles as $f) {
-                // find corresponding analysis result
-                $extracted = '';
-                $detectedTypes = [];
-                if (!empty($analysis['results'])) {
-                    foreach ($analysis['results'] as $res) {
-                        if ($res['filename'] === $f) {
-                            $extracted = $res['text'] ?? '';
-                            $detectedTypes = $res['detected'] ?? [];
-                            break;
-                        }
-                    }
-                }
-
-                // Persist OCR metadata into existing business_ocr_results table (only for sync path)
-                if (!(defined('OCR_ASYNC') && OCR_ASYNC)) {
-                    $insertFileStmt = $pdo->prepare("INSERT INTO business_ocr_results (application_id, filename, saved_filename, file_url, ocr_result, created_at) VALUES (:app_id, :filename, :saved_filename, :file_url, :ocr_result::jsonb, NOW())");
-                    $insertFileStmt->execute([
-                        ':app_id' => $applicationId,
-                        ':filename' => $f,
-                        ':saved_filename' => $f,
-                        ':file_url' => '/Banwa/server/handlers/staff/business/uploads/' . $f,
-                        ':ocr_result' => json_encode(['detected' => array_values($detectedTypes), 'text' => $extracted])
-                    ]);
-                }
-            }
-            // Merge detected types into requirements and update the application before DSS (sync); for async, only set file list and enqueue
-            $submittedReqs = json_decode($requirements, true) ?: [];
-            $mergedReqs = array_values(array_unique(array_merge($submittedReqs, $detectedTypesFromFiles)));
-
-            if (defined('OCR_ASYNC') && OCR_ASYNC) {
-                // Save file list now; worker will merge detected docs into requirements later
-                $updateReqStmt = $pdo->prepare("UPDATE business_applications SET requirement_upload_json = :files::jsonb WHERE id = :id");
-                $updateReqStmt->execute([
-                    ':files' => json_encode($uploadedFiles),
-                    ':id' => $applicationId
+            foreach ($uploadedFiles as $file) {
+                // business_files
+                $pdo->prepare("
+                    INSERT INTO business_files 
+                    (application_id, filename, saved_filename, file_url, checksum, size_bytes, mime_type)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ")->execute([
+                    $applicationId,
+                    $file['original'],
+                    $file['saved'],
+                    $file['file_url'],
+                    $file['checksum'],
+                    $file['size'],
+                    $file['mime']
                 ]);
 
-                // enqueue job
-                $payload = json_encode(['application_id' => $applicationId, 'files' => $uploadedFiles, 'requirements' => $submittedReqs]);
-                $enqueue = $pdo->prepare("INSERT INTO ocr_jobs (job_type, payload, status, created_at) VALUES ('application_files', :payload, 'pending', NOW())");
-                $enqueue->execute([':payload' => $payload]);
-
-                // Try to spawn a short-lived worker process to process pending jobs immediately.
-                // This attempts a non-blocking detached spawn; if it fails, it's non-fatal and operator can run worker manually.
-                try {
-                    $phpBin = defined('PHP_BINARY') ? PHP_BINARY : 'php';
-                    $workerPath = realpath(__DIR__ . '/../../../scripts/ocr_worker.php');
-                    if ($workerPath && file_exists($workerPath)) {
-                        if (stripos(PHP_OS, 'WIN') === 0) {
-                            // Windows: use start to spawn detached process
-                            $cmd = 'start /B "" ' . escapeshellcmd($phpBin) . ' ' . escapeshellarg($workerPath) . ' --once';
-                            pclose(popen($cmd, 'r'));
-                        } else {
-                            // Unix-like: background the process
-                            $cmd = escapeshellcmd($phpBin) . ' ' . escapeshellarg($workerPath) . ' --once > /dev/null 2>&1 &';
-                            exec($cmd);
-                        }
-                    }
-                } catch (Exception $e) {
-                    // non-fatal; worker can be run manually
-                    error_log('Failed to spawn OCR worker: ' . $e->getMessage());
-                }
-            } else {
-                $updateReqStmt = $pdo->prepare("UPDATE business_applications SET requirements = :reqs::json, requirement_upload_json = :files::jsonb WHERE id = :id");
-                $updateReqStmt->execute([
-                    ':reqs' => json_encode($mergedReqs),
-                    ':files' => json_encode($uploadedFiles),
-                    ':id' => $applicationId
+                // business_ocr_results (empty OCR for now - will be filled on re-verify)
+                $pdo->prepare("
+                    INSERT INTO business_ocr_results 
+                    (application_id, filename, saved_filename, file_url, ocr_result)
+                    VALUES (?, ?, ?, ?, ?::jsonb)
+                ")->execute([
+                    $applicationId,
+                    $file['original'],
+                    $file['saved'],
+                    $file['file_url'],
+                    json_encode(['detected' => [], 'text' => ''])
                 ]);
             }
-        } else {
-            // Ensure requirement_upload_json is set even when no files
-            $updateReqStmt = $pdo->prepare("UPDATE business_applications SET requirement_upload_json = :files::jsonb WHERE id = :id");
-            $updateReqStmt->execute([':files' => json_encode([]), ':id' => $applicationId]);
         }
 
-        // Create initial DSS evaluation now that requirements may include detected docs
         createInitialDSSEvaluation($pdo, $applicationId);
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
 
-        $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
-        $newStmt->execute([':id' => $applicationId]);
-        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
-
-        writeAuditLog(
-            $pdo,
-            'CREATE',
-            'business_applications',
-            $applicationId,
-            null,
-            $newData,
-            'BUSINESS_APPLICATION'
-        );
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
