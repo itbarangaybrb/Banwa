@@ -270,3 +270,7 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [01-Mar-2026 11:16:17 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
 LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
                               ^
+[01-Mar-2026 14:45:17 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"applicationsTable_export (1).pdf","saved_filename":"const_69a450fd98880_applicationsTable_export (1).pdf","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a450fd98880_applicationsTable_export (1).pdf"}]
+[01-Mar-2026 14:45:17 UTC] OCR job queued for application 30 with 1 files
+[01-Mar-2026 14:45:17 UTC] CR1 Check - Has file upload: No
+[01-Mar-2026 14:45:17 UTC] CR1 Check - Has file upload: No

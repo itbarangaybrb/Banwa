@@ -30,46 +30,46 @@ function loadAnalytics() {
             const percentages4 = res.data_by_suspensions.map(x => x.percentage);
 
             const dateColors = [
-                '#bdc3c7',
-                '#95a5a6',
-                '#7f8c8d',
-                '#5d6d7e',
-                '#34495e',
-                '#2c3e50',
-                '#00247C'
+                '#4F46E5',
+                '#2563EB',
+                '#0284C7',
+                '#0891B2',
+                '#0D9488',
+                '#14B8A6',
+                '#6366F1'
             ];
 
             const roleColors = [
-                '#bdc3c7',
-                '#d35400',
-                '#16a085',
-                '#7f8c8d',
-                '#5d6d7e',
-                '#34495e',
-                '#2c3e50',
-                '#00247C'
+                '#F59E0B',
+                '#F97316',
+                '#EF4444',
+                '#8B5CF6',
+                '#EC4899',
+                '#84CC16',
+                '#F43F5E',
+                '#A855F7'
             ];
 
             const statusColors = [
-                '#bdc3c7',
-                '#95a5a6',
-                '#7f8c8d',
-                '#5d6d7e',
-                '#34495e',
-                '#2c3e50',
-                '#00247C'
+                '#10B981',
+                '#EF4444',
+                '#F59E0B',
+                '#6366F1',
+                '#8B5CF6',
+                '#EC4899',
+                '#14B8A6'
             ];
 
             const suspensionColors = [
-                '#bdc3c7',
-                '#d35400',
-                '#16a085',
-                '#95a5a6',
-                '#7f8c8d',
-                '#5d6d7e',
-                '#34495e',
-                '#2c3e50',
-                '#00247C'
+                '#EF4444',  // strong red for suspended
+                '#F97316',
+                '#F59E0B',
+                '#8B5CF6',
+                '#EC4899',
+                '#6366F1',
+                '#10B981',
+                '#0284C7',
+                '#0D9488'
             ];
 
             // Destroy previous charts if they exist
@@ -89,7 +89,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Users',
                                 data: values1,
-                                backgroundColor: dateColors.map(c => c + '98'),
+                                backgroundColor: dateColors.map(c => c + '99'),
                                 borderWidth: 2,
                                 tension: 0.4,
                                 fill: true
@@ -121,7 +121,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Roles',
                                 data: values2,
-                                backgroundColor: roleColors.map(c => c + '98'),
+                                backgroundColor: roleColors.map(c => c + '99'),
                                 borderWidth: 1,
                                 borderRadius: '4'
                             }]
@@ -151,7 +151,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Status',
                                 data: totals3,
-                                backgroundColor: statusColors.map(c => c + '98'),
+                                backgroundColor: statusColors.map(c => c + '99'),
                                 borderWidth: 1
                             }]
                         },
@@ -181,7 +181,7 @@ function loadAnalytics() {
                             datasets: [{
                                 label: 'Suspensions',
                                 data: totals4,
-                                backgroundColor: suspensionColors.map(c => c + '98'),
+                                backgroundColor: suspensionColors.map(c => c + '99'),
                                 borderWidth: 1,
                                 borderRadius: 4
                             }]

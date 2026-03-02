@@ -77,7 +77,7 @@ window.onclick = function (event) {
 
 // =============================================
 // NEW: TAB SYSTEM FOR SINGLE TABLE VIEW
- // =============================================
+// =============================================
 let currentTab = 'applications';
 
 function initTabs() {
@@ -88,7 +88,7 @@ function initTabs() {
         btn.addEventListener('click', () => {
             tabButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             currentTab = btn.dataset.tab;
             loadCurrentTab();
         });
@@ -112,7 +112,7 @@ async function loadCurrentTab() {
                 <th style="width: 25%;">Action</th>
             </tr>
         `;
-        await loadApplications();  
+        await loadApplications();
     } else {
         header.innerHTML = `
             <tr>
@@ -122,7 +122,7 @@ async function loadCurrentTab() {
                 <th style="width: 25%;">Action</th>
             </tr>
         `;
-        await loadPayments();       
+        await loadPayments();
     }
 }
 
@@ -215,6 +215,8 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
         let appDetailsResponse;
         if (appType === 'Business') {
             appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+        } else if (appType === 'Construction') {
+            appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_construction_application.php?id=${appId}`);
         } else {
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
@@ -284,10 +286,11 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
         case 'GCash/QR':
             instructionsElement.innerHTML = `
                 <p><strong>GCash Payment:</strong></p>
-                <ul>
-                    <li>Send amount to Official Number: <strong>09XX-XXX-XXXX</strong>.</li>
-                    <li>Use <strong>Business Name</strong> as the "Message".</li>
-                    <li>Save the Screenshot/Reference No. for validation.</li>
+                <ul style="    list-style-type: none; display: block; margin-inline: auto; width: max-content; margin-bottom: 32px;">
+                    <img src="/Banwa/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
+                    <li>1. Send amount to Official Number: <strong>09XX-XXX-XXXX</strong>.</li>
+                    <li>2. Use <strong>Business Name</strong> as the "Message".</li>
+                    <li>3. Save the Screenshot/Reference No. for validation.</li>
                 </ul>
             `;
             break;
@@ -910,12 +913,24 @@ async function loadApplications() {
                 }
 
                 let actionButtonsHtml = '';
+                // Check if status is 'additional requirements' - show edit button
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
                     actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`;
                 }
+
+                // Check if status is 'for payment' AND no payment has been submitted yet
                 if (app.status && app.status.toLowerCase() === 'for payment') {
-                    actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`;
+                    // Check if payment has already been submitted
+                    const hasPayment = app.has_payment === true || app.payment_status === 'pending' || app.payment_status === 'verified';
+
+                    if (!hasPayment) {
+                        actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`;
+                    } else {
+                        // Show a disabled state or different message if payment already submitted
+                        actionButtonsHtml += '<span class="detail-info payment-submitted">Payment Submitted - Pending Verification</span>';
+                    }
                 }
+
                 if (!actionButtonsHtml) actionButtonsHtml = '<span class="detail-info">Processing...</span>';
 
                 tr.innerHTML = `
