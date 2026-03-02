@@ -57,7 +57,11 @@ if ($suspendedUntil) {
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+  <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+  
   <title>Account Suspended</title>
   <link rel="stylesheet" href="../../styles/auth/confirm_verification.css" />
 </head>
