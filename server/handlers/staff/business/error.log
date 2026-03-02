@@ -705,3 +705,82 @@ DETAIL:  Key (application_id)=(89) already exists.
 [01-Mar-2026 13:52:52 UTC] R1 Check - Required: []
 [01-Mar-2026 13:52:52 UTC] R1 Check - Submitted: ["Previous Business Permit"]
 [01-Mar-2026 13:52:52 UTC] R1 Check - Missing: []
+[02-Mar-2026 12:30:47 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 12:30:47 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 12:30:49 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('SEC', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'SEC')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:04:11 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:04:11 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:04:14 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('TCT', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'TCT')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:17:53 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:17:53 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:17:56 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('Lease Contract', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'Lease Contract')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:19:09 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:19:09 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:19:11 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('Lease Contract', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'Lease Contract')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:21:11 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:21:11 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:21:14 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('TCT', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'TCT')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:23:01 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:23:01 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:23:03 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('TCT', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, 'TCT')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:27:48 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:27:48 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:27:51 UTC] PHP Fatal error:  Uncaught TypeError: array_diff(): Argument #1 ($array) must be of type array, string given in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php:174
+Stack trace:
+#0 C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php(174): array_diff('["TCT"]', Array)
+#1 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(873): analyze_files(Array, '["TCT"]')
+#2 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(292): handleAnalyzeDocuments(Object(PDO))
+#3 C:\Users\rvmat\Banwa\server\handlers\staff\business\business_handler.php(38): handleCreateApplication(Object(PDO))
+#4 {main}
+  thrown in C:\Users\rvmat\Banwa\server\api\shared\ocr_service.php on line 174
+[02-Mar-2026 13:33:21 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
+[02-Mar-2026 13:33:21 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
+[02-Mar-2026 13:33:24 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"tct.jpg","text":"","detected":[],"error":"cURL failed: operation aborted by callback"},{"filename":"tct.jpg","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["TCT"],"allVerified":false}}
+[02-Mar-2026 13:33:24 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[02-Mar-2026 13:33:24 UTC] R1 Check - Submitted: ["TCT"]
+[02-Mar-2026 13:33:24 UTC] R1 Check - Missing: {"0":"SEC","1":"DTI","3":"Lease Contract"}
+[02-Mar-2026 13:33:24 UTC] R1 Check - Required: ["SEC","DTI","TCT","Lease Contract"]
+[02-Mar-2026 13:33:24 UTC] R1 Check - Submitted: ["TCT"]
+[02-Mar-2026 13:33:24 UTC] R1 Check - Missing: {"0":"SEC","1":"DTI","3":"Lease Contract"}

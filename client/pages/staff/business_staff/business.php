@@ -350,7 +350,7 @@
                     <p class="page-description">Fill in the details to register a new business</p>
                 </div>
 
-                <form id="createForm" onsubmit="createApplication(event)">
+                <form id="createStaffForm" onsubmit="createApplication(event)">
 
                     <div class="section-title"><strong>Owner Information</strong></div>
 

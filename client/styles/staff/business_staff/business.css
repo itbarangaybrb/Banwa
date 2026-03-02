@@ -1651,7 +1651,7 @@ body:has(.side_nav.expanded) #mapping {
 }
 
 /* Create → only the form scrolls */
-#create #createForm {
+#create #createStaffForm {
     flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;

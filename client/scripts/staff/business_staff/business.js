@@ -2071,11 +2071,11 @@ function generateClearance(appId) {
 async function createApplication(event) {
     event.preventDefault();
 
-    const form = document.getElementById('createForm');
+    const createApplicationform = document.getElementById('createStaffForm');
 
     // ==================== CLIENT-SIDE VALIDATION ====================
     let isValid = true;
-    const errorMsgs = form.querySelectorAll('.error-msg');
+    const errorMsgs = createApplicationform.querySelectorAll('.error-msg');
     errorMsgs.forEach(msg => msg.textContent = ''); // Clear previous errors
 
     // Helper to show error
@@ -2088,7 +2088,7 @@ async function createApplication(event) {
     }
 
     // Required text/email/tel inputs
-    const requiredInputs = form.querySelectorAll('input[required]:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select[required]');
+    const requiredInputs = createApplicationform.querySelectorAll('input[required]:not([type="radio"]):not([type="checkbox"]):not([type="file"]), select[required]');
     requiredInputs.forEach(input => {
         if (!input.value.trim()) {
             showError(input, 'This field is required');
@@ -2096,11 +2096,11 @@ async function createApplication(event) {
     });
 
     // Radio groups: typeOfBusiness, businessStatus
-    if (!form.querySelector('input[name="typeOfBusiness"]:checked')) {
-        showError(form.querySelector('input[name="typeOfBusiness"]'), 'Please select a business type');
+    if (!createApplicationform.querySelector('input[name="typeOfBusiness"]:checked')) {
+        showError(createApplicationform.querySelector('input[name="typeOfBusiness"]'), 'Please select a business type');
     }
-    if (!form.querySelector('input[name="businessStatus"]:checked')) {
-        showError(form.querySelector('input[name="businessStatus"]'), 'Please select business address status');
+    if (!createApplicationform.querySelector('input[name="businessStatus"]:checked')) {
+        showError(createApplicationform.querySelector('input[name="businessStatus"]'), 'Please select business address status');
     }
 
     // Phone patterns
@@ -2126,9 +2126,9 @@ async function createApplication(event) {
     });
 
     // Checkboxes: requirements (optional, but if none warn?)
-    const reqChecks = form.querySelectorAll('input[name="requirements"]:checked');
+    const reqChecks = createApplicationform.querySelectorAll('input[name="requirements"]:checked');
     if (reqChecks.length === 0) {
-        showError(form.querySelector('.checkbox-group'), 'Please select at least one requirement');
+        showError(createApplicationform.querySelector('.checkbox-group'), 'Please select at least one requirement');
     }
 
     // File upload validation
@@ -2167,34 +2167,6 @@ async function createApplication(event) {
         return;
     }
 
-    // ==================== PREPARE FORM DATA ====================
-    const formData = new FormData(form);
-
-    // Append action
-    formData.append('action', 'create');
-
-    // Append radios if not already (FormData handles checked ones)
-    const typeOfBusiness = document.querySelector('input[name="typeOfBusiness"]:checked')?.value;
-    if (typeOfBusiness) formData.set('typeOfBusiness', typeOfBusiness);
-
-    const businessStatusVal = document.querySelector('input[name="businessStatus"]:checked')?.value;
-    if (businessStatusVal) formData.set('businessStatus', businessStatusVal);
-
-    // Append checkboxes as JSON array
-    const requirements = Array.from(form.querySelectorAll('input[name="requirements"]:checked'))
-        .map(checkbox => checkbox.value);
-    if (requirements.length > 0) {
-        formData.set('requirements', JSON.stringify(requirements));
-    }
-
-    // Set application date
-    const applicationDate = document.getElementById('applicationDate');
-    if (applicationDate) {
-        applicationDate.value = new Date().toISOString().split('T')[0];
-        formData.set('applicationDate', applicationDate.value);
-    }
-
-
     // ==================== SUBMIT ====================
     Swal.fire({
         ...swalTopConfig,
@@ -2205,22 +2177,42 @@ async function createApplication(event) {
 
     try {
         const formData = new FormData();
-        formData.append('action', 'create');   // ← Force this FIRST (critical fix)
+        formData.append('action', 'create');
 
-        // Copy all other form fields safely
-        const tempForm = new FormData(form);
-        for (let [key, value] of tempForm) {
-            if (key !== 'action') {
+        const originalFormData = new FormData(createApplicationform);
+        for (let [key, value] of originalFormData) {
+            if (key !== 'action' && key !== 'requirements' && key !== 'requirementUpload') {
                 formData.append(key, value);
             }
         }
 
-        // Files - send as array (matches your PHP code)
-        const fileInput = document.getElementById('requirementUpload');
+        // Append radios
+        const typeOfBusiness = document.querySelector('input[name="typeOfBusiness"]:checked')?.value;
+        if (typeOfBusiness) formData.set('typeOfBusiness', typeOfBusiness);
+
+        const businessStatusVal = document.querySelector('input[name="businessStatus"]:checked')?.value;
+        if (businessStatusVal) formData.set('businessStatus', businessStatusVal);
+
+        // Append checkboxes as array
+        const requirements = Array.from(createApplicationform.querySelectorAll('input[name="requirements"]:checked'))
+            .map(checkbox => checkbox.value);
+        requirements.forEach(val => {
+            formData.append('requirements[]', val);
+        });
+
+        // Append files as array
         if (fileInput && fileInput.files.length > 0) {
-            for (let file of fileInput.files) {
+            Array.from(fileInput.files).forEach(file => {
                 formData.append('requirementUpload[]', file);
-            }
+            });
+        }
+
+        // Append application date
+        const applicationDateElem = document.getElementById('applicationDate');
+        if (applicationDateElem) {
+            const dateVal = new Date().toISOString().split('T')[0];
+            applicationDateElem.value = dateVal;
+            formData.append('applicationDate', dateVal);
         }
 
         const resp = await fetch(BUSINESS_HANDLER_URL, {
@@ -2240,10 +2232,10 @@ async function createApplication(event) {
                 ...swalTopConfig,
                 icon: 'success',
                 title: 'Application Created',
-                text: data.message || 'Your business application has been submitted successfully!',
+                text: 'Your business application has been submitted successfully!',
                 confirmButtonText: 'OK'
             }).then(() => {
-                form.reset();
+                createApplicationform.reset();
                 if (document.getElementById('management')?.classList.contains('active')) {
                     loadManagementTable();
                 }
@@ -2349,6 +2341,13 @@ document.head.insertAdjacentHTML("beforeend", `
         .swal2-backdrop {
             z-index: 2147483646 !important;
         }
+    </style>
+`);
+// Center SweetAlert text
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .swal2-title, .swal2-html-container { text-align: center !important; }
+        .swal2-popup { text-align: center !important; }
     </style>
 `);
 

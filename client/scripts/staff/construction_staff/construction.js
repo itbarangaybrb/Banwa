@@ -1673,6 +1673,13 @@ document.head.insertAdjacentHTML("beforeend", `
         }
     </style>
 `);
+// Center SweetAlert text
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .swal2-title, .swal2-html-container { text-align: center !important; }
+        .swal2-popup { text-align: center !important; }
+    </style>
+`);
 
 document.addEventListener('DOMContentLoaded', function () {
     const navLogo = document.querySelector('.nav_logo');

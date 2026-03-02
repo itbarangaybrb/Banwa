@@ -45,3 +45,4 @@
 {"timestamp":"2026-03-01 12:09:09","application_id":88,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
 {"timestamp":"2026-03-01 13:02:09","application_id":89,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
 {"timestamp":"2026-03-01 13:52:52","application_id":95,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}
+{"timestamp":"2026-03-02 13:33:24","application_id":118,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
