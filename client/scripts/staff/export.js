@@ -11,7 +11,11 @@ function initExportButton() {
     if (!exportBtn) return;
 
     exportBtn.addEventListener('click', () => {
-        exportTableAsPDF('applicationsTable', 'applicationsTable_export.pdf');
+        ['applicationsTable', 'pendingTable'].forEach(id => {
+            if (document.getElementById(id)) {
+                exportTableAsPDF(id, `${id}_export.pdf`);
+            }
+        });
     });
 }
 
