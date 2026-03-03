@@ -397,6 +397,11 @@ nav {
     border-radius: 0 0 7px 7px;
     border-bottom: 3px solid transparent;
     height: 100%;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 button.nav_select {

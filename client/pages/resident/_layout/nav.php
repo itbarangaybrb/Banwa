@@ -21,13 +21,13 @@
                     <li><a class="nav_select" href="../resident/home.php" <?php if ($page_title == "Home") echo 'class="active"'; ?>>Home</a></li>
                     <li><a class="nav_select" href="../resident/about_us.php" <?php if ($page_title == "About Us") echo 'class="active"'; ?>>About Us</a></li>
                     <li class="dropdown">
-                        <a class="nav_select2 dropdown-toggle" href="#" id="clearancesDropdown">
+                        <a class="nav_select2 dropdown-toggle" id="clearancesDropdown">
                             Clearances
                         </a>
                         <ul class="dropdown-menu">
                             <li><a href="../resident/construction_app.php" <?php if ($page_title == "Construction Application") echo 'class="active"'; ?>>Construction Application</a></li>
-                            <li><a href="../resident/utilities_app.php" <?php if ($page_title == "Utilities Application") echo 'class="active"'; ?>>Utilities Application</a></li>
                             <li><a href="../resident/business_app.php" <?php if ($page_title == "Business Application") echo 'class="active"'; ?>>Business Application</a></li>
+                            <li><a href="../resident/utilities_app.php" <?php if ($page_title == "Utilities Application") echo 'class="active"'; ?>>Utilities Application</a></li>
                         </ul>
                     </li>
                 </ul>

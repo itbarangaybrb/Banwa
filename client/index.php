@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../client/styles/global.css">
     <link rel="stylesheet" href="../client/styles/resident/home.css">
     <link rel="stylesheet" href="../client/styles/auth/signup-modal.css">
+    <link rel="stylesheet" href="../client/styles/components/loader.css">
 </head>
 
 <body>
@@ -142,13 +143,11 @@
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Requirements</span>
-                                <span class="preview-count">4 items</span>
                             </div>
                             <ul class="preview-list">
-                                <li>✓ Valid government ID</li>
-                                <li>✓ Proof of ownership</li>
-                                <li>✓ Construction plan</li>
-                                <li>✓ Community tax cert</li>
+                                <li>Construction Information</li>
+                                <li>Contractor Information</li>
+                                <li>Blueprint Document</li>
                             </ul>
                             <div class="preview-footer">
                                 <span class="preview-cta">Proceed →</span>
@@ -176,13 +175,13 @@
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Requirements</span>
-                                <span class="preview-count">4 items</span>
                             </div>
                             <ul class="preview-list">
-                                <li>✓ Valid government ID</li>
-                                <li>✓ DTI/SEC registration</li>
-                                <li>✓ Proof of location</li>
-                                <li>✓ Community tax cert</li>
+                                
+                                <li>SEC (Securities and Exchange Commission) Registration</li>
+                                <li>DTI (Department of Trade and Industry) Registration</li>
+                                <li>TCT (Transfer Certificate of Title)</li>
+                                <li>Lease Contract</li>
                             </ul>
                             <div class="preview-footer">
                                 <span class="preview-cta">Proceed →</span>
@@ -211,13 +210,12 @@
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Services</span>
-                                <span class="preview-count">10+ options</span>
                             </div>
                             <ul class="preview-list">
-                                <li>💧 Water connection</li>
-                                <li>⚡ Electrical repair</li>
-                                <li>🚨 Emergency reports</li>
-                                <li>📋 Billing inquiries</li>
+                                <li>Water connection</li>
+                                <li>Electrical repair</li>
+                                <li>Emergency reports</li>
+                                <li>Billing inquiries</li>
                             </ul>
                             <div class="preview-footer">
                                 <span class="preview-cta">Proceed →</span>
@@ -848,10 +846,16 @@
         </div>
     </div>
 
+    <div id="page-loader">
+        <div class="loader-spinner"></div>
+        <p>Loading…</p>
+    </div>
+
     <script src="../client/scripts/resident/nav.js" defer></script>
     <script src="../client/scripts/resident/home.js" defer></script>
     <script type="module" src="../client/scripts/auth/signup-modal.js"></script>
     <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
+    <script type="module" src="../client/scripts/components/loader.js"></script>
 
     </body>
 </html>

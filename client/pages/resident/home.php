@@ -148,11 +148,11 @@ include '../../pages/resident/_layout/nav.php';
                     </a>
                     
                     <!-- Report Button -->
-                    <a href="incidentReport.php" class="action-btn report-btn">
+                    <!-- <a href="incidentReport.php" class="action-btn report-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Report</span>
-                    </a>
+                    </a> -->
                 </div>
             </div>
         </div>

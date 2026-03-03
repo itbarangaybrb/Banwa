@@ -267,17 +267,25 @@
     box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
 }
 
-.status-open .hours-status::before {
-    background-color: #4CAF50;
-}
-
 .status-closed {
     background-color: #F44336;
     box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
 }
 
-.status-closed .hours-status::before {
+.status-open:hover .hours-status::before {
+    background-color: #4CAF50;
+}
+
+.status-closed:hover .hours-status::before {
     background-color: #F44336;
+}
+
+.status-open .hours-status::before {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.status-closed .hours-status::before {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Status text colors */
@@ -406,6 +414,8 @@
 
 /* Individual Card */
 .service-h-card {
+    display: flex;
+    flex-direction: column;
     background: white;
     border-radius: 24px;
     padding: 30px 25px;
@@ -528,6 +538,10 @@
 
 /* Preview Content (shows on hover/active) */
 .card-preview-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 210px;
     background: #f8faff;
     border-radius: 16px;
     padding: 15px;
@@ -548,15 +562,10 @@
     font-size: 0.9rem;
 }
 
-.preview-count {
-    color: #666;
-    font-size: 0.75rem;
-    background: white;
-    padding: 2px 8px;
-    border-radius: 50px;
-}
-
 .preview-list {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     list-style: none;
     padding: 0;
     margin: 0 0 10px;

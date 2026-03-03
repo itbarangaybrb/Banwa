@@ -254,7 +254,160 @@ include '../../pages/resident/_layout/nav.php';
             </div>
         </section>
 
-        <section data-theme="white">
+        <section data-theme="white" class="faq-section">
+            <div class="cont">
+                <div class="quick_align">
+                    <h2>Frequently Asked Questions</h2>
+                    <p class="faq-subtitle">Find answers to common questions about our services</p>
+                </div>
+                
+                <div class="faq-container">
+                    <!-- FAQ Category: General -->
+                    <div class="faq-category">
+                        <h3 class="category-title">General Questions</h3>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>What is BANWA?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>BANWA (Barangay Blue Ridge B Management System) is an online platform that allows residents to access barangay services, submit applications for clearances, report issues, and stay updated with barangay announcements from anywhere, anytime.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>Is the website available 24/7?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p><strong>Yes!</strong> While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week. You can submit applications, request documents, and report issues at any time.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>Do I need to create an account to use the services?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Yes, you need to register for an account to access most services. This helps us verify your identity and ensure the security of your information. The registration process is simple and only takes a few minutes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ Category: Clearances -->
+                    <div class="faq-category">
+                        <h3 class="category-title">Clearances & Permits</h3>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>How long does it take to process a clearance?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Online clearance applications are typically processed within a few working days. You'll receive a notification via BANWA website once your clearance is ready for pickup or if there are any issues with your application.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>What requirements do I need for Business Clearance?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <ul>
+                                    <li>SEC (Securities and Exchange Commission) Registration</li>
+                                    <li>DTI (Department of Trade and Industry) Registration</li>
+                                    <li>TCT (Transfer Certificate of Title)</li>
+                                    <li>Lease Contract</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>Can I track my application status?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Yes! After logging in, you can view the status of all your applications in your dashboard. Status updates include: Pending, Under Review, Approved, Ready for Pickup, and Completed.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ Category: Technical -->
+                    <div class="faq-category">
+                        <h3 class="category-title">Technical Support</h3>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>I forgot my password. How can I reset it?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Click on the "Forgot password?" link on the login page. Enter your registered email address, and we'll send you instructions to reset your password. If you don't receive the email within a few minutes, check your spam folder.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>What file formats are accepted for ID upload?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>We accept JPG, JPEG, and PNG file formats. The maximum file size is 5MB. Make sure the image is clear and all information on the ID is readable.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>Who can I contact for technical issues?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>For technical support, you can:<br>
+                                • Email us at support@banwa-bbrb.gov.ph<br>
+                                • Call our technical support hotline: +63 946 456 6986<br>
+                                • Visit the barangay hall during office hours and ask for the IT support staff</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ Category: Payments -->
+                    <div class="faq-category">
+                        <h3 class="category-title">Payments & Fees</h3>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>What payment methods are accepted?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>Currently, we accept:<br>
+                                • Cash payments at the barangay hall<br>
+                                • GCash (through our official account)<br>
+                                • Bank transfer receipt<br>
+                                Online payment options will be expanded soon!</p>
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <button class="faq-question">
+                                <span>Are there any fees for using the online system?</span>
+                                <span class="faq-icon">▼</span>
+                            </button>
+                            <div class="faq-answer">
+                                <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances and permits you apply for, just as you would when applying in person.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section data-theme="blue">
             <div class="cont">
                 <div class="contact-content">
                     <div class="story-text">
@@ -270,9 +423,8 @@ include '../../pages/resident/_layout/nav.php';
         </section>
     </main>
 
-    <script src="../../scripts/resident/nav.js" defer></script>
-    <script src="../../scripts/resident/home.js" defer></script>
-    <script type="module" src="../../scripts/auth/signout.js"></script>
+    <script src="../client/scripts/resident/nav.js" defer></script>
+    <script src="../client/scripts/resident/home.js" defer></script>
     <?php include '../../pages/resident/_layout/end.php'; ?>
     </body>
 </html>
