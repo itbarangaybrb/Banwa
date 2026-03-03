@@ -8,6 +8,8 @@
     <!-- <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css"> -->
     <link rel="stylesheet" href="../../../styles/staff/finance_staff/finance.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -108,13 +110,15 @@
                     <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
                 </div>
 
-                <div class="table-responsive">
+                
+                <div class="table-responsive" style="max-height: 580px;">   
                     <table id="pendingTable">
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Type</th>
                                 <th>Payer</th>
-                                <th>Business Name</th>
+                                <th>Business / Project</th>
                                 <th>Assessment Amount</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -122,7 +126,7 @@
                         </thead>
                         <tbody id="pendingTableBody">
                             <tr>
-                                <td colspan="6" class="loading">
+                                <td colspan="7" class="loading">
                                     <div class="spinner"></div>Loading pending payments...
                                 </td>
                             </tr>
@@ -139,11 +143,12 @@
                     <input type="text" id="searchHistory" placeholder="Search by OR Number or Name..." onkeyup="filterTable('historyTable', 'searchHistory')">
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 580px;">   
                     <table id="historyTable">
                         <thead>
                             <tr>
                                 <th>OR/Ref No.</th>
+                                <th>Type</th>
                                 <th>ID</th>
                                 <th>Payer</th>
                                 <th>Amount Paid</th>
@@ -153,7 +158,7 @@
                         </thead>
                         <tbody id="historyTableBody">
                             <tr>
-                                <td colspan="6" class="loading">
+                                <td colspan="7" class="loading">
                                     <div class="spinner"></div>Loading history...
                                 </td>
                             </tr>
@@ -236,38 +241,42 @@
                         <h2>Process Annual Penalty</h2>
                         <button class="close-btn" onclick="closeModal('penaltyModal')">&times;</button>
                     </div>
-                    <form id="penaltyForm" onsubmit="submitPenalty(event)">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="penaltyAppId">Application ID / Business ID</label>
-                                <input type="text" id="penaltyAppId" name="penaltyAppId" required placeholder="Enter ID...">
+                    <div style="padding: 30px;">
+                        <form id="penaltyForm" onsubmit="submitPenalty(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="penaltyAppId">Application ID / Business ID</label>
+                                    <input type="text" id="penaltyAppId" name="penaltyAppId" required placeholder="Enter ID...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="penaltyYear">Tax Year</label>
+                                    <input type="number" id="penaltyYear" name="penaltyYear" value="2024" required>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="penaltyYear">Tax Year</label>
-                                <input type="number" id="penaltyYear" name="penaltyYear" value="2024" required>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="penaltyAmount">Penalty Amount (PHP)</label>
+                                    <input type="number" step="0.01" id="penaltyAmount" name="penaltyAmount" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="penaltyReason">Reason / Violation</label>
+                                    <select id="penaltyReason" name="penaltyReason">
+                                        <option value="Late Renewal">Late Renewal</option>
+                                        <option value="Non-Compliance">Non-Compliance</option>
+                                        <option value="Sanitary Violation">Sanitary Violation</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="penaltyAmount">Penalty Amount (PHP)</label>
-                                <input type="number" step="0.01" id="penaltyAmount" name="penaltyAmount" required>
+                            
+                            <div class="button-group" style="margin-top: 30px;">
+                                <button type="submit" class="btn-danger">Process Penalty</button>
+                                <button type="button" class="btn-secondary" onclick="closeModal('penaltyModal')">Cancel</button>
                             </div>
-                            <div class="form-group">
-                                <label for="penaltyReason">Reason / Violation</label>
-                                <select id="penaltyReason" name="penaltyReason">
-                                    <option value="Late Renewal">Late Renewal</option>
-                                    <option value="Non-Compliance">Non-Compliance</option>
-                                    <option value="Sanitary Violation">Sanitary Violation</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="submit" class="btn-danger">Process Penalty</button>
-                            <button type="button" class="btn-secondary" onclick="closeModal('penaltyModal')">Cancel</button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
+
 
             <div id="detailsModal" class="staff-modal">
                 <div class="staff-modal-content">

@@ -3,6 +3,42 @@ const API_URL = '/Banwa/server/handlers/staff/finance/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
+
+const banwaFinanceSwal = Swal;
+
+// Safe helper functions (use these everywhere in this file)
+const financeSuccess = (title, text = '') => {
+    banwaFinanceSwal.fire({
+        icon: 'success',
+        title: title,
+        text: text,
+        confirmButtonColor: '#28a745'
+    });
+};
+
+const financeError = (title, text = '') => {
+    banwaFinanceSwal.fire({
+        icon: 'error',
+        title: title,
+        text: text,
+        confirmButtonColor: '#dc3545'
+    });
+};
+
+const financeConfirm = async (title, text) => {
+    const result = await banwaFinanceSwal.fire({
+        title: title,
+        text: text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, proceed',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d'
+    });
+    return result.isConfirmed;
+};
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'business';
 let mapFilterVisible = true;
@@ -61,59 +97,48 @@ function switchTab(event, tabName) {
     else if (tabName === 'history') loadHistoryTable();
 }
 
-// LOAD TABLES
 function loadPendingTable() {
     fetch(`${API_URL}?action=fetch_pending`)
         .then(res => res.json())
         .then(data => {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = '';
+
             if (!mapFilterVisible) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:#999;">Hidden by map filters.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999;">Hidden by map filters.</td></tr>';
                 return;
             }
+
             if (data.status === 'success') {
-                pendingApps = data.data;
-                if (pendingApps.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No applications for payment or verification.</td></tr>';
+                pendingApps = data.data || [];
+                if (!pendingApps.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No applications for payment or verification.</td></tr>';
                     return;
                 }
+
                 pendingApps.forEach(app => {
-                    const name = `${app.first_name} ${app.last_name}`;
+                    const typeLabel = app.application_type === 'construction' ? '🛠️ Construction' : '🏢 Business';
+                    const displayBusiness = app.business_name || 'Construction Application';
+                    const payer = `${app.first_name} ${app.last_name}`;
 
-                    let actionButton;
-                    let paymentStatusDisplay = app.payment_status || 'N/A';
-
-                    if (app.payment_status === 'Pending Verification') {
-                        // NEW: Button for verifying online payment submission
-                        actionButton = `<button class="btn-success verify-action-btn" onclick="openVerificationModal(${app.id})">Verify Payment</button>`;
-                    } else {
-                        // Existing: Button for over-the-counter payment processing
-                        actionButton = `<button class="btn-primary process-action-btn" onclick="openPaymentModal(${app.id}, ${app.amount_due})">Process Payment</button>`;
-                    }
+                    const actionButton = (app.payment_status === 'Pending Verification')
+                        ? `<button class="btn-success" onclick="openVerificationModal(${app.id}, '${app.application_type}')">Verify Payment</button>`
+                        : `<button class="btn-primary" onclick="openPaymentModal(${app.id}, '${app.application_type}')">Process Payment</button>`;
 
                     const row = `<tr>
                         <td>${app.id}</td>
-                        <td>${name}</td>
-                        <td>${app.business_name || 'N/A'}</td>
+                        <td><strong>${typeLabel}</strong></td>
+                        <td>${payer}</td>
+                        <td>${displayBusiness}</td>
                         <td>₱${parseFloat(app.amount_due || 0).toFixed(2)}</td>
-                        <td>${app.status} / ${paymentStatusDisplay}</td>
-                        <td>
-                            ${actionButton}
-                            <button class="btn-info" onclick="viewSummary(${app.id}, 'pending')">View Details</button>
-                        </td>
+                        <td>${app.status} / ${app.payment_status || 'N/A'}</td>
+                        <td>${actionButton} <button class="btn-info" onclick="viewSummary(${app.id}, 'pending', '${app.application_type}')">View Details</button></td>
                     </tr>`;
-
                     tbody.innerHTML += row;
                 });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error loading data: ${data.message}</td></tr>`;
             }
         })
-        .catch(err => {
-            console.error('Fetch error:', err);
-            document.getElementById('pendingTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Network Error.</td></tr>';
-        });
+        .catch(() => document.getElementById('pendingTableBody').innerHTML = '<tr><td colspan="7" style="color:red;text-align:center;">Network Error</td></tr>');
 }
 
 function loadHistoryTable() {
@@ -122,28 +147,33 @@ function loadHistoryTable() {
         .then(data => {
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
+
             if (!mapFilterVisible) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color:#999;">Hidden by map filters.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999;">Hidden by map filters.</td></tr>';
                 return;
             }
+
             if (data.status === 'success') {
-                paidApps = data.data;
-                if (paidApps.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No payment history found.</td></tr>';
+                paidApps = data.data || [];
+                if (!paidApps.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No payment history found.</td></tr>';
                     return;
                 }
+
                 paidApps.forEach(app => {
-                    const name = `${app.first_name} ${app.last_name}`;
-                    // Display OR if Cash/Landbank, Ref# if GCash (Assumed stored in or_number column)
+                    const typeLabel = app.application_type === 'construction' ? '🛠️ Construction' : '🏢 Business';
+                    const payer = `${app.first_name} ${app.last_name}`;
+
                     const row = `<tr>
-                        <td><strong>${app.or_number}</strong></td>
+                        <td><strong>${app.or_number || 'N/A'}</strong></td>
+                        <td><strong>${typeLabel}</strong></td>
                         <td>${app.id}</td>
-                        <td>${name}</td>
-                        <td>₱${parseFloat(app.amount_paid).toFixed(2)}</td>
-                        <td>${app.payment_date}</td>
+                        <td>${payer}</td>
+                        <td>₱${parseFloat(app.amount_paid || 0).toFixed(2)}</td>
+                        <td>${app.payment_date || 'N/A'}</td>
                         <td>
-                            <button class="btn-info" onclick="viewSummary(${app.id}, 'paid')">View</button>
-                            <button class="btn-secondary" onclick="generateReceipt(${app.id})">Receipt</button>
+                            <button class="btn-info" onclick="viewSummary(${app.id}, 'paid', '${app.application_type || 'business'}')">View</button>
+                            <button class="btn-secondary" onclick="generateReceipt(${app.id}, '${app.application_type || 'business'}')">Receipt</button>
                         </td>
                     </tr>`;
                     tbody.innerHTML += row;
@@ -186,44 +216,29 @@ setInterval(() => {
  * Opens the modal to display payment details and proof for verification.
  * @param {number} appId The ID of the application to verify.
  */
-function openVerificationModal(appId) {
-    const app = pendingApps.find(a => a.id == appId);
+function openVerificationModal(id, type = 'business') {
+    currentAppType = type;
+    const app = pendingApps.find(a => a.id == id);
     if (!app) return;
 
     const modalBody = document.getElementById('verificationBody');
-    // support JSON array or plain string for requirement_upload
-    let proofFile = null;
-    if (app.requirement_upload_json) {
-        if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) proofFile = app.requirement_upload_json[0];
-        else {
-            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) proofFile = parsed[0]; } catch (e) {}
-        }
-    }
-    if (!proofFile && app.requirement_upload) {
-        try { const parsed = JSON.parse(app.requirement_upload); proofFile = Array.isArray(parsed) ? parsed[0] : app.requirement_upload; } catch (e) { proofFile = app.requirement_upload; }
-    }
-    const proofPath = proofFile ? `../../../server/${proofFile}` : '#';
-    const proofLink = proofFile
-        ? `<a href="${proofPath}" target="_blank" class="btn-info">View Proof of Payment</a>`
-        : `<p style="color: red;">No proof of payment uploaded.</p>`;
+    const proofFile = app.requirement_upload || '';
+    const proofLink = proofFile 
+        ? `<a href="../../../server/${proofFile}" target="_blank" class="btn-info">View Proof of Payment</a>` 
+        : `<p style="color:red;">No proof uploaded.</p>`;
 
     modalBody.innerHTML = `
-        <h3>Payment Details for Application ID: ${app.id}</h3>
+        <h3>Verify Payment — ID: ${app.id} (${app.application_type || 'Business'})</h3>
         <div class="summary-card">
             <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Business:</strong> ${app.business_name || 'N/A'}</p>
+            <p><strong>Business/Project:</strong> ${app.business_name || 'Construction Application'}</p>
             <p><strong>Amount Due:</strong> ₱${parseFloat(app.amount_due || 0).toFixed(2)}</p>
-            <p><strong>Amount Paid:</strong> ₱${parseFloat(app.amount_paid || 0).toFixed(2)}</p>
-            <p><strong>Payment Method:</strong> ${app.payment_method || 'N/A'}</p>
-            <p><strong>OR Number:</strong> ${app.or_number || 'N/A'}</p>
-            <p><strong>Date of Payment:</strong> ${app.payment_date || 'N/A'}</p>
         </div>
         <hr>
-        <h3>Action:</h3>
         ${proofLink}
-        <div class="form-actions" style="margin-top: 20px;">
-            <button class="btn-success" onclick="verifyPayment(${app.id}, 'Approved')">Approve Payment</button>
-            <button class="btn-warning" onclick="verifyPayment(${app.id}, 'Rejected')">Reject Payment</button>
+        <div style="margin-top:20px;">
+            <button class="btn-success" onclick="verifyPayment(${app.id}, 'Approved')">✅ Approve Payment</button>
+            <button class="btn-warning" onclick="verifyPayment(${app.id}, 'Rejected')">❌ Reject Payment</button>
         </div>
     `;
     openModal('verificationModal');
@@ -235,41 +250,27 @@ function openVerificationModal(appId) {
  * @param {string} action 'Approved' or 'Rejected'.
  */
 async function verifyPayment(id, action) {
-    if (!confirm(`Confirm to set payment status to '${action}' for ID ${id}?`)) return;
+    if (!await financeConfirm(`Set payment to ${action}?`, `Application ID ${id}`)) return;
 
-    const actionText = action === 'Approved' ? 'Approving...' : 'Rejecting...';
-    const buttons = document.querySelectorAll('.form-actions button');
-    buttons.forEach(btn => {
-        btn.disabled = true;
-        if (btn.classList.contains('btn-success')) btn.textContent = actionText;
-    });
+    const body = new URLSearchParams({ action: 'verify_payment', id, verification_action: action, type: currentAppType });
 
     try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `action=verify_payment&id=${id}&verification_action=${action}`
-        });
+        const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body });
         const result = await res.json();
-
         if (result.status === 'success') {
-            showAlert(`Payment ${action} successfully! Status updated.`, 'success');
+            financeSuccess('Success!', `Payment ${action} successfully!`);
             closeModal('verificationModal');
-            loadPendingTable(); // Reload data
-        } else {
-            throw new Error(result.message || 'Failed to complete verification.');
-        }
-
+            loadPendingTable();
+        } else throw new Error(result.message);
     } catch (e) {
-        showAlert(`Verification Error: ${e.message}`, 'error');
-        buttons.forEach(btn => btn.disabled = false);
-        document.querySelector('.btn-success').textContent = 'Approve Payment';
+        financeError('Error', e.message);
     }
 }
 
-// === PAYMENT MODAL LOGIC ===
+let currentAppType = 'business';
 
-function openPaymentModal(id) {
+function openPaymentModal(id, type = 'business') {
+    currentAppType = type;
     const app = pendingApps.find(a => a.id == id);
     if (!app) return;
 
@@ -277,22 +278,15 @@ function openPaymentModal(id) {
     document.getElementById('dispAppId').textContent = app.id;
     document.getElementById('dispPayer').textContent = `${app.first_name} ${app.last_name}`;
 
-    // Set Amounts
     document.getElementById('amountDue').value = app.amount_due || '0.00';
     document.getElementById('amountPaid').value = '';
     document.getElementById('change').value = '0.00';
     document.getElementById('balance').value = '0.00';
-
-    // Reset Form Fields
     document.getElementById('refNumber').value = '';
     document.getElementById('proofFile').value = '';
-
-    // Set Default Date to Today
     document.getElementById('paymentDate').valueAsDate = new Date();
-
-    // Default Method
     document.getElementById('paymentMethod').value = 'Cash';
-    toggleReferenceInput(); // Ensure correct label
+    toggleReferenceInput();
 
     openModal('paymentModal');
 }
@@ -300,19 +294,7 @@ function openPaymentModal(id) {
 // Toggle Label based on Method (Requirement: Cash(OR#), GCash(Ref#), Landbank(OR#))
 function toggleReferenceInput() {
     const method = document.getElementById('paymentMethod').value;
-    const label = document.getElementById('refLabel');
-    const input = document.getElementById('refNumber');
-
-    if (method === 'GCash') {
-        label.textContent = 'Reference Number (Ref#) *';
-        input.placeholder = "e.g., 901230xxxxx";
-    } else if (method === 'Landbank') {
-        label.textContent = 'Transaction / OR Number *';
-        input.placeholder = "e.g., LBP-2023-xxxx";
-    } else {
-        label.textContent = 'Official Receipt (OR) No. *';
-        input.placeholder = "e.g., OR-2023-001";
-    }
+    document.getElementById('refLabel').textContent = method === 'GCash' ? 'Reference Number (Ref#) *' : 'Official Receipt (OR) No. *';
 }
 
 // Auto-calculate Change AND Balance (Requirement: Add Balance instead of only Change)
@@ -333,36 +315,52 @@ document.getElementById('amountPaid').addEventListener('input', function () {
     }
 });
 
+// function submitPayment(event) {
+//     event.preventDefault();
+//     const formData = new FormData(document.getElementById('paymentForm'));
+//     formData.append('action', 'process_payment');
+
+//     // Validation
+//     const balance = parseFloat(document.getElementById('balance').value);
+
+//     // Note: If you want to ALLOW partial payment (Balance > 0), remove the blocking alert.
+//     // If strict full payment is required, uncomment below:
+//     /*
+//     if (balance > 0) {
+//         if(!confirm("Amount tendered is less than due. Proceed with partial payment?")) return;
+//     }
+//     */
+
+//     fetch(API_URL, {
+//         method: 'POST',
+//         body: formData // FormData handles file uploads automatically
+//     })
+//         .then(res => res.json())
+//     .then(data => {
+//         if (data.status === 'success') {
+//             closeModal('paymentModal');
+//             financeSuccess('Payment Successful!', 'The transaction has been recorded.');
+//             loadPendingTable();
+//         } else {
+//             financeError('Payment Failed', data.message || 'Unknown error occurred.');
+//         }
+//     });
+// }
+
 function submitPayment(event) {
     event.preventDefault();
     const formData = new FormData(document.getElementById('paymentForm'));
     formData.append('action', 'process_payment');
+    formData.append('type', currentAppType);   // ← This makes construction work
 
-    // Validation
-    const balance = parseFloat(document.getElementById('balance').value);
-
-    // Note: If you want to ALLOW partial payment (Balance > 0), remove the blocking alert.
-    // If strict full payment is required, uncomment below:
-    /*
-    if (balance > 0) {
-        if(!confirm("Amount tendered is less than due. Proceed with partial payment?")) return;
-    }
-    */
-
-    fetch(API_URL, {
-        method: 'POST',
-        body: formData // FormData handles file uploads automatically
-    })
+    fetch(API_URL, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 closeModal('paymentModal');
-                alert('Payment Successful!');
+                financeSuccess('Payment Successful!');
                 loadPendingTable();
-                // generateReceipt(data.id); // Optional auto-print
-            } else {
-                alert('Error: ' + data.message);
-            }
+            } else financeError('Payment Failed', data.message);
         });
 }
 
@@ -374,95 +372,112 @@ function openPenaltyModal() {
 function submitPenalty(event) {
     event.preventDefault();
     // Logic to submit penalty would go here
-    alert("Penalty Processed (Demo Only)");
+    financeSuccess('Penalty Processed!', '(Demo Only - Backend integration coming soon)');
     closeModal('penaltyModal');
 }
 
 // === GENERIC FUNCTIONS ===
 
-function generateReceipt(id) {
-    let app = paidApps.find(a => a.id == id);
-    if (!app) {
-        // Fetch specific if not in list
-        fetch(`${API_URL}?action=fetch_one&id=${id}`)
-            .then(res => res.json())
-            .then(data => { if (data.status === 'success') printReceiptWindow(data.data); });
-    } else {
-        printReceiptWindow(app);
-    }
+function generateReceipt(id, type = 'business') {
+    const app = paidApps.find(a => a.id == id);
+    if (app) printReceiptWindow(app);
 }
 
 function printReceiptWindow(app) {
-    const receiptWindow = window.open('', 'PRINT', 'height=600,width=400');
+    const isConstruction = app.application_type === 'construction';
+    const receiptWindow = window.open('', 'PRINT', 'height=700,width=420');
     receiptWindow.document.write(`
         <html>
         <head>
-            <title>Receipt - ${app.or_number}</title>
+            <title>Official Receipt #${app.or_number || app.id}</title>
             <style>
-                body { font-family: 'Courier New', monospace; padding: 20px; text-align: center; }
-                .header { border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 20px;}
-                .row { display: flex; justify-content: space-between; margin-bottom: 5px; text-align: left; }
-                .total { border-top: 2px dashed #000; padding-top: 10px; font-weight: bold; }
+                body { font-family: 'Courier New', monospace; padding: 30px; background: #fff; color: #000; line-height: 1.4; }
+                .header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
+                .header h2 { font-size: 18px; margin: 0; }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                td { padding: 6px 0; }
+                .label { text-align: left; }
+                .value { text-align: right; font-weight: bold; }
+                .total { border-top: 2px solid #000; font-size: 1.1em; }
+                .thankyou { text-align: center; margin-top: 30px; font-style: italic; }
             </style>
         </head>
         <body>
             <div class="header">
-                <h3>OFFICIAL RECEIPT</h3>
-                <p>OR/Ref: ${app.or_number}</p>
-                <p>Date: ${app.payment_date}</p>
+                <h2>BANWA MUNICIPALITY</h2>
+                <p>OFFICIAL RECEIPT</p>
+                <p>OR / Ref No.: ${app.or_number || 'N/A'}</p>
+                <p>Date: ${app.payment_date || new Date().toLocaleString()}</p>
             </div>
-            <div class="details">
-                <div class="row"><span>Payer:</span> <span>${app.first_name} ${app.last_name}</span></div>
-                <div class="row"><span>Method:</span> <span>${app.payment_method}</span></div>
-                <div class="row"><span>Nature:</span> <span>${app.nature_of_business || 'Business Tax'}</span></div>
-            </div>
+
+            <p><strong>Payer:</strong> ${app.first_name} ${app.last_name}</p>
+            <p><strong>Type:</strong> ${isConstruction ? 'Construction Permit' : 'Business Application'}</p>
+            <p><strong>${isConstruction ? 'Project' : 'Business'}:</strong> ${app.business_name || 'N/A'}</p>
+
+            <table>
+                <tr><td class="label">Amount Due</td><td class="value">₱${parseFloat(app.amount_due || 0).toFixed(2)}</td></tr>
+                <tr><td class="label">Amount Paid</td><td class="value">₱${parseFloat(app.amount_paid || 0).toFixed(2)}</td></tr>
+                ${parseFloat(app.amount_paid || 0) > parseFloat(app.amount_due || 0) ? `
+                <tr><td class="label">Change</td><td class="value">₱${(parseFloat(app.amount_paid) - parseFloat(app.amount_due)).toFixed(2)}</td></tr>` : ''}
+            </table>
+
             <div class="total">
-                <div class="row"><span>TOTAL PAID:</span> <span>PHP ${parseFloat(app.amount_paid).toFixed(2)}</span></div>
+                <table>
+                    <tr><td class="label"><strong>TOTAL PAID</strong></td><td class="value"><strong>₱${parseFloat(app.amount_paid || 0).toFixed(2)}</strong></td></tr>
+                </table>
             </div>
-            <p style="margin-top:20px; font-size:12px;">Thank you for your payment.</p>
+
+            <div class="thankyou">
+                Thank you for your payment!<br>
+                This is an official receipt.<br>
+                BANWA - Finance & Collection
+            </div>
         </body>
         </html>
     `);
     receiptWindow.document.close();
-    setTimeout(() => { receiptWindow.print(); receiptWindow.close(); }, 500);
+    setTimeout(() => { receiptWindow.print(); receiptWindow.close(); }, 600);
 }
 
-function viewSummary(id, source) {
-    let app;
-    if (source === 'pending') app = pendingApps.find(a => a.id == id);
-    else app = paidApps.find(a => a.id == id);
+function viewSummary(id, source, type = 'business') {
+    const app = source === 'pending' 
+        ? pendingApps.find(a => a.id == id) 
+        : paidApps.find(a => a.id == id);
+    if (!app) return;
 
     const modalBody = document.getElementById('summaryBody');
+    const isConstruction = app.application_type === 'construction';
+
     modalBody.innerHTML = `
         <div class="summary-card">
+            <h3 style="color:var(--primary);margin-bottom:15px;">${isConstruction ? '🛠️ Construction Permit' : '🏢 Business Application'}</h3>
+            
             <p><strong>ID:</strong> ${app.id}</p>
             <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Business:</strong> ${app.business_name || 'N/A'}</p>
+            <p><strong>${isConstruction ? 'Project' : 'Business'} Name:</strong> ${app.business_name || 'N/A'}</p>
             <p><strong>Status:</strong> ${app.status}</p>
-            <p><strong>Assessment:</strong> ₱${app.amount_due || 0}</p>
+            <p><strong>Payment Status:</strong> ${app.payment_status || 'N/A'}</p>
+            
+            <hr style="margin:15px 0;border-color:#ddd;">
+            
+            <p><strong>Amount Due:</strong> ₱${parseFloat(app.amount_due || 0).toFixed(2)}</p>
+            ${app.amount_paid ? `<p><strong>Amount Paid:</strong> ₱${parseFloat(app.amount_paid).toFixed(2)}</p>` : ''}
+            ${app.payment_method ? `<p><strong>Payment Method:</strong> ${app.payment_method}</p>` : ''}
+            ${app.or_number ? `<p><strong>OR / Ref Number:</strong> ${app.or_number}</p>` : ''}
+            ${app.payment_date ? `<p><strong>Date Paid:</strong> ${app.payment_date}</p>` : ''}
+            
+            ${app.requirement_upload ? `
+            <p style="margin-top:15px;">
+                <strong>Uploaded Proof:</strong> 
+                <a href="../../../server/${app.requirement_upload}" target="_blank" style="color:var(--primary);text-decoration:underline;">View File</a>
+            </p>` : ''}
+        </div>
+        
+        <div style="text-align:center;margin-top:20px;">
+            <button onclick="closeModal('detailsModal')" class="btn-secondary">Close</button>
         </div>
     `;
     openModal('detailsModal');
-}
-function showAlert(message, type) {
-    const container = document.getElementById('alert-container');
-    if (!container) return;
-
-    const alertBox = document.createElement('div');
-    alertBox.className = `alert alert-${type}`; // Assumes you have CSS classes like .alert-success, .alert-error
-    alertBox.innerHTML = `
-        <strong>${type.toUpperCase()}!</strong> ${message}
-        <button class="close-alert" onclick="this.parentElement.remove()">&times;</button>
-    `;
-
-    // Clear old alerts and append the new one
-    container.innerHTML = '';
-    container.appendChild(alertBox);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        alertBox.remove();
-    }, 5000);
 }
 
 // Helpers
@@ -472,9 +487,8 @@ function filterTable(tableId, inputId) {
     const filter = document.getElementById(inputId).value.toUpperCase();
     const rows = document.getElementById(tableId).getElementsByTagName("tr");
     for (let i = 1; i < rows.length; i++) {
-        const txtValue = rows[i].textContent || rows[i].innerText;
-        rows[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        rows[i].style.display = rows[i].textContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
     }
 }
 
-window.onload = function () { loadPendingTable(); };
+window.onload = () => loadPendingTable();

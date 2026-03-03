@@ -324,6 +324,7 @@ body {
 }
 
 .tab-pane.active {
+    margin-top: 70px; /* Account for fixed header */
     display: flex;
     flex-direction: column;
 }
@@ -1673,39 +1674,87 @@ body:has(.side_nav.expanded) #mapping {
     min-height: 0;
 }
 
-/* General content padding after headers */
-.tab-pane:not(#mapping)> :not(.top-header):not(.page-header) {
-    padding: 0 30px;
+/* Buttons - unified to nav theme */
+.btn-primary, .btn-info, .btn-success, .btn-secondary {
+    background: var(--primary);
+    color: white;
+    transition: all 0.3s;
+}
+.btn-primary:hover, .btn-info:hover { background: var(--primary-dark); transform: translateY(-2px); }
+.btn-success { background: #218838; }
+.btn-warning { background: #e0a800; }
+.btn-danger { background: linear-gradient(135deg, #dc3545, #c82333); }
+
+/* ==================== SCROLLABLE TABLES ==================== */
+.table-responsive {
+    max-height: 580px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+.table-responsive table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--primary);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* Make sure charts inside dashboard don't overflow badly */
-.analytics-container .charts {
-    height: 380px;
-    margin-bottom: 25px;
+/* ==================== SCROLLABLE MODALS (fixes Process Payment modal) ==================== */
+.staff-modal, .modal {
+    display: none; position: fixed; z-index: 3000; left: 0; top: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+}
+.staff-modal.active, .modal.active { display: flex; }
+
+.staff-modal-content, .modal-content {
+    background: white;
+    width: 95%;
+    max-width: 560px;
+    max-height: 92vh;               /* ← SCROLL FIX */
+    overflow-y: auto;               /* ← SCROLL FIX */
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    animation: modalPop 0.3s ease;
+}
+@keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Form polish */
+.staff-modal-content input, .staff-modal-content select {
+    border: 2px solid #ddd;
+    padding: 14px;
+    border-radius: 10px;
+}
+.staff-modal-content input:focus, .staff-modal-content select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(25, 49, 107, 0.2);
 }
 
-/* Page header inside content area (compact BANWA size) */
-.page-header {
-
-    margin-top: 80px;
-    margin-bottom: 22px;
-    margin-left: 2%;
-    padding-bottom: 18px;
-    border-bottom: 1px solid #e5e7eb;
+/* Summary card */
+.summary-card {
+    background: #f8f9fa;
+    padding: 22px;
+    border-radius: 12px;
+    border-left: 6px solid var(--primary);
+    margin-bottom: 15px;
 }
 
-.page-header h1 {
-    color: #19316b;
-    margin: 0 0 5px 0;
-    font-size: 1.65rem;
-    font-weight: 700;
-    line-height: 1.2;
+/* View Details button fix (now matches theme perfectly) */
+.action-buttons .btn-info {
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    border-radius: 8px;
 }
+.action-buttons .btn-info:hover { background: var(--primary-dark); }
 
-.page-description {
-    color: #64748b;
-    font-size: 0.97rem;
-    margin: 3px 0 0 0;
+.container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; }
+
+header, .staff-modal-header, .modal-header, table thead th {
+    background: var(--primary);
+    color: white;
 }
 
 /* Button group consistency (fixes your button styling issue) */
@@ -1718,18 +1767,15 @@ body:has(.side_nav.expanded) #mapping {
     gap: 12px;
     justify-content: flex-end;
 }
-
-.btn-primary,
-.btn-secondary {
+.btn-primary, .btn-secondary {
     min-width: 160px;
     padding: 14px 24px;
     font-weight: 600;
     border-radius: 6px;
 }
-
 .section-title {
     font-size: 20px;
     font-weight: 600;
     color: #19316b;
-    margin-bottom: 8px;
+    margin-bottom: 15px;
 }
