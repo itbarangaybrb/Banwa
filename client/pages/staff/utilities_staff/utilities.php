@@ -532,7 +532,6 @@
                                 <option value="" disabled selected>Select Action...</option>
                                 <option value="Pre-Approved">Pre-Approved</option>
                                 <option value="Additional Requirements">Additional Requirements</option>
-                                <option value="For Payment">For Payment</option>
                                 <option value="Approved">Approved (Final)</option>
                                 <option value="Disapproved">Disapproved</option>
                                 <option value="Cancelled">Cancelled</option>
