@@ -154,15 +154,15 @@ function handleCreateApplication($pdo)
         createInitialDSSEvaluation($pdo, $applicationId);
 
         // Write audit log for CREATE action
-        writeAuditLog(
-            $pdo,
-            'CREATE',
-            'utility_applications',
-            $applicationId,
-            null,
-            $newData,
-            'UTILITY_APPLICATION'
-        );
+        // writeAuditLog(
+        //     $pdo,
+        //     'CREATE',
+        //     'utility_applications',
+        //     $applicationId,
+        //     null,
+        //     $newData,
+        //     'UTILITY_APPLICATION'
+        // );
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Utility Application Created!"]);
     } catch (PDOException $e) {
@@ -251,15 +251,15 @@ function handleUpdateStatus($pdo)
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
         // Write audit log for status update
-        writeAuditLog(
-            $pdo,
-            'STATUS UPDATED',
-            'utility_applications',
-            $id,
-            $oldData,
-            $newData,
-            'STATUS_UPDATE'
-        );
+        // writeAuditLog(
+        //     $pdo,
+        //     'STATUS UPDATED',
+        //     'utility_applications',
+        //     $id,
+        //     $oldData,
+        //     $newData,
+        //     'STATUS_UPDATE'
+        // );
 
         echo json_encode([
             "status" => "success",
@@ -399,15 +399,15 @@ function handleUpdateApplication($pdo)
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
             // Write audit log for UPDATE action
-            writeAuditLog(
-                $pdo,
-                'UPDATE',
-                'utility_applications',
-                $applicationId,
-                $oldData,
-                $newData,
-                'UTILITY_APPLICATION'
-            );
+            // writeAuditLog(
+            //     $pdo,
+            //     'UPDATE',
+            //     'utility_applications',
+            //     $applicationId,
+            //     $oldData,
+            //     $newData,
+            //     'UTILITY_APPLICATION'
+            // );
 
             triggerDSSevaluation($pdo, $applicationId);
             echo json_encode(["status" => "success", "message" => "Utility application updated successfully! DSS re-evaluation triggered."]);
