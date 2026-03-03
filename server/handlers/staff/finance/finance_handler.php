@@ -26,12 +26,13 @@ if (!in_array($type, ['business', 'construction'])) {
     $type = 'business';
 }
 
+// Ensure all responses are JSON
+header('Content-Type: application/json');
+
 switch ($action) {
     case 'fetch_pending':
-        // MODIFIED & ENHANCED: Now returns BOTH business AND construction applications
-        // that are either 'For Payment' or 'Pending Verification'.
-        // Added `application_type` field so your frontend knows which table it belongs to.
-        // requirement_upload_json (construction) is aliased to match the business column name.
+        // FIX: Renamed COALESCE alias from `application_date` to `sort_date` to avoid
+        // ambiguity with the real `application_date` column, which caused a 500 error
         $business_sql = "
             SELECT 
                 id,
@@ -47,11 +48,11 @@ switch ($action) {
                 or_number,
                 requirement_upload,
                 'business' AS application_type,
-                COALESCE(application_date, created_at) AS application_date
+                COALESCE(application_date, created_at) AS sort_date
             FROM business_applications 
             WHERE status = 'For Payment' 
                OR payment_status = 'Pending Verification'
-            ORDER BY application_date ASC";
+            ORDER BY sort_date ASC";
 
         $construction_sql = "
             SELECT 
@@ -66,13 +67,13 @@ switch ($action) {
                 payment_date,
                 payment_method,
                 or_number,
-                requirement_upload_json AS requirement_upload,
+                requirement_upload,
                 'construction' AS application_type,
-                COALESCE(application_date, created_at) AS application_date
+                COALESCE(application_date, created_at) AS sort_date
             FROM construction_applications 
             WHERE status = 'For Payment' 
                OR payment_status = 'Pending Verification'
-            ORDER BY application_date ASC";
+            ORDER BY sort_date ASC";
 
         $business_stmt = $pdo->query($business_sql);
         $construction_stmt = $pdo->query($construction_sql);
@@ -80,11 +81,11 @@ switch ($action) {
         $business_data = $business_stmt->fetchAll(PDO::FETCH_ASSOC);
         $construction_data = $construction_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Merge and sort by application_date (oldest first)
+        // Merge and sort by sort_date (oldest first)
         $all_data = array_merge($business_data, $construction_data);
         usort($all_data, function($a, $b) {
-            $dateA = strtotime($a['application_date'] ?? '1970-01-01');
-            $dateB = strtotime($b['application_date'] ?? '1970-01-01');
+            $dateA = strtotime($a['sort_date'] ?? '1970-01-01');
+            $dateB = strtotime($b['sort_date'] ?? '1970-01-01');
             return $dateA - $dateB;
         });
 
@@ -147,7 +148,6 @@ switch ($action) {
         break;
 
     case 'verify_payment':
-        // NEW + ENHANCED: Works for BOTH tables
         $id = $_POST['id'];
         $table = getTable($type);
         $verificationAction = $_POST['verification_action']; // 'Approved' or 'Rejected'

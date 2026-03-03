@@ -3,43 +3,6 @@ const API_URL = '/Banwa/server/handlers/staff/finance/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
-
-const banwaFinanceSwal = Swal;
-
-// Safe helper functions (use these everywhere in this file)
-const financeSuccess = (title, text = '') => {
-    banwaFinanceSwal.fire({
-        icon: 'success',
-        title: title,
-        text: text,
-        confirmButtonColor: '#28a745'
-    });
-};
-
-const financeError = (title, text = '') => {
-    banwaFinanceSwal.fire({
-        icon: 'error',
-        title: title,
-        text: text,
-        confirmButtonColor: '#dc3545'
-    });
-};
-
-const financeConfirm = async (title, text) => {
-    const result = await banwaFinanceSwal.fire({
-        title: title,
-        text: text,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, proceed',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d'
-    });
-    return result.isConfirmed;
-};
-
-// Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'business';
 let mapFilterVisible = true;
 
@@ -52,7 +15,6 @@ window.addEventListener('staffMapFilterChanged', (e) => {
         } else {
             mapFilterVisible = !!detail[PAGE_CATEGORY];
         }
-        // Refresh currently visible table
         const activeTab = document.querySelector('.tab-pane.active');
         if (activeTab && activeTab.id === 'pending') loadPendingTable();
         if (activeTab && activeTab.id === 'history') loadHistoryTable();
@@ -61,12 +23,10 @@ window.addEventListener('staffMapFilterChanged', (e) => {
     }
 });
 
-// UPDATED TAB SWITCHING FOR NEW SIDEBAR LAYOUT
 document.addEventListener('DOMContentLoaded', function () {
     const navLogo = document.querySelector('.nav_logo');
     const sideNav = document.querySelector('.side_nav');
 
-    // TOGGLE SIDEBAR ON CLICK
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
@@ -74,121 +34,92 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// UPDATED TAB SWITCHING
 function switchTab(event, tabName) {
     if (event) event.preventDefault();
 
-    // 1. Switch Content
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     const target = document.getElementById(tabName);
     if (target) target.classList.add('active');
 
-    // 2. Switch Sidebar Active State
     document.querySelectorAll('.nav_select').forEach(link => link.classList.remove('active'));
 
-    // Find and highlight the clicked link
     if (event) {
         const clickedLink = event.target.closest('.nav_select');
         if (clickedLink) clickedLink.classList.add('active');
     }
 
-    // 3. Load Data
     if (tabName === 'pending') loadPendingTable();
     else if (tabName === 'history') loadHistoryTable();
 }
 
+// FIXED: Now returns promises so .finally() works
 function loadPendingTable() {
-    fetch(`${API_URL}?action=fetch_pending`)
+    return fetch(`${API_URL}?action=fetch_pending`)
         .then(res => res.json())
         .then(data => {
             const tbody = document.getElementById('pendingTableBody');
             tbody.innerHTML = '';
-
             if (!mapFilterVisible) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999;">Hidden by map filters.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color:#999;">Hidden by map filters.</td></tr>';
                 return;
             }
-
             if (data.status === 'success') {
-                pendingApps = data.data || [];
-                if (!pendingApps.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No applications for payment or verification.</td></tr>';
+                pendingApps = data.data;
+                if (pendingApps.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">No applications found.</td></tr>';
                     return;
                 }
-
                 pendingApps.forEach(app => {
-                    const typeLabel = app.application_type === 'construction' ? '🛠️ Construction' : '🏢 Business';
-                    const displayBusiness = app.business_name || 'Construction Application';
-                    const payer = `${app.first_name} ${app.last_name}`;
+                    const name = app.first_name + ' ' + app.last_name;
+                    let actionButton;
+                    let paymentStatusDisplay = app.payment_status || 'N/A';
 
-                    const actionButton = (app.payment_status === 'Pending Verification')
-                        ? `<button class="btn-success" onclick="openVerificationModal(${app.id}, '${app.application_type}')">Verify Payment</button>`
-                        : `<button class="btn-primary" onclick="openPaymentModal(${app.id}, '${app.application_type}')">Process Payment</button>`;
+                    if (app.payment_status === 'Pending Verification') {
+                        actionButton = '<button class="btn btn-verify" onclick="openVerificationModal(' + app.id + ')"><i class="fas fa-check-circle"></i> Verify</button>';
+                    } else {
+                        actionButton = '<button class="btn btn-process" onclick="openPaymentModal(' + app.id + ', ' + app.amount_due + ')"><i class="fas fa-credit-card"></i> Process</button>';
+                    }
 
-                    const row = `<tr>
-                        <td>${app.id}</td>
-                        <td><strong>${typeLabel}</strong></td>
-                        <td>${payer}</td>
-                        <td>${displayBusiness}</td>
-                        <td>₱${parseFloat(app.amount_due || 0).toFixed(2)}</td>
-                        <td>${app.status} / ${app.payment_status || 'N/A'}</td>
-                        <td>${actionButton} <button class="btn-info" onclick="viewSummary(${app.id}, 'pending', '${app.application_type}')">View Details</button></td>
-                    </tr>`;
+                    const row = '<tr><td>' + app.id + '</td><td>' + (app.application_type || 'Business') + '</td><td>' + name + '</td><td>' + (app.business_name || 'N/A') + '</td><td>PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</td><td>' + app.status + ' / ' + paymentStatusDisplay + '</td><td>' + actionButton + '<button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'pending\')"><i class="fas fa-eye"></i> View</button></td></tr>';
+
                     tbody.innerHTML += row;
                 });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" style="color:red;">Error: ' + data.message + '</td></tr>';
             }
         })
-        .catch(() => document.getElementById('pendingTableBody').innerHTML = '<tr><td colspan="7" style="color:red;text-align:center;">Network Error</td></tr>');
+        .catch(err => {
+            console.error('Fetch error:', err);
+            document.getElementById('pendingTableBody').innerHTML = '<tr><td colspan="7" style="color:red;">Network Error</td></tr>';
+        });
 }
 
+// FIXED: Now returns promises so .finally() works
 function loadHistoryTable() {
-    fetch(`${API_URL}?action=fetch_history`)
+    return fetch(`${API_URL}?action=fetch_history`)
         .then(res => res.json())
         .then(data => {
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
-
             if (!mapFilterVisible) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#999;">Hidden by map filters.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Hidden by filters</td></tr>';
                 return;
             }
-
             if (data.status === 'success') {
-                paidApps = data.data || [];
-                if (!paidApps.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">No payment history found.</td></tr>';
+                paidApps = data.data;
+                if (paidApps.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7">No history found</td></tr>';
                     return;
                 }
-
                 paidApps.forEach(app => {
-                    const typeLabel = app.application_type === 'construction' ? '🛠️ Construction' : '🏢 Business';
-                    const payer = `${app.first_name} ${app.last_name}`;
-
-                    const row = `<tr>
-                        <td><strong>${app.or_number || 'N/A'}</strong></td>
-                        <td><strong>${typeLabel}</strong></td>
-                        <td>${app.id}</td>
-                        <td>${payer}</td>
-                        <td>₱${parseFloat(app.amount_paid || 0).toFixed(2)}</td>
-                        <td>${app.payment_date || 'N/A'}</td>
-                        <td>
-                            <button class="btn-info" onclick="viewSummary(${app.id}, 'paid', '${app.application_type || 'business'}')">View</button>
-                            <button class="btn-secondary" onclick="generateReceipt(${app.id}, '${app.application_type || 'business'}')">Receipt</button>
-                        </td>
-                    </tr>`;
+                    const name = app.first_name + ' ' + app.last_name;
+                    const row = '<tr><td>' + app.or_number + '</td><td>' + (app.application_type || 'Business') + '</td><td>' + app.id + '</td><td>' + name + '</td><td>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</td><td>' + app.payment_date + '</td><td><button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'paid\')"><i class="fas fa-eye"></i> View</button><button class="btn btn-receipt" onclick="generateReceipt(' + app.id + ')"><i class="fas fa-receipt"></i> Receipt</button></td></tr>';
                     tbody.innerHTML += row;
                 });
             }
         });
 }
 
-/**
- * Automatically refreshes the active tab every 30 seconds.
- * Fetches the latest application data depending on which tab is active
- * and updates the UI accordingly.
- * 
- * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
- */
 let isRefreshing = false;
 setInterval(() => {
     const activeTab = document.querySelector('.tab-pane.active');
@@ -208,287 +139,268 @@ setInterval(() => {
     }
 }, 30000);
 
-// =================================================================
-// PAYMENT VERIFICATION LOGIC (NEW)
-// =================================================================
-
-/**
- * Opens the modal to display payment details and proof for verification.
- * @param {number} appId The ID of the application to verify.
- */
-function openVerificationModal(id, type = 'business') {
-    currentAppType = type;
-    const app = pendingApps.find(a => a.id == id);
+function openVerificationModal(appId) {
+    const app = pendingApps.find(a => a.id == appId);
     if (!app) return;
 
-    const modalBody = document.getElementById('verificationBody');
-    const proofFile = app.requirement_upload || '';
-    const proofLink = proofFile 
-        ? `<a href="../../../server/${proofFile}" target="_blank" class="btn-info">View Proof of Payment</a>` 
-        : `<p style="color:red;">No proof uploaded.</p>`;
+    const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
+    const proofLink = proofFile ? '<a href="' + proofFile + '" target="_blank">View Proof</a>' : '<p style="color:red;">No proof</p>';
 
-    modalBody.innerHTML = `
-        <h3>Verify Payment — ID: ${app.id} (${app.application_type || 'Business'})</h3>
-        <div class="summary-card">
-            <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Business/Project:</strong> ${app.business_name || 'Construction Application'}</p>
-            <p><strong>Amount Due:</strong> ₱${parseFloat(app.amount_due || 0).toFixed(2)}</p>
-        </div>
-        <hr>
-        ${proofLink}
-        <div style="margin-top:20px;">
-            <button class="btn-success" onclick="verifyPayment(${app.id}, 'Approved')">✅ Approve Payment</button>
-            <button class="btn-warning" onclick="verifyPayment(${app.id}, 'Rejected')">❌ Reject Payment</button>
-        </div>
-    `;
-    openModal('verificationModal');
+    const html = '<div><p><strong>Applicant:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_due).toFixed(2) + '</p><p><strong>Status:</strong> ' + app.payment_status + '</p><hr><p><strong>Proof:</strong></p>' + proofLink + '</div>';
+
+    Swal.fire({
+        title: 'Verify Payment',
+        html: html,
+        icon: 'question',
+        showDenyButton: true,
+        confirmButtonText: 'Approve',
+        denyButtonText: 'Reject',
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px'
+    }).then(result => {
+        if (result.isConfirmed) {
+            submitVerification(appId, 'Approved');
+        } else if (result.isDenied) {
+            submitVerification(appId, 'Rejected');
+        }
+    });
 }
 
-/**
- * Submits the verification decision to the backend.
- * @param {number} id The application ID.
- * @param {string} action 'Approved' or 'Rejected'.
- */
-async function verifyPayment(id, action) {
-    if (!await financeConfirm(`Set payment to ${action}?`, `Application ID ${id}`)) return;
+function submitVerification(appId, status) {
+    const formData = new FormData();
+    formData.append('action', 'verify_payment');
+    formData.append('id', appId);
+    formData.append('verification_action', status);
+    formData.append('type', 'business');
 
-    const body = new URLSearchParams({ action: 'verify_payment', id, verification_action: action, type: currentAppType });
-
-    try {
-        const res = await fetch(API_URL, { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body });
-        const result = await res.json();
-        if (result.status === 'success') {
-            financeSuccess('Success!', `Payment ${action} successfully!`);
-            closeModal('verificationModal');
-            loadPendingTable();
-        } else throw new Error(result.message);
-    } catch (e) {
-        financeError('Error', e.message);
-    }
-}
-
-let currentAppType = 'business';
-
-function openPaymentModal(id, type = 'business') {
-    currentAppType = type;
-    const app = pendingApps.find(a => a.id == id);
-    if (!app) return;
-
-    document.getElementById('payAppId').value = app.id;
-    document.getElementById('dispAppId').textContent = app.id;
-    document.getElementById('dispPayer').textContent = `${app.first_name} ${app.last_name}`;
-
-    document.getElementById('amountDue').value = app.amount_due || '0.00';
-    document.getElementById('amountPaid').value = '';
-    document.getElementById('change').value = '0.00';
-    document.getElementById('balance').value = '0.00';
-    document.getElementById('refNumber').value = '';
-    document.getElementById('proofFile').value = '';
-    document.getElementById('paymentDate').valueAsDate = new Date();
-    document.getElementById('paymentMethod').value = 'Cash';
-    toggleReferenceInput();
-
-    openModal('paymentModal');
-}
-
-// Toggle Label based on Method (Requirement: Cash(OR#), GCash(Ref#), Landbank(OR#))
-function toggleReferenceInput() {
-    const method = document.getElementById('paymentMethod').value;
-    document.getElementById('refLabel').textContent = method === 'GCash' ? 'Reference Number (Ref#) *' : 'Official Receipt (OR) No. *';
-}
-
-// Auto-calculate Change AND Balance (Requirement: Add Balance instead of only Change)
-document.getElementById('amountPaid').addEventListener('input', function () {
-    const due = parseFloat(document.getElementById('amountDue').value) || 0;
-    const paid = parseFloat(this.value) || 0;
-
-    if (paid >= due) {
-        // Full Payment or Overpayment
-        const change = paid - due;
-        document.getElementById('change').value = change.toFixed(2);
-        document.getElementById('balance').value = '0.00';
-    } else {
-        // Partial Payment
-        const balance = due - paid;
-        document.getElementById('change').value = '0.00';
-        document.getElementById('balance').value = balance.toFixed(2);
-    }
-});
-
-// function submitPayment(event) {
-//     event.preventDefault();
-//     const formData = new FormData(document.getElementById('paymentForm'));
-//     formData.append('action', 'process_payment');
-
-//     // Validation
-//     const balance = parseFloat(document.getElementById('balance').value);
-
-//     // Note: If you want to ALLOW partial payment (Balance > 0), remove the blocking alert.
-//     // If strict full payment is required, uncomment below:
-//     /*
-//     if (balance > 0) {
-//         if(!confirm("Amount tendered is less than due. Proceed with partial payment?")) return;
-//     }
-//     */
-
-//     fetch(API_URL, {
-//         method: 'POST',
-//         body: formData // FormData handles file uploads automatically
-//     })
-//         .then(res => res.json())
-//     .then(data => {
-//         if (data.status === 'success') {
-//             closeModal('paymentModal');
-//             financeSuccess('Payment Successful!', 'The transaction has been recorded.');
-//             loadPendingTable();
-//         } else {
-//             financeError('Payment Failed', data.message || 'Unknown error occurred.');
-//         }
-//     });
-// }
-
-function submitPayment(event) {
-    event.preventDefault();
-    const formData = new FormData(document.getElementById('paymentForm'));
-    formData.append('action', 'process_payment');
-    formData.append('type', currentAppType);   // ← This makes construction work
+    Swal.fire({
+        title: 'Processing...',
+        icon: 'info',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
 
     fetch(API_URL, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                closeModal('paymentModal');
-                financeSuccess('Payment Successful!');
-                loadPendingTable();
-            } else financeError('Payment Failed', data.message);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Payment ' + status.toLowerCase(),
+                    confirmButtonColor: '#00247c',
+                    background: '#f8f9fa',
+                    color: '#333'
+                }).then(() => loadPendingTable());
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'Network error', 'error');
         });
 }
 
-// === PENALTY MODAL LOGIC ===
-function openPenaltyModal() {
-    openModal('penaltyModal');
-}
-
-function submitPenalty(event) {
-    event.preventDefault();
-    // Logic to submit penalty would go here
-    financeSuccess('Penalty Processed!', '(Demo Only - Backend integration coming soon)');
-    closeModal('penaltyModal');
-}
-
-// === GENERIC FUNCTIONS ===
-
-function generateReceipt(id, type = 'business') {
-    const app = paidApps.find(a => a.id == id);
-    if (app) printReceiptWindow(app);
-}
-
-function printReceiptWindow(app) {
-    const isConstruction = app.application_type === 'construction';
-    const receiptWindow = window.open('', 'PRINT', 'height=700,width=420');
-    receiptWindow.document.write(`
-        <html>
-        <head>
-            <title>Official Receipt #${app.or_number || app.id}</title>
-            <style>
-                body { font-family: 'Courier New', monospace; padding: 30px; background: #fff; color: #000; line-height: 1.4; }
-                .header { text-align: center; border-bottom: 3px double #000; padding-bottom: 10px; margin-bottom: 20px; }
-                .header h2 { font-size: 18px; margin: 0; }
-                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                td { padding: 6px 0; }
-                .label { text-align: left; }
-                .value { text-align: right; font-weight: bold; }
-                .total { border-top: 2px solid #000; font-size: 1.1em; }
-                .thankyou { text-align: center; margin-top: 30px; font-style: italic; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h2>BANWA MUNICIPALITY</h2>
-                <p>OFFICIAL RECEIPT</p>
-                <p>OR / Ref No.: ${app.or_number || 'N/A'}</p>
-                <p>Date: ${app.payment_date || new Date().toLocaleString()}</p>
-            </div>
-
-            <p><strong>Payer:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>Type:</strong> ${isConstruction ? 'Construction Permit' : 'Business Application'}</p>
-            <p><strong>${isConstruction ? 'Project' : 'Business'}:</strong> ${app.business_name || 'N/A'}</p>
-
-            <table>
-                <tr><td class="label">Amount Due</td><td class="value">₱${parseFloat(app.amount_due || 0).toFixed(2)}</td></tr>
-                <tr><td class="label">Amount Paid</td><td class="value">₱${parseFloat(app.amount_paid || 0).toFixed(2)}</td></tr>
-                ${parseFloat(app.amount_paid || 0) > parseFloat(app.amount_due || 0) ? `
-                <tr><td class="label">Change</td><td class="value">₱${(parseFloat(app.amount_paid) - parseFloat(app.amount_due)).toFixed(2)}</td></tr>` : ''}
-            </table>
-
-            <div class="total">
-                <table>
-                    <tr><td class="label"><strong>TOTAL PAID</strong></td><td class="value"><strong>₱${parseFloat(app.amount_paid || 0).toFixed(2)}</strong></td></tr>
-                </table>
-            </div>
-
-            <div class="thankyou">
-                Thank you for your payment!<br>
-                This is an official receipt.<br>
-                BANWA - Finance & Collection
-            </div>
-        </body>
-        </html>
-    `);
-    receiptWindow.document.close();
-    setTimeout(() => { receiptWindow.print(); receiptWindow.close(); }, 600);
-}
-
-function viewSummary(id, source, type = 'business') {
-    const app = source === 'pending' 
-        ? pendingApps.find(a => a.id == id) 
-        : paidApps.find(a => a.id == id);
+function openPaymentModal(appId, amountDue) {
+    const app = pendingApps.find(a => a.id == appId);
     if (!app) return;
 
-    const modalBody = document.getElementById('summaryBody');
-    const isConstruction = app.application_type === 'construction';
+    const html = '<form style="text-align:left;"><div class="form-group"><label>Amount Due</label><input type="text" value="' + parseFloat(amountDue).toFixed(2) + '" disabled style="width:100%; padding:10px;"></div><div class="form-group"><label>Amount Paid *</label><input type="number" id="amountPaid" required style="width:100%; padding:10px;" step="0.01" min="0"></div><div class="form-group"><label>Payment Method *</label><select id="paymentMethod" required style="width:100%; padding:10px;" onchange="updateRefLabel()"><option>Select</option><option>Cash</option><option>GCash</option><option>Landbank</option></select></div><div class="form-group"><label id="refLabel">OR Number *</label><input type="text" id="refNumber" required style="width:100%; padding:10px;"></div><div class="form-group"><label>Date</label><input type="date" id="paymentDate" style="width:100%; padding:10px;"></div></form>';
 
-    modalBody.innerHTML = `
-        <div class="summary-card">
-            <h3 style="color:var(--primary);margin-bottom:15px;">${isConstruction ? '🛠️ Construction Permit' : '🏢 Business Application'}</h3>
-            
-            <p><strong>ID:</strong> ${app.id}</p>
-            <p><strong>Owner:</strong> ${app.first_name} ${app.last_name}</p>
-            <p><strong>${isConstruction ? 'Project' : 'Business'} Name:</strong> ${app.business_name || 'N/A'}</p>
-            <p><strong>Status:</strong> ${app.status}</p>
-            <p><strong>Payment Status:</strong> ${app.payment_status || 'N/A'}</p>
-            
-            <hr style="margin:15px 0;border-color:#ddd;">
-            
-            <p><strong>Amount Due:</strong> ₱${parseFloat(app.amount_due || 0).toFixed(2)}</p>
-            ${app.amount_paid ? `<p><strong>Amount Paid:</strong> ₱${parseFloat(app.amount_paid).toFixed(2)}</p>` : ''}
-            ${app.payment_method ? `<p><strong>Payment Method:</strong> ${app.payment_method}</p>` : ''}
-            ${app.or_number ? `<p><strong>OR / Ref Number:</strong> ${app.or_number}</p>` : ''}
-            ${app.payment_date ? `<p><strong>Date Paid:</strong> ${app.payment_date}</p>` : ''}
-            
-            ${app.requirement_upload ? `
-            <p style="margin-top:15px;">
-                <strong>Uploaded Proof:</strong> 
-                <a href="../../../server/${app.requirement_upload}" target="_blank" style="color:var(--primary);text-decoration:underline;">View File</a>
-            </p>` : ''}
-        </div>
-        
-        <div style="text-align:center;margin-top:20px;">
-            <button onclick="closeModal('detailsModal')" class="btn-secondary">Close</button>
-        </div>
-    `;
-    openModal('detailsModal');
+    Swal.fire({
+        title: 'Process Payment',
+        html: html,
+        icon: 'question',
+        confirmButtonText: 'Submit',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px',
+        showCancelButton: true,
+        preConfirm: () => {
+            const amountPaid = document.getElementById('amountPaid').value;
+            const method = document.getElementById('paymentMethod').value;
+            const refNumber = document.getElementById('refNumber').value;
+
+            if (!amountPaid || !method || !refNumber) {
+                Swal.showValidationMessage('Fill all fields');
+                return false;
+            }
+
+            return { amountPaid, method, refNumber, appId };
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            submitPayment(result.value, amountDue);
+        }
+    });
+
+    setTimeout(() => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('paymentDate').value = today;
+    }, 100);
 }
 
-// Helpers
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-function filterTable(tableId, inputId) {
-    const filter = document.getElementById(inputId).value.toUpperCase();
-    const rows = document.getElementById(tableId).getElementsByTagName("tr");
-    for (let i = 1; i < rows.length; i++) {
-        rows[i].style.display = rows[i].textContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+function updateRefLabel() {
+    const method = document.getElementById('paymentMethod').value;
+    const label = document.getElementById('refLabel');
+
+    if (method === 'GCash') {
+        label.textContent = 'Reference Number *';
+    } else if (method === 'Landbank') {
+        label.textContent = 'Transaction Number *';
+    } else {
+        label.textContent = 'OR Number *';
     }
 }
 
-window.onload = () => loadPendingTable();
+function submitPayment(paymentData, amountDue) {
+    const formData = new FormData();
+    formData.append('action', 'process_payment');
+    formData.append('id', paymentData.appId);
+    formData.append('type', 'business');
+    formData.append('amountDue', amountDue);
+    formData.append('amountPaid', paymentData.amountPaid);
+    formData.append('paymentMethod', paymentData.method);
+    formData.append('orNumber', paymentData.refNumber);
+
+    Swal.fire({
+        title: 'Processing...',
+        icon: 'info',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    fetch(API_URL, { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Payment processed',
+                    confirmButtonColor: '#00247c'
+                }).then(() => loadPendingTable());
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        })
+        .catch(err => Swal.fire('Error', 'Network error', 'error'));
+}
+
+function generateReceipt(id) {
+    let app = paidApps.find(a => a.id == id);
+    if (!app) {
+        fetch(API_URL + '?action=fetch_one&id=' + id + '&type=business')
+            .then(res => res.json())
+            .then(data => { 
+                if (data.status === 'success') showReceiptModal(data.data);
+            });
+    } else {
+        showReceiptModal(app);
+    }
+}
+
+function showReceiptModal(app) {
+    const html = '<div style="border:2px solid #00247c; border-radius:8px; padding:20px;"><h3 style="color:#00247c;">OFFICIAL RECEIPT</h3><p>OR: ' + (app.or_number || 'N/A') + '</p><hr><p><strong>Payer:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</p><p><strong>Date:</strong> ' + app.payment_date + '</p><p><strong>Method:</strong> ' + app.payment_method + '</p></div>';
+
+    Swal.fire({
+        title: 'Receipt',
+        html: html,
+        icon: 'success',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#00247c',
+        showCancelButton: true,
+        cancelButtonText: 'Print',
+        cancelButtonColor: '#6c757d',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px'
+    }).then(result => {
+        if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+            printReceiptWindow(app);
+        }
+    });
+}
+
+function printReceiptWindow(app) {
+    const w = window.open('', 'PRINT', 'height=600,width=400');
+    w.document.write('<html><head><title>Receipt</title><style>body{font-family:monospace;padding:20px;text-align:center;}.header{border-bottom:2px dashed;padding-bottom:10px;}.row{display:flex;justify-content:space-between;margin:5px 0;}</style></head><body><div class="header"><h3>OFFICIAL RECEIPT</h3><p>OR: ' + app.or_number + '</p><p>Date: ' + app.payment_date + '</p></div><div class="row"><span>Payer:</span><span>' + app.first_name + ' ' + app.last_name + '</span></div><div class="row"><span>Amount:</span><span>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</span></div><p style="margin-top:20px;font-size:12px;">Thank you</p></body></html>');
+    w.document.close();
+    setTimeout(() => { w.print(); w.close(); }, 500);
+}
+
+function viewSummary(id, source) {
+    let app;
+    if (source === 'pending') app = pendingApps.find(a => a.id == id);
+    else app = paidApps.find(a => a.id == id);
+
+    if (!app) return;
+
+    const html = '<div style="text-align:left;"><p><strong>ID:</strong> ' + app.id + '</p><p><strong>Owner:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Business:</strong> ' + (app.business_name || 'N/A') + '</p><p><strong>Assessment:</strong> PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</p><hr><p><strong>Amount Paid:</strong> PHP ' + parseFloat(app.amount_paid || 0).toFixed(2) + '</p></div>';
+
+    Swal.fire({
+        title: 'Details',
+        html: html,
+        icon: 'info',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#00247c',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px'
+    });
+}
+
+function openPenaltyModal() {
+    const html = '<form style="text-align:left;"><div><label>Year *</label><input type="number" id="penaltyYear" required style="width:100%;padding:10px;" min="2000" value="' + new Date().getFullYear() + '"></div><div style="margin-top:10px;"><label>Amount *</label><input type="number" id="penaltyAmount" required style="width:100%;padding:10px;" step="0.01" min="0"></div><div style="margin-top:10px;"><label>Description</label><textarea id="penaltyDesc" style="width:100%;padding:10px;font-family:inherit;" rows="3"></textarea></div></form>';
+
+    Swal.fire({
+        title: 'Process Penalty',
+        html: html,
+        icon: 'warning',
+        confirmButtonText: 'Process',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px',
+        showCancelButton: true,
+        preConfirm: () => {
+            const year = document.getElementById('penaltyYear').value;
+            const amount = document.getElementById('penaltyAmount').value;
+            if (!year || !amount) {
+                Swal.showValidationMessage('Fill required fields');
+                return false;
+            }
+            return { year, amount };
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Done',
+                text: 'Penalty for ' + result.value.year + ' recorded',
+                confirmButtonColor: '#00247c'
+            });
+        }
+    });
+}
+
+function filterTable(tableId, inputId) {
+    const filter = document.getElementById(inputId).value.toUpperCase();
+    const rows = document.getElementById(tableId).getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {
+        const txt = rows[i].textContent || rows[i].innerText;
+        rows[i].style.display = txt.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+    }
+}
+
+window.onload = function() { loadPendingTable(); };

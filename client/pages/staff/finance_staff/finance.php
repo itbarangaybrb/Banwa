@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance & Collection Management System</title>
-    <!-- <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css"> -->
     <link rel="stylesheet" href="../../../styles/staff/finance_staff/finance.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -107,31 +106,35 @@
                         <option value="Rejected / Paid">Rejected / Paid</option>
                         <option value="Rejected / N/A">Rejected / N/A</option>
                     </select>
-                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
+                    <button class="btn-navy" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
                 </div>
 
-                
-                <div class="table-responsive" style="max-height: 580px;">   
-                    <table id="pendingTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Type</th>
-                                <th>Payer</th>
-                                <th>Business / Project</th>
-                                <th>Assessment Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pendingTableBody">
-                            <tr>
-                                <td colspan="7" class="loading">
-                                    <div class="spinner"></div>Loading pending payments...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- FIX: Added id="exportApplicationsTable" wrapper div so exportAs.js can find
+                     the container via data-modal="exportApplicationsTable". Without this, 
+                     exportAs.js threw: Cannot read properties of null (reading 'querySelectorAll') -->
+                <div id="exportApplicationsTable">
+                    <div class="table-responsive" style="max-height: 580px;">
+                        <table id="pendingTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Payer</th>
+                                    <th>Business / Project</th>
+                                    <th>Assessment Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingTableBody">
+                                <tr>
+                                    <td colspan="7" class="loading">
+                                        <div class="spinner"></div>Loading pending payments...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -167,137 +170,6 @@
                 </div>
             </div>
 
-            <div id="paymentModal" class="staff-modal">
-                <div class="staff-modal-content">
-                    <div class="staff-modal-header">
-                        <h2>Process Payment</h2>
-                        <button class="close-btn" onclick="closeModal('paymentModal')">&times;</button>
-                    </div>
-                    <form id="paymentForm" onsubmit="submitPayment(event)" enctype="multipart/form-data">
-                        <input type="hidden" id="payAppId" name="id">
-
-                        <div class="summary-card">
-                            <p><strong>Application ID:</strong> <span id="dispAppId"></span></p>
-                            <p><strong>Payer:</strong> <span id="dispPayer"></span></p>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="paymentDate">Date of Payment *</label>
-                                <input type="date" id="paymentDate" name="paymentDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="amountDue">Amount Due (PHP)</label>
-                                <input type="number" step="0.01" id="amountDue" name="amountDue" readonly style="background-color: #f8f9fa;">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="paymentMethod">Payment Method *</label>
-                                <select id="paymentMethod" name="paymentMethod" required onchange="toggleReferenceInput()">
-                                    <option value="Cash">Cash</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="Landbank">Landbank</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label id="refLabel" for="refNumber">Official Receipt (OR) No. *</label>
-                                <input type="text" id="refNumber" name="refNumber" required placeholder="Enter number...">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="amountPaid">Amount Tendered *</label>
-                                <input type="number" step="0.01" id="amountPaid" name="amountPaid" required placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label for="change">Change</label>
-                                <input type="text" id="change" readonly value="0.00" style="color: green; font-weight: bold; background-color: #f0fff4;">
-                            </div>
-                            <div class="form-group">
-                                <label for="balance">Balance Due</label>
-                                <input type="text" id="balance" readonly value="0.00" style="color: red; font-weight: bold; background-color: #fff5f5;">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="proofFile">Upload Proof (Optional/Required for Online)</label>
-                            <input type="file" id="proofFile" name="proofFile" accept="image/*,application/pdf">
-                        </div>
-
-                        <div class="button-group">
-                            <button type="submit" class="btn-primary">Confirm Payment</button>
-                            <button type="button" class="btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div id="penaltyModal" class="staff-modal">
-                <div class="staff-modal-content">
-                    <div class="staff-modal-header">
-                        <h2>Process Annual Penalty</h2>
-                        <button class="close-btn" onclick="closeModal('penaltyModal')">&times;</button>
-                    </div>
-                    <div style="padding: 30px;">
-                        <form id="penaltyForm" onsubmit="submitPenalty(event)">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="penaltyAppId">Application ID / Business ID</label>
-                                    <input type="text" id="penaltyAppId" name="penaltyAppId" required placeholder="Enter ID...">
-                                </div>
-                                <div class="form-group">
-                                    <label for="penaltyYear">Tax Year</label>
-                                    <input type="number" id="penaltyYear" name="penaltyYear" value="2024" required>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="penaltyAmount">Penalty Amount (PHP)</label>
-                                    <input type="number" step="0.01" id="penaltyAmount" name="penaltyAmount" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="penaltyReason">Reason / Violation</label>
-                                    <select id="penaltyReason" name="penaltyReason">
-                                        <option value="Late Renewal">Late Renewal</option>
-                                        <option value="Non-Compliance">Non-Compliance</option>
-                                        <option value="Sanitary Violation">Sanitary Violation</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="button-group" style="margin-top: 30px;">
-                                <button type="submit" class="btn-danger">Process Penalty</button>
-                                <button type="button" class="btn-secondary" onclick="closeModal('penaltyModal')">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-
-            <div id="detailsModal" class="staff-modal">
-                <div class="staff-modal-content">
-                    <div class="staff-modal-header">
-                        <h2>Application Summary</h2>
-                        <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
-                    </div>
-                    <div id="summaryBody"></div>
-                </div>
-            </div>
-
-            <div id="verificationModal" class="staff-modal">
-                <div class="staff-modal-content">
-                    <div class="staff-modal-header">
-                        <h2>Verify Resident Payment</h2>
-                        <button class="close-btn" onclick="closeModal('verificationModal')">&times;</button>
-                    </div>
-                    <div id="verificationBody"></div>
-                </div>
-            </div>
-
         </div>
     </div>
     <script src="../../../scripts/staff/finance_staff/finance.js"></script>
@@ -307,7 +179,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Simple script to handle active class on sidebar items
