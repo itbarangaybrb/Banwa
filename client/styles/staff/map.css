@@ -535,6 +535,8 @@ body {
 
 .highlight {
   font-weight: bold;
+  background: none;
+  background-color: transparent;
 }
 
 .search-count {
@@ -1188,7 +1190,7 @@ body {
 }
 
 .search-result-item:hover {
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
 }
 
 .search-result-item.active {
@@ -1775,6 +1777,14 @@ body {
 }
 .rpt-footer h4 { color: #00247c; margin: 0 0 7px 0; font-size: 12px; font-weight: 700; }
 .rpt-footer ul { margin: 0; padding-left: 16px; color: #555; line-height: 1.7; }
+
+
+/* SDSS Rules / last-action separator — adds left border to visually separate it */
+.gm-action-btn--separator {
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+  padding-left: 14px;
+}
 
 /* ==================== RESPONSIVE DESIGN ==================== */
 @media (max-width: 768px) {

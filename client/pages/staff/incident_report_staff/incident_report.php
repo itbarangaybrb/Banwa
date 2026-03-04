@@ -104,29 +104,34 @@
                                         <i class="fas fa-chevron-down dropdown-arrow"></i>
                                     </button>
                                     <div class="dropdown-content" id="filterDropdown">
-                                        <!-- Each option filters the map to show that marker type -->
-                                        <a href="#" data-type="incident" onclick="selectFilterType('incident', event)">
+                                        <a href="#" data-type="household" onclick="selectFilterType('household', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background:#dc3545;"></span>
-                                                <span>All Incidents</span>
+                                                <span class="filter-icon" style="background:#28a745;"></span>
+                                                <span>Households</span>
                                             </span>
                                         </a>
-                                        <a href="#" data-type="vawc" onclick="selectFilterType('vawc', event)">
+                                        <a href="#" data-type="business" onclick="selectFilterType('business', event)">
                                             <span class="filter-option">
                                                 <span class="filter-icon" style="background:#9C27B0;"></span>
-                                                <span>VAWC</span>
+                                                <span>Businesses</span>
                                             </span>
                                         </a>
-                                        <a href="#" data-type="crime" onclick="selectFilterType('crime', event)">
+                                        <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
                                             <span class="filter-option">
                                                 <span class="filter-icon" style="background:#ffc107;"></span>
-                                                <span>Serious Crime</span>
+                                                <span>Construction</span>
                                             </span>
                                         </a>
-                                        <a href="#" data-type="dispute" onclick="selectFilterType('dispute', event)">
+                                        <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
                                             <span class="filter-option">
                                                 <span class="filter-icon" style="background:#2196F3;"></span>
-                                                <span>Disputes</span>
+                                                <span>Utilities</span>
+                                            </span>
+                                        </a>
+                                        <a href="#" data-type="incident" onclick="selectFilterType('incident', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background:#cc0000;"></span>
+                                                <span>Incidents</span>
                                             </span>
                                         </a>
                                     </div>
@@ -147,21 +152,34 @@
                                 </button>
                             </div>
 
-                            <!-- Sub-filters shown only when specific incident type is selected -->
-                            <div class="sub-filters" id="incidentSubFilters" style="display:none;">
-                                <h4><i class="fas fa-exclamation-triangle"></i> Incident Types</h4>
-                                <div class="sub-filter-buttons">
-                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterIncidentByType('all', event)">
+                            <!-- Sub-filters shown only when Incident is selected — built by loadIncidentSubFilters() in map.js -->
+                            <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
+
+                            <!-- Sub-filters shown only when Construction is selected -->
+                            <div class="sub-filters" id="constructionSubFilters" style="display:none;">
+                                <div class="sub-filters-bar">
+                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
                                         <i class="fas fa-layer-group"></i><span>All</span>
                                     </button>
-                                    <button class="sub-filter-btn" data-subtype="pending" onclick="filterIncidentByType('pending', event)">
-                                        <i class="fas fa-clock"></i><span>Pending</span>
+                                    <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                                    <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                                        onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                                        <i class="fas fa-filter"></i> Types
+                                        <span class="toggle-arrow">&#9662;</span>
                                     </button>
-                                    <button class="sub-filter-btn" data-subtype="investigation" onclick="filterIncidentByType('investigation', event)">
-                                        <i class="fas fa-search"></i><span>Investigation</span>
+                                </div>
+                                <div class="sub-filter-expanded" id="constructionTypeList">
+                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                        <i class="fas fa-building"></i><span>Major</span>
                                     </button>
-                                    <button class="sub-filter-btn" data-subtype="resolved" onclick="filterIncidentByType('resolved', event)">
-                                        <i class="fas fa-check-circle"></i><span>Resolved</span>
+                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                        <i class="fas fa-home"></i><span>Minor</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                        <i class="fas fa-tools"></i><span>Repair</span>
+                                    </button>
+                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                        <i class="fas fa-trash-alt"></i><span>Demolition</span>
                                     </button>
                                 </div>
                             </div>
@@ -199,28 +217,27 @@
                     <!-- Action buttons for incident reports and assessments (bottom) -->
                     <div class="map-overlay map-overlay--actions">
                         <div class="gm-actions-bar">
-                            <!-- Shows summary of incidents within flood zones -->
                             <button class="gm-action-btn" onclick="getFloodIncidentsSummary()">
                                 <i class="fas fa-chart-bar"></i>
                                 <span>Flood Risk</span>
                             </button>
-                            <!-- Shows incidents near fault lines -->
                             <button class="gm-action-btn" onclick="showFaultLineRiskAssessment()">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Fault Line Risk</span>
                             </button>
-                            <!-- Incident statistics report -->
                             <button class="gm-action-btn" onclick="showIncidentStatistics()">
                                 <i class="fas fa-chart-pie"></i>
                                 <span>Incident Stats</span>
                             </button>
-                            <!-- Incident heatmap -->
                             <button class="gm-action-btn" onclick="showIncidentHeatmap()">
                                 <i class="fas fa-fire"></i>
                                 <span>Heatmap</span>
                             </button>
-                            <!-- Shows incident response rules -->
-                            <button class="gm-action-btn" onclick="showResponseRulesReport()">
+                            <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Incident Report</span>
+                            </button>
+                            <button class="gm-action-btn gm-action-btn--separator" onclick="showResponseRulesReport()">
                                 <i class="fas fa-list-check"></i>
                                 <span>Response Rules</span>
                             </button>
@@ -634,7 +651,7 @@
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 
-    <script type="module" src="../../../scripts/utils/archives.js"></script>
+    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

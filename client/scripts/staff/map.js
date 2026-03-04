@@ -28,7 +28,7 @@ let allMarkersData = [];
 let searchResults = [];
 let activeSearchMarker = null;
 let searchTimeout = null;
-let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search
+let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search // 3/1/2026
 
 // Modal state
 let currentMarkerData = null;
@@ -435,7 +435,7 @@ function displayFloodDetailsInModal(data) {
     ].join('');
     showDetailSwal(title, `${(data.risk_level||'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
-
+ // 3/1/2026
 function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
 
@@ -449,7 +449,7 @@ function displayHouseDetailsInModal(data, apps) {
         detailRow('Created',      formatDate(data.created_at)),
         detailRow('Last Updated', formatDate(data.updated_at))
     ].join('');
-
+    // 3/1/2026
     const typeBadge = (bg, label, textColor) =>
         `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
                       background:${bg};color:${textColor||'#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
@@ -504,7 +504,7 @@ function displayHouseDetailsInModal(data, apps) {
             );
         });
     }
-
+    // 3/1/2026
     const tableRows = [
         sectionHeader('Household Information'), basicRows,
         sectionHeader('Connected Applications'), appRows
@@ -714,7 +714,7 @@ const natureToSubtypeMap = {
     'Complete Demolition': 'demolition',
     'Partial Demolition': 'demolition'
 };
-
+// 3/1/2026
 function filterConstructionByType(subtype, event) {
     if (event) event.stopPropagation();
     constructionSubFilter = subtype;
@@ -727,7 +727,7 @@ function filterConstructionByType(subtype, event) {
         : `<strong>${subtype.charAt(0).toUpperCase() + subtype.slice(1)}</strong>`;
     if (activeFilter === 'construction') updateMarkerVisibility();
 }
-
+// 3/1/2026
 function toggleConstructionFilters() {
     const list = document.getElementById('constructionTypeList');
     const btn  = document.getElementById('constructionToggleBtn');
@@ -1127,7 +1127,7 @@ function highlightExistingMarker(marker, markerData) {
     if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
 
     map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
-
+    // 3/1/2026
     if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
     pendingMoveEndHandler = () => {
         pendingMoveEndHandler = null;
@@ -1187,7 +1187,7 @@ function createTemporaryHighlight(markerData) {
 
     activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon, zIndexOffset: 1000 }).addTo(map);
 
-    // Fly then open popup after animation
+    // Fly then open popup after animation // 3/1/2026
     map.flyTo([lat, lng], 19, { duration: 1.2, easeLinearity: 0.2 });
 
     if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
@@ -1299,7 +1299,7 @@ function showHousePolygonHighlight(houseData) {
             duration: 1.5
         });
         
-        // Open popup after animation finishes
+        // Open popup after animation finishes // 3/1/2026
         if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
         pendingMoveEndHandler = () => {
             pendingMoveEndHandler = null;
@@ -1596,6 +1596,7 @@ async function viewFloodDetails(id) {
     }
 }
 
+// 3/1/2026
 async function viewHouseDetails(id) {
     showSwal({
         title: 'Loading Details',
@@ -2100,14 +2101,14 @@ function renderHousePolygons() {
     if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
-
+    // 3/1/2026
     // Tag application markers by house address — suppress older duplicates
     tagMarkersWithHouseAddress();
 }
 
 /**
  * For each house, find all application markers whose address starts with the house address.
- * Keep only the most recent one visible per house; mark all others suppressedByHouse = true.
+ * Keep only the most recent one visible per house; mark all others suppressedByHouse = true. // 3/1/2026
  */
 function tagMarkersWithHouseAddress() {
     function markerAddress(m) {
@@ -2142,7 +2143,7 @@ function tagMarkersWithHouseAddress() {
         matched.sort((a, b) => markerDate(b) - markerDate(a));
         matched.slice(1).forEach(m => { m.suppressedByHouse = true; });
     });
-
+     // 3/1/2026
     // Re-run visibility so suppressed markers disappear immediately
     updateAllVisibility();
 }
@@ -2212,11 +2213,11 @@ async function getFloodHousesSummary() {
         };
 
         let bodyHTML = '';
-
+        // 3/1/2026
         // Houses list is now deduplicated (one row per house, worst impact wins)
         const houses = data.houses || [];
         const total  = houses.length; // use list length as the single source of truth
-
+        // 3/1/2026
         if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
@@ -2251,7 +2252,7 @@ async function getFloodHousesSummary() {
                         <span style="font-size:11px;color:#aaa;min-width:30px;">${pct}%</span>
                     </div>`;
                 }).join('');
-
+                // 3/1/2026
             // Accordion house rows — sorted worst first
             const impactRank = {'Fully Affected':4,'Affected':3,'Partially Affected':2,'Minimally Affected':1};
             const sortedHouses = [...houses].sort((a,b) =>
@@ -2271,7 +2272,7 @@ async function getFloodHousesSummary() {
                     ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Hazard Zone:</strong> ${h.hazard_description}</div>`:''}`;
                 return rptRow(`fh-${i}`, pct, c, h.address||'Address not specified', h.impact_level||'', body);
             }).join('');
-
+            // 3/1/2026
             bodyHTML = `
                 <div class="rpt-stats">
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
@@ -2301,7 +2302,7 @@ async function getFloodHousesSummary() {
                     <div class="rpt-list-scroll">${houseRows}</div>
                 </div>`;
         }
-
+        // 3/1/2026
         const reportHTML = `<div class="rpt-body">
             <div class="rpt-header">
                 <h3>Flood Risk Assessment</h3>
@@ -2663,7 +2664,7 @@ function displayBusinessSDSSReport(data) {
     if (warnings.length === 0) {
         showReportSwal(`<div class="rpt-body">
             <div class="rpt-header">
-                <h3>Business Safety Compliance</h3>
+                <h3>Business Safety</h3>
                 <div class="rpt-big-num">✓</div>
                 <div class="rpt-subtitle">All ${summary.total} businesses are compliant — no violations detected</div>
             </div>
@@ -2703,7 +2704,7 @@ function displayBusinessSDSSReport(data) {
 
     const reportHTML = `<div class="rpt-body">
         <div class="rpt-header">
-            <h3>Business Safety Compliance Report</h3>
+            <h3>Business Safety Report</h3>
             <div class="rpt-big-num">${warnings.length}</div>
             <div class="rpt-subtitle">${warnings.length === 1 ? 'Business' : 'Businesses'} with Safety Warnings · out of ${summary.total} analyzed</div>
             <div class="rpt-chips">
@@ -2810,7 +2811,7 @@ function displayConstructionSDSSReport(data) {
 
 // Track whether sub-filter panel is expanded
 let incidentFiltersExpanded = false;
-let constructionFiltersExpanded = false;
+let constructionFiltersExpanded = false; // 3/1/2026
 
 async function loadIncidentSubFilters() {
     const panel = document.getElementById('incidentSubFilters');
@@ -2953,7 +2954,7 @@ async function showIncidentSummaryReport() {
         const pending = incidents.filter(i => (i.status || 'Pending') === 'Pending').length;
         const investigating = incidents.filter(i => i.status === 'Under Investigation').length;
         const resolved = incidents.filter(i => i.status === 'Resolved').length;
-
+        // 3/1/2026
         // Type breakdown bars — all red
         const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
         const typeBars = sortedTypes.map(([type, count], i) => {
@@ -3559,7 +3560,7 @@ function displaySDSSRulesReport(data) {
         <div class="rpt-body">
             <!-- Summary Section -->
             <div class="rpt-header">
-                <h3><i class="fas fa-list-check" style="margin-right:8px;"></i>SDSS Rules Summary Report</h3>
+                <h3><i class="fas fa-list-check" style="margin-right:8px;"></i>Rules Summary Report</h3>
                 <div class="rpt-chips">
                     <div class="rpt-chip">
                         <span class="rpt-chip-num">${summary.total_houses}</span>
@@ -3709,7 +3710,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                    background:#f0f4ff;color:#00247c;border:1.5px solid #00247c;
                    border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
                    font-family:inherit;margin-bottom:0;width:100%;">
-            <i class="fas fa-arrow-left"></i> Back to SDSS Rules
+            <i class="fas fa-arrow-left"></i> Back to Rules
         </button>` : '';
 
     panel.innerHTML = `
@@ -3800,12 +3801,12 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
         }
 
         // ── Build record list ───────────────────────────────────────────────
-
+// 3/1/2026
 if (records.length === 0) {
     bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
     return;
 }
-
+// 3/1/2026
 // Sort records - households first, then by name/address
 const sortedRecords = [...records].sort((a, b) => {
     // First sort by type (households first)
@@ -3831,7 +3832,7 @@ const rows = sortedRecords.map(r => `
             <span class="affected-record-type">${r.type}</span>
         </div>
     </div>`).join('');
-
+// 3/1/2026
 bodyEl.innerHTML = `
     <div class="affected-panel-count">${sortedRecords.length} record${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
     <div class="affected-panel-hint">Click a row to view full details</div>

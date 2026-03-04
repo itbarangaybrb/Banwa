@@ -132,6 +132,12 @@
                                                 <span>Utilities</span>
                                             </span>
                                         </a>
+                                        <a href="#" data-type="incident" onclick="selectFilterType('incident', event)">
+                                            <span class="filter-option">
+                                                <span class="filter-icon" style="background:#cc0000;"></span>
+                                                <span>Incidents</span>
+                                            </span>
+                                        </a>
                                     </div>
                                 </div>
 
@@ -150,14 +156,23 @@
                                 </button>
                             </div>
 
+                            <!-- Sub-filters shown only when Incident is selected — built by loadIncidentSubFilters() in map.js -->
+                            <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
+
                             <!-- Sub-filters shown only when Construction is selected -->
                             <div class="sub-filters" id="constructionSubFilters" style="display:none;">
-                                <h4><i class="fas fa-hard-hat"></i> Construction Types</h4>
-                                <div class="sub-filter-buttons">
-                                    <!-- Filter construction markers by sub-type -->
+                                <div class="sub-filters-bar">
                                     <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
                                         <i class="fas fa-layer-group"></i><span>All</span>
                                     </button>
+                                    <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                                    <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                                        onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                                        <i class="fas fa-filter"></i> Types
+                                        <span class="toggle-arrow">&#9662;</span>
+                                    </button>
+                                </div>
+                                <div class="sub-filter-expanded" id="constructionTypeList">
                                     <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
                                         <i class="fas fa-building"></i><span>Major</span>
                                     </button>
@@ -206,28 +221,27 @@
                     <!-- Action buttons for SDSS reports and risk assessments (bottom) -->
                     <div class="map-overlay map-overlay--actions">
                         <div class="gm-actions-bar">
-                            <!-- Shows summary of houses within flood zones -->
                             <button class="gm-action-btn" onclick="getFloodHousesSummary()">
                                 <i class="fas fa-chart-bar"></i>
                                 <span>Flood Risk</span>
                             </button>
-                            <!-- Shows structures near fault lines -->
                             <button class="gm-action-btn" onclick="showFaultLineRiskAssessment()">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Fault Line Risk</span>
                             </button>
-                            <!-- SDSS report for all businesses -->
                             <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                                 <i class="fas fa-building"></i>
                                 <span>Business SDSS</span>
                             </button>
-                            <!-- SDSS report for all construction sites -->
                             <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                                 <i class="fas fa-hard-hat"></i>
                                 <span>Construction SDSS</span>
                             </button>
-                            <!-- Shows the decision rules used by the SDSS -->
-                            <button class="gm-action-btn" onclick="showSDSSRulesReport()">
+                            <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Incident Report</span>
+                            </button>
+                            <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
                                 <span>SDSS Rules</span>
                             </button>
@@ -639,7 +653,7 @@
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 
-    <script type="module" src="../../../scripts/utils/archives.js"></script>
+    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

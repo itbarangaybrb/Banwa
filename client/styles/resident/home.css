@@ -1,9 +1,10 @@
 /* ==================== Hero Section ==================== */
 .hero-section {
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
     margin: 0 auto;
     background-color: #19316b;
+    margin-bottom: 0 !important;
 }
 
 .hero-cont {
@@ -11,8 +12,8 @@
     min-height: 500px;
     background-color: #19316b;
     position: relative;
-    overflow: hidden;
-    padding: 70px 0 50px;
+    overflow: visible !important;
+    padding: 70px 0 100px !important;
     margin: 0 auto;
 }
 
@@ -67,6 +68,8 @@
     min-height: 450px;
     color: white;
     text-align: center;
+    overflow: visible !important;
+    padding-bottom: 50px !important;
 }
 
 .hero_content {
@@ -74,6 +77,7 @@
     padding-left: 7%;
     padding-right: 7%;
     text-align: start;
+    overflow: visible !important;
 }
 
 .hero_content h1 {
@@ -94,17 +98,23 @@
     line-height: 1.5;
 }
 
-/* Office Hours Container */
+/* Office Hours Container - Improved Responsive */
 .barangay-title-container {
     display: flex;
     gap: 15px;
     margin-bottom: 2rem;
     flex-wrap: wrap;
     align-items: center;
+    overflow: visible !important;
+    position: relative;
+    z-index: 100;
 }
 
 .office-hours-container {
     display: inline-block;
+    position: relative;
+    overflow: visible !important;
+    z-index: 100;
 }
 
 .office-hours {
@@ -118,6 +128,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+    overflow: visible !important;
+    z-index: 9999 !important;
 }
 
 .office-hours:hover {
@@ -147,12 +160,12 @@
     transform: translateY(0);
 }
 
-/* Tooltip */
+/* Tooltip - Improved Responsive */
 .hours-tooltip {
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: 10px;
+    margin-top: 15px !important;
     background: white;
     border-radius: 10px;
     padding: 20px;
@@ -162,8 +175,14 @@
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    z-index: 11;
+    z-index: 2147483647 !important;
     color: #333;
+    pointer-events: none;
+    overflow: visible !important;
+}
+
+.office-hours:hover .hours-tooltip {
+    pointer-events: auto;
 }
 
 .hours-tooltip::before {
@@ -338,6 +357,7 @@
     padding: 60px 20px;
     background: white;
     position: relative;
+    z-index: 1;
 }
 
 .cont {
@@ -433,6 +453,7 @@
     overflow: hidden;
     height: 100%;
     text-decoration: none;
+    color: inherit;
 }
 
 .service-h-card::before {
@@ -1141,6 +1162,7 @@
 /* ==================== Barangay Officials Carousel ==================== */
 .officials-section {
     padding: 80px 0;
+    z-index: 1;
 }
 
 .officials-carousel {
@@ -1350,6 +1372,7 @@
 .faq-section {
     padding: 60px 0;
     background: #f8f9fa;
+    z-index: 1;
 }
 
 .faq-subtitle {
@@ -1507,6 +1530,7 @@ section[data-theme="blue"] {
     width: 100%;
     padding: 60px 20px;
     position: relative;
+    z-index: 1;
 }
 
 section[data-theme="white"] .cont,
@@ -1531,6 +1555,10 @@ section[data-theme="blue"] .cont {
     .official-image {
         width: 150px;
     }
+    
+    .hours-tooltip {
+        min-width: 350px;
+    }
 }
 
 /* Desktop / Laptop (992px to 1199px) */
@@ -1553,6 +1581,10 @@ section[data-theme="blue"] .cont {
     
     .mission-vision-wrapper {
         min-height: 400px;
+    }
+    
+    .hours-tooltip {
+        min-width: 320px;
     }
 }
 
@@ -1607,6 +1639,20 @@ section[data-theme="blue"] .cont {
     .utilities-categories {
         grid-template-columns: 1fr;
     }
+    
+    /* Office Hours Tablet Improvements */
+    .barangay-title-container {
+        gap: 12px;
+    }
+    
+    .hours-tooltip {
+        min-width: 300px;
+        left: -20px;
+    }
+    
+    .hours-tooltip::before {
+        left: 40px;
+    }
 }
 
 /* Mobile Landscape (576px to 768px) */
@@ -1638,15 +1684,6 @@ section[data-theme="blue"] .cont {
     
     .hero_content h6 {
         font-size: 1.5rem;
-    }
-    
-    .hours-tooltip {
-        min-width: 280px;
-        left: -50px;
-    }
-    
-    .hours-tooltip::before {
-        left: 50px;
     }
     
     .official-card {
@@ -1705,6 +1742,31 @@ section[data-theme="blue"] .cont {
         text-align: center;
         border-radius: 24px;
         max-width: 100%;
+    }
+    
+    /* Office Hours Mobile Landscape Improvements */
+    .hours-tooltip {
+        min-width: 280px;
+        left: -20px;
+        padding: 15px;
+    }
+    
+    .hours-tooltip::before {
+        left: 35px;
+    }
+    
+    .schedule-item {
+        flex-direction: row;
+        gap: 10px;
+    }
+    
+    .office-hours {
+        white-space: normal;
+        padding: 6px 10px;
+    }
+    
+    .hours-status {
+        font-size: 0.85rem;
     }
 }
 
@@ -1775,22 +1837,6 @@ section[data-theme="blue"] .cont {
     .preview-list li {
         font-size: 0.8rem;
         padding: 3px 0;
-    }
-    
-    .hours-tooltip {
-        min-width: 250px;
-        left: -70px;
-        padding: 15px;
-    }
-    
-    .hours-tooltip::before {
-        left: 70px;
-    }
-    
-    .schedule-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
     }
     
     .officials-carousel {
@@ -1886,6 +1932,70 @@ section[data-theme="blue"] .cont {
     .expanded-badges {
         justify-content: center;
     }
+    
+    /* Office Hours Mobile Portrait Improvements - UPDATED */
+    .hours-tooltip {
+        min-width: 280px;
+        width: calc(100vw - 40px);
+        max-width: 320px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        padding: 15px;
+        right: auto;
+    }
+    
+    .office-hours:hover .hours-tooltip {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .hours-tooltip::before {
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+    }
+    
+    .schedule-item {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    
+    .schedule-item .days,
+    .schedule-item .time {
+        font-size: 0.85rem;
+    }
+    
+    .office-hours {
+        padding: 5px 10px;
+    }
+    
+    .hours-status {
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+    
+    .hours-status::before {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .hours-schedule h4 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .current-status {
+        padding: 8px;
+        margin-top: 10px;
+    }
+    
+    .current-status .status-text {
+        font-size: 0.85rem;
+    }
+    
+    .next-open-info {
+        font-size: 0.8rem;
+    }
 }
 
 /* Small Mobile (up to 375px) */
@@ -1899,21 +2009,6 @@ section[data-theme="blue"] .cont {
     }
     
     .hero_content p {
-        font-size: 0.8rem;
-    }
-    
-    .hours-tooltip {
-        min-width: 200px;
-        left: -50px;
-        padding: 12px;
-    }
-    
-    .hours-tooltip::before {
-        left: 50px;
-    }
-    
-    .schedule-item .days,
-    .schedule-item .time {
         font-size: 0.8rem;
     }
     
@@ -1953,5 +2048,174 @@ section[data-theme="blue"] .cont {
     
     .quick_align h2 {
         font-size: 1.5rem;
+    }
+    
+    /* Office Hours Small Mobile Improvements - FIXED */
+    .barangay-title-container {
+        gap: 8px;
+        position: relative;
+    }
+    
+    .office-hours-container {
+        position: static;
+        width: 100%;
+    }
+    
+    .office-hours {
+        padding: 4px 8px;
+        width: auto;
+        display: inline-flex;
+    }
+    
+    .hours-status {
+        font-size: 0.75rem;
+        gap: 4px;
+    }
+    
+    .hours-status::before {
+        width: 5px;
+        height: 5px;
+    }
+    
+    /* Center the tooltip on very small screens */
+    .hours-tooltip {
+        min-width: 260px;
+        width: calc(100vw - 40px);
+        max-width: 280px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        right: auto;
+        padding: 12px;
+        margin-top: 8px;
+    }
+    
+    .office-hours:hover .hours-tooltip {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .hours-tooltip::before {
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+    }
+    
+    .hours-schedule h4 {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .schedule-item {
+        padding: 6px 0;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .schedule-item .days,
+    .schedule-item .time {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .current-status {
+        padding: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .current-status .status-text {
+        font-size: 0.8rem;
+    }
+    
+    .next-open {
+        padding: 6px;
+        text-align: center;
+    }
+    
+    .next-open-info {
+        font-size: 0.75rem;
+        display: block;
+        text-align: center;
+    }
+}
+
+/* Extra Small Mobile (up to 320px) */
+@media (max-width: 320px) {
+    .hours-tooltip {
+        min-width: 240px;
+        width: calc(100vw - 30px);
+        padding: 10px;
+    }
+    
+    .schedule-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .schedule-item .days,
+    .schedule-item .time {
+        font-size: 0.75rem;
+        white-space: normal;
+    }
+    
+    .hours-schedule h4 {
+        font-size: 0.85rem;
+    }
+    
+    .current-status {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+/* ULTIMATE FIX FOR TOOLTIP BEING CUT OFF - MOBILE */
+@media (max-width: 768px) {
+    .office-hours-container {
+        position: static !important;
+    }
+    
+    .office-hours {
+        position: relative !important;
+        z-index: 9999 !important;
+    }
+    
+    .hours-tooltip {
+        position: fixed !important;
+        top: 55% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90% !important;
+        max-width: 320px !important;
+        margin-top: 0 !important;
+        z-index: 2147483647 !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .office-hours:hover .hours-tooltip {
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    .hours-tooltip::before {
+        display: none !important;
+    }
+    
+    .office-hours:hover .hours-tooltip {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Desktop fix - ensure tooltip has space */
+@media (min-width: 769px) {
+    .hero-cont {
+        padding-bottom: 150px !important;
+    }
+    
+    .hours-tooltip {
+        margin-top: 15px !important;
     }
 }
