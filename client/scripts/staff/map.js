@@ -207,7 +207,7 @@ function rptRow(id, badgeText, badgeColor, name, rightLabel, bodyHTML) {
 /** Builds a single warning block inside an expanded row */
 function rptWarningBlock(warning) {
     const c = warning.severity === 'CRITICAL' ? '#990000'
-             : warning.severity === 'HIGH'     ? '#cc0000' : '#555';
+             : warning.severity === 'HIGH'     ? '#cc0000' : '#ff9800';
     return `
         <div style="background:#f8f8f8;border-left:3px solid ${c};padding:10px 12px;border-radius:4px;margin-bottom:8px;">
             <div style="color:${c};font-weight:700;margin-bottom:4px;">⚠ ${warning.type}</div>
@@ -1154,7 +1154,7 @@ function highlightExistingMarker(marker, markerData) {
     const latLng = marker.getLatLng();
     removeActiveSearchMarker();
 
-    // Single pulse ring — color matches current map mode
+    // Static (non-pulsating) ring around the marker
     const accentColor = getMapAccentColor();
     const pulseRing = L.circleMarker(latLng, {
         radius: 28,
@@ -1168,7 +1168,6 @@ function highlightExistingMarker(marker, markerData) {
     activeSearchMarker = { marker, highlight: pulseRing };
 
     if (!map.hasLayer(marker)) marker.addTo(map);
-    // L.Marker doesn't have bringToFront — use setZIndexOffset instead
     if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
 
     map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
@@ -1215,24 +1214,7 @@ function createTemporaryHighlight(markerData) {
     
     removeActiveSearchMarker();
 
-    // Animated pin icon — color matches current map mode
-    const markerColor = getMapAccentColor();
-    const highlightIcon = L.divIcon({
-        className: '',
-        html: `
-            <div class="search-pin-wrapper">
-                <div class="search-pin-pulse"></div>
-                <div class="search-pin-dot" style="background:${markerColor};"></div>
-            </div>
-        `,
-        iconSize: [48, 48],
-        iconAnchor: [24, 24],
-        popupAnchor: [0, -24]
-    });
-
-    activeSearchMarker = L.marker([lat, lng], { icon: highlightIcon, zIndexOffset: 1000 }).addTo(map);
-
-    // Fly then open popup after animation // 3/1/2026
+    // Just fly to location — no extra marker overlay
     map.flyTo([lat, lng], 19, { duration: 1.2, easeLinearity: 0.2 });
 
     if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
@@ -1244,7 +1226,10 @@ function createTemporaryHighlight(markerData) {
         else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
         else if (type === 'incident') popupContent = createIncidentPopup(markerData);
         else                          popupContent = createHousePopup(markerData);
-        if (activeSearchMarker) activeSearchMarker.bindPopup(popupContent, { autoPan: true }).openPopup();
+        L.popup({ autoPan: true })
+            .setLatLng([lat, lng])
+            .setContent(popupContent)
+            .openOn(map);
     };
     map.once('moveend', pendingMoveEndHandler);
 
@@ -2239,15 +2224,17 @@ async function getFloodHousesSummary() {
         // ── Build flood report with unified layout ──────────────────────────
         const riskColors = { low:'#ffc107', medium:'#ff9800', high:'#dc3545' };
         const impactColors = {
-            'Minimally Affected':'#ffc107', 'Partially Affected':'#ff9800',
-            'Fully Affected':'#dc3545', 'Affected':'#ff9800'
+            'Minimally Affected':'#ffc107',
+            'Partially Affected':'#ff9800',
+            'Fully Affected':    '#dc3545',
+            'Affected':          '#ff9800'
         };
 
         let bodyHTML = '';
         // 3/1/2026
         // Houses list is now deduplicated (one row per house, worst impact wins)
         const houses = data.houses || [];
-        const total  = houses.length; // use list length as the single source of truth
+        const total  = houses.length;
         // 3/1/2026
         if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
@@ -2256,80 +2243,65 @@ async function getFloodHousesSummary() {
                 <p style="color:#666;margin:0;font-size:13px;">All households are outside flood hazard zones.</p>
             </div>`;
         } else {
-            // Recount from the deduplicated list so everything matches
+            // Count by risk level
+            const lowCount    = houses.filter(h => (h.risk_level||'').toLowerCase() === 'low').length;
+            const mediumCount = houses.filter(h => (h.risk_level||'').toLowerCase() === 'medium').length;
+            const highCount   = houses.filter(h => (h.risk_level||'').toLowerCase() === 'high').length;
+
+            // Count by impact level (for subtitles)
             const fullyAffected    = houses.filter(h => h.impact_level === 'Fully Affected').length;
             const partiallyAffected= houses.filter(h => h.impact_level === 'Partially Affected').length;
             const minimallyAffected= houses.filter(h => h.impact_level === 'Minimally Affected').length;
             const affectedNoPoly   = houses.filter(h => h.impact_level === 'Affected').length;
 
-            // Risk-level bar rows — recount from list
-            const byRisk = {};
-            houses.forEach(h => {
-                const rl = (h.risk_level||'unknown').toLowerCase();
-                byRisk[rl] = (byRisk[rl]||0) + 1;
-            });
-            const riskOrder = {low:1,medium:2,high:3};
-            const riskBars = Object.entries(byRisk)
-                .sort((a,b)=>(riskOrder[a[0]]||9)-(riskOrder[b[0]]||9))
-                .map(([level, count]) => {
-                    const c = riskColors[level]||'#888';
-                    const pct = (count/total*100).toFixed(0);
-                    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-                        <span style="background:${c};color:#fff;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:700;min-width:62px;text-align:center;">${level.toUpperCase()}</span>
-                        <span style="font-size:17px;font-weight:700;color:${c};min-width:24px;">${count}</span>
-                        <div style="flex:1;height:7px;background:#e8e8e8;border-radius:3px;overflow:hidden;">
-                            <div style="height:100%;width:${pct}%;background:${c};"></div>
-                        </div>
-                        <span style="font-size:11px;color:#aaa;min-width:30px;">${pct}%</span>
-                    </div>`;
-                }).join('');
-                // 3/1/2026
-            // Accordion house rows — sorted low first (minimally affected → fully affected)
-            const impactRank = {'Fully Affected':4,'Affected':3,'Partially Affected':2,'Minimally Affected':1};
+            // Accordion house rows — sorted by risk level: low → medium → high
+            const riskRank = { low:1, medium:2, high:3 };
+            const impactRank = {'Minimally Affected':1,'Partially Affected':2,'Affected':3,'Fully Affected':4};
             const sortedHouses = [...houses].sort((a,b) =>
-                (impactRank[a.impact_level]||0) - (impactRank[b.impact_level]||0) ||
-                (parseFloat(a.flood_coverage_percent)||0) - (parseFloat(b.flood_coverage_percent)||0)
+                (riskRank[(a.risk_level||'').toLowerCase()]||9) - (riskRank[(b.risk_level||'').toLowerCase()]||9) ||
+                (impactRank[a.impact_level]||0) - (impactRank[b.impact_level]||0)
             );
             const houseRows = sortedHouses.map((h,i)=>{
-                const c   = impactColors[h.impact_level]||'#888';
+                const riskColor   = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
+                const impactColor = impactColors[h.impact_level]||'#888';
                 const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent||0).toFixed(1)+'%';
-                const riskColor = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
                 const body = `
                     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
                         <div><strong>Risk Level:</strong> <span style="color:${riskColor};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
+                        <div><strong>Impact:</strong> <span style="color:${impactColor};font-weight:600;">${h.impact_level||'Unknown'}</span></div>
                         <div><strong>Flood Coverage:</strong> ${pct}</div>
                     </div>
                     ${h.street_name?`<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>`:''}
                     ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Description:</strong> ${h.hazard_description}</div>`:''}`;
-                return rptRow(`fh-${i}`, pct, c, h.address||'Address not specified', h.impact_level||'', body);
+                return rptRow(`fh-${i}`, (h.risk_level||'?').toUpperCase(), riskColor, h.address||'Address not specified',
+                    `${(h.risk_level||'').toUpperCase()} · ${h.impact_level||''}`, body);
             }).join('');
-            // 3/1/2026
+
             bodyHTML = `
                 <div class="rpt-stats">
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
-                        <div class="rpt-stat-num" style="color:#b38600;">${minimallyAffected}</div>
-                        <div class="rpt-stat-label">Minimally Affected (1–24%)</div>
+                        <div class="rpt-stat-num" style="color:#b38600;">${lowCount}</div>
+                        <div class="rpt-stat-label">Low Risk</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Minimally Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
-                        <div class="rpt-stat-num" style="color:#e67e00;">${partiallyAffected}</div>
-                        <div class="rpt-stat-label">Partially Affected (25–74%)</div>
+                        <div class="rpt-stat-num" style="color:#e67e00;">${mediumCount}</div>
+                        <div class="rpt-stat-label">Medium Risk</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Partially Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
-                        <div class="rpt-stat-num" style="color:#dc3545;">${fullyAffected}</div>
-                        <div class="rpt-stat-label">Fully Affected (75–100%)</div>
+                        <div class="rpt-stat-num" style="color:#dc3545;">${highCount}</div>
+                        <div class="rpt-stat-label">High Risk</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Fully Affected</div>
                     </div>
                     ${affectedNoPoly > 0 ? `<div class="rpt-stat" style="border-left-color:#888;">
                         <div class="rpt-stat-num" style="color:#555;">${affectedNoPoly}</div>
                         <div class="rpt-stat-label">In Flood Zone (no polygon)</div>
                     </div>` : ''}
                 </div>
-                <div style="background:#f8f9fa;border-radius:7px;padding:12px 14px;margin-bottom:14px;">
-                    <div style="font-size:12px;font-weight:600;color:#00247c;margin-bottom:10px;">By Flood Risk Level</div>
-                    ${riskBars}
-                </div>
                 <div class="rpt-list-box">
                     <h4>Affected Households <span style="font-weight:400;color:#aaa;">(${total})</span></h4>
-                    <p class="rpt-list-hint">Sorted by severity · click a row to expand</p>
+                    <p class="rpt-list-hint">Sorted by risk level (low → high) · click a row to expand</p>
                     <div class="rpt-list-scroll">${houseRows}</div>
                 </div>`;
         }
@@ -2471,14 +2443,6 @@ async function showFaultLineRiskAssessment() {
             </div>
             <div class="rpt-content">
                 ${bodyHTML}
-                <div class="rpt-footer">
-                    <h4>Legal Requirements</h4>
-                    <ul>
-                        <li><strong>Critical (&lt;50m):</strong> Mandatory structural engineer cert, geological survey &amp; reinforced foundation</li>
-                        <li><strong>High (50–100m):</strong> Seismic design standards &amp; structural engineer certification required</li>
-                        <li><strong>Medium (100–200m):</strong> Enhanced foundation recommended; standard codes with seismic provisions apply</li>
-                    </ul>
-                </div>
             </div>
         </div>`;
 
@@ -3649,7 +3613,7 @@ function createRuleCard(rule, totalHouses, cardId) {
     const severityColors = {
         'CRITICAL': { bg: '#f5f5f5', border: '#990000', text: '#990000' },
         'HIGH':     { bg: '#f5f5f5', border: '#cc0000', text: '#cc0000' },
-        'MEDIUM':   { bg: '#f5f5f5', border: '#555555', text: '#555555' }
+        'MEDIUM':   { bg: '#f5f5f5', border: '#ff9800', text: '#ff9800' }
     };
     
     const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
