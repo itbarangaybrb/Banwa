@@ -16,7 +16,8 @@ function get_mime_type_shared($filename) {
 }
 
 function analyze_files($files, $requiredDocs = []) {
-    $OCR_API_KEY = 'K81052119188957';
+    // $OCR_API_KEY = 'K81052119188957';
+    $OCR_API_KEY = 'K82731431388957';
 
     $KEYWORDS = [
         'SEC' => ['securities and exchange commission', 'sec registration', 'certificate of registration', 'articles of incorporation'],

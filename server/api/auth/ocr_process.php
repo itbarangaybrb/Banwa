@@ -309,7 +309,7 @@ $post_fields = [
     'apikey' => $OCR_API_KEY,
     'language' => 'eng',
     'isOverlayRequired' => 'true',
-    'OCREngine' => '2',
+    'OCREngine' => '1', // Change '2' to '1'
     'file' => $file_field
 ];
 
@@ -320,9 +320,10 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT => 60,
     CURLOPT_CONNECTTIMEOUT => 15,
-    CURLOPT_SSL_VERIFYPEER => true,
-    CURLOPT_SSL_VERIFYHOST => 2,
-    CURLOPT_CAINFO => __DIR__ . '/cacert.pem',
+    // --- CHANGE THESE TWO LINES TO FALSE FOR TESTING ---
+    CURLOPT_SSL_VERIFYPEER => false, 
+    CURLOPT_SSL_VERIFYHOST => 0,
+    // ----------------------------------------------------
     CURLOPT_FOLLOWLOCATION => true
 ]);
 
@@ -333,6 +334,17 @@ curl_close($ch);
 
 if ($response !== false && $http_code === 200) {
     $result = json_decode($response, true);
+    
+    // Check if the API itself returned an error message
+    if (!empty($result['ErrorMessage'])) {
+        ob_end_clean();
+        echo json_encode([
+            "success" => false,
+            "error" => "OCR API Error: " . $result['ErrorMessage'][0]
+        ]);
+        exit;
+    }
+
     if (json_last_error() === JSON_ERROR_NONE && !empty($result['ParsedResults']) && $result['OCRExitCode'] == 1) {
         $raw_text = $result['ParsedResults'][0]['ParsedText'];
 
@@ -364,13 +376,16 @@ if ($response !== false && $http_code === 200) {
     }
 }
 
+// Add the actual API response to your debug info
+$debug_info['raw_api_response'] = json_decode($response, true); 
 $debug_info['ocrspace_error'] = $curl_error ?: ($http_code !== 200 ? "HTTP $http_code" : null);
 
 if ($raw_text === null || trim($raw_text) === '') {
     ob_end_clean();
     echo json_encode([
         "success" => false,
-        "error" => "OCR failed",
+        // Shows the actual error (e.g., "Could not resolve host" or "Connection timed out")
+        "error" => "OCR Error: " . ($curl_error ?: "HTTP $http_code - No text found"),
         "debug_info" => $debug ? $debug_info : null
     ]);
     exit;
@@ -384,7 +399,14 @@ $response = [
     "success" => true,
     "data" => $extracted_data,
     "raw" => $raw_text,
-    "source" => $source
+    "source" => $source,
+    "meta" => [
+        "detected_type" => $id_type,
+        "fields_count" => count(array_filter($extracted_data)),
+        "hits_map" => [
+            $id_type => 1 // Tells the frontend that the ID type was matched
+        ]
+    ]
 ];
 
 if ($avg_confidence > 0) {
