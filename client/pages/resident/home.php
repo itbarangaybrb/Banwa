@@ -1,29 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-
-    <title>Home page</title>
-</head>
-<body>
-    <h1>Home page</h1>
-    <p id="userStatus"></p>
-    <a href="../resident/about_us.php">About Us</a><br>
-    <a href="../resident/contact_us.php">Contact Us</a><br>
-    <a href="../resident/profile.php">Profile</a><br>
-    <a href="../resident/status.php">status</a><br>
-    <a href="../resident/construction_app.php">Construction Application</a><br>
-    <a href="../resident/utilities_app.php">Utilities Application</a><br>
-    <a href="../resident/business_app.php">Business Application</a><br>
-    <button id="signoutBtn">Logout</button>
-
-    <script type="module" src="../../scripts/auth/signout.js"></script>
-</body>
-</html> -->
-
 <?php
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 
@@ -115,45 +89,121 @@ include '../../pages/resident/_layout/nav.php';
         </div>
     </section>
 
-    <!-- Quick Action Section -->
-    <section data-theme="white" class="quick-action-section">
+    <section data-theme="white" class="services-section">
         <div class="cont">
-            <div class="quick-action-container">
-                <!-- Title -->
-                <div class="quick-align">
-                    <h2>CHOOSE FROM THE FOLLOWING SERVICES</h2>
+            <!-- Section Header with 24/7 prominence -->
+            <div class="services-header">
+                <div class="header-badge">
+                    <span class="live-chip">
+                        <span class="pulse-dot"></span>
+                        ONLINE 24/7
+                    </span>
+                    <h2>Barangay Services</h2>
                 </div>
-                
-                <!-- Action Buttons Grid -->
-                <div class="action-buttons-grid">
-                    <!-- Construction Button -->
-                    <a href="construction_app.php" class="action-btn construction-btn">
-                        <div class="btn-icon">
+                <p class="header-description">All services available online 24 hours a day, 7 days a week.</p>
+            </div>
+
+            <!-- 3 Horizontal Cards - These should link to actual pages -->
+            <div class="services-horizontal">
+                <!-- Card 1: Construction Clearance -->
+                <a href="construction_app.php" class="service-h-card" id="constructionCard">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2 20L22 20" stroke-linecap="round"/>
+                                <rect x="4" y="9" width="16" height="11" rx="1" stroke="currentColor"/>
+                                <path d="M8 6L12 3L16 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                         </div>
-                        <span class="btn-text">Construction</span>
-                    </a>
+                    </div>
                     
-                    <!-- Business Clearance Button -->
-                    <a href="business_app.php" class="action-btn business-btn">
-                        <div class="btn-icon">
+                    <h3>Construction Clearance</h3>
+                    <p class="card-subtitle">Home Repairs, Renovations, and New Construction</p>
+
+                    <div class="card-preview-content">
+                        <div class="preview-header">
+                            <span class="preview-title">Requirements</span>
                         </div>
-                        <span class="btn-text">Business Clearance</span>
-                    </a>
+                        <ul class="preview-list">
+                            <li>Construction Information</li>
+                            <li>Contractor Information</li>
+                            <li>Blueprint Document</li>
+                        </ul>
+                        <div class="preview-footer">
+                            <span class="preview-cta">Proceed →</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 2: Business Clearance -->
+                <a href="business_app.php" class="service-h-card" id="businessCard">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="7" width="18" height="14" rx="2" stroke="currentColor"/>
+                                <path d="M16 3L16 7" stroke="currentColor" stroke-linecap="round"/>
+                                <path d="M8 3L8 7" stroke="currentColor" stroke-linecap="round"/>
+                                <path d="M8 13L16 13" stroke="currentColor" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
                     
-                    <!-- Utilities Button -->
-                    <a href="utilities_app.php" class="action-btn utilities-btn">
-                        <div class="btn-icon">
+                    <h3>Business Clearance</h3>
+                    <p class="card-subtitle">New businesses, Renewwals, and Closure</p>
+
+                    <div class="card-preview-content">
+                        <div class="preview-header">
+                            <span class="preview-title">Requirements</span>
                         </div>
-                        <span class="btn-text">Utilities</span>
-                    </a>
+                        <ul class="preview-list">
+                            <li>SEC (Securities and Exchange Commission) Registration</li>
+                            <li>DTI (Department of Trade and Industry) Registration</li>
+                            <li>TCT (Transfer Certificate of Title)</li>
+                            <li>Lease Contract</li>
+                        </ul>
+                        <div class="preview-footer">
+                            <span class="preview-cta">Proceed →</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card 3: Utilities Services -->
+                <a href="utilities_app.php" class="service-h-card" id="utilitiesCard">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="5" stroke="currentColor"/>
+                                <path d="M12 2L12 7" stroke="currentColor" stroke-linecap="round"/>
+                                <path d="M12 17L12 22" stroke="currentColor" stroke-linecap="round"/>
+                                <path d="M22 12L17 12" stroke="currentColor" stroke-linecap="round"/>
+                                <path d="M7 12L2 12" stroke="currentColor" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
                     
-                    <!-- Report Button -->
-                    <!-- <a href="incidentReport.php" class="action-btn report-btn">
-                        <div class="btn-icon">
+                    <h3>Utilities Services</h3>
+                    <p class="card-subtitle">Water, Electricity, Internet and Billing Inquiries</p>
+
+                    <div class="card-preview-content">
+                        <div class="preview-header">
+                            <span class="preview-title">Services</span>
                         </div>
-                        <span class="btn-text">Report</span>
-                    </a> -->
-                </div>
+                        <ul class="preview-list">
+                            <li>Water connection</li>
+                            <li>Electrical repair</li>
+                            <li>Internet Connectivity</li>
+                            <li>Billing inquiries</li>
+                        </ul>
+                        <div class="preview-footer">
+                            <span class="preview-cta">Proceed →</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 24/7 Notice -->
+            <div class="always-open-note">
+                <span><strong>Applications submitted outside office hours will be processed the next business day.</strong></span>
             </div>
         </div>
     </section>

@@ -138,7 +138,7 @@
                         </div>
                         
                         <h3>Construction Clearance</h3>
-                        <p class="card-subtitle">For home repairs, renovations, and new construction</p>
+                        <p class="card-subtitle">Home Repairs, Renovations, and New Construction</p>
 
                         <div class="card-preview-content">
                             <div class="preview-header">
@@ -170,7 +170,7 @@
                         </div>
                         
                         <h3>Business Clearance</h3>
-                        <p class="card-subtitle">Permits for new businesses and renewals</p>
+                        <p class="card-subtitle">New businesses, Renewwals, and Closure</p>
 
                         <div class="card-preview-content">
                             <div class="preview-header">
@@ -205,7 +205,7 @@
                         </div>
                         
                         <h3>Utilities Services</h3>
-                        <p class="card-subtitle">Water, electricity, and emergency reports</p>
+                        <p class="card-subtitle">Water, Electricity, Internet, and Billing Inquiries</p>
 
                         <div class="card-preview-content">
                             <div class="preview-header">
@@ -214,7 +214,7 @@
                             <ul class="preview-list">
                                 <li>Water connection</li>
                                 <li>Electrical repair</li>
-                                <li>Emergency reports</li>
+                                <li>Internet Connectivity</li>
                                 <li>Billing inquiries</li>
                             </ul>
                             <div class="preview-footer">
