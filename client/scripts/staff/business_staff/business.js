@@ -224,7 +224,7 @@ function filterApplications() {
         row.innerHTML = `
             <td>${app.id}</td>
             <td style="font-weight:600;">${app.business_name}</td>
-            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
             <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
             <td>${app.payment_status || 'Unpaid'}</td>
             <td>

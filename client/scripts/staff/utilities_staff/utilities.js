@@ -206,7 +206,7 @@ function filterApplications() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
             <td>${app.owner_contact_no || 'N/A'}</td>
             <td>${app.provider || 'N/A'}</td>
             <td>${app.nature_of_work || 'N/A'}</td>
@@ -307,7 +307,7 @@ function loadProcessTable() {
                 <tr>
                     <td>${app.id}</td>
                     <td>${app.nature_of_work || 'N/A'}</td>
-                    <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+                    <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
                     <td>${app.provider}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>

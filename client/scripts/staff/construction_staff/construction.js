@@ -211,7 +211,7 @@ function filterApplications() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
             <td>${app.nature_of_activity || 'N/A'}</td>
             <td>${app.contractor_name || 'N/A'}</td>
             <td>${app.contractor_contact_number || 'N/A'}</td>
