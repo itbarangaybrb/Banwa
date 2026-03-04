@@ -1420,7 +1420,7 @@ tbody tr:last-child td {
 /* Make the icon-only buttons smaller/circular */
 .action-buttons .btn-info,
 .action-buttons .btn-delete {
-    padding: 8px 10px;
+    /* padding: 8px 10px; */
     border-radius: 4px;
     font-size: 14px;
 }
@@ -1433,11 +1433,11 @@ tbody tr:last-child td {
 }
 
 /* sidebar expanded pushes main content */
-.side_nav.expanded ~ .main-wrapper,
+/* .side_nav.expanded ~ .main-wrapper,
 .side_nav.expanded + .main-wrapper {
     margin-left: 325px;
     width: calc(100% - 325px);
-}
+} */
 
 /* - Inside business.css */
 
@@ -1497,9 +1497,9 @@ tbody tr:last-child td {
 }
 
 /* When sidebar is expanded */
-body:has(.side_nav.expanded) #mapping {
+/* body:has(.side_nav.expanded) #mapping {
     left: 325px;
-}
+} */
 
 /* Override map_staff.css: remove top:70px and left:70px offset - fill full space */
 .map-wrapper {
@@ -1623,6 +1623,7 @@ body:has(.side_nav.expanded) #mapping {
     z-index: 10;
     background: #f4f4f4;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    left: 70px;
 }
 
 /* Page header (Dashboard title etc.) stays fixed too */
@@ -1681,7 +1682,7 @@ body:has(.side_nav.expanded) #mapping {
 
     margin-top: 80px;
     margin-bottom: 22px;
-    margin-left: 2%;
+    margin-inline: 2%;
     padding-bottom: 18px;
     border-bottom: 1px solid #e5e7eb;
 }
@@ -1700,7 +1701,7 @@ body:has(.side_nav.expanded) #mapping {
     margin: 3px 0 0 0;
 }
 /* Button group consistency (fixes your button styling issue) */
-.button-group {
+/* .button-group {
     margin-top: 40px;
     margin-bottom: 30px;
     padding-top: 25px;
@@ -1714,7 +1715,7 @@ body:has(.side_nav.expanded) #mapping {
     padding: 14px 24px;
     font-weight: 600;
     border-radius: 6px;
-}
+} */
 .section-title {
     font-size: 20px;
     font-weight: 600;
