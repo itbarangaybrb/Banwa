@@ -274,3 +274,21 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [01-Mar-2026 14:45:17 UTC] OCR job queued for application 30 with 1 files
 [01-Mar-2026 14:45:17 UTC] CR1 Check - Has file upload: No
 [01-Mar-2026 14:45:17 UTC] CR1 Check - Has file upload: No
+[04-Mar-2026 05:58:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[04-Mar-2026 05:59:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[04-Mar-2026 06:00:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[04-Mar-2026 06:01:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[04-Mar-2026 06:02:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^
+[04-Mar-2026 06:03:59 UTC] Fetch Error in handleFetchApplications: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_applications" does not exist
+LINE 2:                 FROM construction_applications ca
+                             ^

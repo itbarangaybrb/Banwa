@@ -332,7 +332,35 @@ function showReceiptModal(app) {
 
 function printReceiptWindow(app) {
     const w = window.open('', 'PRINT', 'height=600,width=400');
-    w.document.write('<html><head><title>Receipt</title><style>body{font-family:monospace;padding:20px;text-align:center;}.header{border-bottom:2px dashed;padding-bottom:10px;}.row{display:flex;justify-content:space-between;margin:5px 0;}</style></head><body><div class="header"><h3>OFFICIAL RECEIPT</h3><p>OR: ' + app.or_number + '</p><p>Date: ' + app.payment_date + '</p></div><div class="row"><span>Payer:</span><span>' + app.first_name + ' ' + app.last_name + '</span></div><div class="row"><span>Amount:</span><span>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</span></div><p style="margin-top:20px;font-size:12px;">Thank you</p></body></html>');
+    w.document.write(`
+        <html>
+        <head>
+            <title>Receipt - ${app.or_number}</title>
+            <style>
+                body { font-family: 'Courier New', monospace; padding: 20px; text-align: center; }
+                .header { border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 20px;}
+                .row { display: flex; justify-content: space-between; margin-bottom: 5px; text-align: left; }
+                .total { border-top: 2px dashed #000; padding-top: 10px; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h3>OFFICIAL RECEIPT</h3>
+                <p>OR/Ref: ${app.or_number}</p>
+                <p>Date: ${app.payment_date}</p>
+            </div>
+            <div class="details">
+                <div class="row"><span>Payer:</span> <span>${app.first_name} ${app.last_name}</span></div>
+                <div class="row"><span>Method:</span> <span>${app.payment_method}</span></div>
+                <div class="row"><span>Nature:</span> <span>${app.nature_of_business || 'Business Tax'}</span></div>
+            </div>
+            <div class="total">
+                <div class="row"><span>TOTAL PAID:</span> <span>PHP ${parseFloat(app.amount_paid).toFixed(2)}</span></div>
+            </div>
+            <p style="margin-top:20px; font-size:12px;">Thank you for your payment.</p>
+        </body>
+        </html>
+    `);
     w.document.close();
     setTimeout(() => { w.print(); w.close(); }, 500);
 }
