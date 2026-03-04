@@ -198,6 +198,18 @@ function filterApplications() {
         else if (app.status === 'Complied') {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
+        else if (app.status === 'Approved' && !app.or_number) {
+            actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Generate Permit</button>`;
+        }
+        else if (app.status === 'Approved' && app.or_number) {
+            actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
+        }
+        else if (app.status === 'Disapproved') {
+            actionBtn = ``;
+        }
+        else if (app.status === 'Cancelled') {
+            actionBtn = ``;
+        }
         else {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
@@ -292,17 +304,41 @@ function loadProcessTable() {
         });
 
         if (actionable.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications to process.</td></tr>';
+            // Fixed colspan from 5 to 6 to match the number of <td> elements
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No applications to process.</td></tr>';
             return;
         }
 
         actionable.forEach(app => {
             let btnText = "Update";
             let btnClass = "secondary";
+            let buttonsHtml = "";
 
-            if (app.status === 'Pending') { btnClass = "primary"; }
-            else if (app.status === 'Complied') { btnText = "Finalize Approval"; btnClass = "success"; }
+            // 1. Determine primary action button based on status
+            if (app.status === 'Pending') { 
+                btnClass = "primary"; 
+            } else if (app.status === 'Complied') { 
+                btnText = "Finalize Approval"; 
+                btnClass = "success"; 
+            } else if (app.status === 'Approved' || app.status === 'Completed') {
+                btnText = "View Details"; 
+                btnClass = "info";
+            }
 
+            // 2. Build the primary update/action button
+            buttonsHtml += `<button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>`;
+
+            // 3. Conditionally add the "Generate Permit" button for valid statuses
+            // Add or remove statuses in this array based on your specific workflow
+            if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
+                buttonsHtml += `
+                    <button class="btn-primary" onclick="generateUtilitiesPermit(${app.id})" style="margin-left: 5px;">
+                        Generate Permit
+                    </button>
+                `;
+            }
+
+            // 4. Inject into the table row
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
@@ -310,13 +346,137 @@ function loadProcessTable() {
                     <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
                     <td>${app.provider}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                    <td>
-                        <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                    </td>
+                    <td>${buttonsHtml}</td>
                 </tr>
             `;
         });
     });
+}
+
+//Generate Utility Permit
+function generateUtilitiesPermit(appId) {
+    const app = applications.find(a => a.id == appId);
+    if (!app) {
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
+        return;
+    }
+
+    const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`.trim();
+    const address = app.address || '_______________________';
+    const or_number = app.or_number || 'N/A';
+    const date_issued = app.payment_date || app.application_date || getCurrentDateString();
+
+    // === DATE OF WORK ===
+    const workDate = app.dateOfWork ? 
+        new Date(app.dateOfWork).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' }) 
+        : "_________________";
+
+    const currentYear = new Date().getFullYear();
+    const permitNumber = `BRB-UP-${currentYear}-${String(app.id).padStart(4, '0')}`;
+    const date = new Date(date_issued);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const yearIssued = date.getFullYear();
+
+    const CAPTAIN_NAME = "MARIA DELA CRUZ";
+    const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
+
+    const nature = (app.nature_of_application || '').toLowerCase();
+    const isInstall = nature.includes('install') ? 'checked' : '';
+    const isRepair = (nature.includes('repair') || nature.includes('maintenance')) ? 'checked' : '';
+    const isDisconnect = nature.includes('disconnect') ? 'checked' : '';
+    const isReconnect = nature.includes('reconnect') ? 'checked' : '';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
+        .document-container { width: 8.5in; min-height: 11in; margin:0 auto; background:white; padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative; }
+        header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
+        .logo img { width:105px; }
+        .header-center { text-align:center; flex:1; padding:0 20px; }
+        .header-center h1 { font-size:23px; margin:6px 0 3px; text-transform:uppercase; letter-spacing:1px; }
+        .header-center h2 { font-size:15px; margin:0; font-weight:bold; }
+        .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
+        .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
+        .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
+        .sidebar { background:#e8f0e0; padding:20px 18px; border:1.5px solid #c5d9b8; font-size:13px; line-height:1.65; }
+        .main-body { font-size:15.2px; line-height:1.75; }
+        .fill-line { border-bottom:1px solid #000; display:inline-block; min-width:200px; text-align:center; font-weight: bold; }
+        .gate-pass-highlight { border: 2px dashed #333; padding: 15px; margin: 20px 0; text-align: center; }
+        .checkbox-option { margin:6px 0; font-weight:600; text-transform: uppercase; }
+        .checkbox-option::before { content:"☐ "; }
+        .checkbox-option.checked::before { content:"☑ "; }
+        .signature-area { margin-top:70px; display:flex; justify-content:space-between; }
+        .signature-block { width:46%; text-align:center; }
+        .signature-line { border-bottom:1px solid black; margin:8px auto 4px auto; width:90%; padding-top:25px; font-weight:bold; text-transform:uppercase; }
+        .seal-note { text-align:center; margin-top:55px; font-size:12.8px; font-style:italic; color:#222; }
+        @media print { body { background:white; padding:0; } .document-container { box-shadow:none; padding:40px 48px; } }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <header>
+            <div class="logo"><img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Logo"></div>
+            <div class="header-center">
+                <div>Republic of the Philippines</div>
+                <div>Quezon City • District III</div>
+                <h1>BARANGAY BLUE RIDGE B</h1>
+                <h2>OFFICE OF THE PUNONG BARANGAY</h2>
+            </div>
+            <div class="clearance-no">Permit No.<br><span style="font-size:15.5px;">${permitNumber}</span></div>
+        </header>
+
+        <div class="doc-title">UTILITIES PERMIT & GATE PASS</div>
+
+        <div class="content-wrapper">
+            <div class="sidebar">
+                <strong>HON. ${CAPTAIN_NAME}</strong><br><span>Punong Barangay</span><br><br>
+                <strong>KAGAWADS</strong><br>HON. [KAGAWAD 1]<br>HON. [KAGAWAD 2]<br>HON. [KAGAWAD 3]<br>HON. [KAGAWAD 4]<br>HON. [KAGAWAD 5]<br>HON. [KAGAWAD 6]<br>HON. [KAGAWAD 7]<br><br>
+                <strong>MR. ${SECRETARY_NAME}</strong><br><span>Barangay Secretary</span>
+            </div>
+
+            <div class="main-body">
+                <strong>TO THE SECURITY PERSONNEL:</strong><br><br>
+                <p>This serves as an official entry clearance for utility personnel to conduct works at <strong>${address}</strong> for the account of <strong>${grantee_name}</strong>.</p>
+                
+                <div class="gate-pass-highlight">
+                    <span style="font-size: 14px; text-transform: uppercase; color: #555;">Authorized Date of Entry:</span><br>
+                    <span style="font-size: 20px; font-weight: bold;">${workDate}</span>
+                </div>
+
+                <strong>Nature of Utility Work:</strong>
+                <div style="margin: 10px 0 20px 40px;">
+                    <div class="checkbox-option ${isInstall}">INSTALLATION</div>
+                    <div class="checkbox-option ${isRepair}">REPAIR / MAINTENANCE</div>
+                    <div class="checkbox-option ${isDisconnect}">PERMANENT DISCONNECTION</div>
+                    <div class="checkbox-option ${isReconnect}">RECONNECTION</div>
+                </div>
+
+                <div style="text-align:center;">
+                    Issued this <span class="fill-line" style="min-width:40px;">${day}</span> day of <span class="fill-line" style="min-width:100px;">${month}</span>, ${yearIssued}.
+                </div>
+            </div>
+        </div>
+
+        <div class="signature-area">
+            <div class="signature-block">
+                <div>Attested by:</div><div class="signature-line">${SECRETARY_NAME}</div><div>Barangay Secretary</div>
+            </div>
+            <div class="signature-block">
+                <div>Approved by:</div><div class="signature-line">${CAPTAIN_NAME}</div><div>Punong Barangay</div>
+            </div>
+        </div>
+        <div class="seal-note">*** THIS DOCUMENT IS NOT VALID WITHOUT THE OFFICIAL DRY SEAL ***</div>
+    </div>
+</body>
+</html>`;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
 }
 
 let chart1Instance;
