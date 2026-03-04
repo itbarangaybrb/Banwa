@@ -104,11 +104,6 @@
             </div>
         </section>
 
-        <!-- <section data-theme="blue">
-            <h1>Updates</h1>
-                <p>Your gateway to convenient access and management of municipal services.</p>
-        </section> -->
-
         <section data-theme="white" class="services-section">
             <div class="cont">
                 <!-- Section Header with 24/7 prominence -->
