@@ -205,19 +205,19 @@ function filterApplications() {
         let actionBtn = '';
 
         if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+            actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+            actionBtn = `<button class="btn btn-warning" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
         }
         else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+            actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
+            actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
         }
         else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+            actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
         const row = document.createElement('tr');
@@ -230,7 +230,7 @@ function filterApplications() {
             <td>
                 <div class="action-buttons">
                     ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
                 </div>
             </td>
         `;
@@ -1123,7 +1123,7 @@ function viewDetails(appId) {
             // Re-run button (always visible)
             ocrHtml += `
                     <div style="margin-top:8px; text-align:right;">
-                        <button class="btn-secondary" id="rerunOcrBtn-${appId}">Re-run OCR</button>
+                        <button class="btn btn-secondary" id="rerunOcrBtn-${appId}">Re-run OCR</button>
                     </div>
                 </div>
             `;

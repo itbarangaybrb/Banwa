@@ -209,6 +209,7 @@ body {
     overflow: hidden !important;
     border: none !important;
 } */
+
  .top-header {
     position: fixed;
     top: 0;
@@ -470,6 +471,7 @@ button {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-wrap: nowrap;
 }
 
 .btn-primary {
@@ -755,19 +757,20 @@ tr:hover {
 
 /* SEARCH BOX */
 .search-box {
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
     display: flex;
     gap: 10px;
     width: 100%;
 }
 
 .search-box input {
-    flex: 0 1 300px;
-    max-width: 100%;
+    /* flex: 0 1 300px; */
+    /* max-width: 100%; */
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 1em;
+    width: 100%;
 }
 
 .search-box input:focus {
@@ -1354,9 +1357,9 @@ h2 {
 }
 
 /* When sidebar is expanded */
-body:has(.side_nav.expanded) #mapping {
+/* body:has(.side_nav.expanded) #mapping {
     left: 325px;
-}
+} */
 
 /* Override map_staff.css top:70px — fill full height from top */
 .map-wrapper {
@@ -1389,7 +1392,7 @@ body:has(.side_nav.expanded) #mapping {
 .main-wrapper {
     position: absolute;
     top: 0;
-    left: 0;
+    left: 70px;
     right: 0;
     bottom: 0;
     height: 100vh !important;
@@ -1398,9 +1401,9 @@ body:has(.side_nav.expanded) #mapping {
 }
 
 /* When sidebar expanded */
-.side_nav.expanded ~ .main-wrapper {
+/* .side_nav.expanded ~ .main-wrapper {
     left: 325px;
-}
+} */
 
 /* Tab base - flex column */
 .tab-pane {
@@ -1449,7 +1452,7 @@ body:has(.side_nav.expanded) #mapping {
     margin-bottom: 20px;
     padding: 0 30px 15px 30px;
     border-bottom: 1px solid #e5e7eb;
-    margin-left: 70px; /* align with content */
+    /* margin-left: 70px; align with content */
     margin-top: 20px;
 }
 
@@ -1463,7 +1466,8 @@ body:has(.side_nav.expanded) #mapping {
 
 /* Management: table-responsive scrolls */
 #management .table-responsive {
-    margin-left: 70px; /* align with content */
+    /* margin-left: 70px; align with content */
+    margin-inline: 30px;
     flex: 1 1 auto;
     min-height: 0;
     padding: 0;
@@ -1471,14 +1475,14 @@ body:has(.side_nav.expanded) #mapping {
 
 /* Management: search box non-scrolling */
 #management .search-box {
-    margin-left: 70px; /* align with content */
+    /* margin-left: 70px; align with content */
     flex-shrink: 0;
     padding: 0 30px 15px 30px;
 }
 
 /* Create: createForm scrolls */
 #create #createForm {
-    margin-left: 70px; /* align with content */
+    /* margin-left: 70px; align with content */
     flex: 1 1 auto;
     overflow-y: auto !important;
     min-height: 0;
@@ -1538,22 +1542,22 @@ body:has(.side_nav.expanded) #mapping {
     transition: margin-left 0.35s ease;
 }
 
-.side_nav.expanded ~ .main-wrapper,
+/* .side_nav.expanded ~ .main-wrapper,
 .side_nav.expanded + .main-wrapper {
     margin-left: 325px !important;
     width: calc(100% - 325px) !important;
-}
+} */
 
 /* 3. Top header follows sidebar perfectly */
 .top-header {
     left: 70px !important;
-    width: calc(100% - 70px) !important;
+    /* width: calc(100% - 70px) !important; */
     transition: left 0.35s ease;
 }
 
-.side_nav.expanded ~ .main-wrapper .top-header,
-.side_nav.expanded + .main-wrapper .top-header {
-    width: calc(100% - 325px) !important;
+.side_nav.expanded~.main-wrapper .modal-overlay {
+    background: rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
 }
 
 /* 4. FIX TABLE SQUEEZE (this was the main problem) */

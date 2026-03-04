@@ -65,6 +65,7 @@
     </aside>
 
     <!-- Main Content -->
+    <main class="main-wrapper">
         <div class="staff-content">
             <div id="alert-container"></div>
 
@@ -296,20 +297,20 @@
                     </div>
                 </header>
                 <div class="page-header">
-                    <h2>Review Utilities Applications</h2>
+                    <h1>Review Utilities Applications</h1>
                     <p class="form-description">Search, filter, and manage all utilities applications</p>
                 </div>
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
-                     <select id="statusApplications" style="width: max-content;">
+                    <select id="statusApplications" style="width: max-content;">
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
                         <option value="Pre-approved">Pre-approved</option>
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
-                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: 710px;">Export As PDF</button>
+                    <button class="buttons" type="button" data-modal="exportApplicationsTable">Export As PDF</button>
                 </div>
 
                 <div class="table-responsive">
@@ -558,7 +559,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="../../../scripts/staff/utilities_staff/utilities.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

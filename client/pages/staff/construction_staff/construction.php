@@ -308,7 +308,7 @@
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
-                    <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: 800px;">Export As PDF</button>
+                    <button class="buttons" type="button" data-modal="exportApplicationsTable">Export As PDF</button>
                 </div>
 
                 <div class="table-responsive">

@@ -312,7 +312,7 @@
                     <option value="Approved">Approved</option>
                     <option value="Rejected">Rejected</option>
                 </select>
-                <button class="buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
+                <button class="btn buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
             </div>
 
             <div class="table-responsive">
@@ -545,7 +545,7 @@
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
                 <div class="form-group">
-                    <button type="button" class="map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
+                    <button type="button" class="btn map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
                     <div class="map-preview" id="map-preview-2" style="margin-top:10px;display:none;height:200px;"></div>
                 </div>
 
@@ -609,13 +609,13 @@
                 <div class="verification-container" id="verificationSection" style="display:none; margin:25px 0; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
                     <label class="label" style="margin-bottom:12px; display:block;">📋 OCR Document Verification</label>
                     <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
-                    <button type="button" id="verifyDocumentsBtn" class="btn-secondary" style="width:100%; padding:12px;">Re-Verify Documents with OCR</button>
+                    <button type="button" id="verifyDocumentsBtn" class="btn btn-secondary" style="width:100%; padding:12px;">Re-Verify Documents with OCR</button>
                     <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">Auto-checks 1 second after upload. Business name is also cross-checked.</small>
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn-primary">Submit Application</button>
-                    <button type="reset" class="btn-secondary">Clear Form</button>
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                    <button type="reset" class="btn btn-secondary">Clear Form</button>
                 </div>
             </form>
         </div>
@@ -671,7 +671,7 @@
                     <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                         <option value="">-- Select Business Application --</option>
                     </select>
-                    <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
+                    <button onclick="loadSummarySelect()" class="btn btn-secondary" title="Refresh List">Refresh</button>
                 </div>
             </div>
 
@@ -741,8 +741,8 @@
                     </div>
                     <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                     <div class="button-group">
-                        <button type="submit" class="btn-primary">Update Status</button>
-                        <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Status</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
                     </div>
                 </form>
             </div>
