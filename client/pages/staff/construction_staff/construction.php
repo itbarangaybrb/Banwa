@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
 if ($_SESSION['role_id'] != 5) {
     header("Location: /Banwa/client/pages/auth/signin.php");
     exit;
 }
+
+$full_name = getCurrentUserName();
 ?>
 
 <!DOCTYPE html>
@@ -267,12 +270,7 @@ if ($_SESSION['role_id'] != 5) {
                         <h1>Construction Application Management</h1>
                     </div>
                     <div class="header-right">
-                        <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
-                        </div>
+                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                     </div>
                 </header>
                 <div class="page-header">
@@ -314,10 +312,7 @@ if ($_SESSION['role_id'] != 5) {
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -373,10 +368,7 @@ if ($_SESSION['role_id'] != 5) {
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -599,10 +591,7 @@ if ($_SESSION['role_id'] != 5) {
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -625,29 +614,29 @@ if ($_SESSION['role_id'] != 5) {
             </div>
         </div>
 
-            <!-- Modals -->
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Application Details</h2>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <div id="modalBody"></div>
+        <!-- Modals -->
+        <div id="detailsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Application Details</h2>
+                    <button class="close-btn">&times;</button>
                 </div>
+                <div id="modalBody"></div>
             </div>
+        </div>
 
-            <div id="updateModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Update Application Status</h2>
-                        <button class="close-btn">&times;</button>
+        <div id="updateModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Update Application Status</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="updateForm" onsubmit="submitUpdate(event)">
+                    <input type="hidden" id="updateAppId" name="id">
+                    <div class="form-group">
+                        <label>Current Status:</label>
+                        <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
                     </div>
-                    <form id="updateForm" onsubmit="submitUpdate(event)">
-                        <input type="hidden" id="updateAppId" name="id">
-                        <div class="form-group">
-                            <label>Current Status:</label>
-                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
-                        </div>
 
                     <div class="form-group">
                         <label for="newStatus">New Status *</label>
@@ -679,14 +668,14 @@ if ($_SESSION['role_id'] != 5) {
                         </div>
                     </div>
 
-                        <div class="button-group">
-                            <button type="submit" class="btn-primary">Update Status</button>
-                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Update Status</button>
+                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
     </div>
 
     <script src="../../../scripts/staff/construction_staff/construction.js"></script>
