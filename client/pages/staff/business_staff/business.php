@@ -757,7 +757,7 @@
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 
-    <script type="module" src="../../../scripts/utils/archives.js"></script>
+    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
