@@ -184,28 +184,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ======================
-    // SERVICE CARDS - OPEN MODAL (UPDATED)
+    // SERVICE CARDS - OPEN MODAL (FIXED)
     // ======================
-    document.addEventListener('DOMContentLoaded', function() {
+    // Only run this code if the auth modal exists on the page
+    const authModal = document.getElementById('authModal');
+
+    if (authModal) {
         const serviceCards = document.querySelectorAll('.service-h-card');
-        const authModal = document.getElementById('authModal');
         const getStartedBtn = document.getElementById('getStartedBtn');
         
-        // Function to open modal (USING CLASS, NOT STYLE)
+        // Function to open modal
         function openModal() {
-            if (authModal) {
-                authModal.classList.add('show');  // Add the 'show' class
-                document.body.style.overflow = 'hidden';
-                console.log('Modal opened - show class added');
-            }
+            authModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            console.log('Modal opened - show class added');
         }
         
         // Function to close modal
         function closeModal() {
-            if (authModal) {
-                authModal.classList.remove('show');  // Remove the 'show' class
-                document.body.style.overflow = '';
-            }
+            authModal.classList.remove('show');
+            document.body.style.overflow = '';
         }
         
         // Get Started button
@@ -217,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         serviceCards.forEach((card) => {
             card.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 openModal();
             });
         });
@@ -228,14 +227,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Click outside to close
-        if (authModal) {
-            authModal.addEventListener('click', function(e) {
-                if (e.target === authModal) {
-                    closeModal();
-                }
-            });
-        }
-    });
+        authModal.addEventListener('click', function(e) {
+            if (e.target === authModal) {
+                closeModal();
+            }
+        });
+    }
     
     // ======================
     // 4. SMOOTH SCROLLING (Global - only once)
@@ -387,61 +384,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ======================
-// 6. AUTH MODAL FUNCTIONALITY
-// ======================
-document.addEventListener('DOMContentLoaded', function() {
-    const authModal = document.getElementById('authModal');
-    const getStartedBtn = document.getElementById('getStartedBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    
-    if (getStartedBtn) {
-        getStartedBtn.addEventListener('click', function() {
-            if (authModal) {
-                authModal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-        });
-    }
-    
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', function() {
-            if (authModal) {
-                authModal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
-    }
-    
-    // Close modal when clicking outside
-    if (authModal) {
-        authModal.addEventListener('click', function(e) {
-            if (e.target === authModal) {
-                authModal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
-    }
-    
-    // Toggle between signup and login
-    const showSignupBtn = document.getElementById('showSignupBtn');
-    const showLoginBtn = document.getElementById('showLoginBtn');
-    const signupPanel = document.getElementById('signupPanel');
-    const loginPanel = document.getElementById('loginPanel');
-    
-    if (showSignupBtn && showLoginBtn && signupPanel && loginPanel) {
-        showSignupBtn.addEventListener('click', function() {
-            showSignupBtn.classList.add('active');
-            showLoginBtn.classList.remove('active');
-            signupPanel.classList.remove('hidden');
-            loginPanel.classList.add('hidden');
-        });
-        
-        showLoginBtn.addEventListener('click', function() {
-            showLoginBtn.classList.add('active');
-            showSignupBtn.classList.remove('active');
-            loginPanel.classList.remove('hidden');
-            signupPanel.classList.add('hidden');
-        });
-    }
-});
