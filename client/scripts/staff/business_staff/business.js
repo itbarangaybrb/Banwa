@@ -208,7 +208,7 @@ function filterApplications() {
             actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+            actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
         }
         else if (app.status === 'Paid') {
             actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
@@ -1181,12 +1181,13 @@ function viewDetails(appId) {
                                     }
                                 });
                         } else {
-                                Swal.fire({
-                                        ...swalTopConfig,
-                                        icon: 'error',
-                                        title: 'OCR Failed',
-                                        text: data.message || 'Unknown error'
-                                    });                        }
+                            Swal.fire({
+                                ...swalTopConfig,
+                                icon: 'error',
+                                title: 'OCR Failed',
+                                text: data.message || 'Unknown error'
+                            });
+                        }
                     } catch (err) {
                         console.error(err);
                         Swal.fire({

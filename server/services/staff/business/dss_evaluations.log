@@ -48,3 +48,4 @@
 {"timestamp":"2026-03-02 13:33:24","application_id":118,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-03-04 09:00:09","application_id":103,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-03-04 10:17:10","application_id":104,"dss_status":"Rejected","score":3,"max_score":7,"probability":42.86,"passed_rules":3,"failed_rules":4}
+{"timestamp":"2026-03-04 12:29:23","application_id":105,"dss_status":"Pre-Approved","score":6,"max_score":7,"probability":85.71,"passed_rules":6,"failed_rules":1}

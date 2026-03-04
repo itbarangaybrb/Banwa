@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
 if ($_SESSION['role_id'] != 2) {
     header("Location: /Banwa/client/pages/auth/signin.php");
     exit;
 }
+
+$full_name = getCurrentUserName();
 ?>
 
 <!DOCTYPE html>
@@ -28,7 +31,7 @@ if ($_SESSION['role_id'] != 2) {
             Manage Users
         </h1>
 
-        <p id="userStatus"></p>
+        <?php echo htmlspecialchars($full_name); ?>
     </header>
 
     <aside class="aside">
