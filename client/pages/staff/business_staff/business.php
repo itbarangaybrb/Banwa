@@ -102,7 +102,6 @@
                         <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                             <i class="fas fa-times"></i>
                         </button>
-                        <button class="gm-search-btn" onclick="performSearch()">Search</button>
                     </div>
                     <!-- Search results appear here dynamically -->
                     <div id="search-results" class="search-results"></div>
@@ -247,11 +246,11 @@
                         </button>
                         <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                             <i class="fas fa-building"></i>
-                            <span>Business SDSS</span>
+                            <span>Business Report</span>
                         </button>
                         <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                             <i class="fas fa-hard-hat"></i>
-                            <span>Construction SDSS</span>
+                            <span>Construction Report</span>
                         </button>
                         <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
                             <i class="fas fa-exclamation-circle"></i>
@@ -259,7 +258,7 @@
                         </button>
                         <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                             <i class="fas fa-list-check"></i>
-                            <span>SDSS Rules</span>
+                            <span>Rules Summary</span>
                         </button>
                     </div>
                 </div>
