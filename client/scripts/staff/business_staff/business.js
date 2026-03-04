@@ -829,7 +829,8 @@ function submitUpdate(event) {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
-            closeModal('updateModal');
+            document.getElementById('updateModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
             Swal.fire({
                 ...swalTopConfig,
                 icon: 'success',
@@ -1385,19 +1386,6 @@ function openModal(modalId) {
     }
 }
 
-/**
- * Closes a modal dialog by removing the 'active' class
- * Restores body scrolling to enable normal page interaction
- * 
- * @param {string} modalId - The ID of the modal element to close
- */
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-}
 
 /**
  * Closes a modal dialog by removing the 'active' class
