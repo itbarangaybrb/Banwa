@@ -1721,3 +1721,15 @@ body:has(.side_nav.expanded) #mapping {
     color: #19316b;
     margin-bottom: 15px;
 }
+#verifyPaymentBtn {
+    background: linear-gradient(135deg, #f39c12, #d68910);
+    color: white;
+    min-width: 160px;
+    border: solid 2px #000;
+    padding: 14px 24px;
+    border-radius: 6px;
+    /* font-size: 1em; */
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}

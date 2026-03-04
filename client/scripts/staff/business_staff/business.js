@@ -208,7 +208,7 @@ function filterApplications() {
             actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
         }
         else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+            actionBtn = `<button class="btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
         }
         else if (app.status === 'Paid') {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
