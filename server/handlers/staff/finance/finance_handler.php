@@ -185,17 +185,26 @@ switch ($action) {
         }
         break;
 
-    case 'fetch_history':
-        // Optional: you can pass ?type=construction if you want only construction history
-        $table = getTable($type);
-
-        $stmt = $pdo->query("
-            SELECT * FROM $table 
-            WHERE payment_status = 'Paid' 
-            ORDER BY payment_date DESC
-        ");
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(["status" => "success", "data" => $data, "type" => $type]);
+case 'fetch_history':
+        // Fetch from both tables and explicitly define their application_type
+        $business_sql = "SELECT *, 'business' AS application_type FROM business_applications WHERE payment_status = 'Paid'";
+        $construction_sql = "SELECT *, 'construction' AS application_type FROM construction_applications WHERE payment_status = 'Paid'";
+        
+        $b_stmt = $pdo->query($business_sql);
+        $c_stmt = $pdo->query($construction_sql);
+        
+        $b_data = $b_stmt->fetchAll(PDO::FETCH_ASSOC);
+        $c_data = $c_stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Merge and sort by payment_date (newest first)
+        $all_data = array_merge($b_data, $c_data);
+        usort($all_data, function($a, $b) {
+            $dateA = strtotime($a['payment_date'] ?? '1970-01-01');
+            $dateB = strtotime($b['payment_date'] ?? '1970-01-01');
+            return $dateB - $dateA; // Descending order
+        });
+        
+        echo json_encode(["status" => "success", "data" => $all_data]);
         break;
 
     case 'fetch_one':

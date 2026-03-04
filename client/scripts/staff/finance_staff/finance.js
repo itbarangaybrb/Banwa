@@ -73,14 +73,15 @@ function loadPendingTable() {
                     const name = app.first_name + ' ' + app.last_name;
                     let actionButton;
                     let paymentStatusDisplay = app.payment_status || 'N/A';
+                    const appType = app.application_type || 'business';
 
                     if (app.payment_status === 'Pending Verification') {
-                        actionButton = '<button class="btn btn-verify" onclick="openVerificationModal(' + app.id + ')"><i class="fas fa-check-circle"></i> Verify</button>';
+                        actionButton = '<button class="btn btn-verify" onclick="openVerificationModal(' + app.id + ', \'' + appType + '\')"><i class="fas fa-check-circle"></i> Verify</button>';
                     } else {
-                        actionButton = '<button class="btn btn-process" onclick="openPaymentModal(' + app.id + ', ' + app.amount_due + ')"><i class="fas fa-credit-card"></i> Process</button>';
+                        actionButton = '<button class="btn btn-process" onclick="openPaymentModal(' + app.id + ', ' + app.amount_due + ', \'' + appType + '\')"><i class="fas fa-credit-card"></i> Process</button>';
                     }
 
-                    const row = '<tr><td>' + app.id + '</td><td>' + (app.application_type || 'Business') + '</td><td>' + name + '</td><td>' + (app.business_name || 'N/A') + '</td><td>PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</td><td>' + app.status + ' / ' + paymentStatusDisplay + '</td><td>' + actionButton + '<button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'pending\')"><i class="fas fa-eye"></i> View</button></td></tr>';
+                    const row = '<tr><td>' + app.id + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + name + '</td><td>' + (app.business_name || 'N/A') + '</td><td>PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</td><td>' + app.status + ' / ' + paymentStatusDisplay + '</td><td>' + actionButton + '<button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'pending\', \'' + appType + '\')"><i class="fas fa-eye"></i> View</button></td></tr>';
 
                     tbody.innerHTML += row;
                 });
@@ -113,7 +114,8 @@ function loadHistoryTable() {
                 }
                 paidApps.forEach(app => {
                     const name = app.first_name + ' ' + app.last_name;
-                    const row = '<tr><td>' + app.or_number + '</td><td>' + (app.application_type || 'Business') + '</td><td>' + app.id + '</td><td>' + name + '</td><td>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</td><td>' + app.payment_date + '</td><td><button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'paid\')"><i class="fas fa-eye"></i> View</button><button class="btn btn-receipt" onclick="generateReceipt(' + app.id + ')"><i class="fas fa-receipt"></i> Receipt</button></td></tr>';
+                    const appType = app.application_type || 'business';
+                    const row = '<tr><td>' + app.or_number + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + app.id + '</td><td>' + name + '</td><td>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</td><td>' + app.payment_date + '</td><td><button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'paid\', \'' + appType + '\')"><i class="fas fa-eye"></i> View</button><button class="btn btn-receipt" onclick="generateReceipt(' + app.id + ', \'' + appType + '\')"><i class="fas fa-receipt"></i> Receipt</button></td></tr>';
                     tbody.innerHTML += row;
                 });
             }
@@ -139,8 +141,8 @@ setInterval(() => {
     }
 }, 30000);
 
-function openVerificationModal(appId) {
-    const app = pendingApps.find(a => a.id == appId);
+function openVerificationModal(appId, appType) {
+    const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
     if (!app) return;
 
     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
@@ -162,19 +164,19 @@ function openVerificationModal(appId) {
         width: '600px'
     }).then(result => {
         if (result.isConfirmed) {
-            submitVerification(appId, 'Approved');
+            submitVerification(appId, 'Approved', appType);
         } else if (result.isDenied) {
-            submitVerification(appId, 'Rejected');
+            submitVerification(appId, 'Rejected', appType);
         }
     });
 }
 
-function submitVerification(appId, status) {
+function submitVerification(appId, status, appType) {
     const formData = new FormData();
     formData.append('action', 'verify_payment');
     formData.append('id', appId);
     formData.append('verification_action', status);
-    formData.append('type', 'business');
+    formData.append('type', appType); // Dynamically set the type
 
     Swal.fire({
         title: 'Processing...',
@@ -206,8 +208,8 @@ function submitVerification(appId, status) {
         });
 }
 
-function openPaymentModal(appId, amountDue) {
-    const app = pendingApps.find(a => a.id == appId);
+function openPaymentModal(appId, amountDue, appType) {
+    const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
     if (!app) return;
 
     const html = '<form style="text-align:left;"><div class="form-group"><label>Amount Due</label><input type="text" value="' + parseFloat(amountDue).toFixed(2) + '" disabled style="width:100%; padding:10px;"></div><div class="form-group"><label>Amount Paid *</label><input type="number" id="amountPaid" required style="width:100%; padding:10px;" step="0.01" min="0"></div><div class="form-group"><label>Payment Method *</label><select id="paymentMethod" required style="width:100%; padding:10px;" onchange="updateRefLabel()"><option>Select</option><option>Cash</option><option>GCash</option><option>Landbank</option></select></div><div class="form-group"><label id="refLabel">OR Number *</label><input type="text" id="refNumber" required style="width:100%; padding:10px;"></div><div class="form-group"><label>Date</label><input type="date" id="paymentDate" style="width:100%; padding:10px;"></div></form>';
@@ -234,7 +236,7 @@ function openPaymentModal(appId, amountDue) {
                 return false;
             }
 
-            return { amountPaid, method, refNumber, appId };
+            return { amountPaid, method, refNumber, appId, appType };
         }
     }).then(result => {
         if (result.isConfirmed) {
@@ -265,7 +267,7 @@ function submitPayment(paymentData, amountDue) {
     const formData = new FormData();
     formData.append('action', 'process_payment');
     formData.append('id', paymentData.appId);
-    formData.append('type', 'business');
+    formData.append('type', paymentData.appType); // Dynamically set the type
     formData.append('amountDue', amountDue);
     formData.append('amountPaid', paymentData.amountPaid);
     formData.append('paymentMethod', paymentData.method);
@@ -295,10 +297,10 @@ function submitPayment(paymentData, amountDue) {
         .catch(err => Swal.fire('Error', 'Network error', 'error'));
 }
 
-function generateReceipt(id) {
-    let app = paidApps.find(a => a.id == id);
+function generateReceipt(id, appType) {
+    let app = paidApps.find(a => a.id == id && a.application_type === appType);
     if (!app) {
-        fetch(API_URL + '?action=fetch_one&id=' + id + '&type=business')
+        fetch(API_URL + '?action=fetch_one&id=' + id + '&type=' + appType)
             .then(res => res.json())
             .then(data => { 
                 if (data.status === 'success') showReceiptModal(data.data);
@@ -306,6 +308,29 @@ function generateReceipt(id) {
     } else {
         showReceiptModal(app);
     }
+}
+
+function viewSummary(id, source, appType) {
+    let app;
+    if (source === 'pending') app = pendingApps.find(a => a.id == id && a.application_type === appType);
+    else app = paidApps.find(a => a.id == id && a.application_type === appType);
+
+    if (!app) return;
+
+    const businessField = appType === 'business' ? '<p><strong>Business:</strong> ' + (app.business_name || 'N/A') + '</p>' : '';
+    
+    const html = '<div style="text-align:left;"><p><strong>ID:</strong> ' + app.id + '</p><p><strong>Type:</strong> <span style="text-transform: capitalize;">' + appType + '</span></p><p><strong>Owner:</strong> ' + app.first_name + ' ' + app.last_name + '</p>' + businessField + '<p><strong>Assessment:</strong> PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</p><hr><p><strong>Amount Paid:</strong> PHP ' + parseFloat(app.amount_paid || 0).toFixed(2) + '</p></div>';
+
+    Swal.fire({
+        title: 'Details',
+        html: html,
+        icon: 'info',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#00247c',
+        background: '#f8f9fa',
+        color: '#333',
+        width: '600px'
+    });
 }
 
 function showReceiptModal(app) {
@@ -365,26 +390,6 @@ function printReceiptWindow(app) {
     setTimeout(() => { w.print(); w.close(); }, 500);
 }
 
-function viewSummary(id, source) {
-    let app;
-    if (source === 'pending') app = pendingApps.find(a => a.id == id);
-    else app = paidApps.find(a => a.id == id);
-
-    if (!app) return;
-
-    const html = '<div style="text-align:left;"><p><strong>ID:</strong> ' + app.id + '</p><p><strong>Owner:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Business:</strong> ' + (app.business_name || 'N/A') + '</p><p><strong>Assessment:</strong> PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</p><hr><p><strong>Amount Paid:</strong> PHP ' + parseFloat(app.amount_paid || 0).toFixed(2) + '</p></div>';
-
-    Swal.fire({
-        title: 'Details',
-        html: html,
-        icon: 'info',
-        confirmButtonText: 'Close',
-        confirmButtonColor: '#00247c',
-        background: '#f8f9fa',
-        color: '#333',
-        width: '600px'
-    });
-}
 
 function openPenaltyModal() {
     const html = '<form style="text-align:left;"><div><label>Year *</label><input type="number" id="penaltyYear" required style="width:100%;padding:10px;" min="2000" value="' + new Date().getFullYear() + '"></div><div style="margin-top:10px;"><label>Amount *</label><input type="number" id="penaltyAmount" required style="width:100%;padding:10px;" step="0.01" min="0"></div><div style="margin-top:10px;"><label>Description</label><textarea id="penaltyDesc" style="width:100%;padding:10px;font-family:inherit;" rows="3"></textarea></div></form>';
