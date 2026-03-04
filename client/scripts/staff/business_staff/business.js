@@ -1774,316 +1774,185 @@ function downloadSummary(appId) {
 function generateClearance(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) {
-            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
-            return;
-        }
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
+        return;
+    }
 
-    const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`;
-    const businessName = app.business_name;
+    const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`.trim();
+    const businessName = app.business_name || 'N/A';
     const or_number = app.or_number || 'N/A';
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
-    const natureOfApplication = app.nature_of_application ? app.nature_of_application.toLowerCase() : 'new';
+    // === DYNAMIC CLEARANCE NUMBER (based on app.id) ===
+    const currentYear = new Date().getFullYear();
+    const clearanceNumber = `BRB-BC-${currentYear}-${String(app.id).padStart(4, '0')}`;
 
     const date = new Date(date_issued);
     const day = date.getDate().toString().padStart(2, '0');
     const month = date.toLocaleString('en-US', { month: 'long' });
-    const year = date.getFullYear().toString().slice(-2);
+    const yearIssued = date.getFullYear();
 
     const CAPTAIN_NAME = "MARIA DELA CRUZ";
     const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
 
-    const isChecked = (type) => natureOfApplication === type ? 'checked' : '';
+    const nature = (app.nature_of_application || 'new').toLowerCase();
+    const isNew = nature.includes('new') ? 'checked' : '';
+    const isRenewal = nature.includes('renew') ? 'checked' : '';
+    const isClosure = nature.includes('closure') ? 'checked' : '';
 
     const html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Blue Ridge B - Business Clearance</title>
     <style>
-        :root {
-            --sidebar-bg: #eef7e3; 
-            --text-color: #000;
-            --logo-url: url('../../../scripts/staff/business_staff/assets/logo.png'); 
-        }
-
-        body {
-            font-family: "Times New Roman", Serif, sans-serif;
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            background-color: #f4f4f4;
-        }
-
+        body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
         .document-container {
-            width: 8.5in;
-            min-height: 11in;
-            margin: 0 auto;
-            background-color: white;
-            padding: 40px 50px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            position: relative;
-            box-sizing: border-box;
-            overflow: hidden;
+            width: 8.5in; min-height: 11in; margin:0 auto; background:white;
+            padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative;
         }
+        header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
+        .logo img { width:105px; }
+        .header-center { text-align:center; flex:1; padding:0 20px; }
+        .header-center h1 { font-size:23px; margin:6px 0 3px; text-transform:uppercase; letter-spacing:1px; }
+        .header-center h2 { font-size:15px; margin:0; font-weight:bold; }
+        .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
+        
+        .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
 
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .logo-container {
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-
-        .logo-container img {
-            width: 110px;
-            height: auto;
-        }
-
-        .header-text {
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        .header-text div { font-size: 14px; }
-        .header-text h1 { margin: 10px 0 5px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;}
-        .header-text h2 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; }
-
-        .doc-title {
-            text-align: center;
-            text-transform: uppercase;
-            font-size: 28px;
-            font-weight: bold;
-            margin: 40px 0 50px 0;
-            position: relative;
-            z-index: 2;
-            text-shadow: 2px 2px 0px white;
-        }
-
-        .content-wrapper {
-            display: grid;
-            grid-template-columns: 220px 1fr;
-            gap: 30px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .content-wrapper::before {
-            content: "";
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            height: 90%;
-            background-image: var(--logo-url);
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
-            opacity: 0.12; 
-            z-index: -1;
-        }
-
+        .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
         .sidebar {
-            background-color: var(--sidebar-bg);
-            padding: 20px 15px;
-            border: 1px solid #cddbad;
-            font-size: 13px;
-            height: fit-content;
+            background:#e8f0e0; padding:20px 18px; border:1.5px solid #c5d9b8;
+            font-size:13px; line-height:1.65;
         }
-
-        .sidebar .official-group { margin-bottom: 20px; }
-        .sidebar .name { font-weight: bold; display: block; margin-top: 12px; text-transform: uppercase;}
-        .sidebar .title { font-style: italic; display: block; font-size: 12px; }
-        .sidebar .main-title { text-align: center; font-weight: bold; margin-bottom: 20px; display: block;}
-
-        .main-body {
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .salutation {
-            font-weight: bold;
-            margin-bottom: 25px;
-            display: block;
-        }
-
+        .main-body { font-size:15.2px; line-height:1.75; }
+        
         .fill-line {
-            border-bottom: 1px solid black;
-            display: inline-block;
-            min-width: 50px;
-            padding: 0 5px;
+            border-bottom:1px solid #000; display:inline-block; min-width:260px; text-align:center;
+        }
+        .checkbox-group { margin:15px 0 25px 40px; }
+        .checkbox-option { margin:8px 0; font-weight:600; }
+        .checkbox-option::before { content:"☐ "; }
+        .checkbox-option.checked::before { content:"☑ "; }
+
+        .issue-date { margin:35px 0 25px 0; text-align:center; font-size:15.2px; }
+        
+        .signature-area {
+            margin-top:70px; display:flex; justify-content:space-between;
+        }
+        .signature-block { width:46%; text-align:center; }
+        .signature-line {
+            border-bottom:1px solid black; margin:8px auto 4px auto; width:90%; padding-top:25px;
+            font-weight:bold; text-transform:uppercase;
         }
         
-        .fill-block {
-            width: 100%;
+        .seal-note {
+            text-align:center; margin-top:55px; font-size:12.8px; font-style:italic; color:#222;
         }
-
-        .business-nature-section { margin: 20px 0; }
-        .checkbox-group { margin-left: 40px; font-weight: bold; }
-        .checkbox-option { display: block; margin: 5px 0; }
-        .checkbox-option::before { content: "☐ "; font-weight: normal;}
-        .checkbox-option.checked::before { content: "☑ "; font-weight: normal; }
-
-        .issue-date { margin-top: 30px; text-align: right; }
-        .or-details { margin-top: 30px; font-size: 14px;}
-        .or-details div { margin-bottom: 5px; }
-
-        footer {
-            margin-top: 60px;
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            z-index: 2;
-            page-break-inside: avoid;
-        }
-
-        .signature-block {
-            width: 45%;
-            text-align: center;
-        }
-
-        .attested-by { text-align: left; margin-bottom: 40px; }
-        .signature-line {
-            border-bottom: 1px solid black;
-            margin-bottom: 5px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
+        
         @media print {
-            body { background-color: white; padding: 0; }
-            .document-container {
-                width: 100%; height: auto; box-shadow: none; margin: 0; padding: 30px 40px;
-            }
-            .sidebar, .content-wrapper::before {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+            body { background:white; padding:0; }
+            .document-container { box-shadow:none; padding:40px 48px; }
         }
     </style>
 </head>
 <body>
-
     <div class="document-container">
         <header>
-            <div class="header-text">
+            <div class="logo">
+                <img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Barangay Logo">
+            </div>
+            
+            <div class="header-center">
                 <div>Republic of the Philippines</div>
-                <div>Quezon City</div>
-                <div>District III</div>
+                <div>Quezon City • District III</div>
                 <h1>BARANGAY BLUE RIDGE B</h1>
-                <h2>OFFICE OF THE BARANGAY CHAIRMAN</h2>
+                <h2>OFFICE OF THE PUNONG BARANGAY</h2>
+            </div>
+
+            <div class="clearance-no">
+                Clearance No.<br>
+                <span style="font-size:15.5px;">${clearanceNumber}</span>
             </div>
         </header>
 
         <div class="doc-title">BARANGAY BUSINESS CLEARANCE</div>
 
         <div class="content-wrapper">
-            <aside class="sidebar">
-                <div class="official-group" style="text-align: center;">
-                    <span class="name">HON. ${CAPTAIN_NAME}</span>
-                    <span class="title">Punong Barangay</span>
+            <!-- Sidebar (matches your screenshot exactly) -->
+            <div class="sidebar">
+                <strong>HON. ${CAPTAIN_NAME}</strong><br>
+                <span style="font-size:12.5px;">Punong Barangay</span><br><br>
+                
+                <strong>KAGAWADS</strong><br>
+                HON. [KAGAWAD 1]<br>
+                HON. [KAGAWAD 2]<br>
+                HON. [KAGAWAD 3]<br>
+                HON. [KAGAWAD 4]<br>
+                HON. [KAGAWAD 5]<br>
+                HON. [KAGAWAD 6]<br>
+                HON. [KAGAWAD 7]<br><br>
+                
+                <strong>MR. ${SECRETARY_NAME}</strong><br>
+                <span style="font-size:12.5px;">Barangay Secretary</span>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-body">
+                <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
+                
+                <p>This is to certify that <span class="fill-line">${grantee_name}</span> of 
+                <span class="fill-line">${businessName}</span> located at Barangay Blue Ridge B, 
+                Quezon City, has complied with all the requirements of this Barangay.</p>
+
+                <p>This clearance is hereby granted to operate or engage in the said business 
+                for the purpose of securing a Mayor’s Permit.</p>
+
+                <strong>Type of Application:</strong>
+                <div class="checkbox-group">
+                    <div class="checkbox-option ${isNew}">NEW</div>
+                    <div class="checkbox-option ${isRenewal}">RENEWAL</div>
+                    <div class="checkbox-option ${isClosure}">CLOSURE</div>
                 </div>
 
-                <span class="main-title">KAGAWADS</span>
-
-                <div class="official-group">
-                    <span class="name">HON. [KAGAWAD 1]</span>
-                    <span class="name">HON. [KAGAWAD 2]</span>
-                    <span class="name">HON. [KAGAWAD 3]</span>
-                    <span class="name">HON. [KAGAWAD 4]</span>
-                    <span class="name">HON. [KAGAWAD 5]</span>
-                    <span class="name">HON. [KAGAWAD 6]</span>
-                    <span class="name">HON. [KAGAWAD 7]</span>
+                <div class="issue-date">
+                    Issued this <span class="fill-line" style="min-width:48px;">${day}</span> 
+                    day of <span class="fill-line" style="min-width:115px;">${month}</span>, 
+                    ${yearIssued}.
                 </div>
 
-                <div class="official-group">
-                    <span class="name">HON. [SK CHAIR NAME]</span>
-                    <span class="title">S.K Chairperson</span>
+                <div style="margin-top:20px;">
+                    <strong>OR No.:</strong> <span class="fill-line">${or_number}</span><br><br>
+                    <strong>Date Issued:</strong> <span class="fill-line">${date_issued}</span>
                 </div>
-
-                <div class="official-group">
-                    <span class="name">MR. ${SECRETARY_NAME}</span>
-                    <span class="title">Brgy. Secretary</span>
-                </div>
-
-                <div class="official-group">
-                    <span class="name">MR. [TREASURER NAME]</span>
-                    <span class="title">Brgy. Treasurer</span>
-                </div>
-            </aside>
-
-            <main class="main-body">
-                <span class="salutation">TO WHOM IT MAY CONCERN:</span>
-
-                <p>
-                    This clearance is hereby granted to <span class="fill-line fill-block">${grantee_name}</span> with business address at <span class="fill-line" style="font-weight: bold;">Barangay Blue Ridge B, Quezon City</span>, to operate or engage in business trade or occupation in the vicinity of the Barangay for:
-                </p>
-
-                <div class="business-nature-section">
-                    Business Name/Trade Name: <span class="fill-line fill-block">${businessName}</span>
-                    <div class="checkbox-group">
-                        <span class="checkbox-option ${isChecked('new')}">NEW</span> 
-                        <span class="checkbox-option ${isChecked('renewal')}">RENEWAL</span> 
-						<span class="checkbox-option ${isChecked('closure')}">CLOSURE</span> 
-                    </div>
-                </div>
-
-                <p>
-                    As having been complied with the requirements of the Barangay.
-                </p>
-
-                <p>
-                    This clearance is issued upon request of the herein interested party for whatever purposes it may serve.
-                </p>
-
-                <p class="issue-date">
-                    Issued this <span class="fill-line" style="width: 50px; text-align: center;">${day}</span> day of <span class="fill-line" style="width: 100px; text-align: center;">${month}</span>, 20<span class="fill-line" style="width: 30px;">${year}</span>.
-                </p>
-
-                <div class="or-details">
-                    <div>Issued at OR No.: <span class="fill-line fill-block">${or_number}</span></div>
-                    <div>Date Issued: <span class="fill-line fill-block">${date_issued}</span></div>
-                    <div>Issued at: <span class="fill-line fill-block">Barangay Blue Ridge B Hall</span></div>
-                </div>
-            </main>
+            </div>
         </div>
 
-        <footer>
-            <div class="signature-block" style="text-align: left;">
-                <div class="attested-by">Attested by:</div>
-                <div class="signature-line">MR. ${SECRETARY_NAME}</div>
-                <div class="title">Barangay Secretary</div>
-            </div>
-
+        <div class="signature-area">
             <div class="signature-block">
-                <div class="attested-by" style="text-align: center;">Approved by:</div>
-                <div class="signature-line" style="margin-top: 40px;">HON. ${CAPTAIN_NAME}</div>
-                <div class="title">Punong Barangay</div>
+                <div>Attested by:</div>
+                <div class="signature-line">${SECRETARY_NAME}</div>
+                <div>Barangay Secretary</div>
             </div>
-        </footer>
+            <div class="signature-block">
+                <div>Approved by:</div>
+                <div class="signature-line">${CAPTAIN_NAME}</div>
+                <div>Punong Barangay</div>
+            </div>
+        </div>
+
+        <div class="seal-note">
+            *** THIS DOCUMENT IS NOT VALID WITHOUT THE OFFICIAL DRY SEAL OF THE BARANGAY ***
+        </div>
     </div>
 </body>
-</html>
-    `;
+</html>`;
 
-    const w = window.open('', '_blank', 'height=800,width=1000');
+    const w = window.open('', '_blank', 'width=1000,height=850');
     w.document.write(html);
     w.document.close();
-    w.onload = () => {
-        w.print();
-        w.onafterprint = () => w.close();
-    };
+    w.onload = () => { w.print(); };
 }
 
 
