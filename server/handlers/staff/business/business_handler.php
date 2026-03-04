@@ -326,7 +326,7 @@ function handleFetchApplications($pdo)
     try {
         $sql = "SELECT ba.* 
                 FROM business_applications ba
-                ORDER BY ba.created_at DESC";
+                ORDER BY ba.id ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 
