@@ -1,15 +1,32 @@
+/* map_staff.css — shared map overlay styles for all staff management pages */
+/* Generated from map.css — sidebar styles omitted (handled by page-specific CSS) */
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: #f4f4f4;
+  min-height: 100vh;
+  margin: 0;
+}
 
 /* ==================== GOOGLE MAPS STYLE LAYOUT ==================== */
 
 /* Full-screen map wrapper that sits beside the nav */
 .map-wrapper {
-  position: absolute;
-  top: 70px;
+  position: fixed;
+  top: 0;
   left: 70px;
   right: 0;
   bottom: 0;
   z-index: 1;
-  height: 100%;
 }
 
 /* The actual map fills the wrapper */
@@ -297,231 +314,12 @@
   color: #001a5c;
 }
 
-/* ==================== NAVIGATION BAR (OVERLAY STYLE) ==================== */
-.side_nav {
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  width: 70px;
-  background: #00247c; /* Navy blue */
-  color: white;
-  transition: 0.2s;
-  z-index: 2000;
-  box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-}
-
-/* Hover state */
-.side_nav:hover,
-.side_nav.expanded,
-.side_nav.pinned {
-  width: 280px;
-}
-
-.nav_header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  height: 70px;
-  background: #001a5c; /* Darker navy */
-  padding-left: 16px;
-  cursor: pointer;
-}
-
-.nav_logo {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: white;
-  font-size: 24px;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  user-select: none;
-}
-
-.nav_logo:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.logo_title {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-}
-
-.company_name {
-  font-size: 18px;
-  font-weight: 700;
-  cursor: default;
-  user-select: none;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* Show company name when nav is expanded/hovered/pinned */
-.side_nav:hover .company_name,
-.side_nav.expanded .company_name,
-.side_nav.pinned .company_name {
-  opacity: 1;
-}
-
-.nav_list {
-  list-style: none;
-  padding: 16px 0 70px 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.nav_list1,
-.nav_list2 {
-  list-style: none;
-}
-
-.nav_select {
-  display: flex;
-  align-items: center;
-  padding: 16px 16px;
-  text-decoration: none;
-  color: #ecf0f1;
-  transition: all 0.3s ease;
-  border-left: 3px solid transparent;
-  gap: 15px;
-  white-space: nowrap;
-  cursor: pointer;
-  position: relative;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  font-family: inherit;
-  font-size: inherit;
-}
-
-.nav_select:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-left-color: #ffffff;
-  color: white;
-}
-
-.nav_select.active {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-left-color: #ffffff;
-  color: white;
-}
-
-.nav_select_btn {
-  display: flex;
-  align-items: center;
-  padding: 16px 16px;
-  text-decoration: none;
-  color: #ecf0f1;
-  transition: all 0.3s ease;
-  border-left: 3px solid transparent;
-  gap: 15px;
-  background: none;
-  border: none;
-  width: 100%;
-  cursor: pointer;
-  font-size: inherit;
-  font-family: inherit;
-  white-space: nowrap;
-  position: relative;
-  text-align: left;
-}
-
-.nav_select_btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-left-color: #ffffff;
-  color: white;
-}
-
-.nav_select_btn.active {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-left-color: #ffffff;
-  color: white;
-  font-weight: 600;
-}
-
-.nav_icon {
-  font-size: 20px;
-  width: 24px;
-  text-align: center;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-  color: #ffffff;
-}
-
-.nav_text {
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  line-height: 1.4;
-  font-size: 14px;
-}
-
-/* Show nav text when nav is expanded/hovered/pinned */
-.side_nav:hover .nav_text,
-.side_nav.expanded .nav_text,
-.side_nav.pinned .nav_text {
-  opacity: 1;
-}
-
-/* Pin indicator */
-.nav_header::after {
-  content: '📌';
-  position: absolute;
-  right: 10px;
-  top: 25px;
-  font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  color: #ffc107;
-}
-
-.side_nav.pinned .nav_header::after {
-  opacity: 1;
-}
-
-/* (header/content/container replaced by full-screen map-wrapper layout above) */
-.time_date {
-  cursor: default;
-  user-select: none;
-  font-weight: 600;
-  font-size: 14px;
-  color: #555;
-}
-
-.user_image {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #00247c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-}
-
 /* (search-box replaced by .gm-search-box overlay above) */
 
 .highlight {
-  background-color: #e0e0e0; /* Light gray */
   font-weight: bold;
-  padding: 1px 2px;
+  background: none;
+  background-color: transparent;
 }
 
 .search-count {
@@ -653,59 +451,116 @@
 /* ==================== SUB FILTERS ==================== */
 .sub-filters {
   margin-top: 0;
-  padding: 15px;
-  background: #f8f8f8; /* Very light gray */
+  padding: 8px 10px;
+  background: #f8f8f8;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.sub-filters h4 {
-  margin-bottom: 10px;
-  color: #00247c; /* Navy blue */
-  font-size: 0.9em;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sub-filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sub-filter-btn {
+/* Top row: "All" pill + active filter label + toggle button — always visible */
+.sub-filters-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background: white;
-  border: 1px solid #cccccc;
-  border-radius: 6px;
-  color: #555555;
-  cursor: pointer;
-  font-size: 0.85em;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  flex-wrap: nowrap;
+}
+
+.sub-filter-active-label {
+  font-size: 11px;
+  color: #888;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sub-filter-btn:hover {
-  background: #f0f0f0;
-  border-color: #00247c; /* Navy blue */
-  color: #00247c; /* Navy blue */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 36, 124, 0.1);
+.sub-filter-active-label strong {
+  color: #00247c;
 }
 
-.sub-filter-btn.active {
-  background: #00247c; /* Navy blue */
-  color: white;
-  border-color: #00247c; /* Navy blue */
+/* The "Show Types" toggle button */
+.sub-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #c0c0c0;
+  border-radius: 12px;
+  color: #555;
+  cursor: pointer;
+  font-size: 11px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 36, 124, 0.3);
+  white-space: nowrap;
+  transition: all 0.18s;
+  font-family: "Inter", sans-serif;
+  flex-shrink: 0;
+}
+.sub-filter-toggle-btn:hover {
+  border-color: #00247c;
+  color: #00247c;
+  background: #f0f4ff;
+}
+.sub-filter-toggle-btn .toggle-arrow {
+  font-size: 9px;
+  transition: transform 0.2s;
+}
+.sub-filter-toggle-btn.open .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* Hidden type list — scrollable row that slides in */
+.sub-filter-expanded {
+  display: none;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: #00247c #eee;
+}
+.sub-filter-expanded.open {
+  display: flex;
+}
+
+.sub-filters h4 {
+  display: none; /* replaced by the always-visible bar */
+}
+
+.sub-filter-buttons {
+  display: none; /* only incidentSubFilterButtons uses new structure now */
+}
+
+/* Individual type buttons — more compact than before */
+.sub-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid #cccccc;
+  border-radius: 14px;
+  color: #555555;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.18s;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
+}
+.sub-filter-btn:hover {
+  background: #f0f4ff;
+  border-color: #00247c;
+  color: #00247c;
+}
+.sub-filter-btn.active {
+  background: #00247c;
+  color: white;
+  border-color: #00247c;
+  font-weight: 600;
 }
 
 /* (hazard-toggles replaced by .gm-chip--toggle overlay above) */
@@ -765,78 +620,38 @@
 }
 
 /* ==================== POPUP STYLES ==================== */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
-  border: none !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-}
-
 .leaflet-popup-content {
-  font-family: "Inter", sans-serif !important;
-  width: 320px !important;
-  max-width: 320px !important;
+  font-family: "Inter", sans-serif;
+  max-width: 420px !important;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 20px 22px 18px !important;
   margin: 0 !important;
-  padding: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
 }
 
-.leaflet-popup-tip-container {
-  margin-top: -1px;
-}
-
-.leaflet-popup-close-button {
-  position: absolute !important;
-  top: 10px !important;
-  right: 12px !important;
-  width: 26px !important;
-  height: 26px !important;
-  font-size: 18px !important;
-  line-height: 26px !important;
-  text-align: center !important;
-  color: rgba(255,255,255,0.9) !important;
-  background: rgba(0,0,0,0.2) !important;
-  border-radius: 50% !important;
-  z-index: 10 !important;
-  padding: 0 !important;
-  font-weight: 400 !important;
-  transition: background 0.2s !important;
-}
-
-.leaflet-popup-close-button:hover {
-  background: rgba(0,0,0,0.4) !important;
-  color: #fff !important;
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
 }
 
 .popup-content {
-  width: 100%;
+  max-width: 380px;
 }
 
 .popup-content h4 {
-  background: #00247c;
-  color: #fff;
-  margin: 0;
-  padding: 14px 40px 14px 16px;
-  border-bottom: none;
+  color: #00247c;
+  margin: 0 0 14px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #00247c;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   font-size: 14px;
   font-weight: 700;
-  gap: 8px;
-}
-
-.popup-content h4 span:first-child {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.popup-body {
-  padding: 14px 16px 6px;
+  line-height: 1.3;
 }
 
 .popup-section {
@@ -845,15 +660,16 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.popup-section:last-child {
+.popup-section:last-of-type {
   border-bottom: none;
   margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .popup-content p {
   margin: 5px 0;
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.5;
   color: #333333;
 }
 
@@ -861,7 +677,6 @@
   color: #00247c;
   font-weight: 600;
 }
-
 
 .household-badge,
 .business-badge,
@@ -909,44 +724,23 @@
   background: #cc0000;
 }
 
-.popup-body .view-details-btn {
+.view-details-btn {
   display: block;
-  margin: 12px 0 4px 0;
-  padding: 9px 18px;
+  margin-top: 14px;
+  padding: 10px 20px;
   background: #00247c;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
   text-decoration: none;
   width: 100%;
   text-align: center;
   font-family: "Inter", sans-serif;
-}
-
-.popup-body .view-details-btn:hover {
-  background: #001a5c;
-}
-
-.view-details-btn {
-  display: inline-block;
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: #00247c; /* Navy blue */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.95em;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  width: 100%;
-  text-align: center;
-  font-family: "Inter", sans-serif;
+  letter-spacing: 0.2px;
 }
 
 .view-details-btn:hover {
@@ -1179,7 +973,7 @@
 }
 
 .search-result-item:hover {
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
 }
 
 .search-result-item.active {
@@ -1201,15 +995,24 @@
 }
 
 .result-title {
-  font-weight: 600;
+  font-weight: 300;
   color: #333333;
   margin-bottom: 3px;
   font-size: 0.95em;
 }
 
+.result-title .highlight {
+  font-weight: 700;
+}
+
 .result-subtitle {
   color: #666666;
   font-size: 0.85em;
+  font-weight: 300;
+}
+
+.result-subtitle .highlight {
+  font-weight: 700;
 }
 
 .result-type {
@@ -1283,11 +1086,11 @@
 
 /* ==================== FLOOD POPUP ==================== */
 .flood-popup-section {
-  background: #f0f4ff;
-  padding: 8px 10px;
+  background: #f8f8f8; /* Very light gray */
+  padding: 10px;
   border-radius: 5px;
-  margin: 0 0 8px 0;
-  border-left: 4px solid #00247c;
+  margin: 10px 0;
+  border-left: 4px solid #00247c; /* Navy blue */
 }
 
 .flood-risk-high {
@@ -1557,7 +1360,7 @@
 /* ── Global popup shell ── */
 .swal2-popup {
   font-family: "Inter", sans-serif;
-  padding: 0 !important;           /* kill default padding so header touches edges */
+  padding: 0 !important;
   border-radius: 14px !important;
   overflow: hidden !important;
   max-height: 88vh !important;
@@ -1565,7 +1368,7 @@
   flex-direction: column !important;
 }
 
-/* ── Scrollable body — no padding so content fills full width ── */
+/* ── Scrollable body ── */
 .swal2-html-container {
   flex: 1 !important;
   overflow-y: auto !important;
@@ -1576,6 +1379,11 @@
   text-align: left !important;
   scrollbar-width: thin;
   scrollbar-color: #00247c #eee;
+}
+
+/* ── Detail modal inner content padding (marker + house modals) ── */
+.swal2-html-container > div[style*="text-align:left"] {
+  padding: 28px 32px 24px !important;
 }
 .swal2-html-container::-webkit-scrollbar { width: 5px; }
 .swal2-html-container::-webkit-scrollbar-track { background: #eee; }
@@ -1595,15 +1403,14 @@
 .swal2-confirm { background: #00247c !important; }
 .swal2-cancel  { background: #666 !important; }
 
-/* ── Unified modal size for ALL report / risk / SDSS / detail / affected-records modals ── */
+/* ── Unified modal size for ALL report / risk / SDSS / affected-records modals ── */
 .unified-modal-popup,
 .report-modal-popup,
 .sdss-rules-popup,
 .swal-wide {
   width: 860px !important;
   max-width: 95vw !important;
-  height: min(88vh, 640px) !important;
-  min-height: unset !important;
+  min-height: 520px !important;
 }
 
 /* ────────────────────────────────────────────────
@@ -1753,6 +1560,14 @@
 }
 .rpt-footer h4 { color: #00247c; margin: 0 0 7px 0; font-size: 12px; font-weight: 700; }
 .rpt-footer ul { margin: 0; padding-left: 16px; color: #555; line-height: 1.7; }
+
+
+/* SDSS Rules / last-action separator — visual divider on the last action button */
+.gm-action-btn--separator {
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+  padding-left: 14px;
+}
 
 /* ==================== RESPONSIVE DESIGN ==================== */
 @media (max-width: 768px) {
