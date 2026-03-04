@@ -25,3 +25,10 @@
 {"timestamp":"2026-02-17 13:54:27","application_id":28,"dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-02-27 09:58:25","application_id":29,"dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-03-01 14:45:17","application_id":30,"dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
+{"timestamp":"2026-03-04 09:44:33","application_id":31,"dss_status":"Rejected","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
+{"timestamp":"2026-03-04 10:07:31","application_id":32,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
+{"timestamp":"2026-03-04 10:47:53","application_id":33,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
+{"timestamp":"2026-03-04 11:13:59","application_id":34,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
+{"timestamp":"2026-03-04 11:19:17","application_id":35,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
+{"timestamp":"2026-03-04 11:27:37","application_id":36,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}
+{"timestamp":"2026-03-04 11:39:03","application_id":37,"dss_status":"Additional Requirements Needed","score":5,"max_score":7,"probability":71.43,"passed_rules":5,"failed_rules":2}

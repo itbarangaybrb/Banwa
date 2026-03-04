@@ -122,7 +122,7 @@ function handleCreateApplication($pdo)
 
         // Owner Info
         $firstName = get_input('firstName');
-        $middleName = get_input('middleName');
+        $middleName = get_input('middleName') ?? '';
         $lastName = get_input('lastName');
         $suffix = get_input('suffix') ?? '';
         $contactNoOwner = get_input('contactNoOwner');
@@ -313,7 +313,7 @@ function handleFetchApplications($pdo)
     try {
         $sql = "SELECT ca.* 
                 FROM construction_applications ca
-                ORDER BY ca.created_at DESC";
+                ORDER BY ca.id ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 

@@ -244,7 +244,7 @@ function handleFetchApplication($pdo)
                     witness_data_json, latitude, longitude,
                     status, dss_status, created_at, updated_at
                 FROM incident_reports 
-                ORDER BY created_at DESC";
+                ORDER BY id ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 

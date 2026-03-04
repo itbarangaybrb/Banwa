@@ -1,3 +1,12 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 4) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -59,6 +68,12 @@
                     <a href="#" class="nav_select" data-tab="summary">
                         <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>
@@ -172,36 +187,36 @@
 
                         <!-- Sub-filters shown only when Construction is selected -->
                         <!-- Sub-filters shown only when Incident is selected — built by loadIncidentSubFilters() in map.js -->
-                            <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
+                        <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
 
-                            <!-- Sub-filters shown only when Construction is selected -->
-                            <div class="sub-filters" id="constructionSubFilters" style="display:none;">
-                                <div class="sub-filters-bar">
-                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
-                                        <i class="fas fa-layer-group"></i><span>All</span>
-                                    </button>
-                                    <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
-                                    <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
-                                        onclick="toggleConstructionFilters()" title="Show / hide construction types">
-                                        <i class="fas fa-filter"></i> Types
-                                        <span class="toggle-arrow">&#9662;</span>
-                                    </button>
-                                </div>
-                                <div class="sub-filter-expanded" id="constructionTypeList">
-                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
-                                        <i class="fas fa-building"></i><span>Major</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
-                                        <i class="fas fa-home"></i><span>Minor</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
-                                        <i class="fas fa-tools"></i><span>Repair</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
-                                        <i class="fas fa-trash-alt"></i><span>Demolition</span>
-                                    </button>
-                                </div>
+                        <!-- Sub-filters shown only when Construction is selected -->
+                        <div class="sub-filters" id="constructionSubFilters" style="display:none;">
+                            <div class="sub-filters-bar">
+                                <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                    <i class="fas fa-layer-group"></i><span>All</span>
+                                </button>
+                                <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                                <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                                    onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                                    <i class="fas fa-filter"></i> Types
+                                    <span class="toggle-arrow">&#9662;</span>
+                                </button>
                             </div>
+                            <div class="sub-filter-expanded" id="constructionTypeList">
+                                <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                    <i class="fas fa-building"></i><span>Major</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                    <i class="fas fa-home"></i><span>Minor</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                    <i class="fas fa-tools"></i><span>Repair</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                    <i class="fas fa-trash-alt"></i><span>Demolition</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -265,7 +280,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Dashboard tab with analytics charts -->
         <div id="dashboard" class="tab-pane">
             <header class="top-header">
@@ -366,7 +381,7 @@
                 <p class="page-description">Fill in the details to register a new business</p>
             </div>
 
-                <form id="createStaffForm" onsubmit="createApplication(event)">
+            <form id="createStaffForm" onsubmit="createApplication(event)">
 
                 <div class="section-title"><strong>Owner Information</strong></div>
 
@@ -771,6 +786,7 @@
     <script src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 

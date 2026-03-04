@@ -186,7 +186,7 @@ function handleFetchApplications($pdo)
     try {
         $sql = "SELECT ua.* 
                 FROM utility_applications ua
-                ORDER BY ua.created_at DESC";
+                ORDER BY ua.id ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 

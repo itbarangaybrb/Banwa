@@ -72,6 +72,9 @@ try {
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/utilities_staff/utilities.php"]);
                 break;
             case 7:
+                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/finance_staff/finance.php"]);
+                break;
+            case 8:
                 echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/incident_report_staff/incident_report.php"]);
                 break;
             default:

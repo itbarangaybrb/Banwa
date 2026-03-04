@@ -1,3 +1,12 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 6) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,6 +67,12 @@
                     <a href="#" class="nav_select" data-tab="summary">
                         <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>
@@ -582,6 +597,7 @@
     <script src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 

@@ -60,6 +60,12 @@
                         <span class="nav_text">Generate Summary</span>
                     </a>
                 </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
+                    </a>
+                </li>
             </div>
         </ul>
     </aside>
@@ -292,7 +298,7 @@
                         </div>
                     </div>
                 </header>
-                
+
                 <div class="page-header">
                     <h1>Review Incident Reports</h1>
                     <p class="page-description">Manage and review incident reports</p>
@@ -650,6 +656,8 @@
     <script src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
+
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
