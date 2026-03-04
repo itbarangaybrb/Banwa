@@ -431,7 +431,6 @@ function displayFloodDetailsInModal(data) {
         detailRow('Reported By', properties.reported_by || 'Barangay Office'),
         detailRow('Date Identified', formatDate(properties.date_identified)),
         detailRow('Safety Advice', getFloodSafetyAdvice(data.risk_level)),
-        detailRow('Last Updated', formatDate(data.updated_at))
     ].join('');
     showDetailSwal(title, `${(data.risk_level||'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
@@ -446,8 +445,7 @@ function displayHouseDetailsInModal(data, apps) {
     const basicRows = [
         detailRow('Address',      data.address    || 'Not specified'),
         detailRow('Street Name',  data.street_name || 'Not specified'),
-        detailRow('Created',      formatDate(data.created_at)),
-        detailRow('Last Updated', formatDate(data.updated_at))
+        detailRow('Created',      formatDate(data.created_at))
     ].join('');
     // 3/1/2026
     const typeBadge = (bg, label, textColor) =>
@@ -643,6 +641,13 @@ function selectFilterType(type, event) {
         event.preventDefault();
         event.stopPropagation();
     }
+
+    // Clear any active search marker and results when switching filter type
+    removeActiveSearchMarker();
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    const resultsContainer = document.getElementById('search-results');
+    if (resultsContainer) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; }
     
     const dropdown = document.getElementById('filterDropdown');
     const dropdownBtn = document.getElementById('filterDropdownBtn');
@@ -816,15 +821,52 @@ function setActiveNav(element) {
 
 // ==================== MAP VIEW FUNCTIONS ====================
 
+// Palette for each map mode — easy to tweak in one place
+const POLY_COLORS = {
+    street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12 },
+    satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15 }
+};
+const BOUNDARY_COLORS = {
+    street:    { color: '#00247c', fillColor: '#667eea', fillOpacity: 0.08, dashArray: '8, 6' },
+    satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8, 6' }
+};
+
+// Returns the current accent color based on active tile layer
+function getMapAccentColor() {
+    return map.hasLayer(satelliteLayer) ? '#FFFFFF' : '#00247c';
+}
+
+function applyMapModeColors(mode) {
+    const poly = POLY_COLORS[mode];
+    const bound = BOUNDARY_COLORS[mode];
+
+    // Re-style all house polygons
+    if (housePolygonsLayer) {
+        housePolygonsLayer.eachLayer(layer => {
+            if (layer.setStyle) layer.setStyle(poly);
+        });
+    }
+
+    // Re-style the boundary — it's drawn directly on the map, not in a layer group,
+    // so we track it in a variable set at draw time
+    if (window._boundaryLayer) {
+        window._boundaryLayer.setStyle(bound);
+    }
+}
+
 function toggleStreetMap() {
     map.removeLayer(satelliteLayer);
     osmLayer.addTo(map);
+    applyMapModeColors('street');
+    removeActiveSearchMarker();
     setActiveNav(event.currentTarget);
 }
 
 function toggleSatellite() {
     map.removeLayer(osmLayer);
     satelliteLayer.addTo(map);
+    applyMapModeColors('satellite');
+    removeActiveSearchMarker();
     setActiveNav(event.currentTarget);
 }
 
@@ -832,6 +874,8 @@ function resetView() {
     map.setView([14.6175, 121.0756], 17);
     map.removeLayer(satelliteLayer);
     osmLayer.addTo(map);
+    applyMapModeColors('street');
+    removeActiveSearchMarker();
     setActiveNav(event.currentTarget);
 }
 
@@ -1110,12 +1154,13 @@ function highlightExistingMarker(marker, markerData) {
     const latLng = marker.getLatLng();
     removeActiveSearchMarker();
 
-    // Single pulse ring
+    // Single pulse ring — color matches current map mode
+    const accentColor = getMapAccentColor();
     const pulseRing = L.circleMarker(latLng, {
         radius: 28,
-        color: '#00247c',
+        color: accentColor,
         weight: 3,
-        fillColor: '#00247c',
+        fillColor: accentColor,
         fillOpacity: 0.1,
         className: 'search-pulse-ring'
     }).addTo(map);
@@ -1170,8 +1215,8 @@ function createTemporaryHighlight(markerData) {
     
     removeActiveSearchMarker();
 
-    // Animated pin icon
-    const markerColor = '#00247c';
+    // Animated pin icon — color matches current map mode
+    const markerColor = getMapAccentColor();
     const highlightIcon = L.divIcon({
         className: '',
         html: `
@@ -1279,10 +1324,11 @@ function showHousePolygonHighlight(houseData) {
         // Remove any existing highlight
         removeActiveSearchMarker();
         
+        const accentColor = getMapAccentColor();
         const polygon = L.polygon(latLngCoords, {
-            color: '#00247c',
+            color: accentColor,
             weight: 4,
-            fillColor: '#00247c',
+            fillColor: accentColor,
             fillOpacity: 0.2,
             interactive: true
         }).addTo(map);
@@ -1531,9 +1577,6 @@ function createHousePopup(data) {
             <div class="popup-section">
                 <p><strong>Street:</strong> ${data.street_name || 'Not specified'}</p>
             </div>
-            <div class="popup-section">
-                <p><strong>Last Updated:</strong> ${formatDate(data.updated_at)}</p>
-            </div>
             <button class="view-details-btn" onclick="viewHouseDetails(${data.house_id})">
                 View Full Details
             </button>
@@ -1678,24 +1721,12 @@ async function loadAllMarkers() {
             throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         }
 
-        // Get flood data for search
-        const floodFormData = new FormData();
-        floodFormData.append('action', 'get_flood_hazards');
-        
-        const floodResponse = await fetch(`${MAP_HANDLER_URL}`, {
-            method: 'POST',
-            body: floodFormData
-        });
-        
-        const floodData = await floodResponse.json();
-        
-        // Build allMarkersData for search - include houses from house polygons
+        // Build allMarkersData for search (flood hazards excluded from search)
         allMarkersData = [
             ...(data.markers || []).filter(m => m.type === 'construction'),
             ...(data.markers || []).filter(m => m.type === 'business'),
             ...(data.markers || []).filter(m => m.type === 'utility'),
-            ...(data.markers || []).filter(m => m.type === 'incident'),
-            ...(floodData.success ? (floodData.hazards || []).map(f => ({...f, type: 'flood'})) : [])
+            ...(data.markers || []).filter(m => m.type === 'incident')
         ];
 
         // Process markers by type
@@ -2082,7 +2113,7 @@ function renderHousePolygons() {
                     color: '#00247c',
                     weight: 2,
                     fillColor: '#00247c',
-                    fillOpacity: 0.1,
+                    fillOpacity: 0.12,
                     interactive: true,
                     pane: 'housePane'
                 });
@@ -2253,23 +2284,23 @@ async function getFloodHousesSummary() {
                     </div>`;
                 }).join('');
                 // 3/1/2026
-            // Accordion house rows — sorted worst first
+            // Accordion house rows — sorted low first (minimally affected → fully affected)
             const impactRank = {'Fully Affected':4,'Affected':3,'Partially Affected':2,'Minimally Affected':1};
             const sortedHouses = [...houses].sort((a,b) =>
-                (impactRank[b.impact_level]||0) - (impactRank[a.impact_level]||0) ||
-                (parseFloat(b.flood_coverage_percent)||0) - (parseFloat(a.flood_coverage_percent)||0)
+                (impactRank[a.impact_level]||0) - (impactRank[b.impact_level]||0) ||
+                (parseFloat(a.flood_coverage_percent)||0) - (parseFloat(b.flood_coverage_percent)||0)
             );
             const houseRows = sortedHouses.map((h,i)=>{
                 const c   = impactColors[h.impact_level]||'#888';
                 const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent||0).toFixed(1)+'%';
+                const riskColor = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
                 const body = `
                     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
-                        <div><strong>Risk Level:</strong> <span style="color:${riskColors[(h.risk_level||'').toLowerCase()]||'#888'};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
+                        <div><strong>Risk Level:</strong> <span style="color:${riskColor};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
                         <div><strong>Flood Coverage:</strong> ${pct}</div>
-                        ${h.area_sqm?`<div><strong>Area:</strong> ${h.area_sqm} sqm</div>`:''}
                     </div>
                     ${h.street_name?`<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>`:''}
-                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Hazard Zone:</strong> ${h.hazard_description}</div>`:''}`;
+                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Description:</strong> ${h.hazard_description}</div>`:''}`;
                 return rptRow(`fh-${i}`, pct, c, h.address||'Address not specified', h.impact_level||'', body);
             }).join('');
             // 3/1/2026
@@ -3145,13 +3176,13 @@ map.whenReady(async function() {
 
     // Draw boundary polygon if available
     if (blueRidgeGeoJSON) {
-        L.geoJSON(blueRidgeGeoJSON, {
+        window._boundaryLayer = L.geoJSON(blueRidgeGeoJSON, {
             style: {
-                color: '#00247C',
+                color: '#00247c',
                 weight: 3,
                 fillColor: '#667eea',
-                fillOpacity: 0.1,
-                dashArray: '5, 5'
+                fillOpacity: 0.08,
+                dashArray: '8, 6'
             },
             pane: 'boundaryPane'
         }).addTo(map);
@@ -3784,10 +3815,36 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                     affectedHighlightLayers.push(m);
                 }
             } else {
+                // For construction/business records, try to find matching house polygon by proximity
                 const lat = parseFloat(r.lat || r.latitude), lng = parseFloat(r.lng || r.longitude);
                 if (!isNaN(lat) && !isNaN(lng)) {
+                    // Look for a house polygon whose center is within ~15m of this record's coordinates
+                    const nearbyHouse = housePolygonsData.find(h => {
+                        const hLat = parseFloat(h.center_lat), hLng = parseFloat(h.center_lng);
+                        if (isNaN(hLat) || isNaN(hLng)) return false;
+                        const dLat = hLat - lat, dLng = hLng - lng;
+                        return Math.sqrt(dLat * dLat + dLng * dLng) < 0.00015; // ~15m
+                    });
+                    if (nearbyHouse && nearbyHouse.coordinates) {
+                        try {
+                            const coords = JSON.parse(nearbyHouse.coordinates);
+                            const latLngs = coords.map(c => [c[1], c[0]]);
+                            latLngs.push(latLngs[0]);
+                            const badgeClass = r.type === 'business' ? 'business-badge' : 'construction-badge';
+                            const poly = L.polygon(latLngs, {
+                                color: '#dc3545', weight: 3,
+                                fillColor: '#dc3545', fillOpacity: 0.35,
+                                interactive: true, pane: 'housePane'
+                            }).addTo(map);
+                            poly.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="${badgeClass}" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                            affectedHighlightLayers.push(poly);
+                            return;
+                        } catch(e) { console.warn('Polygon parse error for non-household:', e); }
+                    }
+                    // Fallback to circle if no matching house polygon found
+                    const badgeClass = r.type === 'business' ? 'business-badge' : 'construction-badge';
                     const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
-                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="construction-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
+                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="${badgeClass}" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
                     affectedHighlightLayers.push(m);
                 }
             }
@@ -3819,12 +3876,8 @@ const sortedRecords = [...records].sort((a, b) => {
     return nameA.localeCompare(nameB);
 });
 
-const rows = sortedRecords.map(r => `
-    <div class="affected-record-row" onclick="(function(){
-        const d=${JSON.stringify(r)};
-        if(d.type==='household') viewHouseDetails(d.id);
-        else viewMapDetails(d.id,d.type);
-    })()">
+const rows = sortedRecords.map((r, idx) => `
+    <div class="affected-record-row" data-record-idx="${idx}">
         <div class="affected-record-name">${r.name}</div>
         <div class="affected-record-addr">${r.address}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
@@ -3832,12 +3885,24 @@ const rows = sortedRecords.map(r => `
             <span class="affected-record-type">${r.type}</span>
         </div>
     </div>`).join('');
-// 3/1/2026
+
 bodyEl.innerHTML = `
     <div class="affected-panel-count">${sortedRecords.length} record${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
     <div class="affected-panel-hint">Click a row to view full details</div>
-    <div class="affected-records-list">${rows}</div>
+    <div class="affected-records-list" id="affected-records-list"></div>
 `;
+
+// Inject rows safely and attach click listeners via JS (avoids JSON.stringify in HTML attr)
+const listEl = bodyEl.querySelector('#affected-records-list');
+listEl.innerHTML = rows;
+listEl.querySelectorAll('.affected-record-row').forEach(rowEl => {
+    rowEl.addEventListener('click', () => {
+        const r = sortedRecords[parseInt(rowEl.dataset.recordIdx)];
+        if (!r) return;
+        if (r.type === 'household') viewHouseDetails(r.id);
+        else viewMapDetails(r.id, r.type);
+    });
+});
 
     } catch (e) {
         const bodyEl = document.getElementById('affected-panel-body');

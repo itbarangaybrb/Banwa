@@ -20,7 +20,7 @@ body {
     left: 0;
     top: 0;
     height: 100vh;
-    width: 70px !important;
+    width: 70px;
     background: linear-gradient(135deg, #19316b, #19316b);
     color: white;
     transition: width 0.3s ease;
@@ -29,37 +29,29 @@ body {
     overflow: hidden;
 }
 
-/* Block the :hover expansion from map_staff.css */
-.side_nav:hover {
-    width: 70px !important;
-}
-
 .side_nav.expanded {
-    width: 325px !important;
+    width: 325px;
     box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
 }
 
-/* Show nav text only when .expanded (not on hover) */
+/* Override map_staff.css :hover expansion - sidebar only expands on click */
+/* .side_nav:hover {
+    width: 70px !important;
+}
 .side_nav:hover .nav_text {
     opacity: 0;
 }
 .side_nav.expanded .nav_text {
     opacity: 1;
 }
-
-/* Show company name only when .expanded */
 .side_nav:hover .company_name {
     opacity: 0;
 }
 .side_nav.expanded .company_name {
     opacity: 1;
-}
+} */
 
 /* Optional: Add cursor pointer to the hamburger icon to show it's clickable */
-.nav_logo {
-    cursor: pointer;
-}
-
 .nav_header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -83,9 +75,8 @@ body {
     color: white;
     font-size: 24px;
     flex-shrink: 0;
-    cursor: default;
+    cursor: pointer;
     transition: background-color 0.3s ease;
-    cursor: default;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;

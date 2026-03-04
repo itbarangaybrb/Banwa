@@ -1,3 +1,12 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 7) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -50,6 +59,12 @@
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
                         <span class="nav_text">Issue Penalty</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>
@@ -146,7 +161,7 @@
                     <input type="text" id="searchHistory" placeholder="Search by OR Number or Name..." onkeyup="filterTable('historyTable', 'searchHistory')">
                 </div>
 
-                <div class="table-responsive" style="max-height: 580px;">   
+                <div class="table-responsive" style="max-height: 580px;">
                     <table id="historyTable">
                         <thead>
                             <tr>
@@ -175,6 +190,7 @@
     <script src="../../../scripts/staff/finance_staff/finance.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

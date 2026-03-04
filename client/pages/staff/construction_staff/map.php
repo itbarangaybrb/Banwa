@@ -1,339 +1,231 @@
 <?php
-// Start output buffering to catch any unwanted output
-ob_start();
-
-include __DIR__ . '/../../../../../server/configs/database.php';
-
-// Function definitions
-function getConstructionMarkers() {
-    global $conn;
-    try {
-        $sql = "SELECT 
-                    construction_id, 
-                    permit_no, 
-                    homeowner_name, 
-                    contractor_name,
-                    address_of_construction,
-                    nature_of_activity,
-                    type_of_work,
-                    details_of_work,
-                    start_date,
-                    end_date,
-                    num_of_workers,
-                    num_of_working_days,
-                    fee_paid,
-                    payment_type,
-                    payment_status,
-                    approved_by,
-                    noted_by,
-                    remarks,
-                    latitude, 
-                    longitude 
-                FROM construction_doc 
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Database error in getConstructionMarkers: " . $e->getMessage());
-        return [];
-    }
-}
-
-// Handle AJAX request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    // Clear any previous output
-    ob_clean();
-    
-    header('Content-Type: application/json');
-    
-    if ($_POST['action'] === 'get_markers') {
-        $constructions = getConstructionMarkers();
-        echo json_encode([
-            'success' => true,
-            'constructions' => $constructions
-        ]);
-        exit;
-    }
-}
-
-// Clear the output buffer for the HTML content
-ob_end_clean();
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Blue Ridge B - Map System</title>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../../styles/construction_staff/map.css" />
+    <link rel="stylesheet" href="../../styles/staff/map.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 </head>
+
 <body>
-    <header class="header">
-        <nav class="nav-container">
-            <div class="logo">Blue Ridge B</div>
-            <ul class="nav-links">
-                <li><a href="#">Mefferson Juring</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main class="main-container">
-        <div class="content-wrapper">
-            <aside class="sidebar">
-                <h3>Navigation</h3>
-                <ul class="sidebar-menu">
-                    <li><a href="#">Dashboard</a></li>
-                </ul>
-                <h3 style="margin-top: 2rem;">Map Controls</h3>
-                <ul class="sidebar-menu">
-                    <li><a href="#" onclick="resetView(); return false;">Reset View</a></li>
-                    <li><a href="#" onclick="toggleStreetMap(); return false;">Street Map</a></li>
-                    <li><a href="#" onclick="toggleSatellite(); return false;">Satellite View</a></li>
-                    <li><a href="#" onclick="loadAllMarkers(); return false;">Reload Markers</a></li>
-                    <li><a href="#" onclick="debugLoadMarkers(); return false;">Debug Markers</a></li>
-                </ul>
-            </aside>
-
-            <section class="map-container">
-                <div class="map-header">
-                    <h2>Barangay Blue Ridge B Map</h2>
-                    <p>Construction Sites</p>
-                </div>
-                <div id="map"></div>
-                <div id="debug-info" class="debug-info">
-                    <h4>Debug Information</h4>
-                    <pre id="debug-output"></pre>
-                </div>
-            </section>
+    <!-- Side navigation bar -->
+    <nav class="side_nav">
+        <div class="nav_header">
+            <div class="logo_title">
+                <div class="nav_logo">B</div>
+                <div class="company_name">Blue Ridge B</div>
+            </div>
         </div>
-    </main>
+        
+        <ul class="nav_list">
+            <div class="nav_list2">
+                <li>
+                    <!-- Logout link - setActiveNav highlights the active item -->
+                    <a href="#" class="nav_select" onclick="setActiveNav(this)">
+                        <i class="nav_icon fas fa-sign-out-alt"></i>
+                        <span class="nav_text">Logout</span>
+                    </a>
+                </li>
+            </div>
+        </ul>
+    </nav>
 
-    <footer class="footer">
-        <p>&copy; 2024 ConstructPro. All rights reserved.</p>
-    </footer>
+    <!-- Hamburger button for mobile nav -->
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main map container -->
+    <div class="map-wrapper">
+        <!-- Leaflet renders the map inside this div -->
+        <div id="map"></div>
+
+        <!-- Search bar overlay -->
+        <div class="map-overlay map-overlay--search">
+            <div class="gm-search-box">
+                <i class="fas fa-search gm-search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search by name, address, type, or hazard...">
+                <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Search results appear here dynamically -->
+            <div id="search-results" class="search-results"></div>
+        </div>
+
+        <!-- Filter panel overlay -->
+        <div class="map-overlay map-overlay--filter">
+            <div class="gm-panel">
+                <div class="gm-panel-row">
+
+                    <!-- Dropdown to switch marker layer type -->
+                    <div class="dropdown">
+                        <button class="gm-chip dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
+                            <i class="fas fa-layer-group"></i>
+                            <span id="currentFilterText">Households</span>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </button>
+                        <div class="dropdown-content" id="filterDropdown">
+                            <!-- Each option filters the map to show that marker type -->
+                            <a href="#" data-type="household" onclick="selectFilterType('household', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#28a745;"></span>
+                                    <span>Households</span>
+                                </span>
+                            </a>
+                            <a href="#" data-type="business" onclick="selectFilterType('business', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#9C27B0;"></span>
+                                    <span>Businesses</span>
+                                </span>
+                            </a>
+                            <a href="#" data-type="construction" onclick="selectFilterType('construction', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#ffc107;"></span>
+                                    <span>Construction</span>
+                                </span>
+                            </a>
+                            <a href="#" data-type="utility" onclick="selectFilterType('utility', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#2196F3;"></span>
+                                    <span>Utilities</span>
+                                </span>
+                            </a>
+                            <a href="#" data-type="incident" onclick="selectFilterType('incident', event)">
+                                <span class="filter-option">
+                                    <span class="filter-icon" style="background:#cc0000;"></span>
+                                    <span>Incidents</span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Toggle flood hazard layer on/off -->
+                    <button class="gm-chip gm-chip--toggle" id="floodToggleBtn" onclick="toggleFloodLayer()">
+                        <i class="fas fa-water"></i>
+                        <span>Flood</span>
+                        <span class="toggle-indicator"></span>
+                    </button>
+
+                    <!-- Toggle fault line hazard layer on/off -->
+                    <button class="gm-chip gm-chip--toggle" id="faultToggleBtn" onclick="toggleFaultLine()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Fault Line</span>
+                        <span class="toggle-indicator"></span>
+                    </button>
+                </div>
+
+                <!-- Sub-filters shown only when Incident is selected — fully built by loadIncidentSubFilters() in map.js -->
+                <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
+
+                <!-- Sub-filters shown only when Construction is selected -->
+                <div class="sub-filters" id="constructionSubFilters" style="display:none;">
+                    <div class="sub-filters-bar">
+                        <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                            <i class="fas fa-layer-group"></i><span>All</span>
+                        </button>
+                        <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                        <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                            onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                            <i class="fas fa-filter"></i> Types
+                            <span class="toggle-arrow">▾</span>
+                        </button>
+                    </div>
+                    <div class="sub-filter-expanded" id="constructionTypeList">
+                        <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                            <i class="fas fa-building"></i><span>Major</span>
+                        </button>
+                        <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                            <i class="fas fa-home"></i><span>Minor</span>
+                        </button>
+                        <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                            <i class="fas fa-tools"></i><span>Repair</span>
+                        </button>
+                        <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                            <i class="fas fa-trash-alt"></i><span>Demolition</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User info + map view controls (top-right) -->
+        <div class="map-overlay map-overlay--topright">
+            <div class="gm-topright-row">
+                <!-- Shows current logged-in user and live date/time -->
+                <div class="gm-user-pill">
+                    <div class="time_date" id="currentDateTime"></div>
+                    <div class="gm-user-divider"></div>
+                    <span class="gm-user-name">Kagawad Francesca</span>
+                    <div class="user_image" style="width:32px;height:32px;">
+                        <i class="fas fa-user" style="font-size:16px;color:white;"></i>
+                    </div>
+                </div>
+                <!-- Map tile switcher buttons -->
+                <div class="gm-icon-group">
+                    <button class="gm-icon-btn" onclick="toggleStreetMap()" title="Street Map View">
+                        <i class="fas fa-map"></i>
+                    </button>
+                    <button class="gm-icon-btn" onclick="toggleSatellite()" title="Satellite View">
+                        <i class="fas fa-satellite"></i>
+                    </button>
+                    <!-- Resets map to default center and zoom -->
+                    <button class="gm-icon-btn" onclick="resetView()" title="Reset View">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action buttons for SDSS reports and risk assessments (bottom) -->
+        <div class="map-overlay map-overlay--actions">
+            <div class="gm-actions-bar">
+                <!-- Shows summary of houses within flood zones -->
+                <button class="gm-action-btn" onclick="getFloodHousesSummary()">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Flood Risk</span>
+                </button>
+                <!-- Shows structures near fault lines -->
+                <button class="gm-action-btn" onclick="showFaultLineRiskAssessment()">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Fault Line Risk</span>
+                </button>
+                <!-- SDSS report for all businesses -->
+                <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
+                    <i class="fas fa-building"></i>
+                    <span>Business Report</span>
+                </button>
+                <!-- SDSS report for all construction sites -->
+                <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
+                    <i class="fas fa-hard-hat"></i>
+                    <span>Construction Report</span>
+                </button>
+                <!-- Summary report for all incident reports -->
+                <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Incident Report</span>
+                </button>
+                <!-- Shows the decision rules used by the SDSS -->
+                <button class="gm-action-btn" onclick="showSDSSRulesReport()">
+                    <i class="fas fa-list-check"></i>
+                    <span>Rules Summary</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map').setView([14.6175, 121.0756], 17);
-        let constructionMarkers = [];
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../scripts/staff/map.js"></script>
 
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        });
-
-        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri'
-        });
-
-        osmLayer.addTo(map);
-
-        const constructionIcon = L.divIcon({ className: 'construction-marker', iconSize: [15, 15] });
-
-        // Format date function
-        function formatDate(dateString) {
-            if (!dateString) return 'Not specified';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        }
-
-        // Format currency function
-        function formatCurrency(amount) {
-            if (!amount) return 'Not specified';
-            return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP'
-            }).format(amount);
-        }
-
-        async function loadAllMarkers() {
-            clearAllMarkers();
-            
-            try {
-                const formData = new FormData();
-                formData.append('action', 'get_markers');
-                
-                const response = await fetch('map.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Check if response is OK
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const text = await response.text();
-                console.log('Raw response:', text);
-                
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    throw new Error('Invalid JSON response from server');
-                }
-                
-                if (!data.success) {
-                    throw new Error('Server returned error');
-                }
-
-                // Process constructions with detailed popup
-                data.constructions.forEach(construction => {
-                    if (construction.latitude && construction.longitude) {
-                        const popupContent = `
-                            <div class="popup-content">
-                                <h4>CONSTRUCTION SITE</h4>
-                                <div class="popup-section">
-                                    <p><strong>Permit No:</strong> ${construction.permit_no || 'Pending'}</p>
-                                    <p><strong>Homeowner:</strong> ${construction.homeowner_name || 'Not specified'}</p>
-                                    <p><strong>Contractor:</strong> ${construction.contractor_name || 'Not specified'}</p>
-                                    <p><strong>Address:</strong> ${construction.address_of_construction || 'Not specified'}</p>
-                                </div>
-                                
-                                <div class="popup-section">
-                                    <p><strong>Work Type:</strong> ${construction.type_of_work || 'Not specified'}</p>
-                                    <p><strong>Nature:</strong> ${construction.nature_of_activity || 'Not specified'}</p>
-                                    ${construction.details_of_work ? `<p><strong>Details:</strong> ${construction.details_of_work}</p>` : ''}
-                                </div>
-                                
-                                <div class="popup-section">
-                                    <p><strong>Start Date:</strong> ${formatDate(construction.start_date)}</p>
-                                    <p><strong>End Date:</strong> ${formatDate(construction.end_date)}</p>
-                                    <p><strong>Workers:</strong> ${construction.num_of_workers || '0'}</p>
-                                    <p><strong>Working Days:</strong> ${construction.num_of_working_days || '0'}</p>
-                                </div>
-                                
-                                <div class="popup-section">
-                                    <p><strong>Fee Paid:</strong> ${formatCurrency(construction.fee_paid)}</p>
-                                    <p><strong>Payment Type:</strong> ${construction.payment_type || 'Not specified'}</p>
-                                    <p><strong>Payment Status:</strong> <span class="status-${construction.payment_status?.toLowerCase() || 'unknown'}">${construction.payment_status || 'Unknown'}</span></p>
-                                </div>
-                                
-                                ${construction.approved_by || construction.noted_by ? `
-                                <div class="popup-section">
-                                    ${construction.approved_by ? `<p><strong>Approved By:</strong> ${construction.approved_by}</p>` : ''}
-                                    ${construction.noted_by ? `<p><strong>Noted By:</strong> ${construction.noted_by}</p>` : ''}
-                                </div>
-                                ` : ''}
-                                
-                                ${construction.remarks ? `
-                                <div class="popup-section">
-                                    <p><strong>Remarks:</strong> ${construction.remarks}</p>
-                                </div>
-                                ` : ''}
-                            </div>
-                        `;
-
-                        const marker = L.marker([parseFloat(construction.latitude), parseFloat(construction.longitude)], { icon: constructionIcon })
-                            .bindPopup(popupContent)
-                            .addTo(map);
-                        constructionMarkers.push(marker);
-                    }
-                });
-
-                console.log(`Loaded ${constructionMarkers.length} construction sites`);
-
-            } catch (error) {
-                console.error('ERROR LOADING MARKERS:', error);
-                alert('Error loading markers. Check console for details.');
-            }
-        }
-
-        // Debug function to see what's being returned
-        async function debugLoadMarkers() {
-            try {
-                const formData = new FormData();
-                formData.append('action', 'get_markers');
-                
-                const response = await fetch('map.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const text = await response.text();
-                
-                // Show debug info
-                document.getElementById('debug-info').style.display = 'block';
-                document.getElementById('debug-output').textContent = text;
-                
-                console.log('Full response:', text);
-                
-                // Try to parse as JSON
-                try {
-                    const data = JSON.parse(text);
-                    console.log('Parsed JSON:', data);
-                } catch(e) {
-                    console.log('Response is not JSON, likely HTML error page');
-                }
-            } catch (error) {
-                console.error('Debug error:', error);
-                document.getElementById('debug-info').style.display = 'block';
-                document.getElementById('debug-output').textContent = 'Error: ' + error.message;
-            }
-        }
-
-        function clearAllMarkers() {
-            constructionMarkers.forEach(marker => map.removeLayer(marker));
-            constructionMarkers = [];
-        }
-
-        const blueRidgeGeoJSON = {
-            "type": "FeatureCollection",
-            "features": [{
-                "type": "Feature",
-                "properties": {"name": "Barangay Blue Ridge B"},
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [[
-                        [121.07278956348526, 14.61639406374255],
-                        [121.07392145567032, 14.61595803532421],
-                        [121.07419772320655, 14.616251316435923],
-                        [121.07617987565104, 14.616430399403944],
-                        [121.07651515177966, 14.617647640629082],
-                        [121.07800914220171, 14.617803363969443],
-                        [121.07872851395038, 14.617316502559932],
-                        [121.07891090415784, 14.617705811277993],
-                        [121.07449698388697, 14.62017411386342]
-                    ]]
-                }
-            }]
-        };
-
-        const barangayLayer = L.geoJSON(blueRidgeGeoJSON, {
-            style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 },
-            onEachFeature: function(feature, layer) {
-                layer.bindPopup(`<h3>${feature.properties.name}</h3>`);
-            }
-        }).addTo(map);
-
-        const bounds = barangayLayer.getBounds();
-        map.setMaxBounds(bounds);
-        map.setMinZoom(17);
-        map.setMaxZoom(18);
-
-        L.control.scale().addTo(map);
-        L.control.layers({"Street Map": osmLayer, "Satellite": satelliteLayer}).addTo(map);
-
-        function resetView() { 
-            map.setView([14.6175, 121.0756], 17); 
-        }
-        
-        function toggleStreetMap() { 
-            map.removeLayer(satelliteLayer); 
-            osmLayer.addTo(map); 
-        }
-        
-        function toggleSatellite() { 
-            map.removeLayer(osmLayer); 
-            satelliteLayer.addTo(map); 
-        }
-
-        // Load markers when map is ready
-        map.whenReady(loadAllMarkers);
-    </script>
 </body>
+
 </html>

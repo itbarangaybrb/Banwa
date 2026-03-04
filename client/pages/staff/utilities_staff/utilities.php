@@ -1,3 +1,12 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 6) {
+    header("Location: /Banwa/client/pages/auth/signin.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -61,6 +70,12 @@
                         <span class="nav_text">Generate Summary</span>
                     </a>
                 </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
+                    </a>
+                </li>
             </div>
         </ul>
     </aside>
@@ -88,7 +103,6 @@
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>
@@ -231,11 +245,11 @@
                             </button>
                             <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                                 <i class="fas fa-building"></i>
-                                <span>Business SDSS</span>
+                                <span>Business Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                                 <i class="fas fa-hard-hat"></i>
-                                <span>Construction SDSS</span>
+                                <span>Construction Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -243,7 +257,7 @@
                             </button>
                             <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
-                                <span>SDSS Rules</span>
+                                <span>Rules Summary</span>
                             </button>
                         </div>
                     </div>
@@ -652,6 +666,7 @@
     <script src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 

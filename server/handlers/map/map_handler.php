@@ -353,7 +353,7 @@ function getHousesInFloodAreas($riskLevel = null){
                 FROM ranked
                 WHERE rn = 1
                 " . ($riskLevel ? "AND LOWER(risk_level) = LOWER(:risk_level)" : "") . "
-                ORDER BY risk_rank DESC, impact_rank DESC, address";
+                ORDER BY risk_rank ASC, impact_rank ASC, address";
         
         $stmt = $pdo->prepare($sql);
         if ($riskLevel) {
@@ -2028,27 +2028,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     if ($_POST['action'] === 'get_houses_in_flood') {
         $houses = getHousesInFloodAreas($_POST['risk_level'] ?? null);
+        // Already sorted low→high by the fixed getHousesInFloodAreas query
         echo json_encode(['success' => true, 'count' => count($houses), 'houses' => $houses]);
         exit;
     }
 
     if ($_POST['action'] === 'get_flood_houses_summary') {
-        echo json_encode(['success' => true, 'summary' => getFloodAffectedHousesSummary()]);
+        $summary = getFloodAffectedHousesSummary();
+        // Sort by_risk_level low→high
+        if (!empty($summary['by_risk_level'])) {
+            $riskOrder = ['low' => 1, 'medium' => 2, 'high' => 3];
+            usort($summary['by_risk_level'], function($a, $b) use ($riskOrder) {
+                $ra = $riskOrder[strtolower($a['risk_level'] ?? 'low')] ?? 1;
+                $rb = $riskOrder[strtolower($b['risk_level'] ?? 'low')] ?? 1;
+                return $ra - $rb;
+            });
+        }
+        echo json_encode(['success' => true, 'summary' => $summary]);
         exit;
     }
 
-    // NEW: Flood summary for the fixed assessment
+    // Flood summary — returns aggregate stats + per-house list sorted low→high
     if ($_POST['action'] === 'get_flood_summary') {
         $summary = getFloodAffectedHousesSummary();
-        $houses = getHousesInFloodAreas();
+        $houses  = getHousesInFloodAreas(); // already sorted low→high after fix
         
+        // Sort by_risk_level low→high for the risk breakdown chips
+        if (!empty($summary['by_risk_level'])) {
+            $riskOrder = ['low' => 1, 'medium' => 2, 'high' => 3];
+            usort($summary['by_risk_level'], function($a, $b) use ($riskOrder) {
+                $ra = $riskOrder[strtolower($a['risk_level'] ?? 'low')] ?? 1;
+                $rb = $riskOrder[strtolower($b['risk_level'] ?? 'low')] ?? 1;
+                return $ra - $rb;
+            });
+        }
+
         echo json_encode([
             'status' => 'success',
-            'data' => [
+            'data'   => [
                 'summary' => $summary,
-                'houses' => $houses
+                'houses'  => $houses
             ]
         ]);
+        exit;
+    }
+
+    // Per-house flood detail for the side-panel row click
+    if ($_POST['action'] === 'get_flood_house_detail') {
+        $houseId = $_POST['house_id'] ?? 0;
+        if (!$houseId) {
+            echo json_encode(['success' => false, 'message' => 'No house_id provided']);
+            exit;
+        }
+        // Pull all flood intersections for this house (may overlap multiple zones)
+        global $pdo;
+        try {
+            $sql = "WITH hg AS (
+                        SELECT house_id, address, street_name, house_number,
+                               center_lat, center_lng, area_sqm, coordinates,
+                               CASE
+                                   WHEN coordinates IS NOT NULL THEN
+                                       ST_SetSRID(ST_GeomFromGeoJSON(
+                                           json_build_object('type','Polygon','coordinates',
+                                               json_build_array(coordinates))::text), 4326)
+                                   ELSE ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)
+                               END as geom
+                        FROM house_polygons WHERE house_id = :id
+                    )
+                    SELECT hg.house_id, hg.address, hg.street_name, hg.house_number,
+                           hg.center_lat, hg.center_lng, hg.area_sqm,
+                           bh.hazard_id, bh.hazard_name, bh.risk_level, bh.description as hazard_description,
+                           CASE
+                               WHEN hg.coordinates IS NOT NULL THEN
+                                   LEAST(ROUND((ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) /
+                                       NULLIF(ST_Area(hg.geom::geography),0)*100)::numeric,1),100.0)
+                               ELSE 100
+                           END as flood_coverage_percent,
+                           CASE
+                               WHEN hg.coordinates IS NULL THEN 'Affected'
+                               WHEN ST_Area(ST_Intersection(hg.geom::geography,bh.geom))/
+                                    NULLIF(ST_Area(hg.geom::geography),0) >= 0.75 THEN 'Fully Affected'
+                               WHEN ST_Area(ST_Intersection(hg.geom::geography,bh.geom))/
+                                    NULLIF(ST_Area(hg.geom::geography),0) >= 0.25 THEN 'Partially Affected'
+                               ELSE 'Minimally Affected'
+                           END as impact_level
+                    FROM hg
+                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
+                    WHERE bh.hazard_type = 'flood'
+                    ORDER BY CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END DESC";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':id' => $houseId]);
+            $zones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Also get applications linked to this house
+            $apps = getHouseApplications($houseId);
+
+            if (empty($zones)) {
+                echo json_encode(['success' => false, 'message' => 'No flood zone data found for this house']);
+                exit;
+            }
+
+            $house = [
+                'house_id'    => $zones[0]['house_id'],
+                'address'     => $zones[0]['address'],
+                'street_name' => $zones[0]['street_name'],
+                'house_number'=> $zones[0]['house_number'],
+                'center_lat'  => $zones[0]['center_lat'],
+                'center_lng'  => $zones[0]['center_lng'],
+                'area_sqm'    => $zones[0]['area_sqm'],
+                'flood_zones' => $zones,
+                'applications'=> $apps
+            ];
+
+            echo json_encode(['success' => true, 'house' => $house]);
+        } catch (PDOException $e) {
+            error_log("get_flood_house_detail error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
         exit;
     }
 

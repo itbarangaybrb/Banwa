@@ -4,6 +4,346 @@ const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
 let applications = [];
 
 // ===============================================
+// ADDRESS COORDINATES DATABASE
+// ===============================================
+const addressCoordinates = [
+    { address: "1 Twin Peaks Dr", lat: 14.61654081, lng: 121.07447444 },
+    { address: "2 Twin Peaks Dr", lat: 14.61668323, lng: 121.07460514 },
+    { address: "3 Twin Peaks Dr", lat: 14.61682671, lng: 121.07468242 },
+    { address: "4 Twin Peaks Dr", lat: 14.61694967, lng: 121.07476054 },
+    { address: "5 Twin Peaks Dr", lat: 14.61714092, lng: 121.07482525 },
+    { address: "6 Twin Peaks Dr", lat: 14.61729683, lng: 121.07500036 },
+    { address: "7 Twin Peaks Dr", lat: 14.61754755, lng: 121.07516706 },
+    { address: "8 Twin Peaks Dr", lat: 14.61767338, lng: 121.07525121 },
+    { address: "9 Twin Peaks Dr", lat: 14.61780655, lng: 121.07530008 },
+    { address: "10 Twin Peaks Dr", lat: 14.61794471, lng: 121.07533282 },
+    { address: "11 Twin Peaks Dr", lat: 14.61819310, lng: 121.07536152 },
+    { address: "12 Twin Peaks Dr", lat: 14.61839879, lng: 121.07538482 },
+    { address: "13 Twin Peaks Dr", lat: 14.61854397, lng: 121.07541944 },
+    { address: "14 Twin Peaks Dr", lat: 14.61868322, lng: 121.07546403 },
+    { address: "15 Twin Peaks Dr", lat: 14.61882419, lng: 121.07551977 },
+    { address: "16 Twin Peaks Dr", lat: 14.61898348, lng: 121.07559403 },
+    { address: "17 Twin Peaks Dr", lat: 14.61686402, lng: 121.07428562 },
+    { address: "18 Twin Peaks Dr", lat: 14.61697270, lng: 121.07436089 },
+    { address: "19 Twin Peaks Dr", lat: 14.61708844, lng: 121.07443046 },
+    { address: "20 Twin Peaks Dr", lat: 14.61719396, lng: 121.07448813 },
+    { address: "21 Twin Peaks Dr", lat: 14.61744409, lng: 121.07472114 },
+    { address: "22 Twin Peaks Dr", lat: 14.61783405, lng: 121.07488241 },
+    { address: "23 Twin Peaks Dr", lat: 14.61800413, lng: 121.07496824 },
+    { address: "24 Twin Peaks Dr", lat: 14.61817137, lng: 121.07499540 },
+    { address: "25 Twin Peaks Dr", lat: 14.61863570, lng: 121.07507779 },
+    { address: "26 Twin Peaks Dr", lat: 14.61878728, lng: 121.07510386 },
+    { address: "27 Twin Peaks Dr", lat: 14.61892735, lng: 121.07515013 },
+    { address: "28 Twin Peaks Dr", lat: 14.61905858, lng: 121.07520352 },
+    { address: "29 Twin Peaks Dr", lat: 14.61918154, lng: 121.07526446 },
+    { address: "30 Twin Peaks Dr", lat: 14.61932292, lng: 121.07534865 },
+
+    { address: "1 Milkyway Dr", lat: 14.61706500, lng: 121.07501468 },
+    { address: "2 Milkyway Dr", lat: 14.61691847, lng: 121.07500730 },
+    { address: "3 Milkyway Dr", lat: 14.61678070, lng: 121.07514404 },
+    { address: "4 Milkyway Dr", lat: 14.61671843, lng: 121.07531902 },
+    { address: "5 Milkyway Dr", lat: 14.61647885, lng: 121.07531165 },
+    { address: "6 Milkyway Dr", lat: 14.61672306, lng: 121.07553536 },
+    { address: "7 Milkyway Dr", lat: 14.61649288, lng: 121.07552681 },
+    { address: "8 Milkyway Dr", lat: 14.61676880, lng: 121.07567306 },
+    { address: "9 Milkyway Dr", lat: 14.61684472, lng: 121.07572781 },
+    { address: "10 Milkyway Dr", lat: 14.61695843, lng: 121.07582655 },
+    { address: "11 Milkyway Dr", lat: 14.61710718, lng: 121.07587768 },
+    { address: "12 Milkyway Dr", lat: 14.61722648, lng: 121.07583074 },
+    { address: "13 Milkyway Dr", lat: 14.61730556, lng: 121.07586971 },
+    { address: "14 Milkyway Dr", lat: 14.61741895, lng: 121.07590970 },
+    { address: "15 Milkyway Dr", lat: 14.61755934, lng: 121.07591347 },
+    { address: "16 Milkyway Dr", lat: 14.61770071, lng: 121.07590425 },
+    { address: "17 Milkyway Dr", lat: 14.61786389, lng: 121.07591271 },
+    { address: "18 Milkyway Dr", lat: 14.61814955, lng: 121.07591959 },
+    { address: "19 Milkyway Dr", lat: 14.61838930, lng: 121.07598128 },
+    { address: "20 Milkyway Dr", lat: 14.61856497, lng: 121.07602788 },
+    { address: "21 Milkyway Dr", lat: 14.61879280, lng: 121.07605822 },
+    { address: "22 Milkyway Dr", lat: 14.61736782, lng: 121.07533094 },
+    { address: "23 Milkyway Dr", lat: 14.61722559, lng: 121.07531567 },
+    { address: "24 Milkyway Dr", lat: 14.61699909, lng: 121.07528625 },
+    { address: "25 Milkyway Dr", lat: 14.61703353, lng: 121.07552379 },
+    { address: "26 Milkyway Dr", lat: 14.61723662, lng: 121.07555313 },
+    { address: "27 Milkyway Dr", lat: 14.61744636, lng: 121.07558188 },
+    { address: "28 Milkyway Dr", lat: 14.61766470, lng: 121.07557794 },
+    { address: "29 Milkyway Dr", lat: 14.61780882, lng: 121.07556855 },
+    { address: "30 Milkyway Dr", lat: 14.61794265, lng: 121.07558758 },
+    { address: "31 Milkyway Dr", lat: 14.61812992, lng: 121.07561046 },
+    { address: "32 Milkyway Dr", lat: 14.61828232, lng: 121.07561759 },
+    { address: "33 Milkyway Dr", lat: 14.61843869, lng: 121.07563980 },
+    { address: "34 Milkyway Dr", lat: 14.61859474, lng: 121.07567601 },
+    { address: "35 Milkyway Dr", lat: 14.61872759, lng: 121.07573175 },
+    { address: "36 Milkyway Dr", lat: 14.61887966, lng: 121.07580978 },
+
+    { address: "1 Colonel Bonny Serrano Ave.", lat: 14.61648298, lng: 121.07514627 },
+    { address: "2 Colonel Bonny Serrano Ave.", lat: 14.61650699, lng: 121.07499741 },
+    { address: "3 Colonel Bonny Serrano Ave.", lat: 14.61653505, lng: 121.07486079 },
+    { address: "4 Colonel Bonny Serrano Ave.", lat: 14.61645395, lng: 121.07469164 },
+    { address: "5 Colonel Bonny Serrano Ave.", lat: 14.61650034, lng: 121.07568992 },
+    { address: "6 Colonel Bonny Serrano Ave.", lat: 14.61658307, lng: 121.07583057 },
+    { address: "7 Colonel Bonny Serrano Ave.", lat: 14.61656174, lng: 121.07598430 },
+    { address: "8 Colonel Bonny Serrano Ave.", lat: 14.61624518, lng: 121.07380450 },
+
+    { address: "1 Riverview Dr", lat: 14.61678540, lng: 121.07593093 },
+    { address: "2 Riverview Dr", lat: 14.61701585, lng: 121.07606619 },
+    { address: "3 Riverview Dr", lat: 14.61719769, lng: 121.07610919 },
+    { address: "4 Riverview Dr", lat: 14.61740857, lng: 121.07616878 },
+    { address: "5 Riverview Dr", lat: 14.61764462, lng: 121.07623847 },
+    { address: "6 Riverview Dr", lat: 14.61853375, lng: 121.07742297 },
+    { address: "7 Riverview Dr", lat: 14.61825134, lng: 121.07730704 },
+    { address: "8 Riverview Dr", lat: 14.61812976, lng: 121.07725935 },
+    { address: "9 Riverview Dr", lat: 14.61801572, lng: 121.07723236 },
+    { address: "10 Riverview Dr", lat: 14.61786947, lng: 121.07721158 },
+    { address: "11 Riverview Dr", lat: 14.61795360, lng: 121.07696095 },
+    { address: "12 Riverview Dr", lat: 14.61794922, lng: 121.07670581 },
+    { address: "13 Riverview Dr", lat: 14.61799074, lng: 121.07648570 },
+    { address: "14 Riverview Dr", lat: 14.61846391, lng: 121.07782999 },
+    { address: "15 Riverview Dr", lat: 14.61836351, lng: 121.07771968 },
+    { address: "16 Riverview Dr", lat: 14.61824282, lng: 121.07766252 },
+    { address: "17 Riverview Dr", lat: 14.61809797, lng: 121.07761223 },
+    { address: "18 Riverview Dr", lat: 14.61792424, lng: 121.07756076 },
+
+    { address: "1 Comets Loop", lat: 14.61668129, lng: 121.07422217 },
+    { address: "2 Comets Loop", lat: 14.61673595, lng: 121.07405361 },
+    { address: "3 Comets Loop", lat: 14.61684942, lng: 121.07390575 },
+    { address: "4 Comets Loop", lat: 14.61701861, lng: 121.07401723 },
+    { address: "5 Comets Loop", lat: 14.61713962, lng: 121.07408764 },
+    { address: "6 Comets Loop", lat: 14.61724124, lng: 121.07414740 },
+    { address: "7 Comets Loop", lat: 14.61736404, lng: 121.07420532 },
+    { address: "8 Comets Loop", lat: 14.61749665, lng: 121.07421110 },
+    { address: "9 Comets Loop", lat: 14.61761449, lng: 121.07422116 },
+    { address: "10 Comets Loop", lat: 14.61756356, lng: 121.07439760 },
+    { address: "11 Comets Loop", lat: 14.61761271, lng: 121.07453959 },
+    { address: "12 Comets Loop", lat: 14.61762650, lng: 121.07471293 },
+    { address: "13 Comets Loop", lat: 14.61641988, lng: 121.07397079 },
+    { address: "14 Comets Loop", lat: 14.61651672, lng: 121.07378824 },
+    { address: "15 Comets Loop", lat: 14.61661519, lng: 121.07361171 },
+    { address: "16 Comets Loop", lat: 14.61679832, lng: 121.07358590 },
+    { address: "17 Comets Loop", lat: 14.61696654, lng: 121.07361088 },
+    { address: "18 Comets Loop", lat: 14.61712080, lng: 121.07367659 },
+    { address: "19 Comets Loop", lat: 14.61725901, lng: 121.07373795 },
+    { address: "20 Comets Loop", lat: 14.61739770, lng: 121.07380433 },
+    { address: "21 Comets Loop", lat: 14.61754028, lng: 121.07384758 },
+
+    { address: "1 Evening Glow Rd", lat: 14.61775109, lng: 121.07610952 },
+    { address: "2 Evening Glow Rd", lat: 14.61806990, lng: 121.07617104 },
+
+    { address: "1 Moonlight Loop", lat: 14.61846375, lng: 121.07505089 },
+    { address: "2 Moonlight Loop", lat: 14.61847933, lng: 121.07485961 },
+    { address: "3 Moonlight Loop", lat: 14.61850317, lng: 121.07469164 },
+    { address: "4 Moonlight Loop", lat: 14.61869951, lng: 121.07481059 },
+    { address: "5 Moonlight Loop", lat: 14.61890967, lng: 121.07487713 },
+    { address: "6 Moonlight Loop", lat: 14.61903182, lng: 121.07492851 },
+    { address: "7 Moonlight Loop", lat: 14.61915242, lng: 121.07498224 },
+    { address: "8 Moonlight Loop", lat: 14.61927319, lng: 121.07503880 },
+    { address: "9 Moonlight Loop", lat: 14.61943024, lng: 121.07510450 },
+    { address: "10 Moonlight Loop", lat: 14.61856189, lng: 121.07434848 },
+    { address: "11 Moonlight Loop", lat: 14.61869434, lng: 121.07439559 },
+    { address: "12 Moonlight Loop", lat: 14.61882792, lng: 121.07444328 },
+    { address: "13 Moonlight Loop", lat: 14.61896726, lng: 121.07451897 },
+    { address: "14 Moonlight Loop", lat: 14.61909840, lng: 121.07458569 },
+    { address: "15 Moonlight Loop", lat: 14.61922436, lng: 121.07462542 },
+    { address: "16 Moonlight Loop", lat: 14.61935234, lng: 121.07467337 },
+    { address: "17 Moonlight Loop", lat: 14.61947952, lng: 121.07475165 },
+    { address: "18 Moonlight Loop", lat: 14.61962161, lng: 121.07483966 },
+    { address: "19 Moonlight Loop", lat: 14.61978723, lng: 121.07496261 },
+    { address: "20 Moonlight Loop", lat: 14.61973451, lng: 121.07519858 },
+
+    { address: "1 Promenade Ln", lat: 14.61822238, lng: 121.07621874 },
+    { address: "2 Promenade Ln", lat: 14.61837072, lng: 121.07625335 },
+    { address: "3 Promenade Ln", lat: 14.61852053, lng: 121.07629593 },
+    { address: "4 Promenade Ln", lat: 14.61871445, lng: 121.07634271 },
+    { address: "5 Promenade Ln", lat: 14.61844867, lng: 121.07663674 },
+    { address: "6 Promenade Ln", lat: 14.61818021, lng: 121.07662048 },
+
+    { address: "1 Starline Rd", lat: 14.61876928, lng: 121.07620960 },
+    { address: "2 Starline Rd", lat: 14.61963410, lng: 121.07545875 },
+    { address: "3 Starline Rd", lat: 14.61953013, lng: 121.07556470 },
+    { address: "4 Starline Rd", lat: 14.61942842, lng: 121.07565120 },
+    { address: "5 Starline Rd", lat: 14.61934715, lng: 121.07574650 },
+    { address: "6 Starline Rd", lat: 14.61927627, lng: 121.07586980 },
+    { address: "7 Starline Rd", lat: 14.61920173, lng: 121.07598312 },
+    { address: "8 Starline Rd", lat: 14.61916450, lng: 121.07610248 },
+    { address: "9 Starline Rd", lat: 14.61911990, lng: 121.07622502 },
+    { address: "10 Starline Rd", lat: 14.61907780, lng: 121.07636358 },
+    { address: "11 Starline Rd", lat: 14.61898769, lng: 121.07651655 },
+    { address: "12 Starline Rd", lat: 14.61889248, lng: 121.07667404 },
+    { address: "13 Starline Rd", lat: 14.61882175, lng: 121.07680237 },
+    { address: "14 Starline Rd", lat: 14.61875857, lng: 121.07691452 },
+    { address: "15 Starline Rd", lat: 14.61870204, lng: 121.07703329 },
+    { address: "16 Starline Rd", lat: 14.61864616, lng: 121.07715801 },
+    { address: "17 Starline Rd", lat: 14.61858557, lng: 121.07727561 },
+    { address: "18 Starline Rd", lat: 14.61837827, lng: 121.07682869 },
+    { address: "19 Starline Rd", lat: 14.61832750, lng: 121.07696808 },
+    { address: "20 Starline Rd", lat: 14.61825053, lng: 121.07710940 },
+
+    { address: "1 Union Lane", lat: 14.61767394, lng: 121.07391682 },
+    { address: "2 Union Lane", lat: 14.61779268, lng: 121.07364608 },
+    { address: "3 Union Lane", lat: 14.61797128, lng: 121.07385362 },
+    { address: "4 Union Lane", lat: 14.61803454, lng: 121.07369905 },
+
+    { address: "1 Crest line St", lat: 14.61644405, lng: 121.07331231 },
+    { address: "2 Crest line St", lat: 14.61641051, lng: 121.07304946 },
+
+    { address: "1 Hillside Dr", lat: 14.61663895, lng: 121.07313001 },
+    { address: "2 Hillside Dr", lat: 14.61680400, lng: 121.07321123 },
+    { address: "3 Hillside Dr", lat: 14.61712388, lng: 121.07335623 },
+    { address: "4 Hillside Dr", lat: 14.61725057, lng: 121.07340971 },
+    { address: "5 Hillside Dr", lat: 14.61742560, lng: 121.07349303 },
+    { address: "6 Hillside Dr", lat: 14.61763404, lng: 121.07356930 },
+    { address: "7 Hillside Dr", lat: 14.61817550, lng: 121.07384171 },
+    { address: "8 Hillside Dr", lat: 14.61833625, lng: 121.07391464 },
+    { address: "9 Hillside Dr", lat: 14.61851469, lng: 121.07398991 },
+    { address: "10 Hillside Dr", lat: 14.61868241, lng: 121.07406417 },
+    { address: "11 Hillside Dr", lat: 14.61884187, lng: 121.07414145 },
+    { address: "12 Hillside Dr", lat: 14.61899970, lng: 121.07423265 },
+    { address: "13 Hillside Dr", lat: 14.61916580, lng: 121.07431076 },
+    { address: "14 Hillside Dr", lat: 14.61933872, lng: 121.07435334 },
+    { address: "15 Hillside Dr", lat: 14.61966379, lng: 121.07452048 },
+    { address: "16 Hillside Dr", lat: 14.61984368, lng: 121.07461184 },
+    { address: "17 Hillside Dr", lat: 14.62000646, lng: 121.07469021 },
+
+    { address: "Covered Court", lat: 14.61789585, lng: 121.07416204 },
+    { address: "Barangay Hall", lat: 14.61826809, lng: 121.07445661 }
+];
+
+// Simple address validation function for the create form
+function validateConstructionAddress() {
+    const lotInput = document.getElementById('constructionLotNo');
+    const streetInput = document.getElementById('constructionStreet');
+
+    if (!lotInput || !streetInput) return true;
+
+    const lot = lotInput.value.trim();
+    const street = streetInput.value;
+
+    if (!lot || !street || street === '') {
+        return false;
+    }
+
+    const fullAddress = `${lot} ${street}`;
+    const match = addressCoordinates.find(a => a.address === fullAddress);
+
+    if (match) {
+        const lat = document.getElementById('latitude2');
+        const lng = document.getElementById('longitude2');
+        if (lat && lng) {
+            lat.value = match.lat.toFixed(6);
+            lng.value = match.lng.toFixed(6);
+        }
+        return true;
+    }
+
+    // Show error message
+    Swal.fire({
+        ...swalTopConfig,
+        icon: 'error',
+        title: 'Invalid Construction Address',
+        text: 'The construction address does not exist in our records. Please check the lot number and street.',
+        confirmButtonColor: '#00247C'
+    });
+    return false;
+}
+
+/**
+ * Validates owner address against the addressCoordinates database
+ * @returns {boolean} - Whether the address exists in records
+ */
+function validateOwnerAddress() {
+    const lotInput = document.getElementById('ownerLotNo');
+    const streetInput = document.getElementById('ownerStreet');
+
+    if (!lotInput || !streetInput) return true;
+
+    const lot = lotInput.value.trim();
+    const street = streetInput.value;
+
+    if (!lot || !street || street === '') {
+        return false;
+    }
+
+    const fullAddress = `${lot} ${street}`;
+    const match = addressCoordinates.find(a => a.address === fullAddress);
+
+    if (match) {
+        return true;
+    }
+
+    // Show error message
+    Swal.fire({
+        ...swalTopConfig,
+        icon: 'error',
+        title: 'Invalid Owner Address',
+        text: 'The owner address does not exist in our records. Please check the lot number and street.',
+        confirmButtonColor: '#00247C'
+    });
+    return false;
+}
+
+/**
+ * Calculates the number of working days between start and end dates
+ * Excludes weekends (Saturday and Sunday)
+ */
+function calculateWorkingDays() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const workingDaysInput = document.getElementById('numberOfWorkingDays');
+
+    if (!startDateInput || !endDateInput || !workingDaysInput) return;
+
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+
+    // Clear if either date is missing
+    if (!startDate || !endDate) {
+        workingDaysInput.value = '';
+        return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Validate dates
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        workingDaysInput.value = '';
+        return;
+    }
+
+    // Check if end date is before start date
+    if (end < start) {
+        workingDaysInput.value = '';
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'warning',
+            title: 'Invalid Date Range',
+            text: 'End date cannot be before start date.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        return;
+    }
+
+    // Calculate working days (excluding weekends)
+    let workingDays = 0;
+    const currentDate = new Date(start);
+
+    while (currentDate <= end) {
+        // Get day of week (0 = Sunday, 6 = Saturday)
+        const dayOfWeek = currentDate.getDay();
+
+        // If it's not Saturday (6) or Sunday (0), count it as a working day
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            workingDays++;
+        }
+
+        // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    workingDaysInput.value = workingDays;
+}
+
+// ===============================================
 // GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
 // ===============================================
 const swalTopConfig = {
@@ -473,7 +813,7 @@ function openUpdateModal(appId) {
     // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
 
-if (!app) {
+    if (!app) {
         Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
         return;
     }
@@ -804,7 +1144,7 @@ async function viewDetails(appId) {
         // Merged logic to handle all possible formats from the DB
         let files = [];
         const possibleFields = [app.requirement_upload_json, app.requirement_upload, app.documents, app.files];
-        
+
         for (let field of possibleFields) {
             if (!field) continue;
             if (Array.isArray(field)) {
@@ -876,7 +1216,7 @@ async function viewDetails(appId) {
 
         // === 5. GENERATE OCR RESULTS HTML ===
         let ocrHtml = `<h3 style="color: #777; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px;">OCR RESULTS (${ocrRuns.length} RUNS)</h3>`;
-        
+
         if (ocrRuns.length > 0) {
             ocrHtml += `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">`;
             ocrHtml += ocrRuns.map((run, idx) => {
@@ -886,10 +1226,10 @@ async function viewDetails(appId) {
                 });
 
                 let parsedOCR = { text: 'No text content', detected: [] };
-                try { 
-                    parsedOCR = typeof run.ocr_result === 'string' ? JSON.parse(run.ocr_result) : run.ocr_result || {}; 
-                } catch(e) {}
-                
+                try {
+                    parsedOCR = typeof run.ocr_result === 'string' ? JSON.parse(run.ocr_result) : run.ocr_result || {};
+                } catch (e) { }
+
                 return `
                     <details ${isLatest ? 'open' : ''} style="margin-bottom: 10px; border: 1px solid ${isLatest ? '#bbdefb' : '#e9ecef'}; border-radius: 6px; background:${isLatest ? '#f0f7ff' : '#f8f9fa'}; overflow:hidden;">
                         <summary style="padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600; outline: none; display: flex; align-items: center;">
@@ -943,7 +1283,7 @@ async function viewDetails(appId) {
 
                         <div class="detail-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <h3 style="margin-top:0; color: #19316b; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">Owner Details</h3>
-                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Name:</span> <span>${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Name:</span> <span>${app.first_name} ${app.middle_name || ''} ${app.last_name}  ${app.suffix || ''}</span></div>
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 8px; font-size:14px;"><span style="font-weight: 600; color: #555;">Contact:</span> <span>${app.contact_no_owner}</span></div>
                         </div>
 
@@ -1060,7 +1400,7 @@ function updateSummary() {
 
                 <div class="report-section">
                     <h3>Ownership</h3>
-                    <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                    <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name} ${app.suffix || ''}</span></div>
                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.contact_no_owner}</span></div>
                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.address_owner}</span></div>
                 </div>
@@ -1357,7 +1697,7 @@ function printSummary() {
                             <h3>Ownership</h3>
                             <div class="info-row">
                                 <span class="info-label">Owner Name</span>
-                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
+                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name} ${app.suffix || ''}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Contact</span>
@@ -1581,11 +1921,222 @@ function downloadSummary(appId) {
 }
 
 /**
- * Creates a new utility application
+ * Creates a new construction application
+ * Handles form submission with proper file uploads and address concatenation
+ * 
+ * @param {Event} event - The form submission event
  */
 function createApplication(event) {
     event.preventDefault();
-    Swal.fire({ ...swalTopConfig, icon: 'info', title: 'Coming Soon', text: 'Create functionality is not implemented yet.' });
+
+    // Validate both addresses separately with specific error messages
+    const isOwnerAddressValid = validateOwnerAddress();
+    const isConstructionAddressValid = validateConstructionAddress();
+
+    if (!isOwnerAddressValid || !isConstructionAddressValid) {
+        // Individual validation functions already showed specific error messages
+        return;
+    }
+
+    // Get confirmation from user first
+    Swal.fire({
+        title: 'Create Application?',
+        text: 'Are you sure you want to create this application?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
+        confirmButtonText: 'Yes, create it!',
+        cancelButtonText: 'Cancel',
+        customClass: {
+            popup: 'modal-content',
+            confirmButton: 'btn-proceed',
+            cancelButton: 'btn-cancel'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('createForm');
+            const formData = new FormData();
+
+            // 1. ADD THE ACTION
+            formData.append('action', 'create');
+
+            // Get current user ID from session
+            formData.append('supabase_user_id', 'staff_' + Date.now());
+
+            // 2. CAPTURE DATA - With proper null/empty handling
+            // Owner Details - Use empty string for optional fields
+            const firstName = form.querySelector('[name="firstName"]');
+            const middleName = form.querySelector('[name="middleName"]');
+            const lastName = form.querySelector('[name="lastName"]');
+            const suffix = form.querySelector('[name="suffix"]');
+            const contactNoOwner = form.querySelector('[name="contactNoOwner"]');
+            const ownerLotNo = form.querySelector('[name="ownerLotNo"]');
+            const ownerStreet = form.querySelector('[name="ownerStreet"]');
+
+            if (firstName) formData.append('firstName', firstName.value);
+            // IMPORTANT: Use empty string for optional fields, not null or undefined
+            formData.append('middleName', middleName ? (middleName.value || '') : '');
+            if (lastName) formData.append('lastName', lastName.value);
+            formData.append('suffix', suffix ? (suffix.value || '') : '');
+            if (contactNoOwner) formData.append('contactNoOwner', contactNoOwner.value);
+
+            // Add owner lot and street
+            if (ownerLotNo) formData.append('ownerLotNo', ownerLotNo.value);
+            if (ownerStreet) formData.append('ownerStreet', ownerStreet.value);
+
+            // Combine owner address for display/storage
+            const ownerAddress = `${ownerLotNo ? ownerLotNo.value : ''} ${ownerStreet ? ownerStreet.value : ''}`.trim();
+            formData.append('addressOwner', ownerAddress);
+
+            // Construction Details
+            const constructionLotNo = form.querySelector('[name="constructionLotNo"]');
+            const constructionStreet = form.querySelector('[name="constructionStreet"]');
+            const typeOfWork = form.querySelector('[name="typeOfWork"]');
+            const natureOfActivity = form.querySelector('[name="natureOfActivity"]');
+            const detailsOfWork = form.querySelector('[name="detailsOfWork"]');
+            const startDate = form.querySelector('[name="startDate"]');
+            const endDate = form.querySelector('[name="endDate"]');
+            const numberOfWorkingDays = form.querySelector('[name="numberOfWorkingDays"]');
+            const numberOfWorkers = form.querySelector('[name="numberOfWorkers"]');
+            const contractorName = form.querySelector('[name="contractorName"]');
+            const contractorContactNumber = form.querySelector('[name="contractorContactNumber"]');
+            const applicationMethod = form.querySelector('[name="applicationMethod"]');
+
+            if (typeOfWork) formData.append('typeOfWork', typeOfWork.value);
+            if (natureOfActivity) formData.append('natureOfActivity', natureOfActivity.value);
+            if (detailsOfWork) formData.append('detailsOfWork', detailsOfWork.value);
+            if (startDate) formData.append('startDate', startDate.value);
+            if (endDate) formData.append('endDate', endDate.value);
+            // Use empty string for optional numeric fields
+            formData.append('numberOfWorkingDays', numberOfWorkingDays ? (numberOfWorkingDays.value || '') : '');
+            formData.append('numberOfWorkers', numberOfWorkers ? (numberOfWorkers.value || '') : '');
+            formData.append('contractorName', contractorName ? (contractorName.value || '') : '');
+            formData.append('contractorContactNumber', contractorContactNumber ? (contractorContactNumber.value || '') : '');
+            if (applicationMethod) formData.append('applicationMethod', applicationMethod.value || '');
+
+            // Add construction lot and street
+            if (constructionLotNo) formData.append('constructionLotNo', constructionLotNo.value);
+            if (constructionStreet) formData.append('constructionStreet', constructionStreet.value);
+
+            // Construction address for display
+            const constructionAddress = `${constructionLotNo ? constructionLotNo.value : ''} ${constructionStreet ? constructionStreet.value : ''}`.trim();
+            formData.append('constructionAddress', constructionAddress);
+
+            // Coordinates (for construction location)
+            const latitudeEl = form.querySelector('[name="latitude2"]');
+            const longitudeEl = form.querySelector('[name="longitude2"]');
+            formData.append('latitude2', latitudeEl ? (latitudeEl.value || '') : '');
+            formData.append('longitude2', longitudeEl ? (longitudeEl.value || '') : '');
+
+            // Agreement
+            formData.append('agreed', '1');
+
+            // Application Date
+            formData.append('applicationDate', getCurrentDateString());
+
+            // Handle file upload
+            const requirementUploadInput = form.querySelector('[name="requirementUpload"]');
+            if (requirementUploadInput && requirementUploadInput.files.length > 0) {
+                for (let i = 0; i < requirementUploadInput.files.length; i++) {
+                    formData.append('requirementUpload[]', requirementUploadInput.files[i]);
+                }
+                console.log(`[UPLOAD SUCCESS] Sending ${requirementUploadInput.files.length} file(s) for construction`);
+            } else {
+                console.warn('[UPLOAD WARNING] No file selected!');
+            }
+
+            // Show loading state
+            Swal.fire({
+                title: 'Submitting...',
+                text: 'Please wait while we create the application.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 3. SEND TO BACKEND
+            fetch(CONSTRUCTION_HANDLER_URL, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Application created successfully! Reference ID: ' + data.id,
+                            confirmButtonText: 'OK',
+                            color: '#363636',
+                            confirmButtonColor: '#00247C',
+                            customClass: {
+                                popup: 'modal-content',
+                                confirmButton: 'btn-proceed',
+                            }
+                        }).then(() => {
+                            // Reset form
+                            form.reset();
+
+                            // Refresh applications list
+                            loadApplicationsFromDB().then(() => {
+                                // Switch to management tab
+                                switchTab(null, 'management');
+                            });
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Error: ' + (data.message || 'Failed to create application'),
+                            confirmButtonText: 'OK',
+                            color: '#363636',
+                            confirmButtonColor: '#00247C',
+                            customClass: {
+                                popup: 'modal-content',
+                                confirmButton: 'btn-proceed',
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Network error occurred. Please try again.',
+                        confirmButtonText: 'OK',
+                        color: '#363636',
+                        confirmButtonColor: '#00247C',
+                        customClass: {
+                            popup: 'modal-content',
+                            confirmButton: 'btn-proceed',
+                        }
+                    });
+                });
+        }
+    });
+}
+
+/**
+ * Validates owner address against the addressCoordinates database
+ * @returns {boolean} - Whether the address exists in records
+ */
+function validateOwnerAddress() {
+    const lotInput = document.getElementById('ownerLotNo');
+    const streetInput = document.getElementById('ownerStreet');
+
+    if (!lotInput || !streetInput) return true;
+
+    const lot = lotInput.value.trim();
+    const street = streetInput.value;
+
+    if (!lot || !street || street === '') {
+        return false;
+    }
+
+    const fullAddress = `${lot} ${street}`;
+    const match = addressCoordinates.find(a => a.address === fullAddress);
+
+    return !!match;
 }
 
 /**
@@ -1642,32 +2193,59 @@ function reRunOCR(appId) {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        ...swalTopConfig,
-                        icon: 'success',
-                        title: 'Queued!',
-                        text: 'OCR re-run has been queued successfully.',
-                        timer: 2500
-                    });
-                    viewDetails(appId);
-                } else {
-                    Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Failed to queue OCR re-run.' });
-                }
-            })
-            .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            ...swalTopConfig,
+                            icon: 'success',
+                            title: 'Queued!',
+                            text: 'OCR re-run has been queued successfully.',
+                            timer: 2500
+                        });
+                        viewDetails(appId);
+                    } else {
+                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Failed to queue OCR re-run.' });
+                    }
+                })
+                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
         }
     });
 }
 
 // Wait for the DOM content to fully load before running the script
+// Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
-});
 
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', createApplication);
+    }
+
+    // Add working days calculation listeners
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', calculateWorkingDays);
+        endDateInput.addEventListener('change', calculateWorkingDays);
+
+        // Also calculate when user types (for better UX)
+        startDateInput.addEventListener('input', calculateWorkingDays);
+        endDateInput.addEventListener('input', calculateWorkingDays);
+    }
+});
+// CLOSE MODAL ON OUTSIDE CLICK
+window.onclick = function (event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target == modal) {
+            modal.classList.remove('active');
+        }
+    });
+}
 
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `
@@ -1703,53 +2281,3 @@ document.addEventListener('DOMContentLoaded', function () {
         sideNav.classList.toggle('expanded');
     });
 });
-
-// DO NOT REMOVE!!! - JEP
-// /**
-//  * Fetch audit logs from the server
-//  * Clears and re-renders the entire audit table
-//  *
-//  * @async
-//  * @returns {Promise<void>}
-//  */
-// async function fetchAuditLogs() {
-//     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
-//             credentials: 'include',
-//             cache: 'no-store'
-//         });
-
-//         const logs = await resp.json();
-
-//         if (!Array.isArray(logs)) {
-//             console.error('Invalid audit log response');
-//             return;
-//         }
-
-//         const tbody = document.getElementById('auditTableBody');
-//         if (!tbody) return;
-
-//         tbody.innerHTML = '';
-
-//         logs.forEach(log => {
-//             const tr = document.createElement('tr');
-
-//             tr.innerHTML = `
-//                 <td>${log.id}</td>
-//                 <td>${log.action}</td>
-//                 <td>${log.full_name}</td>
-//                 <td>${log.table_name}</td>
-//                 <td>${log.record_id}</td>
-//                 <td>${log.role_id}</td>
-//                 <td>${log.created_at}</td>
-//             `;
-
-//             tbody.appendChild(tr);
-//         });
-
-//     } catch (err) {
-//         console.error('Failed to fetch audit logs:', err);
-//     }
-// }
-
-// fetchAuditLogs
