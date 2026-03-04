@@ -91,7 +91,6 @@
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>

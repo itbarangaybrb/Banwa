@@ -1609,7 +1609,6 @@ body:has(.side_nav.expanded) #mapping {
     height: 100%;
     overflow: hidden;
     flex-direction: column;
-    margin-top: 32px;
 }
 
 .tab-pane.active {
@@ -2010,7 +2009,6 @@ body {
 
 /* CONTENT AREA */
 .content {
-    margin-top: 70px;
     padding: 20px;
     flex: 1;
     overflow-y: auto;

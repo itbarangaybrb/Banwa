@@ -206,7 +206,7 @@ function filterApplications() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
             <td>${app.owner_contact_no || 'N/A'}</td>
             <td>${app.provider || 'N/A'}</td>
             <td>${app.nature_of_work || 'N/A'}</td>
@@ -307,7 +307,7 @@ function loadProcessTable() {
                 <tr>
                     <td>${app.id}</td>
                     <td>${app.nature_of_work || 'N/A'}</td>
-                    <td>${app.first_name} ${app.middle_name} ${app.last_name} ${app.suffix}</td>
+                    <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
                     <td>${app.provider}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
                     <td>
@@ -1121,12 +1121,6 @@ function openModal(modalId) {
     }
 }
 
-/**
- * Closes a modal dialog by removing the 'active' class
- * Restores body scrolling to enable normal page interaction
- * 
- * @param {string} modalId - The ID of the modal element to close
- */
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -1134,6 +1128,42 @@ function closeModal(modalId) {
         document.body.style.overflow = 'auto';
     }
 }
+
+/**
+ * Closes a modal dialog by removing the 'active' class
+ * Restores body scrolling to allow background interaction**/
+document.addEventListener('click', function (e) {
+    // X buttons
+    if (e.target.classList.contains('close-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            console.log("✅ Modal closed successfully");
+        }
+    }
+
+    // Cancel buttons
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+// ESC key support
+document.addEventListener('keydown', function (e) {
+    if (e.key === "Escape") {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            console.log("🟡 ESC pressed");
+            activeModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
 
 /**
  * Displays a temporary alert message to the user
@@ -1445,6 +1475,120 @@ function createApplication(event) {
     });
 }
 
+
+// ====================== STAFF CREATE FORM - NOW MATCHES PHP (camelCase keys) ======================
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('staffCreateForm');
+    if (!form) return;
+
+    const submitBtn = document.getElementById('staffSubmitBtn');
+    const clearBtn = document.getElementById('staffClearBtn');
+
+    // Clear button
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            form.reset();
+            document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+            document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
+        });
+    }
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        // Validation (keeps your red error messages)
+        let isValid = true;
+        const requiredIds = ['firstName','lastName','contactNoOwner','addressOwner','utilityLotNo','utilityStreet','requestDate','dateOfWork','natureOfWork','provider'];
+
+        requiredIds.forEach(id => {
+            const field = document.getElementById(id);
+            if (!field) return;
+            const group = field.closest('.form-group');
+            const err = group ? group.querySelector('.error-msg') : null;
+
+            if (!field.value.trim() || (field.tagName === 'SELECT' && (field.value === '' || field.value === 'select'))) {
+                isValid = false;
+                if (group) group.classList.add('error');
+                if (err) err.textContent = 'This field is required';
+            } else {
+                if (group) group.classList.remove('error');
+                if (err) err.textContent = '';
+            }
+        });
+
+        if (!isValid) {
+            Swal.fire({ ...swalTopConfig, icon: 'warning', title: 'Incomplete Form', text: 'Please fill all required fields.' });
+            return;
+        }
+
+        // === BUILD FORMDATA WITH EXACT KEYS YOUR PHP EXPECTS ===
+        const formData = new FormData();
+        formData.append('action', 'create');
+
+        // Owner Information
+        formData.append('firstName', document.getElementById('firstName').value.trim());
+        formData.append('middleName', document.getElementById('middleName').value.trim());
+        formData.append('lastName', document.getElementById('lastName').value.trim());
+        formData.append('suffix', document.getElementById('suffix').value.trim());
+        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value.trim());
+        formData.append('addressOwner', document.getElementById('addressOwner').value.trim());
+
+        // Utility Location (PHP will build address_of_utility from these)
+        formData.append('utilityLotNo', document.getElementById('utilityLotNo').value.trim());
+        formData.append('utilityStreet', document.getElementById('utilityStreet').value.trim());
+
+        // Coordinates
+        formData.append('latitude2', document.getElementById('latitude2').value || '');
+        formData.append('longitude2', document.getElementById('longitude2').value || '');
+
+        // Utilities Information
+        formData.append('requestDate', document.getElementById('requestDate').value);
+        formData.append('dateOfWork', document.getElementById('dateOfWork').value);
+        formData.append('natureOfWork', document.getElementById('natureOfWork').value);
+        formData.append('provider', document.getElementById('provider').value);
+        formData.append('agreed', '1');
+
+        // Button feedback
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Application...';
+
+        try {
+            const res = await fetch(UTILITY_HANDLER_URL, { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success!',
+                    text: `Application created! ID: ${data.id || 'N/A'}`,
+                    timer: 2500
+                });
+                form.reset();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Failed',
+                    text: data.message || 'Server error'
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                ...swalTopConfig,
+                icon: 'error',
+                title: 'Network Error',
+                text: 'Could not connect to server'
+            });
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+});
+
 /**
  * Filters applications in review table
  */
@@ -1490,14 +1634,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK
-window.onclick = function (event) {
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-        if (event.target == modal) {
-            modal.classList.remove('active');
-        }
-    });
-}
+// window.onclick = function (event) {
+//     const modals = document.querySelectorAll('.modal');
+//     modals.forEach(modal => {
+//         if (event.target == modal) {
+//             modal.classList.remove('active');
+//         }
+//     });
+// }
 
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `

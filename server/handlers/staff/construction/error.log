@@ -295,49 +295,69 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [04-Mar-2026 05:57:19 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
 LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
                               ^
-[04-Mar-2026 09:30:05 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:30:05 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:30:05 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:30:05 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:30:05 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:30:05 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:32:18 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:32:18 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:32:18 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:32:18 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:32:18 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:32:18 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:36:25 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:36:25 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:36:25 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:36:25 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 164
-[04-Mar-2026 09:36:25 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 09:36:25 UTC] General Error in handleCreateApplication: Missing required field: constructionAddress
-[04-Mar-2026 09:44:33 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","saved_filename":"const_69a7ff012b147_localhost_8080_Banwa_client_pages_resident_status.php (4).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a7ff012b147_localhost_8080_Banwa_client_pages_resident_status.php (4).png"}]
-[04-Mar-2026 09:44:33 UTC] OCR job queued for application 31 with 1 files
-[04-Mar-2026 09:44:33 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 09:44:33 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 10:07:31 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","saved_filename":"const_69a80463ac250_localhost_8080_Banwa_client_pages_resident_status.php (4).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a80463ac250_localhost_8080_Banwa_client_pages_resident_status.php (4).png"}]
-[04-Mar-2026 10:07:31 UTC] OCR job queued for application 32 with 1 files
-[04-Mar-2026 10:07:31 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 10:07:31 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 10:47:53 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
-[04-Mar-2026 10:47:53 UTC] No files uploaded for application 33, skipping OCR queue.
-[04-Mar-2026 10:47:53 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 10:47:53 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:13:59 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","saved_filename":"const_69a813f714347_localhost_8080_Banwa_client_pages_resident_status.php (4).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a813f714347_localhost_8080_Banwa_client_pages_resident_status.php (4).png"}]
-[04-Mar-2026 11:13:59 UTC] OCR job queued for application 34 with 1 files
-[04-Mar-2026 11:13:59 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:13:59 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:19:17 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","saved_filename":"const_69a81535a3110_localhost_8080_Banwa_client_pages_resident_status.php (4).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a81535a3110_localhost_8080_Banwa_client_pages_resident_status.php (4).png"}]
-[04-Mar-2026 11:19:17 UTC] OCR job queued for application 35 with 1 files
-[04-Mar-2026 11:19:17 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:19:17 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:27:37 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","saved_filename":"const_69a817290dcdb_localhost_8080_Banwa_client_pages_resident_status.php (1).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a817290dcdb_localhost_8080_Banwa_client_pages_resident_status.php (1).png"}]
-[04-Mar-2026 11:27:37 UTC] OCR job queued for application 36 with 1 files
-[04-Mar-2026 11:27:37 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:27:37 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:39:03 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","saved_filename":"const_69a819d729160_localhost_8080_Banwa_client_pages_resident_status.php (1).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a819d729160_localhost_8080_Banwa_client_pages_resident_status.php (1).png"}]
-[04-Mar-2026 11:39:03 UTC] OCR job queued for application 37 with 1 files
-[04-Mar-2026 11:39:03 UTC] CR1 Check - Has file upload: No
-[04-Mar-2026 11:39:03 UTC] CR1 Check - Has file upload: No
+[04-Mar-2026 10:05:29 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:06:24 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:12:18 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:20:10 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:22:00 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:38:30 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:38:53 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:40:16 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:43:40 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:43:41 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 10:46:08 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:00:46 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:06:28 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:09:07 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:09:48 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:09:52 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:10:06 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:10:29 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:15:31 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:16:47 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:18:38 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^
+[04-Mar-2026 11:26:51 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
+LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
+                              ^

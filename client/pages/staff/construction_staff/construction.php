@@ -100,7 +100,6 @@ if ($_SESSION['role_id'] != 5) {
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>
@@ -243,11 +242,11 @@ if ($_SESSION['role_id'] != 5) {
                             </button>
                             <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                                 <i class="fas fa-building"></i>
-                                <span>Business SDSS</span>
+                                <span>Business Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                                 <i class="fas fa-hard-hat"></i>
-                                <span>Construction SDSS</span>
+                                <span>Construction Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -255,7 +254,7 @@ if ($_SESSION['role_id'] != 5) {
                             </button>
                             <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
-                                <span>SDSS Rules</span>
+                                <span>Rules Summary</span>
                             </button>
                         </div>
                     </div>
@@ -626,29 +625,29 @@ if ($_SESSION['role_id'] != 5) {
             </div>
         </div>
 
-        <!-- Modals -->
-        <div id="detailsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Application Details</h2>
-                    <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
-                </div>
-                <div id="modalBody"></div>
-            </div>
-        </div>
-
-        <div id="updateModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Update Application Status</h2>
-                    <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
-                </div>
-                <form id="updateForm" onsubmit="submitUpdate(event)">
-                    <input type="hidden" id="updateAppId" name="id">
-                    <div class="form-group">
-                        <label>Current Status:</label>
-                        <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
+            <!-- Modals -->
+            <div id="detailsModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Application Details</h2>
+                        <button class="close-btn">&times;</button>
                     </div>
+                    <div id="modalBody"></div>
+                </div>
+            </div>
+
+            <div id="updateModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Update Application Status</h2>
+                        <button class="close-btn">&times;</button>
+                    </div>
+                    <form id="updateForm" onsubmit="submitUpdate(event)">
+                        <input type="hidden" id="updateAppId" name="id">
+                        <div class="form-group">
+                            <label>Current Status:</label>
+                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
+                        </div>
 
                     <div class="form-group">
                         <label for="newStatus">New Status *</label>
@@ -680,14 +679,14 @@ if ($_SESSION['role_id'] != 5) {
                         </div>
                     </div>
 
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Update Status</button>
-                        <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
-                    </div>
-                </form>
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary">Update Status</button>
+                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     </div>
 
     <script src="../../../scripts/staff/construction_staff/construction.js"></script>

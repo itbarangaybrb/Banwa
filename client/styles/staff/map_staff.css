@@ -1,5 +1,5 @@
 /* map_staff.css — shared map overlay styles for all staff management pages */
-/* Generated from map.css — sidebar styles omitted (handled by page-specific CSS) */
+/* Generated from map.css — sidebar nav section omitted (each page has its own) */
 
 
 *,
@@ -324,7 +324,7 @@ body {
 
 .search-count {
   padding: 10px 15px;
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
   color: #666666;
   font-size: 0.9em;
   border-top: 1px solid #e0e0e0;
@@ -840,7 +840,7 @@ body {
   width: 30%;
   font-weight: 600;
   color: #00247c; /* Navy blue */
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
   border-right: 1px solid #e0e0e0;
 }
 
@@ -853,7 +853,7 @@ body {
 .legend {
   margin-top: 20px;
   padding: 15px;
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
   border-radius: 5px;
   border: 1px solid #e0e0e0;
 }
@@ -928,7 +928,7 @@ body {
 
 /* ==================== FOOTER (FIXED - NO SHIFT) ==================== */
 .footer {
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
   text-align: center;
   padding: 20px;
   margin-left: 70px;
@@ -1086,7 +1086,7 @@ body {
 
 /* ==================== FLOOD POPUP ==================== */
 .flood-popup-section {
-  background: #f8f8f8; /* Very light gray */
+  background: transparent;
   padding: 10px;
   border-radius: 5px;
   margin: 10px 0;
@@ -1561,14 +1561,6 @@ body {
 .rpt-footer h4 { color: #00247c; margin: 0 0 7px 0; font-size: 12px; font-weight: 700; }
 .rpt-footer ul { margin: 0; padding-left: 16px; color: #555; line-height: 1.7; }
 
-
-/* SDSS Rules / last-action separator — visual divider on the last action button */
-.gm-action-btn--separator {
-  border-left: 2px solid rgba(255, 255, 255, 0.4);
-  margin-left: 4px;
-  padding-left: 14px;
-}
-
 /* ==================== RESPONSIVE DESIGN ==================== */
 @media (max-width: 768px) {
   .mobile-menu-btn {
@@ -1785,4 +1777,165 @@ body {
     border-radius: 8px;
     padding: 1px 7px;
     letter-spacing: 0.3px;
+}
+/* ==================== FLOOD HOUSE DETAIL PANEL ==================== */
+
+/* Active/selected row in affected records list */
+.affected-record-row.active {
+    border-color: #dc3545;
+    box-shadow: 0 2px 10px rgba(220,53,69,0.18);
+    background: #fff5f5;
+}
+
+/* Risk level color badges */
+.risk-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 8px;
+    padding: 2px 8px;
+    letter-spacing: 0.3px;
+}
+.risk-badge.low    { background: #d4edda; color: #155724; }
+.risk-badge.medium { background: #fff3cd; color: #856404; }
+.risk-badge.high   { background: #f8d7da; color: #721c24; }
+
+/* Impact level badge */
+.impact-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 2px 8px;
+    background: #e9ecef;
+    color: #495057;
+}
+.impact-badge.fully    { background: #f8d7da; color: #721c24; }
+.impact-badge.partially { background: #fff3cd; color: #856404; }
+.impact-badge.minimally { background: #d4edda; color: #155724; }
+
+/* House detail drawer inside the side panel */
+.house-detail-drawer {
+    background: #f8f9fa;
+    border-top: 1px solid #f0f0f0;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: #444;
+    animation: slideDown 0.18s ease;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.house-detail-drawer .detail-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #dc3545;
+    letter-spacing: 0.4px;
+    margin: 10px 0 6px;
+}
+.house-detail-drawer .detail-section-title:first-child {
+    margin-top: 0;
+}
+.house-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+    gap: 8px;
+}
+.house-detail-row:last-child { border-bottom: none; }
+.house-detail-label {
+    font-weight: 600;
+    color: #666;
+    flex-shrink: 0;
+    font-size: 11px;
+}
+.house-detail-value {
+    font-size: 12px;
+    color: #222;
+    text-align: right;
+}
+
+/* Coverage bar inside house detail */
+.coverage-bar-wrap {
+    margin: 6px 0 2px;
+}
+.coverage-bar-track {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 3px;
+}
+.coverage-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.coverage-bar-fill.high   { background: #dc3545; }
+.coverage-bar-fill.medium { background: #fd7e14; }
+.coverage-bar-fill.low    { background: #28a745; }
+
+/* Flood zone chip in the detail drawer */
+.flood-zone-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-size: 11px;
+    margin: 3px 3px 0 0;
+}
+
+/* No-data hint row in the drawer */
+.drawer-empty {
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+    padding: 8px 0;
+    font-style: italic;
+}
+
+/* Flood house detail loading spinner row */
+.drawer-loading {
+    text-align: center;
+    padding: 14px;
+    color: #999;
+    font-size: 12px;
+}
+
+/* Affected records list: risk group header */
+.risk-group-header {
+    padding: 8px 10px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.risk-group-header.low    { color: #155724; }
+.risk-group-header.medium { color: #856404; }
+.risk-group-header.high   { color: #721c24; }
+.risk-group-divider {
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.2;
+}
+
+
+
+/* SDSS Rules / last-action separator */
+.gm-action-btn--separator {
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+  padding-left: 14px;
 }

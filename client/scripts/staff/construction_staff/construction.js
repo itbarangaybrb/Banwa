@@ -551,7 +551,7 @@ function filterApplications() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
-            <td>${app.first_name} ${app.middle_name || ''} ${app.last_name} ${app.suffix || ''}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
             <td>${app.nature_of_activity || 'N/A'}</td>
             <td>${app.contractor_name || 'N/A'}</td>
             <td>${app.contractor_contact_number || 'N/A'}</td>
@@ -1542,6 +1542,39 @@ function closeModal(modalId) {
         document.body.style.overflow = 'auto';
     }
 }
+/**
+ * Closes a modal dialog by removing the 'active' class
+ * Restores body scrolling to allow background interaction**/
+document.addEventListener('click', function (e) {
+    // X buttons
+    if (e.target.classList.contains('close-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Cancel buttons
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+// ESC key support
+document.addEventListener('keydown', function (e) {
+    if (e.key === "Escape") {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
 
 /**
  * Displays a temporary alert message to the user

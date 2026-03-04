@@ -25,6 +25,7 @@ if ($_SESSION['role_id'] != 6) {
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
+    <!-- <link rel="stylesheet" href="../../../styles/staff/utilities.css"> -->
 </head>
 
 <body>
@@ -102,7 +103,6 @@ if ($_SESSION['role_id'] != 6) {
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>
@@ -245,11 +245,11 @@ if ($_SESSION['role_id'] != 6) {
                             </button>
                             <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                                 <i class="fas fa-building"></i>
-                                <span>Business SDSS</span>
+                                <span>Business Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                                 <i class="fas fa-hard-hat"></i>
-                                <span>Construction SDSS</span>
+                                <span>Construction Report</span>
                             </button>
                             <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -257,7 +257,7 @@ if ($_SESSION['role_id'] != 6) {
                             </button>
                             <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
-                                <span>SDSS Rules</span>
+                                <span>Rules Summary</span>
                             </button>
                         </div>
                     </div>
@@ -376,78 +376,147 @@ if ($_SESSION['role_id'] != 6) {
                     <div class="header-right">
                         <div class="user-greeting">
                             <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <div class="user_image"><span class="user_avatar_header">A</span></div>
                         </div>
                     </div>
                 </header>
                 <div class="page-header">
-                    <h2>Create New Utilities Application</h2>
-                    <p class="form-description">Fill in the details to create a new utilities application</p>
+                    <h1>Create New Utilities Application (Staff)</h1>
+                    <p class="form-description">Fill in the details to register a new utilities application</p>
                 </div>
 
-                <form id="createForm" onsubmit="createApplication(event)">
-                    <!-- Applicant Information -->
-                    <div class="section-title">Applicant Information</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fullname">Full Name *</label>
-                            <input type="text" id="fullname" name="fullname" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="contactNo">Contact No *</label>
-                            <input type="tel" id="contactNo" name="contactNo" required>
-                        </div>
-                    </div>
+                <div id="createStaffForm">
+                    <form class="form" id="staffCreateForm">
 
-                    <!-- Application Details -->
-                    <div class="section-title">Application Details</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="address">Address *</label>
-                            <input type="text" id="address" name="address" required>
+                        <!-- ==================== Owner Information ==================== -->
+                        <div class="section-title">Owner Information</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name <span style="color:#BB1B1B;">*</span></label>
+                                <input type="text" id="firstName">
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="middleName">Middle Name <i>(Optional)</i></label>
+                                <input type="text" id="middleName">
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name <span style="color:#BB1B1B;">*</span></label>
+                                <input type="text" id="lastName">
+                                <div class="error-msg"></div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="provider">Utility Provider *</label>
-                            <select id="provider" name="provider" required>
-                                <option value="">Select Provider</option>
-                                <option value="Meralco">Meralco</option>
-                                <option value="Manila Water">Manila Water</option>
-                                <option value="Globe">Globe</option>
-                                <option value="Smart">Smart</option>
-                                <option value="PLDT">PLDT</option>
-                                <option value="Bayantel">Bayantel</option>
-                                <option value="Sky Cable">Sky Cable</option>
-                                <option value="Destiny">Destiny</option>
-                                <option value="Cignal">Cignal</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="natureOfWork">Nature of Work *</label>
-                            <select id="natureOfWork" name="natureOfWork" required>
-                                <option value="">Select Type</option>
-                                <option value="New Installation">New Installation</option>
-                                <option value="Repair/Maintenance">Repair/Maintenance</option>
-                                <option value="Permanent Disconnection">Permanent Disconnection</option>
-                                <option value="Reconnection">Reconnection</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="requestDate">Request Date *</label>
-                            <input type="date" id="requestDate" name="requestDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="dateOfWork">Date of Work *</label>
-                            <input type="date" id="dateOfWork" name="dateOfWork" required>
-                        </div>
-                    </div>
 
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Create Application</button>
-                        <button type="reset" class="btn-secondary">Clear Form</button>
-                    </div>
-                </form>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="suffix">Suffix <i>(Optional)</i></label>
+                                <input type="text" id="suffix">
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="contactNoOwner">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                                <input type="tel" id="contactNoOwner" maxlength="11">
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <!-- ==================== Owner Address ==================== -->
+                        <div class="section-title">Owner Address</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addressOwner">Full Address <span style="color:#BB1B1B;">*</span></label>
+                                <input type="text" id="addressOwner">
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <!-- ==================== Utility Location ==================== -->
+                        <div class="section-title">Utility Location</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="utilityLotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                                <input type="tel" id="utilityLotNo" maxlength="2">
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="utilityStreet">Street Name <span style="color:#BB1B1B;">*</span></label>
+                                <select id="utilityStreet">
+                                    <option value="">Select</option>
+                                    <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
+                                    <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
+                                    <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
+                                    <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
+                                    <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
+                                    <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
+                                    <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
+                                    <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                    <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
+                                    <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
+                                    <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
+                                    <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
+                                    <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
+                                    <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
+                                </select>
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="latitude2">
+                        <input type="hidden" id="longitude2">
+
+                        <!-- ==================== Utilities Information ==================== -->
+                        <div class="section-title">Utilities Information</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="requestDate">Request Date <span style="color:#BB1B1B;">*</span></label>
+                                <input type="date" id="requestDate">
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dateOfWork">Date of Work <span style="color:#BB1B1B;">*</span></label>
+                                <input type="date" id="dateOfWork">
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="natureOfWork">Nature of Work <span style="color:#BB1B1B;">*</span></label>
+                                <select id="natureOfWork">
+                                    <option value="select">Select</option>
+                                    <option value="New Installation">New Installation</option>
+                                    <option value="Repair/Maintenance">Repair/Maintenance</option>
+                                    <option value="Permanent Disconnection">Permanent Disconnection</option>
+                                    <option value="Reconnection">Reconnection</option>
+                                </select>
+                                <div class="error-msg"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="provider">Provider <span style="color:#BB1B1B;">*</span></label>
+                                <select id="provider">
+                                    <option value="select">Select</option>
+                                    <option value="Meralco">Meralco</option>
+                                    <option value="Manila Water">Manila Water</option>
+                                    <option value="Globe">Globe</option>
+                                    <option value="Smart">Smart</option>
+                                    <option value="PLDT">PLDT</option>
+                                    <option value="Bayantel">Bayantel</option>
+                                    <option value="Sky Cable">Sky Cable</option>
+                                    <option value="Destiny">Destiny</option>
+                                    <option value="Cignal">Cignal</option>
+                                </select>
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <div class="button-group" style="margin-top:40px; justify-content:flex-end; gap:12px;">
+                            <button type="button" id="staffClearBtn" class="btn-secondary">Clear Form</button>
+                            <button type="submit" id="staffSubmitBtn" class="btn-primary">Submit Application</button>
+                        </div>
+
+                    </form>
+                </div>
             </div>
 
             <!-- Process Tab -->
@@ -537,7 +606,7 @@ if ($_SESSION['role_id'] != 6) {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>Application Details</h2>
-                        <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+                        <button class="close-btn">&times;</button>
                     </div>
                     <div id="modalBody"></div>
                 </div>
@@ -547,7 +616,7 @@ if ($_SESSION['role_id'] != 6) {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>Update Application Status</h2>
-                        <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
+                        <button class="close-btn">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
                         <input type="hidden" id="updateAppId" name="id">
@@ -582,7 +651,7 @@ if ($_SESSION['role_id'] != 6) {
 
                         <div class="button-group">
                             <button type="submit" class="btn-primary">Update Status</button>
-                            <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
+                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
                         </div>
                     </form>
                 </div>

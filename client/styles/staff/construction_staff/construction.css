@@ -60,7 +60,7 @@ body {
     padding-left: 16px;
 }
 
-/* .nav_logo {
+.nav_logo {
     width: 40px;
     height: 40px;
     background-color: rgba(255, 255, 255, 0.1);
@@ -72,9 +72,8 @@ body {
     color: white;
     font-size: 24px;
     flex-shrink: 0;
-    cursor: default;
+    cursor: pointer;
     transition: background-color 0.3s ease;
-    cursor: default;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -83,7 +82,7 @@ body {
 
 .nav_logo:hover {
     background-color: rgba(255, 255, 255, 0.2);
-} */
+}
 
 .logo_title {
     display: flex;
@@ -1481,7 +1480,7 @@ h2 {
 }
 
 /* Create: createForm scrolls */
-#create #createForm {
+#create #createForm, #createStaffForm {
     /* margin-left: 70px; align with content */
     flex: 1 1 auto;
     overflow-y: auto !important;
