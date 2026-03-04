@@ -668,14 +668,14 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
 
-                    <div class="button-group">
-                        <button type="submit" class="btn-primary">Update Status</button>
-                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                    </div>
-                </form>
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary update-btn">Update Status</button>
+                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     </div>
 
     <script src="../../../scripts/staff/construction_staff/construction.js"></script>

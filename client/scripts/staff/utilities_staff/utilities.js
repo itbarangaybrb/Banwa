@@ -752,7 +752,8 @@ function submitUpdate(event) {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'success') {
-            closeModal('updateModal');
+            document.getElementById('updateModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
             Swal.fire({
                 ...swalTopConfig,
                 icon: 'success',
@@ -1118,14 +1119,6 @@ function openModal(modalId) {
     if (modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = 'auto';
     }
 }
 
