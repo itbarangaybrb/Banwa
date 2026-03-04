@@ -1400,6 +1400,40 @@ function closeModal(modalId) {
 }
 
 /**
+ * Closes a modal dialog by removing the 'active' class
+ * Restores body scrolling to allow background interaction**/
+document.addEventListener('click', function (e) {
+    // X buttons
+    if (e.target.classList.contains('close-btn')) {
+        const modal = e.target.closest('.staff-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Cancel buttons
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.staff-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+// ESC key support
+document.addEventListener('keydown', function (e) {
+    if (e.key === "Escape") {
+        const activeModal = document.querySelector('.staff-modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+/**
  * Displays a temporary alert message to the user
  * Supports different alert types (success, danger, etc.) with automatic dismissal
  * 
@@ -2286,14 +2320,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK
-window.onclick = function (event) {
-    const modals = document.querySelectorAll('.staff-modal');
-    modals.forEach(modal => {
-        if (event.target == modal) {
-            modal.classList.remove('active');
-        }
-    });
-}
+// window.onclick = function (event) {
+//     const modals = document.querySelectorAll('.staff-modal');
+//     modals.forEach(modal => {
+//         if (event.target == modal) {
+//             modal.classList.remove('active');
+//         }
+//     });
+// }
 
 // Status templates for quick text insertion
 const statusTemplates = {

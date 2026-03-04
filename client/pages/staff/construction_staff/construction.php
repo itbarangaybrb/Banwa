@@ -533,7 +533,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>Application Details</h2>
-                        <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+                        <button class="close-btn">&times;</button>
                     </div>
                     <div id="modalBody"></div>
                 </div>
@@ -543,7 +543,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>Update Application Status</h2>
-                        <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
+                        <button class="close-btn">&times;</button>
                     </div>
                     <form id="updateForm" onsubmit="submitUpdate(event)">
                         <input type="hidden" id="updateAppId" name="id">
@@ -584,7 +584,7 @@
 
                         <div class="button-group">
                             <button type="submit" class="btn-primary">Update Status</button>
-                            <button type="button" class="btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
+                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
                         </div>
                     </form>
                 </div>

@@ -1481,7 +1481,7 @@ h2 {
 }
 
 /* Create: createForm scrolls */
-#create #createForm {
+#create #createForm, #createStaffForm {
     /* margin-left: 70px; align with content */
     flex: 1 1 auto;
     overflow-y: auto !important;

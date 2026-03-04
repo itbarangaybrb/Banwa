@@ -544,10 +544,10 @@
                 <input type="hidden" id="latitude2" name="latitude2" value="">
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
-                <div class="form-group">
+                <!-- <div class="form-group">
                     <button type="button" class="btn map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
                     <div class="map-preview" id="map-preview-2" style="margin-top:10px;display:none;height:200px;"></div>
-                </div>
+                </div> -->
 
                 <div class="section-title"><strong>Business Structure</strong></div>
 
@@ -687,7 +687,7 @@
             <div class="staff-modal-content">
                 <div class="staff-modal-header">
                     <h2>Application Details</h2>
-                    <button class="close-btn" onclick="closeModal('detailsModal')">&times;</button>
+                    <button class="close-btn">&times;</button>
                 </div>
                 <div id="modalBody"></div>
             </div>
@@ -697,7 +697,7 @@
             <div class="staff-modal-content">
                 <div class="staff-modal-header">
                     <h2>Update Application Status</h2>
-                    <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
+                    <button class="close-btn">&times;</button>
                 </div>
                 <form id="updateForm" onsubmit="submitUpdate(event)">
                     <input type="hidden" id="updateAppId" name="id">
@@ -742,7 +742,7 @@
                     <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary">Update Status</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('updateModal')">Cancel</button>
+                        <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
                     </div>
                 </form>
             </div>
