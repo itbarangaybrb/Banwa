@@ -146,7 +146,7 @@ function setupNavigationButtons() {
     if (forgotPassElements.backBtn) {
         forgotPassElements.backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/Banwa/client/pages/auth/signin.php';
+            window.location.href = '/Banwa/client/index.php';
         });
     }
 }

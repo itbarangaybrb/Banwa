@@ -4,7 +4,6 @@
 <head>
     <title>Home - Banwa Residential Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Professional residential management system with elegant design and user-friendly interface">
     <link rel="icon" type="image/png" sizes="32x32" href="../client/img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../client/img/browser-icon.svg">
     <link rel="stylesheet" href="../client/styles/global.css">
