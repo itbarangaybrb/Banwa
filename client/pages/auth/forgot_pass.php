@@ -36,18 +36,16 @@
     <!-- Main Content -->
     <main>
         <!-- Forgot Password Section - Using BFP (Banwa Forgot Password) namespace -->
-        <section class="bfp-section">
+        <!-- <section class="bfp-section">
             <div class="bfp-container">
-                <!-- Simple breadcrumb/context indicator -->
+                Simple breadcrumb/context indicator
                 <div class="bfp-context">
                     <a href="../../index.php" class="bfp-context-link">Home</a>
                     <span class="bfp-context-separator">•</span>
                     <span class="bfp-context-current">Forgot Password</span>
                 </div>
 
-                <!-- Forgot Password Card -->
                 <div class="bfp-card">
-                    <!-- Header with icon -->
                     <div class="bfp-card-header">
                         <div class="bfp-icon-circle">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -61,14 +59,11 @@
                         </p>
                     </div>
 
-                    <!-- Form -->
                     <form class="bfp-form" id="forgotPassForm">
-                        <!-- Dynamic message area -->
-                        <div id="bfpFormMessage" class="bfp-message" style="display: none;"></div>
+                        <div id="formMessage" class="bfp-message" style="display: none;"></div>
 
-                        <!-- Email field -->
                         <div class="bfp-field">
-                            <label for="bfpEmail" class="bfp-label">
+                            <label for="email" class="bfp-label">
                                 Email address
                                 <span class="bfp-required">*</span>
                             </label>
@@ -80,16 +75,15 @@
                                 <input 
                                     type="email" 
                                     class="bfp-input" 
-                                    id="bfpEmail" 
+                                    id="email"
                                     name="email" 
                                     placeholder="your.email@example.com"
                                     autocomplete="email"
                                 >
                             </div>
-                            <div class="bfp-error" id="bfpEmailError"></div>
+                            <div class="error-msg bfp-error" id="emailError"></div>
                         </div>
 
-                        <!-- Buttons -->
                         <div class="bfp-actions">
                             <button type="button" class="bfp-btn bfp-btn-secondary" id="forgotPassBackBtn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,7 +100,6 @@
                         </div>
                     </form>
 
-                    <!-- Additional help -->
                     <div class="bfp-footer">
                         <div class="bfp-security">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -118,9 +111,35 @@
                     </div>
                 </div>
             </div>
+        </section> -->
+
+        <section class="sections">
+            <div class="containers">
+                <!-- ==================== Forgot Password Form ==================== -->
+                <div class="forgot-pass-container" id="forgotPass">
+                    <form class="form" id="forgotPassForm">
+                        <h5>Forgot Password</h5>
+                        <!-- <p></p> -->
+
+                        <span id="formMessage"></span>
+
+                        <div class="inputs-container">
+                            <div class="label-and-input">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email">
+                                <div class="error-msg"></div>
+                            </div>
+                        </div>
+
+                        <div class="buttons-container">
+                            <button type="button" id="forgotPassBackBtn">Back</button>
+                            <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </section>
 
-        <!-- Contact Section -->
         <section data-theme="blue">
             <div class="cont">
                 <div class="contact-content">
