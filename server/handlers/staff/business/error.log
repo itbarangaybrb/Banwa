@@ -813,3 +813,26 @@ Stack trace:
 [04-Mar-2026 12:29:23 UTC] R1 Check - Required: []
 [04-Mar-2026 12:29:23 UTC] R1 Check - Submitted: ["SEC"]
 [04-Mar-2026 12:29:23 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:51:45 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[04-Mar-2026 18:51:45 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[04-Mar-2026 18:53:25 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[04-Mar-2026 18:53:25 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[04-Mar-2026 18:53:26 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"Barangay-Blue-Ridge-B-Business-Clearance.pdf","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["DTI","TCT"],"allVerified":false}}
+[04-Mar-2026 18:53:26 UTC] R1 Check - Required: []
+[04-Mar-2026 18:53:26 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:53:26 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:53:26 UTC] R1 Check - Required: []
+[04-Mar-2026 18:53:26 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:53:26 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Required: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:56:31 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Required: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:56:31 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Required: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:56:31 UTC] R1 Check - Missing: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Required: []
+[04-Mar-2026 18:56:31 UTC] R1 Check - Submitted: ["DTI","TCT"]
+[04-Mar-2026 18:56:31 UTC] R1 Check - Missing: []

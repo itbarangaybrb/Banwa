@@ -1934,10 +1934,10 @@ body {
     transition: margin-left 0.3s ease;
 }
 
-.side_nav:hover + .main-wrapper {
+/* .side_nav:hover + .main-wrapper {
     margin-left: 325px;
     width: calc(100% - 325px);
-}
+} */
 
 /* TOP HEADER */
 .top-header {
