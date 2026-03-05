@@ -815,7 +815,7 @@
                                     <input type="password" id="loginPassword" name="password" autocomplete="false">
                                     <div class="error-msg"></div>
                                 </div>
-                                <a href="../auth/forgot_pass.php">Forgot password?</a>
+                                <a href="../client/pages/auth/forgot_pass.php">Forgot password?</a>
                             </div>
 
                             <div class="buttons-container">
