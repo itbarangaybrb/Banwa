@@ -361,3 +361,10 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [04-Mar-2026 11:26:51 UTC] Error in handleChartConstructionType: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "construction_evaluations" does not exist
 LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
                               ^
+[04-Mar-2026 19:07:47 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"valid_id_3.jpg","saved_filename":"const_69a8830381883_valid_id_3.jpg","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69a8830381883_valid_id_3.jpg"}]
+[04-Mar-2026 19:07:47 UTC] OCR job queued for application 38 with 1 files
+[04-Mar-2026 19:07:47 UTC] CR1 Check - Has file upload: No
+[04-Mar-2026 19:07:47 UTC] CR1 Check - Has file upload: No
+[04-Mar-2026 19:09:41 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 512
+[04-Mar-2026 19:09:41 UTC] CR1 Check - Has file upload: No
+[04-Mar-2026 19:09:41 UTC] CR1 Check - Has file upload: No
