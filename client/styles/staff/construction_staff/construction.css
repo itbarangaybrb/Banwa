@@ -1601,3 +1601,29 @@ h2 {
     gap: 24px;
     padding: 20px;
 }
+/* The main white box */
+.custom-swal-popup {
+    padding: 3rem !important;
+    border-radius: 15px !important;
+}
+
+/* Push the Green Checkmark down from the top */
+.custom-swal-icon {
+    margin-top: 2rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Space out the "Success" Header */
+.custom-swal-title {
+    padding: 0 !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.8rem !important;
+    color: #00247C !important; /* Matches your brand blue */
+}
+
+/* Space out the sub-text */
+.custom-swal-text {
+    margin-bottom: 2rem !important;
+    font-size: 1.1rem !important;
+    color: #555 !important;
+}

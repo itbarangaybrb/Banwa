@@ -6,6 +6,31 @@ import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 registerServiceWorker();
 
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    .swal2-popup {
+        padding: 2.5rem 0 !important; /* Forces vertical breathing room */
+        border-radius: 15px !important;
+    }
+    .swal2-icon {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        border-width: 4px !important;
+    }
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .swal2-html-container {
+        margin-bottom: 1.5rem !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
 /**
  * Switches the visible panel in the multi-step form interface
  * @param {string} panelId - The ID of the panel to display ('owner', 'construction', 'waiver', or 'summary')

@@ -14,6 +14,73 @@ const modalFormContent = document.getElementById('modal-form-content');
 const paymentModalFormContent = document.getElementById('payment-modal-form-content');
 const remarksContent = document.getElementById('remarks-content');
 
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    /* Universal Popup Spacing */
+    .swal2-popup {
+        padding: 2rem 1.5rem !important; 
+        border-radius: 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Consistent Icon Margins for Success/Error/Warning */
+    .swal2-icon {
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+        border-width: 4px !important;
+    }
+
+    /* Standardized Titles */
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+        margin: 0.5rem 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Standardized Text Content */
+    .swal2-html-container {
+        margin: 1rem 0 !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+
+    /* Button Spacing */
+    .swal2-actions {
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
+// =========================
+// SWEETALERT2 GLOBAL CONFIG (BanwaSwal)
+// =========================
+// This is the global configuration for ALL SweetAlerts in this file.
+
+const BanwaSwal = Swal.mixin({
+    confirmButtonColor: '#00247C',
+    confirmButtonText: 'OK',
+    color: '#363636',
+    customClass: {
+        popup: 'modal-content',
+        confirmButton: 'btn-proceed',
+        title: 'swal-title',
+        htmlContainer: 'swal-text'
+    },
+    // Force perfect centering + spacing for every alert
+    didOpen: (popup) => {
+        const container = popup.querySelector('.swal2-html-container');
+        if (container) {
+            container.style.textAlign = 'center';
+            container.style.padding = '15px 30px';
+            container.style.lineHeight = '1.65';
+            container.style.marginBottom = '20px';
+        }
+    }
+});
 /**
  * Opens the edit modal for application modifications
  */
@@ -760,24 +827,24 @@ async function handleSubmitChanges(event, appId, appType) {
             throw new Error(updateResult.message || 'Update failed.');
         }
 
-        // alert('Application updated successfully.');
-        Swal.fire({
+        // SUCCESS ALERT - Using global BanwaSwal (centered + proper spacing)
+        await BanwaSwal.fire({
+            icon: 'success',
             title: 'Success!',
-            text: 'Application updated successfully.',
-            confirmButtonText: 'OK',
-            color: '#363636',
-            confirmButtonColor: '#00247C',
-            customClass: {
-                popup: 'modal-content',
-                confirmButton: 'btn-proceed',
-            }
-        })
+            html: 'Application updated successfully.'
+        });
+    
         closeEditModal();
         loadApplications();
 
     } catch (error) {
         console.error('Update error:', error);
-        alert(`Error: ${error.message}`);
+        // ERROR ALERT - Using global BanwaSwal (centered + proper spacing)
+        BanwaSwal.fire({
+            icon: 'error',
+            title: 'Update Failed',
+            html: `An error occurred:<br><br><strong>${error.message}</strong>`
+        });
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Changes';
     }
@@ -835,13 +902,23 @@ async function handleSubmitPayment(event, appId) {
             throw new Error(result.message || 'Failed to submit payment details.');
         }
 
-        alert('Payment details submitted successfully! Your payment is now Pending Verification.');
+        // SUCCESS ALERT - Using global BanwaSwal (centered + proper spacing)
+        await BanwaSwal.fire({
+            icon: 'success',
+            title: 'Payment Submitted!',
+            html: 'Payment details submitted successfully!<br><br>Your payment is now <strong>Pending Verification</strong>.'
+        });
         closePaymentModal();
         loadApplications();
 
     } catch (error) {
         console.error('Error submitting payment:', error);
-        alert(`Error: ${error.message}`);
+        // ERROR ALERT - Using global BanwaSwal (centered + proper spacing)
+        BanwaSwal.fire({
+            icon: 'error',
+            title: 'Submission Failed',
+            html: `Failed to submit payment:<br><br><strong>${error.message}</strong>`
+        });
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Payment';
     }

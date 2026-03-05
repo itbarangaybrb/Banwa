@@ -105,11 +105,11 @@ body {
 }
 
 /* ==================== Status section ==================== */
-.status {
-    /* padding: 32px 64px;
+/* .status {
+    padding: 32px 64px;
     border: 1px solid grey;
-    border-radius: 16px; */
-}
+    border-radius: 16px;
+} */
 
 .status .content .header-and-parag {
     margin-bottom: 32px;
@@ -146,7 +146,7 @@ body {
     color: grey;
 }
 
-.status-bar-container .application-card {}
+/* .status-bar-container .application-card {} */
 
 .status-bar-container .payment-card {
     background-color: #f9f9f9; /* Lighter background for payments */

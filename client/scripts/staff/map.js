@@ -99,6 +99,47 @@ function initNavbar() {
     }
 }
 
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    /* Universal Popup Spacing */
+    .swal2-popup {
+        padding: 2rem 1.5rem !important; 
+        border-radius: 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Consistent Icon Margins for Success/Error/Warning */
+    .swal2-icon {
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+        border-width: 4px !important;
+    }
+
+    /* Standardized Titles */
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+        margin: 0.5rem 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Standardized Text Content */
+    .swal2-html-container {
+        margin: 1rem 0 !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+
+    /* Button Spacing */
+    .swal2-actions {
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
 // ==================== SWEETALERT2 CUSTOM CONFIGURATION ====================
 // Default SweetAlert2 configuration for consistent styling
 const swalDefaultConfig = {

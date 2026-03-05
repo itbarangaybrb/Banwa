@@ -87,6 +87,7 @@ if ($_SESSION['role_id'] != 1) {
             </div>
             
     <script type="module" src="../../scripts/resident/status.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

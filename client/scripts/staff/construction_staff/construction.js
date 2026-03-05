@@ -1,3 +1,31 @@
+// ===============================================
+// 1. GLOBAL STYLE FIX (Inject this at the very top)
+// ===============================================
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    .swal2-popup {
+        padding: 2.5rem 0 !important; /* Forces vertical breathing room */
+        border-radius: 15px !important;
+    }
+    .swal2-icon {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        border-width: 4px !important;
+    }
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .swal2-html-container {
+        margin-bottom: 1.5rem !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
 // Configuration
 const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/construction_handler.php';
 const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
@@ -350,8 +378,39 @@ const swalTopConfig = {
     target: document.body,
     backdrop: true,
     allowOutsideClick: false,
+    width: '30rem',         // Slightly wider for better proportions
+    padding: '0',           // Set to 0 because we will handle spacing via didOpen
     customClass: {
         container: 'sweetalert-top'
+    },
+    // This function runs the moment the modal opens and applies the styles
+    didOpen: (modal) => {
+        const icon = modal.querySelector('.swal2-icon');
+        const title = modal.querySelector('.swal2-title');
+        const content = modal.querySelector('.swal2-html-container');
+        const actions = modal.querySelector('.swal2-actions');
+        
+        // 1. Pushes the Checkmark/Icon down from the very top
+        if (icon) {
+            icon.style.marginTop = '3rem'; 
+            icon.style.marginBottom = '1rem';
+        }
+        // 2. Adds spacing around the "Success" text
+        if (title) {
+            title.style.margin = '0.5rem 0';
+            title.style.fontSize = '2rem';
+            title.style.color = '#00247C'; // Maintains your blue theme
+        }
+        // 3. Pushes the bottom text away from the edge
+        if (content) {
+            content.style.marginBottom = '2.5rem';
+            content.style.fontSize = '1.1rem';
+        }
+        // 4. Ensures the button (if shown) has breathing room
+        if (actions) {
+            actions.style.marginTop = '0';
+            actions.style.marginBottom = '2rem';
+        }
     }
 };
 
@@ -543,6 +602,9 @@ function filterApplications() {
         else if (app.status === 'Paid') {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
+        else if (app.status === 'Approved') {
+            actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Generate Permit</button>`;
+        }
         else {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
@@ -621,6 +683,8 @@ setInterval(() => {
 function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
+        if (!tbody) return;
+
         tbody.innerHTML = '';
 
         const excludedStatuses = ['Cancelled', 'Archived'];
@@ -630,33 +694,229 @@ function loadProcessTable() {
         });
 
         if (actionable.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications to process.</td></tr>';
+            // Fixed colspan from 5 to 6 to match the number of <td> elements
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No applications to process.</td></tr>';
             return;
         }
 
         actionable.forEach(app => {
             let btnText = "Update";
             let btnClass = "secondary";
+            let buttonsHtml = "";
 
-            if (app.status === 'Pending') { btnClass = "primary"; }
-            else if (app.status === 'For Payment') { btnText = "Verify Payment"; btnClass = "warning"; }
-            else if (app.status === 'Paid') { btnText = "Finalize Approval"; btnClass = "success"; }
+            // 1. Determine primary action button based on status
+            if (app.status === 'Pending') { 
+                btnClass = "primary"; 
+            } else if (app.status === 'Complied') { 
+                btnText = "Finalize Approval"; 
+                btnClass = "success"; 
+            } else if (app.status === 'Approved' || app.status === 'Completed') {
+                btnText = "View Details"; 
+                btnClass = "info";
+            }
 
+            // 2. Build the primary update/action button
+            buttonsHtml += `<button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>`;
+
+            // 3. Conditionally add the "Generate Permit" button for valid statuses
+            // Add or remove statuses in this array based on your specific workflow
+            if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
+                buttonsHtml += `
+                    <button class="btn-primary" onclick="generateConstructionPermit(${app.id})" style="margin-left: 5px;">
+                        Generate Permit
+                    </button>
+                `;
+            }
+
+            // 4. Inject into the table row
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.nature_of_activity}</td>
-                    <td>${app.first_name} ${app.last_name}</td>
+                    <td>${app.nature_of_work || 'N/A'}</td>
+                    <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+                    <td>${app.provider}</td>
                     <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                    <td>${app.payment_status || 'Unpaid'}</td>
-                    <td>
-                        <button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>
-                    </td>
+                    <td>${buttonsHtml}</td>
                 </tr>
             `;
         });
     });
 }
+
+// Helper function (needed for the main function to work)
+function getCurrentDateString() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// Generate Construction Permit Function
+function generateConstructionPermit(appId) {
+    // 1. Check if 'applications' exists to prevent crash
+    if (typeof applications === 'undefined') {
+        console.error("The 'applications' array is not defined.");
+        return;
+    }
+
+    const app = applications.find(a => a.id == appId);
+    
+    if (!app) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Not Found', 
+                text: `Application data not found for ID: ${appId}` 
+            });
+        } else {
+            alert(`Application data not found for ID: ${appId}`);
+        }
+        return;
+    }
+
+    const grantee_name = `${app.first_name || ''} ${app.middle_name || ''} ${app.last_name || ''}`.trim() || "N/A";
+    const address = app.address || '_______________________';
+    const contractorName = app.contractor_name || '_______________________';
+    const or_number = app.or_number || 'N/A';
+    
+    // Uses the helper function defined above
+    const date_issued = app.payment_date || app.application_date || getCurrentDateString();
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "N/A";
+        const d = new Date(dateStr);
+        return isNaN(d) ? "N/A" : d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
+    };
+
+    const validityStart = formatDate(app.startDate);
+    const validityEnd = formatDate(app.endDate);
+
+    const currentYear = new Date().getFullYear();
+    const permitNumber = `BRB-CP-${currentYear}-${String(app.id).padStart(4, '0')}`;
+    const date = new Date(date_issued);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const yearIssued = date.getFullYear();
+
+    const CAPTAIN_NAME = "MARIA DELA CRUZ";
+    const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
+
+    const nature = (app.nature_of_activity || '').toLowerCase();
+    const isMajor = nature.includes('major') ? 'checked' : '';
+    const isMinor = nature.includes('minor') ? 'checked' : '';
+    const isRepair = nature.includes('repair') ? 'checked' : '';
+    const isDemolition = nature.includes('demolition') ? 'checked' : '';
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Construction Permit - ${grantee_name}</title>
+        <style>
+            body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
+            .document-container { width: 8.5in; min-height: 11in; margin:0 auto; background:white; padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative; }
+            header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
+            .logo img { width:105px; }
+            .header-center { text-align:center; flex:1; padding:0 20px; }
+            .header-center h1 { font-size:23px; margin:6px 0 3px; text-transform:uppercase; letter-spacing:1px; }
+            .header-center h2 { font-size:15px; margin:0; font-weight:bold; }
+            .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
+            .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
+            .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
+            .sidebar { background:#e8f0e0; padding:20px 18px; border:1.5px solid #c5d9b8; font-size:13px; line-height:1.65; }
+            .main-body { font-size:15.2px; line-height:1.75; }
+            .fill-line { border-bottom:1px solid #000; display:inline-block; min-width:200px; text-align:center; font-weight: bold; }
+            .checkbox-group { margin:10px 0 10px 40px; display: grid; grid-template-columns: 1fr 1fr; }
+            .checkbox-option { margin:5px 0; font-weight:600; text-transform: uppercase; }
+            .checkbox-option::before { content:"☐ "; }
+            .checkbox-option.checked::before { content:"☑ "; }
+            .validity-box { border: 1.5px solid #000; padding: 10px; margin: 15px 0; background: #fafafa; }
+            .signature-area { margin-top:70px; display:flex; justify-content:space-between; }
+            .signature-block { width:46%; text-align:center; }
+            .signature-line { border-bottom:1px solid black; margin:8px auto 4px auto; width:90%; padding-top:25px; font-weight:bold; text-transform:uppercase; }
+            .seal-note { text-align:center; margin-top:55px; font-size:12.8px; font-style:italic; color:#222; }
+            @media print { body { background:white; padding:0; } .document-container { box-shadow:none; padding:40px 48px; } }
+        </style>
+    </head>
+    <body>
+        <div class="document-container">
+            <header>
+                <div class="logo"><img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Logo"></div>
+                <div class="header-center">
+                    <div>Republic of the Philippines</div>
+                    <div>Quezon City • District III</div>
+                    <h1>BARANGAY BLUE RIDGE B</h1>
+                    <h2>OFFICE OF THE PUNONG BARANGAY</h2>
+                </div>
+                <div class="clearance-no">Permit No.<br><span style="font-size:15.5px;">${permitNumber}</span></div>
+            </header>
+
+            <div class="doc-title">CONSTRUCTION PERMIT</div>
+
+            <div class="content-wrapper">
+                <div class="sidebar">
+                    <strong>HON. ${CAPTAIN_NAME}</strong><br><span>Punong Barangay</span><br><br>
+                    <strong>KAGAWADS</strong><br>HON. [KAGAWAD 1]<br>HON. [KAGAWAD 2]<br>HON. [KAGAWAD 3]<br>HON. [KAGAWAD 4]<br>HON. [KAGAWAD 5]<br>HON. [KAGAWAD 6]<br>HON. [KAGAWAD 7]<br><br>
+                    <strong>MR. ${SECRETARY_NAME}</strong><br><span>Barangay Secretary</span>
+                </div>
+
+                <div class="main-body">
+                    <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
+                    <p>Permission is granted to <span class="fill-line">${grantee_name}</span> for construction works at <span class="fill-line">${address}</span>.</p>
+                    <p>Contractor: <span class="fill-line">${contractorName}</span></p>
+
+                    <strong>Scope of Works:</strong>
+                    <div class="checkbox-group">
+                        <div class="checkbox-option ${isMajor}">MAJOR</div><div class="checkbox-option ${isRepair}">REPAIR</div>
+                        <div class="checkbox-option ${isMinor}">MINOR</div><div class="checkbox-option ${isDemolition}">DEMOLITION</div>
+                    </div>
+
+                    <div class="validity-box">
+                        <strong>VALIDITY PERIOD:</strong><br>
+                        This permit is valid from <strong>${validityStart}</strong> until <strong>${validityEnd}</strong>. Any extension requires a new application.
+                    </div>
+
+                    <div style="text-align:center; margin-top:25px;">
+                        Issued this <span class="fill-line" style="min-width:40px;">${day}</span> day of <span class="fill-line" style="min-width:100px;">${month}</span>, ${yearIssued}.
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        OR No.: <span class="fill-line" style="min-width:150px;">${or_number}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signature-area">
+                <div class="signature-block">
+                    <div>Attested by:</div><div class="signature-line">${SECRETARY_NAME}</div><div>Barangay Secretary</div>
+                </div>
+                <div class="signature-block">
+                    <div>Approved by:</div><div class="signature-line">${CAPTAIN_NAME}</div><div>Punong Barangay</div>
+                </div>
+            </div>
+            <div class="seal-note">*** THIS DOCUMENT IS NOT VALID WITHOUT THE OFFICIAL DRY SEAL ***</div>
+        </div>
+    </body>
+    </html>`;
+
+const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+
+    // This triggers the print dialog as soon as the content is loaded
+    w.focus(); // Necessary for some browsers to focus the print dialog
+    
+    // Use a slight timeout to ensure styles and images (like your logo) are rendered
+    setTimeout(() => {
+        w.print();
+        
+        // Optional: Uncomment the line below if you want the window to close 
+        // automatically after the user clicks 'Print' or 'Cancel'
+        // w.close(); 
+    }, 500);
+}
+
+// Ensure global scope (Alias both names just in case)
+window.generateConstructionPermit = generateConstructionPermit;
+window.generateConstructionClearance = generateConstructionPermit;
 
 let chart1Instance;
 let chart2Instance;
@@ -1099,14 +1359,14 @@ function submitUpdate(event) {
             //Closes Update Button after successful update
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
-                Swal.fire({
-                    ...swalTopConfig,
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Application updated successfully!',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                    Swal.fire({
+                        ...swalTopConfig,
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Application updated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 loadManagementTable();
                 loadProcessTable();
             } else {

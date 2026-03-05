@@ -7,6 +7,69 @@ import { registerServiceWorker } from '../../../register_sw.js';
 
 registerServiceWorker();
 
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    /* Universal Popup Spacing */
+    .swal2-popup {
+        padding: 2rem 1.5rem !important; 
+        border-radius: 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Consistent Icon Margins for Success/Error/Warning */
+    .swal2-icon {
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+        border-width: 4px !important;
+    }
+
+    /* Standardized Titles */
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+        margin: 0.5rem 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Standardized Text Content */
+    .swal2-html-container {
+        margin: 1rem 0 !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+
+    /* Button Spacing */
+    .swal2-actions {
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
+const business_app_swal = Swal.mixin({
+    confirmButtonColor: '#00247C',
+    confirmButtonText: 'OK',
+    color: '#363636',
+    customClass: {
+        popup: 'modal-content',
+        confirmButton: 'btn-proceed',
+        title: 'swal-title',
+        htmlContainer: 'swal-text'
+    },
+    // Force perfect centering + spacing for every alert
+    didOpen: (popup) => {
+        const container = popup.querySelector('.swal2-html-container');
+        if (container) {
+            container.style.textAlign = 'center';
+            container.style.padding = '15px 30px';
+            container.style.lineHeight = '1.65';
+            container.style.marginBottom = '20px';
+        }
+    }
+});
+
 /**
  * Switches the visible panel in the multi-step form interface
  * @param {string} panelId - The ID of the panel to display ('owner', 'business', 'waiver', or 'summary')
@@ -569,22 +632,20 @@ newSummaryForm.addEventListener('submit', async function (e) {
         });
     }
 
-    const confirmResult = await Swal.fire({
+    const confirmBusResult = await business_app_swal.fire({
+        icon: 'question',
         title: 'Submit Application?',
-        text: 'Are you sure you want to submit this application?',
+        html: 'Are you sure you want to submit this application?',
         showCancelButton: true,
-        confirmButtonColor: '#00247C',
-        cancelButtonColor: '#ad2c2c',
         confirmButtonText: 'Yes, submit it!',
         cancelButtonText: 'Cancel',
+        cancelButtonColor: '#ad2c2c',
         customClass: {
-            popup: 'modal-content',
-            confirmButton: 'btn-proceed',
             cancelButton: 'btn-cancel'
         }
     });
 
-    if (confirmResult.isConfirmed) {
+    if (confirmBusResult.isConfirmed) {
         const formData = new FormData();
 
         // Add action for business_handler.php
@@ -664,49 +725,32 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
+                    business_app_swal.fire({
+                        icon: 'success',
                         title: 'Success!',
-                        text: 'Submitted successfully! Reference ID: ' + data.id,
-                        confirmButtonText: 'OK',
-                        color: '#363636',
-                        confirmButtonColor: '#00247C',
-                        customClass: {
-                            popup: 'modal-content',
-                            confirmButton: 'btn-proceed',
-                        }
+                        html: 'Submitted successfully!<br><br>Reference ID: <strong>' + data.id + '</strong>'
                     }).then(() => {
                         window.location.href = '/Banwa/client/pages/resident/status.php';
                     });
                 } else {
-                    Swal.fire({
+                    business_app_swal.fire({
+                        icon: 'error',
                         title: 'Error!',
-                        text: 'Error: ' + data.message,
-                        confirmButtonText: 'OK',
-                        color: '#363636',
-                        confirmButtonColor: '#00247C',
-                        customClass: {
-                            popup: 'modal-content',
-                            confirmButton: 'btn-proceed',
-                        }
+                        html: 'An error occurred:<br><br><strong>' + data.message + '</strong>'
                     });
                 }
             })
             .catch(err => {
                 console.error(err);
-                Swal.fire({
+                business_app_swal.fire({
+                    icon: 'error',
                     title: 'Error!',
-                    text: 'Error: ' + err,
-                    confirmButtonText: 'OK',
-                    color: '#363636',
-                    confirmButtonColor: '#00247C',
-                    customClass: {
-                        popup: 'modal-content',
-                        confirmButton: 'btn-proceed',
-                    }
+                    html: 'An error occurred:<br><br><strong>' + err.message + '</strong>'
                 });
             });
     }
 });
+
 
 // ====================== OCR DOCUMENT VERIFICATION ======================
 
@@ -746,8 +790,15 @@ async function verifyUploadedDocuments() {
 
     const total = requirementUpload.files.length;
     if (total > 5) {
-        alert("Maximum 5 files allowed for verification.");
-        return;
+        if (total > 5) {
+            business_app_swal.fire({
+                icon: 'warning',
+                title: 'Too Many Files',
+                html: 'Maximum <strong>5 files</strong> allowed for verification.'
+            });
+            return;
+        }
+                return;
     }
 
     verifyBtn.textContent = `Processing file 1 of ${total}...`;

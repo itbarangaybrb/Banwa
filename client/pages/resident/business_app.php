@@ -362,6 +362,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/business_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <?php include '_layout/end.php'; ?>
 </body>

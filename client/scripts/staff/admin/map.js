@@ -1,3 +1,23 @@
+// Global SweetAlert Configuration for Map Alerts
+const mapAlertConfig = Swal.mixin({
+    padding: '2em',
+    customClass: {
+        title: 'swal-title-center', 
+        htmlContainer: 'swal-text-center',
+        actions: 'swal-actions-spacing'
+    },
+    // Adding inline styles just in case you don't have custom CSS classes set up yet
+    didOpen: (popup) => {
+        popup.style.textAlign = 'center';
+        const content = popup.querySelector('.swal2-html-container');
+        if (content) {
+            content.style.textAlign = 'center';
+            content.style.lineHeight = '1.6';
+            content.style.marginTop = '1em';
+        }
+    }
+});
+
 // Map variables
 const map = L.map('map').setView([14.6175, 121.0756], 17);
 let constructionMarkers = [];
@@ -213,7 +233,14 @@ async function loadAllMarkers() {
 
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
-        alert('Error loading markers. Check console for details.');
+        // REPLACED NATIVE ALERT WITH SWEETALERT2
+        mapAlertConfig.fire({
+            icon: 'error',
+            title: 'Failed to Load Map Data',
+            text: 'We encountered an error while loading the map markers. Please check the console for more details.',
+            confirmButtonText: 'Understood',
+            confirmButtonColor: '#d33'
+        });
     }
 }
 

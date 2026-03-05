@@ -2,6 +2,66 @@
 const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
 let incidents = [];
 
+const swalStyle = document.createElement('style');
+swalStyle.innerHTML = `
+    /* Universal Popup Spacing */
+    .swal2-popup {
+        padding: 2rem 1.5rem !important; 
+        border-radius: 15px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Consistent Icon Margins for Success/Error/Warning */
+    .swal2-icon {
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+        border-width: 4px !important;
+    }
+
+    /* Standardized Titles */
+    .swal2-title {
+        color: #00247C !important;
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+        margin: 0.5rem 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Standardized Text Content */
+    .swal2-html-container {
+        margin: 1rem 0 !important;
+        font-size: 1.05rem !important;
+        color: #555 !important;
+    }
+
+    /* Button Spacing */
+    .swal2-actions {
+        margin-top: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+`;
+document.head.appendChild(swalStyle);
+
+// Global SweetAlert Configuration for Incident Alerts
+const incidentAlertConfig = Swal.mixin({
+    padding: '2em',
+    customClass: {
+        title: 'swal-title-center', 
+        htmlContainer: 'swal-text-center',
+        actions: 'swal-actions-spacing'
+    },
+    didOpen: (popup) => {
+        popup.style.textAlign = 'center';
+        const content = popup.querySelector('.swal2-html-container');
+        if (content) {
+            content.style.textAlign = 'center';
+            content.style.lineHeight = '1.6';
+            content.style.marginTop = '1em';
+        }
+    }
+});
+
 // Map filter visibility flag for this management page
 const PAGE_CATEGORY = 'household';
 let mapFilterVisible = true;
@@ -460,9 +520,16 @@ function openUpdateModal(appId) {
     const incident = incidents.find(i => i.id == appId);
 
     if (!incident) {
-        alert("Incident data not found.");
-        return;
-    }
+            // REPLACED WITH SWEETALERT2
+            incidentAlertConfig.fire({
+                icon: 'error',
+                title: 'Not Found',
+                text: 'Incident data not found.',
+                confirmButtonText: 'Understood',
+                confirmButtonColor: '#d33'
+            });
+            return;
+        }
 
     document.getElementById('updateReportId').value = incident.id;
     document.getElementById('displayCurrentStatus').value = incident.status;
@@ -748,18 +815,43 @@ function submitUpdate(event) {
         .then(data => {
             if (data.status === 'success') {
                 closeModal('updateModal');
-                alert('Incident updated successfully!');
+                
+                // REPLACED WITH SWEETALERT2
+                incidentAlertConfig.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Incident updated successfully!',
+                    confirmButtonText: 'Great',
+                    confirmButtonColor: '#28a745'
+                });
+
                 loadManagementTable();
                 loadProcessTable();
             } else {
-                alert('Error: ' + data.message);
+                // REPLACED WITH SWEETALERT2
+                incidentAlertConfig.fire({
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: 'Error: ' + data.message,
+                    confirmButtonText: 'Try Again',
+                    confirmButtonColor: '#d33'
+                });
             }
         })
         .catch(error => {
             console.error('Error updating incident:', error);
-            alert('Error updating incident. Please try again.');
+            
+            // REPLACED WITH SWEETALERT2
+            incidentAlertConfig.fire({
+                icon: 'error',
+                title: 'Update Error',
+                text: 'Error updating incident. Please try again.',
+                confirmButtonText: 'Understood',
+                confirmButtonColor: '#d33'
+            });
         });
-}
+};
+
 
 /**
  * Displays detailed incident information in a modal view
