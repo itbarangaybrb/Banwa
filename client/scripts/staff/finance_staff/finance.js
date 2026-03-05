@@ -76,12 +76,12 @@ function loadPendingTable() {
                     const appType = app.application_type || 'business';
 
                     if (app.payment_status === 'Pending Verification') {
-                        actionButton = '<button class="btn btn-verify" onclick="openVerificationModal(' + app.id + ', \'' + appType + '\')"><i class="fas fa-check-circle"></i> Verify</button>';
+                        actionButton = '<button class="btn btn-verify" onclick="openVerificationModal(' + app.id + ', \'' + appType + '\')">Verify</button>';
                     } else {
-                        actionButton = '<button class="btn btn-process" onclick="openPaymentModal(' + app.id + ', ' + app.amount_due + ', \'' + appType + '\')"><i class="fas fa-credit-card"></i> Process</button>';
+                        actionButton = '<button class="btn btn-process" onclick="openPaymentModal(' + app.id + ', ' + app.amount_due + ', \'' + appType + '\')">Process</button>';
                     }
 
-                    const row = '<tr><td>' + app.id + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + name + '</td><td>' + (app.business_name || 'N/A') + '</td><td>PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</td><td>' + app.status + ' / ' + paymentStatusDisplay + '</td><td>' + actionButton + '<button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'pending\', \'' + appType + '\')"><i class="fas fa-eye"></i> View</button></td></tr>';
+                    const row = '<tr><td>' + app.id + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + name + '</td><td>' + (app.business_name || 'N/A') + '</td><td>PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</td><td>' + app.status + ' / ' + paymentStatusDisplay + '</td><td>' + actionButton + '<button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'pending\', \'' + appType + '\')">View</button></td></tr>';
 
                     tbody.innerHTML += row;
                 });
@@ -115,7 +115,11 @@ function loadHistoryTable() {
                 paidApps.forEach(app => {
                     const name = app.first_name + ' ' + app.last_name;
                     const appType = app.application_type || 'business';
-                    const row = '<tr><td>' + app.or_number + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + app.id + '</td><td>' + name + '</td><td>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</td><td>' + app.payment_date + '</td><td><button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'paid\', \'' + appType + '\')"><i class="fas fa-eye"></i> View</button><button class="btn btn-receipt" onclick="generateReceipt(' + app.id + ', \'' + appType + '\')"><i class="fas fa-receipt"></i> Receipt</button></td></tr>';
+
+                    // Format OR/Reference number - show '---' if null/empty
+                    const orNumber = app.or_number && app.or_number.trim() !== '' ? app.or_number : '---';
+
+                    const row = '<tr><td>' + orNumber + '</td><td style="text-transform: capitalize;">' + appType + '</td><td>' + app.id + '</td><td>' + name + '</td><td>PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</td><td>' + app.payment_date + '</td><td><button class="btn btn-view" onclick="viewSummary(' + app.id + ', \'paid\', \'' + appType + '\')">View</button><button class="btn btn-receipt" onclick="generateReceipt(' + app.id + ', \'' + appType + '\')">Receipt</button></td></tr>';
                     tbody.innerHTML += row;
                 });
             }
@@ -302,7 +306,7 @@ function generateReceipt(id, appType) {
     if (!app) {
         fetch(API_URL + '?action=fetch_one&id=' + id + '&type=' + appType)
             .then(res => res.json())
-            .then(data => { 
+            .then(data => {
                 if (data.status === 'success') showReceiptModal(data.data);
             });
     } else {
@@ -318,7 +322,7 @@ function viewSummary(id, source, appType) {
     if (!app) return;
 
     const businessField = appType === 'business' ? '<p><strong>Business:</strong> ' + (app.business_name || 'N/A') + '</p>' : '';
-    
+
     const html = '<div style="text-align:left;"><p><strong>ID:</strong> ' + app.id + '</p><p><strong>Type:</strong> <span style="text-transform: capitalize;">' + appType + '</span></p><p><strong>Owner:</strong> ' + app.first_name + ' ' + app.last_name + '</p>' + businessField + '<p><strong>Assessment:</strong> PHP ' + parseFloat(app.amount_due || 0).toFixed(2) + '</p><hr><p><strong>Amount Paid:</strong> PHP ' + parseFloat(app.amount_paid || 0).toFixed(2) + '</p></div>';
 
     Swal.fire({
@@ -334,7 +338,9 @@ function viewSummary(id, source, appType) {
 }
 
 function showReceiptModal(app) {
-    const html = '<div style="border:2px solid #00247c; border-radius:8px; padding:20px;"><h3 style="color:#00247c;">OFFICIAL RECEIPT</h3><p>OR: ' + (app.or_number || 'N/A') + '</p><hr><p><strong>Payer:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</p><p><strong>Date:</strong> ' + app.payment_date + '</p><p><strong>Method:</strong> ' + app.payment_method + '</p></div>';
+    const orNumber = app.or_number && app.or_number.trim() !== '' ? app.or_number : '(Not Available)';
+
+    const html = '<div style="border:2px solid #00247c; border-radius:8px; padding:20px;"><h3 style="color:#00247c;">OFFICIAL RECEIPT</h3><p>OR/Ref: <strong>' + orNumber + '</strong></p><hr><p><strong>Payer:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_paid).toFixed(2) + '</p><p><strong>Date:</strong> ' + app.payment_date + '</p><p><strong>Method:</strong> ' + app.payment_method + '</p></div>';
 
     Swal.fire({
         title: 'Receipt',
@@ -356,27 +362,31 @@ function showReceiptModal(app) {
 }
 
 function printReceiptWindow(app) {
+    // Format OR/Reference number for print
+    const orNumber = app.or_number && app.or_number.trim() !== '' ? app.or_number : 'N/A';
+
     const w = window.open('', 'PRINT', 'height=600,width=400');
     w.document.write(`
         <html>
         <head>
-            <title>Receipt - ${app.or_number}</title>
+            <title>Receipt - ${orNumber}</title>
             <style>
                 body { font-family: 'Courier New', monospace; padding: 20px; text-align: center; }
                 .header { border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 20px;}
                 .row { display: flex; justify-content: space-between; margin-bottom: 5px; text-align: left; }
                 .total { border-top: 2px dashed #000; padding-top: 10px; font-weight: bold; }
+                .na-message { color: #999; font-style: italic; }
             </style>
         </head>
         <body>
             <div class="header">
                 <h3>OFFICIAL RECEIPT</h3>
-                <p>OR/Ref: ${app.or_number}</p>
-                <p>Date: ${app.payment_date}</p>
+                <p>OR/Ref: ${orNumber}</p>
+                <p>Date: ${app.payment_date || 'N/A'}</p>
             </div>
             <div class="details">
                 <div class="row"><span>Payer:</span> <span>${app.first_name} ${app.last_name}</span></div>
-                <div class="row"><span>Method:</span> <span>${app.payment_method}</span></div>
+                <div class="row"><span>Method:</span> <span>${app.payment_method || 'N/A'}</span></div>
                 <div class="row"><span>Nature:</span> <span>${app.nature_of_business || 'Business Tax'}</span></div>
             </div>
             <div class="total">
@@ -436,4 +446,4 @@ function filterTable(tableId, inputId) {
     }
 }
 
-window.onload = function() { loadPendingTable(); };
+window.onload = function () { loadPendingTable(); };
