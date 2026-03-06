@@ -1,14 +1,18 @@
-FROM php:8.2-cli
+# Use PHP with Apache
+FROM php:8.2-apache
 
-# Install PostgreSQL PDO extension
+# Install PostgreSQL client libraries and PHP extensions
 RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo_pgsql
+    && docker-php-ext-install pdo pdo_pgsql pgsql
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
 # Set working directory
-WORKDIR /var/www/html/Banwa
+WORKDIR /var/www/html
 
-# Copy your app code
-COPY . /var/www/html/Banwa
+# Copy project files
+COPY . .
 
-# Start PHP built-in server on all interfaces
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html/Banwa"]
+# Adjust permissions for Apache
+RUN chown -R www-data:www-data /var/www/html/Banwa

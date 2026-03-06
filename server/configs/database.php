@@ -1,14 +1,18 @@
 <?php
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->safeLoad();
 // ===============================
 // Database Connection Diagnostic
 // ===============================
 
 // Configuration
-$host = 'localhost';
-$db   = 'capstone';
-$user = 'postgres';
-$pass = '080702';
-$port = '5432';
+$host = getenv('DB_HOST');
+$db   = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
+$port = getenv('DB_PORT');
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean(); // Clear any previous junk

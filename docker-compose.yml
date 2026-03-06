@@ -1,29 +1,25 @@
-
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: banwa_php
-    network_mode: "host"
-    volumes:
-      - ./:/var/www/html/Banwa
-    depends_on:
-      - db
+    build: .
+    # This allows PHP to use 'localhost' to find the DB
+    network_mode: "service:db" 
     env_file:
       - .env
-    ports:
-      - "8080:8080"
+    depends_on:
+      - db
 
   db:
     image: postgres:18
-    container_name: banwa_postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 080702
-      POSTGRES_DB: capstone
+    restart: always
     ports:
-      - "5432:5432"
+      - "8080:80"   # Website: http://localhost:8080
+      - "5432:5432" # Database: localhost:5432
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
