@@ -1,4 +1,4 @@
-import supabase from "/Banwa/server/api/supabase.js";
+import supabase from "/server/api/supabase.js";
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';

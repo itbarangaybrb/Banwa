@@ -1,7 +1,7 @@
 // Configuration imports for Supabase, address data, and service worker registration
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 
-import supabase from '/Banwa/server/api/supabase.js';
+import supabase from '/server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 registerServiceWorker();

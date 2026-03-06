@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadUserDataAndUpdateAvatar() {
         try {
             // Fetch user data from your backend
-            const res = await fetch('/Banwa/server/api/resident/get_user.php', {
+            const res = await fetch('/server/api/resident/get_user.php', {
                 credentials: 'include'
             });
             const data = await res.json();
