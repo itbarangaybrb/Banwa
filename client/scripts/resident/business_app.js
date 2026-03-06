@@ -1,5 +1,5 @@
 // Configuration imports for Supabase, address data, and service worker registration
-const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_handler.php';
+const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
@@ -424,16 +424,16 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     ].filter(Boolean);
 
     if (!validator.address(businessLotNo, businessStreet)) return;
-        if (!validateStep(stepFields)) return;
+    if (!validateStep(stepFields)) return;
 
-        // Soft reminder if not verified
-        if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-            if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-                return;
-            }
+    // Soft reminder if not verified
+    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
+        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
+            return;
         }
+    }
 
-        switchPanel('waiver');
+    switchPanel('waiver');
 });
 
 /**
@@ -470,7 +470,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/Banwa/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/services.php';
     });
 
     document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
@@ -575,8 +575,8 @@ newSummaryForm.addEventListener('submit', async function (e) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Business Application Submitted", {
                 body: "Click to view your application status",
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }
@@ -688,7 +688,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             confirmButton: 'btn-proceed',
                         }
                     }).then(() => {
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                        window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     Swal.fire({
@@ -771,7 +771,7 @@ async function verifyUploadedDocuments() {
     try {
         for (let i = 0; i < total; i++) {
             const file = requirementUpload.files[i];
-            verifyBtn.textContent = `OCR on file ${i+1}/${total}: ${file.name}`;
+            verifyBtn.textContent = `OCR on file ${i + 1}/${total}: ${file.name}`;
 
             const formData = new FormData();
             formData.append('action', 'analyze_documents');
@@ -837,7 +837,7 @@ function renderVerificationResults(analysis, selectedReqs) {
                 nameMatched = textLower.includes(ownerName);
             } else if (rule === 'either') {
                 nameMatched = (businessName && textLower.includes(businessName)) ||
-                              (ownerName && textLower.includes(ownerName));
+                    (ownerName && textLower.includes(ownerName));
             }
 
             // Keyword detection from backend
@@ -975,7 +975,7 @@ async function initializeMapPicker(target) {
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
-        const response = await fetch('/Banwa/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
+        const response = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
@@ -1086,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const resp = await fetch('/Banwa/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
+        const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
         console.debug('business_app autofill response:', data);
 

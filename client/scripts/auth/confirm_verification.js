@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // 4. Critical Sync: Send Supabase user data to our local backend
         // We use 'credentials: include' to ensure any session cookies are passed if required.
-        const resp = await fetch("/Banwa/server/api/resident/signup_user.php", {
+        const resp = await fetch("/server/api/resident/signup_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         statusEl.textContent = "Email verified successfully. Redirecting to login…";
 
         setTimeout(() => {
-            window.location.href = "/Banwa/client/pages/auth/signin.php";
+            window.location.href = "/client/pages/auth/signin.php";
         }, 2000);
 
     } catch (err) {

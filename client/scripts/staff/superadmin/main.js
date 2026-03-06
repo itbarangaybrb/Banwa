@@ -50,7 +50,7 @@ function initExportButton() {
  */
 async function fetchAuditLogs() {
     try {
-        const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
             credentials: 'include',
             cache: 'no-store'
         });

@@ -188,7 +188,7 @@ function validateInput(input, message = 'This field is required', rules = {}) {
 // =========================
 async function loadUserData() {
     try {
-        const res = await fetch('/Banwa/server/api/resident/get_user.php', { credentials: 'include' });
+        const res = await fetch('/server/api/resident/get_user.php', { credentials: 'include' });
         const data = await res.json();
         if (data.error) { console.error(data.error); return; }
 
@@ -249,7 +249,7 @@ async function loadUserData() {
 
 async function loadApplicationSummary() {
     try {
-        const res = await fetch('/Banwa/server/api/resident/get_applications.php', { credentials: 'include' });
+        const res = await fetch('/server/api/resident/get_applications.php', { credentials: 'include' });
         const json = await res.json();
         if (json.error) return;
         const apps = json.applications || [];
@@ -562,7 +562,7 @@ document.getElementById('mngAccForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const resp = await fetch('/Banwa/server/api/resident/update_user.php', {
+        const resp = await fetch('/server/api/resident/update_user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -678,7 +678,7 @@ function disablePanelSwitch(state) {
             }
 
             try {
-                const response = await fetch('/Banwa/server/api/shared/signout_user.php', {
+                const response = await fetch('/server/api/shared/signout_user.php', {
                     method: 'POST'
                 });
 
@@ -686,7 +686,7 @@ function disablePanelSwitch(state) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                window.location.href = "/Banwa/client/pages/auth/signin.php";
+                window.location.href = "/client/pages/auth/signin.php";
 
             } catch (fetchError) {
                 console.error("Server sign-out error:", fetchError);

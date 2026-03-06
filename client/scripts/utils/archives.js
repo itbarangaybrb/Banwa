@@ -10,7 +10,7 @@ import { fetchUsers } from '../staff/superadmin/manage_users.js';
  * @param {number|string}  - The ID of the record to archive.
  */
 export async function archiveRecord(tableName, recordId) {
-    const response = await fetch("/Banwa/server/api/shared/archive_record.php", {
+    const response = await fetch("/server/api/shared/archive_record.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -109,7 +109,7 @@ async function restoreRecord(archiveId) {
 
     if (!confirmResult.isConfirmed) return;
 
-    const response = await fetch("/Banwa/server/api/shared/restore_record.php", {
+    const response = await fetch("/server/api/shared/restore_record.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -177,7 +177,7 @@ async function fetchArchives() {
     if (!tbody) return;
 
     try {
-        const resp = await fetch('/Banwa/server/api/shared/get_archives.php', {
+        const resp = await fetch('/server/api/shared/get_archives.php', {
             credentials: 'include',
             cache: 'no-store'
         });

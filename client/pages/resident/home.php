@@ -1,3 +1,11 @@
+<?php
+require_once __DIR__ . '/../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /client/pages/auth/signin.php");
+    exit;
+}
+?>
 <!-- <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,14 +32,6 @@
 </body>
 </html> -->
 
-<?php
-require_once __DIR__ . '/../../../server/api/shared/check_session.php';
-
-if ($_SESSION['role_id'] != 1) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
-    exit;
-}
-?>
 
 <!DOCTYPE html>
 <html lang="en">

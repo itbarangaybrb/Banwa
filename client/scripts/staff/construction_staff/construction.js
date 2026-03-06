@@ -1,6 +1,6 @@
 // Configuration
-const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/construction_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
+const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
 
 // ===============================================
@@ -473,7 +473,7 @@ function openUpdateModal(appId) {
     // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
 
-if (!app) {
+    if (!app) {
         Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
         return;
     }
@@ -802,7 +802,7 @@ async function viewDetails(appId) {
         // Merged logic to handle all possible formats from the DB
         let files = [];
         const possibleFields = [app.requirement_upload_json, app.requirement_upload, app.documents, app.files];
-        
+
         for (let field of possibleFields) {
             if (!field) continue;
             if (Array.isArray(field)) {
@@ -874,7 +874,7 @@ async function viewDetails(appId) {
 
         // === 5. GENERATE OCR RESULTS HTML ===
         let ocrHtml = `<h3 style="color: #777; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px;">OCR RESULTS (${ocrRuns.length} RUNS)</h3>`;
-        
+
         if (ocrRuns.length > 0) {
             ocrHtml += `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">`;
             ocrHtml += ocrRuns.map((run, idx) => {
@@ -884,10 +884,10 @@ async function viewDetails(appId) {
                 });
 
                 let parsedOCR = { text: 'No text content', detected: [] };
-                try { 
-                    parsedOCR = typeof run.ocr_result === 'string' ? JSON.parse(run.ocr_result) : run.ocr_result || {}; 
-                } catch(e) {}
-                
+                try {
+                    parsedOCR = typeof run.ocr_result === 'string' ? JSON.parse(run.ocr_result) : run.ocr_result || {};
+                } catch (e) { }
+
                 return `
                     <details ${isLatest ? 'open' : ''} style="margin-bottom: 10px; border: 1px solid ${isLatest ? '#bbdefb' : '#e9ecef'}; border-radius: 6px; background:${isLatest ? '#f0f7ff' : '#f8f9fa'}; overflow:hidden;">
                         <summary style="padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600; outline: none; display: flex; align-items: center;">
@@ -1619,22 +1619,22 @@ function reRunOCR(appId) {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        ...swalTopConfig,
-                        icon: 'success',
-                        title: 'Queued!',
-                        text: 'OCR re-run has been queued successfully.',
-                        timer: 2500
-                    });
-                    viewDetails(appId);
-                } else {
-                    Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Failed to queue OCR re-run.' });
-                }
-            })
-            .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            ...swalTopConfig,
+                            icon: 'success',
+                            title: 'Queued!',
+                            text: 'OCR re-run has been queued successfully.',
+                            timer: 2500
+                        });
+                        viewDetails(appId);
+                    } else {
+                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Failed to queue OCR re-run.' });
+                    }
+                })
+                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
         }
     });
 }
@@ -1693,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //  */
 // async function fetchAuditLogs() {
 //     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
 //             credentials: 'include',
 //             cache: 'no-store'
 //         });

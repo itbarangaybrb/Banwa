@@ -1,5 +1,5 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
-const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
@@ -508,7 +508,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
-        window.location.href = '/Banwa/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/services.php';
     });
 
     document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
@@ -617,8 +617,8 @@ newSummaryForm.addEventListener('submit', async function (e) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Incident Report Submitted", {
                 body: "Click to view your report status",
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }
@@ -728,7 +728,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         }
                     }).then(() => {
                         generateReportDocument();
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                        window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     Swal.fire({
@@ -949,7 +949,7 @@ async function initializeMapPicker(target) {
     try {
         const formData = new FormData();
         formData.append('action', 'get_houses');
-        const response = await fetch('/Banwa/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
+        const response = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
@@ -1054,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const resp = await fetch('/Banwa/server/api/resident/get_user.php');
+        const resp = await fetch('/server/api/resident/get_user.php');
         const data = await resp.json();
 
         if (data.error) {

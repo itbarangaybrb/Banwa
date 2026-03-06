@@ -1,11 +1,12 @@
 <?php
+
 /**
  * Initializes the session and checks if the user is logged in with a valid role.
  * Redirects to the sign-in page if the user is not authenticated.
  */
 session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 
@@ -26,7 +27,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user || $user['status'] === 'suspended') {
     session_destroy();
-    header("Location: /Banwa/client/pages/auth/suspended.php");
+    header("Location: /client/pages/auth/suspended.php");
     exit;
 }
 
@@ -37,5 +38,3 @@ if (!$user || $user['status'] === 'suspended') {
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
-?>
-

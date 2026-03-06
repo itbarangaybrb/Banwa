@@ -215,17 +215,17 @@ const validator = (() => {
 // 4. Validation Rules per Field
 // ───────────────────────────────────────────────────────────────
 const validationConfig = [
-    { el: formElements.firstName,      type: 'text',     message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true } },
-    { el: formElements.lastName,       type: 'text',     message: 'Last name is required',  rules: { lettersOnly: true, normalizeSpaces: true } },
-    { el: formElements.sex,            type: 'select',   message: 'Please select sex' },
-    { el: formElements.contactNo,      type: 'number',   message: 'Contact number is required', rules: { minLength: 11, maxLength: 11 } },
-    { el: formElements.address,        type: 'text',     message: 'Address is required' },
-    { el: formElements.email,          type: 'email',    message: 'Email is required' },
-    { el: formElements.password,       type: 'password', message: 'Password is required' },
+    { el: formElements.firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true } },
+    { el: formElements.lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true } },
+    { el: formElements.sex, type: 'select', message: 'Please select sex' },
+    { el: formElements.contactNo, type: 'number', message: 'Contact number is required', rules: { minLength: 11, maxLength: 11 } },
+    { el: formElements.address, type: 'text', message: 'Address is required' },
+    { el: formElements.email, type: 'email', message: 'Email is required' },
+    { el: formElements.password, type: 'password', message: 'Password is required' },
     { el: formElements.reTypePassword, type: 'password', message: 'Please re-type password' },
-    { el: formElements.agreeCheckBox,  type: 'checkbox', message: 'You must agree to the terms' },
-    { el: formElements.idType,         type: 'select',   message: 'Please select ID type' },
-    { el: formElements.idFile,         type: 'file',     message: 'Please upload ID document', rules: { accept: ['.jpg', '.png', '.pdf'] } }
+    { el: formElements.agreeCheckBox, type: 'checkbox', message: 'You must agree to the terms' },
+    { el: formElements.idType, type: 'select', message: 'Please select ID type' },
+    { el: formElements.idFile, type: 'file', message: 'Please upload ID document', rules: { accept: ['.jpg', '.png', '.pdf'] } }
 ];
 
 // ───────────────────────────────────────────────────────────────
@@ -235,14 +235,14 @@ function validateField({ el, type, message, rules }) {
     if (!el) return true;
 
     switch (type) {
-        case 'text':     return validator.text(el, message, rules);
-        case 'number':   return validator.number(el, message, rules);
-        case 'email':    return validator.email(el, message);
+        case 'text': return validator.text(el, message, rules);
+        case 'number': return validator.number(el, message, rules);
+        case 'email': return validator.email(el, message);
         case 'password': return validator.password(el, message);
-        case 'select':   return validator.select(el, message);
+        case 'select': return validator.select(el, message);
         case 'checkbox': return validator.checkbox(el, message);
-        case 'file':     return validator.file(el, message, rules);
-        default:         return true;
+        case 'file': return validator.file(el, message, rules);
+        default: return true;
     }
 }
 
@@ -333,7 +333,7 @@ async function processOCR() {
     }
 
     try {
-        const response = await fetch('/Banwa/server/api/auth/ocr_process.php', {
+        const response = await fetch('/server/api/auth/ocr_process.php', {
             method: 'POST',
             body: formData
         });
@@ -411,7 +411,7 @@ function setupNavigationButtons() {
     // Back to login
     formElements.selectIdBackBtn?.addEventListener('click', e => {
         e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+        window.location.href = '/client/pages/auth/signin.php';
     });
 
     // Back one step
@@ -477,7 +477,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: signupData.email,
-        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+        options: { emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
     });
 
     if (error) {
@@ -523,7 +523,7 @@ function setupAccountSubmission() {
 
         try {
             // Prevent duplicate signups
-            const checkRes = await fetch('/Banwa/server/api/shared/check_email.php', {
+            const checkRes = await fetch('/server/api/shared/check_email.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: signupData.email })
@@ -543,7 +543,7 @@ function setupAccountSubmission() {
                 password: signupData.password,
                 options: {
                     data: signupData,
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+                    emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php"
                 }
             });
 
@@ -579,7 +579,7 @@ function setupAccountSubmission() {
                         debug: isLocal
                     };
 
-                    const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
+                    const resp = await fetch('/server/api/shared/verify_ocr.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

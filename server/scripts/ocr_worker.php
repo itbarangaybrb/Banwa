@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Fixed OCR Worker - Works for both Business and Construction
  * Usage: php ocr_worker.php --once
@@ -94,9 +95,9 @@ while (true) {
                 $originalName = $res['filename'] ?? 'unknown';
                 $savedName = basename($res['filename'] ?? '');
 
-                $fileUrl = ($isBusiness 
-                    ? '/Banwa/server/handlers/staff/business/uploads/' . $savedName 
-                    : '/Banwa/server/handlers/staff/construction/uploads/' . $savedName);
+                $fileUrl = ($isBusiness
+                    ? '/server/handlers/staff/business/uploads/' . $savedName
+                    : '/server/handlers/staff/construction/uploads/' . $savedName);
 
                 try {
                     $ins = $pdo->prepare("INSERT INTO {$ocrTable} 
@@ -126,7 +127,6 @@ while (true) {
         $pdo->commit();
 
         if ($runOnce) break;
-
     } catch (Exception $e) {
         $pdo->rollBack();
         if (isset($jobId)) {
@@ -138,4 +138,3 @@ while (true) {
         sleep(1);
     }
 }
-?>

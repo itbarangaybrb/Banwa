@@ -191,7 +191,7 @@ export async function fetchUsers() {
     if (!tbody) return;
 
     try {
-        const resp = await fetch('/Banwa/server/api/staff/superadmin/get_user_all.php', {
+        const resp = await fetch('/server/api/staff/superadmin/get_user_all.php', {
             credentials: 'include',
             cache: 'no-store'
         });
@@ -276,7 +276,7 @@ async function unsuspendUser(userId) {
     if (!confirmResult.isConfirmed) return;
 
     try {
-        const response = await fetch("/Banwa/server/api/staff/superadmin/unsuspend_user.php", {
+        const response = await fetch("/server/api/staff/superadmin/unsuspend_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -735,7 +735,7 @@ async function handleCreateFormSubmit(form) {
     const longitude = form.querySelector('[name="longitude"]').value;
 
     try {
-        const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+        const respCheck = await fetch('/server/api/shared/check_email.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -761,7 +761,7 @@ async function handleCreateFormSubmit(form) {
                     latitude: latitude,
                     longitude: longitude
                 },
-                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification_superadmin.php"
+                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification_superadmin.php"
             }
         });
 
@@ -832,7 +832,7 @@ async function handleUpdateFormSubmit(form) {
     };
 
     try {
-        const resp = await fetch('/Banwa/server/api/staff/superadmin/update_user.php', {
+        const resp = await fetch('/server/api/staff/superadmin/update_user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -929,7 +929,7 @@ async function handleSuspendFormSubmit(form) {
             details: detailsInput.value.trim()
         };
 
-        const resp = await fetch('/Banwa/server/api/staff/superadmin/suspend_user.php', {
+        const resp = await fetch('/server/api/staff/superadmin/suspend_user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

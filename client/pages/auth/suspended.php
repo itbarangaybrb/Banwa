@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../../server/configs/database.php';
  */
 $userId = $_SESSION['user_id'] ?? null;
 if (!$userId) {
-  header("Location: /Banwa/client/pages/auth/signin.php");
+  header("Location: /client/pages/auth/signin.php");
   exit;
 }
 
@@ -23,7 +23,7 @@ $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user || $user['status'] !== 'suspended') {
-  header("Location: /Banwa/client/pages/resident/home.php");
+  header("Location: /client/pages/resident/home.php");
   exit;
 }
 

@@ -1,19 +1,21 @@
 services:
   web:
     build: .
-    # This allows PHP to use 'localhost' to find the DB
-    network_mode: "service:db" 
-    env_file:
-      - .env
     depends_on:
       - db
+      - ws
+    env_file:
+      - .env
+    ports:
+      - "8080:80" # PHP/Apache
+    volumes:
+      - .:/var/www/html
 
   db:
-    image: postgres:18
+    image: postgis/postgis:18-3.6
     restart: always
     ports:
-      - "8080:80"   # Website: http://localhost:8080
-      - "5432:5432" # Database: localhost:5432
+      - "5432:5432"
     env_file:
       - .env
     environment:
@@ -21,7 +23,22 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
+      - ./03062026_banwa.sql:/docker-entrypoint-initdb.d/03062026_banwa.sql
+
+  ws:
+    build:
+      context: . # Use the root directory where the Dockerfile exists
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # Replace 'php server/websocket/server.php' with your actual entry point
+    command: php /var/www/html/server/websocket/server.php
 
 volumes:
   postgres_data:

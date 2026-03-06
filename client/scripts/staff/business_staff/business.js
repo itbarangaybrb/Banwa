@@ -1,6 +1,6 @@
 // Configuration
-const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/business/uploads/';
+const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
 
 // ===============================================
@@ -826,33 +826,33 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeModal('updateModal');
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Success',
-                text: 'Application updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            loadManagementTable();
-            loadProcessTable();
-        } else {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'error',
-                title: 'Update Failed',
-                text: data.message || 'An unknown error occurred.'
-            });
-        }
-    })
-    .catch(err => {
-        console.error('Submit update error:', err);
-        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('updateModal');
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'An unknown error occurred.'
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Submit update error:', err);
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
+        });
 }
 
 /**
@@ -1180,12 +1180,13 @@ function viewDetails(appId) {
                                     }
                                 });
                         } else {
-                                Swal.fire({
-                                        ...swalTopConfig,
-                                        icon: 'error',
-                                        title: 'OCR Failed',
-                                        text: data.message || 'Unknown error'
-                                    });                        }
+                            Swal.fire({
+                                ...swalTopConfig,
+                                icon: 'error',
+                                title: 'OCR Failed',
+                                text: data.message || 'Unknown error'
+                            });
+                        }
                     } catch (err) {
                         console.error(err);
                         Swal.fire({
@@ -1752,9 +1753,9 @@ function downloadSummary(appId) {
 function generateClearance(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) {
-            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
-            return;
-        }
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: `Application data not found for ID: ${appId}` });
+        return;
+    }
 
     const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`;
     const businessName = app.business_name;
@@ -2156,7 +2157,7 @@ async function createApplication(event) {
         showError(lng, 'Invalid longitude format');
     }
 
-   if (!isValid) {
+    if (!isValid) {
         Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Validation Error', text: 'Please fix the highlighted errors.' });
         return;
     }
@@ -2321,7 +2322,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //  */
 // async function fetchAuditLogs() {
 //     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
 //             credentials: 'include',
 //             cache: 'no-store'
 //         });

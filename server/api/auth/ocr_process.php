@@ -1,5 +1,5 @@
 <?php
-// /Banwa/server/api/auth/ocr_process.php
+// /server/api/auth/ocr_process.php
 // PRIMARY: OCR.space only (high accuracy, reliable line order)
 // TESSERACT FALLBACK FULLY COMMENTED OUT
 // FEATURES:
@@ -25,13 +25,15 @@ $debug = !empty($_POST['debug']);
 $debug_info = [];
 
 // === HELPER FUNCTIONS ===
-function get_mime_type($filename) {
+function get_mime_type($filename)
+{
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $map = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png'];
     return $map[$ext] ?? 'application/octet-stream';
 }
 
-function str_contains_array($haystack, $needles) {
+function str_contains_array($haystack, $needles)
+{
     $haystack = strtoupper($haystack);
     foreach ($needles as $needle) {
         if (strpos($haystack, strtoupper($needle)) !== false) return true;
@@ -39,14 +41,16 @@ function str_contains_array($haystack, $needles) {
     return false;
 }
 
-function clean_value($str) {
+function clean_value($str)
+{
     $str = trim($str);
     $str = preg_replace('/\s+/', ' ', $str);
     $str = preg_replace('/[.,\d]*$/', '', $str);
     return trim($str);
 }
 
-function clean_address_line($line) {
+function clean_address_line($line)
+{
     $line = preg_replace('/^Tirahan\/Address\s*/i', '', $line);
     $line = preg_replace('/^Address\s*[:\/]?\s*/i', '', $line);
     $line = preg_replace('/^Tirahan\s*[:\/]?\s*/i', '', $line);
@@ -57,7 +61,8 @@ function clean_address_line($line) {
     return $line;
 }
 
-function is_image_blurry($path, $threshold = 150) {
+function is_image_blurry($path, $threshold = 150)
+{
     if (!extension_loaded('gd')) return false;
 
     $info = getimagesize($path);
@@ -72,7 +77,7 @@ function is_image_blurry($path, $threshold = 150) {
 
     imagefilter($im, IMG_FILTER_GRAYSCALE);
 
-    $matrix = [[-1,-1,-1], [-1,8,-1], [-1,-1,-1]];
+    $matrix = [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]];
     imageconvolution($im, $matrix, 1, 0);
 
     $width = imagesx($im);
@@ -101,7 +106,8 @@ function is_image_blurry($path, $threshold = 150) {
 }
 
 // === PARSING FUNCTION ===
-function parse_id_data($raw_lines, $id_type) {
+function parse_id_data($raw_lines, $id_type)
+{
     $data = ['firstName' => '', 'lastName' => '', 'middleName' => '', 'address' => ''];
 
     $lines = [];

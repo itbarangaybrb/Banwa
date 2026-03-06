@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = '/Banwa/server/handlers/staff/finance/finance_handler.php';
+const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
 let pendingApps = [];
 let paidApps = [];
@@ -196,7 +196,7 @@ function openVerificationModal(appId) {
     if (app.requirement_upload_json) {
         if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) proofFile = app.requirement_upload_json[0];
         else {
-            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) proofFile = parsed[0]; } catch (e) {}
+            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) proofFile = parsed[0]; } catch (e) { }
         }
     }
     if (!proofFile && app.requirement_upload) {

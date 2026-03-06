@@ -1,6 +1,6 @@
 // Configuration
-const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/utility/uploads/';
+const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/utility/uploads/';
 let applications = [];
 
 // ===============================================
@@ -475,9 +475,9 @@ function openUpdateModal(appId) {
     const app = applications.find(a => a.id == appId);
 
     if (!app) {
-            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
-            return;
-        }
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
+        return;
+    }
 
     // Fill the hidden ID field and the visible "Current Status" text
     document.getElementById('updateAppId').value = app.id;
@@ -749,38 +749,38 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeModal('updateModal');
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Success',
-                text: 'Application updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            loadManagementTable();
-            loadProcessTable();
-        } else {
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('updateModal');
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'An unknown error occurred.'
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Submit update error:', err);
             Swal.fire({
                 ...swalTopConfig,
                 icon: 'error',
-                title: 'Update Failed',
-                text: data.message || 'An unknown error occurred.'
+                title: 'Network Error',
+                text: 'Please check your connection.'
             });
-        }
-    })
-    .catch(err => {
-        console.error('Submit update error:', err);
-        Swal.fire({
-            ...swalTopConfig,
-            icon: 'error',
-            title: 'Network Error',
-            text: 'Please check your connection.'
         });
-    });
 }
 
 /**
@@ -1181,15 +1181,15 @@ function showAlert(message, type) {
 function printSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     if (!appId) {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'warning',
-                title: 'No Application Selected',
-                text: 'Please select an application to print.'
-            });
-            return;
-        }
-        
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'warning',
+            title: 'No Application Selected',
+            text: 'Please select an application to print.'
+        });
+        return;
+    }
+
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
@@ -1528,7 +1528,7 @@ document.head.insertAdjacentHTML("beforeend", `
 //  */
 // async function fetchAuditLogs() {
 //     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
 //             credentials: 'include',
 //             cache: 'no-store'
 //         });

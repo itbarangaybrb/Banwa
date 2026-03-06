@@ -79,7 +79,8 @@ function get_input($key)
     return isset($_POST[$key]) && trim($_POST[$key]) !== '' ? trim($_POST[$key]) : null;
 }
 
-function ensureEvaluationTableExists($pdo) {
+function ensureEvaluationTableExists($pdo)
+{
     try {
         $check = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'business_evaluations')");
         if (!$check->fetchColumn()) {
@@ -101,7 +102,8 @@ function ensureEvaluationTableExists($pdo) {
     }
 }
 // ==================== ENSURE FILES TABLE EXISTS ====================
-function ensureFilesTableExists($pdo) {
+function ensureFilesTableExists($pdo)
+{
     try {
         $check = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'business_files')");
         if (!$check->fetchColumn()) {
@@ -259,7 +261,7 @@ function handleCreateApplication($pdo)
                 $mime = $_FILES['requirementUpload']['type'][$idx];
                 $size = filesize($uploadDir . $saved_name);
                 $checksum = md5_file($uploadDir . $saved_name);
-                $file_url = '/Banwa/server/handlers/staff/business/uploads/' . $saved_name;
+                $file_url = '/server/handlers/staff/business/uploads/' . $saved_name;
 
                 // business_files
                 $pdo->prepare("
@@ -286,17 +288,17 @@ function handleCreateApplication($pdo)
         // ==================== AUTO OCR ON CREATE ====================
         if (!empty($uploadedFiles)) {
             $_POST['application_id'] = $applicationId;
-            
+
             // ←←← CAPTURE OUTPUT SO IT DOESN'T POLLUTE THE MAIN RESPONSE
             ob_start();
             handleAnalyzeDocuments($pdo);
             $ocrOutput = ob_get_clean();
-            
+
             // Optional: log for debugging
             if (!empty($ocrOutput)) {
                 error_log("Auto-OCR output: " . substr($ocrOutput, 0, 500));
             }
-            
+
             unset($_POST['application_id']);
         }
 
@@ -304,7 +306,6 @@ function handleCreateApplication($pdo)
         createInitialDSSEvaluation($pdo, $applicationId);
 
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -570,7 +571,7 @@ function handleUpdateApplication($pdo)
                             ':app_id' => $applicationId,
                             ':filename' => $res['filename'],
                             ':saved_filename' => $res['filename'],
-                            ':file_url' => '/Banwa/server/handlers/staff/business/uploads/' . $res['filename'],
+                            ':file_url' => '/server/handlers/staff/business/uploads/' . $res['filename'],
                             ':ocr_result' => json_encode(['detected' => array_values($detected), 'text' => $res['text'] ?? ''])
                         ]);
                     }
@@ -888,7 +889,7 @@ function handleAnalyzeDocuments($pdo)
                     ':app_id' => $applicationId,
                     ':filename' => $res['filename'],
                     ':saved_filename' => $res['filename'],
-                    ':file_url' => '/Banwa/server/handlers/staff/business/uploads/' . $res['filename'],
+                    ':file_url' => '/server/handlers/staff/business/uploads/' . $res['filename'],
                     ':ocr_result' => json_encode(['detected' => array_values($detected), 'text' => $res['text'] ?? ''])
                 ]);
             }

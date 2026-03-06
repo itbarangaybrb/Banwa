@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 2. Unauthenticated Redirect
     // If no session exists, we immediately bounce the user to the login page.
     if (!session) {
-        window.location.href = "/Banwa/client/pages/auth/signin.php";
+        window.location.href = "/client/pages/auth/signin.php";
         return;
     }
-    
+
     // 3. UI Enrichment
     // Display the user's identity once the session is confirmed.
     if (userStatus) {
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // B) The Application Server (PHP Session)
     if (signoutBtn) {
         signoutBtn.addEventListener("click", async () => {
-            
+
             // A. Invalidate Supabase Session
             // This clears the JWT from the browser's local storage.
             const { error } = await supabase.auth.signOut();
@@ -45,12 +45,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             // B. Invalidate PHP Session
             // We notify the local backend to destroy the PHP $_SESSION.
             // 'credentials: include' is mandatory here to pass the session cookie.
-            await fetch('/Banwa/server/api/shared/signout_user.php', {
+            await fetch('/server/api/shared/signout_user.php', {
                 method: 'POST',
                 credentials: 'include'
             });
 
-            window.location.href = "/Banwa/client/index.php";
+            window.location.href = "/client/index.php";
         });
     }
 });

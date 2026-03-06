@@ -1,7 +1,7 @@
 self.addEventListener('notificationclick', event => {
     event.notification.close();
 
-    const urlToOpen = event.notification.data?.url || '/Banwa/sw.js';
+    const urlToOpen = event.notification.data?.url || '/sw.js';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
