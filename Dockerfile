@@ -15,4 +15,4 @@ WORKDIR /var/www/html
 COPY . .
 
 # Adjust permissions for Apache
-RUN chown -R www-data:www-data /var/www/html/Banwa
+RUN chown -R www-data:www-data /var/www/html
