@@ -8,7 +8,7 @@ $dotenv->safeLoad();
 // ===============================
 
 // Configuration
-$host = getenv('DB_HOST');
+$host = getenv('DB_HOST') ?: 'db';
 $db   = getenv('DB_NAME');
 $user = getenv('DB_USER');
 $pass = getenv('DB_PASS');
