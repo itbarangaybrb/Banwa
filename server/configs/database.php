@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-$dotenv->safeLoad();
+// $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+// $dotenv->safeLoad();
 // ===============================
 // Database Connection Diagnostic
 // ===============================
@@ -12,7 +12,7 @@ $host = getenv('DB_HOST') ?: 'db';
 $db   = getenv('DB_NAME');
 $user = getenv('DB_USER');
 $pass = getenv('DB_PASS');
-$port = getenv('DB_PORT');
+$port = getenv('DB_PORT') ?: '5432';
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean(); // Clear any previous junk
