@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 
 /**
  * Centralized DOM element references for the login form
@@ -85,7 +85,7 @@ const validator = (() => {
  * IMPORTANT: Do NOT reference loginValidationConfig inside its own definition
  */
 const loginValidationConfig = [
-    { el: loginElements.email,    type: 'email',    message: 'Email is required' },
+    { el: loginElements.email, type: 'email', message: 'Email is required' },
     { el: loginElements.password, type: 'password', message: 'Please enter a password' }
 ];
 
@@ -99,9 +99,9 @@ function validateField(config) {
     if (!el) return true;
 
     switch (type) {
-        case 'email':    return validator.email(el, message);
+        case 'email': return validator.email(el, message);
         case 'password': return validator.password(el, message);
-        default:         return true;
+        default: return true;
     }
 }
 

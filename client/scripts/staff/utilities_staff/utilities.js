@@ -1,6 +1,6 @@
 // Configuration
-const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/utility/uploads/';
+const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/utility/uploads/';
 let applications = [];
 
 // ===============================================

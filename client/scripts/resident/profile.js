@@ -1,4 +1,4 @@
-import supabase from '../../../server/api/supabase.js'
+import supabase from '/Banwa/server/api/supabase.js'
 
 // =========================
 // Change password form elements
@@ -686,7 +686,7 @@ function disablePanelSwitch(state) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                window.location.href = "/Banwa/client/pages/auth/signin.php";
+                window.location.href = "/client/pages/auth/signin.php";
 
             } catch (fetchError) {
                 console.error("Server sign-out error:", fetchError);

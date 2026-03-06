@@ -28,7 +28,7 @@
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 
 if ($_SESSION['role_id'] != 1) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 ?>
@@ -45,10 +45,10 @@ if ($_SESSION['role_id'] != 1) {
 
 
 <body>
-<?php 
-$page_title = "Home";
-include '../../pages/resident/_layout/nav.php';
-?>
+    <?php
+    $page_title = "Home";
+    include '../../pages/resident/_layout/nav.php';
+    ?>
 
     <section data-theme="banner" class="hero-section">
         <div class="hero-cont">
@@ -71,12 +71,12 @@ include '../../pages/resident/_layout/nav.php';
                     <span class="dot" data-index="4"></span>
                 </div>
             </div>
-            
+
             <!-- Hero Content Overlay -->
             <div class="hero-content-overlay">
                 <div class="hero_content">
                     <h1>BANWA</h1>
-                    
+
                     <div class="barangay-title-container">
                         <h6>Barangay Blue Ridge B</h6>
                         <div class="office-hours-container">
@@ -123,7 +123,7 @@ include '../../pages/resident/_layout/nav.php';
                 <div class="quick-align">
                     <h2>CHOOSE FROM THE FOLLOWING SERVICES</h2>
                 </div>
-                
+
                 <!-- Action Buttons Grid -->
                 <div class="action-buttons-grid">
                     <!-- Construction Button -->
@@ -132,21 +132,21 @@ include '../../pages/resident/_layout/nav.php';
                         </div>
                         <span class="btn-text">Construction</span>
                     </a>
-                    
+
                     <!-- Business Clearance Button -->
                     <a href="business_app.php" class="action-btn business-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Business Clearance</span>
                     </a>
-                    
+
                     <!-- Utilities Button -->
                     <a href="utilities_app.php" class="action-btn utilities-btn">
                         <div class="btn-icon">
                         </div>
                         <span class="btn-text">Utilities</span>
                     </a>
-                    
+
                     <!-- Report Button -->
                     <a href="incidentReport.php" class="action-btn report-btn">
                         <div class="btn-icon">
@@ -159,20 +159,21 @@ include '../../pages/resident/_layout/nav.php';
     </section>
 
     <section data-theme="blue">
-            <div class="cont">
-                <div class="contact-content">
-                    <div class="story-text">
-                        <h2>Contact Us</h2>
-                        <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
-                        <ul class="contact-info">
-                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
-                            <li><strong>Phone:</strong> +63 946 456 6986</li>
-                        </ul>
-                    </div>
+        <div class="cont">
+            <div class="contact-content">
+                <div class="story-text">
+                    <h2>Contact Us</h2>
+                    <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
+                    <ul class="contact-info">
+                        <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
+                        <li><strong>Phone:</strong> +63 946 456 6986</li>
+                    </ul>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
     <?php include '../../pages/resident/_layout/end.php'; ?>
 </body>
+
 </html>

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 
 if ($_SESSION['role_id'] != 1) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 ?>
@@ -27,12 +27,12 @@ if ($_SESSION['role_id'] != 1) {
     $page_title = "About Us";
     include '_layout/nav.php';
     ?>
-        <div class="profile-container">
-            <!-- Profile Header -->
-            <div class="profile-header">
-                <h1>My Profile</h1>
-                <p>Manage your account information and preferences</p>
-            </div>
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h1>My Profile</h1>
+            <p>Manage your account information and preferences</p>
+        </div>
 
         <div class="profile-content">
             <!-- Left Column: User Info -->

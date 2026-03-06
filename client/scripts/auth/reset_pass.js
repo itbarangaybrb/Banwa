@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 
 /**
  * UI Element Mapping
@@ -49,13 +49,13 @@ const validator = (() => {
         if (!input) return true;
         const value = input.value.trim();
         if (!value) { showError(input, 'Password is required'); return false; }
-        if (value.length < 8 || value.length > 16) { 
-            showError(input, 'Password should be 8-16 characters long'); 
-            return false; 
+        if (value.length < 8 || value.length > 16) {
+            showError(input, 'Password should be 8-16 characters long');
+            return false;
         }
-        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) { 
-            showError(input, 'Password must contain letters and numbers'); 
-            return false; 
+        if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+            showError(input, 'Password must contain letters and numbers');
+            return false;
         }
         clearError(input);
         return true;
@@ -150,7 +150,7 @@ async function handleFormSubmit(e) {
 
         // Graceful redirect to sign-in page
         setTimeout(() => {
-            window.location.href = '/Banwa/client/pages/auth/signin.php';
+            window.location.href = '/client/pages/auth/signin.php';
         }, 2000);
 
     } catch (err) {
@@ -177,9 +177,9 @@ function initialize() {
             resetPassElements.formMessage.style.display = 'block';
             resetPassElements.formMessage.style.color = 'red';
             resetPassElements.formMessage.textContent = 'Reset link is invalid or expired.';
-            
+
             // Optional: Disable the form if no session exists
-            if(resetPassElements.form) resetPassElements.form.style.opacity = "0.5";
+            if (resetPassElements.form) resetPassElements.form.style.opacity = "0.5";
         }
     });
 

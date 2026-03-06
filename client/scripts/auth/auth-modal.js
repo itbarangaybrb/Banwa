@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 
 // =========================
 // Modal Management
@@ -79,7 +79,7 @@ function updateProgress(step) {
     steps.forEach((stepEl, index) => {
         const stepNum = index + 1;
         stepEl.classList.remove('active', 'completed');
-        
+
         if (stepNum === step) {
             stepEl.classList.add('active');
         } else if (stepNum < step) {
@@ -93,10 +93,10 @@ function switchPanel(panelId) {
     Object.values(panels).forEach(panel => {
         panel.classList.add('hidden');
     });
-    
+
     panels[panelId].classList.remove('hidden');
-    
-    switch(panelId) {
+
+    switch (panelId) {
         case 'selectId':
             updateProgress(1);
             break;
@@ -168,13 +168,13 @@ let lastOcrData = null;
 const validator = (() => {
     function getWrapper(el) { return el.closest('.label-and-input'); }
     function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
-    
+
     function showError(el, message) {
         const errorEl = getErrorEl(el);
         el.classList.add('error');
         if (errorEl) { errorEl.textContent = message; errorEl.classList.add('show'); }
     }
-    
+
     function clearError(el) {
         const errorEl = getErrorEl(el);
         el.classList.remove('error');
@@ -268,7 +268,7 @@ const validator = (() => {
         clearError(input); return true;
     }
 
-    return { 
+    return {
         text: validateText,
         number: validateNumber,
         email: validateEmail,
@@ -281,7 +281,7 @@ const validator = (() => {
             email: validateLoginEmail,
             password: validateLoginPassword
         },
-        clear: clearError 
+        clear: clearError
     };
 })();
 
@@ -401,7 +401,7 @@ async function processOCR() {
 
     formElements.ocrStatus.className = 'ocr-status-processing';
     formElements.ocrStatus.style.display = 'block';
-    
+
     formElements.ocrStatus.innerHTML = `
         <div class="progress-container">
             <div class="progress-bar"></div>
@@ -442,7 +442,7 @@ async function processOCR() {
                 formElements.selectIdNextBtn.onclick = () => window.location.reload();
                 return;
             }
-            
+
             formElements.firstName.value = d.firstName || "";
             formElements.middleName.value = d.middleName || "";
             formElements.lastName.value = d.lastName || "";
@@ -491,13 +491,13 @@ function resetVerifyButton() {
 // Navigation Buttons
 // =========================
 function setupNavigationButtons() {
-    formElements.selectIdBackBtn?.addEventListener('click', e => { 
-        e.preventDefault(); 
+    formElements.selectIdBackBtn?.addEventListener('click', e => {
+        e.preventDefault();
         if (confirm('Are you sure you want to go back? Your progress will be lost.')) {
             closeModal();
         }
     });
-    
+
     formElements.personalDetailsBackBtn?.addEventListener('click', () => switchPanel('selectId'));
     formElements.createAccBackBtn?.addEventListener('click', () => switchPanel('personalDetails'));
 
@@ -603,9 +603,9 @@ function startResendCooldown() {
         btn.textContent = `Resend available in ${countdown}s`;
         if (countdown <= 0) {
             clearInterval(interval);
-            if (resendCount < MAX_RESENDS) { 
-                btn.disabled = false; 
-                btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`; 
+            if (resendCount < MAX_RESENDS) {
+                btn.disabled = false;
+                btn.textContent = `Resend Verification Email (${resendCount}/${MAX_RESENDS})`;
             }
             else btn.remove();
         }
@@ -618,7 +618,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: allData.email,
-        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+        options: { emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
     });
     if (error) {
         formElements.formMessage.style.color = 'red';
@@ -691,7 +691,7 @@ function setupAccountSubmission() {
             !validator.matchPassword(formElements.password, formElements.reTypePassword)) {
             return;
         }
-        
+
         const confirmed = await showSubmitConfirmation();
         if (!confirmed) return;
 
@@ -725,7 +725,7 @@ function setupAccountSubmission() {
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
-                options: { data: allData, emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+                options: { data: allData, emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
             });
 
             if (error) {
@@ -799,7 +799,7 @@ function initialize() {
     setupRealtimeValidation();
     setupNavigationButtons();
     setupAccountSubmission();
-    
+
     if (loginElements.form) {
         loginElements.form.addEventListener('submit', handleLoginSubmit);
     }

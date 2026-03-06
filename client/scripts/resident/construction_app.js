@@ -1,7 +1,7 @@
 // Configuration imports for Supabase, address data, and service worker registration
-const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/construction_handler.php';
+const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 
-import supabase from '../../../server/api/supabase.js';
+import supabase from '/Banwa/server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 registerServiceWorker();
@@ -434,7 +434,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/Banwa/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/services.php';
     });
 
     document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));
@@ -465,8 +465,8 @@ newSummaryForm.addEventListener('submit', async (e) => {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification('Application Submitted', {
                 body: "Click to view your application status",
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }
@@ -565,7 +565,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
                             confirmButton: 'btn-proceed',
                         }
                     }).then(() => {
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                        window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     Swal.fire({

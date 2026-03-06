@@ -1,5 +1,5 @@
 // Configuration
-const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 let incidents = [];
 
 // Map filter visibility flag for this management page

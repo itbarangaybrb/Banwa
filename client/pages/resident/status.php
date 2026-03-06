@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 
 if ($_SESSION['role_id'] != 1) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 ?>
@@ -33,30 +33,32 @@ if ($_SESSION['role_id'] != 1) {
     include '_layout/nav.php';
     ?>
 
-<section class="sections">
-    <div class="header-and-parag">
-        <h4>Current Status</h4>
-        <p>Track your ongoing applications and payment history</p>
-    </div>
+    <section class="sections">
+        <div class="header-and-parag">
+            <h4>Current Status</h4>
+            <p>Track your ongoing applications and payment history</p>
+        </div>
 
-    <!-- Tabs -->
-    <div class="tab-navigation">
-        <button class="tab-btn active" data-tab="applications">Applications</button>
-        <button class="tab-btn" data-tab="payments">Payment History</button>
-    </div>
+        <!-- Tabs -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="applications">Applications</button>
+            <button class="tab-btn" data-tab="payments">Payment History</button>
+        </div>
 
-    <!-- Single Table -->
-    <div class="containers status-table-container">
-        <table class="status-table" id="mainStatusTable">
-            <thead id="tableHeader">
-                <!-- JS fills this -->
-            </thead>
-            <tbody id="mainTableBody">
-                <tr><td colspan="4" style="text-align:center; padding: 60px;">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</section>
+        <!-- Single Table -->
+        <div class="containers status-table-container">
+            <table class="status-table" id="mainStatusTable">
+                <thead id="tableHeader">
+                    <!-- JS fills this -->
+                </thead>
+                <tbody id="mainTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 60px;">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <!-- Modal -->
 
@@ -75,17 +77,17 @@ if ($_SESSION['role_id'] != 1) {
     </div>
 
     <div class="modal" id="remarksModal">
-                <div class="modal-content" style="max-width: 500px;">
-                    <span class="modal-close-btn remarks-modal-close-btn">&times;</span>
-                    <h2 style="color: var(--color-blue-1); margin-top: 0;">Application Remarks</h2>
-                    <div id="remarks-content" style="padding: 20px 0; font-size: 16px; line-height: 1.6; color: #333;">
-                        </div>
-                    <div style="text-align: right; margin-top: 10px;">
-                        <button class="remarks-close-btn-secondary" style="padding: 8px 16px; cursor: pointer;">Close</button>
-                    </div>
-                </div>
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close-btn remarks-modal-close-btn">&times;</span>
+            <h2 style="color: var(--color-blue-1); margin-top: 0;">Application Remarks</h2>
+            <div id="remarks-content" style="padding: 20px 0; font-size: 16px; line-height: 1.6; color: #333;">
             </div>
-            
+            <div style="text-align: right; margin-top: 10px;">
+                <button class="remarks-close-btn-secondary" style="padding: 8px 16px; cursor: pointer;">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 

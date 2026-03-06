@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const statusEl = document.getElementById("status");
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             longitude: metadata.longitude || ''
         };
 
-        const resp = await fetch("/Banwa/server/api/staff/superadmin/signup_user.php", {
+        const resp = await fetch("/server/api/staff/superadmin/signup_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         statusEl.textContent = "Email verified successfully. Redirecting to login…";
 
         setTimeout(() => {
-            window.location.href = "/Banwa/client/pages/auth/signin.php";
+            window.location.href = "/client/pages/auth/signin.php";
         }, 2000);
 
     } catch (err) {

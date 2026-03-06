@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -6,7 +6,6 @@ services:
     restart: always
     ports:
       - "5432:5432"
-      - "8080:80" 
     env_file:
       - .env
     environment:
@@ -19,6 +18,8 @@ services:
 
   web:
     build: .
+    ports:
+      - "8080:80"
     network_mode: "service:db"
     env_file:
       - .env

@@ -1,5 +1,5 @@
 // Configuration imports for service worker registration and address data
-const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
+const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
@@ -386,7 +386,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/Banwa/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/services.php';
     });
 
     document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('owner'));
@@ -417,8 +417,8 @@ newSummaryForm.addEventListener('submit', async function (e) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Application Submitted", {
                 body: "Click to view your application status",
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }
@@ -481,7 +481,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             confirmButton: 'btn-proceed',
                         }
                     }).then(() => {
-                        window.location.href = '/Banwa/client/pages/resident/status.php';
+                        window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     Swal.fire({

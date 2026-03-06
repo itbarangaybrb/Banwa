@@ -1,6 +1,6 @@
 // Configuration
-const BUSINESS_HANDLER_URL = '/Banwa/server/handlers/staff/business/business_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/business/uploads/';
+const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
 
 // ===============================================

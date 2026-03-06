@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../server/api/shared/check_session.php';
 
 if ($_SESSION['role_id'] != 1) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 ?>
@@ -244,9 +244,9 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input" id="requirementsSection">
                         <label class="label">Requirements (Photocopy Only) <span style="color: #BB1B1B;">*</span></label>
-                            <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
-                            <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
-                            <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
+                        <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
                         <div class="error-msg"></div>
@@ -257,18 +257,18 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                 </div>
-                
+
                 <!-- NEW: OCR Document Verification Section -->
                 <div class="label-and-input verification-container" id="verificationSection" style="display:none; margin-top:20px; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
                     <label class="label" style="margin-bottom:12px; display:block;">
                         📋 OCR Document Verification
                     </label>
                     <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
-                    
+
                     <button type="button" id="verifyDocumentsBtn" class="btn-secondary" style="width:100%; padding:12px;">
                         Re-Verify Documents with OCR
                     </button>
-                    
+
                     <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">
                         Auto-checks 1 second after upload. Business name is also cross-checked in the documents.
                     </small>
@@ -383,7 +383,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/business_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <?php include '_layout/end.php'; ?>
 </body>
 

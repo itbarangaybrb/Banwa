@@ -145,22 +145,22 @@ async function openEditModalFor(appId, appType) {
 
         switch (appType) {
             case 'Business':
-                endpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_business_application.php?id=${appId}`;
                 formGenerator = generateBusinessFormHtml;
                 break;
 
             case 'Construction':
-                endpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_construction_application.php?id=${appId}`;
                 formGenerator = generateConstructionFormHtml;
                 break;
 
             case 'Utilities':
-                endpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_utilities_application.php?id=${appId}`;
                 formGenerator = generateUtilitiesFormHtml;
                 break;
 
             case 'Incident Reports':
-                endpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_incident_report.php?id=${appId}`;
                 formGenerator = generateIncidentReportFormHtml;
                 break;
 
@@ -214,7 +214,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
     try {
         let appDetailsResponse;
         if (appType === 'Business') {
-            appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+            appDetailsResponse = await fetch(`/server/api/resident/get_business_application.php?id=${appId}`);
         } else {
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
@@ -632,8 +632,8 @@ async function handleSubmitChanges(event, appId, appType) {
 
         switch (appType) {
             case 'Business':
-                getEndpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/business/business_handler.php`;
+                getEndpoint = `/server/api/resident/get_business_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/business/business_handler.php`;
                 keyMap = {
                     'type_of_business': 'typeOfBusiness',
                     'nature_of_business': 'natureOfBusiness',
@@ -654,8 +654,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Construction':
-                getEndpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/construction/construction_handler.php`;
+                getEndpoint = `/server/api/resident/get_construction_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/construction/construction_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -667,8 +667,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Utilities':
-                getEndpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/utility/utility_handler.php`;
+                getEndpoint = `/server/api/resident/get_utilities_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/utility/utility_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -678,8 +678,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Incident Reports':
-                getEndpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/incident_report/ir_handler.php`;
+                getEndpoint = `/server/api/resident/get_incident_report.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/incident_report/ir_handler.php`;
                 keyMap = {
                     'rp_full_name': 'rpFullName',
                     'application_date': 'applicationDate'
@@ -1099,8 +1099,8 @@ function showStatusNotification(appId, appType, newStatus) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Application Status Updated", {
                 body: `${appType} application ID ${appId} is now "${newStatus}"`,
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }

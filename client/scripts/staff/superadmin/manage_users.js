@@ -1,4 +1,4 @@
-import supabase from "../../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';
@@ -276,7 +276,7 @@ async function unsuspendUser(userId) {
     if (!confirmResult.isConfirmed) return;
 
     try {
-        const response = await fetch("/Banwa/server/api/staff/superadmin/unsuspend_user.php", {
+        const response = await fetch("/server/api/staff/superadmin/unsuspend_user.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -761,7 +761,7 @@ async function handleCreateFormSubmit(form) {
                     latitude: latitude,
                     longitude: longitude
                 },
-                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification_superadmin.php"
+                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification_superadmin.php"
             }
         });
 
