@@ -1,0 +1,3 @@
+RewriteEngine On
+# Redirect the root URL (/) to the client index
+RewriteRule ^$ /client/index.php [L,R=301]
