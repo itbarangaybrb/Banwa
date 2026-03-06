@@ -863,7 +863,7 @@
         </div>
     </div>
 
-    <!-- <script src="../client/scripts/resident/nav.js" defer></script> -->
+    <script src="../client/scripts/resident/nav.js" defer></script>
     <script src="../client/scripts/resident/home.js" defer></script>
     <script type="module" src="../client/scripts/auth/signup-modal.js"></script>
     <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
