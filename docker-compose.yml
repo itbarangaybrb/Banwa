@@ -1,19 +1,12 @@
-services:
-  web:
-    build: .
-    # This allows PHP to use 'localhost' to find the DB
-    network_mode: "service:db" 
-    env_file:
-      - .env
-    depends_on:
-      - db
+version: '3.8'
 
+services:
   db:
     image: postgres:18
     restart: always
     ports:
-      - "8080:80"   # Website: http://localhost:8080
-      - "5432:5432" # Database: localhost:5432
+      - "5432:5432"
+      - "8080:80" 
     env_file:
       - .env
     environment:
@@ -21,7 +14,16 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # CHANGE: Remove the /data suffix as required by Postgres 18
+      - postgres_data:/var/lib/postgresql
+
+  web:
+    build: .
+    network_mode: "service:db"
+    env_file:
+      - .env
+    depends_on:
+      - db
 
 volumes:
   postgres_data:
