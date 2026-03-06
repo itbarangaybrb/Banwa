@@ -3,7 +3,7 @@ const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
-import supabase from '../../../server/api/supabase.js';
+import supabase from '/Banwa/server/api/supabase.js';
 
 registerServiceWorker();
 

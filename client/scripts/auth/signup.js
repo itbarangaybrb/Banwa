@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "/Banwa/server/api/supabase.js";
 
 // ───────────────────────────────────────────────────────────────
 // 1. Navigation Logic – Panel Switching
