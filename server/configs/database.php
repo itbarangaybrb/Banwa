@@ -1,18 +1,23 @@
 <?php
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-$dotenv->safeLoad();
-// ===============================
-// Database Connection Diagnostic
-// ===============================
+// Check if the file actually exists to debug the path
+$envPath = __DIR__ . '/../../';
+$envFile = $envPath . '.env';
 
-// Configuration
-$host = getenv('DB_HOST');
-$db   = getenv('DB_NAME');
-$user = getenv('DB_USER');
-$pass = getenv('DB_PASS');
-$port = getenv('DB_PORT');
+if (!file_exists($envFile)) {
+    die("ERROR: .env file not found at: " . realpath($envPath));
+}
+
+$dotenv = Dotenv\Dotenv::createImmutable($envPath);
+$dotenv->safeLoad();
+
+// Configuration - Define these FIRST
+$host = $_ENV['DB_HOST'] ?? 'host.docker.internal'; 
+$db   = $_ENV['DB_NAME'] ?? 'capstone';
+$user = $_ENV['DB_USER'] ?? 'postgres';
+$pass = $_ENV['DB_PASS'] ?? '';
+$port = $_ENV['DB_PORT'] ?? '5432';
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean(); // Clear any previous junk
