@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./03062026_banwa.sql:/docker-entrypoint-initdb.d/03062026_banwa.sql
+      - ./03062025_banwa.sql:/docker-entrypoint-initdb.d/03062025_banwa.sql
 
   ws:
     build:
