@@ -29,7 +29,7 @@ if (empty($supabase_user_id)) {
  * Handles any PDO exceptions with an internal server error response.
  */
 try {
-    $stmt = $pdo->prepare("SELECT user_id, full_name, role_id, status, suspend_reason FROM users WHERE supabase_user_id = :supabase_user_id");
+    $stmt = $pdo->prepare("SELECT user_id, full_name, role_id, status, suspend_reason FROM public.users WHERE supabase_user_id = :supabase_user_id");
     $stmt->execute([":supabase_user_id" => $supabase_user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
