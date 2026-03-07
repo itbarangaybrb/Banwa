@@ -355,7 +355,7 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
                 <p><strong>GCash Payment:</strong></p>
                 <ul style="    list-style-type: none; display: block; margin-inline: auto; width: max-content; margin-bottom: 32px;">
                     <img src="/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
-                    <li>1. Send amount to Official Number: <strong>09XX-XXX-XXXX</strong>.</li>
+                    <li>1. Send amount to Official Number: <strong>09919926620</strong>.</li>
                     <li>2. Use <strong>Business Name</strong> as the "Message".</li>
                     <li>3. Save the Screenshot/Reference No. for validation.</li>
                 </ul>

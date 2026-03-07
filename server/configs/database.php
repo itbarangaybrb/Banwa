@@ -5,7 +5,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
 $dotenv->safeLoad();
 
 // Configuration
-$host = $_ENV['DB_HOST'] ?? 'host.docker.internal'; // Default to the Docker bridge
+$host = $_ENV['DB_HOST'] ?? 'host.docker.internal';
 $db   = $_ENV['DB_NAME'] ?? 'capstone';
 $user = $_ENV['DB_USER'] ?? 'postgres';
 $pass = $_ENV['DB_PASS'] ?? '';
