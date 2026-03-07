@@ -1,5 +1,5 @@
 # to hide the sensitive keys
-.env
+# .env
 
 # to hide the sensitive parts of php
 server/configs/
