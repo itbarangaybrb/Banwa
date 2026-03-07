@@ -21,7 +21,7 @@ if (!$email) {
  * Queries the database to check if the email exists.
  * Returns a JSON response indicating existence.
  */
-$stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
+$stmt = $pdo->prepare("SELECT user_id FROM public.users WHERE email = ?");
 $stmt->execute([$email]);
 
 echo json_encode([
