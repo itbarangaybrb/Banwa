@@ -1,15 +1,9 @@
+# Use PHP with Apache
 FROM php:8.2-apache
 
-# Install extensions and tools
-RUN apt-get update && apt-get install -y \
-        libpq-dev \
-        unzip \
-        git \
-        curl \
-        libzip-dev \
-        libssl-dev \
-    && docker-php-ext-install pdo pdo_pgsql pgsql zip \
-    && docker-php-ext-enable sockets \
+# Install PostgreSQL client libraries and PHP extensions
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite
@@ -22,10 +16,10 @@ WORKDIR /var/www/html
 COPY . .
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Install PHP dependencies
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader
 
-# Set permissions
+# Adjust permissions for Apache
 RUN chown -R www-data:www-data /var/www/html
