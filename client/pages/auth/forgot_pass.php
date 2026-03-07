@@ -36,16 +36,17 @@
     <!-- Main Content -->
     <main>
         <!-- Forgot Password Section - Using BFP (Banwa Forgot Password) namespace -->
-        <!-- <section class="bfp-section">
+        <section class="bfp-section">
             <div class="bfp-container">
-                Simple breadcrumb/context indicator
+                <!-- Simple breadcrumb/context indicator -->
                 <div class="bfp-context">
                     <a href="../../index.php" class="bfp-context-link">Home</a>
                     <span class="bfp-context-separator">•</span>
                     <span class="bfp-context-current">Forgot Password</span>
                 </div>
 
-                <div class="bfp-card">
+                <!-- Forgot Password Card - Using ID from old design -->
+                <div class="bfp-card" id="forgotPass">
                     <div class="bfp-card-header">
                         <div class="bfp-icon-circle">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -59,10 +60,13 @@
                         </p>
                     </div>
 
+                    <!-- Form - Using ID from old design -->
                     <form class="bfp-form" id="forgotPassForm">
+                        <!-- Message area - Using ID from old design -->
                         <div id="formMessage" class="bfp-message" style="display: none;"></div>
 
-                        <div class="bfp-field">
+                        <!-- Email field - Using old IDs and structure -->
+                        <div class="bfp-field label-and-input">
                             <label for="email" class="bfp-label">
                                 Email address
                                 <span class="bfp-required">*</span>
@@ -81,10 +85,12 @@
                                     autocomplete="email"
                                 >
                             </div>
-                            <div class="error-msg bfp-error" id="emailError"></div>
+                            <!-- Error message - Using old class -->
+                            <div class="error-msg"></div>
                         </div>
 
-                        <div class="bfp-actions">
+                        <!-- Buttons - Using old IDs -->
+                        <div class="bfp-actions buttons-container">
                             <button type="button" class="bfp-btn bfp-btn-secondary" id="forgotPassBackBtn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M19 12H5M12 19L5 12L12 5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -100,6 +106,7 @@
                         </div>
                     </form>
 
+                    <!-- Footer with security note -->
                     <div class="bfp-footer">
                         <div class="bfp-security">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -111,15 +118,15 @@
                     </div>
                 </div>
             </div>
-        </section> -->
+        </section>
 
-        <section class="sections">
+        <!-- <section class="sections">
             <div class="containers">
-                <!-- ==================== Forgot Password Form ==================== -->
+                ==================== Forgot Password Form ====================
                 <div class="forgot-pass-container" id="forgotPass">
                     <form class="form" id="forgotPassForm">
                         <h5>Forgot Password</h5>
-                        <!-- <p></p> -->
+                        <p></p>
 
                         <span id="formMessage"></span>
 
@@ -138,7 +145,7 @@
                     </form>
                 </div>
             </div>
-        </section>
+        </section> -->
 
         <section data-theme="blue">
             <div class="cont">
