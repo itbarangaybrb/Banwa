@@ -2,7 +2,7 @@
  * Registers a service worker if supported by the browser.
  * @param {string} swPath Path to the service worker file.
  */
-export function registerServiceWorker(swPath = '/Banwa/sw.js') {
+export function registerServiceWorker(swPath = '/sw.js') {
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker.register(swPath)

@@ -27,8 +27,8 @@ swalStyle.innerHTML = `
 document.head.appendChild(swalStyle);
 
 // Configuration
-const CONSTRUCTION_HANDLER_URL = '/Banwa/server/handlers/staff/construction/construction_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/construction/uploads/';
+const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
 
 // ===============================================

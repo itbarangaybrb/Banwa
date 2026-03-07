@@ -39,7 +39,7 @@ try {
         $_SESSION['role_id'] = $user['role_id'];
         echo json_encode([
             "success" => true,
-            "redirect" => "/Banwa/client/pages/auth/suspended.php",
+            "redirect" => "/client/pages/auth/suspended.php",
             "reason" => $user['suspend_reason'] ?? "Your account is temporarily suspended."
         ]);
         exit;
@@ -54,28 +54,28 @@ try {
 
         switch ($user['role_id']) {
             case 1:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/resident/home.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/resident/home.php"]);
                 break;
             case 2:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/superadmin/dashboard.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/superadmin/dashboard.php"]);
                 break;
             case 3:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/admin/dashboard.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/admin/dashboard.php"]);
                 break;
             case 4:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/business_staff/business.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/business_staff/business.php"]);
                 break;
             case 5:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/construction_staff/construction.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/construction_staff/construction.php"]);
                 break;
             case 6:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/utilities_staff/utilities.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/utilities_staff/utilities.php"]);
                 break;
             case 7:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/finance_staff/finance.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/finance_staff/finance.php"]);
                 break;
             case 8:
-                echo json_encode(["success" => true, "redirect" => "/Banwa/client/pages/staff/incident_report_staff/incident_report.php"]);
+                echo json_encode(["success" => true, "redirect" => "/client/pages/staff/incident_report_staff/incident_report.php"]);
                 break;
             default:
                 echo json_encode(["success" => false, "message" => "Unknown role. Contact support."]);

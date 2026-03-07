@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    depends_on:
+      - db
+      - ws
+    env_file:
+      - .env
+    ports:
+      - "8080:80" # PHP/Apache
+    volumes:
+      - .:/var/www/html
+
+  db:
+    image: postgres:18
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./03062026_banwa.sql:/docker-entrypoint-initdb.d/03062026_banwa.sql
+
+  ws:
+    build:
+      context: . # Use the root directory where the Dockerfile exists
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    # Replace 'php server/websocket/server.php' with your actual entry point
+    command: php /var/www/html/server/websocket/server.php
+
+volumes:
+  postgres_data:

@@ -5,7 +5,7 @@
  */
 session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
-    header("Location: /Banwa/client/pages/auth/signin.php");
+    header("Location: /client/pages/auth/signin.php");
     exit;
 }
 
@@ -26,7 +26,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user || $user['status'] === 'suspended') {
     session_destroy();
-    header("Location: /Banwa/client/pages/auth/suspended.php");
+    header("Location: /client/pages/auth/suspended.php");
     exit;
 }
 

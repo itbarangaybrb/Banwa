@@ -333,7 +333,7 @@ async function processOCR() {
     }
 
     try {
-        const response = await fetch('/Banwa/server/api/auth/ocr_process.php', {
+        const response = await fetch('/server/api/auth/ocr_process.php', {
             method: 'POST',
             body: formData
         });
@@ -411,7 +411,7 @@ function setupNavigationButtons() {
     // Back to login
     formElements.selectIdBackBtn?.addEventListener('click', e => {
         e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+        window.location.href = '/client/pages/auth/signin.php';
     });
 
     // Back one step
@@ -477,7 +477,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: signupData.email,
-        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+        options: { emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
     });
 
     if (error) {
@@ -523,7 +523,7 @@ function setupAccountSubmission() {
 
         try {
             // Prevent duplicate signups
-            const checkRes = await fetch('/Banwa/server/api/shared/check_email.php', {
+            const checkRes = await fetch('/server/api/shared/check_email.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: signupData.email })
@@ -543,7 +543,7 @@ function setupAccountSubmission() {
                 password: signupData.password,
                 options: {
                     data: signupData,
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+                    emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php"
                 }
             });
 
@@ -579,7 +579,7 @@ function setupAccountSubmission() {
                         debug: isLocal
                     };
 
-                    const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
+                    const resp = await fetch('/server/api/shared/verify_ocr.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

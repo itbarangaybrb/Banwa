@@ -1,5 +1,5 @@
 // Configuration
-const API_URL = '/Banwa/server/handlers/staff/finance/finance_handler.php';
+const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `

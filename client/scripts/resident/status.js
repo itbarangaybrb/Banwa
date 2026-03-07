@@ -212,22 +212,22 @@ async function openEditModalFor(appId, appType) {
 
         switch (appType) {
             case 'Business':
-                endpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_business_application.php?id=${appId}`;
                 formGenerator = generateBusinessFormHtml;
                 break;
 
             case 'Construction':
-                endpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_construction_application.php?id=${appId}`;
                 formGenerator = generateConstructionFormHtml;
                 break;
 
             case 'Utilities':
-                endpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_utilities_application.php?id=${appId}`;
                 formGenerator = generateUtilitiesFormHtml;
                 break;
 
             case 'Incident Reports':
-                endpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
+                endpoint = `/server/api/resident/get_incident_report.php?id=${appId}`;
                 formGenerator = generateIncidentReportFormHtml;
                 break;
 
@@ -281,9 +281,9 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
     try {
         let appDetailsResponse;
         if (appType === 'Business') {
-            appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_business_application.php?id=${appId}`);
+            appDetailsResponse = await fetch(`/server/api/resident/get_business_application.php?id=${appId}`);
         } else if (appType === 'Construction') {
-            appDetailsResponse = await fetch(`/Banwa/server/api/resident/get_construction_application.php?id=${appId}`);
+            appDetailsResponse = await fetch(`/server/api/resident/get_construction_application.php?id=${appId}`);
         } else {
             throw new Error(`Payment submission for application type '${appType}' is not fully implemented.`);
         }
@@ -354,7 +354,7 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
             instructionsElement.innerHTML = `
                 <p><strong>GCash Payment:</strong></p>
                 <ul style="    list-style-type: none; display: block; margin-inline: auto; width: max-content; margin-bottom: 32px;">
-                    <img src="/Banwa/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
+                    <img src="/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
                     <li>1. Send amount to Official Number: <strong>09XX-XXX-XXXX</strong>.</li>
                     <li>2. Use <strong>Business Name</strong> as the "Message".</li>
                     <li>3. Save the Screenshot/Reference No. for validation.</li>
@@ -702,8 +702,8 @@ async function handleSubmitChanges(event, appId, appType) {
 
         switch (appType) {
             case 'Business':
-                getEndpoint = `/Banwa/server/api/resident/get_business_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/business/business_handler.php`;
+                getEndpoint = `/server/api/resident/get_business_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/business/business_handler.php`;
                 keyMap = {
                     'type_of_business': 'typeOfBusiness',
                     'nature_of_business': 'natureOfBusiness',
@@ -724,8 +724,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Construction':
-                getEndpoint = `/Banwa/server/api/resident/get_construction_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/construction/construction_handler.php`;
+                getEndpoint = `/server/api/resident/get_construction_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/construction/construction_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -737,8 +737,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Utilities':
-                getEndpoint = `/Banwa/server/api/resident/get_utilities_application.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/utility/utility_handler.php`;
+                getEndpoint = `/server/api/resident/get_utilities_application.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/utility/utility_handler.php`;
                 keyMap = {
                     'first_name': 'firstName',
                     'middle_name': 'middleName',
@@ -748,8 +748,8 @@ async function handleSubmitChanges(event, appId, appType) {
                 break;
 
             case 'Incident Reports':
-                getEndpoint = `/Banwa/server/api/resident/get_incident_report.php?id=${appId}`;
-                updateEndpoint = `/Banwa/server/handlers/staff/incident_report/ir_handler.php`;
+                getEndpoint = `/server/api/resident/get_incident_report.php?id=${appId}`;
+                updateEndpoint = `/server/handlers/staff/incident_report/ir_handler.php`;
                 keyMap = {
                     'rp_full_name': 'rpFullName',
                     'application_date': 'applicationDate'
@@ -891,7 +891,7 @@ async function handleSubmitPayment(event, appId) {
         const formData = new FormData(form);
         formData.append('application_id', appId);
 
-        const response = await fetch('/Banwa/server/api/resident/submit_payment.php', {
+        const response = await fetch('/server/api/resident/submit_payment.php', {
             method: 'POST',
             body: formData
         });
@@ -934,7 +934,7 @@ async function loadApplications() {
     if (!tableBody) return;
 
     try {
-        const res = await fetch('/Banwa/server/api/resident/get_applications.php');
+        const res = await fetch('/server/api/resident/get_applications.php');
         const data = await res.json();
 
         tableBody.innerHTML = '';
@@ -1080,7 +1080,7 @@ async function loadPayments() {
     if (!tableBody) return;
 
     try {
-        const res = await fetch('/Banwa/server/api/resident/get_payment.php');
+        const res = await fetch('/server/api/resident/get_payment.php');
         const data = await res.json();
 
         tableBody.innerHTML = '';
@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let lastStatuses = {};
 async function checkStatusUpdates() {
     try {
-        const res = await fetch('/Banwa/server/api/resident/get_applications.php');
+        const res = await fetch('/server/api/resident/get_applications.php');
         const data = await res.json();
 
         if (data.success && Array.isArray(data.applications)) {
@@ -1191,8 +1191,8 @@ function showStatusNotification(appId, appType, newStatus) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Application Status Updated", {
                 body: `${appType} application ID ${appId} is now "${newStatus}"`,
-                icon: "/Banwa/client/img/banwalogo.png",
-                data: { url: "/Banwa/client/pages/resident/status.php" }
+                icon: "/client/img/banwalogo.png",
+                data: { url: "/client/pages/resident/status.php" }
             });
         });
     }

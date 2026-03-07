@@ -198,7 +198,7 @@ function validation() {
     // Back to login
     document.getElementById('personalDetailsBackBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = '/Banwa/client/pages/auth/signin.php';
+        window.location.href = '/client/pages/auth/signin.php';
     });
 
     // Back to ID selection
@@ -263,7 +263,7 @@ function validation() {
 
         try {
             // Check if email already exists (custom backend check)
-            const resp = await fetch(`/Banwa/server/api/resident/check_email.php?email=${encodeURIComponent(signupData.email)}`);
+            const resp = await fetch(`/server/api/resident/check_email.php?email=${encodeURIComponent(signupData.email)}`);
             const { exists } = await resp.json();
 
             if (exists) {
@@ -279,7 +279,7 @@ function validation() {
                 password: signupData.password,
                 options: {
                     data: signupData,
-                    emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php",
+                    emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php",
                 },
             });
 
@@ -358,7 +358,7 @@ function validation() {
             type: 'signup',
             email: signupData.email,
             options: {
-                emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php"
+                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php"
             }
         });
 

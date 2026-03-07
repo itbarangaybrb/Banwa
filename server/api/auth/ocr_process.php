@@ -1,5 +1,5 @@
 <?php
-// /Banwa/server/api/auth/ocr_process.php
+// /server/api/auth/ocr_process.php
 // PRIMARY: OCR.space only (high accuracy, reliable line order)
 // TESSERACT FALLBACK FULLY COMMENTED OUT
 // FEATURES:

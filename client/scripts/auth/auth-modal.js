@@ -418,7 +418,7 @@ async function processOCR() {
 
     let result = null;
     try {
-        const response = await fetch('/Banwa/server/api/auth/ocr_process.php', {
+        const response = await fetch('/server/api/auth/ocr_process.php', {
             method: 'POST',
             body: formData
         });
@@ -530,7 +530,7 @@ async function handleLoginSubmit(e) {
     if (!validateLoginStep([loginElements.email, loginElements.password])) return;
 
     // Check if account exists
-    const existsResp = await fetch('/Banwa/server/api/shared/check_email.php', {
+    const existsResp = await fetch('/server/api/shared/check_email.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginElements.email.value.trim() })
@@ -560,7 +560,7 @@ async function handleLoginSubmit(e) {
     }
 
     // Server-side signin check (role & redirect)
-    const resp = await fetch('/Banwa/server/api/shared/signin_user.php', {
+    const resp = await fetch('/server/api/shared/signin_user.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -618,7 +618,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: allData.email,
-        options: { emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+        options: { emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
     });
     if (error) {
         formElements.formMessage.style.color = 'red';
@@ -709,7 +709,7 @@ function setupAccountSubmission() {
         };
 
         try {
-            const respCheck = await fetch('/Banwa/server/api/shared/check_email.php', {
+            const respCheck = await fetch('/server/api/shared/check_email.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: allData.email })
@@ -725,7 +725,7 @@ function setupAccountSubmission() {
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
-                options: { data: allData, emailRedirectTo: "http://localhost:8080/Banwa/client/pages/auth/confirm_verification.php" }
+                options: { data: allData, emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php" }
             });
 
             if (error) {
@@ -765,7 +765,7 @@ function setupAccountSubmission() {
                         ocrData: allData.ocrData,
                         debug: isLocal
                     };
-                    const resp = await fetch('/Banwa/server/api/shared/verify_ocr.php', {
+                    const resp = await fetch('/server/api/shared/verify_ocr.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

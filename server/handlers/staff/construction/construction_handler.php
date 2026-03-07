@@ -170,7 +170,7 @@ function handleCreateApplication($pdo)
                         $uploadedFiles[] = [
                             'filename' => $originalName,
                             'saved_filename' => $savedName,
-                            'file_url' => '/Banwa/server/handlers/staff/construction/uploads/' . $savedName
+                            'file_url' => '/server/handlers/staff/construction/uploads/' . $savedName
                         ];
                     }
                 }
@@ -518,7 +518,7 @@ function handleUpdateApplication($pdo)
                         $uploadedFiles[] = [
                             'filename' => $originalName,
                             'saved_filename' => $savedName,
-                            'file_url' => '/Banwa/server/handlers/staff/construction/uploads/' . $savedName
+                            'file_url' => '/server/handlers/staff/construction/uploads/' . $savedName
                         ];
                     }
                 }

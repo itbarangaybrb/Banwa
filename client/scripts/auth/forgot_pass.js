@@ -116,7 +116,7 @@ async function handleForgotPassSubmit(e) {
          */
         const { data, error } = await supabase.auth.resetPasswordForEmail(
             forgotPassElements.email.value.trim(),
-            { redirectTo: 'http://localhost:8080/Banwa/client/pages/auth/reset_pass.php' }
+            { redirectTo: 'http://localhost:8080/client/pages/auth/reset_pass.php' }
         );
 
         if (error) {
@@ -146,7 +146,7 @@ function setupNavigationButtons() {
     if (forgotPassElements.backBtn) {
         forgotPassElements.backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/Banwa/client/index.php';
+            window.location.href = '/client/index.php';
         });
     }
 }

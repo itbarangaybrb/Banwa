@@ -95,8 +95,8 @@ while (true) {
                 $savedName = basename($res['filename'] ?? '');
 
                 $fileUrl = ($isBusiness 
-                    ? '/Banwa/server/handlers/staff/business/uploads/' . $savedName 
-                    : '/Banwa/server/handlers/staff/construction/uploads/' . $savedName);
+                    ? '/server/handlers/staff/business/uploads/' . $savedName 
+                    : '/server/handlers/staff/construction/uploads/' . $savedName);
 
                 try {
                     $ins = $pdo->prepare("INSERT INTO {$ocrTable} 

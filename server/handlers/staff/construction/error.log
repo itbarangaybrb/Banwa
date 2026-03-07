@@ -368,3 +368,7 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [04-Mar-2026 19:09:41 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 512
 [04-Mar-2026 19:09:41 UTC] CR1 Check - Has file upload: No
 [04-Mar-2026 19:09:41 UTC] CR1 Check - Has file upload: No
+[07-Mar-2026 11:52:27 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_services.php (1).png","saved_filename":"const_69ac117b74dc4_localhost_8080_Banwa_client_pages_resident_services.php (1).png","file_url":"\/Banwa\/server\/handlers\/staff\/construction\/uploads\/const_69ac117b74dc4_localhost_8080_Banwa_client_pages_resident_services.php (1).png"}]
+[07-Mar-2026 11:52:27 UTC] OCR job queued for application 39 with 1 files
+[07-Mar-2026 11:52:27 UTC] CR1 Check - Has file upload: No
+[07-Mar-2026 11:52:27 UTC] CR1 Check - Has file upload: No

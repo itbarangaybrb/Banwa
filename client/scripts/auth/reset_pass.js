@@ -150,7 +150,7 @@ async function handleFormSubmit(e) {
 
         // Graceful redirect to sign-in page
         setTimeout(() => {
-            window.location.href = '/Banwa/client/pages/index.php';
+            window.location.href = '/client/pages/index.php';
         }, 2000);
 
     } catch (err) {

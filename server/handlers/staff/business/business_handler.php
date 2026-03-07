@@ -259,7 +259,7 @@ function handleCreateApplication($pdo)
                 $mime = $_FILES['requirementUpload']['type'][$idx];
                 $size = filesize($uploadDir . $saved_name);
                 $checksum = md5_file($uploadDir . $saved_name);
-                $file_url = '/Banwa/server/handlers/staff/business/uploads/' . $saved_name;
+                $file_url = '/server/handlers/staff/business/uploads/' . $saved_name;
 
                 // business_files
                 $pdo->prepare("
@@ -571,7 +571,7 @@ function handleUpdateApplication($pdo)
                             ':app_id' => $applicationId,
                             ':filename' => $res['filename'],
                             ':saved_filename' => $res['filename'],
-                            ':file_url' => '/Banwa/server/handlers/staff/business/uploads/' . $res['filename'],
+                            ':file_url' => '/server/handlers/staff/business/uploads/' . $res['filename'],
                             ':ocr_result' => json_encode(['detected' => array_values($detected), 'text' => $res['text'] ?? ''])
                         ]);
                     }
@@ -890,7 +890,7 @@ function handleAnalyzeDocuments($pdo)
                     ':app_id' => $applicationId,
                     ':filename' => $res['filename'],
                     ':saved_filename' => $res['filename'],
-                    ':file_url' => '/Banwa/server/handlers/staff/business/uploads/' . $res['filename'],
+                    ':file_url' => '/server/handlers/staff/business/uploads/' . $res['filename'],
                     ':ocr_result' => json_encode(['detected' => array_values($detected), 'text' => $res['text'] ?? ''])
                 ]);
             }

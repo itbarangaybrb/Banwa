@@ -1,5 +1,5 @@
 // Configuration
-const IR_HANDLER_URL = '/Banwa/server/handlers/staff/incident_report/ir_handler.php';
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 let incidents = [];
 
 const swalStyle = document.createElement('style');
@@ -1741,7 +1741,7 @@ function formatTime(dateTimeString) {
 //  */
 // async function fetchAuditLogs() {
 //     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
 //             credentials: 'include',
 //             cache: 'no-store'
 //         });

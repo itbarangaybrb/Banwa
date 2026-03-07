@@ -1,6 +1,6 @@
 // Configuration
-const UTILITY_HANDLER_URL = '/Banwa/server/handlers/staff/utility/utility_handler.php';
-const UPLOADS_BASE_PATH = '/Banwa/server/handlers/staff/utility/uploads/';
+const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
+const UPLOADS_BASE_PATH = '/server/handlers/staff/utility/uploads/';
 let applications = [];
 
 // ===============================================
@@ -1891,7 +1891,7 @@ document.head.insertAdjacentHTML("beforeend", `
 //  */
 // async function fetchAuditLogs() {
 //     try {
-//         const resp = await fetch('/Banwa/server/api/shared/get_audit_logs.php', {
+//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
 //             credentials: 'include',
 //             cache: 'no-store'
 //         });

@@ -153,7 +153,7 @@ async function handleLoginSubmit(e) {
 
     try {
         // 2. Check if account exists in local system
-        const existsResp = await fetch('/Banwa/server/api/shared/check_email.php', {
+        const existsResp = await fetch('/server/api/shared/check_email.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: loginElements.email.value.trim() })
@@ -185,7 +185,7 @@ async function handleLoginSubmit(e) {
         }
 
         // 4. Sync session with PHP backend (sets role-based session)
-        const syncResp = await fetch('/Banwa/server/api/shared/signin_user.php', {
+        const syncResp = await fetch('/server/api/shared/signin_user.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Required for PHP session cookies
