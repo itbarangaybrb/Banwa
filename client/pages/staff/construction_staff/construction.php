@@ -1,15 +1,3 @@
-<?php
-require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
-require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
-
-if ($_SESSION['role_id'] != 5) {
-    header("Location: /client/pages/auth/signin.php");
-    exit;
-}
-
-$full_name = getCurrentUserName();
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -72,12 +60,6 @@ $full_name = getCurrentUserName();
                         <span class="nav_text">Generate Summary</span>
                     </a>
                 </li>
-                <li>
-                    <a class="nav_select" id="signoutBtn" href="#">
-                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
-                        <span class="nav_text">Logout</span>
-                    </a>
-                </li>
             </div>
         </ul>
     </aside>
@@ -103,6 +85,7 @@ $full_name = getCurrentUserName();
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
+                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>
@@ -124,13 +107,13 @@ $full_name = getCurrentUserName();
                                         <!-- Each option filters the map to show that marker type -->
                                         <a href="#" data-type="household" onclick="selectFilterType('household', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background:#28a745;"></span>
+                                                <span class="filter-icon" style="background:#1565c0;"></span>
                                                 <span>Households</span>
                                             </span>
                                         </a>
                                         <a href="#" data-type="business" onclick="selectFilterType('business', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background:#9C27B0;"></span>
+                                                <span class="filter-icon" style="background:#2e7d32;"></span>
                                                 <span>Businesses</span>
                                             </span>
                                         </a>
@@ -257,7 +240,7 @@ $full_name = getCurrentUserName();
                             </button>
                             <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
-                                <span>Rules Summary</span>
+                                <span>Barangay Rules</span>
                             </button>
                         </div>
                     </div>
@@ -265,14 +248,19 @@ $full_name = getCurrentUserName();
             </div>
 
             <div id="dashboard" class="tab-pane">
-                <header class="top-header">
-                    <div class="header-left">
-                        <h1>Construction Application Management</h1>
-                    </div>
-                    <div class="header-right">
-                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
-                    </div>
-                </header>
+                        <header class="top-header">
+                            <div class="header-left">
+                                <h1>Construction Application Management</h1>
+                            </div>
+                            <div class="header-right">
+                                <div class="user-greeting">
+                                    <p class="username">Admin</p>
+                                    <div class="user_image">
+                                        <span class="user_avatar_header">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
                 <div class="page-header">
                     <h1>Construction Dashboard</h1>
                     <p class="page-description">Overview of construction applications and analytics</p>
@@ -312,11 +300,14 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
                         </div>
                     </div>
                 </header>
-
+                
                 <div class="page-header">
                     <h1>Review Construction Applications</h1>
                     <p class="page-description">Manage and review construction applications</p>
@@ -368,7 +359,10 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -376,53 +370,33 @@ $full_name = getCurrentUserName();
                     <h2>Create New Construction Application</h2>
                     <p class="form-description">Fill in the details to create a new construction application</p>
                 </div>
-                <form id="createForm">
+                <form id="createForm" onsubmit="createApplication(event)">
                     <!-- Owner Information -->
                     <div class="section-title">Owner Information</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName">First Name *</label>
-                            <input type="text" id="firstName" name="firstName" required>
+                            <input type="text" name="firstName" required>
                         </div>
                         <div class="form-group">
                             <label for="middleName">Middle Name</label>
-                            <input type="text" id="middleName" name="middleName">
+                            <input type="text" name="middleName">
                         </div>
                         <div class="form-group">
                             <label for="lastName">Last Name *</label>
-                            <input type="text" id="lastName" name="lastName" required>
+                            <input type="text" name="lastName" required>
                         </div>
                         <div class="form-group">
                             <label for="suffix">Suffix</label>
-                            <input type="text" id="suffix" name="suffix">
+                            <input type="text" name="suffix">
                         </div>
                         <div class="form-group">
                             <label for="contactNoOwner">Contact No *</label>
-                            <input type="tel" id="contactNoOwner" name="contactNoOwner" required>
+                            <input type="tel" name="contactNoOwner" required>
                         </div>
                         <div class="form-group">
-                            <label for="ownerLotNo">Owner Lot No. *</label>
-                            <input type="text" id="ownerLotNo" name="ownerLotNo" required maxlength="2" pattern="[0-9]{1,2}">
-                        </div>
-                        <div class="form-group">
-                            <label for="ownerStreet">Owner Street Name *</label>
-                            <select id="ownerStreet" name="ownerStreet" required>
-                                <option value="" disabled selected>Select Street</option>
-                                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
-                                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
-                                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
-                                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
-                                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
-                                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
-                                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
-                                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
-                            </select>
+                            <label for="ownerAddress">Owner Address *</label>
+                            <input type="text" name="ownerAddress" required>
                         </div>
                     </div>
 
@@ -430,79 +404,36 @@ $full_name = getCurrentUserName();
                     <div class="section-title">Construction Details</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="constructionLotNo">Lot No. *</label>
-                            <input type="text" id="constructionLotNo" name="constructionLotNo" required maxlength="2" pattern="[0-9]{1,2}">
-                        </div>
-                        <div class="form-group">
-                            <label for="constructionStreet">Street Name *</label>
-                            <select id="constructionStreet" name="constructionStreet" required>
-                                <option value="" disabled selected>Select Street</option>
-                                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
-                                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
-                                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
-                                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
-                                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
-                                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
-                                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
-                                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
-                                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
-                            </select>
+                            <label for="constructionAddress">Construction Address *</label>
+                            <input type="text" name="constructionAddress" required>
                         </div>
                         <div class="form-group">
                             <label for="natureOfActivity">Nature of Activity *</label>
-                            <select id="natureOfActivity" name="natureOfActivity" required>
-                                <option value="" disabled selected>Select Nature of Activity</option>
-                                <option value="Demolition">Demolition</option>
-                                <option value="Major Construction">Major Construction</option>
-                                <option value="Minor Construction">Minor Construction</option>
-                                <option value="Repairs">Repairs</option>
-                            </select>
+                            <input type="text" name="natureOfActivity" required>
                         </div>
                         <div class="form-group">
                             <label for="typeOfWork">Type of Work *</label>
-                            <select id="typeOfWork" name="typeOfWork" required>
-                                <option value="" disabled selected>Select Type of Work</option>
-                                <option value="residential">Residential (House)</option>
-                                <option value="commercial">Commercial (Business)</option>
-                                <option value="renovation">Renovation / Remodeling</option>
-                                <option value="demolition">Demolition</option>
-                                <option value="addition">Extension / Additional Structure</option>
-                                <option value="repair">Repair</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <input type="text" name="typeOfWork" required>
                         </div>
-                        <div class="form-group full-width">
+                        <div class="form-group">
                             <label for="detailsOfWork">Details of Work *</label>
-                            <textarea id="detailsOfWork" name="detailsOfWork" rows="3" required></textarea>
+                            <textarea name="detailsOfWork" required></textarea>
                         </div>
                         <div class="form-group">
                             <label for="startDate">Start Date</label>
-                            <input type="date" id="startDate" name="startDate">
+                            <input type="date" name="startDate">
                         </div>
                         <div class="form-group">
                             <label for="endDate">End Date</label>
-                            <input type="date" id="endDate" name="endDate">
+                            <input type="date" name="endDate">
                         </div>
                         <div class="form-group">
                             <label for="numberOfWorkers">Number of Workers</label>
-                            <input type="number" id="numberOfWorkers" name="numberOfWorkers" min="0">
+                            <input type="number" name="numberOfWorkers" min="0">
                         </div>
                         <div class="form-group">
                             <label for="numberOfWorkingDays">Working Days</label>
-                            <input type="number" id="numberOfWorkingDays" name="numberOfWorkingDays" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="applicationMethod">Application Method *</label>
-                            <select id="applicationMethod" name="applicationMethod" required>
-                                <option value="" disabled selected>Select Method</option>
-                                <option value="Online">Online</option>
-                                <option value="In Person">In Person</option>
-                            </select>
+                            <input type="number" name="numberOfWorkingDays" min="0">
                         </div>
                     </div>
 
@@ -511,24 +442,18 @@ $full_name = getCurrentUserName();
                     <div class="form-row">
                         <div class="form-group">
                             <label for="contractorName">Contractor Name</label>
-                            <input type="text" id="contractorName" name="contractorName">
+                            <input type="text" name="contractorName">
                         </div>
                         <div class="form-group">
                             <label for="contractorContactNumber">Contractor Contact</label>
-                            <input type="tel" id="contractorContactNumber" name="contractorContactNumber">
+                            <input type="tel" name="contractorContactNumber">
                         </div>
                     </div>
-
-                    <!-- Coordinates (Hidden) -->
-                    <input type="hidden" id="latitude2" name="latitude2">
-                    <input type="hidden" id="longitude2" name="longitude2">
 
                     <!-- Requirements -->
                     <div class="section-title">Requirements (Photocopy Only)</div>
                     <div class="form-group">
-                        <label for="requirementUpload">Upload Documents</label>
-                        <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                        <small>You can select multiple files</small>
+                        <input type="file" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
                     </div>
 
                     <div class="button-group">
@@ -591,7 +516,10 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -614,62 +542,62 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Modals -->
-        <div id="detailsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Application Details</h2>
-                    <button class="close-btn">&times;</button>
+            <!-- Modals -->
+            <div id="detailsModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Application Details</h2>
+                        <button class="close-btn">&times;</button>
+                    </div>
+                    <div id="modalBody"></div>
                 </div>
-                <div id="modalBody"></div>
             </div>
-        </div>
 
-        <div id="updateModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Update Application Status</h2>
-                    <button class="close-btn">&times;</button>
-                </div>
-                <form id="updateForm" onsubmit="submitUpdate(event)">
-                    <input type="hidden" id="updateAppId" name="id">
-                    <div class="form-group">
-                        <label>Current Status:</label>
-                        <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
+            <div id="updateModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Update Application Status</h2>
+                        <button class="close-btn">&times;</button>
                     </div>
-
-                    <div class="form-group">
-                        <label for="newStatus">New Status *</label>
-                        <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
-                            <option value="" disabled selected>Select Action...</option>
-                            <option value="Pre-Approved">Pre-Approved</option>
-                            <option value="Additional Requirements">Additional Requirements</option>
-                            <option value="For Payment">For Payment (Assessment)</option>
-                            <option value="Approved">Approved (Final)</option>
-                            <option value="Disapproved">Disapproved</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group hidden" id="amountFieldGroup">
-                        <label for="assessmentAmount">Assessment Amount (PHP) *</label>
-                        <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="updateComments">Remarks / Comments *</label>
-                        <div class="prompt-container">
-                            <div class="prompt-suggestions">
-                                <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
-                                <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
-                                <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
-                            </div>
-                            <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
+                    <form id="updateForm" onsubmit="submitUpdate(event)">
+                        <input type="hidden" id="updateAppId" name="id">
+                        <div class="form-group">
+                            <label>Current Status:</label>
+                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
                         </div>
-                    </div>
+
+                        <div class="form-group">
+                            <label for="newStatus">New Status *</label>
+                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
+                                <option value="" disabled selected>Select Action...</option>
+                                <option value="Pre-Approved">Pre-Approved</option>
+                                <option value="Additional Requirements">Additional Requirements</option>
+                                <option value="For Payment">For Payment (Assessment)</option>
+                                <option value="Approved">Approved (Final)</option>
+                                <option value="Disapproved">Disapproved</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group hidden" id="amountFieldGroup">
+                            <label for="assessmentAmount">Assessment Amount (PHP) *</label>
+                            <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="updateComments">Remarks / Comments *</label>
+                            <div class="prompt-container">
+                                <div class="prompt-suggestions">
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
+                                </div>
+                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
+                            </div>
+                        </div>
 
                         <div class="button-group">
-                            <button type="submit" class="btn-primary update-btn">Update Status</button>
+                            <button type="submit" class="btn-primary">Update Status</button>
                             <button type="button" class="btn-secondary cancel-btn">Cancel</button>
                         </div>
                     </form>
@@ -683,10 +611,8 @@ $full_name = getCurrentUserName();
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script src="../../../scripts/staff/map.js"></script>
-    <script type="module" src="../../../scripts/staff/export.js"></script>busi
+    <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
-    <script type="module" src="../../../scripts/auth/signout.js"></script>
-
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 

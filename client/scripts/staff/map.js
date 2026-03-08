@@ -1,4 +1,4 @@
-const MAP_HANDLER_URL = '/server/handlers/map/map_handler.php';
+const MAP_HANDLER_URL = '/Banwa/server/handlers/map/map_handler.php';
 
 // Map variables
 const map = L.map('map').setView([14.6175, 121.0756], 17);
@@ -98,47 +98,6 @@ function initNavbar() {
         }
     }
 }
-
-// const swalStyle = document.createElement('style');
-// swalStyle.innerHTML = `
-//     /* Universal Popup Spacing */
-//     .swal2-popup {
-//         padding: 2rem 1.5rem !important; 
-//         border-radius: 15px !important;
-//         display: flex !important;
-//         flex-direction: column !important;
-//     }
-
-//     /* Consistent Icon Margins for Success/Error/Warning */
-//     .swal2-icon {
-//         margin-top: 1rem !important;
-//         margin-bottom: 1rem !important;
-//         border-width: 4px !important;
-//     }
-
-//     /* Standardized Titles */
-//     .swal2-title {
-//         color: #00247C !important;
-//         font-size: 1.6rem !important;
-//         font-weight: 700 !important;
-//         margin: 0.5rem 0 !important;
-//         padding: 0 !important;
-//     }
-
-//     /* Standardized Text Content */
-//     .swal2-html-container {
-//         margin: 1rem 0 !important;
-//         font-size: 1.05rem !important;
-//         color: #555 !important;
-//     }
-
-//     /* Button Spacing */
-//     .swal2-actions {
-//         margin-top: 1.5rem !important;
-//         margin-bottom: 0.5rem !important;
-//     }
-// `;
-// document.head.appendChild(swalStyle);
 
 // ==================== SWEETALERT2 CUSTOM CONFIGURATION ====================
 // Default SweetAlert2 configuration for consistent styling
@@ -868,7 +827,7 @@ const POLY_COLORS = {
     satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15 }
 };
 const BOUNDARY_COLORS = {
-    street:    { color: '#00247c', fillColor: '#667eea', fillOpacity: 0.08, dashArray: '8, 6' },
+    street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8, 6' },
     satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8, 6' }
 };
 
@@ -2303,18 +2262,17 @@ async function getFloodHousesSummary() {
                 (impactRank[a.impact_level]||0) - (impactRank[b.impact_level]||0)
             );
             const houseRows = sortedHouses.map((h,i)=>{
-                const riskColor   = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
-                const impactColor = impactColors[h.impact_level]||'#888';
+                const riskColor = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
                 const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent||0).toFixed(1)+'%';
                 const body = `
                     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
                         <div><strong>Risk Level:</strong> <span style="color:${riskColor};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
-                        <div><strong>Impact:</strong> <span style="color:${impactColor};font-weight:600;">${h.impact_level||'Unknown'}</span></div>
+                        <div><strong>Impact:</strong> <span style="color:${riskColor};font-weight:600;">${h.impact_level||'Unknown'}</span></div>
                         <div><strong>Flood Coverage:</strong> ${pct}</div>
                     </div>
                     ${h.street_name?`<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>`:''}
                     ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Description:</strong> ${h.hazard_description}</div>`:''}`;
-                return rptRow(`fh-${i}`, (h.risk_level||'?').toUpperCase(), riskColor, h.address||'Address not specified',
+                return rptRow(`fh-${i}`, h.impact_level||'?', riskColor, h.address||'Address not specified',
                     `${(h.risk_level||'').toUpperCase()} · ${h.impact_level||''}`, body);
             }).join('');
 
@@ -2323,21 +2281,25 @@ async function getFloodHousesSummary() {
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
                         <div class="rpt-stat-num" style="color:#b38600;">${lowCount}</div>
                         <div class="rpt-stat-label">Low Risk</div>
-                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Minimally Affected</div>
+                        <div style="font-size:10px;color:#b38600;font-weight:600;margin-top:2px;">${total > 0 ? ((lowCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:1px;">Minimally Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
                         <div class="rpt-stat-num" style="color:#e67e00;">${mediumCount}</div>
                         <div class="rpt-stat-label">Medium Risk</div>
-                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Partially Affected</div>
+                        <div style="font-size:10px;color:#e67e00;font-weight:600;margin-top:2px;">${total > 0 ? ((mediumCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:1px;">Partially Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
                         <div class="rpt-stat-num" style="color:#dc3545;">${highCount}</div>
                         <div class="rpt-stat-label">High Risk</div>
-                        <div style="font-size:10px;color:#aaa;margin-top:2px;">Fully Affected</div>
+                        <div style="font-size:10px;color:#dc3545;font-weight:600;margin-top:2px;">${total > 0 ? ((highCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#aaa;margin-top:1px;">Fully Affected</div>
                     </div>
                     ${affectedNoPoly > 0 ? `<div class="rpt-stat" style="border-left-color:#888;">
                         <div class="rpt-stat-num" style="color:#555;">${affectedNoPoly}</div>
                         <div class="rpt-stat-label">In Flood Zone (no polygon)</div>
+                        <div style="font-size:10px;color:#888;font-weight:600;margin-top:2px;">${total > 0 ? ((affectedNoPoly/total)*100).toFixed(1) : '0.0'}%</div>
                     </div>` : ''}
                 </div>
                 <div class="rpt-list-box">
@@ -2484,6 +2446,14 @@ async function showFaultLineRiskAssessment() {
             </div>
             <div class="rpt-content">
                 ${bodyHTML}
+                <div class="rpt-footer">
+                    <h4>Legal Requirements</h4>
+                    <ul>
+                        <li><strong>Critical (&lt;50m):</strong> Mandatory structural engineer cert, geological survey &amp; reinforced foundation</li>
+                        <li><strong>High (50–100m):</strong> Seismic design standards &amp; structural engineer certification required</li>
+                        <li><strong>Medium (100–200m):</strong> Enhanced foundation recommended; standard codes with seismic provisions apply</li>
+                    </ul>
+                </div>
             </div>
         </div>`;
 
@@ -3185,7 +3155,7 @@ map.whenReady(async function() {
             style: {
                 color: '#00247c',
                 weight: 3,
-                fillColor: '#667eea',
+                fillColor: '#00247c',
                 fillOpacity: 0.08,
                 dashArray: '8, 6'
             },
@@ -3203,8 +3173,7 @@ map.whenReady(async function() {
         [14.6188121, 121.0766554],
         [14.6190770, 121.0767448]
     ];
-    
-    // Create fault line with correct coordinates
+
     faultLine = L.polyline(faultLineCoordinates, {
         color: '#cc0000',
         weight: 4,
@@ -3213,118 +3182,58 @@ map.whenReady(async function() {
         lineCap: 'round',
         lineJoin: 'round'
     });
-    
+
     faultLine.bindPopup(`
-        <div style="max-width: 300px;">
-            <h4 style="color: #cc0000; margin-bottom: 10px;">
-                FAULT LINE
-            </h4>
+        <div style="max-width:300px;">
+            <h4 style="color:#cc0000;margin-bottom:10px;">FAULT LINE</h4>
             <p><strong>Seismic Hazard Zone</strong></p>
             <p>This area has been identified as having potential seismic activity.</p>
-            <p style="font-size: 0.9em; color: #666;">
-                Construction and development in this area should follow earthquake-resistant guidelines.
-            </p>
+            <p style="font-size:0.9em;color:#666;">Construction and development in this area should follow earthquake-resistant guidelines.</p>
         </div>
     `);
-    
-    faultLine.on('mouseover', function() {
-        this.setStyle({
-            weight: 6,
-            opacity: 1,
-            color: '#cc0000'
-        });
-    });
-    
-    faultLine.on('mouseout', function() {
-        this.setStyle({
-            weight: 4,
-            opacity: 0.8,
-            color: '#ff0000'
-        });
-    });
-    
-    // Create warning marker at the midpoint of the fault line
+
+    faultLine.on('mouseover', function() { this.setStyle({ weight: 6, opacity: 1, color: '#cc0000' }); });
+    faultLine.on('mouseout',  function() { this.setStyle({ weight: 4, opacity: 0.8, color: '#ff0000' }); });
+
     const midIndex = Math.floor(faultLineCoordinates.length / 2);
     const warningPoint = faultLineCoordinates[midIndex];
-    
+
     const warningIcon = L.divIcon({
         className: 'fault-warning-marker',
-        html: `<div style="
-            position: relative;
-            width: 30px;
-            height: 30px;
-        ">
-            <div style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(180, 0, 0, 0.3);
-                border-radius: 50%;
-                animation: pulse-fault 2s infinite;
-            "></div>
-            <div style="
-                position: absolute;
-                top: 5px;
-                left: 5px;
-                width: 20px;
-                height: 20px;
-                background: rgba(180, 0, 0, 0.9);
-                border-radius: 50%;
-                border: 2px solid white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            ">
-                <i class="fas fa-exclamation" style="color: white; font-size: 10px;"></i>
+        html: `<div style="position:relative;width:30px;height:30px;">
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;
+                background:rgba(180,0,0,0.3);border-radius:50%;animation:pulse-fault 2s infinite;"></div>
+            <div style="position:absolute;top:5px;left:5px;width:20px;height:20px;
+                background:rgba(180,0,0,0.9);border-radius:50%;border:2px solid white;
+                display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-exclamation" style="color:white;font-size:10px;"></i>
             </div>
         </div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15]
     });
-    
-    // Add CSS animation for fault line warning marker
+
     const style = document.createElement('style');
-    style.textContent = `
-        @keyframes pulse-fault {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-            50% {
-                transform: scale(1.3);
-                opacity: 0.4;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-        }
-    `;
+    style.textContent = `@keyframes pulse-fault {
+        0%   { transform:scale(1);   opacity:0.8; }
+        50%  { transform:scale(1.3); opacity:0.4; }
+        100% { transform:scale(1);   opacity:0.8; }
+    }`;
     document.head.appendChild(style);
-    
-    warningMarker = L.marker(warningPoint, {
-        icon: warningIcon,
-        title: 'Fault Line Warning'
-    });
-    
+
+    warningMarker = L.marker(warningPoint, { icon: warningIcon, title: 'Fault Line Warning' });
     warningMarker.bindPopup(`
-        <div style="max-width: 250px;">
-            <h4 style="color: #cc0000; margin-bottom: 8px;">
-                EARTHQUAKE RISK AREA
-            </h4>
+        <div style="max-width:250px;">
+            <h4 style="color:#cc0000;margin-bottom:8px;">EARTHQUAKE RISK AREA</h4>
             <p><strong>Fault Line Detected</strong></p>
             <p>Special precautions required for construction and development.</p>
-            <p style="font-size: 0.85em; color: #666; margin-top: 10px;">
-                Ensure structures meet seismic design standards.
-            </p>
+            <p style="font-size:0.85em;color:#666;margin-top:10px;">Ensure structures meet seismic design standards.</p>
         </div>
     `);
-    
+
     // Set up soft boundary
     setupSoftBoundary();
-    
+
     // Load all data
     loadAllMarkers();
     initDateTime();
@@ -3521,111 +3430,105 @@ function debugFloodState() {
     console.log('Flood Legend in DOM:', !!legendElement);
 }
 
-// ==================== SDSS RULES SUMMARY REPORT ====================
+// ==================== BARANGAY RULES SUMMARY REPORT ====================
 
 /**
- * Show SDSS Rules Summary Report
+ * Show Barangay Rules Summary Report (with DSS Evaluations tab)
  */
 async function showSDSSRulesReport() {
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_sdss_rules_summary'
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            displaySDSSRulesReport(result.data);
+        const [rulesRes, dssRes] = await Promise.all([
+            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_sdss_rules_summary' }),
+            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_dss_evaluations' })
+        ]);
+
+        const rulesResult = await rulesRes.json();
+        const dssResult   = await dssRes.json();
+
+        if (rulesResult.status === 'success') {
+            displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
         } else {
-            showSwal({
-                icon: 'error',
-                title: 'Error',
-                text: result.message || 'Failed to load SDSS rules summary',
-                confirmButtonColor: '#00247c'
-            });
+            showSwal({ icon: 'error', title: 'Error', text: rulesResult.message || 'Failed to load rules summary', confirmButtonColor: '#00247c' });
         }
     } catch (error) {
-        console.error('Error fetching SDSS rules summary:', error);
-        showSwal({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to fetch SDSS rules summary',
-            confirmButtonColor: '#00247c'
-        });
+        console.error('Error fetching Barangay Rules:', error);
+        showSwal({ icon: 'error', title: 'Error', text: 'Failed to fetch Barangay Rules', confirmButtonColor: '#00247c' });
     }
 }
 
 /**
- * Display SDSS Rules Summary Report
+ * Display Barangay Rules Summary Report
  */
-function displaySDSSRulesReport(data) {
+function displaySDSSRulesReport(data, dssData) {
     const { summary, rules } = data;
-    
+
     // Group rules by category
-    const floodRules = [];
-    const seismicRules = [];
-    const constructionRules = [];
-    const businessRules = [];
-    
+    const floodRules = [], seismicRules = [], constructionRules = [], businessRules = [];
     for (const [key, rule] of Object.entries(rules)) {
-        if (rule.category === 'Flood Hazard') floodRules.push({ key, ...rule });
+        if (rule.category === 'Flood Hazard')       floodRules.push({ key, ...rule });
         else if (rule.category === 'Seismic Hazard') seismicRules.push({ key, ...rule });
         else if (rule.category === 'Construction Safety') constructionRules.push({ key, ...rule });
-        else if (rule.category === 'Business Safety') businessRules.push({ key, ...rule });
+        else if (rule.category === 'Business Safety')     businessRules.push({ key, ...rule });
     }
-    
+
     const renderCategory = (title, icon, rulesArr, totalHouses) => {
         if (rulesArr.length === 0) return '';
         return `
-            <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;">
-                <h4 style="color: #00247c; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:18px 20px;margin-bottom:16px;">
+                <h4 style="color:#00247c;margin:0 0 4px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;">
                     <i class="fas ${icon}"></i> ${title}
                 </h4>
-                <p style="margin: 0 0 12px 0; font-size: 11px; color: #aaa;">Click any rule to expand details.</p>
-                <div style="display: grid; gap: 8px;">
+                <p style="margin:0 0 12px;font-size:11px;color:#aaa;">Click any rule to expand details.</p>
+                <div style="display:grid;gap:8px;">
                     ${rulesArr.map((rule, i) => createRuleCard(rule, totalHouses, `${title.replace(/\s/g,'')}-${i}`)).join('')}
                 </div>
-            </div>
-        `;
+            </div>`;
     };
-    
-    // Build HTML content
-    let htmlContent = `
+
+    // ── DSS Evaluations Tab ──
+    const dssTabContent = buildDSSTab(dssData);
+
+    const htmlContent = `
         <div class="rpt-body">
-            <!-- Summary Section -->
             <div class="rpt-header">
-                <h3><i class="fas fa-list-check" style="margin-right:8px;"></i>Rules Summary Report</h3>
-                <div class="rpt-chips">
-                    <div class="rpt-chip">
-                        <span class="rpt-chip-num">${summary.total_houses}</span>
-                        <span class="rpt-chip-label">Total Houses</span>
-                    </div>
-                    <div class="rpt-chip">
-                        <span class="rpt-chip-num">${summary.total_rule_violations}</span>
-                        <span class="rpt-chip-label">Total Violations</span>
-                    </div>
-                    <div class="rpt-chip">
-                        <span class="rpt-chip-num">${summary.rules_evaluated}</span>
-                        <span class="rpt-chip-label">Rules Evaluated</span>
-                    </div>
+                <h3><i class="fas fa-shield-alt" style="margin-right:8px;"></i>Barangay Rules</h3>
+                <div style="display:flex;gap:4px;margin-top:14px;background:#f0f2f5;border-radius:8px;padding:4px;">
+                    <button id="tab-btn-rules" onclick="switchRulesTab('rules')"
+                        style="flex:1;padding:7px 14px;border:none;border-radius:6px;font-weight:700;font-size:12px;
+                               color:white;background:#00247c;cursor:pointer;transition:all 0.2s;font-family:inherit;">
+                        <i class="fas fa-list-check"></i> Barangay Rules
+                    </button>
+                    <button id="tab-btn-dss" onclick="switchRulesTab('dss')"
+                        style="flex:1;padding:7px 14px;border:none;border-radius:6px;font-weight:600;font-size:12px;
+                               color:#666;background:transparent;cursor:pointer;transition:all 0.2s;font-family:inherit;">
+                        <i class="fas fa-clipboard-check"></i> Rules Evaluation
+                    </button>
                 </div>
             </div>
             <div class="rpt-content">
-                <div class="rpt-footer" style="margin-bottom:16px;">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Note:</strong> A house may violate multiple rules simultaneously. Total violations may exceed total houses.
+                <!-- Rules Tab -->
+                <div id="tab-rules">
+                    <div class="rpt-chips" style="margin-bottom:12px;">
+                        <div class="rpt-chip"><span class="rpt-chip-num">${summary.total_houses}</span><span class="rpt-chip-label">Total Houses</span></div>
+                        <div class="rpt-chip"><span class="rpt-chip-num">${summary.total_rule_violations}</span><span class="rpt-chip-label">Total Violations</span></div>
+                        <div class="rpt-chip"><span class="rpt-chip-num">${summary.rules_evaluated}</span><span class="rpt-chip-label">Rules Evaluated</span></div>
+                    </div>
+                    <div class="rpt-footer" style="margin-bottom:16px;">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> A house may violate multiple rules. Total violations may exceed total houses.
+                    </div>
+                    ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
+                    ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
+                    ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
+                    ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
                 </div>
-
-                ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
-                ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
-                ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
-                ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
+                <!-- DSS Tab -->
+                <div id="tab-dss" style="display:none;">
+                    ${dssTabContent}
+                </div>
             </div>
-        </div>
-    `;
-    
+        </div>`;
+
     Swal.fire({
         ...swalDefaultConfig,
         html: htmlContent,
@@ -3635,17 +3538,168 @@ function displaySDSSRulesReport(data) {
         didOpen: (popup) => {
             attachAccordionHandler(popup);
             popup.addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-rule-key]');
-                if (btn) {
+                // Barangay Rules tab — view affected records
+                const ruleBtn = e.target.closest('[data-rule-key]');
+                if (ruleBtn) {
                     e.stopPropagation();
-                    // Close SDSS rules modal first, then open affected records
                     Swal.close();
-                    setTimeout(() => showRuleAffectedData(btn.dataset.ruleKey, btn.dataset.ruleName, true), 200);
+                    setTimeout(() => showRuleAffectedData(ruleBtn.dataset.ruleKey, ruleBtn.dataset.ruleName, true), 200);
+                    return;
+                }
+                // DSS Evaluation tab — view all evaluated applications of a type on map
+                const bulkBtn = e.target.closest('[data-dss-bulk-type]');
+                if (bulkBtn) {
+                    e.stopPropagation();
+                    const type    = bulkBtn.dataset.dssBulkType;
+                    const indices = bulkBtn.dataset.dssBulkIndices.split(',').map(Number);
+                    const evList  = (window._dssEvals || []).filter((_, i) => indices.includes(i));
+                    if (evList.length > 0) {
+                        Swal.close();
+                        setTimeout(() => showDSSEvalsOnMap(type, evList), 200);
+                    }
                 }
             });
         }
     });
 }
+
+function switchRulesTab(tab) {
+    document.getElementById('tab-rules').style.display = tab === 'rules' ? '' : 'none';
+    document.getElementById('tab-dss').style.display   = tab === 'dss'   ? '' : 'none';
+    const rBtn = document.getElementById('tab-btn-rules');
+    const dBtn = document.getElementById('tab-btn-dss');
+    rBtn.style.background  = tab === 'rules' ? '#00247c' : 'transparent';
+    rBtn.style.color       = tab === 'rules' ? 'white'   : '#666';
+    rBtn.style.fontWeight  = tab === 'rules' ? '700'     : '600';
+    dBtn.style.background  = tab === 'dss'   ? '#00247c' : 'transparent';
+    dBtn.style.color       = tab === 'dss'   ? 'white'   : '#666';
+    dBtn.style.fontWeight  = tab === 'dss'   ? '700'     : '600';
+}
+
+function buildDSSTab(dssData) {
+    if (!dssData || !dssData.success) {
+        return `<div style="text-align:center;padding:32px;color:#888;font-size:13px;">
+            <i class="fas fa-exclamation-circle" style="font-size:28px;margin-bottom:10px;display:block;"></i>
+            No evaluation data available yet. Evaluations are generated when applications are submitted.
+        </div>`;
+    }
+
+    const evals = dssData.evaluations || [];
+    const sum   = dssData.summary || {};
+
+    if (evals.length === 0) {
+        return `<div style="text-align:center;padding:32px;color:#888;font-size:13px;">
+            <i class="fas fa-clipboard-check" style="font-size:28px;margin-bottom:10px;display:block;color:#ccc;"></i>
+            No evaluations found yet.
+        </div>`;
+    }
+
+    const statusColor = s => s === 'Pre-Approved' ? '#28a745' : s === 'Rejected' ? '#dc3545' : '#ff9800';
+    const typeIcon    = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
+    const typeColor   = t => t === 'construction' ? '#ffc107' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
+
+    // Sort order: Rejected first, then Additional Requirements Needed, then Pre-Approved
+    const statusRank = { 'Rejected': 1, 'Additional Requirements Needed': 2, 'Pre-Approved': 3 };
+
+    // Group by type
+    const groups = { construction: [], business: [], utility: [], incident: [] };
+    evals.forEach(e => { if (groups[e.type]) groups[e.type].push(e); });
+    // Sort each group by status rank
+    Object.values(groups).forEach(arr => arr.sort((a, b) => (statusRank[a.dss_status] || 9) - (statusRank[b.dss_status] || 9)));
+
+    const groupLabels = { construction: 'Construction', business: 'Business', utility: 'Utility', incident: 'Incident Reports' };
+
+    const summaryChips = `
+        <div class="rpt-chips" style="margin-bottom:12px;">
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#28a745;">${sum['Pre-Approved']||0}</span><span class="rpt-chip-label">Pre-Approved</span></div>
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#ff9800;">${sum['Additional Requirements Needed']||0}</span><span class="rpt-chip-label">Needs Review</span></div>
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#dc3545;">${sum['Rejected']||0}</span><span class="rpt-chip-label">Rejected</span></div>
+        </div>
+        <div class="rpt-footer" style="margin-bottom:14px;">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note:</strong> These evaluate each application's completeness and compliance (documents, contractor info, safety plans). 
+            Location-based hazard checks (flood zones, fault line) are shown in the <strong>Barangay Rules</strong> tab.
+        </div>`;
+
+    // Store all evals globally so showDSSEvalOnMap can access them by index
+    window._dssEvals = evals;
+
+    const groupSections = Object.entries(groups).map(([type, items]) => {
+        if (items.length === 0) return '';
+
+        // Collect indices of all evals in this group for the bulk "View All on Map" button
+        const typeIndices = items.map(ev => evals.indexOf(ev)).join(',');
+
+        const rows = items.map((ev, i) => {
+            const sc      = statusColor(ev.dss_status);
+            const pct     = ev.max_score > 0 ? Math.round((ev.score / ev.max_score) * 100) : 0;
+            const uid     = `dss-${type}-${i}`;
+
+            const failedList = ev.failed_rules.length > 0
+                ? `<div style="margin-top:8px;"><strong style="font-size:11px;color:#cc0000;">Failed Rules:</strong>
+                    <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;color:#555;">
+                        ${ev.failed_rules.map(r => `<li>${r}</li>`).join('')}
+                    </ul></div>` : '';
+            const passedList = ev.passed_rules.length > 0
+                ? `<div style="margin-top:6px;"><strong style="font-size:11px;color:#28a745;">Passed Rules:</strong>
+                    <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;color:#555;">
+                        ${ev.passed_rules.map(r => `<li>${r}</li>`).join('')}
+                    </ul></div>` : '';
+
+            return `
+                <div style="border:2px solid ${sc}30;border-left:4px solid ${sc};border-radius:8px;overflow:hidden;margin-bottom:6px;">
+                    <div data-accordion-toggle="${uid}"
+                         style="display:flex;justify-content:space-between;align-items:center;
+                                padding:10px 14px;cursor:pointer;background:#fafafa;user-select:none;">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+                            <span style="background:${sc};color:white;padding:3px 8px;border-radius:10px;
+                                         font-size:11px;font-weight:700;white-space:nowrap;">${ev.dss_status}</span>
+                            <div style="min-width:0;">
+                                <div style="font-weight:600;font-size:13px;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    ${ev.name || 'Application #' + ev.id}
+                                </div>
+                                <div style="font-size:11px;color:#888;">${ev.address || ''}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;">
+                            <span style="font-size:12px;font-weight:700;color:${sc};">${pct}%</span>
+                            <span class="acc-arrow" style="color:#999;transition:transform 0.2s;display:inline-block;">▼</span>
+                        </div>
+                    </div>
+                    <div id="${uid}" style="display:none;padding:12px 14px;background:white;border-top:1px solid #eee;">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                            <div style="flex:1;height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;">
+                                <div style="height:100%;width:${pct}%;background:${sc};border-radius:4px;"></div>
+                            </div>
+                            <span style="font-size:12px;color:#555;white-space:nowrap;">Score: ${ev.score}/${ev.max_score} (${pct}%)</span>
+                        </div>
+                        ${failedList}${passedList}
+                        <div style="font-size:11px;color:#bbb;margin-top:8px;">Evaluated: ${ev.evaluated_at || '—'}</div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        return `
+            <div style="background:white;border:1px solid #e0e0e0;border-radius:10px;padding:16px 18px;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+                    <h4 style="color:${typeColor(type)};margin:0;font-size:14px;font-weight:700;">
+                        <i class="fas ${typeIcon(type)}"></i> ${groupLabels[type]} (${items.length})
+                    </h4>
+                    <button data-dss-bulk-type="${type}" data-dss-bulk-indices="${typeIndices}"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;
+                               background:#00247c;color:white;border:none;border-radius:6px;
+                               font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">
+                        <i class="fas fa-map-marked-alt"></i> View All on Map
+                    </button>
+                </div>
+                ${rows}
+            </div>`;
+    }).join('');
+
+    return summaryChips + groupSections;
+}
+
+
 
 /**
  * Create a collapsible rule card HTML
@@ -3915,6 +3969,214 @@ listEl.querySelectorAll('.affected-record-row').forEach(rowEl => {
     }
 }
 
+// ==================== DSS EVALUATION MAP VIEW ====================
+
+/**
+ * Opens the side panel and plots a single evaluated application on the map,
+ * showing its passed/failed rules in both the popup and the panel.
+ */
+// ==================== DSS EVALUATION MAP VIEW ====================
+
+/**
+ * Plots ALL evaluated applications of one type on the map at once.
+ * Each application is shown as its house polygon (if found) or a circle marker.
+ * Clicking any marker opens a popup with that application's passed/failed rules.
+ */
+async function showDSSEvalsOnMap(type, evList) {
+    const oldPanel = document.getElementById('affected-side-panel');
+    if (oldPanel) oldPanel.remove();
+
+    const statusColor = s => s === 'Pre-Approved' ? '#28a745' : s === 'Rejected' ? '#dc3545' : '#ff9800';
+    const typeIcon    = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
+    const typeColor   = t => t === 'construction' ? '#e6a800' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
+    const groupLabels = { construction: 'Construction', business: 'Business', utility: 'Utility', incident: 'Incident Reports' };
+
+    const panel = document.createElement('div');
+    panel.id = 'affected-side-panel';
+    panel.className = 'affected-side-panel';
+
+    const restoreMap = () => {
+        clearAffectedHighlights();
+        updateAllVisibility();
+        if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) floodLayer.addTo(map);
+        if (faultLineActive) {
+            if (faultLine && !map.hasLayer(faultLine)) faultLine.addTo(map);
+            if (warningMarker && !map.hasLayer(warningMarker)) warningMarker.addTo(map);
+        }
+    };
+    const closePanel = () => {
+        panel.classList.remove('open');
+        setTimeout(() => { if (panel.parentNode) panel.remove(); }, 300);
+        restoreMap();
+    };
+
+    panel.innerHTML = `
+        <div class="affected-panel-header">
+            <button class="affected-panel-close" id="dss-panel-close-btn">&times;</button>
+            <div style="font-size:10px;opacity:0.75;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;">
+                <i class="fas ${typeIcon(type)}" style="color:${typeColor(type)};"></i> ${groupLabels[type] || type} — Rules Evaluation
+            </div>
+            <h3 style="margin:0 0 8px;font-size:15px;font-weight:700;padding-right:28px;">
+                ${evList.length} Application${evList.length !== 1 ? 's' : ''} on Map
+            </h3>
+            <button id="dss-back-btn"
+                style="display:inline-flex;align-items:center;gap:6px;padding:6px 13px;
+                       background:#f0f4ff;color:#00247c;border:1.5px solid #00247c;
+                       border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+                       font-family:inherit;width:100%;">
+                <i class="fas fa-arrow-left"></i> Back to Rules Evaluation
+            </button>
+        </div>
+        <div class="affected-panel-body" id="dss-eval-panel-body">
+            <div style="padding:28px;text-align:center;color:#888;font-size:13px;">
+                <i class="fas fa-map-marked-alt" style="font-size:20px;margin-bottom:8px;display:block;"></i>
+                Plotting on map...
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(panel);
+    requestAnimationFrame(() => panel.classList.add('open'));
+
+    document.getElementById('dss-panel-close-btn').onclick = closePanel;
+    document.getElementById('dss-back-btn').onclick = () => {
+        closePanel();
+        setTimeout(() => showSDSSRulesReport(), 320);
+    };
+    document.addEventListener('keydown', function escH(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escH); }
+    });
+
+    // ── Plot all applications ──────────────────────────────────────────────
+    clearAffectedHighlights();
+    hideAllMarkers();
+
+    const panelRows = [];
+
+    evList.forEach(ev => {
+        const lat = ev.lat != null ? parseFloat(ev.lat) : NaN;
+        const lng = ev.lng != null ? parseFloat(ev.lng) : NaN;
+        if (isNaN(lat) || isNaN(lng)) return; // skip if no coordinates
+
+        const sc  = statusColor(ev.dss_status);
+        const pct = ev.max_score > 0 ? Math.round((ev.score / ev.max_score) * 100) : 0;
+
+        // Single consistent marker — a pin divIcon with status color
+        const icon = L.divIcon({
+            className: '',
+            html: `<div style="
+                width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+                background:${sc};border:2px solid white;
+                box-shadow:0 2px 6px rgba(0,0,0,0.35);">
+            </div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 28],
+            popupAnchor: [0, -28]
+        });
+
+        const marker = L.marker([lat, lng], { icon }).addTo(map);
+        marker.bindPopup(buildEvalPopup(ev, sc, pct));
+        affectedHighlightLayers.push(marker);
+        panelRows.push({ ev, sc, pct, marker });
+    });
+
+    // Fit map to all markers
+    if (affectedHighlightLayers.length > 0) {
+        const grp = L.featureGroup(affectedHighlightLayers);
+        if (grp.getBounds().isValid()) {
+            map.fitBounds(grp.getBounds(), { padding: [60, 60], maxZoom: 19 });
+        }
+    }
+
+    // ── Build panel list ───────────────────────────────────────────────────
+    const bodyEl = document.getElementById('dss-eval-panel-body');
+    if (!bodyEl) return;
+
+    if (panelRows.length === 0) {
+        bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No applications with coordinates found.</div>`;
+        return;
+    }
+
+    bodyEl.innerHTML = `
+        <div class="affected-panel-count">${panelRows.length} application${panelRows.length !== 1 ? 's' : ''} shown on map</div>
+        <div class="affected-panel-hint">Click a row to highlight it on the map</div>
+        <div class="affected-records-list" id="dss-records-list"></div>
+    `;
+
+    const listEl = bodyEl.querySelector('#dss-records-list');
+    panelRows.forEach(({ ev, sc, pct, marker }) => {
+        const div = document.createElement('div');
+        div.className = 'affected-record-row';
+        div.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span class="affected-record-name" style="flex:1;min-width:0;">${ev.name || 'Application #' + ev.id}</span>
+                <span style="background:${sc};color:white;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;">${ev.dss_status}</span>
+            </div>
+            <div class="affected-record-addr">${ev.address || '—'}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+                <div style="flex:1;height:5px;background:#e0e0e0;border-radius:3px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${sc};border-radius:3px;"></div>
+                </div>
+                <span style="font-size:11px;font-weight:600;color:${sc};">${pct}%</span>
+            </div>
+            <div style="margin-top:4px;">
+                ${ev.failed_rules.length > 0
+                    ? `<div style="font-size:11px;color:#cc0000;"><i class="fas fa-times-circle"></i> ${ev.failed_rules.length} failed rule${ev.failed_rules.length !== 1 ? 's' : ''}</div>`
+                    : `<div style="font-size:11px;color:#28a745;"><i class="fas fa-check-circle"></i> All rules passed</div>`}
+            </div>
+        `;
+        div.addEventListener('click', () => {
+            listEl.querySelectorAll('.affected-record-row').forEach(r => r.classList.remove('active'));
+            div.classList.add('active');
+            map.flyTo(marker.getLatLng(), 19, { duration: 1, easeLinearity: 0.2 });
+            if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+            pendingMoveEndHandler = () => {
+                pendingMoveEndHandler = null;
+                marker.openPopup();
+            };
+            map.once('moveend', pendingMoveEndHandler);
+        });
+        listEl.appendChild(div);
+    });
+}
+
+/** Builds the map popup for a DSS-evaluated application */
+function buildEvalPopup(ev, sc, pct) {
+    const failedItems = ev.failed_rules.map(r =>
+        `<li style="color:#cc0000;margin-bottom:2px;"><i class="fas fa-times" style="margin-right:4px;"></i>${r}</li>`
+    ).join('');
+    const passedItems = ev.passed_rules.map(r =>
+        `<li style="color:#28a745;margin-bottom:2px;"><i class="fas fa-check" style="margin-right:4px;"></i>${r}</li>`
+    ).join('');
+
+    return `
+        <div class="popup-content">
+            <h4>
+                <span>${ev.name || 'Application #' + ev.id}</span>
+                <span style="background:${sc};color:white;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700;">${ev.dss_status}</span>
+            </h4>
+            <div class="popup-section">
+                <p><strong>Type:</strong> ${ev.type}</p>
+                <p><strong>Address:</strong> ${ev.address || '—'}</p>
+                <p><strong>Score:</strong> <span style="color:${sc};font-weight:700;">${pct}% (${ev.score}/${ev.max_score})</span></p>
+            </div>
+            ${ev.failed_rules.length > 0 ? `
+            <div class="popup-section">
+                <p style="font-weight:700;color:#cc0000;margin-bottom:4px;">Failed Rules:</p>
+                <ul style="margin:0;padding-left:0;list-style:none;font-size:12px;">${failedItems}</ul>
+            </div>` : ''}
+            ${ev.passed_rules.length > 0 ? `
+            <div class="popup-section">
+                <p style="font-weight:700;color:#28a745;margin-bottom:4px;">Passed Rules:</p>
+                <ul style="margin:0;padding-left:0;list-style:none;font-size:12px;">${passedItems}</ul>
+            </div>` : ''}
+            <button class="view-details-btn" onclick="viewMapDetails(${ev.id}, '${ev.type}')">
+                View Full Details
+            </button>
+        </div>`;
+}
+
+
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;
 window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
@@ -3924,6 +4186,7 @@ window.displayBusinessSDSSReport = displayBusinessSDSSReport;
 window.displayConstructionSDSSReport = displayConstructionSDSSReport;
 window.showSDSSRulesReport = showSDSSRulesReport;
 window.showRuleAffectedData = showRuleAffectedData;
+window.showDSSEvalsOnMap = showDSSEvalsOnMap;
 window.clearAffectedHighlights = clearAffectedHighlights;
 window.showIncidentSummaryReport = showIncidentSummaryReport;
 window.filterIncidentByType = filterIncidentByType;

@@ -307,7 +307,7 @@ function getHousesInFloodAreas($riskLevel = null){
                             WHEN hg.coordinates IS NOT NULL THEN
                                 LEAST(
                                     ROUND(
-                                        (ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                                        (ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                          NULLIF(ST_Area(hg.geom::geography), 0) * 100)::numeric,
                                         1
                                     ),
@@ -317,23 +317,23 @@ function getHousesInFloodAreas($riskLevel = null){
                         END as flood_coverage_percent,
                         CASE 
                             WHEN hg.coordinates IS NULL THEN 'Affected'
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 'Partially Affected'
                             ELSE 'Minimally Affected'
                         END as impact_level,
                         CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
                         CASE 
                             WHEN hg.coordinates IS NULL THEN 4
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 2
                             ELSE 1
                         END as impact_rank
                     FROM house_geoms hg
-                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
+                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom::geography, bh.geom::geography)
                     WHERE bh.hazard_type = 'flood'
                 ),
                 -- Keep only the worst row per house (highest risk then highest impact)
@@ -398,23 +398,23 @@ function getFloodAffectedHousesSummary(){
                         bh.risk_level,
                         CASE 
                             WHEN hg.coordinates IS NULL THEN 'Affected'
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 'Partially Affected'
                             ELSE 'Minimally Affected'
                         END as impact_level,
                         CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
                         CASE 
                             WHEN hg.coordinates IS NULL THEN 4
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
-                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) / 
+                            WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.25 THEN 2
                             ELSE 1
                         END as impact_rank
                     FROM house_geoms hg
-                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
+                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom::geography, bh.geom::geography)
                     WHERE bh.hazard_type = 'flood'
                 ),
                 -- One row per house: keep the worst risk + worst impact
@@ -926,9 +926,9 @@ function getFaultLineAssessment() {
             [14.6190770, 121.0767448]
         ];
         
-        // Get all house polygons
+        // Get all house polygons — also fetch coordinates so we can measure from polygon edges
         $sql = "SELECT house_id, address, street_name, house_number, 
-                       center_lat, center_lng, area_sqm
+                       center_lat, center_lng, area_sqm, coordinates
                 FROM house_polygons
                 WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
         $stmt = $pdo->query($sql);
@@ -941,12 +941,32 @@ function getFaultLineAssessment() {
         
         foreach ($houses as $house) {
             $minDistance = PHP_FLOAT_MAX;
-            
-            // Calculate minimum distance to fault line
+
+            // Build list of points to test: always include the centre,
+            // and also every vertex of the polygon if coordinates exist.
+            // This means we measure from the closest part of the building,
+            // not just its centroid — important for large or oddly-shaped houses.
+            $testPoints = [[$house['center_lat'], $house['center_lng']]];
+            if (!empty($house['coordinates'])) {
+                try {
+                    $coords = json_decode($house['coordinates'], true);
+                    if (is_array($coords)) {
+                        foreach ($coords as $c) {
+                            // coordinates are stored as [lng, lat]
+                            if (isset($c[0], $c[1])) {
+                                $testPoints[] = [(float)$c[1], (float)$c[0]];
+                            }
+                        }
+                    }
+                } catch (Exception $e) { /* ignore parse errors */ }
+            }
+
+            // Calculate minimum distance to fault line from any test point
+            foreach ($testPoints as $pt) {
             for ($i = 0; $i < count($faultLineCoords) - 1; $i++) {
                 $distance = calculateDistanceToLineSegment(
-                    $house['center_lat'], 
-                    $house['center_lng'],
+                    $pt[0], 
+                    $pt[1],
                     $faultLineCoords[$i][0], 
                     $faultLineCoords[$i][1],
                     $faultLineCoords[$i + 1][0], 
@@ -954,6 +974,7 @@ function getFaultLineAssessment() {
                 );
                 $minDistance = min($minDistance, $distance);
             }
+            } // end foreach $testPoints
             
             // Categorize risk level
             $risk_level = null;
@@ -2100,7 +2121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                            bh.hazard_id, bh.hazard_name, bh.risk_level, bh.description as hazard_description,
                            CASE
                                WHEN hg.coordinates IS NOT NULL THEN
-                                   LEAST(ROUND((ST_Area(ST_Intersection(hg.geom::geography, bh.geom)) /
+                                   LEAST(ROUND((ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) /
                                        NULLIF(ST_Area(hg.geom::geography),0)*100)::numeric,1),100.0)
                                ELSE 100
                            END as flood_coverage_percent,
@@ -2113,7 +2134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                                ELSE 'Minimally Affected'
                            END as impact_level
                     FROM hg
-                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom, bh.geom)
+                    JOIN barangay_hazards bh ON ST_Intersects(hg.geom::geography, bh.geom::geography)
                     WHERE bh.hazard_type = 'flood'
                     ORDER BY CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END DESC";
             $stmt = $pdo->prepare($sql);
@@ -2256,6 +2277,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'get_sdss_rules_summary') {
         $result = getSDSSRulesSummary();
         echo json_encode($result);
+        exit;
+    }
+
+    if ($_POST['action'] === 'get_dss_evaluations') {
+        // Use per-query try/catch so a missing table (e.g. construction_evaluations)
+        // does not abort the entire response — it simply returns an empty array.
+        $safeQuery = function($sql) use ($pdo) {
+            try { return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC); }
+            catch (PDOException $e) { return []; }
+        };
+
+        $parse = function($rows, $type, $nameField) {
+            return array_map(function($r) use ($type, $nameField) {
+                $details = json_decode($r['evaluation_details'] ?? '{}', true) ?: [];
+                return [
+                    'id'           => $r['id'],
+                    'type'         => $type,
+                    'name'         => $r[$nameField] ?? 'Unknown',
+                    'address'      => $r['address'] ?? '',
+                    'lat'          => isset($r['latitude'])  ? (float)$r['latitude']  : null,
+                    'lng'          => isset($r['longitude']) ? (float)$r['longitude'] : null,
+                    'dss_status'   => $r['dss_status'],
+                    'score'        => $details['score'] ?? 0,
+                    'max_score'    => $details['max_score'] ?? 0,
+                    'probability'  => $details['approval_probability'] ?? 0,
+                    'passed_rules' => $details['passed_rules'] ?? [],
+                    'failed_rules' => $details['failed_rules'] ?? [],
+                    'evaluated_at' => $r['evaluated_at'],
+                ];
+            }, $rows);
+        };
+
+        $con  = $safeQuery("
+            SELECT ce.dss_status, ce.evaluation_details, ce.evaluated_at,
+                   ca.id, ca.nature_of_work, ca.construction_address AS address, ca.latitude, ca.longitude
+            FROM construction_evaluations ce
+            JOIN construction_applications ca ON ca.id = ce.application_id
+            ORDER BY ce.evaluated_at DESC
+        ");
+
+        $biz  = $safeQuery("
+            SELECT be.dss_status, be.evaluation_details, be.evaluated_at,
+                   ba.id, ba.business_name AS name, ba.address_of_business AS address, ba.latitude, ba.longitude
+            FROM business_evaluations be
+            JOIN business_applications ba ON ba.id = be.application_id
+            ORDER BY be.evaluated_at DESC
+        ");
+
+        $util = $safeQuery("
+            SELECT ue.dss_status, ue.evaluation_details, ue.evaluated_at,
+                   ua.id, ua.nature_of_work, ua.address_of_utility AS address, ua.latitude, ua.longitude
+            FROM utility_evaluations ue
+            JOIN utility_applications ua ON ua.id = ue.application_id
+            ORDER BY ue.evaluated_at DESC
+        ");
+
+        $inc  = $safeQuery("
+            SELECT ie.dss_status, ie.evaluation_details, ie.evaluated_at,
+                   ir.id, ir.incident_type AS name, ir.vic_address AS address, ir.latitude, ir.longitude
+            FROM incident_report_evaluations ie
+            JOIN incident_reports ir ON ir.id = ie.application_id
+            ORDER BY ie.evaluated_at DESC
+        ");
+
+        $all = array_merge(
+            $parse($con,  'construction', 'nature_of_work'),
+            $parse($biz,  'business',     'name'),
+            $parse($util, 'utility',      'nature_of_work'),
+            $parse($inc,  'incident',     'name')
+        );
+
+        $summary = ['Pre-Approved' => 0, 'Rejected' => 0, 'Additional Requirements Needed' => 0, 'Other' => 0];
+        foreach ($all as $a) {
+            $s = $a['dss_status'];
+            if (isset($summary[$s])) $summary[$s]++;
+            else $summary['Other']++;
+        }
+
+        echo json_encode(['success' => true, 'evaluations' => $all, 'summary' => $summary]);
         exit;
     }
 

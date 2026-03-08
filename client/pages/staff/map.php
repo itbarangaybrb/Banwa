@@ -78,13 +78,13 @@
                             <!-- Each option filters the map to show that marker type -->
                             <a href="#" data-type="household" onclick="selectFilterType('household', event)">
                                 <span class="filter-option">
-                                    <span class="filter-icon" style="background:#28a745;"></span>
+                                    <span class="filter-icon" style="background:#1565c0;"></span>
                                     <span>Households</span>
                                 </span>
                             </a>
                             <a href="#" data-type="business" onclick="selectFilterType('business', event)">
                                 <span class="filter-option">
-                                    <span class="filter-icon" style="background:#9C27B0;"></span>
+                                    <span class="filter-icon" style="background:#2e7d32;"></span>
                                     <span>Businesses</span>
                                 </span>
                             </a>
@@ -202,12 +202,12 @@
                 <!-- SDSS report for all businesses -->
                 <button class="gm-action-btn" onclick="showAllBusinessesSDSSReport()">
                     <i class="fas fa-building"></i>
-                    <span>Business SDSS</span>
+                    <span>Business Report</span>
                 </button>
                 <!-- SDSS report for all construction sites -->
                 <button class="gm-action-btn" onclick="showAllConstructionSDSSReport()">
                     <i class="fas fa-hard-hat"></i>
-                    <span>Construction SDSS</span>
+                    <span>Construction Report</span>
                 </button>
                 <!-- Summary report for all incident reports -->
                 <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
@@ -217,7 +217,7 @@
                 <!-- Shows the decision rules used by the SDSS -->
                 <button class="gm-action-btn" onclick="showSDSSRulesReport()">
                     <i class="fas fa-list-check"></i>
-                    <span>SDSS Rules</span>
+                    <span>Barangay Rules</span>
                 </button>
             </div>
         </div>

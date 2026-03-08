@@ -1,15 +1,3 @@
-<?php
-require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
-require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
-
-if ($_SESSION['role_id'] != 6) {
-    header("Location: /client/pages/auth/signin.php");
-    exit;
-}
-
-$full_name = getCurrentUserName();
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -73,12 +61,6 @@ $full_name = getCurrentUserName();
                         <span class="nav_text">Generate Summary</span>
                     </a>
                 </li>
-                <li>
-                    <a class="nav_select" id="signoutBtn" href="#">
-                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
-                        <span class="nav_text">Logout</span>
-                    </a>
-                </li>
             </div>
         </ul>
     </aside>
@@ -106,6 +88,7 @@ $full_name = getCurrentUserName();
                             <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                                 <i class="fas fa-times"></i>
                             </button>
+                            <button class="gm-search-btn" onclick="performSearch()">Search</button>
                         </div>
                         <!-- Search results appear here dynamically -->
                         <div id="search-results" class="search-results"></div>
@@ -127,13 +110,13 @@ $full_name = getCurrentUserName();
                                         <!-- Each option filters the map to show that marker type -->
                                         <a href="#" data-type="household" onclick="selectFilterType('household', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background:#28a745;"></span>
+                                                <span class="filter-icon" style="background:#1565c0;"></span>
                                                 <span>Households</span>
                                             </span>
                                         </a>
                                         <a href="#" data-type="business" onclick="selectFilterType('business', event)">
                                             <span class="filter-option">
-                                                <span class="filter-icon" style="background:#9C27B0;"></span>
+                                                <span class="filter-icon" style="background:#2e7d32;"></span>
                                                 <span>Businesses</span>
                                             </span>
                                         </a>
@@ -260,7 +243,7 @@ $full_name = getCurrentUserName();
                             </button>
                             <button class="gm-action-btn gm-action-btn--separator" onclick="showSDSSRulesReport()">
                                 <i class="fas fa-list-check"></i>
-                                <span>Rules Summary</span>
+                                <span>Barangay Rules</span>
                             </button>
                         </div>
                     </div>
@@ -273,7 +256,12 @@ $full_name = getCurrentUserName();
                         <h1>Utilities Application Management</h1>
                     </div>
                     <div class="header-right">
-                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
                     </div>
                 </header>
                 <div class="page-header">
@@ -315,7 +303,12 @@ $full_name = getCurrentUserName();
                         <h1>Utilities Application Management</h1>
                     </div>
                     <div class="header-right">
-                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
+                        </div>
                     </div>
                 </header>
                 <div class="page-header">
@@ -367,7 +360,10 @@ $full_name = getCurrentUserName();
                         <h1>Utilities Application Management</h1>
                     </div>
                     <div class="header-right">
-                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                        <div class="user-greeting">
+                            <p class="username">Admin</p>
+                            <div class="user_image"><span class="user_avatar_header">A</span></div>
+                        </div>
                     </div>
                 </header>
                 <div class="page-header">
@@ -517,7 +513,10 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -563,7 +562,10 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                            <p class="username">Admin</p>
+                            <div class="user_image">
+                                <span class="user_avatar_header">A</span>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -650,7 +652,6 @@ $full_name = getCurrentUserName();
     <script src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
-    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
