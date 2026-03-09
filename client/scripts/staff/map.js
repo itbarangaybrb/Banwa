@@ -1,4 +1,4 @@
-const MAP_HANDLER_URL = '/Banwa/server/handlers/map/map_handler.php';
+const MAP_HANDLER_URL = '/server/handlers/map/map_handler.php';
 
 // Map variables
 const map = L.map('map').setView([14.6175, 121.0756], 17);
