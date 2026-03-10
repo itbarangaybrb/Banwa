@@ -622,20 +622,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
         await Notification.requestPermission();
     }
 
-    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("Business Application Submitted", {
-                body: "Click to view your application status",
-                icon: "/client/img/banwalogo.png",
-                data: { url: "/client/pages/resident/status.php" }
-            });
-        });
-    }
-
     const confirmBusResult = await business_app_swal.fire({
         icon: 'question',
-        title: 'Submit Application?',
-        html: 'Are you sure you want to submit this application?',
+        title: 'Submit your application?',
+        text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonText: 'Yes, submit it!',
         cancelButtonText: 'Cancel',
@@ -646,6 +636,16 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmBusResult.isConfirmed) {
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Business Application Submitted", {
+                    body: "Click to view your application status",
+                    icon: "/client/img/banwalogo.png",
+                    data: { url: "/client/pages/resident/status.php" }
+                });
+            });
+        }
+
         const formData = new FormData();
 
         // Add action for business_handler.php
@@ -725,6 +725,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+
+                    if (sockets["business"] && sockets["business"].readyState === WebSocket.OPEN) {
+                        sockets["business"].send(JSON.stringify({ type: "business_update", action: "new_application" }));
+                    }
+
                     business_app_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1149,5 +1154,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.address) addressOwner.value = data.address;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
+    }
+
+    if (!sockets["business_applications"]) {
+        initSocket("business_applications", "ws://localhost:8081", data => { });
     }
 });

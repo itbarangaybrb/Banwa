@@ -868,3 +868,26 @@ Stack trace:
 #3 /home/jeferson/Desktop/Banwa/server/handlers/staff/business/business_handler.php(16): require_once('...')
 #4 {main}
   thrown in /home/jeferson/Desktop/Banwa/vendor/composer/autoload_real.php on line 41
+[10-Mar-2026 14:35:30 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[10-Mar-2026 14:35:30 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[10-Mar-2026 14:35:47 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[10-Mar-2026 14:35:47 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[10-Mar-2026 14:35:50 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"valid_id_3.jpg","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Lease Contract"],"allVerified":false}}
+[10-Mar-2026 14:35:51 UTC] R1 Check - Required: []
+[10-Mar-2026 14:35:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 14:35:51 UTC] R1 Check - Missing: []
+[10-Mar-2026 14:35:51 UTC] R1 Check - Required: []
+[10-Mar-2026 14:35:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 14:35:51 UTC] R1 Check - Missing: []
+[10-Mar-2026 15:54:06 UTC] R1 Check - Required: []
+[10-Mar-2026 15:54:06 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 15:54:06 UTC] R1 Check - Missing: []
+[10-Mar-2026 15:54:06 UTC] R1 Check - Required: []
+[10-Mar-2026 15:54:06 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 15:54:06 UTC] R1 Check - Missing: []
+[10-Mar-2026 15:54:11 UTC] R1 Check - Required: []
+[10-Mar-2026 15:54:11 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 15:54:11 UTC] R1 Check - Missing: []
+[10-Mar-2026 15:54:11 UTC] R1 Check - Required: []
+[10-Mar-2026 15:54:11 UTC] R1 Check - Submitted: ["Lease Contract"]
+[10-Mar-2026 15:54:11 UTC] R1 Check - Missing: []

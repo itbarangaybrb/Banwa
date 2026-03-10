@@ -475,18 +475,9 @@ newSummaryForm.addEventListener('submit', async (e) => {
         await Notification.requestPermission();
     }
 
-    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification('Application Submitted', {
-                body: "Click to view your application status",
-                icon: "/client/img/banwalogo.png",
-                data: { url: "/client/pages/resident/status.php" }
-            });
-        });
-    }
-
     const confirmResult = await Swal.fire({
-        title: 'Submit Report?',
+        icon: 'question',
+        title: 'Submit your application?',
         text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonColor: '#00247C',
@@ -501,6 +492,16 @@ newSummaryForm.addEventListener('submit', async (e) => {
     });
 
     if (confirmResult.isConfirmed) {
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification('Application Submitted', {
+                    body: "Click to view your application status",
+                    icon: "/client/img/banwalogo.png",
+                    data: { url: "/client/pages/resident/status.php" }
+                });
+            });
+        }
+
         const formData = new FormData();
 
         // 1. ADD THE ACTION (Crucial for construction_handler.php)
@@ -567,6 +568,11 @@ newSummaryForm.addEventListener('submit', async (e) => {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+
+                    if (sockets["construction"] && sockets["construction"].readyState === WebSocket.OPEN) {
+                        sockets["construction"].send(JSON.stringify({ type: "construction_update", action: "new_application" }));
+                    }
+
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -901,4 +907,8 @@ document.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('change', () => calculateTotalDays(startDate, endDate, numberOfWorkingDays));
         });
     }
+
+     if (!sockets["construction_applications"]) {
+            initSocket("construction_applications", "ws://localhost:8081", data => { });
+        }
 });

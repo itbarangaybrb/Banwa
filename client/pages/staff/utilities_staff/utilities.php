@@ -645,7 +645,7 @@
         </div>
     </main>
 
-    <script src="../../../scripts/staff/utilities_staff/utilities.js"></script>
+    <script type="module" src="../../../scripts/staff/utilities_staff/utilities.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 

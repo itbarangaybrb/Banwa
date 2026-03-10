@@ -1,4 +1,5 @@
 // Configuration imports for service worker registration and address data
+import { initSocket, sockets } from '../utils/socketUtils.js';
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
 import { registerServiceWorker } from '../../../register_sw.js';
@@ -442,18 +443,9 @@ newSummaryForm.addEventListener('submit', async function (e) {
         await Notification.requestPermission();
     }
 
-    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("Application Submitted", {
-                body: "Click to view your application status",
-                icon: "/client/img/banwalogo.png",
-                data: { url: "/client/pages/resident/status.php" }
-            });
-        });
-    }
-
     const confirmResult = await Swal.fire({
-        title: 'Submit Report?',
+        icon: 'question',
+        title: 'Submit your application?',
         text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonColor: '#00247C',
@@ -468,6 +460,16 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmResult.isConfirmed) {
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Application Submitted", {
+                    body: "Click to view your application status",
+                    icon: "/client/img/banwalogo.png",
+                    data: { url: "/client/pages/resident/status.php" }
+                });
+            });
+        }
+
         const formData = new FormData();
 
         formData.append('action', 'create');
@@ -499,6 +501,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+
+                    if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
+                        sockets["utility_applications"].send(JSON.stringify({ type: "utility_applications_update", action: "new_application" }));
+                    }
+
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -775,5 +782,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.address) addressOwner.value = data.address;
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
+    }
+
+    if (!sockets["utility_applications"]) {
+        initSocket("utility_applications", "ws://localhost:8081", data => { });
     }
 });

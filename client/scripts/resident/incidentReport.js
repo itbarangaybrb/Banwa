@@ -676,20 +676,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
         await Notification.requestPermission();
     }
 
-    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("Incident Report Submitted", {
-                body: "Click to view your report status",
-                icon: "/client/img/banwalogo.png",
-                data: { url: "/client/pages/resident/status.php" }
-            });
-        });
-    }
-
     const confirmInciStaffResult = await ir_swal.fire({
         icon: 'question',
-        title: 'Submit Report?',
-        html: 'Are you sure you want to submit this incident report?',
+        title: 'Submit your application?',
+        text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonText: 'Yes, submit it!',
         cancelButtonText: 'Cancel',
@@ -700,6 +690,16 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmInciStaffResult.isConfirmed) {
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Incident Report Submitted", {
+                    body: "Click to view your report status",
+                    icon: "/client/img/banwalogo.png",
+                    data: { url: "/client/pages/resident/status.php" }
+                });
+            });
+        }
+
         const formData = new FormData();
 
         formData.append('action', 'create');
@@ -777,6 +777,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+
+                    if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
+                        sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
+                    }
+
                     ir_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1139,5 +1144,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Failed to fetch user data:', err);
+    }
+
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
     }
 });

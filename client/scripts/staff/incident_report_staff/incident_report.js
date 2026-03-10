@@ -1,4 +1,5 @@
 // Configuration
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 let incidents = [];
 
@@ -47,7 +48,7 @@ document.head.appendChild(swalStyle);
 const incidentAlertConfig = Swal.mixin({
     padding: '2em',
     customClass: {
-        title: 'swal-title-center', 
+        title: 'swal-title-center',
         htmlContainer: 'swal-text-center',
         actions: 'swal-actions-spacing'
     },
@@ -288,10 +289,15 @@ function loadIncidentsFromDB() {
 }
 
 /**
- * Automatically refreshes the active tab every 30 seconds.
+ * Refreshes the currently active tab's content with latest application data.
+ * Triggered by WebSocket construction updates.
+ * 
+ * Uses `isRefreshing` flag to prevent concurrent refreshes.
+ * 
+ * @see {@link loadApplicationsFromDB} - Fetches fresh data
  */
 let isRefreshing = false;
-setInterval(() => {
+function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
 
@@ -311,7 +317,7 @@ setInterval(() => {
     } else {
         finish();
     }
-}, 30000);
+};
 
 /**
  * Loads incidents into the process table with actionable statuses
@@ -512,7 +518,7 @@ function applyPrompt(text) {
 
 /**
  * Opens the update modal for a specific incident and loads current data
- * Includes DSS evaluation results display and status tracking
+ * Includes Evaluation Results display and status tracking
  * 
  * @param {number} appId - The incident ID to open in the update modal
  */
@@ -520,16 +526,16 @@ function openUpdateModal(appId) {
     const incident = incidents.find(i => i.id == appId);
 
     if (!incident) {
-            // REPLACED WITH SWEETALERT2
-            incidentAlertConfig.fire({
-                icon: 'error',
-                title: 'Not Found',
-                text: 'Incident data not found.',
-                confirmButtonText: 'Understood',
-                confirmButtonColor: '#d33'
-            });
-            return;
-        }
+        // REPLACED WITH SWEETALERT2
+        incidentAlertConfig.fire({
+            icon: 'error',
+            title: 'Not Found',
+            text: 'Incident data not found.',
+            confirmButtonText: 'Understood',
+            confirmButtonColor: '#d33'
+        });
+        return;
+    }
 
     document.getElementById('updateReportId').value = incident.id;
     document.getElementById('displayCurrentStatus').value = incident.status;
@@ -554,7 +560,7 @@ function openUpdateModal(appId) {
  * @param {Object} incident - The incident object containing basic incident data
  */
 function fetchDSSEvaluation(appId, incident) {
-    console.debug('fetchDSSEvaluation ->', IR_HANDLER_URL, appId);
+    // console.debug('fetchDSSEvaluation ->', IR_HANDLER_URL, appId);
     // Use 'application_id' parameter to match the PHP backend expectation
     fetch(`${IR_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
@@ -562,7 +568,7 @@ function fetchDSSEvaluation(appId, incident) {
             return res.json();
         })
         .then(data => {
-            console.debug('DSS response for', appId, data);
+            // console.debug('DSS response for', appId, data);
             const existing = document.getElementById('dssEvaluationSection');
             if (data && data.status === 'success' && data.evaluation) {
                 if (existing) existing.remove();
@@ -664,7 +670,7 @@ function addDSSSectionToModal(evaluation, incident) {
     dssSection.innerHTML = `
 <div class="dss-evaluation-section">
     <div class="dss-header">
-        <h3>DSS Evaluation Result</h3>
+        <h3>Evaluation Result</h3>
         <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
             ${dssStatus}
         </span>
@@ -815,7 +821,7 @@ function submitUpdate(event) {
         .then(data => {
             if (data.status === 'success') {
                 closeModal('updateModal');
-                
+
                 // REPLACED WITH SWEETALERT2
                 incidentAlertConfig.fire({
                     icon: 'success',
@@ -824,6 +830,17 @@ function submitUpdate(event) {
                     confirmButtonText: 'Great',
                     confirmButtonColor: '#28a745'
                 });
+
+                if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+                    sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
+                }
+
+                if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
+                    sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "status_update" }));
+                }
 
                 loadManagementTable();
                 loadProcessTable();
@@ -840,7 +857,7 @@ function submitUpdate(event) {
         })
         .catch(error => {
             console.error('Error updating incident:', error);
-            
+
             // REPLACED WITH SWEETALERT2
             incidentAlertConfig.fire({
                 icon: 'error',
@@ -1634,6 +1651,16 @@ function updateApplicationDate() {
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
+
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => {
+            if (data.type === "incident_report_applications_update") {
+                refreshActiveTab()
+                loadManagementTable();
+                loadProcessTable();
+            }
+        });
+    }
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK
@@ -1683,7 +1710,7 @@ function formatDate(dateString) {
             day: 'numeric'
         });
     } catch (e) {
-        console.warn('Error formatting date:', dateString, e);
+        // console.warn('Error formatting date:', dateString, e);
         return 'Invalid Date';
     }
 }
@@ -1706,7 +1733,7 @@ function formatDateTime(dateTimeString) {
             minute: '2-digit'
         });
     } catch (e) {
-        console.warn('Error formatting date/time:', dateTimeString, e);
+        // console.warn('Error formatting date/time:', dateTimeString, e);
         return 'Invalid Date/Time';
     }
 }
@@ -1726,10 +1753,98 @@ function formatTime(dateTimeString) {
             minute: '2-digit'
         });
     } catch (e) {
-        console.warn('Error formatting time:', dateTimeString, e);
+        // console.warn('Error formatting time:', dateTimeString, e);
         return 'Invalid Time';
     }
 }
+
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// ===============================================
+
+// Core application functions
+window.loadIncidentsFromDB = loadIncidentsFromDB;
+window.filterIncidents = filterIncidents;
+window.createIncident = createIncident;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+
+// Summary functions
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+
+// Process and management functions
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.archiveApplication = archiveApplication;
+
+// Report generation
+window.generateIncidentReport = generateIncidentReport;
+window.generateIncidentClearance = generateIncidentReport; // Alias
+
+// Tab navigation and initialization
+window.switchTab = switchTab;
+window.initializeSidebarNav = initializeSidebarNav;
+
+// Helper functions
+window.getCurrentDateString = getCurrentDateString;
+window.updateApplicationDate = updateApplicationDate;
+window.filterReviewIncidents = filterReviewIncidents;
+window.resetIncidentForm = resetIncidentForm;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.getSeverityBadge = getSeverityBadge;
+window.formatDate = formatDate;
+window.formatDateTime = formatDateTime;
+window.formatTime = formatTime;
+
+// Chart instances if needed globally
+window.chart1Instance = chart1Instance;
+window.chart2Instance = chart2Instance;
+window.chart3Instance = chart3Instance;
+
+// Ensure global scope (Alias both names just in case) - like in construction.js
+window.generateIncidentReport = generateIncidentReport;
+window.generateIncidentClearance = generateIncidentReport;
+
+// Expose all functions used by inline HTML handlers (required for type="module")
+window.filterIncidents = filterIncidents;
+window.createIncident = createIncident;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.archiveApplication = archiveApplication;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.switchTab = switchTab;
+window.toggleMobileMenu = toggleMobileMenu; // From map.js
+window.clearSearch = clearSearch; // From map.js
+window.performSearch = performSearch; // From map.js
+window.toggleFilterDropdown = toggleFilterDropdown; // From map.js
+window.selectFilterType = selectFilterType; // From map.js
+window.toggleFloodLayer = toggleFloodLayer; // From map.js
+window.toggleFaultLine = toggleFaultLine; // From map.js
+window.filterConstructionByType = filterConstructionByType; // From map.js
+window.toggleConstructionFilters = toggleConstructionFilters; // From map.js
+window.toggleStreetMap = toggleStreetMap; // From map.js
+window.toggleSatellite = toggleSatellite; // From map.js
+window.resetView = resetView; // From map.js
+window.getFloodIncidentsSummary = getFloodIncidentsSummary; // From map.js
+window.showFaultLineRiskAssessment = showFaultLineRiskAssessment; // From map.js
+window.showIncidentStatistics = showIncidentStatistics; // From map.js
+window.showIncidentHeatmap = showIncidentHeatmap; // From map.js
+window.showIncidentSummaryReport = showIncidentSummaryReport; // From map.js
+window.showResponseRulesReport = showResponseRulesReport; // From map.js
+window.confirmLocation = confirmLocation; // From map picker modal
 
 // DO NOT REMOVE!!! - JEP
 // /**
