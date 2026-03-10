@@ -56,7 +56,7 @@ if ($_SESSION['role_id'] != 8) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="rpLotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="rpLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="rpLotNo" id="rpLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -118,7 +118,7 @@ if ($_SESSION['role_id'] != 8) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="vicLotNo">Lot No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="vicLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="vicLotNo" id="vicLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -193,7 +193,7 @@ if ($_SESSION['role_id'] != 8) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="susLotNo">Lot No. (if known)</label>
+                        <label class="label" for="susLotNo">House No. (if known)</label>
                         <input type="tel" name="susLotNo" id="susLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -298,7 +298,7 @@ if ($_SESSION['role_id'] != 8) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="incidentLotNo">Incident Location - Lot No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="incidentLotNo">Incident Location - House No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="incidentLotNo" id="incidentLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>

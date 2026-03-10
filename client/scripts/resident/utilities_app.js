@@ -193,7 +193,7 @@ const validator = (() => {
      */
     function validateAddress(lotInput, streetInput) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!lot) return validator.number(lotInput, 'House No. is required');
         if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
         const fullAddress = `${lot} ${street}`;
         const match = addressCoordinates.find(a => a.address === fullAddress);
@@ -290,7 +290,7 @@ const validator = (() => {
 const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
 
     { el: requestDate, type: 'date', message: 'Request date is required', rules: { todayOnly: true } },
@@ -298,7 +298,7 @@ const validationConfig = [
     { el: natureOfWork, type: 'select', message: 'Nature of work is required' },
     { el: provider, type: 'select', message: 'Provider is required' },
     { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
-    { el: utilityLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: utilityLotNo, type: 'number', message: 'House No. is required', rules: { maxLength: 2 } },
     { el: utilityStreet, type: 'select', message: 'Street is required' },
 ];
 

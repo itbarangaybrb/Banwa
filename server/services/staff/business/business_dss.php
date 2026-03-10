@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Decision Support System Rule Engine for business permit application evaluation
+ * Decision Support System Rule Engine for Business Clearance application evaluation
  * Implements a Rete algorithm-based expert system to assess permit eligibility
  */
 class DSSRuleEngine
@@ -16,7 +16,7 @@ class DSSRuleEngine
     }
 
     /**
-     * Loads and defines all business permit evaluation rules into the rule base
+     * Loads and defines all Business Clearance evaluation rules into the rule base
      * Each rule contains conditions to evaluate and actions to take if conditions match
      */
     private function loadRules()
@@ -222,7 +222,7 @@ class DSSRuleEngine
                 $requirements[] = 'Lease Contract';
                 break;
             case 'Renew':
-                $requirements[] = 'Previous Business Permit';
+                $requirements[] = 'Previous Business Clearance';
                 break;
             case 'Closure':
                 $requirements[] = 'Notarized affidavit for Business Closure';
@@ -381,7 +381,7 @@ class DSSRuleEngine
 
     /**
      * Main evaluation function orchestrating the complete Rete algorithm process
-     * @param array $applicationData - Business permit application data to evaluate
+     * @param array $applicationData - Business Clearance application data to evaluate
      * @return array - Complete evaluation result with status, details, and timestamp
      */
     public function evaluateApplication($applicationData)

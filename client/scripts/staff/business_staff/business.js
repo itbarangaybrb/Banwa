@@ -49,10 +49,10 @@ const swalTopConfig = {
         const title = modal.querySelector('.swal2-title');
         const content = modal.querySelector('.swal2-html-container');
         const actions = modal.querySelector('.swal2-actions');
-        
+
         // 1. Pushes the Checkmark/Icon down from the very top
         if (icon) {
-            icon.style.marginTop = '3rem'; 
+            icon.style.marginTop = '3rem';
             icon.style.marginBottom = '1rem';
         }
         // 2. Adds spacing around the "Success" text
@@ -885,34 +885,34 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            document.getElementById('updateModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Success',
-                text: 'Application updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            loadManagementTable();
-            loadProcessTable();
-        } else {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'error',
-                title: 'Update Failed',
-                text: data.message || 'An unknown error occurred.'
-            });
-        }
-    })
-    .catch(err => {
-        console.error('Submit update error:', err);
-        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('updateModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'An unknown error occurred.'
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Submit update error:', err);
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
+        });
 }
 
 /**
@@ -2251,7 +2251,7 @@ const statusTemplates = {
     'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
     'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
     'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
-    'Approved': "Your Business Permit is now ready for pick-up/download."
+    'Approved': "Your Business Clearance is now ready for pick-up/download."
 };
 
 // Event listener for status change to update textarea with templates

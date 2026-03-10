@@ -565,7 +565,7 @@ document.getElementById('mngAccForm').addEventListener('submit', async (e) => {
         validateInput(middleName, 'Middle name is required'),
         validateInput(lastName, 'Last name is required'),
         validateInput(suffix, 'Suffix is required'),
-        validateInput(contactNo, 'Contact no. is required', {
+        validateInput(contactNo, 'Contact No. is required', {
             pattern: /^[0-9]+$/,
             maxLength: 11,
             errorMessage: 'Contact number must be numeric, max 11 digits'

@@ -42,11 +42,11 @@ const validator = (() => {
         if (!input) return true;
         const value = input.value.trim();
         if (!value) { showError(input, message); return false; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { 
-            showError(input, 'Enter a valid email address'); 
-            return false; 
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(input, 'Enter a valid email address');
+            return false;
         }
-        clearError(input); 
+        clearError(input);
         return true;
     }
 
@@ -101,7 +101,7 @@ function setupRealtimeValidation() {
  */
 async function handleForgotPassSubmit(e) {
     e.preventDefault();
-    
+
     // Reset UI state before processing
     forgotPassElements.formMessage.textContent = '';
     forgotPassElements.formMessage.style.display = 'none';
@@ -116,7 +116,7 @@ async function handleForgotPassSubmit(e) {
          */
         const { data, error } = await supabase.auth.resetPasswordForEmail(
             forgotPassElements.email.value.trim(),
-            { redirectTo: 'http://localhost:8080/client/pages/auth/reset_pass.php' }
+            { redirectTo: 'https://banwa.onrender.com/client/pages/auth/reset_pass.php' }
         );
 
         if (error) {
@@ -130,7 +130,7 @@ async function handleForgotPassSubmit(e) {
         forgotPassElements.formMessage.style.display = 'block';
         forgotPassElements.formMessage.style.color = 'green';
         forgotPassElements.formMessage.textContent = 'Email submitted. Check your inbox for the reset link.';
-        
+
     } catch (err) {
         console.error("Critical Auth Error:", err);
         forgotPassElements.formMessage.style.display = 'block';

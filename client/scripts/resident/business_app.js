@@ -290,7 +290,7 @@ const validator = (() => {
      */
     function validateAddress(lotInput, streetInput) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!lot) return validator.number(lotInput, 'House No. is required');
         if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
         const fullAddress = `${lot} ${street}`;
         const match = addressCoordinates.find(a => a.address === fullAddress);
@@ -331,17 +331,17 @@ const validator = (() => {
 const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
     { el: businessName, type: 'text', message: 'Business Name is required' },
     { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
     { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
     { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
     { el: businessStatus, type: 'radio', message: 'Please select business status' },
-    { el: contactNoBusiness, type: 'number', message: 'Contact no. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contactNoBusiness, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
     { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
-    { el: businessLotNo, type: 'number', message: 'Lot no. is required', rules: { maxLength: 2 } },
+    { el: businessLotNo, type: 'number', message: 'House No. is required', rules: { maxLength: 2 } },
     { el: businessStreet, type: 'select', message: 'Street is required' },
     { el: typeOfStructureSelect, type: 'select', message: 'Type of structure is required' },
     { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
@@ -358,7 +358,7 @@ const requirementKeywords = {
     'DTI': ['department of trade and industry', 'dti registration', 'business name registration'],
     'TCT': ['transfer certificate of title', 'tct no.', "owner's duplicate copy"],
     'Lease Contract': ['contract of lease', 'lease agreement', 'lessor', 'lessee'],
-    'Previous Business Permit': ['business permit', "mayor's permit", 'barangay business clearance', 'business clearance']
+    'Previous Business Clearance': ['Business Clearance', "mayor's permit", 'barangay business clearance', 'business clearance']
     // ← ADD MORE HERE when you add new requirement types
 };
 
@@ -368,7 +368,7 @@ const requirementNameRules = {
     'TCT': 'owner',              // must contain owner name
     'Lease Contract': 'owner',   // must contain owner name
     'SEC': 'either',             // business OR owner name
-    'Previous Business Permit': 'either'
+    'Previous Business Clearance': 'either'
 };
 
 // let documentVerificationDone = false;
@@ -582,7 +582,7 @@ function natureOfApplicationSel(selectEl) {
 
     const visibleMap = {
         'New': ['SEC', 'DTI', 'TCT', 'Lease Contract'],
-        'Renew': ['Previous Business Permit', 'Photocopy of Valid ID of Business Owner'],
+        'Renew': ['Previous Business Clearance', 'Photocopy of Valid ID of Business Owner'],
         'Closure': ['Notarized affidavit for Business Closure']
     };
 
@@ -798,7 +798,7 @@ async function verifyUploadedDocuments() {
             });
             return;
         }
-                return;
+        return;
     }
 
     verifyBtn.textContent = `Processing file 1 of ${total}...`;

@@ -279,7 +279,7 @@ class ConstructionDSSRuleEngine
         }
 
         if (strpos($activity, 'commercial') !== false) {
-            $requirements[] = 'Business Permit';
+            $requirements[] = 'Business Clearance';
             $requirements[] = 'Fire Safety Certificate';
         }
 

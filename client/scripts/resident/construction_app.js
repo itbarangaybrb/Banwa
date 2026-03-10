@@ -199,7 +199,7 @@ const validator = (() => {
      */
     function validateAddress(lotInput, streetInput) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot) return validator.number(lotInput, 'Lot no. is required');
+        if (!lot) return validator.number(lotInput, 'House No. is required');
         if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
         const fullAddress = `${lot} ${street}`;
         const match = addressCoordinates.find(a => a.address === fullAddress);
@@ -297,7 +297,7 @@ const validator = (() => {
 const validationConfig = [
     { el: firstName, type: 'text', message: 'Please enter your first name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Please enter your last name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
     { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
@@ -306,7 +306,7 @@ const validationConfig = [
     { el: endDate, type: 'date', message: 'Please select the expected completion date' },
     { el: numberOfWorkers, type: 'number', message: 'Please enter the number of workers', rules: { minLength: 1, maxLength: 2, errorMessage: 'Number of workers must be at least 1' } },
     { el: contractorName, type: 'text', message: 'Please enter the contractor\'s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor\'s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact no. must be exactly 11 digits' } },
+    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor\'s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: applicationMethod, type: 'select', message: 'Please select how you will submit the application' },
     { el: constructionLotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
     { el: constructionStreet, type: 'select', message: 'Please select the street' },

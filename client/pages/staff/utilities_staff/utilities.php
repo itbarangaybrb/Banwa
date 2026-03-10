@@ -334,7 +334,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Applicant</th>
-                                <th>Contact no.</th>
+                                <th>Contact No.</th>
                                 <th>Provider</th>
                                 <th>N. of Work</th>
                                 <th>Address</th>
@@ -401,7 +401,7 @@
                                 <div class="error-msg"></div>
                             </div>
                             <div class="form-group">
-                                <label for="contactNoOwner">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                                <label for="contactNoOwner">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
                                 <input type="tel" id="contactNoOwner" maxlength="11">
                                 <div class="error-msg"></div>
                             </div>
@@ -421,7 +421,7 @@
                         <div class="section-title">Utility Location</div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="utilityLotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                                <label for="utilityLotNo">House No. <span style="color:#BB1B1B;">*</span></label>
                                 <input type="tel" id="utilityLotNo" maxlength="2">
                                 <div class="error-msg"></div>
                             </div>

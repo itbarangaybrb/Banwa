@@ -11,28 +11,28 @@ LINE 1: INSERT INTO business_status_history
 LINE 1: INSERT INTO business_status_history 
                     ^
 [01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
-[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
 [01-Feb-2026 12:21:49 UTC] R1 Check - Required: []
-[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 12:21:49 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 12:21:49 UTC] R1 Check - Missing: []
 [01-Feb-2026 12:39:26 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
                     ^
 [01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
-[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Clearance\\\"]\"]"]
 [01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
 [01-Feb-2026 12:40:49 UTC] R1 Check - Required: []
-[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Permit\\\"]\"]"]
+[01-Feb-2026 12:40:49 UTC] R1 Check - Submitted: ["[\"[\\\"Previous Business Clearance\\\"]\"]"]
 [01-Feb-2026 12:40:49 UTC] R1 Check - Missing: []
 [01-Feb-2026 12:45:02 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
                     ^
 [01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
-[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Clearance\\\\\\\"]\\\"]\"]"]
 [01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
 [01-Feb-2026 12:45:18 UTC] R1 Check - Required: []
-[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Permit\\\\\\\"]\\\"]\"]"]
+[01-Feb-2026 12:45:18 UTC] R1 Check - Submitted: ["[\"[\\\"[\\\\\\\"Previous Business Clearance\\\\\\\"]\\\"]\"]"]
 [01-Feb-2026 12:45:18 UTC] R1 Check - Missing: []
 [01-Feb-2026 13:15:01 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
@@ -41,19 +41,19 @@ LINE 1: INSERT INTO business_status_history
 LINE 1: INSERT INTO business_status_history 
                     ^
 [01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
-[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
 [01-Feb-2026 13:47:38 UTC] R1 Check - Required: []
-[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:47:38 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 13:47:38 UTC] R1 Check - Missing: []
 [01-Feb-2026 13:49:14 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
                     ^
 [01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
-[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
 [01-Feb-2026 13:49:31 UTC] R1 Check - Required: []
-[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Permit\"]"]
+[01-Feb-2026 13:49:31 UTC] R1 Check - Submitted: ["[\"Previous Business Clearance\"]"]
 [01-Feb-2026 13:49:31 UTC] R1 Check - Missing: []
 [01-Feb-2026 13:57:28 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "business_status_history" does not exist
 LINE 1: INSERT INTO business_status_history 
@@ -107,76 +107,76 @@ Stack trace:
 Stack trace:
 #0 {main}
 [04-Feb-2026 20:18:51 UTC] R1 Check - Required: []
-[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:18:51 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:18:51 UTC] R1 Check - Required: []
-[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:18:51 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:18:51 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:27:26 UTC] R1 Check - Required: []
-[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:27:26 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:27:26 UTC] R1 Check - Required: []
-[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:27:26 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:27:26 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:29:09 UTC] R1 Check - Required: []
-[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:29:09 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:29:09 UTC] R1 Check - Required: []
-[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:29:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:29:09 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:30:30 UTC] R1 Check - Required: []
-[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:30:30 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:30:30 UTC] R1 Check - Required: []
-[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:30:30 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:30:30 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:35:34 UTC] R1 Check - Required: []
-[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:35:34 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:35:34 UTC] R1 Check - Required: []
-[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:35:34 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:35:34 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:39:40 UTC] R1 Check - Required: []
-[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:39:40 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:39:40 UTC] R1 Check - Required: []
-[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:39:40 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:39:40 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:42:35 UTC] R1 Check - Required: []
-[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:42:35 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:42:35 UTC] R1 Check - Required: []
-[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:42:35 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:42:35 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:43:15 UTC] R1 Check - Required: []
-[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:43:15 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:43:15 UTC] R1 Check - Required: []
-[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:43:15 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:43:15 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:47:23 UTC] R1 Check - Required: []
-[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:47:23 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:47:23 UTC] R1 Check - Required: []
-[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:47:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:47:23 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:59:57 UTC] R1 Check - Required: []
-[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:59:57 UTC] R1 Check - Missing: []
 [04-Feb-2026 20:59:57 UTC] R1 Check - Required: []
-[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 20:59:57 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 20:59:57 UTC] R1 Check - Missing: []
 [04-Feb-2026 21:10:10 UTC] R1 Check - Required: []
-[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 21:10:10 UTC] R1 Check - Missing: []
 [04-Feb-2026 21:10:10 UTC] R1 Check - Required: []
-[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:10:10 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 21:10:10 UTC] R1 Check - Missing: []
 [04-Feb-2026 21:11:56 UTC] R1 Check - Required: []
-[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 21:11:56 UTC] R1 Check - Missing: []
 [04-Feb-2026 21:11:56 UTC] R1 Check - Required: []
-[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[04-Feb-2026 21:11:56 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [04-Feb-2026 21:11:56 UTC] R1 Check - Missing: []
 [05-Feb-2026 03:14:03 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function getEvaluationSummary() in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php:1076
 Stack trace:
@@ -211,10 +211,10 @@ Stack trace:
 [05-Feb-2026 03:25:13 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
 [05-Feb-2026 03:25:43 UTC] PHP Notice:  session_start(): Ignoring session_start() because a session is already active (started from C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\business\business_handler.php on line 10) in C:\Users\jeffm\Desktop\Banwa\server\services\staff\business\business_applications.php on line 5
 [05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
-[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []
 [05-Feb-2026 03:27:18 UTC] R1 Check - Required: []
-[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[05-Feb-2026 03:27:18 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [05-Feb-2026 03:27:18 UTC] R1 Check - Missing: []
 [15-Feb-2026 14:13:53 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=, is_staff=NULL
 [15-Feb-2026 14:13:53 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
@@ -364,10 +364,10 @@ Stack trace:
 [27-Feb-2026 11:14:14 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [27-Feb-2026 11:14:14 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [27-Feb-2026 11:14:57 UTC] R1 Check - Required: []
-[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [27-Feb-2026 11:14:57 UTC] R1 Check - Missing: []
 [27-Feb-2026 11:14:57 UTC] R1 Check - Required: []
-[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:14:57 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [27-Feb-2026 11:14:57 UTC] R1 Check - Missing: []
 [27-Feb-2026 11:14:57 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(70) already exists.
@@ -376,10 +376,10 @@ DETAIL:  Key (application_id)=(70) already exists.
 [27-Feb-2026 11:15:07 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [27-Feb-2026 11:15:07 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [27-Feb-2026 11:15:15 UTC] R1 Check - Required: []
-[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [27-Feb-2026 11:15:15 UTC] R1 Check - Missing: []
 [27-Feb-2026 11:15:15 UTC] R1 Check - Required: []
-[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[27-Feb-2026 11:15:15 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [27-Feb-2026 11:15:15 UTC] R1 Check - Missing: []
 [27-Feb-2026 11:15:15 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(71) already exists.
@@ -490,27 +490,27 @@ DETAIL:  Key (application_id)=(83) already exists.
 DETAIL:  Key (application_id)=(84) already exists.
 [01-Mar-2026 05:38:17 UTC] DSS re-evaluation failed after OCR analyze: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(84) already exists.
-[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Clearance"]
 [01-Mar-2026 08:47:29 UTC] R1 Check - Submitted: ["[\"SEC\",\"DTI\"]"]
-[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Permit"]
-[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Clearance"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Required: ["Previous Business Clearance"]
 [01-Mar-2026 08:47:29 UTC] R1 Check - Submitted: ["[\"SEC\",\"DTI\"]"]
-[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Permit"]
+[01-Mar-2026 08:47:29 UTC] R1 Check - Missing: ["Previous Business Clearance"]
 [01-Mar-2026 11:17:56 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:17:56 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:18:27 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:18:27 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:18:28 UTC] R1 Check - Required: []
-[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:18:28 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:18:28 UTC] R1 Check - Required: []
-[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:18:28 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:18:28 UTC] R1 Check - Required: []
-[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:18:28 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:18:28 UTC] R1 Check - Required: []
-[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:18:28 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:18:28 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:18:28 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(79) already exists.
@@ -519,16 +519,16 @@ DETAIL:  Key (application_id)=(79) already exists.
 [01-Mar-2026 11:26:04 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:26:04 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:26:05 UTC] R1 Check - Required: []
-[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:26:05 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:26:05 UTC] R1 Check - Required: []
-[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:26:05 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:26:05 UTC] R1 Check - Required: []
-[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:26:05 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:26:05 UTC] R1 Check - Required: []
-[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:26:05 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:26:05 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:26:05 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(80) already exists.
@@ -537,16 +537,16 @@ DETAIL:  Key (application_id)=(80) already exists.
 [01-Mar-2026 11:29:07 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:29:07 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:29:08 UTC] R1 Check - Required: []
-[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:29:08 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:29:08 UTC] R1 Check - Required: []
-[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:29:08 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:29:08 UTC] R1 Check - Required: []
-[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:29:08 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:29:08 UTC] R1 Check - Required: []
-[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:29:08 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:29:08 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:29:08 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(81) already exists.
@@ -555,16 +555,16 @@ DETAIL:  Key (application_id)=(81) already exists.
 [01-Mar-2026 11:37:40 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:37:40 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:37:41 UTC] R1 Check - Required: []
-[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:37:41 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:37:41 UTC] R1 Check - Required: []
-[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:37:41 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:37:41 UTC] R1 Check - Required: []
-[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:37:41 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:37:41 UTC] R1 Check - Required: []
-[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:37:41 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:37:41 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:37:41 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(82) already exists.
@@ -609,16 +609,16 @@ DETAIL:  Key (application_id)=(84) already exists.
 [01-Mar-2026 11:58:32 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 11:58:32 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 11:58:33 UTC] R1 Check - Required: []
-[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:58:33 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:58:33 UTC] R1 Check - Required: []
-[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:58:33 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:58:33 UTC] R1 Check - Required: []
-[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:58:33 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:58:33 UTC] R1 Check - Required: []
-[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 11:58:33 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 11:58:33 UTC] R1 Check - Missing: []
 [01-Mar-2026 11:58:33 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(85) already exists.
@@ -627,16 +627,16 @@ DETAIL:  Key (application_id)=(85) already exists.
 [01-Mar-2026 12:00:22 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 12:00:22 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 12:00:23 UTC] R1 Check - Required: []
-[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:00:23 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:00:23 UTC] R1 Check - Required: []
-[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:00:23 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:00:23 UTC] R1 Check - Required: []
-[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:00:23 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:00:23 UTC] R1 Check - Required: []
-[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:00:23 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:00:23 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:00:23 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(86) already exists.
@@ -645,16 +645,16 @@ DETAIL:  Key (application_id)=(86) already exists.
 [01-Mar-2026 12:03:44 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 12:03:44 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 12:03:45 UTC] R1 Check - Required: []
-[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:03:45 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:03:45 UTC] R1 Check - Required: []
-[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:03:45 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:03:45 UTC] R1 Check - Required: []
-[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:03:45 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:03:45 UTC] R1 Check - Required: []
-[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:03:45 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:03:45 UTC] R1 Check - Missing: []
 [01-Mar-2026 12:03:45 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(87) already exists.
@@ -663,16 +663,16 @@ DETAIL:  Key (application_id)=(87) already exists.
 [01-Mar-2026 12:09:08 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 12:09:08 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 12:09:09 UTC] R1 Check - Required: ["Partnership Agreement"]
-[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Missing: ["Partnership Agreement"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Required: ["Partnership Agreement"]
-[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Missing: ["Partnership Agreement"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Required: ["Partnership Agreement"]
-[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Missing: ["Partnership Agreement"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Required: ["Partnership Agreement"]
-[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 12:09:09 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 12:09:09 UTC] R1 Check - Missing: ["Partnership Agreement"]
 [01-Mar-2026 12:09:09 UTC] Failed to create DSS evaluation: SQLSTATE[23505]: Unique violation: 7 ERROR:  duplicate key value violates unique constraint "business_evaluations_application_id_key"
 DETAIL:  Key (application_id)=(88) already exists.
@@ -698,12 +698,12 @@ DETAIL:  Key (application_id)=(89) already exists.
 [01-Mar-2026 13:52:33 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [01-Mar-2026 13:52:51 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [01-Mar-2026 13:52:51 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
-[01-Mar-2026 13:52:52 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"applicationsTable_export (3).pdf","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Previous Business Permit"],"allVerified":false}}
+[01-Mar-2026 13:52:52 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"applicationsTable_export (3).pdf","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Previous Business Clearance"],"allVerified":false}}
 [01-Mar-2026 13:52:52 UTC] R1 Check - Required: []
-[01-Mar-2026 13:52:52 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 13:52:52 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 13:52:52 UTC] R1 Check - Missing: []
 [01-Mar-2026 13:52:52 UTC] R1 Check - Required: []
-[01-Mar-2026 13:52:52 UTC] R1 Check - Submitted: ["Previous Business Permit"]
+[01-Mar-2026 13:52:52 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [01-Mar-2026 13:52:52 UTC] R1 Check - Missing: []
 [02-Mar-2026 12:30:47 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=, is_staff=NULL
 [02-Mar-2026 12:30:47 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=
@@ -796,12 +796,12 @@ Stack trace:
 [04-Mar-2026 10:17:08 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,role_id,full_name,is_staff, is_staff=true
 [04-Mar-2026 10:17:08 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,role_id,full_name,is_staff
 [04-Mar-2026 10:17:10 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"},{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["SEC"],"allVerified":false}}
-[04-Mar-2026 10:17:10 UTC] R1 Check - Required: ["Previous Business Permit"]
+[04-Mar-2026 10:17:10 UTC] R1 Check - Required: ["Previous Business Clearance"]
 [04-Mar-2026 10:17:10 UTC] R1 Check - Submitted: ["SEC"]
-[04-Mar-2026 10:17:10 UTC] R1 Check - Missing: ["Previous Business Permit"]
-[04-Mar-2026 10:17:10 UTC] R1 Check - Required: ["Previous Business Permit"]
+[04-Mar-2026 10:17:10 UTC] R1 Check - Missing: ["Previous Business Clearance"]
+[04-Mar-2026 10:17:10 UTC] R1 Check - Required: ["Previous Business Clearance"]
 [04-Mar-2026 10:17:10 UTC] R1 Check - Submitted: ["SEC"]
-[04-Mar-2026 10:17:10 UTC] R1 Check - Missing: ["Previous Business Permit"]
+[04-Mar-2026 10:17:10 UTC] R1 Check - Missing: ["Previous Business Clearance"]
 [04-Mar-2026 12:28:57 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [04-Mar-2026 12:28:57 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
 [04-Mar-2026 12:29:22 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
@@ -859,3 +859,12 @@ Stack trace:
 [07-Mar-2026 11:43:53 UTC] R1 Check - Required: []
 [07-Mar-2026 11:43:53 UTC] R1 Check - Submitted: ["DTI"]
 [07-Mar-2026 11:43:53 UTC] R1 Check - Missing: []
+[09-Mar-2026 03:41:10 UTC] PHP Warning:  require(/home/jeferson/Desktop/Banwa/vendor/composer/../react/promise/src/functions_include.php): Failed to open stream: No such file or directory in /home/jeferson/Desktop/Banwa/vendor/composer/autoload_real.php on line 41
+[09-Mar-2026 03:41:10 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/jeferson/Desktop/Banwa/vendor/composer/../react/promise/src/functions_include.php' (include_path='.:/usr/share/php') in /home/jeferson/Desktop/Banwa/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/jeferson/Desktop/Banwa/vendor/composer/autoload_real.php(45): {closure:ComposerAutoloaderInitce559b9fbd0e097bccee77e6c3cc8be1::getLoader():37}()
+#1 /home/jeferson/Desktop/Banwa/vendor/autoload.php(22): ComposerAutoloaderInitce559b9fbd0e097bccee77e6c3cc8be1::getLoader()
+#2 /home/jeferson/Desktop/Banwa/server/configs/database.php(2): require_once('...')
+#3 /home/jeferson/Desktop/Banwa/server/handlers/staff/business/business_handler.php(16): require_once('...')
+#4 {main}
+  thrown in /home/jeferson/Desktop/Banwa/vendor/composer/autoload_real.php on line 41

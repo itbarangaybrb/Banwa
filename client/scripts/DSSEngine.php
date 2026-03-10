@@ -1,6 +1,7 @@
 <?php
 
-class DSSEngine {
+class DSSEngine
+{
 
     private $data;
     private $status = 'Pre-Approved'; // Default state: Optimistic
@@ -8,11 +9,13 @@ class DSSEngine {
     private $reasons = [];
 
     // Constructor receives the $_POST data directly
-    public function __construct($formData) {
+    public function __construct($formData)
+    {
         $this->data = $formData;
     }
 
-    public function analyze() {
+    public function analyze()
+    {
         // 1. ROOT NODE: Check Nature of Application
         // Your HTML uses 'New', 'Renew', 'Closure'
         $nature = $this->data['natureOfApplication'] ?? '';
@@ -44,7 +47,8 @@ class DSSEngine {
     }
 
     // --- RULE SET: NEW BUSINESS ---
-    private function evaluateNewBusiness() {
+    private function evaluateNewBusiness()
+    {
         $reqs = $this->data['requirements'] ?? []; // Array from checkboxes
         $bizType = $this->data['typeOfBusiness'] ?? '';
 
@@ -52,7 +56,7 @@ class DSSEngine {
         $hasProofOfPlace = in_array('TCT', $reqs) || in_array('Lease Contract', $reqs);
         if (!$hasProofOfPlace) {
             $this->flagReview(
-                "Missing Proof of Place (TCT or Lease Contract).", 
+                "Missing Proof of Place (TCT or Lease Contract).",
                 "New Application requires location verification."
             );
         }
@@ -70,13 +74,14 @@ class DSSEngine {
     }
 
     // --- RULE SET: RENEWAL ---
-    private function evaluateRenewal() {
+    private function evaluateRenewal()
+    {
         $reqs = $this->data['requirements'] ?? [];
 
         // Rule A: Previous Permit
-        if (!in_array('Previous Business Permit', $reqs)) {
+        if (!in_array('Previous Business Clearance', $reqs)) {
             $this->flagReview(
-                "Missing Previous Business Permit.", 
+                "Missing Previous Business Clearance.",
                 "Renewal requires evidence of prior operation."
             );
         }
@@ -88,27 +93,29 @@ class DSSEngine {
     }
 
     // --- RULE SET: CLOSURE ---
-    private function evaluateClosure() {
+    private function evaluateClosure()
+    {
         $reqs = $this->data['requirements'] ?? [];
 
         // Rule A: Affidavit
         if (!in_array('Notarized affidavit for Business Closure', $reqs)) {
             $this->flagReview(
-                "Missing Notarized Affidavit of Closure.", 
+                "Missing Notarized Affidavit of Closure.",
                 "Legal document for closure is missing."
             );
         }
     }
 
     // --- HEURISTIC: RISK & DATA VALIDATION ---
-    private function evaluateRisk() {
+    private function evaluateRisk()
+    {
         // Rule: High Impact Business Types always go to manual review
         $nature = $this->data['natureOfBusiness'] ?? '';
         $highRiskTypes = ['Manufacturing', 'Wholesale/Repacking']; // Add more as needed
-        
+
         if (in_array($nature, $highRiskTypes)) {
             $this->flagReview(
-                "High-impact business nature ($nature) detected.", 
+                "High-impact business nature ($nature) detected.",
                 "Requires zoning and safety inspection."
             );
         }
@@ -116,21 +123,23 @@ class DSSEngine {
         // Rule: Missing File Upload
         // Your form sends a file, but if the user bypassed it or it failed:
         if (!isset($_FILES['requirementUpload']) || $_FILES['requirementUpload']['error'] != UPLOAD_ERR_OK) {
-             $this->flagReview(
-                "No digital document uploaded.", 
+            $this->flagReview(
+                "No digital document uploaded.",
                 "System requires at least one physical file for digital records."
-             );
+            );
         }
     }
 
     // --- UTILITIES ---
-    private function flagReview($publicComment, $internalReason) {
+    private function flagReview($publicComment, $internalReason)
+    {
         $this->status = 'For Manual Review';
         $this->comments[] = $publicComment;
         $this->reasons[] = $internalReason;
     }
 
-    private function getResult() {
+    private function getResult()
+    {
         return [
             'status' => $this->status,
             'approval_comments' => empty($this->comments) ? 'Application meets preliminary requirements.' : implode(' | ', $this->comments),
@@ -138,4 +147,3 @@ class DSSEngine {
         ];
     }
 }
-?>

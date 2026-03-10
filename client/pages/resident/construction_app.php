@@ -169,7 +169,7 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="contractorContactNumber">Contractor's Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contractorContactNumber">Contractor's Mobile or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contractorContactNumber" name="contractorContactNumber" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -185,7 +185,7 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="constructionLotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="constructionLotNo">House no. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="constructionLotNo" id="constructionLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -255,7 +255,7 @@ if ($_SESSION['role_id'] != 1) {
                         Business Application Form is true and correct. I authorize the Barangay to verify the information
                         with the documents submitted.</p>
                     <p>I understand that any false declaration or withholding of relevant information may result in
-                        the denial, revocation, or suspension of my business permit.</p>
+                        the denial, revocation, or suspension of my Business Clearance.</p>
                     <p> I agree that the Barangay shall not be held liable for any incorrect information or discrepancies
                         provided in this form and supporting documents.</p>
                 </div>
@@ -285,7 +285,7 @@ if ($_SESSION['role_id'] != 1) {
                         <p>Construction Information</p>
                         <div class="summary-info">
                             <div>
-                                <p>type of Work:</p> <span id="sumTypeOfConstruction"></span>
+                                <p>Type of Work:</p> <span id="sumTypeOfConstruction"></span>
                             </div>
                             <div>
                                 <p>Nature of Activity:</p> <span id="sumNatureOfActivity"></span>

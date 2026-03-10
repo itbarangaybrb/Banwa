@@ -285,7 +285,7 @@ const validator = (() => {
      */
     function validateAddress(lotInput, streetInput, options = {}) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot && !options.optional) return validator.number(lotInput, 'Lot no. is required');
+        if (!lot && !options.optional) return validator.number(lotInput, 'House No. is required');
         if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
 
         if (!lot || !street || street === 'select') return true;
@@ -613,7 +613,7 @@ function addWitness() {
             <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
         </div>
         <div class="label-and-input">
-            <label class="label" for="witnessLotNo${witnessCount}">Lot No.</label>
+            <label class="label" for="witnessLotNo${witnessCount}">House No.</label>
             <input type="tel" class="witness-lotNo" id="witnessLotNo${witnessCount}" maxlength="2" pattern="[0-9]{1,2}">
         </div>
         <div class="label-and-input">

@@ -119,7 +119,7 @@ $full_name = getCurrentUserName();
                                     Email Address
                                 </span>
                             </th>
-                            <th>Lot No.</th>
+                            <th>House No.</th>
                             <th>Street</th>
                             <th>Status</th>
                             <th>Role</th>
@@ -177,7 +177,7 @@ $full_name = getCurrentUserName();
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="lotNo">Lot No. <span id="createLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <label for="lotNo">House No. <span id="createLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
                         <input type="text" id="lotNo" name="lotNo" maxlength="10">
                         <div class="error-msg"></div>
                     </div>
@@ -245,7 +245,7 @@ $full_name = getCurrentUserName();
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label for="editLotNo">Lot No. <span id="editLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
+                        <label for="editLotNo">House No. <span id="editLotRequired" style="color:#BB1B1B; display:none;">*</span></label>
                         <input type="text" id="editLotNo" name="editLotNo" maxlength="10">
                         <div class="error-msg"></div>
                     </div>
