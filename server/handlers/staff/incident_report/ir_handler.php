@@ -8,6 +8,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/incident_report/ir_dss.php';
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php'; // Add audit log function
 
 session_start();
 
@@ -205,7 +206,24 @@ function handleCreateApplication($pdo)
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $reportId = $result['id'];
+
+        // Get the newly created report data for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
+        $newStmt->execute([':id' => $reportId]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
         createInitialDSSEvaluation($pdo, $reportId);
+
+        // Write audit log for CREATE action
+        writeAuditLog(
+            $pdo,
+            'CREATE',
+            'incident_reports',
+            $reportId,
+            null,
+            $newData,
+            'INCIDENT_REPORT'
+        );
 
         // Commit transaction
         // $pdo->commit();
@@ -274,6 +292,11 @@ function handleUpdateStatus($pdo)
     }
 
     try {
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
+        $oldStmt->execute([':id' => $id]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
         $getStmt = $pdo->prepare("SELECT dss_status FROM incident_reports WHERE id = :id");
         $getStmt->execute([':id' => $id]);
         $currentReport = $getStmt->fetch(PDO::FETCH_ASSOC);
@@ -295,6 +318,22 @@ function handleUpdateStatus($pdo)
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
+
+        // Get new data after update for audit log
+        $newStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
+        $newStmt->execute([':id' => $id]);
+        $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Write audit log for status update
+        writeAuditLog(
+            $pdo,
+            'STATUS UPDATED',
+            'incident_reports',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
 
         echo json_encode([
             "status" => "success",
@@ -320,6 +359,11 @@ function handleUpdateApplication($pdo)
         if (!$reportId) {
             throw new Exception("Report ID is required for update.");
         }
+
+        // Get current data before update for audit log
+        $oldStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
+        $oldStmt->execute([':id' => $reportId]);
+        $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
@@ -488,6 +532,22 @@ function handleUpdateApplication($pdo)
                     }
                 }
             }
+
+            // Get new data after update for audit log
+            $newStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
+            $newStmt->execute([':id' => $reportId]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Write audit log for UPDATE action
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'incident_reports',
+                $reportId,
+                $oldData,
+                $newData,
+                'INCIDENT_REPORT'
+            );
 
             triggerDSSevaluation($pdo, $reportId);
             echo json_encode(["status" => "success", "message" => "Incident report updated successfully! DSS re-evaluation triggered."]);

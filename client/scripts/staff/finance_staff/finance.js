@@ -1,4 +1,5 @@
 // Configuration
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
 const swalStyle = document.createElement('style');
@@ -57,6 +58,7 @@ window.addEventListener('staffMapFilterChanged', (e) => {
             mapFilterVisible = !!detail[PAGE_CATEGORY];
         }
         const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab && activeTab.id === 'dashboard') loadAnalyticsTab();
         if (activeTab && activeTab.id === 'pending') loadPendingTable();
         if (activeTab && activeTab.id === 'history') loadHistoryTable();
     } catch (err) {
@@ -89,8 +91,13 @@ function switchTab(event, tabName) {
         if (clickedLink) clickedLink.classList.add('active');
     }
 
-    if (tabName === 'pending') loadPendingTable();
-    else if (tabName === 'history') loadHistoryTable();
+    if (tabName === 'dashboard') {
+        loadAnalyticsTab();
+    } else if (tabName === 'pending') {
+        loadPendingTable();
+    } else if (tabName === 'history') {
+        loadHistoryTable();
+    }
 }
 
 // FIXED: Now returns promises so .finally() works
@@ -168,7 +175,7 @@ function loadHistoryTable() {
 }
 
 let isRefreshing = false;
-setInterval(() => {
+function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
 
@@ -184,7 +191,7 @@ setInterval(() => {
     } else {
         finish();
     }
-}, 30000);
+};
 
 function openVerificationModal(appId, appType) {
     const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
@@ -235,6 +242,17 @@ function submitVerification(appId, status, appType) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+
+                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
+                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
+                }
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Success',
@@ -251,6 +269,341 @@ function submitVerification(appId, status, appType) {
             console.error(err);
             Swal.fire('Error', 'Network error', 'error');
         });
+}
+
+function loadAnalyticsTab() {
+    console.log('Loading analytics tab...');
+
+    // Make sure canvas elements exist
+    const chart1Canvas = document.getElementById('chart1');
+    const chart2Canvas = document.getElementById('chart2');
+    const chart3Canvas = document.getElementById('chart3');
+
+    if (!chart1Canvas || !chart2Canvas || !chart3Canvas) {
+        console.error('Canvas elements not found!');
+        return;
+    }
+
+    // Get date range (you can add a dropdown to change this)
+    const days = 30; // Default to last 30 days
+    
+    fetch(`${API_URL}?action=chart_finance_type&days=${days}`)
+        .then(res => {
+            console.log('Response status:', res.status);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(res => {
+            console.log('API Response:', res);
+
+            if (res.status !== 'success') {
+                console.error('API Error:', res.message);
+                // Show error message in chart containers
+                document.querySelectorAll('.charts').forEach(chart => {
+                    chart.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Error loading chart data: ' + (res.message || 'Unknown error') + '</div>';
+                });
+                return;
+            }
+
+            // Add summary cards above charts
+            addSummaryCards(res.summary);
+
+            // Chart 1: Applications by date (timeline)
+            const labels1 = res.data_by_date?.map(x => {
+                const date = new Date(x.application_date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }) || [];
+            const values1 = res.data_by_date?.map(x => parseInt(x.total)) || [];
+            
+            // Calculate percentages for tooltips
+            const total1 = values1.reduce((a, b) => a + b, 0);
+            const percentages1 = values1.map(v => total1 > 0 ? ((v / total1) * 100).toFixed(1) : '0');
+
+            // Chart 2: Payment Status Distribution (use combined_status)
+            const statusData = res.combined_status || [];
+            const labels2 = statusData.map(x => x.payment_status || 'Unknown');
+            const values2 = statusData.map(x => parseInt(x.total));
+            const total2 = values2.reduce((a, b) => a + b, 0);
+            const percentages2 = values2.map(v => total2 > 0 ? ((v / total2) * 100).toFixed(1) : '0');
+
+            // Chart 3: Payment Method Distribution (use combined_methods)
+            const methodData = res.combined_methods || [];
+            const labels3 = methodData.map(x => x.payment_method || 'Not Specified');
+            const values3 = methodData.map(x => parseInt(x.total));
+            const total3 = values3.reduce((a, b) => a + b, 0);
+            const percentages3 = values3.map(v => total3 > 0 ? ((v / total3) * 100).toFixed(1) : '0');
+
+            // Color schemes
+            const colors = {
+                timeline: '#4F46E5',
+                status: ['#10B981', '#EF4444', '#F59E0B', '#6366F1', '#8B5CF6', '#EC4899'],
+                methods: ['#F59E0B', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444', '#6B7280']
+            };
+
+            // Destroy existing charts if they exist
+            if (window.chart1Instance) window.chart1Instance.destroy();
+            if (window.chart2Instance) window.chart2Instance.destroy();
+            if (window.chart3Instance) window.chart3Instance.destroy();
+
+            try {
+                // Chart 1: Timeline Chart (Line)
+                window.chart1Instance = new Chart(chart1Canvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels1,
+                        datasets: [{
+                            label: 'Applications Over Time',
+                            data: values1,
+                            backgroundColor: colors.timeline + '20',
+                            borderColor: colors.timeline,
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true,
+                            pointBackgroundColor: colors.timeline,
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Daily Application Trends (Last 30 Days)',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#00247C'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const value = context.raw;
+                                        const percent = percentages1[context.dataIndex];
+                                        return `Applications: ${value} (${percent}% of total)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Applications'
+                                },
+                                grid: { color: '#e5e7eb' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+
+                // Chart 2: Payment Status Distribution (Pie Chart)
+                window.chart2Instance = new Chart(chart2Canvas, {
+                    type: 'pie',
+                    data: {
+                        labels: labels2,
+                        datasets: [{
+                            data: values2,
+                            backgroundColor: colors.status.slice(0, labels2.length),
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Payment Status Distribution',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#00247C'
+                            },
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    boxWidth: 12,
+                                    padding: 15,
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const percent = percentages2[context.dataIndex];
+                                        return `${label}: ${value} (${percent}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Chart 3: Payment Method Distribution (Doughnut)
+                window.chart3Instance = new Chart(chart3Canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels3,
+                        datasets: [{
+                            data: values3,
+                            backgroundColor: colors.methods.slice(0, labels3.length),
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Payment Methods',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#00247C'
+                            },
+                            legend: {
+                                position: 'right',
+                                labels: { 
+                                    boxWidth: 12,
+                                    padding: 15,
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const percent = percentages3[context.dataIndex];
+                                        return `${label}: ${value} (${percent}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+
+                console.log('Charts created successfully!');
+            } catch (chartError) {
+                console.error('Error creating charts:', chartError);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
+            // Show error message in chart containers
+            document.querySelectorAll('.charts').forEach(chart => {
+                chart.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Error loading charts: ' + error.message + '</div>';
+            });
+        });
+}
+
+// Helper function to add summary cards above charts
+function addSummaryCards(summary) {
+    // Check if summary container already exists
+    let summaryContainer = document.querySelector('.summary-cards');
+    
+    if (!summaryContainer) {
+        // Create summary container
+        summaryContainer = document.createElement('div');
+        summaryContainer.className = 'summary-cards';
+        summaryContainer.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        `;
+        
+        // Insert before the first chart
+        const analyticsContainer = document.querySelector('.analytics-container');
+        analyticsContainer.parentNode.insertBefore(summaryContainer, analyticsContainer);
+    }
+    
+    // Format currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2
+        }).format(amount || 0);
+    };
+    
+    // Create summary cards HTML
+    summaryContainer.innerHTML = `
+        <div class="summary-card" style="background: linear-gradient(135deg, #4F46E5, #6366F1);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9;">Total Applications</div>
+                    <div style="font-size: 28px; font-weight: bold;">${(summary?.total_business || 0) + (summary?.total_construction || 0)}</div>
+                </div>
+                <i class="fas fa-file-alt" style="font-size: 40px; opacity: 0.3;"></i>
+            </div>
+        </div>
+        <div class="summary-card" style="background: linear-gradient(135deg, #059669, #10B981);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9;">Paid Applications</div>
+                    <div style="font-size: 28px; font-weight: bold;">${(summary?.business_paid || 0) + (summary?.construction_paid || 0)}</div>
+                </div>
+                <i class="fas fa-check-circle" style="font-size: 40px; opacity: 0.3;"></i>
+            </div>
+        </div>
+        <div class="summary-card" style="background: linear-gradient(135deg, #B45309, #F59E0B);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9;">Total Revenue</div>
+                    <div style="font-size: 24px; font-weight: bold;">${formatCurrency(summary?.total_revenue)}</div>
+                </div>
+                <i class="fas fa-peso-sign" style="font-size: 40px; opacity: 0.3;"></i>
+            </div>
+        </div>
+        <div class="summary-card" style="background: linear-gradient(135deg, #7B1FA2, #8B5CF6);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9;">Collection Rate</div>
+                    <div style="font-size: 28px; font-weight: bold;">
+                        ${calculateCollectionRate(summary)}%
+                    </div>
+                </div>
+                <i class="fas fa-chart-pie" style="font-size: 40px; opacity: 0.3;"></i>
+            </div>
+        </div>
+    `;
+    
+    // Add styles for summary cards
+    const style = document.createElement('style');
+    style.textContent = `
+        .summary-card {
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Helper function to calculate collection rate
+function calculateCollectionRate(summary) {
+    const totalApps = (summary?.total_business || 0) + (summary?.total_construction || 0);
+    const paidApps = (summary?.business_paid || 0) + (summary?.construction_paid || 0);
+    
+    if (totalApps === 0) return '0';
+    return ((paidApps / totalApps) * 100).toFixed(1);
 }
 
 function openPaymentModal(appId, amountDue, appType) {
@@ -329,6 +682,17 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+
+                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
+                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "payment_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "payment_update" }));
+                }
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Success',
@@ -487,4 +851,152 @@ function filterTable(tableId, inputId) {
     }
 }
 
+// DO NOT REMOVE!!! - JEP
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
 window.onload = function () { loadPendingTable(); };
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
+
+    if (!sockets["finance_applications"]) {
+        initSocket("finance_applications", "ws://localhost:8081", data => {
+            if (data.type === "finance_applications_update") {
+                refreshActiveTab();
+            }
+        });
+    }
+
+    if (!sockets["applications"]) {
+        initSocket("applications", "ws://localhost:8081", data => {
+            if (data.type === "applications_update") {
+                refreshActiveTab();
+            }
+        });
+    }
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                } else if (data.id) {
+                    appendAuditRow(data);
+                } else {
+                    fetchAuditLogs();
+                }
+            }
+        });
+    }
+});
+
+window.onload = function () { loadPendingTable(); };
+
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// ===============================================
+
+// Core payment functions
+window.loadPendingTable = loadPendingTable;
+window.loadHistoryTable = loadHistoryTable;
+window.openPaymentModal = openPaymentModal;
+window.openVerificationModal = openVerificationModal;
+window.submitPayment = submitPayment;
+window.submitVerification = submitVerification;
+window.updateRefLabel = updateRefLabel;
+
+// Receipt functions
+window.generateReceipt = generateReceipt;
+window.showReceiptModal = showReceiptModal;
+window.printReceiptWindow = printReceiptWindow;
+
+// Summary and view functions
+window.viewSummary = viewSummary;
+
+// Penalty functions
+window.openPenaltyModal = openPenaltyModal;
+
+// Tab navigation
+window.switchTab = switchTab;
+
+// Helper functions
+window.filterTable = filterTable;

@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     appendAuditRow(data);
                 }
                 else {
-                    fetchAuditLogs()
+                    fetchAuditLogs();
                 }
             }
         });

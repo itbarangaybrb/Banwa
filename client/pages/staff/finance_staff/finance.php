@@ -17,10 +17,16 @@ $full_name = getCurrentUserName();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance & Collection Management System</title>
-    <link rel="stylesheet" href="../../../styles/staff/finance_staff/finance.css">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="../../../styles/staff/finance_staff/finance.css">
+    <link rel="stylesheet" href="../../../styles/staff/analytics.css">
 </head>
 
 <body>
@@ -34,6 +40,12 @@ $full_name = getCurrentUserName();
         </div>
         <ul class="nav_list">
             <div>
+                <!-- <li>
+                    <a href="#" class="nav_select active" data-tab="dashboard">
+                        <i class="fas fa-chart-line nav_icon"></i>
+                        <span class="nav_text">Dashboard</span>
+                    </a>
+                </li> -->
                 <li>
                     <a href="#" class="nav_select active" onclick="switchTab(event, 'pending')">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,6 +111,39 @@ $full_name = getCurrentUserName();
 
         <div class="content">
             <div id="alert-container"></div>
+
+            <div id="dashboard" class="tab-pane active">
+                <div class="section-title">Applications For Payment</div>
+                <p class="form-description">Process over-the-counter payments or verify online transactions.</p>
+
+                <div class="analytics-container">
+                    <div class="charts">
+                        <canvas id="chart1"></canvas>
+                    </div>
+                    <div class="charts">
+                        <canvas id="chart2"></canvas>
+                    </div>
+                    <div class="charts">
+                        <canvas id="chart3"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
 
             <div id="pending" class="tab-pane active">
                 <div class="section-title">Applications For Payment</div>
@@ -187,14 +232,16 @@ $full_name = getCurrentUserName();
 
         </div>
     </div>
-    <script src="../../../scripts/staff/finance_staff/finance.js"></script>
-    <script type="module" src="../../../scripts/staff/export.js"></script>
-    <script type="module" src="../../../scripts/staff/filter.js"></script>
-    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script type="module" src="../../../scripts/staff/finance_staff/finance.js"></script>
+    <script type="module" src="../../../scripts/staff/export.js"></script>
+    <script type="module" src="../../../scripts/staff/filter.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
 
     <script>
         // Simple script to handle active class on sidebar items

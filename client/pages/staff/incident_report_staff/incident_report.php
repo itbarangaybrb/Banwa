@@ -1,3 +1,15 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
+
+if ($_SESSION['role_id'] != 8) {
+    header("Location: /client/pages/auth/signin.php");
+    exit;
+}
+
+$full_name = getCurrentUserName();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -193,7 +205,7 @@
                             <div class="gm-user-pill">
                                 <div class="time_date" id="currentDateTime"></div>
                                 <div class="gm-user-divider"></div>
-                                <span class="gm-user-name">Kagawad Francesca</span>
+                                <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
                                 <div class="user_image" style="width:32px;height:32px;">
                                     <i class="fas fa-user" style="font-size:16px;color:white;"></i>
                                 </div>
@@ -253,10 +265,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -285,10 +294,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -345,10 +351,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -491,10 +494,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -533,10 +533,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -643,19 +640,20 @@
         </div>
     </div>
 
-    <script type="module" src="../../../scripts/staff/incident_report_staff/incident_report.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
     <script src="../../../scripts/staff/map.js"></script>
+    
+    <script type="module" src="../../../scripts/staff/incident_report_staff/incident_report.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>
 
 </html>

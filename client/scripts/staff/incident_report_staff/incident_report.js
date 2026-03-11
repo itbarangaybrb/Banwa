@@ -1759,38 +1759,22 @@ function formatTime(dateTimeString) {
 }
 
 // ===============================================
-// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
 // ===============================================
-
-// Core application functions
 window.loadIncidentsFromDB = loadIncidentsFromDB;
 window.filterIncidents = filterIncidents;
-window.createIncident = createIncident;
 window.openUpdateModal = openUpdateModal;
 window.viewDetails = viewDetails;
 window.submitUpdate = submitUpdate;
 window.applyPrompt = applyPrompt;
-
-// Summary functions
 window.loadSummarySelect = loadSummarySelect;
 window.updateSummary = updateSummary;
 window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
-
-// Process and management functions
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
-window.archiveApplication = archiveApplication;
-
-// Report generation
-window.generateIncidentReport = generateIncidentReport;
-window.generateIncidentClearance = generateIncidentReport; // Alias
-
-// Tab navigation and initialization
 window.switchTab = switchTab;
 window.initializeSidebarNav = initializeSidebarNav;
-
-// Helper functions
 window.getCurrentDateString = getCurrentDateString;
 window.updateApplicationDate = updateApplicationDate;
 window.filterReviewIncidents = filterReviewIncidents;
@@ -1801,19 +1785,7 @@ window.getSeverityBadge = getSeverityBadge;
 window.formatDate = formatDate;
 window.formatDateTime = formatDateTime;
 window.formatTime = formatTime;
-
-// Chart instances if needed globally
-window.chart1Instance = chart1Instance;
-window.chart2Instance = chart2Instance;
-window.chart3Instance = chart3Instance;
-
-// Ensure global scope (Alias both names just in case) - like in construction.js
-window.generateIncidentReport = generateIncidentReport;
-window.generateIncidentClearance = generateIncidentReport;
-
-// Expose all functions used by inline HTML handlers (required for type="module")
 window.filterIncidents = filterIncidents;
-window.createIncident = createIncident;
 window.openUpdateModal = openUpdateModal;
 window.viewDetails = viewDetails;
 window.submitUpdate = submitUpdate;
@@ -1822,76 +1794,6 @@ window.loadSummarySelect = loadSummarySelect;
 window.updateSummary = updateSummary;
 window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
-window.archiveApplication = archiveApplication;
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
 window.switchTab = switchTab;
-window.toggleMobileMenu = toggleMobileMenu; // From map.js
-window.clearSearch = clearSearch; // From map.js
-window.performSearch = performSearch; // From map.js
-window.toggleFilterDropdown = toggleFilterDropdown; // From map.js
-window.selectFilterType = selectFilterType; // From map.js
-window.toggleFloodLayer = toggleFloodLayer; // From map.js
-window.toggleFaultLine = toggleFaultLine; // From map.js
-window.filterConstructionByType = filterConstructionByType; // From map.js
-window.toggleConstructionFilters = toggleConstructionFilters; // From map.js
-window.toggleStreetMap = toggleStreetMap; // From map.js
-window.toggleSatellite = toggleSatellite; // From map.js
-window.resetView = resetView; // From map.js
-window.getFloodIncidentsSummary = getFloodIncidentsSummary; // From map.js
-window.showFaultLineRiskAssessment = showFaultLineRiskAssessment; // From map.js
-window.showIncidentStatistics = showIncidentStatistics; // From map.js
-window.showIncidentHeatmap = showIncidentHeatmap; // From map.js
-window.showIncidentSummaryReport = showIncidentSummaryReport; // From map.js
-window.showResponseRulesReport = showResponseRulesReport; // From map.js
-window.confirmLocation = confirmLocation; // From map picker modal
-
-// DO NOT REMOVE!!! - JEP
-// /**
-//  * Fetch audit logs from the server
-//  * Clears and re-renders the entire audit table
-//  *
-//  * @async
-//  * @returns {Promise<void>}
-//  */
-// async function fetchAuditLogs() {
-//     try {
-//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
-//             credentials: 'include',
-//             cache: 'no-store'
-//         });
-
-//         const logs = await resp.json();
-
-//         if (!Array.isArray(logs)) {
-//             console.error('Invalid audit log response');
-//             return;
-//         }
-
-//         const tbody = document.getElementById('auditTableBody');
-//         if (!tbody) return;
-
-//         tbody.innerHTML = '';
-
-//         logs.forEach(log => {
-//             const tr = document.createElement('tr');
-
-//             tr.innerHTML = `
-//                 <td>${log.id}</td>
-//                 <td>${log.action}</td>
-//                 <td>${log.full_name}</td>
-//                 <td>${log.table_name}</td>
-//                 <td>${log.record_id}</td>
-//                 <td>${log.role_id}</td>
-//                 <td>${log.created_at}</td>
-//             `;
-
-//             tbody.appendChild(tr);
-//         });
-
-//     } catch (err) {
-//         console.error('Failed to fetch audit logs:', err);
-//     }
-// }
-
-// fetchAuditLogs

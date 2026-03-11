@@ -911,6 +911,13 @@ function submitUpdate(event) {
                     sockets["business"].send(JSON.stringify({ type: "business_update", action: "status_update" }));
                 }
 
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({
+                        type: "new_audit_log",
+                        action: "new_audit_log",
+                    }));
+                }
+
                 loadManagementTable();
                 loadProcessTable();
             } else {
@@ -2267,14 +2274,113 @@ const statusTemplates = {
     'Approved': "Your Business Clearance is now ready for pick-up/download."
 };
 
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
 // Event listener for status change to update textarea with templates
 document.addEventListener('DOMContentLoaded', function () {
+    fetchAuditLogs();
+
     if (!sockets["business_applications"]) {
         initSocket("business_applications", "ws://localhost:8081", data => {
             if (data.type === "business_applications_update") {
                 refreshActiveTab()
                 loadManagementTable();
                 loadProcessTable();
+            }
+        });
+    }
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                }
+                else if (data.id) {
+                    appendAuditRow(data);
+                }
+                else {
+                    fetchAuditLogs();
+                }
             }
         });
     }
@@ -2328,16 +2434,6 @@ document.head.insertAdjacentHTML("beforeend", `
 // ===============================================
 // EXPOSE FUNCTIONS TO GLOBAL SCOPE
 // ===============================================
-// ===============================================
-// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE FOR type="module"
-// ===============================================
-
-// Core application functions
-// ===============================================
-// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
-// ===============================================
-
-// Core application functions
 window.loadApplicationsFromDB = loadApplicationsFromDB;
 window.filterApplications = filterApplications;
 window.createApplication = createApplication;
@@ -2346,40 +2442,26 @@ window.viewDetails = viewDetails;
 window.submitUpdate = submitUpdate;
 window.toggleAmountField = toggleAmountField;
 window.applyPrompt = applyPrompt;
-
-// Summary functions
 window.loadSummarySelect = loadSummarySelect;
 window.updateSummary = updateSummary;
 window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
-
-// Process and management functions
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
 window.archiveApplication = archiveApplication;
-
-// Clearance and permit generation
 window.generateClearance = generateClearance;
 window.generateBusinessPermit = generateClearance;
 window.generateBusinessClearance = generateClearance;
-
-// Tab navigation and initialization
 window.switchTab = switchTab;
 window.initializeSidebarNav = initializeSidebarNav;
 window.refreshActiveTab = refreshActiveTab;
-
-// Helper functions
 window.getCurrentDateString = getCurrentDateString;
 window.updateApplicationDate = updateApplicationDate;
-window.validateOwnerAddress = validateOwnerAddress;
-window.validateBusinessAddress = validateBusinessAddress; // If you have this function
-
-// Ensure global scope (Alias both names just in case) - like in construction.js
+// window.validateOwnerAddress = validateOwnerAddress;
+// window.validateBusinessAddress = validateBusinessAddress;
 window.generateClearance = generateClearance;
 window.generateBusinessPermit = generateClearance;
 window.generateBusinessClearance = generateClearance;
-
-// Expose all functions used by inline HTML handlers (required for type="module")
 window.filterApplications = filterApplications;
 window.createApplication = createApplication;
 window.openUpdateModal = openUpdateModal;
@@ -2396,53 +2478,3 @@ window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
 window.switchTab = switchTab;
 window.generateClearance = generateClearance;
-
-// DO NOT REMOVE!!! - JEP
-// /**
-//  * Fetch audit logs from the server
-//  * Clears and re-renders the entire audit table
-//  *
-//  * @async
-//  * @returns {Promise<void>}
-//  */
-// async function fetchAuditLogs() {
-//     try {
-//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
-//             credentials: 'include',
-//             cache: 'no-store'
-//         });
-
-//         const logs = await resp.json();
-
-//         if (!Array.isArray(logs)) {
-//             console.error('Invalid audit log response');
-//             return;
-//         }
-
-//         const tbody = document.getElementById('auditTableBody');
-//         if (!tbody) return;
-
-//         tbody.innerHTML = '';
-
-//         logs.forEach(log => {
-//             const tr = document.createElement('tr');
-
-//             tr.innerHTML = `
-//                 <td>${log.id}</td>
-//                 <td>${log.action}</td>
-//                 <td>${log.full_name}</td>
-//                 <td>${log.table_name}</td>
-//                 <td>${log.record_id}</td>
-//                 <td>${log.role_id}</td>
-//                 <td>${log.created_at}</td>
-//             `;
-
-//             tbody.appendChild(tr);
-//         });
-
-//     } catch (err) {
-//         console.error('Failed to fetch audit logs:', err);
-//     }
-// }
-
-// fetchAuditLogs

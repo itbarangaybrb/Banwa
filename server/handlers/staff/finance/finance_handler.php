@@ -7,6 +7,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
 
 ob_start();
 ini_set('display_errors', 0);
@@ -169,6 +170,11 @@ switch ($action) {
         $method = $_POST['paymentMethod'];
 
         try {
+            // Get current data before update for audit log
+            $oldStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+            $oldStmt->execute([':id' => $id]);
+            $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
             $sql = "UPDATE $table SET 
                     status = 'Paid',
                     payment_status = 'Paid',
@@ -188,6 +194,22 @@ switch ($action) {
                 ':method' => $method,
                 ':id' => $id
             ]);
+
+            // Get new data after update for audit log
+            $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+            $newStmt->execute([':id' => $id]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Write audit log for payment processing
+            writeAuditLog(
+                $pdo,
+                'PAYMENT PROCESSED',
+                $table,
+                $id,
+                $oldData,
+                $newData,
+                'PAYMENT'
+            );
 
             echo json_encode([
                 "status" => "success",
@@ -214,6 +236,11 @@ switch ($action) {
         }
 
         try {
+            // Get current data before update for audit log
+            $oldStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+            $oldStmt->execute([':id' => $id]);
+            $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
             $sql = "UPDATE $table SET 
                     status = :new_status,
                     payment_status = :new_payment_status,
@@ -226,6 +253,22 @@ switch ($action) {
                 ':new_payment_status' => $newPaymentStatus,
                 ':id' => $id
             ]);
+
+            // Get new data after update for audit log
+            $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+            $newStmt->execute([':id' => $id]);
+            $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Write audit log for payment verification
+            writeAuditLog(
+                $pdo,
+                'PAYMENT VERIFIED',
+                $table,
+                $id,
+                $oldData,
+                $newData,
+                'PAYMENT'
+            );
 
             echo json_encode([
                 "status" => "success",

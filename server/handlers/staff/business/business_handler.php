@@ -403,16 +403,17 @@ function handleUpdateStatus($pdo)
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-        // Log the status update in the audit log(removed temporarily to prevent duplicate logs since handleUpdateApplication also calls this function)
-        // writeAuditLog(
-        //     $pdo,
-        //     'STATUS UPDATED',
-        //     'business_applications',
-        //     $id,
-        //     $oldData,
-        //     $newData,
-        //     'STATUS_UPDATE'
-        // );
+        // Log the status update in the audit log
+        writeAuditLog(
+            $pdo,
+            'STATUS UPDATED',
+            'business_applications',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
+
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -631,16 +632,16 @@ function handleUpdateApplication($pdo)
             $newStmt->execute([':id' => $applicationId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-            // Log the update in the audit log(removed temporarily to prevent duplicate logs since handleUpdateStatus also calls this function)
-            // writeAuditLog(
-            //     $pdo,
-            //     'UPDATE',
-            //     'business_applications',
-            //     $applicationId,
-            //     $oldData,
-            //     $newData,
-            //     'BUSINESS_APPLICATION'
-            // );
+            // Log the update in the audit log
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'business_applications',
+                $applicationId,
+                $oldData,
+                $newData,
+                'BUSINESS_APPLICATION'
+            );
 
             triggerDSSevaluation($pdo, $applicationId);
         }

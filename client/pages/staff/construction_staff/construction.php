@@ -1,3 +1,15 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
+
+if ($_SESSION['role_id'] != 5) {
+    header("Location: /client/pages/auth/signin.php");
+    exit;
+}
+
+$full_name = getCurrentUserName();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -58,6 +70,12 @@
                     <a href="#" class="nav_select" data-tab="summary">
                         <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>
@@ -194,7 +212,7 @@
                             <div class="gm-user-pill">
                                 <div class="time_date" id="currentDateTime"></div>
                                 <div class="gm-user-divider"></div>
-                                <span class="gm-user-name">Kagawad Francesca</span>
+                                <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
                                 <div class="user_image" style="width:32px;height:32px;">
                                     <i class="fas fa-user" style="font-size:16px;color:white;"></i>
                                 </div>
@@ -248,19 +266,16 @@
             </div>
 
             <div id="dashboard" class="tab-pane">
-                        <header class="top-header">
-                            <div class="header-left">
-                                <h1>Construction Application Management</h1>
-                            </div>
-                            <div class="header-right">
-                                <div class="user-greeting">
-                                    <p class="username">Admin</p>
-                                    <div class="user_image">
-                                        <span class="user_avatar_header">A</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </header>
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Construction Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                        </div>
+                    </div>
+                </header>
                 <div class="page-header">
                     <h1>Construction Dashboard</h1>
                     <p class="page-description">Overview of construction applications and analytics</p>
@@ -277,19 +292,21 @@
                     </div>
                 </div>
 
-                <!-- <div>
+                <div>
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
+                                <th>ID</th>
                                 <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
                                 <th>Created At</th>
                             </tr>
                         </thead>
 
                         <tbody id="auditTableBody"></tbody>
                     </table>
-                </div> -->
+                </div>
             </div>
 
             <!-- Review Tab -->
@@ -300,14 +317,11 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
-                
+
                 <div class="page-header">
                     <h1>Review Construction Applications</h1>
                     <p class="page-description">Manage and review construction applications</p>
@@ -359,10 +373,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -516,10 +527,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -542,83 +550,85 @@
             </div>
         </div>
 
-            <!-- Modals -->
-            <div id="detailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Application Details</h2>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <div id="modalBody"></div>
+        <!-- Modals -->
+        <div id="detailsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Application Details</h2>
+                    <button class="close-btn">&times;</button>
                 </div>
+                <div id="modalBody"></div>
             </div>
+        </div>
 
-            <div id="updateModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Update Application Status</h2>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <form id="updateForm" onsubmit="submitUpdate(event)">
-                        <input type="hidden" id="updateAppId" name="id">
-                        <div class="form-group">
-                            <label>Current Status:</label>
-                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="newStatus">New Status *</label>
-                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
-                                <option value="" disabled selected>Select Action...</option>
-                                <option value="Pre-Approved">Pre-Approved</option>
-                                <option value="Additional Requirements">Additional Requirements</option>
-                                <option value="For Payment">For Payment (Assessment)</option>
-                                <option value="Approved">Approved (Final)</option>
-                                <option value="Disapproved">Disapproved</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group hidden" id="amountFieldGroup">
-                            <label for="assessmentAmount">Assessment Amount (PHP) *</label>
-                            <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="updateComments">Remarks / Comments *</label>
-                            <div class="prompt-container">
-                                <div class="prompt-suggestions">
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
-                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
-                                </div>
-                                <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="button-group">
-                            <button type="submit" class="btn-primary">Update Status</button>
-                            <button type="button" class="btn-secondary cancel-btn">Cancel</button>
-                        </div>
-                    </form>
+        <div id="updateModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Update Application Status</h2>
+                    <button class="close-btn">&times;</button>
                 </div>
+                <form id="updateForm" onsubmit="submitUpdate(event)">
+                    <input type="hidden" id="updateAppId" name="id">
+                    <div class="form-group">
+                        <label>Current Status:</label>
+                        <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newStatus">New Status *</label>
+                        <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
+                            <option value="" disabled selected>Select Action...</option>
+                            <option value="Pre-Approved">Pre-Approved</option>
+                            <option value="Additional Requirements">Additional Requirements</option>
+                            <option value="For Payment">For Payment (Assessment)</option>
+                            <option value="Approved">Approved (Final)</option>
+                            <option value="Disapproved">Disapproved</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group hidden" id="amountFieldGroup">
+                        <label for="assessmentAmount">Assessment Amount (PHP) *</label>
+                        <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="updateComments">Remarks / Comments *</label>
+                        <div class="prompt-container">
+                            <div class="prompt-suggestions">
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
+                            </div>
+                            <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Update Status</button>
+                        <button type="button" class="btn-secondary cancel-btn">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+    </div>
 
-    <script type="module" src="../../../scripts/staff/construction_staff/construction.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <script src="../../../scripts/staff/map.js"></script>
-    <script type="module" src="../../../scripts/staff/export.js"></script>
-    <script type="module" src="../../../scripts/staff/filter.js"></script>
-
-    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="../../../scripts/staff/map.js"></script>
+
+    <script type="module" src="../../../scripts/staff/construction_staff/construction.js"></script>
+    <script type="module" src="../../../scripts/staff/export.js"></script>
+    <script type="module" src="../../../scripts/staff/filter.js"></script>
+
+
+    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
+
 </body>
 
 </html>

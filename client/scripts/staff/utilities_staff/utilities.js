@@ -993,6 +993,13 @@ function submitUpdate(event) {
                     sockets["utility"].send(JSON.stringify({ type: "utility_update", action: "status_update" }));
                 }
 
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({
+                        type: "new_audit_log",
+                        action: "new_audit_log",
+                    }));
+                }
+
                 loadManagementTable();
                 loadProcessTable();
             } else {
@@ -1851,8 +1858,92 @@ function updateApplicationDate() {
     }
 }
 
+// DO NOT REMOVE!!! - JEP
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
+
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
@@ -1862,6 +1953,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshActiveTab()
                 loadManagementTable();
                 loadProcessTable();
+            }
+        });
+    }
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                }
+                else if (data.id) {
+                    appendAuditRow(data);
+                }
+                else {
+                    fetchAuditLogs()
+                }
             }
         });
     }
@@ -1904,10 +2011,8 @@ document.head.insertAdjacentHTML("beforeend", `
 `);
 
 // ===============================================
-// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
 // ===============================================
-
-// Core application functions
 window.loadApplicationsFromDB = loadApplicationsFromDB;
 window.filterApplications = filterApplications;
 window.createApplication = createApplication;
@@ -1915,45 +2020,26 @@ window.openUpdateModal = openUpdateModal;
 window.viewDetails = viewDetails;
 window.submitUpdate = submitUpdate;
 window.applyPrompt = applyPrompt;
-
-// Summary functions
 window.loadSummarySelect = loadSummarySelect;
 window.updateSummary = updateSummary;
 window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
-
-// Process and management functions
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
 window.archiveApplication = archiveApplication;
-
-// Permit generation
 window.generateUtilitiesPermit = generateUtilitiesPermit;
-window.generateUtilityPermit = generateUtilitiesPermit; // Alias
-window.generateUtilitiesClearance = generateUtilitiesPermit; // Alias
-
-// Tab navigation and initialization
+window.generateUtilityPermit = generateUtilitiesPermit;
+window.generateUtilitiesClearance = generateUtilitiesPermit;
 window.switchTab = switchTab;
 window.initializeSidebarNav = initializeSidebarNav;
-
-// Helper functions
 window.getCurrentDateString = getCurrentDateString;
 window.updateApplicationDate = updateApplicationDate;
 window.filterReviewApplications = filterReviewApplications;
 window.showAlert = showAlert;
 window.openModal = openModal;
-
-// Chart instances if needed globally
-window.chart1Instance = chart1Instance;
-window.chart2Instance = chart2Instance;
-window.chart3Instance = chart3Instance;
-
-// Ensure global scope (Alias both names just in case) - like in construction.js
 window.generateUtilitiesPermit = generateUtilitiesPermit;
 window.generateUtilityPermit = generateUtilitiesPermit;
 window.generateUtilitiesClearance = generateUtilitiesPermit;
-
-// Expose all functions used by inline HTML handlers (required for type="module")
 window.filterApplications = filterApplications;
 window.createApplication = createApplication;
 window.openUpdateModal = openUpdateModal;
@@ -1969,71 +2055,3 @@ window.generateUtilitiesPermit = generateUtilitiesPermit;
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
 window.switchTab = switchTab;
-window.toggleMobileMenu = toggleMobileMenu; // If this exists in map.js
-window.clearSearch = clearSearch; // From map.js
-window.performSearch = performSearch; // From map.js
-window.toggleFilterDropdown = toggleFilterDropdown; // From map.js
-window.selectFilterType = selectFilterType; // From map.js
-window.toggleFloodLayer = toggleFloodLayer; // From map.js
-window.toggleFaultLine = toggleFaultLine; // From map.js
-window.filterConstructionByType = filterConstructionByType; // From map.js
-window.toggleConstructionFilters = toggleConstructionFilters; // From map.js
-window.toggleStreetMap = toggleStreetMap; // From map.js
-window.toggleSatellite = toggleSatellite; // From map.js
-window.resetView = resetView; // From map.js
-window.getFloodHousesSummary = getFloodHousesSummary; // From map.js
-window.showFaultLineRiskAssessment = showFaultLineRiskAssessment; // From map.js
-window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport; // From map.js
-window.showAllConstructionSDSSReport = showAllConstructionSDSSReport; // From map.js
-window.showIncidentSummaryReport = showIncidentSummaryReport; // From map.js
-window.showSDSSRulesReport = showSDSSRulesReport; // From map.js
-
-// DO NOT REMOVE!!! - JEP
-// /**
-//  * Fetch audit logs from the server
-//  * Clears and re-renders the entire audit table
-//  *
-//  * @async
-//  * @returns {Promise<void>}
-//  */
-// async function fetchAuditLogs() {
-//     try {
-//         const resp = await fetch('/server/api/shared/get_audit_logs.php', {
-//             credentials: 'include',
-//             cache: 'no-store'
-//         });
-
-//         const logs = await resp.json();
-
-//         if (!Array.isArray(logs)) {
-//             console.error('Invalid audit log response');
-//             return;
-//         }
-
-//         const tbody = document.getElementById('auditTableBody');
-//         if (!tbody) return;
-
-//         tbody.innerHTML = '';
-
-//         logs.forEach(log => {
-//             const tr = document.createElement('tr');
-
-//             tr.innerHTML = `
-//                 <td>${log.id}</td>
-//                 <td>${log.action}</td>
-//                 <td>${log.full_name}</td>
-//                 <td>${log.table_name}</td>
-//                 <td>${log.record_id}</td>
-//                 <td>${log.role_id}</td>
-//                 <td>${log.created_at}</td>
-//             `;
-
-//             tbody.appendChild(tr);
-//         });
-
-//     } catch (err) {
-//         console.error('Failed to fetch audit logs:', err);
-//     }
-// }
-
-// fetchAuditLogs

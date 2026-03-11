@@ -1,3 +1,15 @@
+<?php
+require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
+require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
+
+if ($_SESSION['role_id'] != 6) {
+    header("Location: /client/pages/auth/signin.php");
+    exit;
+}
+
+$full_name = getCurrentUserName();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +28,6 @@
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
-    <!-- <link rel="stylesheet" href="../../../styles/staff/utilities.css"> -->
 </head>
 
 <body>
@@ -59,6 +70,12 @@
                     <a href="#" class="nav_select" data-tab="summary">
                         <i class="fas fa-file-alt nav_icon"></i>
                         <span class="nav_text">Generate Summary</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>
@@ -197,7 +214,7 @@
                             <div class="gm-user-pill">
                                 <div class="time_date" id="currentDateTime"></div>
                                 <div class="gm-user-divider"></div>
-                                <span class="gm-user-name">Kagawad Francesca</span>
+                                <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
                                 <div class="user_image" style="width:32px;height:32px;">
                                     <i class="fas fa-user" style="font-size:16px;color:white;"></i>
                                 </div>
@@ -257,10 +274,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -281,19 +295,21 @@
                     </div>
                 </div>
 
-                <!-- <div>
+                <div>
                     <table>
                         <thead>
                             <tr>
-                                <th>Name</th>
+                                <th>ID</th>
                                 <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
                                 <th>Created At</th>
                             </tr>
                         </thead>
 
                         <tbody id="auditTableBody"></tbody>
                     </table>
-                </div> -->
+                </div>
             </div>
 
             <!-- Review Tab -->
@@ -304,10 +320,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -513,10 +526,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -562,10 +572,7 @@
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image">
-                                <span class="user_avatar_header">A</span>
-                            </div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
@@ -645,19 +652,21 @@
         </div>
     </main>
 
-    <script type="module" src="../../../scripts/staff/utilities_staff/utilities.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
     <script src="../../../scripts/staff/map.js"></script>
+
+    <script type="module" src="../../../scripts/staff/utilities_staff/utilities.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 
     <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>
 
 </html>

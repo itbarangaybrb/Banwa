@@ -254,15 +254,15 @@ function handleCreateApplication($pdo)
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
         // Write audit log for CREATE action
-        // writeAuditLog(
-        //     $pdo,
-        //     'CREATE',
-        //     'construction_applications',
-        //     $applicationId,
-        //     null,
-        //     $newData,
-        //     'CONSTRUCTION_APPLICATION'
-        // );
+        writeAuditLog(
+            $pdo,
+            'CREATE',
+            'construction_applications',
+            $applicationId,
+            null,
+            $newData,
+            'CONSTRUCTION_APPLICATION'
+        );
 
         // === QUEUE OCR JOB AFTER SUCCESSFUL INSERT ===
         if (!empty($uploadedFiles)) {
@@ -382,15 +382,15 @@ function handleUpdateStatus($pdo)
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
         // Write audit log for status update
-        // writeAuditLog(
-        //     $pdo,
-        //     'STATUS UPDATED',
-        //     'construction_applications',
-        //     $id,
-        //     $oldData,
-        //     $newData,
-        //     'STATUS_UPDATE'
-        // );
+        writeAuditLog(
+            $pdo,
+            'STATUS UPDATED',
+            'construction_applications',
+            $id,
+            $oldData,
+            $newData,
+            'STATUS_UPDATE'
+        );
 
         echo json_encode([
             "status" => "success",
@@ -582,15 +582,15 @@ function handleUpdateApplication($pdo)
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
             // Write audit log for UPDATE action
-            // writeAuditLog(
-            //     $pdo,
-            //     'UPDATE',
-            //     'construction_applications',
-            //     $applicationId,
-            //     $oldData,
-            //     $newData,
-            //     'CONSTRUCTION_APPLICATION'
-            // );
+            writeAuditLog(
+                $pdo,
+                'UPDATE',
+                'construction_applications',
+                $applicationId,
+                $oldData,
+                $newData,
+                'CONSTRUCTION_APPLICATION'
+            );
 
             triggerDSSevaluation($pdo, $applicationId);
             echo json_encode(["status" => "success", "message" => "Application updated successfully! DSS re-evaluation triggered."]);
