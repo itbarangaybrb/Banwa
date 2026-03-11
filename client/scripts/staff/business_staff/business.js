@@ -1,4 +1,5 @@
 // Configuration
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
@@ -49,10 +50,10 @@ const swalTopConfig = {
         const title = modal.querySelector('.swal2-title');
         const content = modal.querySelector('.swal2-html-container');
         const actions = modal.querySelector('.swal2-actions');
-        
+
         // 1. Pushes the Checkmark/Icon down from the very top
         if (icon) {
-            icon.style.marginTop = '3rem'; 
+            icon.style.marginTop = '3rem';
             icon.style.marginBottom = '1rem';
         }
         // 2. Adds spacing around the "Success" text
@@ -364,14 +365,15 @@ async function loadApplicationsFromDB() {
 }
 
 /**
- * Automatically refreshes the active tab every 30 seconds.
- * Fetches the latest application data depending on which tab is active
- * and updates the UI accordingly.
+ * Refreshes the currently active tab's content with latest application data.
+ * Triggered by WebSocket construction updates.
  * 
- * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ * Uses `isRefreshing` flag to prevent concurrent refreshes.
+ * 
+ * @see {@link loadApplicationsFromDB} - Fetches fresh data
  */
 let isRefreshing = false;
-setInterval(() => {
+function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
 
@@ -391,8 +393,7 @@ setInterval(() => {
     } else {
         finish();
     }
-}, 30000);
-
+};
 
 /**
  * Loads applications into the process table with actionable statuses
@@ -590,7 +591,7 @@ function applyPrompt(text) {
 
 /**
  * Opens the update modal for a specific application and loads current data
- * Includes DSS evaluation results display and status tracking
+ * Includes Evaluation Results display and status tracking
  * 
  * @param {number} appId - The application ID to open in the update modal
  */
@@ -627,14 +628,14 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', BUSINESS_HANDLER_URL, appId);
+    // console.debug('fetchDSSEvaluation ->', BUSINESS_HANDLER_URL, appId);
     fetch(`${BUSINESS_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
         })
         .then(data => {
-            console.debug('DSS response for', appId, data);
+            // console.debug('DSS response for', appId, data);
             const existing = document.getElementById('dssEvaluationSection');
             if (data && data.status === 'success' && data.evaluation) {
                 if (existing) existing.remove();
@@ -733,7 +734,7 @@ function addDSSSectionToModal(evaluation, app) {
     dssSection.innerHTML = `
     <div class="dss-evaluation-section">
         <div class="dss-header">
-            <h3>DSS Evaluation Result</h3>
+            <h3>Evaluation Result</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
@@ -885,34 +886,46 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            document.getElementById('updateModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Success',
-                text: 'Application updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            loadManagementTable();
-            loadProcessTable();
-        } else {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'error',
-                title: 'Update Failed',
-                text: data.message || 'An unknown error occurred.'
-            });
-        }
-    })
-    .catch(err => {
-        console.error('Submit update error:', err);
-        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('updateModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+                    sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "status_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
+                }
+
+                if (sockets["business"] && sockets["business"].readyState === WebSocket.OPEN) {
+                    sockets["business"].send(JSON.stringify({ type: "business_update", action: "status_update" }));
+                }
+
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'An unknown error occurred.'
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Submit update error:', err);
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Please check your connection.' });
+        });
 }
 
 /**
@@ -2251,11 +2264,21 @@ const statusTemplates = {
     'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
     'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
     'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
-    'Approved': "Your Business Permit is now ready for pick-up/download."
+    'Approved': "Your Business Clearance is now ready for pick-up/download."
 };
 
 // Event listener for status change to update textarea with templates
 document.addEventListener('DOMContentLoaded', function () {
+    if (!sockets["business_applications"]) {
+        initSocket("business_applications", "ws://localhost:8081", data => {
+            if (data.type === "business_applications_update") {
+                refreshActiveTab()
+                loadManagementTable();
+                loadProcessTable();
+            }
+        });
+    }
+
     const statusSelect = document.getElementById('newStatus');
     if (statusSelect) {
         statusSelect.addEventListener('change', function () {
@@ -2301,6 +2324,78 @@ document.head.insertAdjacentHTML("beforeend", `
         .swal2-popup { text-align: center !important; }
     </style>
 `);
+
+// ===============================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE
+// ===============================================
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE FOR type="module"
+// ===============================================
+
+// Core application functions
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// ===============================================
+
+// Core application functions
+window.loadApplicationsFromDB = loadApplicationsFromDB;
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.toggleAmountField = toggleAmountField;
+window.applyPrompt = applyPrompt;
+
+// Summary functions
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+
+// Process and management functions
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.archiveApplication = archiveApplication;
+
+// Clearance and permit generation
+window.generateClearance = generateClearance;
+window.generateBusinessPermit = generateClearance;
+window.generateBusinessClearance = generateClearance;
+
+// Tab navigation and initialization
+window.switchTab = switchTab;
+window.initializeSidebarNav = initializeSidebarNav;
+window.refreshActiveTab = refreshActiveTab;
+
+// Helper functions
+window.getCurrentDateString = getCurrentDateString;
+window.updateApplicationDate = updateApplicationDate;
+window.validateOwnerAddress = validateOwnerAddress;
+window.validateBusinessAddress = validateBusinessAddress; // If you have this function
+
+// Ensure global scope (Alias both names just in case) - like in construction.js
+window.generateClearance = generateClearance;
+window.generateBusinessPermit = generateClearance;
+window.generateBusinessClearance = generateClearance;
+
+// Expose all functions used by inline HTML handlers (required for type="module")
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.toggleAmountField = toggleAmountField;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.archiveApplication = archiveApplication;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.switchTab = switchTab;
+window.generateClearance = generateClearance;
 
 // DO NOT REMOVE!!! - JEP
 // /**

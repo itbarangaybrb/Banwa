@@ -508,7 +508,7 @@ const validator = (() => {
         const lot = lotInput.value.trim();
         const street = streetInput.value.trim();
 
-        if (!lot) { showError(lotInput, 'Lot no. is required'); return false; }
+        if (!lot) { showError(lotInput, 'House No. is required'); return false; }
         if (!street || street === 'select') { showError(streetInput, 'Street is required'); return false; }
 
         const fullAddress = `${lot} ${street}`;
@@ -587,7 +587,7 @@ function createValidationConfig(form) {
                 config.push({
                     el: input,
                     type: 'text',
-                    message: 'Lot no. is required',
+                    message: 'House No. is required',
                     conditional: () => {
                         const roleEl = form.querySelector('[name="role"]');
                         return roleEl?.value === '1';
@@ -598,7 +598,7 @@ function createValidationConfig(form) {
                 config.push({
                     el: input,
                     type: 'text',
-                    message: 'Lot no. is required',
+                    message: 'House No. is required',
                     conditional: () => {
                         const roleEl = form.querySelector('[name="editRole"]');
                         return roleEl?.value === '1';
@@ -802,7 +802,7 @@ async function handleCreateFormSubmit(form) {
                     latitude: latitude,
                     longitude: longitude
                 },
-                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification_superadmin.php"
+                emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification_superadmin.php"
             }
         });
 

@@ -285,7 +285,7 @@ const validator = (() => {
      */
     function validateAddress(lotInput, streetInput, options = {}) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot && !options.optional) return validator.number(lotInput, 'Lot no. is required');
+        if (!lot && !options.optional) return validator.number(lotInput, 'House No. is required');
         if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
 
         if (!lot || !street || street === 'select') return true;
@@ -613,7 +613,7 @@ function addWitness() {
             <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
         </div>
         <div class="label-and-input">
-            <label class="label" for="witnessLotNo${witnessCount}">Lot No.</label>
+            <label class="label" for="witnessLotNo${witnessCount}">House No.</label>
             <input type="tel" class="witness-lotNo" id="witnessLotNo${witnessCount}" maxlength="2" pattern="[0-9]{1,2}">
         </div>
         <div class="label-and-input">
@@ -676,20 +676,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
         await Notification.requestPermission();
     }
 
-    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification("Incident Report Submitted", {
-                body: "Click to view your report status",
-                icon: "/client/img/banwalogo.png",
-                data: { url: "/client/pages/resident/status.php" }
-            });
-        });
-    }
-
     const confirmInciStaffResult = await ir_swal.fire({
         icon: 'question',
-        title: 'Submit Report?',
-        html: 'Are you sure you want to submit this incident report?',
+        title: 'Submit your application?',
+        text: 'Are you sure you want to submit this application?',
         showCancelButton: true,
         confirmButtonText: 'Yes, submit it!',
         cancelButtonText: 'Cancel',
@@ -700,6 +690,16 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmInciStaffResult.isConfirmed) {
+        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Incident Report Submitted", {
+                    body: "Click to view your report status",
+                    icon: "/client/img/banwalogo.png",
+                    data: { url: "/client/pages/resident/status.php" }
+                });
+            });
+        }
+
         const formData = new FormData();
 
         formData.append('action', 'create');
@@ -777,6 +777,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+
+                    if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
+                        sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
+                    }
+
                     ir_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1139,5 +1144,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Failed to fetch user data:', err);
+    }
+
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
     }
 });

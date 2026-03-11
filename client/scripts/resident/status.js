@@ -1,3 +1,5 @@
+import { initSocket, sockets } from '../utils/socketUtils.js';
+
 // =========================
 // MODAL HANDLING 
 // =========================
@@ -678,6 +680,69 @@ function generateIncidentReportFormHtml(data) {
 }
 
 /**
+ * Sends a WebSocket notification when an application is edited
+ * 
+ * Maps the application type to the appropriate WebSocket channel and broadcasts
+ * the update to all connected clients (like staff dashboards) for real-time refresh.
+ * 
+ * @param {string} appType - Type of application (Business, Construction, Utilities, Incident Reports)
+ * @param {string} appId - ID of the updated application
+ * @param {string} [action='update'] - Action performed (default: 'update')
+ * 
+ * @returns {void}
+ * 
+ * @example
+ * sendWebSocketUpdate('Business', 'APP-123', 'edit');
+ */
+function sendWebSocketUpdate(appType, appId, action = 'update') {
+    try {
+        let socketType = '';
+        let messageType = '';
+
+        // Map application type to socket type
+        switch (appType) {
+            case 'Business':
+                socketType = 'business_applications';
+                messageType = 'business_applications_update';
+                break;
+            case 'Construction':
+                socketType = 'construction_applications';
+                messageType = 'construction_applications_update';
+                break;
+            case 'Utilities':
+                socketType = 'utility_applications';
+                messageType = 'utility_applications_update';
+                break;
+
+            // for now as temporary only
+            case 'Incident Reports':
+                socketType = 'incident_reports';
+                messageType = 'incident_reports_update';
+                break;
+
+            default:
+                console.log(`No socket mapping for application type: ${appType}`);
+                return;
+        }
+
+        // Check if socket exists and is open
+        if (sockets && sockets[socketType] && sockets[socketType].readyState === WebSocket.OPEN) {
+            sockets[socketType].send(JSON.stringify({
+                type: messageType,
+                action: action,
+                application_id: appId,
+                timestamp: new Date().toISOString()
+            }));
+            console.log(`WebSocket update sent for ${appType} application ${appId}`);
+        } else {
+            console.log(`WebSocket ${socketType} not connected or not initialized`);
+        }
+    } catch (error) {
+        console.error('Error sending WebSocket update:', error);
+    }
+}
+
+/**
  * Handles the submission of the simplified edit form
  * Only submits fields that were actually changed to avoid overwriting with null values
  * 
@@ -827,13 +892,15 @@ async function handleSubmitChanges(event, appId, appType) {
             throw new Error(updateResult.message || 'Update failed.');
         }
 
+        sendWebSocketUpdate(appType, appId, 'edit');
+
         // SUCCESS ALERT - Using global BanwaSwal (centered + proper spacing)
         await BanwaSwal.fire({
             icon: 'success',
             title: 'Success!',
             html: 'Application updated successfully.'
         });
-    
+
         closeEditModal();
         loadApplications();
 
@@ -1198,6 +1265,33 @@ function showStatusNotification(appId, appType, newStatus) {
     }
 }
 
-// Start polling every 30s
-checkStatusUpdates();
-setInterval(checkStatusUpdates, 30000);
+document.addEventListener('DOMContentLoaded', () => {
+    if (!sockets["construction_applications"]) {
+        initSocket("construction_applications", "ws://localhost:8081", data => {
+            if (data.type === "construction_applications_update") {
+                loadApplications();
+                checkStatusUpdates();
+            }
+        });
+    }
+
+    if (!sockets["business_applications"]) {
+        initSocket("business_applications", "ws://localhost:8081", data => {
+            if (data.type === "business_applications_update") {
+                loadApplications();
+                checkStatusUpdates();
+            }
+        });
+    }
+
+    if (!sockets["utility_applications"]) {
+        initSocket("utility_applications", "ws://localhost:8081", data => {
+            if (data.type === "utility_applications_update") {
+                loadApplications();
+                checkStatusUpdates();
+            }
+        });
+    }
+
+    checkStatusUpdates(); // Initial load
+});

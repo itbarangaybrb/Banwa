@@ -732,7 +732,7 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="contactNo">Contact no. <span style="color: #BB1B1B;">*</span></label>
+                                    <label for="contactNo">Contact No. <span style="color: #BB1B1B;">*</span></label>
                                     <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
                                     <div class="error-msg"></div>
                                 </div>

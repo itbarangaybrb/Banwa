@@ -1,10 +1,12 @@
 <?php
+
 /**
  * Shared OCR service used by resident and staff endpoints.
  * Provides a reusable analyze_files($files, $requiredDocs) function.
  */
 
-function get_mime_type_shared($filename) {
+function get_mime_type_shared($filename)
+{
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $map = [
         'jpg'  => 'image/jpeg',
@@ -15,7 +17,8 @@ function get_mime_type_shared($filename) {
     return $map[$ext] ?? 'application/octet-stream';
 }
 
-function analyze_files($files, $requiredDocs = []) {
+function analyze_files($files, $requiredDocs = [])
+{
     // $OCR_API_KEY = 'K81052119188957';
     $OCR_API_KEY = 'K82731431388957';
 
@@ -24,7 +27,7 @@ function analyze_files($files, $requiredDocs = []) {
         'DTI' => ['department of trade and industry', 'dti registration', 'business name registration'],
         'TCT' => ['transfer certificate of title', 'tct no.', "owner's duplicate copy"],
         'Lease Contract' => ['contract of lease', 'lease agreement', 'lessor', 'lessee'],
-        'Previous Business Permit' => ['business permit', "mayor's permit", 'barangay business clearance', 'business clearance']
+        'Previous Business Clearance' => ['Business Clearance', "mayor's permit", 'barangay business clearance', 'business clearance']
     ];
 
     $results = [];
@@ -180,5 +183,3 @@ function analyze_files($files, $requiredDocs = []) {
         'allVerified' => count($missing) === 0
     ];
 }
-
-?>

@@ -372,3 +372,7 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [07-Mar-2026 11:52:27 UTC] OCR job queued for application 39 with 1 files
 [07-Mar-2026 11:52:27 UTC] CR1 Check - Has file upload: No
 [07-Mar-2026 11:52:27 UTC] CR1 Check - Has file upload: No
+[10-Mar-2026 13:41:33 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"valid_id_5.jpg","saved_filename":"const_69b01f8d50bd5_valid_id_5.jpg","file_url":"\/server\/handlers\/staff\/construction\/uploads\/const_69b01f8d50bd5_valid_id_5.jpg"}]
+[10-Mar-2026 13:41:33 UTC] OCR job queued for application 42 with 1 files
+[10-Mar-2026 13:41:33 UTC] CR1 Check - Has file upload: No
+[10-Mar-2026 13:41:33 UTC] CR1 Check - Has file upload: No

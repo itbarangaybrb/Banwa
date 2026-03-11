@@ -1,3 +1,5 @@
+import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
 // ===============================================
@@ -30,210 +32,6 @@ document.head.appendChild(swalStyle);
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
-
-// ===============================================
-// ADDRESS COORDINATES DATABASE
-// ===============================================
-const addressCoordinates = [
-    { address: "1 Twin Peaks Dr", lat: 14.61654081, lng: 121.07447444 },
-    { address: "2 Twin Peaks Dr", lat: 14.61668323, lng: 121.07460514 },
-    { address: "3 Twin Peaks Dr", lat: 14.61682671, lng: 121.07468242 },
-    { address: "4 Twin Peaks Dr", lat: 14.61694967, lng: 121.07476054 },
-    { address: "5 Twin Peaks Dr", lat: 14.61714092, lng: 121.07482525 },
-    { address: "6 Twin Peaks Dr", lat: 14.61729683, lng: 121.07500036 },
-    { address: "7 Twin Peaks Dr", lat: 14.61754755, lng: 121.07516706 },
-    { address: "8 Twin Peaks Dr", lat: 14.61767338, lng: 121.07525121 },
-    { address: "9 Twin Peaks Dr", lat: 14.61780655, lng: 121.07530008 },
-    { address: "10 Twin Peaks Dr", lat: 14.61794471, lng: 121.07533282 },
-    { address: "11 Twin Peaks Dr", lat: 14.61819310, lng: 121.07536152 },
-    { address: "12 Twin Peaks Dr", lat: 14.61839879, lng: 121.07538482 },
-    { address: "13 Twin Peaks Dr", lat: 14.61854397, lng: 121.07541944 },
-    { address: "14 Twin Peaks Dr", lat: 14.61868322, lng: 121.07546403 },
-    { address: "15 Twin Peaks Dr", lat: 14.61882419, lng: 121.07551977 },
-    { address: "16 Twin Peaks Dr", lat: 14.61898348, lng: 121.07559403 },
-    { address: "17 Twin Peaks Dr", lat: 14.61686402, lng: 121.07428562 },
-    { address: "18 Twin Peaks Dr", lat: 14.61697270, lng: 121.07436089 },
-    { address: "19 Twin Peaks Dr", lat: 14.61708844, lng: 121.07443046 },
-    { address: "20 Twin Peaks Dr", lat: 14.61719396, lng: 121.07448813 },
-    { address: "21 Twin Peaks Dr", lat: 14.61744409, lng: 121.07472114 },
-    { address: "22 Twin Peaks Dr", lat: 14.61783405, lng: 121.07488241 },
-    { address: "23 Twin Peaks Dr", lat: 14.61800413, lng: 121.07496824 },
-    { address: "24 Twin Peaks Dr", lat: 14.61817137, lng: 121.07499540 },
-    { address: "25 Twin Peaks Dr", lat: 14.61863570, lng: 121.07507779 },
-    { address: "26 Twin Peaks Dr", lat: 14.61878728, lng: 121.07510386 },
-    { address: "27 Twin Peaks Dr", lat: 14.61892735, lng: 121.07515013 },
-    { address: "28 Twin Peaks Dr", lat: 14.61905858, lng: 121.07520352 },
-    { address: "29 Twin Peaks Dr", lat: 14.61918154, lng: 121.07526446 },
-    { address: "30 Twin Peaks Dr", lat: 14.61932292, lng: 121.07534865 },
-
-    { address: "1 Milkyway Dr", lat: 14.61706500, lng: 121.07501468 },
-    { address: "2 Milkyway Dr", lat: 14.61691847, lng: 121.07500730 },
-    { address: "3 Milkyway Dr", lat: 14.61678070, lng: 121.07514404 },
-    { address: "4 Milkyway Dr", lat: 14.61671843, lng: 121.07531902 },
-    { address: "5 Milkyway Dr", lat: 14.61647885, lng: 121.07531165 },
-    { address: "6 Milkyway Dr", lat: 14.61672306, lng: 121.07553536 },
-    { address: "7 Milkyway Dr", lat: 14.61649288, lng: 121.07552681 },
-    { address: "8 Milkyway Dr", lat: 14.61676880, lng: 121.07567306 },
-    { address: "9 Milkyway Dr", lat: 14.61684472, lng: 121.07572781 },
-    { address: "10 Milkyway Dr", lat: 14.61695843, lng: 121.07582655 },
-    { address: "11 Milkyway Dr", lat: 14.61710718, lng: 121.07587768 },
-    { address: "12 Milkyway Dr", lat: 14.61722648, lng: 121.07583074 },
-    { address: "13 Milkyway Dr", lat: 14.61730556, lng: 121.07586971 },
-    { address: "14 Milkyway Dr", lat: 14.61741895, lng: 121.07590970 },
-    { address: "15 Milkyway Dr", lat: 14.61755934, lng: 121.07591347 },
-    { address: "16 Milkyway Dr", lat: 14.61770071, lng: 121.07590425 },
-    { address: "17 Milkyway Dr", lat: 14.61786389, lng: 121.07591271 },
-    { address: "18 Milkyway Dr", lat: 14.61814955, lng: 121.07591959 },
-    { address: "19 Milkyway Dr", lat: 14.61838930, lng: 121.07598128 },
-    { address: "20 Milkyway Dr", lat: 14.61856497, lng: 121.07602788 },
-    { address: "21 Milkyway Dr", lat: 14.61879280, lng: 121.07605822 },
-    { address: "22 Milkyway Dr", lat: 14.61736782, lng: 121.07533094 },
-    { address: "23 Milkyway Dr", lat: 14.61722559, lng: 121.07531567 },
-    { address: "24 Milkyway Dr", lat: 14.61699909, lng: 121.07528625 },
-    { address: "25 Milkyway Dr", lat: 14.61703353, lng: 121.07552379 },
-    { address: "26 Milkyway Dr", lat: 14.61723662, lng: 121.07555313 },
-    { address: "27 Milkyway Dr", lat: 14.61744636, lng: 121.07558188 },
-    { address: "28 Milkyway Dr", lat: 14.61766470, lng: 121.07557794 },
-    { address: "29 Milkyway Dr", lat: 14.61780882, lng: 121.07556855 },
-    { address: "30 Milkyway Dr", lat: 14.61794265, lng: 121.07558758 },
-    { address: "31 Milkyway Dr", lat: 14.61812992, lng: 121.07561046 },
-    { address: "32 Milkyway Dr", lat: 14.61828232, lng: 121.07561759 },
-    { address: "33 Milkyway Dr", lat: 14.61843869, lng: 121.07563980 },
-    { address: "34 Milkyway Dr", lat: 14.61859474, lng: 121.07567601 },
-    { address: "35 Milkyway Dr", lat: 14.61872759, lng: 121.07573175 },
-    { address: "36 Milkyway Dr", lat: 14.61887966, lng: 121.07580978 },
-
-    { address: "1 Colonel Bonny Serrano Ave.", lat: 14.61648298, lng: 121.07514627 },
-    { address: "2 Colonel Bonny Serrano Ave.", lat: 14.61650699, lng: 121.07499741 },
-    { address: "3 Colonel Bonny Serrano Ave.", lat: 14.61653505, lng: 121.07486079 },
-    { address: "4 Colonel Bonny Serrano Ave.", lat: 14.61645395, lng: 121.07469164 },
-    { address: "5 Colonel Bonny Serrano Ave.", lat: 14.61650034, lng: 121.07568992 },
-    { address: "6 Colonel Bonny Serrano Ave.", lat: 14.61658307, lng: 121.07583057 },
-    { address: "7 Colonel Bonny Serrano Ave.", lat: 14.61656174, lng: 121.07598430 },
-    { address: "8 Colonel Bonny Serrano Ave.", lat: 14.61624518, lng: 121.07380450 },
-
-    { address: "1 Riverview Dr", lat: 14.61678540, lng: 121.07593093 },
-    { address: "2 Riverview Dr", lat: 14.61701585, lng: 121.07606619 },
-    { address: "3 Riverview Dr", lat: 14.61719769, lng: 121.07610919 },
-    { address: "4 Riverview Dr", lat: 14.61740857, lng: 121.07616878 },
-    { address: "5 Riverview Dr", lat: 14.61764462, lng: 121.07623847 },
-    { address: "6 Riverview Dr", lat: 14.61853375, lng: 121.07742297 },
-    { address: "7 Riverview Dr", lat: 14.61825134, lng: 121.07730704 },
-    { address: "8 Riverview Dr", lat: 14.61812976, lng: 121.07725935 },
-    { address: "9 Riverview Dr", lat: 14.61801572, lng: 121.07723236 },
-    { address: "10 Riverview Dr", lat: 14.61786947, lng: 121.07721158 },
-    { address: "11 Riverview Dr", lat: 14.61795360, lng: 121.07696095 },
-    { address: "12 Riverview Dr", lat: 14.61794922, lng: 121.07670581 },
-    { address: "13 Riverview Dr", lat: 14.61799074, lng: 121.07648570 },
-    { address: "14 Riverview Dr", lat: 14.61846391, lng: 121.07782999 },
-    { address: "15 Riverview Dr", lat: 14.61836351, lng: 121.07771968 },
-    { address: "16 Riverview Dr", lat: 14.61824282, lng: 121.07766252 },
-    { address: "17 Riverview Dr", lat: 14.61809797, lng: 121.07761223 },
-    { address: "18 Riverview Dr", lat: 14.61792424, lng: 121.07756076 },
-
-    { address: "1 Comets Loop", lat: 14.61668129, lng: 121.07422217 },
-    { address: "2 Comets Loop", lat: 14.61673595, lng: 121.07405361 },
-    { address: "3 Comets Loop", lat: 14.61684942, lng: 121.07390575 },
-    { address: "4 Comets Loop", lat: 14.61701861, lng: 121.07401723 },
-    { address: "5 Comets Loop", lat: 14.61713962, lng: 121.07408764 },
-    { address: "6 Comets Loop", lat: 14.61724124, lng: 121.07414740 },
-    { address: "7 Comets Loop", lat: 14.61736404, lng: 121.07420532 },
-    { address: "8 Comets Loop", lat: 14.61749665, lng: 121.07421110 },
-    { address: "9 Comets Loop", lat: 14.61761449, lng: 121.07422116 },
-    { address: "10 Comets Loop", lat: 14.61756356, lng: 121.07439760 },
-    { address: "11 Comets Loop", lat: 14.61761271, lng: 121.07453959 },
-    { address: "12 Comets Loop", lat: 14.61762650, lng: 121.07471293 },
-    { address: "13 Comets Loop", lat: 14.61641988, lng: 121.07397079 },
-    { address: "14 Comets Loop", lat: 14.61651672, lng: 121.07378824 },
-    { address: "15 Comets Loop", lat: 14.61661519, lng: 121.07361171 },
-    { address: "16 Comets Loop", lat: 14.61679832, lng: 121.07358590 },
-    { address: "17 Comets Loop", lat: 14.61696654, lng: 121.07361088 },
-    { address: "18 Comets Loop", lat: 14.61712080, lng: 121.07367659 },
-    { address: "19 Comets Loop", lat: 14.61725901, lng: 121.07373795 },
-    { address: "20 Comets Loop", lat: 14.61739770, lng: 121.07380433 },
-    { address: "21 Comets Loop", lat: 14.61754028, lng: 121.07384758 },
-
-    { address: "1 Evening Glow Rd", lat: 14.61775109, lng: 121.07610952 },
-    { address: "2 Evening Glow Rd", lat: 14.61806990, lng: 121.07617104 },
-
-    { address: "1 Moonlight Loop", lat: 14.61846375, lng: 121.07505089 },
-    { address: "2 Moonlight Loop", lat: 14.61847933, lng: 121.07485961 },
-    { address: "3 Moonlight Loop", lat: 14.61850317, lng: 121.07469164 },
-    { address: "4 Moonlight Loop", lat: 14.61869951, lng: 121.07481059 },
-    { address: "5 Moonlight Loop", lat: 14.61890967, lng: 121.07487713 },
-    { address: "6 Moonlight Loop", lat: 14.61903182, lng: 121.07492851 },
-    { address: "7 Moonlight Loop", lat: 14.61915242, lng: 121.07498224 },
-    { address: "8 Moonlight Loop", lat: 14.61927319, lng: 121.07503880 },
-    { address: "9 Moonlight Loop", lat: 14.61943024, lng: 121.07510450 },
-    { address: "10 Moonlight Loop", lat: 14.61856189, lng: 121.07434848 },
-    { address: "11 Moonlight Loop", lat: 14.61869434, lng: 121.07439559 },
-    { address: "12 Moonlight Loop", lat: 14.61882792, lng: 121.07444328 },
-    { address: "13 Moonlight Loop", lat: 14.61896726, lng: 121.07451897 },
-    { address: "14 Moonlight Loop", lat: 14.61909840, lng: 121.07458569 },
-    { address: "15 Moonlight Loop", lat: 14.61922436, lng: 121.07462542 },
-    { address: "16 Moonlight Loop", lat: 14.61935234, lng: 121.07467337 },
-    { address: "17 Moonlight Loop", lat: 14.61947952, lng: 121.07475165 },
-    { address: "18 Moonlight Loop", lat: 14.61962161, lng: 121.07483966 },
-    { address: "19 Moonlight Loop", lat: 14.61978723, lng: 121.07496261 },
-    { address: "20 Moonlight Loop", lat: 14.61973451, lng: 121.07519858 },
-
-    { address: "1 Promenade Ln", lat: 14.61822238, lng: 121.07621874 },
-    { address: "2 Promenade Ln", lat: 14.61837072, lng: 121.07625335 },
-    { address: "3 Promenade Ln", lat: 14.61852053, lng: 121.07629593 },
-    { address: "4 Promenade Ln", lat: 14.61871445, lng: 121.07634271 },
-    { address: "5 Promenade Ln", lat: 14.61844867, lng: 121.07663674 },
-    { address: "6 Promenade Ln", lat: 14.61818021, lng: 121.07662048 },
-
-    { address: "1 Starline Rd", lat: 14.61876928, lng: 121.07620960 },
-    { address: "2 Starline Rd", lat: 14.61963410, lng: 121.07545875 },
-    { address: "3 Starline Rd", lat: 14.61953013, lng: 121.07556470 },
-    { address: "4 Starline Rd", lat: 14.61942842, lng: 121.07565120 },
-    { address: "5 Starline Rd", lat: 14.61934715, lng: 121.07574650 },
-    { address: "6 Starline Rd", lat: 14.61927627, lng: 121.07586980 },
-    { address: "7 Starline Rd", lat: 14.61920173, lng: 121.07598312 },
-    { address: "8 Starline Rd", lat: 14.61916450, lng: 121.07610248 },
-    { address: "9 Starline Rd", lat: 14.61911990, lng: 121.07622502 },
-    { address: "10 Starline Rd", lat: 14.61907780, lng: 121.07636358 },
-    { address: "11 Starline Rd", lat: 14.61898769, lng: 121.07651655 },
-    { address: "12 Starline Rd", lat: 14.61889248, lng: 121.07667404 },
-    { address: "13 Starline Rd", lat: 14.61882175, lng: 121.07680237 },
-    { address: "14 Starline Rd", lat: 14.61875857, lng: 121.07691452 },
-    { address: "15 Starline Rd", lat: 14.61870204, lng: 121.07703329 },
-    { address: "16 Starline Rd", lat: 14.61864616, lng: 121.07715801 },
-    { address: "17 Starline Rd", lat: 14.61858557, lng: 121.07727561 },
-    { address: "18 Starline Rd", lat: 14.61837827, lng: 121.07682869 },
-    { address: "19 Starline Rd", lat: 14.61832750, lng: 121.07696808 },
-    { address: "20 Starline Rd", lat: 14.61825053, lng: 121.07710940 },
-
-    { address: "1 Union Lane", lat: 14.61767394, lng: 121.07391682 },
-    { address: "2 Union Lane", lat: 14.61779268, lng: 121.07364608 },
-    { address: "3 Union Lane", lat: 14.61797128, lng: 121.07385362 },
-    { address: "4 Union Lane", lat: 14.61803454, lng: 121.07369905 },
-
-    { address: "1 Crest line St", lat: 14.61644405, lng: 121.07331231 },
-    { address: "2 Crest line St", lat: 14.61641051, lng: 121.07304946 },
-
-    { address: "1 Hillside Dr", lat: 14.61663895, lng: 121.07313001 },
-    { address: "2 Hillside Dr", lat: 14.61680400, lng: 121.07321123 },
-    { address: "3 Hillside Dr", lat: 14.61712388, lng: 121.07335623 },
-    { address: "4 Hillside Dr", lat: 14.61725057, lng: 121.07340971 },
-    { address: "5 Hillside Dr", lat: 14.61742560, lng: 121.07349303 },
-    { address: "6 Hillside Dr", lat: 14.61763404, lng: 121.07356930 },
-    { address: "7 Hillside Dr", lat: 14.61817550, lng: 121.07384171 },
-    { address: "8 Hillside Dr", lat: 14.61833625, lng: 121.07391464 },
-    { address: "9 Hillside Dr", lat: 14.61851469, lng: 121.07398991 },
-    { address: "10 Hillside Dr", lat: 14.61868241, lng: 121.07406417 },
-    { address: "11 Hillside Dr", lat: 14.61884187, lng: 121.07414145 },
-    { address: "12 Hillside Dr", lat: 14.61899970, lng: 121.07423265 },
-    { address: "13 Hillside Dr", lat: 14.61916580, lng: 121.07431076 },
-    { address: "14 Hillside Dr", lat: 14.61933872, lng: 121.07435334 },
-    { address: "15 Hillside Dr", lat: 14.61966379, lng: 121.07452048 },
-    { address: "16 Hillside Dr", lat: 14.61984368, lng: 121.07461184 },
-    { address: "17 Hillside Dr", lat: 14.62000646, lng: 121.07469021 },
-
-    { address: "Covered Court", lat: 14.61789585, lng: 121.07416204 },
-    { address: "Barangay Hall", lat: 14.61826809, lng: 121.07445661 }
-];
 
 // Simple address validation function for the create form
 function validateConstructionAddress() {
@@ -389,10 +187,10 @@ const swalTopConfig = {
         const title = modal.querySelector('.swal2-title');
         const content = modal.querySelector('.swal2-html-container');
         const actions = modal.querySelector('.swal2-actions');
-        
+
         // 1. Pushes the Checkmark/Icon down from the very top
         if (icon) {
-            icon.style.marginTop = '3rem'; 
+            icon.style.marginTop = '3rem';
             icon.style.marginBottom = '1rem';
         }
         // 2. Adds spacing around the "Success" text
@@ -646,14 +444,15 @@ function loadApplicationsFromDB() {
 }
 
 /**
- * Automatically refreshes the active tab every 30 seconds.
- * Fetches the latest application data depending on which tab is active
- * and updates the UI accordingly.
+ * Refreshes the currently active tab's content with latest application data.
+ * Triggered by WebSocket construction updates.
  * 
- * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ * Uses `isRefreshing` flag to prevent concurrent refreshes.
+ * 
+ * @see {@link loadApplicationsFromDB} - Fetches fresh data
  */
 let isRefreshing = false;
-setInterval(() => {
+function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
 
@@ -673,7 +472,7 @@ setInterval(() => {
     } else {
         finish();
     }
-}, 30000);
+}
 
 
 /**
@@ -705,13 +504,13 @@ function loadProcessTable() {
             let buttonsHtml = "";
 
             // 1. Determine primary action button based on status
-            if (app.status === 'Pending') { 
-                btnClass = "primary"; 
-            } else if (app.status === 'Complied') { 
-                btnText = "Finalize Approval"; 
-                btnClass = "success"; 
+            if (app.status === 'Pending') {
+                btnClass = "primary";
+            } else if (app.status === 'Complied') {
+                btnText = "Finalize Approval";
+                btnClass = "success";
             } else if (app.status === 'Approved' || app.status === 'Completed') {
-                btnText = "View Details"; 
+                btnText = "View Details";
                 btnClass = "info";
             }
 
@@ -743,11 +542,6 @@ function loadProcessTable() {
     });
 }
 
-// Helper function (needed for the main function to work)
-function getCurrentDateString() {
-    return new Date().toISOString().split('T')[0];
-}
-
 // Generate Construction Permit Function
 function generateConstructionPermit(appId) {
     // 1. Check if 'applications' exists to prevent crash
@@ -757,13 +551,13 @@ function generateConstructionPermit(appId) {
     }
 
     const app = applications.find(a => a.id == appId);
-    
+
     if (!app) {
         if (typeof Swal !== 'undefined') {
-            Swal.fire({ 
-                icon: 'error', 
-                title: 'Not Found', 
-                text: `Application data not found for ID: ${appId}` 
+            Swal.fire({
+                icon: 'error',
+                title: 'Not Found',
+                text: `Application data not found for ID: ${appId}`
             });
         } else {
             alert(`Application data not found for ID: ${appId}`);
@@ -775,7 +569,7 @@ function generateConstructionPermit(appId) {
     const address = app.address || '_______________________';
     const contractorName = app.contractor_name || '_______________________';
     const or_number = app.or_number || 'N/A';
-    
+
     // Uses the helper function defined above
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
@@ -897,17 +691,17 @@ function generateConstructionPermit(appId) {
     </body>
     </html>`;
 
-const w = window.open('', '_blank');
+    const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
 
     // This triggers the print dialog as soon as the content is loaded
     w.focus(); // Necessary for some browsers to focus the print dialog
-    
+
     // Use a slight timeout to ensure styles and images (like your logo) are rendered
     setTimeout(() => {
         w.print();
-        
+
         // Optional: Uncomment the line below if you want the window to close 
         // automatically after the user clicks 'Print' or 'Cancel'
         // w.close(); 
@@ -1065,7 +859,7 @@ function applyPrompt(text) {
 
 /**
  * Opens the update modal for a specific application and loads current data
- * Includes DSS evaluation results display and status tracking
+ * Includes Evaluation Results display and status tracking
  * 
  * @param {number} appId - The application ID to open in the update modal
  */
@@ -1110,14 +904,14 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', CONSTRUCTION_HANDLER_URL, appId);
+    // console.debug('fetchDSSEvaluation ->', CONSTRUCTION_HANDLER_URL, appId);
     fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
         })
         .then(data => {
-            console.debug('DSS response for', appId, data);
+            // console.debug('DSS response for', appId, data);
             const existing = document.getElementById('dssEvaluationSection');
             if (data && data.status === 'success' && data.evaluation) {
                 if (existing) existing.remove();
@@ -1210,7 +1004,7 @@ function addDSSSectionToModal(evaluation, app) {
     dssSection.innerHTML = `
     <div class="dss-evaluation-section">
         <div class="dss-header">
-            <h3>DSS Evaluation Result</h3>
+            <h3>Evaluation Result</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
@@ -1356,17 +1150,29 @@ function submitUpdate(event) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-            //Closes Update Button after successful update
+                //Closes Update Button after successful update
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
-                    Swal.fire({
-                        ...swalTopConfig,
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Application updated successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+                    sockets["construction_applications"].send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
+                }
+
+                if (sockets["construction"] && sockets["construction"].readyState === WebSocket.OPEN) {
+                    sockets["construction"].send(JSON.stringify({ type: "construction_update", action: "status_update" }));
+                }
+
                 loadManagementTable();
                 loadProcessTable();
             } else {
@@ -2301,7 +2107,7 @@ function createApplication(event) {
                 for (let i = 0; i < requirementUploadInput.files.length; i++) {
                     formData.append('requirementUpload[]', requirementUploadInput.files[i]);
                 }
-                console.log(`[UPLOAD SUCCESS] Sending ${requirementUploadInput.files.length} file(s) for construction`);
+                // console.log(`[UPLOAD SUCCESS] Sending ${requirementUploadInput.files.length} file(s) for construction`);
             } else {
                 console.warn('[UPLOAD WARNING] No file selected!');
             }
@@ -2374,29 +2180,6 @@ function createApplication(event) {
                 });
         }
     });
-}
-
-/**
- * Validates owner address against the addressCoordinates database
- * @returns {boolean} - Whether the address exists in records
- */
-function validateOwnerAddress() {
-    const lotInput = document.getElementById('ownerLotNo');
-    const streetInput = document.getElementById('ownerStreet');
-
-    if (!lotInput || !streetInput) return true;
-
-    const lot = lotInput.value.trim();
-    const street = streetInput.value;
-
-    if (!lot || !street || street === '') {
-        return false;
-    }
-
-    const fullAddress = `${lot} ${street}`;
-    const match = addressCoordinates.find(a => a.address === fullAddress);
-
-    return !!match;
 }
 
 /**
@@ -2479,6 +2262,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
+    if (!sockets["construction_applications"]) {
+        initSocket("construction_applications", "ws://localhost:8081", data => {
+            if (data.type === "construction_applications_update") {
+                refreshActiveTab()
+                loadManagementTable();
+                loadProcessTable();
+            }
+        });
+    }
+
     const createForm = document.getElementById('createForm');
     if (createForm) {
         createForm.addEventListener('submit', createApplication);
@@ -2541,3 +2334,25 @@ document.addEventListener('DOMContentLoaded', function () {
         sideNav.classList.toggle('expanded');
     });
 });
+
+window.generateConstructionPermit = generateConstructionPermit;
+window.generateConstructionClearance = generateConstructionPermit;
+// Ensure global scope (Alias both names just in case)
+window.generateConstructionPermit = generateConstructionPermit;
+window.generateConstructionClearance = generateConstructionPermit;
+
+// Expose all functions used by inline HTML handlers (required for type="module")
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.toggleAmountField = toggleAmountField;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.archiveApplication = archiveApplication;
+window.reRunOCR = reRunOCR;
+

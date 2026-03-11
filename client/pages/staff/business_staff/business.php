@@ -172,36 +172,36 @@
 
                         <!-- Sub-filters shown only when Construction is selected -->
                         <!-- Sub-filters shown only when Incident is selected — built by loadIncidentSubFilters() in map.js -->
-                            <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
+                        <div class="sub-filters" id="incidentSubFilters" style="display:none;"></div>
 
-                            <!-- Sub-filters shown only when Construction is selected -->
-                            <div class="sub-filters" id="constructionSubFilters" style="display:none;">
-                                <div class="sub-filters-bar">
-                                    <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
-                                        <i class="fas fa-layer-group"></i><span>All</span>
-                                    </button>
-                                    <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
-                                    <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
-                                        onclick="toggleConstructionFilters()" title="Show / hide construction types">
-                                        <i class="fas fa-filter"></i> Types
-                                        <span class="toggle-arrow">&#9662;</span>
-                                    </button>
-                                </div>
-                                <div class="sub-filter-expanded" id="constructionTypeList">
-                                    <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
-                                        <i class="fas fa-building"></i><span>Major</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
-                                        <i class="fas fa-home"></i><span>Minor</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
-                                        <i class="fas fa-tools"></i><span>Repair</span>
-                                    </button>
-                                    <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
-                                        <i class="fas fa-trash-alt"></i><span>Demolition</span>
-                                    </button>
-                                </div>
+                        <!-- Sub-filters shown only when Construction is selected -->
+                        <div class="sub-filters" id="constructionSubFilters" style="display:none;">
+                            <div class="sub-filters-bar">
+                                <button class="sub-filter-btn active" data-subtype="all" onclick="filterConstructionByType('all', event)">
+                                    <i class="fas fa-layer-group"></i><span>All</span>
+                                </button>
+                                <span class="sub-filter-active-label" id="constructionActiveLabel">Showing all types</span>
+                                <button class="sub-filter-toggle-btn" id="constructionToggleBtn"
+                                    onclick="toggleConstructionFilters()" title="Show / hide construction types">
+                                    <i class="fas fa-filter"></i> Types
+                                    <span class="toggle-arrow">&#9662;</span>
+                                </button>
                             </div>
+                            <div class="sub-filter-expanded" id="constructionTypeList">
+                                <button class="sub-filter-btn" data-subtype="major" onclick="filterConstructionByType('major', event)">
+                                    <i class="fas fa-building"></i><span>Major</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="minor" onclick="filterConstructionByType('minor', event)">
+                                    <i class="fas fa-home"></i><span>Minor</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="repair" onclick="filterConstructionByType('repair', event)">
+                                    <i class="fas fa-tools"></i><span>Repair</span>
+                                </button>
+                                <button class="sub-filter-btn" data-subtype="demolition" onclick="filterConstructionByType('demolition', event)">
+                                    <i class="fas fa-trash-alt"></i><span>Demolition</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -265,7 +265,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Dashboard tab with analytics charts -->
         <div id="dashboard" class="tab-pane">
             <header class="top-header">
@@ -366,7 +366,7 @@
                 <p class="page-description">Fill in the details to register a new business</p>
             </div>
 
-                <form id="createStaffForm" onsubmit="createApplication(event)">
+            <form id="createStaffForm" onsubmit="createApplication(event)">
 
                 <div class="section-title"><strong>Owner Information</strong></div>
 
@@ -398,7 +398,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="contactNoOwner">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoOwner">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -408,7 +408,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="lotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="lotNo">House No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="lotNo" name="lotNo" maxlength="2" pattern="[0-9]{1,2}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -504,7 +504,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="contactNoBusiness">Landline/Phone No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoBusiness">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -528,7 +528,7 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="businessLotNo">Lot no. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="businessLotNo">House No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="businessLotNo" name="businessLotNo" maxlength="2" pattern="[0-9]{1,2}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -609,7 +609,7 @@
                         <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
                         <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
-                        <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
+                        <label><input type="checkbox" name="requirements" value="Previous Business Clearance"> Previous Business Clearance</label>
                     </div>
                     <div class="error-msg"></div>
                 </div>
@@ -622,7 +622,7 @@
 
                 <!-- OCR Verification Section (kept exactly as you had) -->
                 <div class="verification-container" id="verificationSection" style="display:none; margin:25px 0; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
-                    <label class="label" style="margin-bottom:12px; display:block;">📋 OCR Document Verification</label>
+                    <label class="label" style="margin-bottom:12px; display:block;">Document Verification</label>
                     <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
                     <button type="button" id="verifyDocumentsBtn" class="btn btn-secondary" style="width:100%; padding:12px;">Re-Verify Documents with OCR</button>
                     <small style="color:#64748b; font-size:0.85em; margin-top:10px; display:block;">Auto-checks 1 second after upload. Business name is also cross-checked.</small>
@@ -764,7 +764,7 @@
         </div>
     </div>
     </div>
-    <script src="../../../scripts/staff/business_staff/business.js"></script>
+    <script type="module" src="../../../scripts/staff/business_staff/business.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 

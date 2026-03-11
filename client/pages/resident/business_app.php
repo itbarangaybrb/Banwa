@@ -141,7 +141,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoBusiness">Landline/Phone No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoBusiness">Mobile or Landline No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -156,7 +156,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="businessLotNo">Lot no. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="businessLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="businessLotNo" id="businessLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
                     </div>
@@ -197,12 +197,8 @@ if ($_SESSION['role_id'] != 1) {
                         <label class="label" for="typeOfStructureSelect">What kind of structure is the business in? <span style="color: #BB1B1B;">*</span></label>
                         <select id="typeOfStructureSelect" name="typeOfStructureSelect">
                             <option value="" disabled selected>Select Structure Type</option>
-                            <option value="Residence">Residence</option>
-                            <option value="Store">Store</option>
-                            <option value="Office">Office</option>
-                            <option value="Warehouse">Warehouse</option>
-                            <option value="Factory">Factory</option>
-                            <option value="Others">Others</option>
+                            <option value="Residential">Residential</option>
+                            <option value="Commercial">Commercial</option>
                         </select>
                         <div class="error-msg"></div>
                     </div>
@@ -223,11 +219,11 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
                     <div class="label-and-input" id="requirementsSection">
                         <label class="label">Requirements (Photocopy Only) <span style="color: #BB1B1B;">*</span></label>
-                        <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
-                        <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
                         <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
-                        <label><input type="checkbox" name="requirements" value="Previous Business Permit"> Previous Business Permit</label>
+                        <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
+                        <label><input type="checkbox" name="requirements" value="Previous Business Clearance"> Previous Business Clearance</label>
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
@@ -240,7 +236,7 @@ if ($_SESSION['role_id'] != 1) {
                 <!-- NEW: OCR Document Verification Section -->
                 <div class="label-and-input verification-container" id="verificationSection" style="display:none; margin-top:20px; padding:18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
                     <label class="label" style="margin-bottom:12px; display:block;">
-                        📋 OCR Document Verification
+                        Document Verification
                     </label>
                     <div id="verificationResults" style="margin-bottom:15px; line-height:1.6;"></div>
 
@@ -270,7 +266,7 @@ if ($_SESSION['role_id'] != 1) {
                         Business Application Form is true and correct. I authorize the Barangay to verify the information
                         with the documents submitted.</p>
                     <p>I understand that any false declaration or withholding of relevant information may result in
-                        the denial, revocation, or suspension of my business permit.</p>
+                        the denial, revocation, or suspension of my Business Clearance.</p>
                     <p> I agree that the Barangay shall not be held liable for any incorrect information or discrepancies
                         provided in this form and supporting documents.</p>
                 </div>

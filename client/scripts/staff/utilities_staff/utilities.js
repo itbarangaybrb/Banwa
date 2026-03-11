@@ -1,6 +1,6 @@
 // Configuration
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
-const UPLOADS_BASE_PATH = '/server/handlers/staff/utility/uploads/';
 let applications = [];
 
 // ===============================================
@@ -49,10 +49,10 @@ const swalTopConfig = {
         const title = modal.querySelector('.swal2-title');
         const content = modal.querySelector('.swal2-html-container');
         const actions = modal.querySelector('.swal2-actions');
-        
+
         // 1. Pushes the Checkmark/Icon down from the very top
         if (icon) {
-            icon.style.marginTop = '3rem'; 
+            icon.style.marginTop = '3rem';
             icon.style.marginBottom = '1rem';
         }
         // 2. Adds spacing around the "Success" text
@@ -315,14 +315,15 @@ function loadApplicationsFromDB() {
 }
 
 /**
- * Automatically refreshes the active tab every 30 seconds.
- * Fetches the latest application data depending on which tab is active
- * and updates the UI accordingly.
+ * Refreshes the currently active tab's content with latest application data.
+ * Triggered by WebSocket construction updates.
  * 
- * @note Uses a flag (`isRefreshing`) to prevent overlapping fetches.
+ * Uses `isRefreshing` flag to prevent concurrent refreshes.
+ * 
+ * @see {@link loadApplicationsFromDB} - Fetches fresh data
  */
 let isRefreshing = false;
-setInterval(() => {
+function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
 
@@ -342,8 +343,7 @@ setInterval(() => {
     } else {
         finish();
     }
-}, 30000);
-
+};
 
 /**
  * Loads applications into the process table with actionable statuses
@@ -374,13 +374,13 @@ function loadProcessTable() {
             let buttonsHtml = "";
 
             // 1. Determine primary action button based on status
-            if (app.status === 'Pending') { 
-                btnClass = "primary"; 
-            } else if (app.status === 'Complied') { 
-                btnText = "Finalize Approval"; 
-                btnClass = "success"; 
+            if (app.status === 'Pending') {
+                btnClass = "primary";
+            } else if (app.status === 'Complied') {
+                btnText = "Finalize Approval";
+                btnClass = "success";
             } else if (app.status === 'Approved' || app.status === 'Completed') {
-                btnText = "View Details"; 
+                btnText = "View Details";
                 btnClass = "info";
             }
 
@@ -426,8 +426,8 @@ function generateUtilitiesPermit(appId) {
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
     // === DATE OF WORK ===
-    const workDate = app.dateOfWork ? 
-        new Date(app.dateOfWork).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' }) 
+    const workDate = app.dateOfWork ?
+        new Date(app.dateOfWork).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })
         : "_________________";
 
     const currentYear = new Date().getFullYear();
@@ -685,7 +685,7 @@ function applyPrompt(text) {
 
 /**
  * Opens the update modal for a specific application and loads current data
- * Includes DSS evaluation results display and status tracking
+ * Includes Evaluation Results display and status tracking
  * 
  * @param {number} appId - The application ID to open in the update modal
  */
@@ -694,9 +694,9 @@ function openUpdateModal(appId) {
     const app = applications.find(a => a.id == appId);
 
     if (!app) {
-            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
-            return;
-        }
+        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Not Found', text: 'Application data not found.' });
+        return;
+    }
 
     // Fill the hidden ID field and the visible "Current Status" text
     document.getElementById('updateAppId').value = app.id;
@@ -728,14 +728,14 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    console.debug('fetchDSSEvaluation ->', UTILITY_HANDLER_URL, appId);
+    // console.debug('fetchDSSEvaluation ->', UTILITY_HANDLER_URL, appId);
     fetch(`${UTILITY_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
         })
         .then(data => {
-            console.debug('DSS response for', appId, data);
+            // console.debug('DSS response for', appId, data);
             const existing = document.getElementById('dssEvaluationSection');
             if (data && data.status === 'success' && data.evaluation) {
                 if (existing) existing.remove();
@@ -834,7 +834,7 @@ function addDSSSectionToModal(evaluation, app) {
     dssSection.innerHTML = `
     <div class="dss-evaluation-section">
         <div class="dss-header">
-            <h3>DSS Evaluation Result</h3>
+            <h3>Evaluation Result</h3>
             <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
                 ${dssStatus}
             </span>
@@ -968,39 +968,51 @@ function submitUpdate(event) {
         method: 'POST',
         body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            document.getElementById('updateModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'success',
-                title: 'Success',
-                text: 'Application updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            loadManagementTable();
-            loadProcessTable();
-        } else {
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('updateModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Application updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
+                    sockets["utility_applications"].send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
+                }
+
+                if (sockets["utility"] && sockets["utility"].readyState === WebSocket.OPEN) {
+                    sockets["utility"].send(JSON.stringify({ type: "utility_update", action: "status_update" }));
+                }
+
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: data.message || 'An unknown error occurred.'
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Submit update error:', err);
             Swal.fire({
                 ...swalTopConfig,
                 icon: 'error',
-                title: 'Update Failed',
-                text: data.message || 'An unknown error occurred.'
+                title: 'Network Error',
+                text: 'Please check your connection.'
             });
-        }
-    })
-    .catch(err => {
-        console.error('Submit update error:', err);
-        Swal.fire({
-            ...swalTopConfig,
-            icon: 'error',
-            title: 'Network Error',
-            text: 'Please check your connection.'
         });
-    });
 }
 
 /**
@@ -1351,7 +1363,7 @@ document.addEventListener('click', function (e) {
         if (modal) {
             modal.classList.remove('active');
             document.body.style.overflow = 'auto';
-            console.log("✅ Modal closed successfully");
+            // console.log("Modal closed successfully");
         }
     }
 
@@ -1370,7 +1382,7 @@ document.addEventListener('keydown', function (e) {
     if (e.key === "Escape") {
         const activeModal = document.querySelector('.modal.active');
         if (activeModal) {
-            console.log("🟡 ESC pressed");
+            // console.log("🟡 ESC pressed");
             activeModal.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
@@ -1423,15 +1435,15 @@ function showAlert(message, type) {
 function printSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
     if (!appId) {
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'warning',
-                title: 'No Application Selected',
-                text: 'Please select an application to print.'
-            });
-            return;
-        }
-        
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'warning',
+            title: 'No Application Selected',
+            text: 'Please select an application to print.'
+        });
+        return;
+    }
+
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
@@ -1710,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validation (keeps your red error messages)
         let isValid = true;
-        const requiredIds = ['firstName','lastName','contactNoOwner','addressOwner','utilityLotNo','utilityStreet','requestDate','dateOfWork','natureOfWork','provider'];
+        const requiredIds = ['firstName', 'lastName', 'contactNoOwner', 'addressOwner', 'utilityLotNo', 'utilityStreet', 'requestDate', 'dateOfWork', 'natureOfWork', 'provider'];
 
         requiredIds.forEach(id => {
             const field = document.getElementById(id);
@@ -1843,6 +1855,16 @@ function updateApplicationDate() {
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
+
+    if (!sockets["utility_applications"]) {
+        initSocket("utility_applications", "ws://localhost:8081", data => {
+            if (data.type === "utility_applications_update") {
+                refreshActiveTab()
+                loadManagementTable();
+                loadProcessTable();
+            }
+        });
+    }
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK
@@ -1880,6 +1902,91 @@ document.head.insertAdjacentHTML("beforeend", `
         .swal2-popup { text-align: center !important; }
     </style>
 `);
+
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
+// ===============================================
+
+// Core application functions
+window.loadApplicationsFromDB = loadApplicationsFromDB;
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+
+// Summary functions
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+
+// Process and management functions
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.archiveApplication = archiveApplication;
+
+// Permit generation
+window.generateUtilitiesPermit = generateUtilitiesPermit;
+window.generateUtilityPermit = generateUtilitiesPermit; // Alias
+window.generateUtilitiesClearance = generateUtilitiesPermit; // Alias
+
+// Tab navigation and initialization
+window.switchTab = switchTab;
+window.initializeSidebarNav = initializeSidebarNav;
+
+// Helper functions
+window.getCurrentDateString = getCurrentDateString;
+window.updateApplicationDate = updateApplicationDate;
+window.filterReviewApplications = filterReviewApplications;
+window.showAlert = showAlert;
+window.openModal = openModal;
+
+// Chart instances if needed globally
+window.chart1Instance = chart1Instance;
+window.chart2Instance = chart2Instance;
+window.chart3Instance = chart3Instance;
+
+// Ensure global scope (Alias both names just in case) - like in construction.js
+window.generateUtilitiesPermit = generateUtilitiesPermit;
+window.generateUtilityPermit = generateUtilitiesPermit;
+window.generateUtilitiesClearance = generateUtilitiesPermit;
+
+// Expose all functions used by inline HTML handlers (required for type="module")
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.archiveApplication = archiveApplication;
+window.generateUtilitiesPermit = generateUtilitiesPermit;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.switchTab = switchTab;
+window.toggleMobileMenu = toggleMobileMenu; // If this exists in map.js
+window.clearSearch = clearSearch; // From map.js
+window.performSearch = performSearch; // From map.js
+window.toggleFilterDropdown = toggleFilterDropdown; // From map.js
+window.selectFilterType = selectFilterType; // From map.js
+window.toggleFloodLayer = toggleFloodLayer; // From map.js
+window.toggleFaultLine = toggleFaultLine; // From map.js
+window.filterConstructionByType = filterConstructionByType; // From map.js
+window.toggleConstructionFilters = toggleConstructionFilters; // From map.js
+window.toggleStreetMap = toggleStreetMap; // From map.js
+window.toggleSatellite = toggleSatellite; // From map.js
+window.resetView = resetView; // From map.js
+window.getFloodHousesSummary = getFloodHousesSummary; // From map.js
+window.showFaultLineRiskAssessment = showFaultLineRiskAssessment; // From map.js
+window.showAllBusinessesSDSSReport = showAllBusinessesSDSSReport; // From map.js
+window.showAllConstructionSDSSReport = showAllConstructionSDSSReport; // From map.js
+window.showIncidentSummaryReport = showIncidentSummaryReport; // From map.js
+window.showSDSSRulesReport = showSDSSRulesReport; // From map.js
 
 // DO NOT REMOVE!!! - JEP
 // /**

@@ -97,16 +97,16 @@
                             </div>
 
                             <div class="buttons-container">
-                            <p class="login-prompt">
-                                Already have an account? 
-                                <a href="./signin.php" class="login-link">Login Now</a>
-                            </p>
-                            
-                            <button type="button" id="selectIdNextBtn">Next</button>
+                                <p class="login-prompt">
+                                    Already have an account?
+                                    <a href="./signin.php" class="login-link">Login Now</a>
+                                </p>
+
+                                <button type="button" id="selectIdNextBtn">Next</button>
                             </div>
                         </form>
                     </div>
-<!-- <button type="button" id="selectIdNextBtn">Next</button> -->
+                    <!-- <button type="button" id="selectIdNextBtn">Next</button> -->
                     <div class="personal-details-container hidden" id="personalDetails">
                         <form class="form" id="personalDetailsForm">
                             <h5>Personal Information</h5>
@@ -147,7 +147,7 @@
                                     <div class="error-msg"></div>
                                 </div>
                                 <div class="label-and-input">
-                                    <label for="contactNo">Contact no. <span style="color: #BB1B1B;">*</span></label>
+                                    <label for="contactNo">Contact No. <span style="color: #BB1B1B;">*</span></label>
                                     <input type="tel" id="contactNo" name="contactNo" maxlength="11" pattern="[0-9]{1,11}" required>
                                     <div class="error-msg"></div>
                                 </div>

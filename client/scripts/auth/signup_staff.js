@@ -104,8 +104,8 @@ function validation() {
         const errorEl = wrapper?.querySelector('.error-msg');
         if (!errorEl) return true;
 
-        let value = input.type === 'checkbox' 
-            ? input.checked 
+        let value = input.type === 'checkbox'
+            ? input.checked
             : (input.value ?? '').trim();
 
         const setError = (msg) => {
@@ -279,7 +279,7 @@ function validation() {
                 password: signupData.password,
                 options: {
                     data: signupData,
-                    emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php",
+                    emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php",
                 },
             });
 
@@ -358,7 +358,7 @@ function validation() {
             type: 'signup',
             email: signupData.email,
             options: {
-                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php"
+                emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php"
             }
         });
 
