@@ -713,8 +713,8 @@ if (file_exists($databasePath)) {
     
     <script>
 
-        const HAZARD_HANDLER_URL = '/server/handlers/map/hazard_handler.php';
-        const MAP_HANDLER_URL    = '/server/handlers/map/map_handler.php';
+        const HAZARD_HANDLER_URL = '/Banwa/server/handlers/map/hazard_handler.php';
+        const MAP_HANDLER_URL    = '/Banwa/server/handlers/map/map_handler.php';
 
         // Global variables
         let editorMap;

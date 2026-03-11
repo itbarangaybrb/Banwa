@@ -1,4 +1,51 @@
 <?php
+
+// ── Geometry helper ──────────────────────────────────────────────────────────
+// Builds the best available PostGIS geometry for a house_polygons row.
+// Priority:
+//   1. Dedicated `geom` column (geometry(Polygon,4326)) — fastest, uses spatial index
+//   2. jsonb `coordinates` column — converted on the fly (slower, no index)
+//   3. center_lat / center_lng point — least accurate, always available
+//
+// Use HOUSE_GEOM_SQL as the geometry expression inside any SQL query that
+// reads from house_polygons (aliased as any table alias you choose).
+// Replace the placeholder {alias} with the actual table alias used in the query.
+//
+// Run migration/add_geom_column.sql once to add the geom column and index.
+define('HOUSE_GEOM_EXPR',
+    "CASE
+        WHEN {alias}.geom IS NOT NULL
+            THEN {alias}.geom
+        WHEN {alias}.coordinates IS NOT NULL
+            THEN ST_Force2D(ST_SetSRID(
+                     ST_GeomFromGeoJSON(
+                         json_build_object(
+                             'type', 'Polygon',
+                             'coordinates', json_build_array({alias}.coordinates)
+                         )::text
+                     ), 4326))
+        ELSE
+            ST_SetSRID(ST_MakePoint({alias}.center_lng, {alias}.center_lat), 4326)
+    END"
+);
+
+/**
+ * Returns the geometry expression for a house_polygons alias.
+ * e.g. house_geom_expr('hp') → the CASE expression with 'hp.' prefix
+ */
+function house_geom_expr(string $alias): string {
+    return str_replace('{alias}', $alias, HOUSE_GEOM_EXPR);
+}
+
+/**
+ * Returns the "has polygon" condition — true when the house has a real polygon
+ * (either a stored geom column or jsonb coordinates), not just a centre point.
+ */
+function house_has_polygon(string $alias): string {
+    return "({$alias}.geom IS NOT NULL OR {$alias}.coordinates IS NOT NULL)";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DB connection — provides the global $pdo variable used by all functions below
 require_once __DIR__ . '/../../configs/database.php';
 
@@ -279,23 +326,23 @@ function getHousesInFloodAreas($riskLevel = null){
         $sql = "WITH house_geoms AS (
                     SELECT 
                         house_id, address, street_name, house_number,
-                        center_lat, center_lng, area_sqm, coordinates,
-                        CASE 
-                            WHEN coordinates IS NOT NULL THEN
-                                ST_SetSRID(
-                                    ST_GeomFromGeoJSON(
-                                        json_build_object(
-                                            'type', 'Polygon',
-                                            'coordinates', json_build_array(coordinates)
-                                        )::text
-                                    ),
-                                    4326
-                                )
+                        center_lat, center_lng, area_sqm, coordinates, geom,
+                        CASE
+                            WHEN geom IS NOT NULL
+                                THEN geom
+                            WHEN coordinates IS NOT NULL
+                                THEN ST_Force2D(ST_SetSRID(
+                                         ST_GeomFromGeoJSON(
+                                             json_build_object(
+                                                 'type', 'Polygon',
+                                                 'coordinates', json_build_array(coordinates)
+                                             )::text
+                                         ), 4326))
                             ELSE
                                 ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)
                         END as geom
                     FROM house_polygons
-                    WHERE (coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
+                    WHERE (geom IS NOT NULL OR coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
                 ),
                 raw_impacts AS (
                     SELECT 
@@ -304,7 +351,7 @@ function getHousesInFloodAreas($riskLevel = null){
                         bh.hazard_id, bh.hazard_name, bh.risk_level,
                         bh.description as hazard_description, bh.properties,
                         CASE 
-                            WHEN hg.coordinates IS NOT NULL THEN
+                            WHEN (hg.geom IS NOT NULL OR hg.coordinates IS NOT NULL) THEN
                                 LEAST(
                                     ROUND(
                                         (ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
@@ -316,7 +363,7 @@ function getHousesInFloodAreas($riskLevel = null){
                             ELSE 100
                         END as flood_coverage_percent,
                         CASE 
-                            WHEN hg.coordinates IS NULL THEN 'Affected'
+                            WHEN (hg.geom IS NULL AND hg.coordinates IS NULL) THEN 'Affected'
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
@@ -325,7 +372,7 @@ function getHousesInFloodAreas($riskLevel = null){
                         END as impact_level,
                         CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
                         CASE 
-                            WHEN hg.coordinates IS NULL THEN 4
+                            WHEN (hg.geom IS NULL AND hg.coordinates IS NULL) THEN 4
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
@@ -375,29 +422,29 @@ function getFloodAffectedHousesSummary(){
         $sql = "WITH house_geoms AS (
                     SELECT 
                         house_id, address, coordinates, center_lat, center_lng,
-                        CASE 
-                            WHEN coordinates IS NOT NULL THEN
-                                ST_SetSRID(
-                                    ST_GeomFromGeoJSON(
-                                        json_build_object(
-                                            'type', 'Polygon',
-                                            'coordinates', json_build_array(coordinates)
-                                        )::text
-                                    ),
-                                    4326
-                                )
+                        CASE
+                            WHEN geom IS NOT NULL
+                                THEN geom
+                            WHEN coordinates IS NOT NULL
+                                THEN ST_Force2D(ST_SetSRID(
+                                         ST_GeomFromGeoJSON(
+                                             json_build_object(
+                                                 'type', 'Polygon',
+                                                 'coordinates', json_build_array(coordinates)
+                                             )::text
+                                         ), 4326))
                             ELSE
                                 ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)
                         END as geom
                     FROM house_polygons
-                    WHERE (coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
+                    WHERE (geom IS NOT NULL OR coordinates IS NOT NULL OR (center_lat IS NOT NULL AND center_lng IS NOT NULL))
                 ),
                 raw_impacts AS (
                     SELECT 
                         hg.house_id,
                         bh.risk_level,
                         CASE 
-                            WHEN hg.coordinates IS NULL THEN 'Affected'
+                            WHEN (hg.geom IS NULL AND hg.coordinates IS NULL) THEN 'Affected'
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 'Fully Affected'
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
@@ -406,7 +453,7 @@ function getFloodAffectedHousesSummary(){
                         END as impact_level,
                         CASE LOWER(bh.risk_level) WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END as risk_rank,
                         CASE 
-                            WHEN hg.coordinates IS NULL THEN 4
+                            WHEN (hg.geom IS NULL AND hg.coordinates IS NULL) THEN 4
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
                                  NULLIF(ST_Area(hg.geom::geography), 0) >= 0.75 THEN 3
                             WHEN ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) / 
@@ -2108,25 +2155,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         SELECT house_id, address, street_name, house_number,
                                center_lat, center_lng, area_sqm, coordinates,
                                CASE
-                                   WHEN coordinates IS NOT NULL THEN
-                                       ST_SetSRID(ST_GeomFromGeoJSON(
-                                           json_build_object('type','Polygon','coordinates',
-                                               json_build_array(coordinates))::text), 4326)
-                                   ELSE ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)
-                               END as geom
+                            WHEN geom IS NOT NULL
+                                THEN geom
+                            WHEN coordinates IS NOT NULL
+                                THEN ST_Force2D(ST_SetSRID(
+                                         ST_GeomFromGeoJSON(
+                                             json_build_object(
+                                                 'type', 'Polygon',
+                                                 'coordinates', json_build_array(coordinates)
+                                             )::text
+                                         ), 4326))
+                            ELSE
+                                ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)
+                        END as geom
                         FROM house_polygons WHERE house_id = :id
                     )
                     SELECT hg.house_id, hg.address, hg.street_name, hg.house_number,
                            hg.center_lat, hg.center_lng, hg.area_sqm,
                            bh.hazard_id, bh.hazard_name, bh.risk_level, bh.description as hazard_description,
                            CASE
-                               WHEN hg.coordinates IS NOT NULL THEN
+                               WHEN (hg.geom IS NOT NULL OR hg.coordinates IS NOT NULL) THEN
                                    LEAST(ROUND((ST_Area(ST_Intersection(hg.geom::geography, bh.geom::geography)) /
                                        NULLIF(ST_Area(hg.geom::geography),0)*100)::numeric,1),100.0)
                                ELSE 100
                            END as flood_coverage_percent,
                            CASE
-                               WHEN hg.coordinates IS NULL THEN 'Affected'
+                               WHEN (hg.geom IS NULL AND hg.coordinates IS NULL) THEN 'Affected'
                                WHEN ST_Area(ST_Intersection(hg.geom::geography,bh.geom))/
                                     NULLIF(ST_Area(hg.geom::geography),0) >= 0.75 THEN 'Fully Affected'
                                WHEN ST_Area(ST_Intersection(hg.geom::geography,bh.geom))/

@@ -1302,7 +1302,9 @@ function hideAllMarkers() {
 
 function showHousePolygonHighlight(houseData) {
     try {
-        const coords = JSON.parse(houseData.coordinates);
+        let coords = JSON.parse(houseData.coordinates);
+        // Normalise: unwrap GeoJSON array-of-rings if needed
+        coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
         const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
         latLngCoords.push(latLngCoords[0]);
         
@@ -2090,8 +2092,10 @@ function renderHousePolygons() {
     housePolygonsData.forEach(house => {
         if (house.coordinates) {
             try {
-                const coords = JSON.parse(house.coordinates);
-                const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                let coords = JSON.parse(house.coordinates);
+                // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
+                const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                const latLngCoords = ring.map(coord => [coord[1], coord[0]]);
                 latLngCoords.push(latLngCoords[0]);
                 
                 const polygon = L.polygon(latLngCoords, {
@@ -3133,9 +3137,10 @@ map.whenReady(async function() {
         const data = await res.json();
         if (data.success && data.boundaries && data.boundaries.length > 0) {
             const b      = data.boundaries[0];
-            const coords = typeof b.coordinates === 'string'
+            let coords = typeof b.coordinates === 'string'
                 ? JSON.parse(b.coordinates)
                 : b.coordinates;
+            coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
             blueRidgeGeoJSON = {
                 type: 'FeatureCollection',
                 features: [{
@@ -3854,7 +3859,8 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                 const houseData = housePolygonsData.find(h => String(h.house_id) === String(r.id));
                 if (houseData && houseData.coordinates) {
                     try {
-                        const coords = JSON.parse(houseData.coordinates);
+                        let coords = JSON.parse(houseData.coordinates);
+                        coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                         const latLngs = coords.map(c => [c[1], c[0]]);
                         latLngs.push(latLngs[0]);
                         const poly = L.polygon(latLngs, {
@@ -3886,7 +3892,8 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                     });
                     if (nearbyHouse && nearbyHouse.coordinates) {
                         try {
-                            const coords = JSON.parse(nearbyHouse.coordinates);
+                            let coords = JSON.parse(nearbyHouse.coordinates);
+                            coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                             const latLngs = coords.map(c => [c[1], c[0]]);
                             latLngs.push(latLngs[0]);
                             const badgeClass = r.type === 'business' ? 'business-badge' : 'construction-badge';
