@@ -935,6 +935,14 @@ function openMapPicker(target) {
             <div class="map-header">
                 <div class="map-modal-header">
                     <h3>Select Location</h3>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <button id="picker-street-btn" style="padding:5px 12px;border-radius:6px;border:none;background:#00247c;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+                            <i class="fas fa-map"></i> Street
+                        </button>
+                        <button id="picker-satellite-btn" style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+                            <i class="fas fa-satellite"></i> Satellite
+                        </button>
+                    </div>
                     <button class="close-map">Close</button>
                 </div>
             </div>
@@ -969,137 +977,178 @@ async function initializeMapPicker(target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
-    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    });
+    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri World Imagery'
+    });
 
-    let marker = null;
+    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+    osmTile.addTo(map);
 
-    // Handle map clicks to set location marker and populate coordinates
+    // Match main map color system
+    const POLY_COLORS = {
+        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
+    };
+    const BOUND_COLORS = {
+        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8,6', weight: 2 }
+    };
+
+    let currentMode = 'street';
+    let housePolygons = [];
+    let boundaryLayers = [];
+    let selectedMarker = null;
+
+    function applyColors(mode) {
+        housePolygons.forEach(p => p.setStyle(POLY_COLORS[mode]));
+        boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
+    }
+
+    // Street / Satellite toggle
+    const streetBtn = document.getElementById('picker-street-btn');
+    const satBtn    = document.getElementById('picker-satellite-btn');
+    if (streetBtn && satBtn) {
+        streetBtn.addEventListener('click', () => {
+            map.removeLayer(satTile); osmTile.addTo(map);
+            currentMode = 'street'; applyColors('street');
+            streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
+            satBtn.style.background    = 'white';   satBtn.style.color    = '#555';  satBtn.style.border    = '1px solid #ccc';
+        });
+        satBtn.addEventListener('click', () => {
+            map.removeLayer(osmTile); satTile.addTo(map);
+            currentMode = 'satellite'; applyColors('satellite');
+            satBtn.style.background    = '#00247c'; satBtn.style.color    = 'white'; satBtn.style.border    = 'none';
+            streetBtn.style.background = 'white';   streetBtn.style.color = '#555';  streetBtn.style.border = '1px solid #ccc';
+        });
+    }
+
+    // Click anywhere to pick a point
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
-
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
-
-        document.getElementById(`latitude${target}`).value = lat;
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        selectedMarker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .openPopup();
+        document.getElementById(`latitude${target}`).value  = lat;
         document.getElementById(`longitude${target}`).value = lng;
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
-    // Optional: Load barangay polygon for visual reference
-    const blueRidgeGeoJSON = {
-        "type": "FeatureCollection",
-        "features": [{
-            "type": "Feature",
-            "properties": { "name": "Barangay Blue Ridge B" },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [121.07278956348526, 14.61639406374255],
-                    [121.07392145567032, 14.61595803532421],
-                    [121.07419772320655, 14.616251316435923],
-                    [121.07617987565104, 14.616430399403944],
-                    [121.07651515177966, 14.617647640629082],
-                    [121.07800914220171, 14.617803363969443],
-                    [121.07872851395038, 14.617316502559932],
-                    [121.07891090415784, 14.617705811277993],
-                    [121.07449698388697, 14.62017411386342]
-                ]]
-            }
-        }]
-    };
-    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
-
-    // Load houses from server database for selection
+    // Load barangay boundaries from DB
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_houses');
-        const response = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const bRes  = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
+        });
+        const bData = await bRes.json();
+        if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
+            bData.boundaries.forEach(b => {
+                try {
+                    const coords  = JSON.parse(b.coordinates);
+                    const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
+                    const layer   = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    boundaryLayers.push(layer);
+                } catch (err) { console.error('Boundary parse error:', err); }
+            });
+        }
+    } catch (err) { console.error('Failed to load boundaries:', err); }
 
-        if (data.success && data.houses) {
+    // Load house polygons
+    try {
+        const hRes  = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
+        });
+        const hData = await hRes.json();
+
+        if (hData.success && hData.houses) {
             const houseLayer = L.layerGroup();
 
-            data.houses.forEach(house => {
-                if (house.coordinates) {
-                    try {
-                        const coords = JSON.parse(house.coordinates);
-                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                        latLngCoords.push(latLngCoords[0]); // close polygon
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                try {
+                    const coords  = JSON.parse(house.coordinates);
+                    // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
+                    const ring    = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const latLngs = ring.map(c => [c[1], c[0]]);
+                    latLngs.push(latLngs[0]);
 
-                        const polygon = L.polygon(latLngCoords, {
-                            color: '#3388ff',
-                            weight: 1,
-                            fillColor: '#3388ff',
-                            fillOpacity: 0.1,
-                            interactive: true
-                        }).addTo(houseLayer);
+                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
+                    housePolygons.push(polygon);
 
-                        // Polygon click autofill - populate form fields when house is selected
-                        polygon.on('click', function (e) {
-                            const lat = e.latlng.lat.toFixed(6);
-                            const lng = e.latlng.lng.toFixed(6);
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const titleText  = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const subtitleHtml = house.street_name
+                        ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>'
+                        : '';
+                    const addrHtml = (!isLandmark && house.address)
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
+                        : '';
+                    const streetHtml = house.street_name
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>'
+                        : '';
 
-                            if (marker) map.removeLayer(marker);
-                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+                    const popupHtml =
+                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                                '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
+                                subtitleHtml +
+                            '</div>' +
+                            addrHtml +
+                            streetHtml +
+                            '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '</div>';
 
-                            document.getElementById(`latitude${target}`).value = lat;
-                            document.getElementById(`longitude${target}`).value = lng;
-                            document.getElementById(`map-preview-${target}`).style.display = 'block';
+                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
 
-                            // Only fill fields for the correct target
-                            // if (target === '1') { // Owner
-                            //     const lotNo = document.getElementById('lotNo');
-                            //     const street = document.getElementById('street');
-                            //     lotNo.value = house.house_number || '';
-                            //     street.value = house.street_name || '';
-                            //     [lotNo, street].forEach(el => {
-                            //         el.dispatchEvent(new Event('input', { bubbles: true }));
-                            //         el.dispatchEvent(new Event('change', { bubbles: true }));
-                            //     });
-                            // }
+                    polygon.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
-                            if (target === '2') { // Business
-                                const businessLot = document.getElementById('businessLotNo');
-                                const businessStreet = document.getElementById('businessStreet');
-                                businessLot.value = house.house_number || '';
-                                businessStreet.value = house.street_name || '';
-                                document.getElementById(`latitude2`).value = lat;
-                                document.getElementById(`longitude2`).value = lng;
+                        if (selectedMarker) map.removeLayer(selectedMarker);
+                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
+                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                        const selAddr  = (!isLandmarkSel && house.address)
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
+                            : '';
+                        const selStreet = house.street_name
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>'
+                            : '';
+                        const selPopup =
+                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                                '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                                    '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                                    (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                                '</div>' +
+                                selAddr +
+                                selStreet +
+                            '</div>';
+                        selectedMarker = L.marker([lat, lng]).addTo(map)
+                            .bindPopup(selPopup, { maxWidth: 240 })
+                            .openPopup();
 
-                                [businessLot, businessStreet].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
-                            }
-                        });
+                        document.getElementById(`latitude${target}`).value  = lat;
+                        document.getElementById(`longitude${target}`).value = lng;
+                        document.getElementById(`map-preview-${target}`).style.display = 'block';
 
-                        // Add popup with house information
-                        polygon.bindPopup(`
-                            <div class="house-popup">
-                                <h4>${house.address}</h4>
-                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
-                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
-                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
-                            </div>
-                        `);
+                        if (target === '2') {
+                            const businessLot    = document.getElementById('businessLotNo');
+                            const businessStreet = document.getElementById('businessStreet');
+                            if (businessLot)    { businessLot.value    = house.house_number || ''; businessLot.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (businessStreet) { businessStreet.value = house.street_name  || ''; businessStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                        }
+                    });
 
-                    } catch (err) {
-                        console.error('Error parsing house coordinates:', err);
-                    }
-                }
+                    polygon.addTo(houseLayer);
+                } catch (err) { console.error('House parse error:', err); }
             });
 
             houseLayer.addTo(map);
         }
-    } catch (err) {
-        console.error('Error loading houses:', err);
-    }
+    } catch (err) { console.error('Failed to load houses:', err); }
 }
 
 /**

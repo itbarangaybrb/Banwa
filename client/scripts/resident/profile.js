@@ -727,7 +727,7 @@ function disablePanelSwitch(state) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                window.location.href = "/client/pages/auth/signin.php";
+                window.location.href = "/client/index.php";
 
             } catch (fetchError) {
                 console.error("Server sign-out error:", fetchError);

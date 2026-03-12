@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
 require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
 if ($_SESSION['role_id'] != 8) {
-    header("Location: /client/pages/auth/signin.php");
+    header("Location: /client/index.php");
     exit;
 }
 
@@ -76,6 +76,12 @@ $full_name = getCurrentUserName();
                     <a href="#" class="nav_select" data-tab="archives">
                         <i class="fas fa-archive nav_icon"></i>
                         <span class="nav_text">Archives</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="nav_select" id="signoutBtn" href="#">
+                        <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
+                        <span class="nav_text">Logout</span>
                     </a>
                 </li>
             </div>

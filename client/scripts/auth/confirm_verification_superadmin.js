@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         statusEl.textContent = "Email verified successfully. Redirecting to login…";
 
         setTimeout(() => {
-            window.location.href = "/client/pages/auth/signin.php";
+            window.location.href = "/client/index.php";
         }, 2000);
 
     } catch (err) {
