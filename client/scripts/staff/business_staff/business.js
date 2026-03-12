@@ -1,5 +1,6 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { archiveRecord } from '../../utils/archives.js';
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
@@ -291,6 +292,7 @@ function filterApplications() {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
                 </div>
             </td>
         `;
@@ -298,12 +300,6 @@ function filterApplications() {
     });
 }
 
-/**
- * Fetches business applications from the server API
- * Updates the global applications array with retrieved data
- * 
- * @returns {Promise} Promise resolving to the applications array
- */
 /**
  * Fetches business applications from the server API
  * Updates the global applications array with retrieved data
@@ -315,32 +311,28 @@ async function loadApplicationsFromDB() {
     try {
         const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`);
 
-        // 1. Check for HTTP errors (like 404 or 500)
         if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
         }
 
-        // 2. Get text first to debug "Unexpected end of JSON"
         const textData = await response.text();
 
         if (!textData || textData.trim() === "") {
             throw new Error("Server returned empty response.");
         }
 
-        // 3. Try parsing
         let data;
         try {
             data = JSON.parse(textData);
         } catch (e) {
-            console.error("Raw Server Response:", textData); // Check console to see the PHP error!
+            console.error("Raw Server Response:", textData);
             throw new Error("Invalid JSON response from server. Check console for details.");
         }
 
         if (data.status === 'success') {
-            applications = data.data;
+            applications = (data.data || []).filter(app => !app.is_archived);
         } else {
             console.error('Server reported error:', data.message);
-            // Optional: alert('Error: ' + data.message);
             applications = [];
         }
         return applications;
@@ -349,11 +341,10 @@ async function loadApplicationsFromDB() {
         console.error('Critical Error fetching applications:', error);
         applications = [];
 
-        // Update UI to show error state instead of infinite loading
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" style="text-align:center; padding: 40px; color:#dc3545;">
+                    <td colspan="8" style="text-align:center; padding: 40px; color:#dc3545;">
                         <i class="fas fa-exclamation-circle"></i> 
                         Error loading data: ${error.message}<br>
                         <small>Check the console (F12) for details.</small>
@@ -1413,46 +1404,6 @@ function updateSummary() {
 }
 
 /**
- * Archives an application by sending a request to the server
- * Requires user confirmation before proceeding with archival
- * 
- * @param {number} appId - The application ID to archive
- */
-function archiveApplication(appId) {
-    Swal.fire({
-        ...swalTopConfig,
-        title: 'Are you sure?',
-        text: "You want to archive this application? This action cannot be undone.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, archive it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`${BUSINESS_HANDLER_URL}?action=archive&id=${appId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire({
-                            ...swalTopConfig,
-                            title: 'Archived!',
-                            text: 'Application has been archived successfully.',
-                            icon: 'success',
-                            timer: 2500,
-                            showConfirmButton: false
-                        });
-                        loadManagementTable();
-                    } else {
-                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Error', text: data.message || 'Failed to archive.' });
-                    }
-                })
-                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
-        }
-    });
-}
-
-/**
  * Opens a modal dialog by adding the 'active' class
  * Disables body scrolling to prevent background interaction
  * 
@@ -2339,7 +2290,7 @@ function appendAuditRow(log) {
     const tbody = document.getElementById('auditTableBody');
     if (!tbody) return;
 
-    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+    if (document.getElementById(`audit-${log.id}`)) return;
 
     const tr = document.createElement('tr');
     tr.id = `audit-${log.id}`;
@@ -2405,6 +2356,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    // FIX: Changed from 'utility_applications' to 'business_applications'
+    if (tableName !== 'business_applications') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            // FIX: Use the correct table name
+            await archiveRecord('business_applications', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
+
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `
     <style>
@@ -2448,7 +2450,6 @@ window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
-window.archiveApplication = archiveApplication;
 window.generateClearance = generateClearance;
 window.generateBusinessPermit = generateClearance;
 window.generateBusinessClearance = generateClearance;
@@ -2459,22 +2460,3 @@ window.getCurrentDateString = getCurrentDateString;
 window.updateApplicationDate = updateApplicationDate;
 // window.validateOwnerAddress = validateOwnerAddress;
 // window.validateBusinessAddress = validateBusinessAddress;
-window.generateClearance = generateClearance;
-window.generateBusinessPermit = generateClearance;
-window.generateBusinessClearance = generateClearance;
-window.filterApplications = filterApplications;
-window.createApplication = createApplication;
-window.openUpdateModal = openUpdateModal;
-window.viewDetails = viewDetails;
-window.submitUpdate = submitUpdate;
-window.toggleAmountField = toggleAmountField;
-window.applyPrompt = applyPrompt;
-window.loadSummarySelect = loadSummarySelect;
-window.updateSummary = updateSummary;
-window.downloadSummary = downloadSummary;
-window.printSummary = printSummary;
-window.archiveApplication = archiveApplication;
-window.loadProcessTable = loadProcessTable;
-window.loadAnalyticsTab = loadAnalyticsTab;
-window.switchTab = switchTab;
-window.generateClearance = generateClearance;

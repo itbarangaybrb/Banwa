@@ -1,5 +1,7 @@
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
+import { archiveRecord } from '../../utils/archives.js';
+
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
 // ===============================================
@@ -300,7 +302,6 @@ function switchTab(event, tabName) {
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
     }
-    // Add 'create' tab handling if needed
 }
 
 /**
@@ -422,6 +423,7 @@ function filterApplications() {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="construction_applications">Archive</button>
                 </div>
             </td>
         `;
@@ -438,7 +440,14 @@ function loadApplicationsFromDB() {
     return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') applications = data.data;
+            if (data.status === 'success') {
+                applications = (data.data || []).filter(app => !app.is_archived);
+            }
+            return applications;
+        })
+        .catch(error => {
+            console.error('Error fetching applications:', error);
+            applications = [];
             return applications;
         });
 }
@@ -469,6 +478,8 @@ function refreshActiveTab() {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
         loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else if (activeTabId === 'archives') {
+
     } else {
         finish();
     }
@@ -2403,6 +2414,55 @@ window.onclick = function (event) {
         }
     });
 }
+
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'construction_applications') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('construction_applications', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
 
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `

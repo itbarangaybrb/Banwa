@@ -1465,10 +1465,11 @@ h2 {
 
 /* Management: table-responsive scrolls */
 #management .table-responsive,
-#dashboard .table-responsive {
+#dashboard .table-responsive,
+#archives .table-responsive {
     /* margin-left: 70px; align with content */
     margin-inline: 30px;
-    flex: 1 1 auto;
+    /* flex: 1 1 auto; */
     min-height: 0;
     padding: 0;
 }

@@ -1,6 +1,8 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
+import { archiveRecord } from '../../utils/archives.js';
+
 let incidents = [];
 
 const swalStyle = document.createElement('style');
@@ -262,6 +264,7 @@ function filterIncidents() {
             <div class="action-buttons">
                 ${actionBtn}
                 <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
+                <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="incident_reports">Archive</button>
             </div>
         </td>
     `;
@@ -278,7 +281,9 @@ function loadIncidentsFromDB() {
     return fetch(`${IR_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') incidents = data.data;
+            if (data.status === 'success') {
+                incidents = (data.data || []).filter(inc => !inc.is_archived);
+            }
             return incidents;
         })
         .catch(error => {
@@ -1716,29 +1721,6 @@ function formatDate(dateString) {
 }
 
 /**
- * Formats a date and time string
- * 
- * @param {string} dateTimeString - The date/time string to format
- * @returns {string} Formatted date/time string
- */
-function formatDateTime(dateTimeString) {
-    if (!dateTimeString) return 'N/A';
-    try {
-        const date = new Date(dateTimeString);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        // console.warn('Error formatting date/time:', dateTimeString, e);
-        return 'Invalid Date/Time';
-    }
-}
-
-/**
  * Formats a time string
  * 
  * @param {string} dateTimeString - The date/time string to extract time from
@@ -1757,6 +1739,55 @@ function formatTime(dateTimeString) {
         return 'Invalid Time';
     }
 }
+
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'incident_reports') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('incident_reports', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
 
 // ===============================================
 // EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE

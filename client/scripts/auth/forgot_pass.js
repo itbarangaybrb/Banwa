@@ -113,10 +113,12 @@ async function handleForgotPassSubmit(e) {
         /**
          * SUPABASE CALL: Request a reset email.
          * redirectTo: The URL the user lands on after clicking the email link.
+         * 
+         * use: { redirectTo: 'https://banwa.onrender.com/client/pages/auth/reset_pass.php' }
          */
         const { data, error } = await supabase.auth.resetPasswordForEmail(
             forgotPassElements.email.value.trim(),
-            { redirectTo: 'https://banwa.onrender.com/client/pages/auth/reset_pass.php' }
+            { redirectTo: 'http://localhost:8080/client/pages/auth/reset_pass.php' }
         );
 
         if (error) {

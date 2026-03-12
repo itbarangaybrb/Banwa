@@ -73,6 +73,12 @@ $full_name = getCurrentUserName();
                     </a>
                 </li>
                 <li>
+                    <a href="#" class="nav_select" data-tab="archives">
+                        <i class="fas fa-archive nav_icon"></i>
+                        <span class="nav_text">Archives</span>
+                    </a>
+                </li>
+                <li>
                     <a class="nav_select" id="signoutBtn" href="#">
                         <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
                         <span class="nav_text">Logout</span>
@@ -548,7 +554,50 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </div>
+            
+            <div id="archives" class="tab-pane">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1>Utilities Application Management</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-greeting">
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                        </div>
+                    </div>
+                </header>
+                <div class="page-header">
+                    <h2>Archives</h2>
+                    <p class="form-description">View and restore your archived records.</p>
+                </div>
+    
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Archive ID</th>
+                                <th>Table</th>
+                                <th>Record ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Archived At</th>
+                                <th>Restored At</th>
+                                <th>Role ID</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archiveTableBody">
+                            <tr>
+                                <td colspan="8" class="loading">
+                                    <div class="spinner"></div>Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
 
         <!-- Modals -->
         <div id="detailsModal" class="modal">
@@ -626,9 +675,7 @@ $full_name = getCurrentUserName();
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
-
-
-    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
+    <script type="module" src="../../../scripts/utils/archives.js"></script>
 
 </body>
 

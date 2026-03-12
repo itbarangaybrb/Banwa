@@ -1,6 +1,8 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { archiveRecord } from '../../utils/archives.js';
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
+
 let applications = [];
 
 // ===============================================
@@ -38,35 +40,30 @@ const swalTopConfig = {
     target: document.body,
     backdrop: true,
     allowOutsideClick: false,
-    width: '30rem',         // Slightly wider for better proportions
-    padding: '0',           // Set to 0 because we will handle spacing via didOpen
+    width: '30rem',
+    padding: '0',
     customClass: {
         container: 'sweetalert-top'
     },
-    // This function runs the moment the modal opens and applies the styles
     didOpen: (modal) => {
         const icon = modal.querySelector('.swal2-icon');
         const title = modal.querySelector('.swal2-title');
         const content = modal.querySelector('.swal2-html-container');
         const actions = modal.querySelector('.swal2-actions');
 
-        // 1. Pushes the Checkmark/Icon down from the very top
         if (icon) {
             icon.style.marginTop = '3rem';
             icon.style.marginBottom = '1rem';
         }
-        // 2. Adds spacing around the "Success" text
         if (title) {
             title.style.margin = '0.5rem 0';
             title.style.fontSize = '2rem';
-            title.style.color = '#00247C'; // Maintains your blue theme
+            title.style.color = '#00247C';
         }
-        // 3. Pushes the bottom text away from the edge
         if (content) {
             content.style.marginBottom = '2.5rem';
             content.style.fontSize = '1.1rem';
         }
-        // 4. Ensures the button (if shown) has breathing room
         if (actions) {
             actions.style.marginTop = '0';
             actions.style.marginBottom = '2rem';
@@ -104,14 +101,12 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function initializeSidebarNav() {
     const navItems = document.querySelectorAll('.nav_select[data-tab]');
-    const navLogo = document.querySelector('.nav_logo'); // Select the hamburger icon
-    const sideNav = document.querySelector('.side_nav'); // Select the sidebar
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
 
-    // --- NEW CLICK TOGGLE LOGIC ---
     if (navLogo && sideNav) {
         navLogo.addEventListener('click', function () {
             sideNav.classList.toggle('expanded');
-            // Redraw Leaflet map after sidebar transition
             setTimeout(function () {
                 if (typeof map !== 'undefined' && map) {
                     map.invalidateSize();
@@ -151,7 +146,6 @@ function switchTab(event, tabName) {
         if (link) link.classList.add('active');
     }
 
-    // Update this to match your actual tab names
     if (tabName === 'management') {
         loadManagementTable();
     } else if (tabName === 'process') {
@@ -161,37 +155,29 @@ function switchTab(event, tabName) {
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
     }
-    // Add 'create' tab handling if needed
 }
 
 /**
  * Loads the management table with applications from database
- * Serves as the main entry point for the management tab functionality
  */
 function loadManagementTable() {
     loadApplicationsFromDB().finally(() => {
-        // Also trigger the filter function immediately to populate the table
         filterApplications();
     });
 }
 
 /**
  * Filters and renders applications in the management table based on search criteria
- * Handles search term filtering, status filtering, and smart action button generation
- * Displays appropriate status badges and action buttons based on application state
  */
 function filterApplications() {
-    // 1. GET ELEMENTS
     const searchEl = document.getElementById('managementSearch');
     const tbody = document.getElementById('tableBody');
 
-    // If the table body doesn't exist, stop immediately
     if (!tbody) {
         console.error('Table body not found');
         return;
     }
 
-    // If map filter hides this category, show message and do not render
     if (!mapFilterVisible) {
         tbody.innerHTML = `
             <tr>
@@ -200,13 +186,9 @@ function filterApplications() {
         return;
     }
 
-    // 2. GET SEARCH VALUE
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-
-    // Clear table body
     tbody.innerHTML = '';
 
-    // 3. CHECK IF APPLICATIONS ARE LOADED
     if (!applications || !Array.isArray(applications) || applications.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -217,7 +199,6 @@ function filterApplications() {
         return;
     }
 
-    // 4. FILTER LOGIC
     const filtered = applications.filter(app => {
         const natureOfWork = (app.nature_of_work || '').toLowerCase();
         const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
@@ -230,7 +211,6 @@ function filterApplications() {
             address.includes(searchTerm);
     });
 
-    // 5. RENDER LOGIC
     if (filtered.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -242,13 +222,11 @@ function filterApplications() {
     }
 
     filtered.forEach(app => {
-        // A. Determine Status Color
         let badgeClass = 'pending';
         if (app.status === 'Approved') badgeClass = 'approved';
         if (app.status === 'Disapproved') badgeClass = 'disapproved';
         if (app.status === 'Complied') badgeClass = 'complied';
 
-        // B. Determine "Smart Action" Button
         let actionBtn = '';
 
         if (app.status === 'Pending') {
@@ -273,7 +251,6 @@ function filterApplications() {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
         }
 
-        // C. Build Row - Match your table headers
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${app.id}</td>
@@ -287,6 +264,7 @@ function filterApplications() {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
                 </div>
             </td>
         `;
@@ -296,7 +274,6 @@ function filterApplications() {
 
 /**
  * Fetches utility applications from the server API
- * Updates the global applications array with retrieved data
  * 
  * @returns {Promise} Promise resolving to the applications array
  */
@@ -304,7 +281,11 @@ function loadApplicationsFromDB() {
     return fetch(`${UTILITY_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') applications = data.data;
+            if (data.status === 'success') {
+                applications = (data.data || []).filter(app => !app.is_archived);
+            } else {
+                applications = [];
+            }
             return applications;
         })
         .catch(error => {
@@ -316,11 +297,6 @@ function loadApplicationsFromDB() {
 
 /**
  * Refreshes the currently active tab's content with latest application data.
- * Triggered by WebSocket construction updates.
- * 
- * Uses `isRefreshing` flag to prevent concurrent refreshes.
- * 
- * @see {@link loadApplicationsFromDB} - Fetches fresh data
  */
 let isRefreshing = false;
 function refreshActiveTab() {
@@ -343,13 +319,12 @@ function refreshActiveTab() {
     } else {
         finish();
     }
-};
+}
 
 /**
  * Loads applications into the process table with actionable statuses
- * Filters out excluded statuses and shows appropriate action buttons based on current status
  */
-function loadProcessTable() {
+export function loadProcessTable() {
     loadApplicationsFromDB().finally(() => {
         const tbody = document.getElementById('processTableBody');
         if (!tbody) return;
@@ -363,7 +338,6 @@ function loadProcessTable() {
         });
 
         if (actionable.length === 0) {
-            // Fixed colspan from 5 to 6 to match the number of <td> elements
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No applications to process.</td></tr>';
             return;
         }
@@ -373,7 +347,6 @@ function loadProcessTable() {
             let btnClass = "secondary";
             let buttonsHtml = "";
 
-            // 1. Determine primary action button based on status
             if (app.status === 'Pending') {
                 btnClass = "primary";
             } else if (app.status === 'Complied') {
@@ -384,11 +357,8 @@ function loadProcessTable() {
                 btnClass = "info";
             }
 
-            // 2. Build the primary update/action button
             buttonsHtml += `<button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>`;
 
-            // 3. Conditionally add the "Generate Permit" button for valid statuses
-            // Add or remove statuses in this array based on your specific workflow
             if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
                 buttonsHtml += `
                     <button class="btn-primary" onclick="generateUtilitiesPermit(${app.id})" style="margin-left: 5px;">
@@ -397,7 +367,6 @@ function loadProcessTable() {
                 `;
             }
 
-            // 4. Inject into the table row
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
@@ -425,7 +394,6 @@ function generateUtilitiesPermit(appId) {
     const or_number = app.or_number || 'N/A';
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
-    // === DATE OF WORK ===
     const workDate = app.dateOfWork ?
         new Date(app.dateOfWork).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })
         : "_________________";
@@ -538,13 +506,21 @@ function generateUtilitiesPermit(appId) {
     w.document.close();
 }
 
+/**
+ * Views an existing utility permit (reuses generate function)
+ * 
+ * @param {number} appId - The application ID to view permit for
+ */
+function viewUtilitiesPermit(appId) {
+    generateUtilitiesPermit(appId);
+}
+
 let chart1Instance;
 let chart2Instance;
 let chart3Instance;
 
 /**
  * Loads analytics data and renders charts for utility application statistics
- * Creates three charts: timeline chart, provider distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
     fetch(`${UTILITY_HANDLER_URL}?action=chart_utilities_type`)
@@ -671,7 +647,6 @@ function loadAnalyticsTab() {
 
 /**
  * Applies pre-defined text prompts to the update comments textarea
- * Used for quick insertion of common status update messages
  * 
  * @param {string} text - The text prompt to insert into the comments field
  */
@@ -684,13 +659,11 @@ function applyPrompt(text) {
 }
 
 /**
- * Opens the update modal for a specific application and loads current data
- * Includes Evaluation Results display and status tracking
+ * Opens the update modal for a specific application
  * 
  * @param {number} appId - The application ID to open in the update modal
  */
 function openUpdateModal(appId) {
-    // Find the specific application from our global array
     const app = applications.find(a => a.id == appId);
 
     if (!app) {
@@ -698,44 +671,33 @@ function openUpdateModal(appId) {
         return;
     }
 
-    // Fill the hidden ID field and the visible "Current Status" text
     document.getElementById('updateAppId').value = app.id;
     document.getElementById('displayCurrentStatus').value = app.status;
-
-    // Reset the form fields
     document.getElementById('newStatus').value = "";
     document.getElementById('updateComments').value = "";
 
-    // Clear previous DSS content
     const existingDSSSection = document.getElementById('dssEvaluationSection');
     if (existingDSSSection) existingDSSSection.remove();
 
-    // Insert a basic/loading DSS section immediately
     addBasicDSSSection(app);
-
-    // Fetch DSS evaluation details and replace basic section when available
     fetchDSSEvaluation(appId, app);
 
-    // Show the modal
     document.getElementById('updateModal').classList.add('active');
 }
 
 /**
  * Fetches DSS evaluation details from the server for a specific application
- * Handles both successful and failed fetch scenarios
  * 
  * @param {number} appId - The application ID to fetch evaluation for
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    // console.debug('fetchDSSEvaluation ->', UTILITY_HANDLER_URL, appId);
     fetch(`${UTILITY_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
         })
         .then(data => {
-            // console.debug('DSS response for', appId, data);
             const existing = document.getElementById('dssEvaluationSection');
             if (data && data.status === 'success' && data.evaluation) {
                 if (existing) existing.remove();
@@ -785,7 +747,6 @@ function fetchDSSEvaluation(appId, app) {
 
 /**
  * Creates and inserts a detailed DSS evaluation section into the update modal
- * Displays evaluation scores, status, rule results, and recommendations
  * 
  * @param {Object} evaluation - The DSS evaluation data object
  * @param {Object} app - The application object for context
@@ -795,9 +756,7 @@ function addDSSSectionToModal(evaluation, app) {
     if (!updateForm) return;
 
     const existingDSS = document.getElementById('dssEvaluationSection');
-    if (existingDSS) {
-        existingDSS.remove();
-    }
+    if (existingDSS) existingDSS.remove();
 
     const dssSection = document.createElement('div');
     dssSection.id = 'dssEvaluationSection';
@@ -815,20 +774,13 @@ function addDSSSectionToModal(evaluation, app) {
     let statusColor, statusBg;
     switch (dssStatus) {
         case 'Pre-Approved':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
-            break;
+            statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'Additional Requirements Needed':
-            statusColor = '#856404';
-            statusBg = '#fff3cd';
-            break;
+            statusColor = '#856404'; statusBg = '#fff3cd'; break;
         case 'Rejected':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
-            break;
+            statusColor = '#721c24'; statusBg = '#f8d7da'; break;
         default:
-            statusColor = '#0c5460';
-            statusBg = '#d1ecf1';
+            statusColor = '#0c5460'; statusBg = '#d1ecf1';
     }
 
     dssSection.innerHTML = `
@@ -839,7 +791,6 @@ function addDSSSectionToModal(evaluation, app) {
                 ${dssStatus}
             </span>
         </div>
-        
         <div class="dss-score-summary">
             <div class="dss-score">
                 <strong>Score</strong>
@@ -850,7 +801,6 @@ function addDSSSectionToModal(evaluation, app) {
                 <span>${probability.toFixed(2)}%</span>
             </div>
         </div>
-        
         <div class="dss-progress-container">
             <div class="dss-progress-label">
                 <span>Approval Progress</span>
@@ -860,7 +810,6 @@ function addDSSSectionToModal(evaluation, app) {
                 <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, probability))}%"></div>
             </div>
         </div>
-        
         <div class="dss-rules-summary">
             <div class="dss-rules-column">
                 <h4>Passed Rules (${passedRules.length})</h4>
@@ -869,7 +818,6 @@ function addDSSSectionToModal(evaluation, app) {
             `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
         }
             </div>
-            
             <div class="dss-rules-column">
                 <h4>Failed Rules (${failedRules.length})</h4>
                 ${failedRules.length > 0 ?
@@ -878,7 +826,6 @@ function addDSSSectionToModal(evaluation, app) {
         }
             </div>
         </div>
-        
         ${recommendations.length > 0 ? `
             <div class="dss-recommendations">
                 <h4>Recommendations</h4>
@@ -887,7 +834,6 @@ function addDSSSectionToModal(evaluation, app) {
                 </ul>
             </div>
         ` : ''}
-        
         ${evaluation.evaluated_at ? `
             <div class="dss-timestamp">
                 Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
@@ -901,7 +847,6 @@ function addDSSSectionToModal(evaluation, app) {
 
 /**
  * Creates a basic DSS section when detailed evaluation data is unavailable
- * Provides minimal DSS status display as fallback
  * 
  * @param {Object} app - The application object containing basic DSS status
  */
@@ -910,9 +855,7 @@ function addBasicDSSSection(app) {
     if (!updateForm) return;
 
     const existingDSS = document.getElementById('dssEvaluationSection');
-    if (existingDSS) {
-        existingDSS.remove();
-    }
+    if (existingDSS) existingDSS.remove();
 
     const dssSection = document.createElement('div');
     dssSection.id = 'dssEvaluationSection';
@@ -923,20 +866,13 @@ function addBasicDSSSection(app) {
 
     switch (dssStatus) {
         case 'Pre-Approved':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
-            break;
+            statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'Additional Requirements Needed':
-            statusColor = '#856404';
-            statusBg = '#fff3cd';
-            break;
+            statusColor = '#856404'; statusBg = '#fff3cd'; break;
         case 'Rejected':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
-            break;
+            statusColor = '#721c24'; statusBg = '#f8d7da'; break;
         default:
-            statusColor = '#0c5460';
-            statusBg = '#d1ecf1';
+            statusColor = '#0c5460'; statusBg = '#d1ecf1';
     }
 
     dssSection.innerHTML = `
@@ -988,11 +924,9 @@ function submitUpdate(event) {
                 if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
                     sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
                 }
-
                 if (sockets["utility"] && sockets["utility"].readyState === WebSocket.OPEN) {
                     sockets["utility"].send(JSON.stringify({ type: "utility_update", action: "status_update" }));
                 }
-
                 if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
                     sockets["audit"].send(JSON.stringify({
                         type: "new_audit_log",
@@ -1032,10 +966,8 @@ function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // 1. Prepare Data
     const utilityAddress = app.address_of_utility || 'Not specified';
 
-    // 2. Status Colors
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
     switch (app.status) {
@@ -1044,7 +976,6 @@ function viewDetails(appId) {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // 3. Build Professional HTML Structure
     const content = `
         <div class="details-container">
             <div class="details-header-card">
@@ -1069,7 +1000,6 @@ function viewDetails(appId) {
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${utilityAddress}</span></div>
                         <div class="detail-row"><span class="detail-label">Coordinates</span> <span class="detail-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span></div>
                     </div>
-
                     <div class="detail-card" style="margin-top:20px;">
                         <h3>Owner Details</h3>
                         <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
@@ -1077,7 +1007,6 @@ function viewDetails(appId) {
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.owner_address || 'N/A'}</span></div>
                     </div>
                 </div>
-
                 <div class="col-right">
                     <div class="detail-card">
                         <h3>Schedule & Agreement</h3>
@@ -1085,7 +1014,6 @@ function viewDetails(appId) {
                         <div class="detail-row"><span class="detail-label">Date of Work</span> <span class="detail-value">${app.date_of_work || 'N/A'}</span></div>
                         <div class="detail-row"><span class="detail-label">Agreement</span> <span class="detail-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
                     </div>
-
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
                         <h3>Evaluation Status</h3>
                         <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${app.dss_status || 'Pending Evaluation'}</span></div>
@@ -1108,7 +1036,6 @@ function viewDetails(appId) {
 
 /**
  * Loads application options into the summary select dropdown
- * Populates the dropdown with application IDs and utility work types
  */
 function loadSummarySelect() {
     loadApplicationsFromDB().finally(() => {
@@ -1122,102 +1049,6 @@ function loadSummarySelect() {
 
 /**
  * Updates the summary display with detailed application information
- * Generates a professional report view with formatted data
- */
-// function updateSummary() {
-//     const appId = document.getElementById('summaryApplicationSelect').value;
-//     const summaryOutput = document.getElementById('summaryOutput');
-
-//     if (!appId) {
-//         summaryOutput.innerHTML = `
-//             <div class="placeholder-state">
-//                 <i class="fas fa-file-invoice fa-3x"></i>
-//                 <p>Select a utility application from the list above to view the full report.</p>
-//             </div>`;
-//         return;
-//     }
-
-//     const app = applications.find(a => a.id == appId);
-//     if (!app) return;
-
-//     // --- 1. Data Processing ---
-
-//     // Status Badge Color Logic
-//     let statusColor = '#6c757d';
-//     let statusBg = '#e2e3e5';
-
-//     switch (app.status) {
-//         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
-//         case 'Complied': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
-//         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
-//     }
-
-//     // Formatted Dates
-//     const dateApplied = new Date(app.request_date || app.created_at).toLocaleDateString('en-US', {
-//         year: 'numeric', month: 'long', day: 'numeric'
-//     });
-
-//     // --- 2. Build HTML Structure ---
-
-//     summaryOutput.innerHTML = `
-//         <div class="report-header">
-//             <div class="report-title">
-//                 <h1>Utility Permit Profile</h1>
-//                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
-//             </div>
-//             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
-//                 ${app.status}
-//             </div>
-//         </div>
-
-//         <div class="report-grid">
-//             <div class="report-column">
-//                 <div class="report-section">
-//                     <h3>Utility Details</h3>
-//                     <div class="info-row"><span class="info-label">Nature of Work</span> <span class="info-value">${app.nature_of_work || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Provider</span> <span class="info-value">${app.provider || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_utility || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span></div>
-//                 </div>
-
-//                 <div class="report-section">
-//                     <h3>Ownership</h3>
-//                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
-//                     <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${app.owner_contact_no || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.owner_address || 'N/A'}</span></div>
-//                 </div>
-//             </div>
-
-//             <div class="report-column">
-//                 <div class="report-section">
-//                     <h3>Schedule & Agreement</h3>
-//                     <div class="info-row"><span class="info-label">Request Date</span> <span class="info-value">${app.request_date || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Date of Work</span> <span class="info-value">${app.date_of_work || 'N/A'}</span></div>
-//                     <div class="info-row"><span class="info-label">Agreement</span> <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
-//                 </div>
-
-//                 <div class="financial-box">
-//                     <h3 style="border:none; margin:0 0 10px 0;">DSS Evaluation</h3>
-//                     <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value">${app.dss_status || 'Pending Evaluation'}</span></div>
-//                 </div>
-//             </div>
-//         </div>
-
-//         ${app.approval_comments ? `
-//         <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
-//             <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
-//             <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
-//         </div>` : ''}
-
-//         <div class="report-actions">
-//             <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download Word</button>
-//             <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
-//         </div>
-//     `;
-// }
-/**
- * Updates the summary display with detailed application information
- * Generates a professional report view with formatted data
  */
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
@@ -1235,9 +1066,6 @@ function updateSummary() {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // --- 1. Data Processing ---
-
-    // Status Badge Color Logic
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
 
@@ -1247,12 +1075,9 @@ function updateSummary() {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // Formatted Dates
     const dateApplied = new Date(app.request_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
-
-    // --- 2. Build HTML Structure ---
 
     summaryOutput.innerHTML = `
         <div class="report-header">
@@ -1274,7 +1099,6 @@ function updateSummary() {
                     <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.address_of_utility || 'N/A'}</span></div>
                     <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span></div>
                 </div>
-
                 <div class="report-section">
                     <h3>Ownership</h3>
                     <div class="info-row"><span class="info-label">Owner Name</span> <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
@@ -1282,7 +1106,6 @@ function updateSummary() {
                     <div class="info-row"><span class="info-label">Owner Address</span> <span class="info-value">${app.owner_address || 'N/A'}</span></div>
                 </div>
             </div>
-
             <div class="report-column">
                 <div class="report-section">
                     <h3>Schedule & Agreement</h3>
@@ -1307,48 +1130,7 @@ function updateSummary() {
 }
 
 /**
- * Archives an application by sending a request to the server
- * Requires user confirmation before proceeding with archival
- * 
- * @param {number} appId - The application ID to archive
- */
-function archiveApplication(appId) {
-    Swal.fire({
-        ...swalTopConfig,
-        title: 'Are you sure?',
-        text: "You want to archive this application? This action cannot be undone.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, archive it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`${UTILITY_HANDLER_URL}?action=archive&id=${appId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire({
-                            ...swalTopConfig,
-                            title: 'Archived!',
-                            text: 'Application has been archived successfully.',
-                            icon: 'success',
-                            timer: 2500,
-                            showConfirmButton: false
-                        });
-                        loadManagementTable();
-                    } else {
-                        Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Error', text: data.message || 'Failed to archive.' });
-                    }
-                })
-                .catch(() => Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error' }));
-        }
-    });
-}
-
-/**
  * Opens a modal dialog by adding the 'active' class
- * Disables body scrolling to prevent background interaction
  * 
  * @param {string} modalId - The ID of the modal element to open    
  */
@@ -1364,17 +1146,13 @@ function openModal(modalId) {
  * Closes a modal dialog by removing the 'active' class
  * Restores body scrolling to allow background interaction**/
 document.addEventListener('click', function (e) {
-    // X buttons
     if (e.target.classList.contains('close-btn')) {
         const modal = e.target.closest('.modal');
         if (modal) {
             modal.classList.remove('active');
             document.body.style.overflow = 'auto';
-            // console.log("Modal closed successfully");
         }
     }
-
-    // Cancel buttons
     if (e.target.classList.contains('cancel-btn')) {
         const modal = e.target.closest('.modal');
         if (modal) {
@@ -1389,7 +1167,6 @@ document.addEventListener('keydown', function (e) {
     if (e.key === "Escape") {
         const activeModal = document.querySelector('.modal.active');
         if (activeModal) {
-            // console.log("🟡 ESC pressed");
             activeModal.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
@@ -1398,7 +1175,6 @@ document.addEventListener('keydown', function (e) {
 
 /**
  * Displays a temporary alert message to the user
- * Supports different alert types (success, danger, etc.) with automatic dismissal
  * 
  * @param {string} message - The alert message to display
  * @param {string} type - The alert type (success, danger, warning, info)
@@ -1418,26 +1194,6 @@ function showAlert(message, type) {
 
 /**
  * Prints the current summary report to a new window
- * Creates a print-friendly version of the summary content
- */
-// function printSummary() {
-//     const summaryToPrint = document.getElementById('summaryOutput');
-
-//     const printWindow = window.open('', '', 'height=600,width=800');
-//     printWindow.document.write('<html><head><title>Utility Application Summary</title>');
-//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/utilities_staff/utilities.css">');
-//     printWindow.document.write('</head><body>');
-//     printWindow.document.write(summaryToPrint.innerHTML);
-//     printWindow.document.write('');
-//     printWindow.document.write('</body></html>');
-//     printWindow.document.close();
-//     printWindow.focus();
-// }
-
-/**
- * Prints the current summary report to a new window
- * Creates a print-friendly version of the summary content with proper structure
  */
 function printSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
@@ -1454,9 +1210,6 @@ function printSummary() {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // --- 1. Data Processing ---
-
-    // Status Badge Color Logic
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
 
@@ -1466,12 +1219,9 @@ function printSummary() {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // Formatted Dates
     const dateApplied = new Date(app.request_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
-
-    // --- 2. Build Print HTML Structure ---
 
     const printHTML = `
         <!DOCTYPE html>
@@ -1494,98 +1244,44 @@ function printSummary() {
                         ${app.status}
                     </div>
                 </div>
-
                 <div class="report-grid">
                     <div class="report-column">
                         <div class="report-section">
                             <h3>Utility Details</h3>
-                            <div class="info-row">
-                                <span class="info-label">Nature of Work</span>
-                                <span class="info-value">${app.nature_of_work || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Provider</span>
-                                <span class="info-value">${app.provider || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Address</span>
-                                <span class="info-value">${app.address_of_utility || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Coordinates</span>
-                                <span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span>
-                            </div>
+                            <div class="info-row"><span class="info-label">Nature of Work</span><span class="info-value">${app.nature_of_work || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Provider</span><span class="info-value">${app.provider || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Address</span><span class="info-value">${app.address_of_utility || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Coordinates</span><span class="info-value">${app.latitude || 'N/A'}, ${app.longitude || 'N/A'}</span></div>
                         </div>
-
                         <div class="report-section">
                             <h3>Ownership</h3>
-                            <div class="info-row">
-                                <span class="info-label">Owner Name</span>
-                                <span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Contact</span>
-                                <span class="info-value">${app.owner_contact_no || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Owner Address</span>
-                                <span class="info-value">${app.owner_address || 'N/A'}</span>
-                            </div>
+                            <div class="info-row"><span class="info-label">Owner Name</span><span class="info-value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span></div>
+                            <div class="info-row"><span class="info-label">Contact</span><span class="info-value">${app.owner_contact_no || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Owner Address</span><span class="info-value">${app.owner_address || 'N/A'}</span></div>
                         </div>
                     </div>
-
                     <div class="report-column">
                         <div class="report-section">
                             <h3>Schedule & Agreement</h3>
-                            <div class="info-row">
-                                <span class="info-label">Request Date</span>
-                                <span class="info-value">${app.request_date || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Date of Work</span>
-                                <span class="info-value">${app.date_of_work || 'N/A'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Agreement</span>
-                                <span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span>
-                            </div>
+                            <div class="info-row"><span class="info-label">Request Date</span><span class="info-value">${app.request_date || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Date of Work</span><span class="info-value">${app.date_of_work || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Agreement</span><span class="info-value">${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</span></div>
                         </div>
                     </div>
                 </div>
-
                 ${app.approval_comments ? `
                 <div class="report-section" style="background:#f8f9fa; padding:15px; border-radius:5px;">
                     <h3 style="border:none; margin-bottom:5px;">Official Remarks</h3>
                     <p style="margin:0; font-style:italic; color:#555;">"${app.approval_comments}"</p>
                 </div>` : ''}
-
                 <div class="footer-note">
-                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })}</p>
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                     <p>Barangay Utility Management System</p>
                 </div>
             </div>
-            
             <script>
-                // Auto-print when page loads
-                window.onload = function() {
-                    window.print();
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
-                };
-                
-                // Also close when print dialog is cancelled
-                window.onafterprint = function() {
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
-                };
+                window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 100); };
+                window.onafterprint = function() { setTimeout(function() { window.close(); }, 100); };
             </script>
         </body>
         </html>
@@ -1598,7 +1294,6 @@ function printSummary() {
 
 /**
  * Downloads a summary report as a Word document
- * Generates HTML content with embedded styles and triggers file download
  * 
  * @param {number} appId - The application ID to download summary for
  */
@@ -1606,10 +1301,8 @@ function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // Prepare data for HTML
     const utilityAddress = app.address_of_utility || 'Not specified';
 
-    // Generate HTML for comments
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
         commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
@@ -1617,7 +1310,6 @@ function downloadSummary(appId) {
         commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
     }
 
-    // Generate the full HTML content with embedded CSS for styling
     const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -1632,7 +1324,7 @@ function downloadSummary(appId) {
                 .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
                 .info-list { list-style-type: none; padding: 0; }
                 .info-list li { margin-bottom: 8px; }
-                .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
+                .info-list strong { display: inline-block; width: 180px; font-weight: bold; }
                 .status-badge { background-color: ${app.status === 'Approved' ? '#d4edda' : app.status === 'Disapproved' ? '#f8d7da' : '#fff3cd'}; color: ${app.status === 'Approved' ? '#155724' : app.status === 'Disapproved' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
                 .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
                 .comment-box h3 { font-size: 12pt; }
@@ -1645,7 +1337,6 @@ function downloadSummary(appId) {
                 <h1>Utility Permit Summary Report</h1>
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
-
                 <h2>Utility Information</h2>
                 <div class="card">
                     <ul class="info-list">
@@ -1658,7 +1349,6 @@ function downloadSummary(appId) {
                         <li><strong>Agreement:</strong> ${app.agreed == 1 ? 'Agreed' : 'Not Agreed'}</li>
                     </ul>
                 </div>
-
                 <h2>Owner Information</h2>
                 <div class="card">
                     <ul class="info-list">
@@ -1667,7 +1357,6 @@ function downloadSummary(appId) {
                         <li><strong>Owner Address:</strong> ${app.owner_address}</li>
                     </ul>
                 </div>
-
                 <h2>Application Status</h2>
                 <div class="card">
                     <ul class="info-list">
@@ -1706,8 +1395,7 @@ function createApplication(event) {
     });
 }
 
-
-// ====================== STAFF CREATE FORM - NOW MATCHES PHP (camelCase keys) ======================
+// ====================== STAFF CREATE FORM ======================
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('staffCreateForm');
     if (!form) return;
@@ -1715,7 +1403,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('staffSubmitBtn');
     const clearBtn = document.getElementById('staffClearBtn');
 
-    // Clear button
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             form.reset();
@@ -1727,7 +1414,6 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        // Validation (keeps your red error messages)
         let isValid = true;
         const requiredIds = ['firstName', 'lastName', 'contactNoOwner', 'addressOwner', 'utilityLotNo', 'utilityStreet', 'requestDate', 'dateOfWork', 'natureOfWork', 'provider'];
 
@@ -1752,34 +1438,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // === BUILD FORMDATA WITH EXACT KEYS YOUR PHP EXPECTS ===
         const formData = new FormData();
         formData.append('action', 'create');
-
-        // Owner Information
         formData.append('firstName', document.getElementById('firstName').value.trim());
         formData.append('middleName', document.getElementById('middleName').value.trim());
         formData.append('lastName', document.getElementById('lastName').value.trim());
         formData.append('suffix', document.getElementById('suffix').value.trim());
         formData.append('contactNoOwner', document.getElementById('contactNoOwner').value.trim());
         formData.append('addressOwner', document.getElementById('addressOwner').value.trim());
-
-        // Utility Location (PHP will build address_of_utility from these)
         formData.append('utilityLotNo', document.getElementById('utilityLotNo').value.trim());
         formData.append('utilityStreet', document.getElementById('utilityStreet').value.trim());
-
-        // Coordinates
         formData.append('latitude2', document.getElementById('latitude2').value || '');
         formData.append('longitude2', document.getElementById('longitude2').value || '');
-
-        // Utilities Information
         formData.append('requestDate', document.getElementById('requestDate').value);
         formData.append('dateOfWork', document.getElementById('dateOfWork').value);
         formData.append('natureOfWork', document.getElementById('natureOfWork').value);
         formData.append('provider', document.getElementById('provider').value);
         formData.append('agreed', '1');
 
-        // Button feedback
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating Application...';
@@ -1798,21 +1474,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 form.reset();
             } else {
-                Swal.fire({
-                    ...swalTopConfig,
-                    icon: 'error',
-                    title: 'Failed',
-                    text: data.message || 'Server error'
-                });
+                Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Server error' });
             }
         } catch (err) {
             console.error(err);
-            Swal.fire({
-                ...swalTopConfig,
-                icon: 'error',
-                title: 'Network Error',
-                text: 'Could not connect to server'
-            });
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Could not connect to server' });
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
@@ -1826,7 +1492,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function filterReviewApplications() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('#tableBody tr');
-
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';
@@ -1835,7 +1500,6 @@ function filterReviewApplications() {
 
 /**
  * Returns the current date as a formatted string (YYYY-MM-DD)
- * Used for date input field population
  * 
  * @returns {string} Current date in YYYY-MM-DD format
  */
@@ -1849,7 +1513,6 @@ function getCurrentDateString() {
 
 /**
  * Updates the application date input field with the current date
- * Called on page load and periodically to keep date current
  */
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
@@ -1924,11 +1587,10 @@ function appendAuditRow(log) {
     const tbody = document.getElementById('auditTableBody');
     if (!tbody) return;
 
-    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+    if (document.getElementById(`audit-${log.id}`)) return;
 
     const tr = document.createElement('tr');
     tr.id = `audit-${log.id}`;
-
     tr.innerHTML = `
         <td>${log.id ?? '—'}</td>
         <td>${log.action ?? '—'}</td>
@@ -1936,12 +1598,10 @@ function appendAuditRow(log) {
         <td>${log.full_name ?? '—'}</td>
         <td>${log.created_at ?? '—'}</td>
     `;
-
     tbody.prepend(tr);
 }
 
-
-// Wait for the DOM content to fully load before running the script
+// ====================== DOMContentLoaded: Socket Initialization ======================
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
     updateApplicationDate();
@@ -1950,7 +1610,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sockets["utility_applications"]) {
         initSocket("utility_applications", "ws://localhost:8081", data => {
             if (data.type === "utility_applications_update") {
-                refreshActiveTab()
+                refreshActiveTab();
                 loadManagementTable();
                 loadProcessTable();
             }
@@ -1960,49 +1620,90 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sockets["audit"]) {
         initSocket("audit", "ws://localhost:8081", (data) => {
             if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs()
-                }
+                if (data.payload) appendAuditRow(data.payload);
+                else if (data.id) appendAuditRow(data);
+                else fetchAuditLogs();
+            }
+        });
+    }
+
+    if (!sockets["archives"]) {
+        initSocket("archives", "ws://localhost:8081", data => {
+            if (data.type === "archives_update") {
+                loadManagementTable();
+                loadProcessTable();
+            }
+        });
+    }
+
+    if (!sockets["utility"]) {
+        initSocket("utility", "ws://localhost:8081", data => {
+            if (data.type === "utility_update") {
+                refreshActiveTab();
             }
         });
     }
 });
 
-// CLOSE MODAL ON OUTSIDE CLICK
-// window.onclick = function (event) {
-//     const modals = document.querySelectorAll('.modal');
-//     modals.forEach(modal => {
-//         if (event.target == modal) {
-//             modal.classList.remove('active');
-//         }
-//     });
-// }
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'utility_applications') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('utility_applications', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
 
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `
     <style>
         .hidden { display: none !important; }
-        
-        /* FORCE SWEETALERT TO ALWAYS BE ON TOP OF MODALS */
-        .swal2-container,
-        .sweetalert-top {
-            z-index: 2147483647 !important;
-        }
-        .swal2-popup {
-            z-index: 2147483647 !important;
-        }
-        .swal2-backdrop {
-            z-index: 2147483646 !important;
-        }
+        .swal2-container, .sweetalert-top { z-index: 2147483647 !important; }
+        .swal2-popup { z-index: 2147483647 !important; }
+        .swal2-backdrop { z-index: 2147483646 !important; }
     </style>
 `);
-// Center SweetAlert text
+
 document.head.insertAdjacentHTML("beforeend", `
     <style>
         .swal2-title, .swal2-html-container { text-align: center !important; }
@@ -2026,10 +1727,10 @@ window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
 window.loadProcessTable = loadProcessTable;
 window.loadAnalyticsTab = loadAnalyticsTab;
-window.archiveApplication = archiveApplication;
 window.generateUtilitiesPermit = generateUtilitiesPermit;
 window.generateUtilityPermit = generateUtilitiesPermit;
 window.generateUtilitiesClearance = generateUtilitiesPermit;
+window.viewUtilitiesPermit = viewUtilitiesPermit;
 window.switchTab = switchTab;
 window.initializeSidebarNav = initializeSidebarNav;
 window.getCurrentDateString = getCurrentDateString;

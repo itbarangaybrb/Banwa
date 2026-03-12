@@ -48,7 +48,7 @@ document.head.appendChild(swalStyle);
  * active users table and the archive list.
  *
  * @param {string} tableName - The name of the table containing the record to archive.
- * @param {number|string}  - The ID of the record to archive.
+ * @param {number|string} recordId - The ID of the record to archive.
  */
 export async function archiveRecord(tableName, recordId) {
     const response = await fetch("/server/api/shared/archive_record.php", {
@@ -74,22 +74,18 @@ export async function archiveRecord(tableName, recordId) {
             timerProgressBar: true,
         });
 
-        // Remove the row from the users table if we're on the users page
         const row = document
             .querySelector(`button.edit-btn[data-id="${recordId}"]`)
             ?.closest('tr');
 
         if (row) row.remove();
 
-        // Refresh the archives table
         fetchArchives();
 
-        // Also refresh the users table to ensure consistency
         if (typeof window.fetchUsers === 'function') {
             window.fetchUsers();
         }
 
-        // Notify via WebSocket that archives have been updated
         if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
             sockets["archives"].send(JSON.stringify({
                 type: "archives_update",
@@ -99,7 +95,6 @@ export async function archiveRecord(tableName, recordId) {
             }));
         }
 
-        // Also notify users update
         if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
             sockets["users"].send(JSON.stringify({
                 type: "users_update",
@@ -108,11 +103,42 @@ export async function archiveRecord(tableName, recordId) {
             }));
         }
 
-        // Also notify audit update
         if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
             sockets["audit"].send(JSON.stringify({
                 type: "new_audit_log",
                 action: "new_audit_log",
+            }));
+        }
+
+        if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
+            sockets["utility_applications"].send(JSON.stringify({
+                type: "utility_applications_update",
+                action: "archive",
+                recordId: recordId
+            }));
+        }
+
+        if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+            sockets["construction_applications"].send(JSON.stringify({
+                type: "construction_applications_update",
+                action: "archive",
+                recordId: recordId
+            }));
+        }
+
+        if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+            sockets["business_applications"].send(JSON.stringify({
+                type: "business_applications_update",
+                action: "archive",
+                recordId: recordId
+            }));
+        }
+
+        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+            sockets["incident_report_applications"].send(JSON.stringify({
+                type: "incident_report_applications_update",
+                action: "archive",
+                recordId: recordId
             }));
         }
 
@@ -172,11 +198,9 @@ async function restoreRecord(archiveId) {
             timerProgressBar: true,
         });
 
-        // Refresh the archives table
         fetchArchives();
         fetchUsers();
 
-        // Notify via WebSocket that archives have been updated
         if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
             sockets["archives"].send(JSON.stringify({
                 type: "archives_update",
@@ -185,7 +209,6 @@ async function restoreRecord(archiveId) {
             }));
         }
 
-        // Also notify users update
         if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
             sockets["users"].send(JSON.stringify({
                 type: "users_update",
@@ -194,13 +217,45 @@ async function restoreRecord(archiveId) {
             }));
         }
 
-        // Also notify audit update - ADDED THIS SECTION
         if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
             sockets["audit"].send(JSON.stringify({
                 type: "new_audit_log",
                 action: "new_audit_log",
             }));
         }
+
+        if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
+            sockets["utility_applications"].send(JSON.stringify({
+                type: "utility_applications_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
+        if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+            sockets["construction_applications"].send(JSON.stringify({
+                type: "construction_applications_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
+        if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+            sockets["business_applications"].send(JSON.stringify({
+                type: "business_applications_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
+        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+            sockets["incident_report_applications"].send(JSON.stringify({
+                type: "incident_report_applications_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
     } else {
         await Swal.fire({
             icon: 'error',
@@ -209,9 +264,9 @@ async function restoreRecord(archiveId) {
         });
     }
 }
+
 /**
  * Fetches all archived records from the server and populates the archive table in the DOM.
- * Handles empty results and errors gracefully by displaying appropriate messages.
  */
 async function fetchArchives() {
     const tbody = document.getElementById('archiveTableBody');
@@ -233,6 +288,10 @@ async function fetchArchives() {
 
         archives.forEach(item => {
             const tr = document.createElement('tr');
+            const isRestored = item.restored_at && item.restored_at !== 'Not restored' && item.restored_at !== null;
+            const restoreButton = !isRestored
+                ? `<button class="buttons restore-btn" data-id="${item.archive_id}">Restore</button>`
+                : '<span style="color:#28a745; font-weight:500;">Restored</span>';
 
             tr.innerHTML = `
                 <td>${item.archive_id}</td>
@@ -244,24 +303,23 @@ async function fetchArchives() {
                 <td>${item.restored_at || 'Not restored'}</td>
                 <td>${item.role_id || ''}</td>
                 <td>
-                    <button class="buttons restore-btn" data-id="${item.archive_id}">
-                        Restore
-                    </button>
+                    ${restoreButton}
                 </td>
             `;
-
             tbody.appendChild(tr);
         });
 
     } catch (err) {
         console.error('Failed to fetch archives:', err);
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">Error loading users</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">Error loading archives</td></tr>`;
     }
 }
 
 /**
  * Handles user interactions for restore and archive buttons.
- * Triggers restoreRecord or archiveRecord based on the clicked button and confirms actions via SweetAlert.
+ * FIX: archive-btn handler now checks data-table and only processes
+ * "users" table archives. Other tables (e.g. utility_applications)
+ * are handled by their own module's click listener.
  */
 document.addEventListener('click', async (e) => {
     // Handle restore button clicks
@@ -290,8 +348,10 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    // Handle archive button clicks
     if (e.target.classList.contains('archive-btn')) {
+        const tableName = e.target.dataset.table || 'users';
+        if (tableName !== 'users') return;
+
         const userId = e.target.dataset.id;
 
         if (!userId || userId === 'undefined') {
