@@ -292,7 +292,7 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
 
-                <div>
+                <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>

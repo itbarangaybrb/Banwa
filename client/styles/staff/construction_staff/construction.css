@@ -1464,7 +1464,8 @@ h2 {
 }
 
 /* Management: table-responsive scrolls */
-#management .table-responsive {
+#management .table-responsive,
+#dashboard .table-responsive {
     /* margin-left: 70px; align with content */
     margin-inline: 30px;
     flex: 1 1 auto;

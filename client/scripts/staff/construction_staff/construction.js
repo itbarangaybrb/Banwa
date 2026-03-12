@@ -2346,6 +2346,7 @@ function appendAuditRow(log) {
 
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
