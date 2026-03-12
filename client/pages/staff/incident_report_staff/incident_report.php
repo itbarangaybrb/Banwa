@@ -298,7 +298,7 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
-                
+
                 <div class="page-header">
                     <h1>Review Incident Reports</h1>
                     <p class="page-description">Manage and review incident reports</p>
@@ -645,10 +645,11 @@ $full_name = getCurrentUserName();
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    
+
     <script src="../../../scripts/staff/map.js"></script>
-    
+
     <script type="module" src="../../../scripts/staff/incident_report_staff/incident_report.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 

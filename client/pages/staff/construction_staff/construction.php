@@ -623,6 +623,7 @@ $full_name = getCurrentUserName();
     <script src="../../../scripts/staff/map.js"></script>
 
     <script type="module" src="../../../scripts/staff/construction_staff/construction.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
 

@@ -1,5 +1,5 @@
 import { initSocket, sockets } from '../../utils/socketUtils.js';
-import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
 // ===============================================
