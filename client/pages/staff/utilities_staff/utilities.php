@@ -420,7 +420,7 @@ $full_name = getCurrentUserName();
                                 <div class="error-msg"></div>
                             </div>
                             <div class="form-group">
-                                <label for="contactNoOwner">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
+                                <label for="contactNoOwner">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                                 <input type="tel" id="contactNoOwner" maxlength="11">
                                 <div class="error-msg"></div>
                             </div>

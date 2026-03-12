@@ -13,7 +13,7 @@ if ($_SESSION['role_id'] != 1) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construction Permit Application</title>
+    <title>Construction Clearance Application</title>
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -77,7 +77,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoOwner">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -169,7 +169,7 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="contractorContactNumber">Contractor's Mobile or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contractorContactNumber">Contractor's Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contractorContactNumber" name="contractorContactNumber" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -252,10 +252,10 @@ if ($_SESSION['role_id'] != 1) {
 
                 <div id="waiverContent">
                     <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
-                        Business Application Form is true and correct. I authorize the Barangay to verify the information
+                        Construction Application Form are true and correct. I authorize the Barangay to verify the information
                         with the documents submitted.</p>
                     <p>I understand that any false declaration or withholding of relevant information may result in
-                        the denial, revocation, or suspension of my Business Clearance.</p>
+                        the denial, revocation, or suspension of my Construction Clearance.</p>
                     <p> I agree that the Barangay shall not be held liable for any incorrect information or discrepancies
                         provided in this form and supporting documents.</p>
                 </div>

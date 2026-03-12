@@ -20,7 +20,8 @@ function generateUniqueFilename($originalName) {
 }
 
 try {
-    if (!isset($_SESSION['user_id'])) {
+    // Note: Ensuring we check the correct session variable for your resident login
+    if (!isset($_SESSION['user_id']) && !isset($_SESSION['supabase_user_id'])) {
         throw new Exception("User not logged in.");
     }
 
@@ -30,15 +31,27 @@ try {
     $amountPaid = get_input('amountPaid');
     $dateOfPayment = get_input('dateOfPayment');
     $orNumber = get_input('orNumber'); 
+    
+    // NEW: Capture the application type sent from status.js
+    $appType = get_input('payment_purpose_app_type'); 
 
-    if (!$applicationId || !$paymentMethod || !$amountPaid || !$dateOfPayment) {
+    if (!$applicationId || !$paymentMethod || !$amountPaid || !$dateOfPayment || !$appType) {
         throw new Exception("Missing required form data.");
+    }
+
+    // NEW: Determine the correct database table based on the application type
+    $tableName = '';
+    if ($appType === 'Business') {
+        $tableName = 'business_applications';
+    } elseif ($appType === 'Construction') {
+        $tableName = 'construction_applications';
+    } else {
+        throw new Exception("Invalid application type provided.");
     }
 
     // Handle file upload
     $proofOfPaymentPath = null;
     if (isset($_FILES['proofOfPayment']) && $_FILES['proofOfPayment']['error'] === UPLOAD_ERR_OK) {
-        // Since you don't have a specific folder, we'll create one in the current directory's parent
         $uploadDir = __DIR__ . '/uploads/payment_proofs/'; 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
@@ -55,8 +68,8 @@ try {
         }
 
         if (move_uploaded_file($_FILES['proofOfPayment']['tmp_name'], $targetFile)) {
-            // Store relative path for database
-            $proofOfPaymentPath = 'server/api/resident/uploads/payment_proofs/' . $fileName;
+            // Store relative path for database - added leading slash for absolute path mapping
+            $proofOfPaymentPath = '/server/api/resident/uploads/payment_proofs/' . $fileName;
         } else {
             throw new Exception("Failed to move uploaded proof of payment file.");
         }
@@ -65,12 +78,9 @@ try {
     }
 
     /**
-     * SQL UPDATE: Mapping to business_applications schema
-     * - status: Updates main status to 'Paid' or 'Pending Verification'
-     * - payment_status: Specifically tracks the payment state
-     * - proof_of_payment: Maps to requirement_upload or you may need to add a dedicated column
+     * SQL UPDATE: Now dynamically targets $tableName
      */
-    $sql = "UPDATE business_applications SET 
+    $sql = "UPDATE {$tableName} SET 
                 payment_method = :payment_method, 
                 amount_paid = :amount_paid, 
                 payment_date = :payment_date, 
@@ -106,3 +116,4 @@ try {
     echo json_encode(["status" => "error", "message" => "Submission Error: " . $e->getMessage()]);
 }
 ob_end_flush();
+?>

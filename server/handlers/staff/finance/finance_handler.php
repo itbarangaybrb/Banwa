@@ -222,64 +222,133 @@ switch ($action) {
         }
         break;
 
-    case 'verify_payment':
+        case 'verify_payment':
         $id = $_POST['id'];
         $table = getTable($type);
         $verificationAction = $_POST['verification_action'];
 
+        $orFilePath = null;
+
         if ($verificationAction === 'Approved') {
             $newPaymentStatus = 'Paid';
             $newApplicationStatus = 'Paid';
+
+            // Handle the Official Receipt File Upload
+            if (isset($_FILES['or_file']) && $_FILES['or_file']['error'] === UPLOAD_ERR_OK) {
+                // Creates a directory at /server/uploads/or_receipts/
+                $uploadDir = __DIR__ . '/../../../uploads/or_receipts/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                
+                // Create a unique file name to prevent overwriting
+                $fileName = time() . '_' . preg_replace("/[^a-zA-Z0-9.-]/", "_", $_FILES['or_file']['name']);
+                $targetFilePath = $uploadDir . $fileName;
+                
+                if (move_uploaded_file($_FILES['or_file']['tmp_name'], $targetFilePath)) {
+                    // Store the relative path for the frontend
+                    $orFilePath = '/server/uploads/or_receipts/' . $fileName;
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Failed to save the Official Receipt."]);
+                    exit;
+                }
+            } else {
+                echo json_encode(["status" => "error", "message" => "An Official Receipt is required to approve."]);
+                exit;
+            }
         } else {
             $newPaymentStatus = 'Rejected';
             $newApplicationStatus = 'For Payment';
         }
 
         try {
-            // Get current data before update for audit log
             $oldStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
             $oldStmt->execute([':id' => $id]);
             $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
-            $sql = "UPDATE $table SET 
-                    status = :new_status,
-                    payment_status = :new_payment_status,
-                    updated_at = NOW()
-                    WHERE id = :id";
+            // Dynamically build SQL to include the OR file path if uploaded
+            $sql = "UPDATE $table SET status = :new_status, payment_status = :new_payment_status, updated_at = NOW()";
+            if ($orFilePath !== null) {
+                $sql .= ", or_file_path = :or_file_path";
+            }
+            $sql .= " WHERE id = :id";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':new_status' => $newApplicationStatus,
-                ':new_payment_status' => $newPaymentStatus,
-                ':id' => $id
-            ]);
+            $params = [':new_status' => $newApplicationStatus, ':new_payment_status' => $newPaymentStatus, ':id' => $id];
+            if ($orFilePath !== null) {
+                $params[':or_file_path'] = $orFilePath;
+            }
+            $stmt->execute($params);
 
-            // Get new data after update for audit log
             $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
             $newStmt->execute([':id' => $id]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-            // Write audit log for payment verification
-            writeAuditLog(
-                $pdo,
-                'PAYMENT VERIFIED',
-                $table,
-                $id,
-                $oldData,
-                $newData,
-                'PAYMENT'
-            );
+            writeAuditLog($pdo, 'PAYMENT VERIFIED', $table, $id, $oldData, $newData, 'PAYMENT');
 
-            echo json_encode([
-                "status" => "success",
-                "id" => $id,
-                "type" => $type,
-                "message" => "Payment verification set to " . $newPaymentStatus
-            ]);
+            echo json_encode(["status" => "success", "id" => $id, "type" => $type, "message" => "Payment set to " . $newPaymentStatus]);
         } catch (Exception $e) {
             echo json_encode(["status" => "error", "message" => "Verification error: " . $e->getMessage()]);
         }
         break;
+    // case 'verify_payment':
+    //     $id = $_POST['id'];
+    //     $table = getTable($type);
+    //     $verificationAction = $_POST['verification_action'];
+
+    //     if ($verificationAction === 'Approved') {
+    //         $newPaymentStatus = 'Paid';
+    //         $newApplicationStatus = 'Paid';
+    //     } else {
+    //         $newPaymentStatus = 'Rejected';
+    //         $newApplicationStatus = 'For Payment';
+    //     }
+
+    //     try {
+    //         // Get current data before update for audit log
+    //         $oldStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+    //         $oldStmt->execute([':id' => $id]);
+    //         $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
+
+    //         $sql = "UPDATE $table SET 
+    //                 status = :new_status,
+    //                 payment_status = :new_payment_status,
+    //                 updated_at = NOW()
+    //                 WHERE id = :id";
+
+    //         $stmt = $pdo->prepare($sql);
+    //         $stmt->execute([
+    //             ':new_status' => $newApplicationStatus,
+    //             ':new_payment_status' => $newPaymentStatus,
+    //             ':id' => $id
+    //         ]);
+
+    //         // Get new data after update for audit log
+    //         $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
+    //         $newStmt->execute([':id' => $id]);
+    //         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+    //         // Write audit log for payment verification
+    //         writeAuditLog(
+    //             $pdo,
+    //             'PAYMENT VERIFIED',
+    //             $table,
+    //             $id,
+    //             $oldData,
+    //             $newData,
+    //             'PAYMENT'
+    //         );
+
+    //         echo json_encode([
+    //             "status" => "success",
+    //             "id" => $id,
+    //             "type" => $type,
+    //             "message" => "Payment verification set to " . $newPaymentStatus
+    //         ]);
+    //     } catch (Exception $e) {
+    //         echo json_encode(["status" => "error", "message" => "Verification error: " . $e->getMessage()]);
+    //     }
+    //     break;
 
     case 'fetch_history':
         $business_sql = "SELECT *, 'business' AS application_type FROM business_applications WHERE payment_status = 'Paid' ORDER BY payment_date ASC";

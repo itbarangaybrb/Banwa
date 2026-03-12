@@ -103,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($result) {
                 // Store success message in session
-                $_SESSION['success_message'] = "Construction permit application submitted successfully!";
+                $_SESSION['success_message'] = "Construction Clearance application submitted successfully!";
 
                 // Redirect to same page to prevent resubmission
                 header("Location: " . $_SERVER['PHP_SELF']);

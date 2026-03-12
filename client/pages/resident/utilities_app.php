@@ -68,7 +68,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Mobile or Landline No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoOwner">Mobile Phone or Landline No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
