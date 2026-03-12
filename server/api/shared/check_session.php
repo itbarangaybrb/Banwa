@@ -5,7 +5,7 @@
  */
 session_start();
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
-    header("Location: /client/pages/auth/signin.php");
+    header("Location: /client/index.php");
     exit;
 }
 

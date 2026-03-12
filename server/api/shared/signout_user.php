@@ -26,5 +26,5 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 // Redirect AFTER cleanup
-header("Location: /client/pages/auth/signin.php");
+header("Location: /client/index.php");
 exit;

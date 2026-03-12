@@ -411,7 +411,7 @@ function setupNavigationButtons() {
     // Back to login
     formElements.selectIdBackBtn?.addEventListener('click', e => {
         e.preventDefault();
-        window.location.href = '/client/pages/auth/signin.php';
+        window.location.href = '/client/index.php';
     });
 
     // Back one step

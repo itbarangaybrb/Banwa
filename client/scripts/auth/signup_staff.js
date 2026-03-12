@@ -198,7 +198,7 @@ function validation() {
     // Back to login
     document.getElementById('personalDetailsBackBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = '/client/pages/auth/signin.php';
+        window.location.href = '/client/index.php';
     });
 
     // Back to ID selection

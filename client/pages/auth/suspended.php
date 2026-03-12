@@ -1,5 +1,13 @@
 <?php
 session_start();
+
+// --- ADDED: Prevent browser caching ---
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Date in the past
+// --------------------------------------
+
 header("Content-Type: text/html; charset=UTF-8");
 require_once __DIR__ . '/../../../server/configs/database.php';
 
@@ -9,7 +17,7 @@ require_once __DIR__ . '/../../../server/configs/database.php';
  */
 $userId = $_SESSION['user_id'] ?? null;
 if (!$userId) {
-  header("Location: /client/pages/auth/signin.php");
+  header("Location: /client/index.php");
   exit;
 }
 
@@ -57,6 +65,9 @@ if ($suspendedUntil) {
 <html lang="en">
 
 <head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
@@ -71,7 +82,9 @@ if ($suspendedUntil) {
     <h1 style="color: red; margin-bottom: 56px;">Account Suspended</h1>
     <h3 style="margin-bottom: 8px;"><?php echo htmlspecialchars($reason); ?></h3>
     <p><?php echo htmlspecialchars($details); ?></p>
+    <a id="signoutBtn" href="/client/index.php" style="display: inline-block; margin-top: 24px; padding: 12px 24px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 4px;">
+      Logout
+    </a>
   </div>
 </body>
-
-</html>
+<script type="module" src="/client/scripts/auth/signout.js"></script></html>

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
 require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
 if ($_SESSION['role_id'] != 4) {
-    header("Location: /client/pages/auth/signin.php");
+    header("Location: /client/index.php");
     exit;
 }
 
