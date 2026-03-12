@@ -832,7 +832,7 @@ if (file_exists($databasePath)) {
 <div class="toast-container" id="toast-container"></div>
 
 <script>
-    const HANDLER_URL = '/Banwa/server/handlers/map/house_handler.php';
+    const HANDLER_URL = '/server/handlers/map/house_handler.php';
 
     // ── State ─────────────────────────────────────────────────────────────────
     let allHouses      = [];
