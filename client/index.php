@@ -83,7 +83,7 @@
                                                 <span class="time">8:00 AM - 12:00 PM</span>
                                             </div>
                                             <div class="schedule-item">
-                                                <span class="days">Sunday</span>
+                                                <span class="days">Sunday and Holidays</span>
                                                 <span class="time closed">Closed</span>
                                             </div>
                                             <div class="current-status">
@@ -173,10 +173,8 @@
                             </div>
                             <ul class="preview-list">
 
-                                <li>SEC (Securities and Exchange Commission) Registration</li>
-                                <li>DTI (Department of Trade and Industry) Registration</li>
-                                <li>TCT (Transfer Certificate of Title)</li>
-                                <li>Lease Contract</li>
+                                <li>SEC Registration or DTI Registration</li>
+                                <li>TCT or Lease Contract</li>
                             </ul>
                             <div class="preview-footer">
                                 <span class="preview-cta">Proceed →</span>
@@ -481,7 +479,7 @@
                                 <span class="faq-icon">▼</span>
                             </button>
                             <div class="faq-answer">
-                                <p><strong>Yes!</strong> While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week. You can submit applications, request documents, and report issues at any time.</p>
+                                <p>Yes! While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week except for Holidays. You can submit applications, request documents, and report issues at any time.</p>
                             </div>
                         </div>
 
