@@ -68,7 +68,7 @@ include '../../pages/resident/_layout/nav.php';
                                             <span class="time">8:00 AM - 12:00 PM</span>
                                         </div>
                                         <div class="schedule-item">
-                                            <span class="days">Sunday</span>
+                                            <span class="days">Sunday & Holidays</span>
                                             <span class="time closed">Closed</span>
                                         </div>
                                         <div class="current-status">
@@ -149,17 +149,15 @@ include '../../pages/resident/_layout/nav.php';
                     </div>
                     
                     <h3>Business Clearance</h3>
-                    <p class="card-subtitle">New businesses, Renewwals, and Closure</p>
+                    <p class="card-subtitle">New businesses, Renewals, and Closure</p>
 
                     <div class="card-preview-content">
                         <div class="preview-header">
                             <span class="preview-title">Requirements</span>
                         </div>
                         <ul class="preview-list">
-                            <li>SEC (Securities and Exchange Commission) Registration</li>
-                            <li>DTI (Department of Trade and Industry) Registration</li>
-                            <li>TCT (Transfer Certificate of Title)</li>
-                            <li>Lease Contract</li>
+                            <li>SEC Registration or DTI Registration</li>
+                            <li>TCT or Lease Contract</li>
                         </ul>
                         <div class="preview-footer">
                             <span class="preview-cta">Proceed →</span>
@@ -209,19 +207,21 @@ include '../../pages/resident/_layout/nav.php';
     </section>
 
     <section data-theme="blue">
-            <div class="cont">
-                <div class="contact-content">
-                    <div class="story-text">
-                        <h2>Contact Us</h2>
-                        <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
-                        <ul class="contact-info">
-                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
-                            <li><strong>Phone:</strong> +63 946 456 6986</li>
-                        </ul>
-                    </div>
+        <div class="cont">
+            <div class="contact-content">
+                <div class="story-text">
+                    <h2>Contact Us</h2>
+                    <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
+                    <ul class="contact-info">
+                        <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
+                        <li><strong>Mobile:</strong> 0917-1822272</li>
+                        <li><strong>Landline:</strong> 8-5359822</li>
+                        <li><strong>Email:</strong> blueridgeb@yahoo.com</li>
+                    </ul>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
     <?php include '../../pages/resident/_layout/end.php'; ?>
 </body>

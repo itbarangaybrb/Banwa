@@ -260,12 +260,12 @@ include '../../pages/resident/_layout/nav.php';
                     <h2>Frequently Asked Questions</h2>
                     <p class="faq-subtitle">Find answers to common questions about our services</p>
                 </div>
-                
+
                 <div class="faq-container">
                     <!-- FAQ Category: General -->
                     <div class="faq-category">
                         <h3 class="category-title">General Questions</h3>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>What is BANWA?</span>
@@ -275,17 +275,17 @@ include '../../pages/resident/_layout/nav.php';
                                 <p>BANWA (Barangay Blue Ridge B Management System) is an online platform that allows residents to access barangay services, submit applications for clearances, report issues, and stay updated with barangay announcements from anywhere, anytime.</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>Is the website available 24/7?</span>
                                 <span class="faq-icon">▼</span>
                             </button>
                             <div class="faq-answer">
-                                <p><strong>Yes!</strong> While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week. You can submit applications, request documents, and report issues at any time.</p>
+                                <p>Yes! While our physical office has specific hours (Monday-Friday: 8AM-5PM, Saturday: 8AM-12PM), our online services are available 24 hours a day, 7 days a week except for Holidays. You can submit applications, request documents, and report issues at any time.</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>Do I need to create an account to use the services?</span>
@@ -296,11 +296,11 @@ include '../../pages/resident/_layout/nav.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- FAQ Category: Clearances -->
                     <div class="faq-category">
                         <h3 class="category-title">Clearances & Permits</h3>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>How long does it take to process a clearance?</span>
@@ -310,7 +310,7 @@ include '../../pages/resident/_layout/nav.php';
                                 <p>Online clearance applications are typically processed within a few working days. You'll receive a notification via BANWA website once your clearance is ready for pickup or if there are any issues with your application.</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>What requirements do I need for Business Clearance?</span>
@@ -318,14 +318,12 @@ include '../../pages/resident/_layout/nav.php';
                             </button>
                             <div class="faq-answer">
                                 <ul>
-                                    <li>SEC (Securities and Exchange Commission) Registration</li>
-                                    <li>DTI (Department of Trade and Industry) Registration</li>
-                                    <li>TCT (Transfer Certificate of Title)</li>
-                                    <li>Lease Contract</li>
+                                    <li>SEC Registration or DTI Registration</li>
+                                    <li>TCT or Lease Contract</li>
                                 </ul>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>Can I track my application status?</span>
@@ -336,11 +334,11 @@ include '../../pages/resident/_layout/nav.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- FAQ Category: Technical -->
                     <div class="faq-category">
                         <h3 class="category-title">Technical Support</h3>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>I forgot my password. How can I reset it?</span>
@@ -350,7 +348,7 @@ include '../../pages/resident/_layout/nav.php';
                                 <p>Click on the "Forgot password?" link on the login page. Enter your registered email address, and we'll send you instructions to reset your password. If you don't receive the email within a few minutes, check your spam folder.</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>What file formats are accepted for ID upload?</span>
@@ -360,7 +358,7 @@ include '../../pages/resident/_layout/nav.php';
                                 <p>We accept JPG, JPEG, and PNG file formats. The maximum file size is 5MB. Make sure the image is clear and all information on the ID is readable.</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>Who can I contact for technical issues?</span>
@@ -368,17 +366,19 @@ include '../../pages/resident/_layout/nav.php';
                             </button>
                             <div class="faq-answer">
                                 <p>For technical support, you can:<br>
-                                • Email us at support@banwa-bbrb.gov.ph<br>
-                                • Call our technical support hotline: +63 946 456 6986<br>
-                                • Visit the barangay hall during office hours and ask for the IT support staff</p>
+                                    • Email us at blueridgeb@yahoo.com<br>
+                                    • Call our technical support hotline:<br>
+                                    Mobile: 0917-1822272<br>
+                                    Landline: 8-5359822<br>
+                                    • Visit the barangay hall during office hours and ask for the IT support staff</p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- FAQ Category: Payments -->
                     <div class="faq-category">
                         <h3 class="category-title">Payments & Fees</h3>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>What payment methods are accepted?</span>
@@ -386,20 +386,20 @@ include '../../pages/resident/_layout/nav.php';
                             </button>
                             <div class="faq-answer">
                                 <p>Currently, we accept:<br>
-                                • Cash payments at the barangay hall<br>
-                                • GCash (through our official account)<br>
-                                • Bank transfer receipt<br>
-                                Online payment options will be expanded soon!</p>
+                                    • Cash payments at the barangay hall<br>
+                                    • GCash (through our official account)<br>
+                                    • Bank transfer with proof of payment<br>
+                                    Online payment options will be expanded soon!</p>
                             </div>
                         </div>
-                        
+
                         <div class="faq-item">
                             <button class="faq-question">
                                 <span>Are there any fees for using the online system?</span>
                                 <span class="faq-icon">▼</span>
                             </button>
                             <div class="faq-answer">
-                                <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances and permits you apply for, just as you would when applying in person.</p>
+                                <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances you apply for, just as you would when applying in person. Gcash payments will also include a small processing fee.</p>
                             </div>
                         </div>
                     </div>
@@ -414,8 +414,10 @@ include '../../pages/resident/_layout/nav.php';
                         <h2>Contact Us</h2>
                         <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
                         <ul class="contact-info">
-                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4,  Quezon City, Metro Manila</li>
-                            <li><strong>Phone:</strong> +63 946 456 6986</li>
+                            <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
+                            <li><strong>Mobile:</strong> 0917-1822272</li>
+                            <li><strong>Landline:</strong> 8-5359822</li>
+                            <li><strong>Email:</strong> blueridgeb@yahoo.com</li>
                         </ul>
                     </div>
                 </div>
