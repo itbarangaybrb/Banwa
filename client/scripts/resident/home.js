@@ -111,54 +111,59 @@ document.addEventListener('DOMContentLoaded', function() {
     // ======================
     // 1. BACKGROUND CAROUSEL
     // ======================
+    // Only run if carousel elements exist on this page
     const carouselImages = document.querySelectorAll('.carousel-image');
     const dots = document.querySelectorAll('.dot');
-    let currentImageIndex = 0;
-    const totalImages = carouselImages.length;
-    
-    // Function to change image
-    function changeImage(index) {
-        // Remove active class from all images and dots
-        carouselImages.forEach(img => img.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
+
+    // Check if carousel exists on this page
+    if (carouselImages.length > 0 && dots.length > 0) {
+        let currentImageIndex = 0;
+        const totalImages = carouselImages.length;
         
-        // Add active class to current image and dot
-        carouselImages[index].classList.add('active');
-        dots[index].classList.add('active');
-        currentImageIndex = index;
-    }
-    
-    // Function for next image
-    function nextImage() {
-        let nextIndex = (currentImageIndex + 1) % totalImages;
-        changeImage(nextIndex);
-    }
-    
-    // Auto-play carousel
-    let carouselInterval = setInterval(nextImage, 5000); // Change every 5 seconds
-    
-    // Click on dots to change image
-    dots.forEach(dot => {
-        dot.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            changeImage(index);
+        // Function to change image
+        function changeImage(index) {
+            // Remove active class from all images and dots
+            carouselImages.forEach(img => img.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
             
-            // Reset auto-play timer
-            clearInterval(carouselInterval);
-            carouselInterval = setInterval(nextImage, 5000);
-        });
-    });
-    
-    // Optional: Pause carousel on hover
-    const carouselContainer = document.querySelector('.hero-bg-carousel');
-    if (carouselContainer) {
-        carouselContainer.addEventListener('mouseenter', () => {
-            clearInterval(carouselInterval);
+            // Add active class to current image and dot
+            carouselImages[index].classList.add('active');
+            dots[index].classList.add('active');
+            currentImageIndex = index;
+        }
+        
+        // Function for next image
+        function nextImage() {
+            let nextIndex = (currentImageIndex + 1) % totalImages;
+            changeImage(nextIndex);
+        }
+        
+        // Auto-play carousel
+        let carouselInterval = setInterval(nextImage, 5000); // Change every 5 seconds
+        
+        // Click on dots to change image
+        dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                changeImage(index);
+                
+                // Reset auto-play timer
+                clearInterval(carouselInterval);
+                carouselInterval = setInterval(nextImage, 5000);
+            });
         });
         
-        carouselContainer.addEventListener('mouseleave', () => {
-            carouselInterval = setInterval(nextImage, 5000);
-        });
+        // Optional: Pause carousel on hover
+        const carouselContainer = document.querySelector('.hero-bg-carousel');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('mouseenter', () => {
+                clearInterval(carouselInterval);
+            });
+            
+            carouselContainer.addEventListener('mouseleave', () => {
+                carouselInterval = setInterval(nextImage, 5000);
+            });
+        }
     }
     
     // ======================
