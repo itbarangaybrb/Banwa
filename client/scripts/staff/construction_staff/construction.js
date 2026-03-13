@@ -553,7 +553,7 @@ function loadProcessTable() {
     });
 }
 
-// Generate Construction Permit Function
+// Generate Construction Clearance Function
 function generateConstructionPermit(appId) {
     // 1. Check if 'applications' exists to prevent crash
     if (typeof applications === 'undefined') {
@@ -614,7 +614,7 @@ function generateConstructionPermit(appId) {
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Construction Permit - ${grantee_name}</title>
+        <title>Construction Clearance - ${grantee_name}</title>
         <style>
             body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
             .document-container { width: 8.5in; min-height: 11in; margin:0 auto; background:white; padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative; }
@@ -654,7 +654,7 @@ function generateConstructionPermit(appId) {
                 <div class="clearance-no">Permit No.<br><span style="font-size:15.5px;">${permitNumber}</span></div>
             </header>
 
-            <div class="doc-title">CONSTRUCTION PERMIT</div>
+            <div class="doc-title">Construction Clearance</div>
 
             <div class="content-wrapper">
                 <div class="sidebar">
@@ -1464,7 +1464,7 @@ function updateSummary() {
     summaryOutput.innerHTML = `
         <div class="report-header">
             <div class="report-title">
-                <h1>Construction Permit Profile</h1>
+                <h1>Construction Clearance Profile</h1>
                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
             </div>
             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
@@ -1747,7 +1747,7 @@ function printSummary() {
             <div class="print-container">
                 <div class="report-header">
                     <div class="report-title">
-                        <h1>Construction Permit Profile</h1>
+                        <h1>Construction Clearance Profile</h1>
                         <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
                     </div>
                     <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
@@ -1943,7 +1943,7 @@ function downloadSummary(appId) {
         </head>
         <body>
             <div class="container">
-                <h1>Construction Permit Summary Report</h1>
+                <h1>Construction Clearance Summary Report</h1>
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
 

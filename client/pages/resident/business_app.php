@@ -62,7 +62,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoOwner">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoOwner">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -141,7 +141,7 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
-                        <label class="label" for="contactNoBusiness">Mobile or Landline No. <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="contactNoBusiness">Mobile Phone or Landline No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>
                     </div>
@@ -263,7 +263,7 @@ if ($_SESSION['role_id'] != 1) {
 
                 <div id="waiverContent">
                     <p>I, <span id="waiverFullname"></span>, hereby certify that all information provided in this
-                        Business Application Form is true and correct. I authorize the Barangay to verify the information
+                        Business Application Form are true and correct. I authorize the Barangay to verify the information
                         with the documents submitted.</p>
                     <p>I understand that any false declaration or withholding of relevant information may result in
                         the denial, revocation, or suspension of my Business Clearance.</p>

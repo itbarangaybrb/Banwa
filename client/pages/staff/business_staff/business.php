@@ -429,7 +429,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="contactNoOwner">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoOwner">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -505,7 +505,6 @@ $full_name = getCurrentUserName();
                         <label for="natureOfBusinessSelect">Nature of Business <span style="color:#BB1B1B;">*</span></label>
                         <select name="natureOfBusiness" id="natureOfBusinessSelect" required>
                             <option value="" disabled selected>Select</option>
-                            <option value="Manufacturing">Manufacturing</option>
                             <option value="Retailing">Retailing</option>
                             <option value="Services">Services</option>
                             <option value="Rentals">Rentals</option>
@@ -531,11 +530,17 @@ $full_name = getCurrentUserName();
                         <label><input type="radio" name="businessStatus" value="Others"> Others</label>
                     </div>
                     <div class="error-msg"></div>
+                    <!-- Hidden fields from your original owner code-->
+                    <div class="form-group specify-others" id="businessStatusSpecifyGroup" style="display:none;">
+                        <label for="businessStatusSpecify">If Others, please specify <span style="color:#BB1B1B;">*</span></label>
+                        <input type="text" id="businessStatusSpecify" name="businessStatusSpecify">
+                    </div>
+                    <div class="error-msg"></div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="contactNoBusiness">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoBusiness">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>

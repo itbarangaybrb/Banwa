@@ -1452,7 +1452,7 @@ function evaluateConstructionSDSS($construction, $pdo) {
                     'Elevated foundation required (minimum 1.5m above ground)',
                     'Waterproof materials required for basement/ground floor',
                     'Install flood barriers and drainage systems',
-                    'Obtain special flood zone construction permit'
+                    'Obtain special flood zone Construction Clearance'
                 ]
             ];
             $maxSeverity = 'CRITICAL';

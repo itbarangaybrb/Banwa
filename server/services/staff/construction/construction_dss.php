@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Decision Support System Rule Engine for construction permit application evaluation
- * Implements a Rete algorithm-based expert system to assess construction permit eligibility
+ * Decision Support System Rule Engine for Construction Clearance application evaluation
+ * Implements a Rete algorithm-based expert system to assess Construction Clearance eligibility
  */
 class ConstructionDSSRuleEngine
 {
@@ -16,7 +16,7 @@ class ConstructionDSSRuleEngine
     }
 
     /**
-     * Loads and defines all construction permit evaluation rules into the rule base
+     * Loads and defines all Construction Clearance evaluation rules into the rule base
      * Each rule contains conditions to evaluate and actions to take if conditions match
      */
     private function loadRules()
@@ -459,7 +459,7 @@ class ConstructionDSSRuleEngine
 
     /**
      * Main evaluation function orchestrating the complete Rete algorithm process
-     * @param array $applicationData - Construction permit application data to evaluate
+     * @param array $applicationData - Construction Clearance application data to evaluate
      * @return array - Complete evaluation result with status, details, and timestamp
      */
     public function evaluateApplication($applicationData)
@@ -529,7 +529,7 @@ class ConstructionDSSRuleEngine
     {
         switch ($status) {
             case 'Pre-Approved':
-                return 'Construction permit meets all safety and regulatory requirements. All critical rules passed with sufficient overall score.';
+                return 'Construction Clearance meets all safety and regulatory requirements. All critical rules passed with sufficient overall score.';
 
             case 'Additional Requirements Needed':
                 $failed = implode(', ', $evaluationDetails['failed_rules'] ?? []);
@@ -828,7 +828,7 @@ function getEvaluationSummary($dssStatus)
 {
     $summaries = [
         'Pre-Approved' => [
-            'message' => 'Construction permit meets all requirements for pre-approval',
+            'message' => 'Construction Clearance meets all requirements for pre-approval',
             'color' => 'green',
             'bg_color' => '#d4edda',
             'text_color' => '#155724'
@@ -840,7 +840,7 @@ function getEvaluationSummary($dssStatus)
             'text_color' => '#856404'
         ],
         'Rejected' => [
-            'message' => 'Construction permit application does not meet basic requirements',
+            'message' => 'Construction Clearance application does not meet basic requirements',
             'color' => 'red',
             'bg_color' => '#f8d7da',
             'text_color' => '#721c24'
