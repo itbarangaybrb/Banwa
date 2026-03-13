@@ -74,6 +74,12 @@ $full_name = getCurrentUserName();
                     </a>
                 </li>
                 <li>
+                    <a href="#" class="nav_select" data-tab="archives">
+                        <i class="fas fa-archive nav_icon"></i>
+                        <span class="nav_text">Archives</span>
+                    </a>
+                </li>
+                <li>
                     <a class="nav_select" id="signoutBtn" href="#">
                         <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
                         <span class="nav_text">Logout</span>
@@ -423,7 +429,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="contactNoOwner">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoOwner">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -499,7 +505,6 @@ $full_name = getCurrentUserName();
                         <label for="natureOfBusinessSelect">Nature of Business <span style="color:#BB1B1B;">*</span></label>
                         <select name="natureOfBusiness" id="natureOfBusinessSelect" required>
                             <option value="" disabled selected>Select</option>
-                            <option value="Manufacturing">Manufacturing</option>
                             <option value="Retailing">Retailing</option>
                             <option value="Services">Services</option>
                             <option value="Rentals">Rentals</option>
@@ -525,11 +530,17 @@ $full_name = getCurrentUserName();
                         <label><input type="radio" name="businessStatus" value="Others"> Others</label>
                     </div>
                     <div class="error-msg"></div>
+                    <!-- Hidden fields from your original owner code-->
+                    <div class="form-group specify-others" id="businessStatusSpecifyGroup" style="display:none;">
+                        <label for="businessStatusSpecify">If Others, please specify <span style="color:#BB1B1B;">*</span></label>
+                        <input type="text" id="businessStatusSpecify" name="businessStatusSpecify">
+                    </div>
+                    <div class="error-msg"></div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="contactNoBusiness">Mobile or Landline No. <span style="color:#BB1B1B;">*</span></label>
+                        <label for="contactNoBusiness">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -720,6 +731,48 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
+        <div id="archives" class="tab-pane">
+            <header class="top-header">
+                <div class="header-left">
+                    <h1>Business Application Management</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-greeting">
+                        <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
+                    </div>
+                </div>
+            </header>
+            <div class="page-header">
+                <h2>Archives</h2>
+                <p class="form-description">View and restore your archived records.</p>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Archive ID</th>
+                            <th>Table</th>
+                            <th>Record ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Archived At</th>
+                            <th>Restored At</th>
+                            <th>Role ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archiveTableBody">
+                        <tr>
+                            <td colspan="8" class="loading">
+                                <div class="spinner"></div>Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div id="detailsModal" class="staff-modal">
             <div class="staff-modal-content">
                 <div class="staff-modal-header">
@@ -798,8 +851,7 @@ $full_name = getCurrentUserName();
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
-
-    <!-- <script type="module" src="../../../scripts/utils/archives.js"></script> -->
+    <script type="module" src="../../../scripts/utils/archives.js"></script>
 
 
 </body>

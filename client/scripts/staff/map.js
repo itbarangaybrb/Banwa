@@ -2698,7 +2698,7 @@ function displayBusinessSDSSReport(data) {
         const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
         const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
         const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
-        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#555';
+        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
 
         const body = `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;font-size:12px;color:#555;">
@@ -2776,7 +2776,7 @@ function displayConstructionSDSSReport(data) {
         const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
         const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
         const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
-        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#555';
+        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
         const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
 
         const body = `
@@ -3468,12 +3468,13 @@ function displaySDSSRulesReport(data, dssData) {
     const { summary, rules } = data;
 
     // Group rules by category
-    const floodRules = [], seismicRules = [], constructionRules = [], businessRules = [];
+    const floodRules = [], seismicRules = [], constructionRules = [], businessRules = [], incidentRules = [];
     for (const [key, rule] of Object.entries(rules)) {
-        if (rule.category === 'Flood Hazard')       floodRules.push({ key, ...rule });
-        else if (rule.category === 'Seismic Hazard') seismicRules.push({ key, ...rule });
+        if (rule.category === 'Flood Hazard')             floodRules.push({ key, ...rule });
+        else if (rule.category === 'Seismic Hazard')      seismicRules.push({ key, ...rule });
         else if (rule.category === 'Construction Safety') constructionRules.push({ key, ...rule });
-        else if (rule.category === 'Business Safety')     businessRules.push({ key, ...rule });
+        else if (rule.category === 'Business Rules')      businessRules.push({ key, ...rule });
+        else if (rule.category === 'Incident Rules')      incidentRules.push({ key, ...rule });
     }
 
     const renderCategory = (title, icon, rulesArr, totalHouses) => {
@@ -3524,8 +3525,9 @@ function displaySDSSRulesReport(data, dssData) {
                     </div>
                     ${renderCategory('Flood Hazard Rules', 'fa-water', floodRules, summary.total_houses)}
                     ${renderCategory('Seismic Hazard Rules (Fault Line)', 'fa-exclamation-triangle', seismicRules, summary.total_houses)}
-                    ${renderCategory('Construction Safety Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
-                    ${renderCategory('Business Safety Rules', 'fa-building', businessRules, summary.total_houses)}
+                    ${renderCategory('Construction Rules', 'fa-hard-hat', constructionRules, summary.total_houses)}
+                    ${renderCategory('Business Rules', 'fa-building', businessRules, summary.total_houses)}
+                    ${renderCategory('Incident Rules', 'fa-flag', incidentRules, summary.total_houses)}
                 </div>
                 <!-- DSS Tab -->
                 <div id="tab-dss" style="display:none;">
@@ -3603,8 +3605,8 @@ function buildDSSTab(dssData) {
     const typeIcon    = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
     const typeColor   = t => t === 'construction' ? '#ffc107' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
 
-    // Sort order: Rejected first, then Additional Requirements Needed, then Pre-Approved
-    const statusRank = { 'Rejected': 1, 'Additional Requirements Needed': 2, 'Pre-Approved': 3 };
+    // Sort order: Pre-Approved (green) on top, Additional Requirements Needed (yellow) middle, Rejected (red) at bottom
+    const statusRank = { 'Pre-Approved': 1, 'Additional Requirements Needed': 2, 'Rejected': 3, 'Pending Evaluation': 4 };
 
     // Group by type
     const groups = { construction: [], business: [], utility: [], incident: [] };
@@ -4111,6 +4113,8 @@ async function showDSSEvalsOnMap(type, evList) {
     `;
 
     const listEl = bodyEl.querySelector('#dss-records-list');
+    const panelStatusRank = { 'Pre-Approved': 1, 'Additional Requirements Needed': 2, 'Rejected': 3, 'Pending Evaluation': 4 };
+    panelRows.sort((a, b) => (panelStatusRank[a.ev.dss_status] || 9) - (panelStatusRank[b.ev.dss_status] || 9));
     panelRows.forEach(({ ev, sc, pct, marker }) => {
         const div = document.createElement('div');
         div.className = 'affected-record-row';

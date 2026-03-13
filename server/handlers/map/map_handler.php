@@ -326,7 +326,7 @@ function getHousesInFloodAreas($riskLevel = null){
         $sql = "WITH house_geoms AS (
                     SELECT 
                         house_id, address, street_name, house_number,
-                        center_lat, center_lng, area_sqm, coordinates, geom,
+                        center_lat, center_lng, area_sqm, coordinates,
                         CASE
                             WHEN geom IS NOT NULL
                                 THEN geom
@@ -1452,7 +1452,7 @@ function evaluateConstructionSDSS($construction, $pdo) {
                     'Elevated foundation required (minimum 1.5m above ground)',
                     'Waterproof materials required for basement/ground floor',
                     'Install flood barriers and drainage systems',
-                    'Obtain special flood zone construction permit'
+                    'Obtain special flood zone Construction Clearance'
                 ]
             ];
             $maxSeverity = 'CRITICAL';
@@ -1672,9 +1672,25 @@ function getSDSSRulesSummary() {
                 'count' => 0,
                 'category' => 'Flood Hazard'
             ],
+            'FAULT_EXISTING_STRUCTURE_CRITICAL' => [
+                'name' => 'Existing Structure — Critical Risk (≤5m from Fault)',
+                'description' => 'Existing house within 5m of fault trace — HIGH RISK STATUS. Structure predates hazard mapping or regulation. Ground rupture during earthquakes poses severe structural damage risk. Status: Relocation recommended by PHIVOLCS. Restrictions: Cannot be expanded, renovated without structural seismic certification. Owners must be informed of earthquake risk. May remain temporarily under "grandfather" clause but no new permits for improvements.',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Seismic Hazard',
+                'recommendation' => 'RELOCATION RECOMMENDED'
+            ],
+            'FAULT_NO_BUILD_ZONE' => [
+                'name' => 'No Build Zone — Fault Trace (≤5m) — New Construction Prohibited',
+                'description' => 'New construction/permits within 5m of fault trace — PERMIT DENIED. Zone is classified as Fault Rupture Zone by PHIVOLCS. No new habitable structures, critical facilities, or permanent buildings permitted. Ground rupture during earthquakes causes catastrophic structural damage. Zone reserved for green spaces, gardens, parks, or parking only. Complies with National Building Code and RA seismic safety standards.',
+                'severity' => 'CRITICAL',
+                'count' => 0,
+                'category' => 'Seismic Hazard',
+                'recommendation' => 'PERMIT DENIED'
+            ],
             'FAULT_CRITICAL' => [
-                'name' => 'Fault Line Critical Zone (<50m)',
-                'description' => 'Houses within 50m of fault line — enhanced seismic standards mandatory',
+                'name' => 'Fault Line Critical Zone (5–50m)',
+                'description' => 'Houses within 5–50m of fault line — enhanced seismic standards mandatory',
                 'severity' => 'CRITICAL',
                 'count' => 0,
                 'category' => 'Seismic Hazard'
@@ -1712,7 +1728,11 @@ function getSDSSRulesSummary() {
             
             // Check fault line proximity
             $faultDistance = getDistanceToFaultLine($lat, $lng);
-            if ($faultDistance < 50) {
+            if ($faultDistance <= 5) {
+                // Existing houses within 5m are flagged as existing critical structures
+                // (requiring relocation recommendation, not new construction denial)
+                $rules['FAULT_EXISTING_STRUCTURE_CRITICAL']['count']++;
+            } elseif ($faultDistance < 50) {
                 $rules['FAULT_CRITICAL']['count']++;
             } elseif ($faultDistance < 100) {
                 $rules['FAULT_HIGH_RISK']['count']++;
@@ -1722,47 +1742,38 @@ function getSDSSRulesSummary() {
         }
         
         // ---- Construction Safety Rules ----
-        // Count construction applications that violate simple rules
-        $conSql = "SELECT id, number_of_workers, number_of_working_days, type_of_work,
-                          nature_of_activity, start_date, end_date, latitude, longitude
+        // Count construction applications that violate distance-based rules
+        $conSql = "SELECT id, latitude, longitude, type_of_work
                    FROM construction_applications
                    WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
         $conStmt = $pdo->query($conSql);
         $constructions = $conStmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $conNoWorkers = 0;
+        $conNoBuildZone = 0;
         $conFloodZone = 0;
-        $conExceedsDays = 0;
         $conFaultZone = 0;
         
         foreach ($constructions as $con) {
-            // Rule: No workers declared
-            $workers = intval($con['number_of_workers'] ?? 0);
-            if ($workers === 0) $conNoWorkers++;
-            
             // Rule: Construction in any flood zone
             if ($con['latitude'] && $con['longitude']) {
                 $floodRisk = checkPointInFloodZone($con['latitude'], $con['longitude']);
                 if ($floodRisk) $conFloodZone++;
                 
-                // Rule: Construction within fault critical zone
+                // Rule: Construction in fault no-build zone (<=5m)
                 $dist = getDistanceToFaultLine($con['latitude'], $con['longitude']);
-                if ($dist < 50) $conFaultZone++;
-            }
-            
-            // Rule: Working days exceed 90 days without major classification
-            $days = intval($con['number_of_working_days'] ?? 0);
-            $typeOfWork = strtolower($con['type_of_work'] ?? '');
-            if ($days > 90 && strpos($typeOfWork, 'major') === false) {
-                $conExceedsDays++;
+                if ($dist <= 5) {
+                    $conNoBuildZone++;
+                } elseif ($dist < 50) {
+                    $conFaultZone++;
+                }
             }
         }
         
-        $rules['CON_NO_WORKERS'] = [
-            'name' => 'No Workers Declared',
-            'description' => 'Construction applications with zero workers listed — required for safety planning and inspection scheduling',
-            'severity' => 'HIGH',
-            'count' => $conNoWorkers,
+        $rules['CON_NO_BUILD_ZONE'] = [
+            'name' => 'No Build Zone — Fault Trace (≤5m) — New Construction Prohibited',
+            'description' => 'New construction/permit applications within 5m of fault trace — PERMIT DENIED. Zone classified as Fault Rupture Zone by PHIVOLCS. No new habitable structures, critical facilities, or permanent buildings permitted. Ground rupture during earthquakes causes catastrophic structural damage. Zone reserved for green spaces, gardens, parks, or parking only. Complies with National Building Code seismic safety standards.',
+            'severity' => 'CRITICAL',
+            'count' => $conNoBuildZone,
             'category' => 'Construction Safety'
         ];
         $rules['CON_FLOOD_ZONE'] = [
@@ -1773,32 +1784,67 @@ function getSDSSRulesSummary() {
             'category' => 'Construction Safety'
         ];
         $rules['CON_FAULT_ZONE'] = [
-            'name' => 'Construction in Fault Critical Zone (<50m)',
-            'description' => 'Construction sites within 50m of the fault line — mandatory seismic design and structural engineer certification',
+            'name' => 'Construction in Fault Critical Zone (5–50m)',
+            'description' => 'Construction sites within 5–50m of the fault line — mandatory seismic design and structural engineer certification',
             'severity' => 'CRITICAL',
             'count' => $conFaultZone,
             'category' => 'Construction Safety'
         ];
-        $rules['CON_EXCESS_DAYS'] = [
-            'name' => 'Long Duration Non-Major Construction (>90 days)',
-            'description' => 'Non-major construction projects running longer than 90 working days — may require permit renewal or reclassification',
+        
+        // ---- Construction Proximity Rules ----
+        // Check for construction projects near other active construction (within 500m)
+        $conAllForProx = $pdo->query("SELECT id, latitude, longitude FROM construction_applications 
+                                      WHERE latitude IS NOT NULL AND longitude IS NOT NULL")
+                             ->fetchAll(PDO::FETCH_ASSOC);
+        $conNearOtherCon = 0;
+        
+        foreach ($conAllForProx as $con) {
+            $nearOther = false;
+            foreach ($conAllForProx as $otherCon) {
+                if ($con['id'] !== $otherCon['id']) {
+                    // Calculate distance between two construction sites
+                    $lat1 = $con['latitude'];
+                    $lng1 = $con['longitude'];
+                    $lat2 = $otherCon['latitude'];
+                    $lng2 = $otherCon['longitude'];
+                    
+                    // Haversine formula for distance calculation
+                    $R = 6371000; // Earth's radius in meters
+                    $dLat = deg2rad($lat2 - $lat1);
+                    $dLng = deg2rad($lng2 - $lng1);
+                    $a = sin($dLat / 2) * sin($dLat / 2) +
+                         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                         sin($dLng / 2) * sin($dLng / 2);
+                    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                    $distance = $R * $c;
+                    
+                    if ($distance < 500) {
+                        $nearOther = true;
+                        break;
+                    }
+                }
+            }
+            if ($nearOther) $conNearOtherCon++;
+        }
+        
+        $rules['CON_NEAR_EXISTING_CONSTRUCTION'] = [
+            'name' => 'Construction Near Existing Construction (<500m)',
+            'description' => 'New construction projects within 500m of other active construction sites — requires coordinated development planning, traffic management, and dust/noise mitigation measures to prevent congestion and cumulative environmental impact.',
             'severity' => 'MEDIUM',
-            'count' => $conExceedsDays,
+            'count' => $conNearOtherCon,
             'category' => 'Construction Safety'
         ];
         
         // ---- Business Safety Rules ----
-        $bizSql = "SELECT id, no_of_employees, type_of_business, nature_of_business,
-                          latitude, longitude
+        $bizSql = "SELECT id, latitude, longitude
                    FROM business_applications
                    WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
         $bizStmt = $pdo->query($bizSql);
         $businesses = $bizStmt->fetchAll(PDO::FETCH_ASSOC);
         
+        $bizNoBuildZone = 0;
         $bizFloodZone = 0;
         $bizFaultZone = 0;
-        $bizHighOccupancy = 0;
-        $bizHazardousType = 0;
         
         foreach ($businesses as $biz) {
             if ($biz['latitude'] && $biz['longitude']) {
@@ -1806,26 +1852,23 @@ function getSDSSRulesSummary() {
                 $floodRisk = checkPointInFloodZone($biz['latitude'], $biz['longitude']);
                 if ($floodRisk) $bizFloodZone++;
                 
-                // Rule: Business in fault critical zone
+                // Rule: Business in fault no-build zone (<=5m) or critical zone
                 $dist = getDistanceToFaultLine($biz['latitude'], $biz['longitude']);
-                if ($dist < 50) $bizFaultZone++;
-            }
-            
-            // Rule: High occupancy (>50 employees)
-            $emp = intval($biz['no_of_employees'] ?? 0);
-            if ($emp > 50) $bizHighOccupancy++;
-            
-            // Rule: Potentially hazardous business type (fuel, chemicals, welding, LPG)
-            $bizType = strtolower($biz['type_of_business'] ?? '') . ' ' . strtolower($biz['nature_of_business'] ?? '');
-            $hazardKeywords = ['fuel', 'lpg', 'gasoline', 'chemical', 'welding', 'petroleum', 'flammable', 'paint store'];
-            foreach ($hazardKeywords as $keyword) {
-                if (strpos($bizType, $keyword) !== false) {
-                    $bizHazardousType++;
-                    break;
+                if ($dist <= 5) {
+                    $bizNoBuildZone++;
+                } elseif ($dist < 50) {
+                    $bizFaultZone++;
                 }
             }
         }
         
+        $rules['BIZ_NO_BUILD_ZONE'] = [
+            'name' => 'No Build Zone — Fault Trace (≤5m) — New Business Prohibited',
+            'description' => 'New business permit applications within 5m of fault trace — PERMIT DENIED. Zone classified as Fault Rupture Zone by PHIVOLCS. No new commercial operations, critical facilities, or permanent buildings permitted. Ground rupture during earthquakes causes catastrophic structural damage. Zone reserved for green spaces, gardens, parks, or parking only. Complies with National Building Code seismic safety standards.',
+            'severity' => 'CRITICAL',
+            'count' => $bizNoBuildZone,
+            'category' => 'Business Rules'
+        ];
         $rules['BIZ_FLOOD_ZONE'] = [
             'name' => 'Business in Flood Zone',
             'description' => 'Registered businesses located within any flood hazard area — emergency plan and flood mitigation measures required',
@@ -1834,27 +1877,198 @@ function getSDSSRulesSummary() {
             'category' => 'Business Safety'
         ];
         $rules['BIZ_FAULT_ZONE'] = [
-            'name' => 'Business in Fault Critical Zone (<50m)',
-            'description' => 'Businesses within 50m of the fault line — building must meet enhanced seismic standards and have earthquake evacuation plan',
+            'name' => 'Business in Fault Critical Zone (5–50m)',
+            'description' => 'Businesses within 5–50m of the fault line — building must meet enhanced seismic standards and have earthquake evacuation plan',
             'severity' => 'CRITICAL',
             'count' => $bizFaultZone,
             'category' => 'Business Safety'
         ];
-        $rules['BIZ_HIGH_OCCUPANCY'] = [
-            'name' => 'High Occupancy Business (>50 Employees)',
-            'description' => 'Businesses with more than 50 employees — subject to stricter BFP fire safety inspections, adequate exits, and regular safety drills',
+        
+        // ---- Business Clustering Rules ----
+        // Check for business cluster density: businesses within 200m of 5+ other businesses
+        $bizAllForCluster = $pdo->query("SELECT id, latitude, longitude FROM business_applications 
+                                         WHERE latitude IS NOT NULL AND longitude IS NOT NULL")
+                                 ->fetchAll(PDO::FETCH_ASSOC);
+        $bizClusterDensity = 0;
+        
+        foreach ($bizAllForCluster as $biz) {
+            $nearbyCount = 0;
+            foreach ($bizAllForCluster as $otherBiz) {
+                if ($biz['id'] !== $otherBiz['id']) {
+                    // Calculate distance between two businesses
+                    $lat1 = $biz['latitude'];
+                    $lng1 = $biz['longitude'];
+                    $lat2 = $otherBiz['latitude'];
+                    $lng2 = $otherBiz['longitude'];
+                    
+                    // Haversine formula for distance calculation
+                    $R = 6371000; // Earth's radius in meters
+                    $dLat = deg2rad($lat2 - $lat1);
+                    $dLng = deg2rad($lng2 - $lng1);
+                    $a = sin($dLat / 2) * sin($dLat / 2) +
+                         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                         sin($dLng / 2) * sin($dLng / 2);
+                    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                    $distance = $R * $c;
+                    
+                    if ($distance < 200) {
+                        $nearbyCount++;
+                    }
+                }
+            }
+            if ($nearbyCount >= 5) $bizClusterDensity++;
+        }
+        
+        $rules['BUSINESS_CLUSTER_DENSITY'] = [
+            'name' => 'Business Cluster Density (5+ within 200m)',
+            'description' => 'Commercial businesses with 5 or more other businesses within 200m radius — indicates over-commercialized area with potential parking, traffic congestion, and access management issues. May require coordinated parking solutions or traffic flow management.',
             'severity' => 'MEDIUM',
-            'count' => $bizHighOccupancy,
-            'category' => 'Business Safety'
+            'count' => $bizClusterDensity,
+            'category' => 'Business Rules'
         ];
-        $rules['BIZ_HAZARDOUS'] = [
-            'name' => 'Potentially Hazardous Business Type',
-            'description' => 'Businesses dealing with fuel, LPG, chemicals, welding, or flammable materials — require special permits, fire suppression systems, and hazmat protocols',
-            'severity' => 'HIGH',
-            'count' => $bizHazardousType,
-            'category' => 'Business Safety'
+
+        // ---- Construction Safety Rules (additional) ----
+        $conAllSql = "SELECT id, latitude, longitude
+                      FROM construction_applications
+                      WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $conAllStmt = $pdo->query($conAllSql);
+        $constructionsAll = $conAllStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $conBothHazards     = 0;  // in BOTH flood zone AND fault critical zone
+
+        foreach ($constructionsAll as $c) {
+            // Rule: Site is in BOTH a flood zone AND within fault critical zone (<50m)
+            if ($c['latitude'] && $c['longitude']) {
+                $inFlood = checkPointInFloodZone($c['latitude'], $c['longitude']);
+                $fDist   = getDistanceToFaultLine($c['latitude'], $c['longitude']);
+                if ($inFlood && $fDist < 50) $conBothHazards++;
+            }
+        }
+
+        $rules['CON_DUAL_HAZARD'] = [
+            'name'        => 'Dual Hazard Zone — Flood & Fault Line',
+            'description' => 'Construction sites that fall inside a flood hazard area AND within 50m of the fault line — highest structural risk; mandatory geological and structural engineer review before any work begins',
+            'severity'    => 'CRITICAL',
+            'count'       => $conBothHazards,
+            'category'    => 'Construction Safety'
+        ];
+
+        // ---- Business Safety Rules (additional) ----
+        $bizAllSql = "SELECT id, latitude, longitude
+                      FROM business_applications
+                      WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $bizAllStmt = $pdo->query($bizAllSql);
+        $businessesAll = $bizAllStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $bizBothHazards          = 0;  // in BOTH flood zone AND fault critical zone
+
+        foreach ($businessesAll as $b) {
+            if ($b['latitude'] && $b['longitude']) {
+                $inFlood = checkPointInFloodZone($b['latitude'], $b['longitude']);
+                $fDist   = getDistanceToFaultLine($b['latitude'], $b['longitude']);
+
+                // Rule: In BOTH flood zone AND fault critical zone
+                if ($inFlood && $fDist < 50) $bizBothHazards++;
+            }
+        }
+
+        $rules['BIZ_DUAL_HAZARD'] = [
+            'name'        => 'Dual Hazard Zone — Flood & Fault Line',
+            'description' => 'Businesses that fall inside a flood hazard area AND within 50m of the fault line — require comprehensive disaster resilience plan, elevated structure, and earthquake-resistant design',
+            'severity'    => 'CRITICAL',
+            'count'       => $bizBothHazards,
+            'category'    => 'Business Safety'
+        ];
+
+        // ---- Incident Safety Rules ----
+        $incSql = "SELECT id, incident_type, status, vic_address, latitude, longitude,
+                          incident_timestamp
+                   FROM incident_reports
+                   WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+        $incStmt = $pdo->query($incSql);
+        $incidents = $incStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $incOpenFlood       = 0;  // unresolved incident in a flood zone
+        $incHighRiskArea    = 0;  // incident inside high flood risk zone
+
+        foreach ($incidents as $inc) {
+            $status = strtolower($inc['status'] ?? '');
+            $isOpen = ($status !== 'resolved' && $status !== 'closed');
+
+            if ($inc['latitude'] && $inc['longitude']) {
+                $inFlood = checkPointInFloodZone($inc['latitude'], $inc['longitude']);
+                if ($inFlood) {
+                    if ($isOpen) $incOpenFlood++;
+                    if (strtolower($inFlood['risk_level']) === 'high') $incHighRiskArea++;
+                }
+            }
+        }
+
+        $rules['INC_OPEN_IN_FLOOD'] = [
+            'name'        => 'Unresolved Incident in Flood Zone',
+            'description' => 'Active/open incident reports located inside a flood hazard area — priority follow-up needed as flooding may escalate or obstruct response',
+            'severity'    => 'HIGH',
+            'count'       => $incOpenFlood,
+            'category' => 'Incident Rules'
+        ];
+        $rules['INC_HIGH_RISK_AREA'] = [
+            'name'        => 'Incident in High Flood Risk Zone',
+            'description' => 'Incident reports (any status) occurring inside a HIGH flood risk zone — structural damage, evacuation delays, and recurrence risk are elevated',
+            'severity'    => 'CRITICAL',
+            'count'       => $incHighRiskArea,
+            'category' => 'Incident Rules'
         ];
         
+        // ---- Incident Clustering Rules ----
+        // Check for incident cluster radius: incidents within 500m of another incident in past 30 days
+        $thirtyDaysAgo = date('Y-m-d H:i:s', time() - (30 * 24 * 60 * 60));
+        $incClusterSql = "SELECT id, latitude, longitude, incident_timestamp FROM incident_reports 
+                          WHERE latitude IS NOT NULL AND longitude IS NOT NULL 
+                          AND incident_timestamp >= :thirtyDaysAgo
+                          ORDER BY incident_timestamp DESC";
+        $incClusterStmt = $pdo->prepare($incClusterSql);
+        $incClusterStmt->execute([':thirtyDaysAgo' => $thirtyDaysAgo]);
+        $incidentsCluster = $incClusterStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $incClusterCount = 0;
+        
+        foreach ($incidentsCluster as $inc) {
+            $hasNearby = false;
+            foreach ($incidentsCluster as $otherInc) {
+                if ($inc['id'] !== $otherInc['id']) {
+                    // Calculate distance between two incidents
+                    $lat1 = $inc['latitude'];
+                    $lng1 = $inc['longitude'];
+                    $lat2 = $otherInc['latitude'];
+                    $lng2 = $otherInc['longitude'];
+                    
+                    // Haversine formula for distance calculation
+                    $R = 6371000; // Earth's radius in meters
+                    $dLat = deg2rad($lat2 - $lat1);
+                    $dLng = deg2rad($lng2 - $lng1);
+                    $a = sin($dLat / 2) * sin($dLat / 2) +
+                         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                         sin($dLng / 2) * sin($dLng / 2);
+                    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                    $distance = $R * $c;
+                    
+                    if ($distance < 500) {
+                        $hasNearby = true;
+                        break;
+                    }
+                }
+            }
+            if ($hasNearby) $incClusterCount++;
+        }
+        
+        $rules['INCIDENT_CLUSTER_RADIUS'] = [
+            'name'        => 'Incident Cluster Radius (500m in past 30 days)',
+            'description' => 'Incident reports within 500m of another incident reported in the past 30 days — indicates emerging hotspot area with recurring safety or public order issues. Requires barangay investigation and intervention to identify root cause and implement preventive measures.',
+            'severity'    => 'HIGH',
+            'count'       => $incClusterCount,
+            'category' => 'Incident Rules'
+        ];
+
         // Calculate totals
         $totalHouses = count($houses);
         $totalAffected = 0;
@@ -1896,7 +2110,7 @@ function getRuleAffectedData($ruleKey) {
         $label = '';
 
         // ── Flood / Fault house rules ──
-        if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK'])) {
+        if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_EXISTING_STRUCTURE_CRITICAL','FAULT_NO_BUILD_ZONE','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK'])) {
             $sql = "SELECT house_id, address, street_name, house_number, center_lat, center_lng FROM house_polygons WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
             $houses = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1909,10 +2123,20 @@ function getRuleAffectedData($ruleKey) {
                     if ($match) $h['detail'] = ucfirst($expected) . ' flood risk zone';
                 } else {
                     $dist = round(getDistanceToFaultLine($h['center_lat'], $h['center_lng']), 1);
-                    $match = ($ruleKey === 'FAULT_CRITICAL' && $dist < 50) ||
+                    $match = ($ruleKey === 'FAULT_EXISTING_STRUCTURE_CRITICAL' && $dist <= 5) ||
+                             ($ruleKey === 'FAULT_NO_BUILD_ZONE' && $dist <= 5) ||
+                             ($ruleKey === 'FAULT_CRITICAL' && $dist > 5 && $dist < 50) ||
                              ($ruleKey === 'FAULT_HIGH_RISK' && $dist >= 50 && $dist < 100) ||
                              ($ruleKey === 'FAULT_MEDIUM_RISK' && $dist >= 100 && $dist < 200);
-                    if ($match) $h['detail'] = "{$dist}m from fault line";
+                    if ($match) {
+                        if ($ruleKey === 'FAULT_EXISTING_STRUCTURE_CRITICAL') {
+                            $h['detail'] = "EXISTING STRUCTURE - CRITICAL RISK: {$dist}m from fault trace — Relocation recommended by PHIVOLCS";
+                        } elseif ($ruleKey === 'FAULT_NO_BUILD_ZONE') {
+                            $h['detail'] = "NO BUILD ZONE: {$dist}m from fault trace — New construction prohibited, permit denied";
+                        } else {
+                            $h['detail'] = "{$dist}m from fault line";
+                        }
+                    }
                 }
                 if ($match) {
                     $records[] = [
@@ -1932,24 +2156,58 @@ function getRuleAffectedData($ruleKey) {
         // ── Construction rules ──
         elseif (strpos($ruleKey, 'CON_') === 0) {
             $sql = "SELECT id, first_name, last_name, construction_address, nature_of_work, type_of_work,
-                           number_of_workers, number_of_working_days, latitude, longitude
+                           number_of_workers, number_of_working_days, contractor_name, end_date, latitude, longitude
                     FROM construction_applications WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
             $cons = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($cons as $c) {
                 $match = false; $detail = '';
-                if ($ruleKey === 'CON_NO_WORKERS' && intval($c['number_of_workers'] ?? 0) === 0) {
-                    $match = true; $detail = '0 workers declared';
+                if ($ruleKey === 'CON_NO_BUILD_ZONE') {
+                    $dist = round(getDistanceToFaultLine($c['latitude'], $c['longitude']), 1);
+                    if ($dist <= 5) { 
+                        $match = true; 
+                        $detail = "PERMIT DENIED: {$dist}m from fault trace — No Build Zone, new construction prohibited"; 
+                    }
                 } elseif ($ruleKey === 'CON_FLOOD_ZONE') {
                     $risk = checkPointInFloodZone($c['latitude'], $c['longitude']);
                     if ($risk) { $match = true; $detail = ucfirst($risk['risk_level']) . ' flood zone'; }
                 } elseif ($ruleKey === 'CON_FAULT_ZONE') {
                     $dist = round(getDistanceToFaultLine($c['latitude'], $c['longitude']), 1);
-                    if ($dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
-                } elseif ($ruleKey === 'CON_EXCESS_DAYS') {
-                    $days = intval($c['number_of_working_days'] ?? 0);
-                    if ($days > 90 && strpos(strtolower($c['type_of_work'] ?? ''), 'major') === false) {
-                        $match = true; $detail = "{$days} working days";
+                    if ($dist > 5 && $dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
+                } elseif ($ruleKey === 'CON_DUAL_HAZARD') {
+                    $risk = checkPointInFloodZone($c['latitude'], $c['longitude']);
+                    $dist = round(getDistanceToFaultLine($c['latitude'], $c['longitude']), 1);
+                    if ($risk && $dist > 5 && $dist < 50) {
+                        $match = true; $detail = ucfirst($risk['risk_level']) . " flood zone & {$dist}m from fault";
+                    }
+                } elseif ($ruleKey === 'CON_NEAR_EXISTING_CONSTRUCTION') {
+                    // Check if this construction is within 500m of another construction
+                    $otherConsSql = "SELECT latitude, longitude FROM construction_applications 
+                                     WHERE id != :conId AND latitude IS NOT NULL AND longitude IS NOT NULL";
+                    $otherConsStmt = $pdo->prepare($otherConsSql);
+                    $otherConsStmt->execute([':conId' => $c['id']]);
+                    $otherCons = $otherConsStmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    foreach ($otherCons as $other) {
+                        $lat1 = $c['latitude'];
+                        $lng1 = $c['longitude'];
+                        $lat2 = $other['latitude'];
+                        $lng2 = $other['longitude'];
+                        
+                        $R = 6371000;
+                        $dLat = deg2rad($lat2 - $lat1);
+                        $dLng = deg2rad($lng2 - $lng1);
+                        $a = sin($dLat / 2) * sin($dLat / 2) +
+                             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                             sin($dLng / 2) * sin($dLng / 2);
+                        $c_dist = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                        $distance = $R * $c_dist;
+                        
+                        if ($distance < 500) {
+                            $match = true;
+                            $detail = round($distance) . "m from another construction site";
+                            break;
+                        }
                     }
                 }
                 if ($match) $records[] = [
@@ -1967,24 +2225,63 @@ function getRuleAffectedData($ruleKey) {
 
         // ── Business rules ──
         elseif (strpos($ruleKey, 'BIZ_') === 0) {
-            $sql = "SELECT id, business_name, address_of_business, type_of_business, nature_of_business, no_of_employees, latitude, longitude
+            $sql = "SELECT id, business_name, address_of_business, type_of_business, nature_of_business,
+                           no_of_employees, type_of_structure, latitude, longitude
                     FROM business_applications WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
             $bizs = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($bizs as $b) {
                 $match = false; $detail = '';
-                if ($ruleKey === 'BIZ_FLOOD_ZONE') {
+                if ($ruleKey === 'BIZ_NO_BUILD_ZONE') {
+                    $dist = round(getDistanceToFaultLine($b['latitude'], $b['longitude']), 1);
+                    if ($dist <= 5) { 
+                        $match = true; 
+                        $detail = "PERMIT DENIED: {$dist}m from fault trace — No Build Zone, new business prohibited"; 
+                    }
+                } elseif ($ruleKey === 'BIZ_FLOOD_ZONE') {
                     $risk = checkPointInFloodZone($b['latitude'], $b['longitude']);
                     if ($risk) { $match = true; $detail = ucfirst($risk['risk_level']) . ' flood zone'; }
                 } elseif ($ruleKey === 'BIZ_FAULT_ZONE') {
                     $dist = round(getDistanceToFaultLine($b['latitude'], $b['longitude']), 1);
-                    if ($dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
-                } elseif ($ruleKey === 'BIZ_HIGH_OCCUPANCY' && intval($b['no_of_employees'] ?? 0) > 50) {
-                    $match = true; $detail = ($b['no_of_employees']) . ' employees';
-                } elseif ($ruleKey === 'BIZ_HAZARDOUS') {
-                    $bizType = strtolower($b['type_of_business'] ?? '') . ' ' . strtolower($b['nature_of_business'] ?? '');
-                    foreach (['fuel','lpg','gasoline','chemical','welding','petroleum','flammable','paint store'] as $kw) {
-                        if (strpos($bizType, $kw) !== false) { $match = true; $detail = "Contains: $kw"; break; }
+                    if ($dist > 5 && $dist < 50) { $match = true; $detail = "{$dist}m from fault line"; }
+                } elseif ($ruleKey === 'BIZ_DUAL_HAZARD') {
+                    $risk = checkPointInFloodZone($b['latitude'], $b['longitude']);
+                    $dist = round(getDistanceToFaultLine($b['latitude'], $b['longitude']), 1);
+                    if ($risk && $dist > 5 && $dist < 50) {
+                        $match = true; $detail = ucfirst($risk['risk_level']) . " flood zone & {$dist}m from fault";
+                    }
+                } elseif ($ruleKey === 'BUSINESS_CLUSTER_DENSITY') {
+                    // Check if this business has 5+ other businesses within 200m
+                    $otherBizSql = "SELECT latitude, longitude FROM business_applications 
+                                    WHERE id != :bizId AND latitude IS NOT NULL AND longitude IS NOT NULL";
+                    $otherBizStmt = $pdo->prepare($otherBizSql);
+                    $otherBizStmt->execute([':bizId' => $b['id']]);
+                    $otherBizs = $otherBizStmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    $nearbyCount = 0;
+                    foreach ($otherBizs as $other) {
+                        $lat1 = $b['latitude'];
+                        $lng1 = $b['longitude'];
+                        $lat2 = $other['latitude'];
+                        $lng2 = $other['longitude'];
+                        
+                        $R = 6371000;
+                        $dLat = deg2rad($lat2 - $lat1);
+                        $dLng = deg2rad($lng2 - $lng1);
+                        $a = sin($dLat / 2) * sin($dLat / 2) +
+                             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                             sin($dLng / 2) * sin($dLng / 2);
+                        $c_dist = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                        $distance = $R * $c_dist;
+                        
+                        if ($distance < 200) {
+                            $nearbyCount++;
+                        }
+                    }
+                    
+                    if ($nearbyCount >= 5) {
+                        $match = true;
+                        $detail = $nearbyCount . " businesses within 200m — high commercial density area";
                     }
                 }
                 if ($match) $records[] = [
@@ -1998,6 +2295,81 @@ function getRuleAffectedData($ruleKey) {
                 ];
             }
             $label = 'Business';
+        }
+
+        // ── Incident rules ──
+        elseif (strpos($ruleKey, 'INC_') === 0) {
+            $sql = "SELECT id, incident_type, status, vic_address, vic_full_name, latitude, longitude,
+                           incident_timestamp
+                    FROM incident_reports WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+            $incs = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+            // Pre-compute street counts for hotspot rule
+            $streetCounts = [];
+            foreach ($incs as $inc) {
+                $s = strtolower(trim($inc['vic_address'] ?? ''));
+                if ($s) $streetCounts[$s] = ($streetCounts[$s] ?? 0) + 1;
+            }
+            $hotspotStreets = array_keys(array_filter($streetCounts, fn($c) => $c >= 3));
+
+            foreach ($incs as $inc) {
+                $match = false; $detail = '';
+                $status = strtolower($inc['status'] ?? '');
+                $isOpen = ($status !== 'resolved' && $status !== 'closed');
+
+                if ($ruleKey === 'INC_OPEN_IN_FLOOD') {
+                    if ($isOpen) {
+                        $risk = checkPointInFloodZone($inc['latitude'], $inc['longitude']);
+                        if ($risk) { $match = true; $detail = 'Open · ' . ucfirst($risk['risk_level']) . ' flood zone'; }
+                    }
+                } elseif ($ruleKey === 'INC_HIGH_RISK_AREA') {
+                    $risk = checkPointInFloodZone($inc['latitude'], $inc['longitude']);
+                    if ($risk && strtolower($risk['risk_level']) === 'high') {
+                        $match = true; $detail = 'High flood risk zone · ' . ucfirst($status ?: 'Unknown status');
+                    }
+                } elseif ($ruleKey === 'INCIDENT_CLUSTER_RADIUS') {
+                    // Check if this incident is within 500m of another incident in past 30 days
+                    $thirtyDaysAgo = date('Y-m-d H:i:s', time() - (30 * 24 * 60 * 60));
+                    $otherIncSql = "SELECT latitude, longitude, incident_timestamp FROM incident_reports 
+                                    WHERE id != :incId AND latitude IS NOT NULL AND longitude IS NOT NULL 
+                                    AND incident_timestamp >= :thirtyDaysAgo";
+                    $otherIncStmt = $pdo->prepare($otherIncSql);
+                    $otherIncStmt->execute([':incId' => $inc['id'], ':thirtyDaysAgo' => $thirtyDaysAgo]);
+                    $otherIncs = $otherIncStmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    foreach ($otherIncs as $other) {
+                        $lat1 = $inc['latitude'];
+                        $lng1 = $inc['longitude'];
+                        $lat2 = $other['latitude'];
+                        $lng2 = $other['longitude'];
+                        
+                        $R = 6371000;
+                        $dLat = deg2rad($lat2 - $lat1);
+                        $dLng = deg2rad($lng2 - $lng1);
+                        $a = sin($dLat / 2) * sin($dLat / 2) +
+                             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                             sin($dLng / 2) * sin($dLng / 2);
+                        $c_dist = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                        $distance = $R * $c_dist;
+                        
+                        if ($distance < 500) {
+                            $match = true;
+                            $detail = round($distance) . "m from recent incident — possible hotspot pattern";
+                            break;
+                        }
+                    }
+                }
+                if ($match) $records[] = [
+                    'type'    => 'incident',
+                    'id'      => $inc['id'],
+                    'name'    => $inc['incident_type'] ?: 'Incident Report',
+                    'address' => $inc['vic_address'] ?: 'No address',
+                    'lat'     => $inc['latitude'],
+                    'lng'     => $inc['longitude'],
+                    'detail'  => $detail
+                ];
+            }
+            $label = 'Incident';
         }
 
         return ['success' => true, 'records' => $records, 'label' => $label];

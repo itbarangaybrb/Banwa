@@ -198,78 +198,150 @@ function openVerificationModal(appId, appType) {
     if (!app) return;
 
     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
-    const proofLink = proofFile ? '<a href="' + proofFile + '" target="_blank">View Proof</a>' : '<p style="color:red;">No proof</p>';
+    const proofLink = proofFile ? `<a href="${proofFile}" target="_blank">View Proof</a>` : '<p style="color:red;">No proof</p>';
 
-    const html = '<div><p><strong>Applicant:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_due).toFixed(2) + '</p><p><strong>Status:</strong> ' + app.payment_status + '</p><hr><p><strong>Proof:</strong></p>' + proofLink + '</div>';
+    const html = `
+        <div style="text-align:left;">
+            <p><strong>Applicant:</strong> ${app.first_name} ${app.last_name}</p>
+            <p><strong>Amount:</strong> PHP ${parseFloat(app.amount_due).toFixed(2)}</p>
+            <p><strong>Status:</strong> ${app.payment_status}</p>
+            <hr>
+            <p><strong>Resident's Proof:</strong></p>
+            ${proofLink}
+            <hr>
+            <div style="margin-top: 15px; background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label for="orFile" style="font-weight: bold; display: block; margin-bottom: 5px; color: #00247C;">Upload Official Receipt (OR) *</label>
+                <input type="file" id="orFile" accept=".jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white;">
+            </div>
+        </div>
+    `;
 
     Swal.fire({
         title: 'Verify Payment',
         html: html,
         icon: 'question',
+        showCloseButton: true,           // ← This adds the X close button at the top right
         showDenyButton: true,
         confirmButtonText: 'Approve',
         denyButtonText: 'Reject',
         confirmButtonColor: '#28a745',
         denyButtonColor: '#dc3545',
-        background: '#f8f9fa',
-        color: '#333',
-        width: '600px'
+        preConfirm: () => {
+            const orFileInput = document.getElementById('orFile');
+            if (!orFileInput.files.length) {
+                Swal.showValidationMessage('You must upload an Official Receipt to approve.');
+                return false;
+            }
+            return orFileInput.files[0];
+        }
     }).then(result => {
         if (result.isConfirmed) {
-            submitVerification(appId, 'Approved', appType);
+            submitVerification(appId, 'Approved', appType, result.value);
         } else if (result.isDenied) {
-            submitVerification(appId, 'Rejected', appType);
+            submitVerification(appId, 'Rejected', appType, null);
         }
+        // If user clicks the X (or outside/esc), nothing happens – modal just closes (default behavior)
     });
 }
 
-function submitVerification(appId, status, appType) {
+function submitVerification(appId, status, appType, orFile = null) {
     const formData = new FormData();
     formData.append('action', 'verify_payment');
     formData.append('id', appId);
     formData.append('verification_action', status);
-    formData.append('type', appType); // Dynamically set the type
+    formData.append('type', appType);
+    if (status === 'Approved' && orFile) formData.append('or_file', orFile);
 
-    Swal.fire({
-        title: 'Processing...',
-        icon: 'info',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => Swal.showLoading()
-    });
+    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     fetch(API_URL, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-
-                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
-                }
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Payment ' + status.toLowerCase(),
-                    confirmButtonColor: '#00247c',
-                    background: '#f8f9fa',
-                    color: '#333'
-                }).then(() => loadPendingTable());
+                Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => loadPendingTable());
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
-        })
-        .catch(err => {
-            console.error(err);
-            Swal.fire('Error', 'Network error', 'error');
         });
 }
+
+// function openVerificationModal(appId, appType) {
+//     const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
+//     if (!app) return;
+
+//     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
+//     const proofLink = proofFile ? '<a href="' + proofFile + '" target="_blank">View Proof</a>' : '<p style="color:red;">No proof</p>';
+
+//     const html = '<div><p><strong>Applicant:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_due).toFixed(2) + '</p><p><strong>Status:</strong> ' + app.payment_status + '</p><hr><p><strong>Proof:</strong></p>' + proofLink + '</div>';
+
+//     Swal.fire({
+//         title: 'Verify Payment',
+//         html: html,
+//         icon: 'question',
+//         showDenyButton: true,
+//         confirmButtonText: 'Approve',
+//         denyButtonText: 'Reject',
+//         confirmButtonColor: '#28a745',
+//         denyButtonColor: '#dc3545',
+//         background: '#f8f9fa',
+//         color: '#333',
+//         width: '600px'
+//     }).then(result => {
+//         if (result.isConfirmed) {
+//             submitVerification(appId, 'Approved', appType);
+//         } else if (result.isDenied) {
+//             submitVerification(appId, 'Rejected', appType);
+//         }
+//     });
+// }
+
+// function submitVerification(appId, status, appType) {
+//     const formData = new FormData();
+//     formData.append('action', 'verify_payment');
+//     formData.append('id', appId);
+//     formData.append('verification_action', status);
+//     formData.append('type', appType); // Dynamically set the type
+
+//     Swal.fire({
+//         title: 'Processing...',
+//         icon: 'info',
+//         allowOutsideClick: false,
+//         allowEscapeKey: false,
+//         didOpen: () => Swal.showLoading()
+//     });
+
+//     fetch(API_URL, { method: 'POST', body: formData })
+//         .then(res => res.json())
+//         .then(data => {
+//             if (data.status === 'success') {
+
+//                 if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
+//                     sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
+//                 }
+//                 if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+//                     sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
+//                 }
+//                 if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+//                     sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
+//                 }
+
+//                 Swal.fire({
+//                     icon: 'success',
+//                     title: 'Success',
+//                     text: 'Payment ' + status.toLowerCase(),
+//                     confirmButtonColor: '#00247c',
+//                     background: '#f8f9fa',
+//                     color: '#333'
+//                 }).then(() => loadPendingTable());
+//             } else {
+//                 Swal.fire('Error', data.message, 'error');
+//             }
+//         })
+//         .catch(err => {
+//             console.error(err);
+//             Swal.fire('Error', 'Network error', 'error');
+//         });
+// }
 
 function loadAnalyticsTab() {
     console.log('Loading analytics tab...');

@@ -41,12 +41,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 </ul>`
         },
         construction: {
-            title: "Construction Permit Requirements",
+            title: "Construction Clearance Requirements",
             disclaimer: `
                     <div class="disclaimer">
                         <div class="disclaimer-icon">🕒</div>
                         <p>
-                            <strong>Processing Time:</strong> Construction Permit applications typically take a few working days 
+                            <strong>Processing Time:</strong> Construction Clearance applications typically take a few working days 
                             to process after submission. Thank you for your patience.
                         </p>
                     </div>

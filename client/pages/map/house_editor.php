@@ -316,8 +316,8 @@ if (file_exists($databasePath)) {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const HOUSE_HANDLER_URL = '/Banwa/server/handlers/map/house_handler.php';
-    const MAP_HANDLER_URL   = '/Banwa/server/handlers/map/map_handler.php';
+    const HOUSE_HANDLER_URL = '/server/handlers/map/house_handler.php';
+    const MAP_HANDLER_URL   = '/server/handlers/map/map_handler.php';
 
     // ── State ─────────────────────────────────────────────────────────────────
     let editorMap, boundaryLayer;

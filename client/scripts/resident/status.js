@@ -175,20 +175,20 @@ async function loadCurrentTab() {
     if (currentTab === 'applications') {
         header.innerHTML = `
             <tr>
-                <th style="width: 20%;">Reference Number</th>
-                <th style="width: 35%;">Details</th>
-                <th style="width: 20%;">Status</th>
-                <th style="width: 25%;">Action</th>
+                <th>Reference No.</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         `;
         await loadApplications();
     } else {
         header.innerHTML = `
             <tr>
-                <th style="width: 20%;">Transaction ID</th>
-                <th style="width: 35%;">Details</th>
-                <th style="width: 20%;">Status</th>
-                <th style="width: 25%;">Action</th>
+                <th>Transaction ID</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         `;
         await loadPayments();
@@ -354,44 +354,60 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
     switch (method) {
         case 'GCash/QR':
             instructionsElement.innerHTML = `
-                <p><strong>GCash Payment:</strong></p>
-                <ul style="    list-style-type: none; display: block; margin-inline: auto; width: max-content; margin-bottom: 32px;">
-                    <img src="/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
-                    <li>1. Send amount to Official Number: <strong>09919926620</strong>.</li>
-                    <li>2. Use <strong>Business Name</strong> as the "Message".</li>
-                    <li>3. Save the Screenshot/Reference No. for validation.</li>
-                </ul>
+                <div style="width: 96%; box-sizing: border-box; background: linear-gradient(135deg, #00247C, #0033a0); color: white; padding: 14px 20px; border-radius: 10px; margin-bottom: 18px; text-align: center; box-shadow: 0 4px 12px rgba(0, 36, 124, 0.25);">
+                    <h4 style="margin: 0; font-size: 1.3rem; font-weight: 700;">GCASH BILLS PAYMENT</h4>
+                </div>
+
+                <p style="font-weight: 600; color: #00247C; margin-bottom: 12px; padding-left: 4px;">Follow these steps exactly:</p>
+                
+                <ol style="width: 100%; box-sizing: border-box; list-style-type: decimal; padding-left: 26px; margin-bottom: 24px; font-size: 1.05rem; line-height: 1.8;">
+                    <li><strong>Open</strong> the GCash app and <strong>log in</strong></li>
+                    <li>On the GCash Dashboard, tap <strong>Bills</strong></li>
+                    <li>Select <strong>Government</strong> under Categories</li>
+                    <li>Scroll or search for <span style="background: #fff; color: #00247C; padding: 3px 10px; border-radius: 6px; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Brgy. Blue Ridge B, QC</span> and select it</li>
+                    <li>Enter the necessary details (Amount, Payment Type, Payor Name, etc.)</li>
+                    <li>Press <strong>Next</strong> then <strong>Confirm</strong></li>
+                </ol>
+
+                <div style="width: 96%; box-sizing: border-box; background: #fff3cd; border-left: 6px solid #ffc107; padding: 18px 20px; border-radius: 10px; margin: 0;">
+                    <p style="margin: 0; font-size: 1.02rem; color: #d32f2f;">
+                        <strong>IMPORTANT!:</strong><br>
+                        After payment, take a clear screenshot of the <strong>transaction confirmation</strong> (including Reference No.) and upload it below as your <strong>Proof of Payment</strong>.
+                    </p>
+                </div>
             `;
             break;
+
         case 'Cash (Over-the-Counter)':
             orNumberGroup.style.display = 'block';
             orNumberGroup.querySelector('input').setAttribute('required', 'required');
             instructionsElement.innerHTML = `
                 <p><strong>Cash Payment:</strong></p>
-                <ul>
+                <ul style="padding-left: 20px;">
                     <li>Proceed to <strong>Window 3 (Treasury Office)</strong>.</li>
                     <li>Present your Assessment Form.</li>
                     <li>Wait for your Official Receipt (OR).</li>
                 </ul>
             `;
             break;
+
         case 'LandBank':
             orNumberGroup.style.display = 'block';
             orNumberGroup.querySelector('input').setAttribute('required', 'required');
             instructionsElement.innerHTML = `
                 <p><strong>Landbank Online:</strong></p>
-                <ul>
+                <ul style="padding-left: 20px;">
                     <li>Account Name: <strong>Municipality Treasury</strong></li>
                     <li>Account No: <strong>1234-5678-90</strong></li>
                     <li>Upload proof of transfer via portal or present printed copy.</li>
                 </ul>
             `;
             break;
+
         default:
             instructionsElement.innerHTML = '<p>Please select a payment method.</p>';
     }
 }
-
 /**
  * Generates the HTML for the payment submission form
  * 
@@ -1149,61 +1165,109 @@ async function loadPayments() {
     try {
         const res = await fetch('/server/api/resident/get_payment.php');
         const data = await res.json();
-
+        
         tableBody.innerHTML = '';
 
-        if (data.error) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">${data.error}</td></tr>`;
+        if (!data.success || !data.payments || data.payments.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">No payment records found.</td></tr>`;
             return;
         }
 
-        if (!data.success || !Array.isArray(data.payments) || data.payments.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No payment history found.</td></tr>`;
-            return;
-        }
+        data.payments.forEach(pay => {
+            const tr = document.createElement('tr');
+            const payDate = pay.payment_date ? new Date(pay.payment_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+            
+            // Clean status for CSS class (e.g., "Pending Verification" -> "pending-verification")
+            const statusClass = pay.status ? pay.status.toLowerCase().replace(/\s+/g, '-') : 'pending';
 
-        data.payments
-            .sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))
-            .forEach(payment => {
-                const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <span class="ref-id">#${pay.id}</span>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px;">Ref: ${pay.reference_number || '---'}</div>
+                </td>
+                <td>
+                    <div style="font-weight: 600; color: #00247C;">${pay.type}</div>
+                    <div style="font-size: 13px; margin-top: 4px;">Amount: ₱${parseFloat(pay.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    <div style="font-size: 11px; color: #666;">Date: ${payDate}</div>
+                </td>
+                <td>
+                    <span class="status-badge ${statusClass}">${pay.status}</span>
+                </td>
+                <td>
+                    <button class="main-action-btn view-receipt-btn" 
+                            data-url="${pay.file_url || ''}" 
+                            ${!pay.file_url ? 'disabled style="background:#ccc; cursor:not-allowed;"' : 'style="background:#17a2b8;"'}>
+                        ${pay.file_url ? 'View Receipt' : 'No File'}
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
 
-                const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                });
-
-                let statusClass = 'pending';
-                if (payment.status === 'Verified') statusClass = 'success';
-
-                tr.innerHTML = `
-                    <td>
-                        <span class="ref-id">${payment.id}</span>
-                        <div style="margin-top: 10px;">
-                            <span class="date-label">Paid On:</span>
-                            <span class="date-filed">${paymentDate}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="detail-title">${payment.type || 'Payment'}</span>
-                        <div class="detail-info">Amount: ₱${parseFloat(payment.amount).toFixed(2)}</div>
-                        <div class="detail-info">Ref: ${payment.reference_number || 'N/A'}</div>
-                    </td>
-                    <td>
-                        <span class="status-badge ${statusClass}">${payment.status || 'Pending'}</span>
-                    </td>
-                    <td>
-                        <div class="action-btn-group">
-                            <button class="main-action-btn" style="background-color: #17a2b8;">View Receipt</button>
-                        </div>
-                    </td>
-                `;
-
-                tableBody.appendChild(tr);
-            });
+        // FIX: Define the listener attachment here or call the function below
+        attachReceiptListeners();
 
     } catch (err) {
         console.error('Error loading payment history:', err);
-        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center;">Failed to load history.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" style="color: red; text-align: center; padding: 20px;">Error loading data.</td></tr>`;
     }
+}
+
+function attachReceiptListeners() {
+    document.querySelectorAll('.view-receipt-btn').forEach(btn => {
+        btn.onclick = function() {
+            const url = this.getAttribute('data-url');
+            if (!url) return;
+
+            const isPdf = url.toLowerCase().endsWith('.pdf');
+            const content = isPdf 
+                ? `<iframe src="${url}" style="width:100%; height:500px;" frameborder="0"></iframe>`
+                : `<img src="${url}" id="receipt-img-preview" style="max-width:100%; border-radius:8px;">`;
+
+            Swal.fire({
+                title: 'Payment Document',
+                html: content,
+                width: isPdf ? '800px' : '500px',
+                showCloseButton: true,
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: '<i class="fa fa-download"></i> Download',
+                denyButtonText: '<i class="fa fa-print"></i> Print',
+                // cancelButtonText: 'Close',
+                confirmButtonColor: '#28a745', // Green for download
+                denyButtonColor: '#17a2b8',    // Cyan for print
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // HANDLE DOWNLOAD
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = url.split('/').pop(); // Extracts filename from path
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else if (result.isDenied) {
+                    // HANDLE PRINT
+                    if (isPdf) {
+                        // For PDFs, opening in a new tab is the most reliable way to trigger the browser's native print
+                        const printWindow = window.open(url, '_blank');
+                        printWindow.onload = () => printWindow.print();
+                    } else {
+                        // For Images, we create a temporary print window
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                            <html>
+                                <head><title>Print Receipt</title></head>
+                                <body style="margin:0; display:flex; justify-content:center; align-items:center;">
+                                    <img src="${url}" style="max-width:100%;" onload="window.print(); window.close();">
+                                </body>
+                            </html>
+                        `);
+                        printWindow.document.close();
+                    }
+                }
+            });
+        };
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

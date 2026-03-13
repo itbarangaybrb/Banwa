@@ -1,5 +1,7 @@
 import { initSocket, sockets } from '../../utils/socketUtils.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
+import { archiveRecord } from '../../utils/archives.js';
+
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
 // ===============================================
@@ -300,7 +302,6 @@ function switchTab(event, tabName) {
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
     }
-    // Add 'create' tab handling if needed
 }
 
 /**
@@ -422,6 +423,7 @@ function filterApplications() {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="construction_applications">Archive</button>
                 </div>
             </td>
         `;
@@ -438,7 +440,14 @@ function loadApplicationsFromDB() {
     return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`)
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') applications = data.data;
+            if (data.status === 'success') {
+                applications = (data.data || []).filter(app => !app.is_archived);
+            }
+            return applications;
+        })
+        .catch(error => {
+            console.error('Error fetching applications:', error);
+            applications = [];
             return applications;
         });
 }
@@ -469,6 +478,8 @@ function refreshActiveTab() {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
         loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else if (activeTabId === 'archives') {
+
     } else {
         finish();
     }
@@ -542,7 +553,7 @@ function loadProcessTable() {
     });
 }
 
-// Generate Construction Permit Function
+// Generate Construction Clearance Function
 function generateConstructionPermit(appId) {
     // 1. Check if 'applications' exists to prevent crash
     if (typeof applications === 'undefined') {
@@ -603,7 +614,7 @@ function generateConstructionPermit(appId) {
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Construction Permit - ${grantee_name}</title>
+        <title>Construction Clearance - ${grantee_name}</title>
         <style>
             body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
             .document-container { width: 8.5in; min-height: 11in; margin:0 auto; background:white; padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative; }
@@ -643,7 +654,7 @@ function generateConstructionPermit(appId) {
                 <div class="clearance-no">Permit No.<br><span style="font-size:15.5px;">${permitNumber}</span></div>
             </header>
 
-            <div class="doc-title">CONSTRUCTION PERMIT</div>
+            <div class="doc-title">Construction Clearance</div>
 
             <div class="content-wrapper">
                 <div class="sidebar">
@@ -1453,7 +1464,7 @@ function updateSummary() {
     summaryOutput.innerHTML = `
         <div class="report-header">
             <div class="report-title">
-                <h1>Construction Permit Profile</h1>
+                <h1>Construction Clearance Profile</h1>
                 <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
             </div>
             <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
@@ -1736,7 +1747,7 @@ function printSummary() {
             <div class="print-container">
                 <div class="report-header">
                     <div class="report-title">
-                        <h1>Construction Permit Profile</h1>
+                        <h1>Construction Clearance Profile</h1>
                         <div class="report-meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
                     </div>
                     <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
@@ -1932,7 +1943,7 @@ function downloadSummary(appId) {
         </head>
         <body>
             <div class="container">
-                <h1>Construction Permit Summary Report</h1>
+                <h1>Construction Clearance Summary Report</h1>
                 <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 <p><strong>Application ID:</strong> ${app.id}</p>
 
@@ -2403,6 +2414,55 @@ window.onclick = function (event) {
         }
     });
 }
+
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'construction_applications') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('construction_applications', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
 
 // Enhanced styles - SweetAlert2 forced to front layer
 document.head.insertAdjacentHTML("beforeend", `

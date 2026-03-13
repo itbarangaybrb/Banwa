@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────
-// Construction Permit Management – View / Edit / Search Utilities
+// Construction Clearance Management – View / Edit / Search Utilities
 // ───────────────────────────────────────────────────────────────
 
 /**

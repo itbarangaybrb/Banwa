@@ -83,7 +83,7 @@ if ($_SESSION['role_id'] != 8) {
                     </div>
                     <!-- NO LATITUDE/LONGITUDE FOR REPORTING PERSON -->
                     <div class="label-and-input">
-                        <label class="label" for="rpContact">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="rpContact">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="rpContact" name="rpContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
                         <div class="error-msg"></div>
                     </div>
@@ -145,7 +145,7 @@ if ($_SESSION['role_id'] != 8) {
                     </div>
                     <!-- NO LATITUDE/LONGITUDE FOR VICTIM -->
                     <div class="label-and-input">
-                        <label class="label" for="vicContact">Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="vicContact">MobilePhone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicContact" name="vicContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
                         <div class="error-msg"></div>
                     </div>
@@ -220,7 +220,7 @@ if ($_SESSION['role_id'] != 8) {
                     </div>
                     <!-- NO LATITUDE/LONGITUDE FOR SUSPECT -->
                     <div class="label-and-input">
-                        <label class="label" for="susContact">Phone or Landline Number (if known)</label>
+                        <label class="label" for="susContact">Mobile Phone or Landline Number (if known)</label>
                         <input type="text" id="susContact" name="susContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="Contact Number">
                         <div class="error-msg"></div>
                     </div>
