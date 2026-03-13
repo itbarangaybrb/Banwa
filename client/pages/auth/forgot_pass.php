@@ -155,7 +155,9 @@
                         <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
                         <ul class="contact-info">
                             <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
-                            <li><strong>Phone:</strong> +63 946 456 6986</li>
+                            <li><strong>Mobile:</strong> 0917-1822272</li>
+                            <li><strong>Landline:</strong> 8-5359822</li>
+                            <li><strong>Email:</strong> blueridgeb@yahoo.com</li>
                         </ul>
                     </div>
                 </div>
