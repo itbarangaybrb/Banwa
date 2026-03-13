@@ -517,10 +517,8 @@
                             </button>
                             <div class="faq-answer">
                                 <ul>
-                                    <li>SEC (Securities and Exchange Commission) Registration</li>
-                                    <li>DTI (Department of Trade and Industry) Registration</li>
-                                    <li>TCT (Transfer Certificate of Title)</li>
-                                    <li>Lease Contract</li>
+                                    <li>SEC Registration or DTI Registration</li>
+                                    <li>TCT or Lease Contract</li>
                                 </ul>
                             </div>
                         </div>
@@ -589,7 +587,7 @@
                                 <p>Currently, we accept:<br>
                                     • Cash payments at the barangay hall<br>
                                     • GCash (through our official account)<br>
-                                    • Bank transfer receipt<br>
+                                    • Bank transfer with proof of payment<br>
                                     Online payment options will be expanded soon!</p>
                             </div>
                         </div>
@@ -600,7 +598,7 @@
                                 <span class="faq-icon">▼</span>
                             </button>
                             <div class="faq-answer">
-                                <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances and permits you apply for, just as you would when applying in person.</p>
+                                <p>No, using the online system itself is completely free. You only pay the standard government fees for the clearances you apply for, just as you would when applying in person. Gcash payments will also include a small processing fee.</p>
                             </div>
                         </div>
                     </div>
