@@ -149,12 +149,14 @@ body {
 /* .status-bar-container .application-card {} */
 
 .status-bar-container .payment-card {
-    background-color: #f9f9f9; /* Lighter background for payments */
+    background-color: #f9f9f9;
+    /* Lighter background for payments */
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 15px; /* Spacing between payment cards */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
+    /* Spacing between payment cards */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .status-bar-container .payment-card h3 {
@@ -246,7 +248,8 @@ body {
 :root {
     --color-blue-1: #1249B4;
     --color-blue-2: #00247C;
-    --table-header-bg: #007bff; /* Bright blue from image */
+    --table-header-bg: #007bff;
+    /* Bright blue from image */
     --table-border: #dee2e6;
     --text-muted: #6c757d;
 }
@@ -256,17 +259,20 @@ body {
 .sections {
     width: 100%;
     max-width: 1440px;
-    padding: 40px 64px; /* Reduced top padding slightly */
+    padding: 40px 64px;
+    /* Reduced top padding slightly */
     margin-inline: auto;
 }
 
 /* Container fix to match image width style */
 .containers.status-table-container {
     background: white;
-    padding: 0; /* Remove padding to let table touch edges */
+    padding: 0;
+    /* Remove padding to let table touch edges */
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    overflow: hidden; /* For rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    /* For rounded corners */
     border: 1px solid var(--table-border);
 }
 
@@ -288,6 +294,7 @@ body {
     font-weight: 600;
     font-size: 14px;
     letter-spacing: 0.5px;
+    text-wrap: nowrap;
 }
 
 .status-table td {
@@ -297,6 +304,7 @@ body {
     color: #333;
     font-size: 14px;
     line-height: 1.5;
+    text-wrap: nowrap;
 }
 
 .status-table tr:last-child td {
@@ -312,10 +320,12 @@ body {
     display: block;
     margin-bottom: 8px;
 }
+
 .date-filed {
     font-size: 12px;
     color: var(--text-muted);
 }
+
 .date-label {
     display: block;
     font-weight: 600;
@@ -330,6 +340,7 @@ body {
     display: block;
     margin-bottom: 4px;
 }
+
 .detail-info {
     font-size: 13px;
     color: #555;
@@ -345,11 +356,19 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     color: white;
-    background-color: #28a745; /* Default Green */
+    background-color: #28a745;
+    /* Default Green */
     margin-bottom: 8px;
 }
-.status-badge.pending { background-color: #ffc107; color: #333; }
-.status-badge.rejected { background-color: #dc3545; }
+
+.status-badge.pending {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.status-badge.rejected {
+    background-color: #dc3545;
+}
 
 .validation-btn {
     display: block;
@@ -363,6 +382,7 @@ body {
     width: fit-content;
     margin-top: 5px;
 }
+
 .validation-hint {
     font-size: 10px;
     color: var(--text-muted);
@@ -378,7 +398,8 @@ body {
 }
 
 .main-action-btn {
-    background-color: #6c757d; /* Gray color from image */
+    background-color: #6c757d;
+    /* Gray color from image */
     color: white;
     border: none;
     padding: 10px;
@@ -395,7 +416,8 @@ body {
 }
 
 .main-action-btn.pay {
-    background-color: #007bff; /* Blue for payment actions */
+    background-color: #007bff;
+    /* Blue for payment actions */
 }
 
 .download-link {
@@ -406,16 +428,51 @@ body {
     margin-top: 4px;
     text-align: center;
 }
+
 .download-link:hover {
     text-decoration: underline;
 }
 
 /* Keep Modal Styles (Previous CSS) below here... */
 /* ... (Copy your existing Modal CSS here) ... */
-.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); padding-top: 60px; }
-.modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; }
-.modal-close-btn { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-.payment-modal-close-btn { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px;
+    border-radius: 8px;
+    position: relative;
+}
+
+.modal-close-btn {
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.payment-modal-close-btn {
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 /* Edit Modal specific styles */
 #modal-form-content h2 {
     margin-top: 0;
@@ -535,7 +592,8 @@ body {
 
 /* New styles for payment action button */
 .payment-action-btn {
-    background-color: #28a745; /* Green color for payment */
+    background-color: #28a745;
+    /* Green color for payment */
     color: white;
     padding: 8px 15px;
     border: none;
@@ -545,7 +603,8 @@ body {
     font-weight: var(--fw-medium);
     transition: background-color 0.3s ease;
     margin-top: 10px;
-    margin-left: 5px; /* Spacing between buttons */
+    margin-left: 5px;
+    /* Spacing between buttons */
 }
 
 .payment-action-btn:hover {
@@ -554,7 +613,8 @@ body {
 
 /* Payment Modal specific styles */
 #paymentModal .modal-content {
-    max-width: 600px; /* Adjust as needed for payment form */
+    max-width: 600px;
+    /* Adjust as needed for payment form */
 }
 
 .payment-modal-close-btn {
@@ -677,7 +737,7 @@ body {
 }
 
 .tab-btn {
-    padding: 14px 32px;
+    padding: 16px 24px;
     border: none;
     background: #f8f9fa;
     color: #555;
@@ -687,7 +747,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    min-width: 180px;
+    /* min-width: 180px; */
 }
 
 .tab-btn.active {
@@ -715,4 +775,14 @@ body {
 /* Make sure the table container still looks perfect */
 .containers.status-table-container {
     margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .sections {
+        padding: 40px 16px;
+    }
+
+    .containers.status-table-container {
+        overflow-x: scroll;
+    }
 }

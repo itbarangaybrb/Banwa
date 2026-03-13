@@ -175,20 +175,20 @@ async function loadCurrentTab() {
     if (currentTab === 'applications') {
         header.innerHTML = `
             <tr>
-                <th style="width: 20%;">Reference Number</th>
-                <th style="width: 35%;">Details</th>
-                <th style="width: 20%;">Status</th>
-                <th style="width: 25%;">Action</th>
+                <th>Reference No.</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         `;
         await loadApplications();
     } else {
         header.innerHTML = `
             <tr>
-                <th style="width: 20%;">Transaction ID</th>
-                <th style="width: 35%;">Details</th>
-                <th style="width: 20%;">Status</th>
-                <th style="width: 25%;">Action</th>
+                <th>Transaction ID</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         `;
         await loadPayments();
@@ -355,7 +355,7 @@ function updatePaymentInstructions(method, orNumberGroup, instructionsElement) {
         case 'GCash/QR':
             instructionsElement.innerHTML = `
                 <p><strong>GCash Payment:</strong></p>
-                <ul style="    list-style-type: none; display: block; margin-inline: auto; width: max-content; margin-bottom: 32px;">
+                <ul style="    list-style-type: none; display: block; margin-inline: auto; margin-bottom: 32px;">
                     <img src="/client/img/gcash-qr.png" alt="GCash QR Code" style="width: 60%; display: block; margin-inline: auto;">
                     <li>1. Send amount to Official Number: <strong>09919926620</strong>.</li>
                     <li>2. Use <strong>Business Name</strong> as the "Message".</li>

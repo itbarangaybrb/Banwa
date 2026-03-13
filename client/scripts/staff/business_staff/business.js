@@ -292,7 +292,7 @@ function filterApplications() {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
                 </div>
             </td>
         `;
@@ -1397,8 +1397,8 @@ function updateSummary() {
         </div>` : ''}
 
         <div class="report-actions">
-            <button class="btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download</button>
-            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
+            <button class="btn btn-secondary" onclick="downloadSummary(${app.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
         </div>
     `;
 }
