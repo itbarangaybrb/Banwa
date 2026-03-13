@@ -729,7 +729,7 @@ $full_name = getCurrentUserName();
         <div id="archives" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
-                    <h1>Utilities Application Management</h1>
+                    <h1>Business Application Management</h1>
                 </div>
                 <div class="header-right">
                     <div class="user-greeting">
