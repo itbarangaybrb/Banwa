@@ -11,7 +11,7 @@ function initExportButton() {
     if (!exportBtn) return;
 
     exportBtn.addEventListener('click', () => {
-        ['applicationsTable', 'pendingTable'].forEach(id => {
+        ['applicationsTable', 'pendingTable', 'incidentsTable'].forEach(id => {
             if (document.getElementById(id)) {
                 exportTableAsPDF(id, `${id}_export.pdf`);
             }

@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:80" # PHP/Apache
+      - "8080:80"
     volumes:
       - .:/var/www/html
 
@@ -30,7 +30,7 @@ services:
 
   ws:
     build:
-      context: . # Use the root directory where the Dockerfile exists
+      context: .
       dockerfile: Dockerfile
     restart: always
     ports:
@@ -39,8 +39,20 @@ services:
       - .env
     depends_on:
       - db
-    # Replace 'php server/websocket/server.php' with your actual entry point
     command: php /var/www/html/server/websocket/server.php
+
+  ocr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: php /var/www/html/server/scripts/ocr_worker.php
+    volumes:
+      - .:/var/www/html
 
 volumes:
   postgres_data:
