@@ -366,6 +366,9 @@ async function unsuspendUser(userId) {
  * @type {Object<string, string[]>}
  */
 const reasonTemplates = {
+    "Test Auto Unsuspend": [
+        "Testing auto unsuspend after 2 minutes."
+    ],
     "Violation of Terms of Service": [
         "User submitted content that violates platform guidelines.",
         "User repeatedly ignored community standards.",

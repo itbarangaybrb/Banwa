@@ -44,6 +44,9 @@ $details = $input['details'] ?? null;
 $now = new DateTime();
 
 switch ($reason) {
+    case 'Test Auto Unsuspend':
+        $now->modify('+2 minutes');
+        break;
     case 'Fraudulent Activity':
         $now->modify('+1 year');
         break;
