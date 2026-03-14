@@ -99,23 +99,22 @@ function setupRealtimeValidation() {
  * Form Submission Handler
  * Triggers the Supabase Password Reset flow.
  */
+let cooldownInterval = null;
+let cooldownSeconds = 0;
 async function handleForgotPassSubmit(e) {
     e.preventDefault();
 
-    // Reset UI state before processing
+    // Block if cooldown is active
+    if (cooldownSeconds > 0) return;
+
     forgotPassElements.formMessage.textContent = '';
     forgotPassElements.formMessage.style.display = 'none';
 
-    // Guard Clause: Only proceed if frontend validation passes
     if (!validateStep([forgotPassElements.email])) return;
 
+    const submitBtn = document.getElementById('forgotPassConfirmBtn');
+
     try {
-        /**
-         * SUPABASE CALL: Request a reset email.
-         * redirectTo: The URL the user lands on after clicking the email link.
-         * 
-         * use: { redirectTo: 'https://banwa.onrender.com/client/pages/auth/reset_pass.php' }
-         */
         const { data, error } = await supabase.auth.resetPasswordForEmail(
             forgotPassElements.email.value.trim(),
             { redirectTo: 'http://banwa.onrender.com/client/pages/auth/reset_pass.php' }
@@ -125,13 +124,14 @@ async function handleForgotPassSubmit(e) {
             forgotPassElements.formMessage.style.display = 'block';
             forgotPassElements.formMessage.style.color = 'red';
             forgotPassElements.formMessage.textContent = `Reset failed: ${error.message}`;
+            startCooldown(submitBtn); // cooldown even on error to prevent spam
             return;
         }
 
-        // Inform user to check their external inbox (Handing off control to the email provider)
         forgotPassElements.formMessage.style.display = 'block';
         forgotPassElements.formMessage.style.color = 'green';
         forgotPassElements.formMessage.textContent = 'Email submitted. Check your inbox for the reset link.';
+        startCooldown(submitBtn);
 
     } catch (err) {
         console.error("Critical Auth Error:", err);
@@ -139,6 +139,25 @@ async function handleForgotPassSubmit(e) {
         forgotPassElements.formMessage.style.color = 'red';
         forgotPassElements.formMessage.textContent = 'An unexpected error occurred. Please try again.';
     }
+}
+
+function startCooldown(btn) {
+    cooldownSeconds = 60;
+    btn.disabled = true;
+
+    cooldownInterval = setInterval(() => {
+        cooldownSeconds--;
+        btn.textContent = `Wait ${cooldownSeconds}s`;
+
+        if (cooldownSeconds <= 0) {
+            clearInterval(cooldownInterval);
+            btn.disabled = false;
+            btn.innerHTML = `Send instructions
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`;
+        }
+    }, 1000);
 }
 
 /**
