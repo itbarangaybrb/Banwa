@@ -376,3 +376,79 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [10-Mar-2026 13:41:33 UTC] OCR job queued for application 42 with 1 files
 [10-Mar-2026 13:41:33 UTC] CR1 Check - Has file upload: No
 [10-Mar-2026 13:41:33 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:02:31 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:02:32 UTC] No files uploaded for application 40, skipping OCR queue.
+[14-Mar-2026 05:02:32 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:02:32 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:04:45 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:04:45 UTC] No files uploaded for application 41, skipping OCR queue.
+[14-Mar-2026 05:04:46 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:04:46 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:08:43 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:08:44 UTC] No files uploaded for application 42, skipping OCR queue.
+[14-Mar-2026 05:08:44 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:08:44 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:10:42 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:10:42 UTC] No files uploaded for application 43, skipping OCR queue.
+[14-Mar-2026 05:10:42 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:10:42 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:15:19 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:15:20 UTC] No files uploaded for application 44, skipping OCR queue.
+[14-Mar-2026 05:15:20 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:15:20 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:19:07 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:19:07 UTC] No files uploaded for application 45, skipping OCR queue.
+[14-Mar-2026 05:19:07 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:19:07 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:21:33 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:21:34 UTC] No files uploaded for application 46, skipping OCR queue.
+[14-Mar-2026 05:21:34 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:21:34 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:32:58 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 05:32:59 UTC] No files uploaded for application 47, skipping OCR queue.
+[14-Mar-2026 05:33:00 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 05:33:00 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 06:40:55 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 06:40:55 UTC] No files uploaded for application 48, skipping OCR queue.
+[14-Mar-2026 06:40:56 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 06:40:56 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 06:59:17 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 06:59:17 UTC] No files uploaded for application 52, skipping OCR queue.
+[14-Mar-2026 06:59:17 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 06:59:17 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:10:23 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:10:23 UTC] No files uploaded for application 53, skipping OCR queue.
+[14-Mar-2026 07:10:23 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:10:23 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:19:05 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:19:05 UTC] No files uploaded for application 54, skipping OCR queue.
+[14-Mar-2026 07:19:05 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:19:05 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:24:41 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:24:42 UTC] No files uploaded for application 55, skipping OCR queue.
+[14-Mar-2026 07:24:42 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:24:42 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:31:49 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:31:50 UTC] No files uploaded for application 56, skipping OCR queue.
+[14-Mar-2026 07:31:50 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:31:50 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:34:15 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:34:15 UTC] No files uploaded for application 57, skipping OCR queue.
+[14-Mar-2026 07:34:15 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:34:15 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:35:47 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:35:47 UTC] No files uploaded for application 58, skipping OCR queue.
+[14-Mar-2026 07:35:47 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:35:48 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:36:31 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:36:31 UTC] No files uploaded for application 59, skipping OCR queue.
+[14-Mar-2026 07:36:31 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:36:31 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:40:12 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 07:40:12 UTC] No files uploaded for application 60, skipping OCR queue.
+[14-Mar-2026 07:40:12 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:40:12 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:40:51 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","saved_filename":"const_69b51103af918_localhost_8080_Banwa_client_pages_resident_status.php (1).png","file_url":"\/server\/handlers\/staff\/construction\/uploads\/const_69b51103af918_localhost_8080_Banwa_client_pages_resident_status.php (1).png"}]
+[14-Mar-2026 07:40:52 UTC] OCR job queued for application 61 with 1 files
+[14-Mar-2026 07:40:52 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 07:40:52 UTC] CR1 Check - Has file upload: No

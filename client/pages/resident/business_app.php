@@ -141,6 +141,11 @@ if ($_SESSION['role_id'] != 1) {
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">
+                        <label class="label" for="businessStatusSpecify">Please describe your business status <span style="color: #BB1B1B;">*</span></label>
+                        <input type="text" id="businessStatusSpecify" name="businessStatusSpecify">
+                        <div class="error-msg"></div>
+                    </div>
+                    <div class="label-and-input">
                         <label class="label" for="contactNoBusiness">Mobile Phone or Landline No. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}">
                         <div class="error-msg"></div>

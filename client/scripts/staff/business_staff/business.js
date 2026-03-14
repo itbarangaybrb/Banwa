@@ -2313,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!sockets["business_applications"]) {
         initSocket("business_applications", "ws://localhost:8081", data => {
             if (data.type === "business_applications_update") {
-                refreshActiveTab()
+                refreshActiveTab();
                 loadManagementTable();
                 loadProcessTable();
             }
@@ -2332,6 +2332,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 else {
                     fetchAuditLogs();
                 }
+            }
+        });
+    }
+
+    if (!sockets["business_applications"]) {
+        initSocket("business_applications", "ws://localhost:8081", data => {
+            if (data.type === "business_applications_update") {
+                refreshActiveTab();
             }
         });
     }

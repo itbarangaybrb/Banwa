@@ -2387,6 +2387,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (!sockets["construction"]) {
+        initSocket("construction", "ws://localhost:8081", data => {
+            if (data.type === "construction_update") {
+                refreshActiveTab();
+            }
+        });
+    }
+
     const createForm = document.getElementById('createForm');
     if (createForm) {
         createForm.addEventListener('submit', createApplication);

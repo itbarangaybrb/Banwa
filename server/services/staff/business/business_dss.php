@@ -180,7 +180,6 @@ class DSSRuleEngine
                         return false;
                     }
 
-                    // Normalize uploaded OCR results
                     $uploaded = [];
                     foreach ($uploadedRaw as $doc) {
                         $normalized = $this->normalizeDocumentType($doc);
@@ -195,12 +194,76 @@ class DSSRuleEngine
                     sort($selected);
                     sort($uploaded);
 
-                    // STRICT bidirectional comparison
                     return $selected === $uploaded;
                 }
             ],
             'action' => 'mark_requirements_verified',
             'priority' => 12
+        ];
+
+        $this->rules[] = [
+            'id' => 'R8',
+            'name' => 'No Exterior Signage on Residence Rule',
+            'conditions' => [
+                'function' => function ($data) {
+                    // Only enforce for renewal applications
+                    if (($data['nature_of_application'] ?? '') !== 'Renew') {
+                        return true;
+                    }
+
+                    return !empty($data['no_exterior_signage']) && $data['no_exterior_signage'] == true;
+                }
+            ],
+            'action' => 'mark_no_exterior_signage',
+            'priority' => 4
+        ];
+
+        $this->rules[] = [
+            'id' => 'R9',
+            'name' => 'No Sidewalk Parking Rule',
+            'conditions' => [
+                'function' => function ($data) {
+                    // Only enforce for renewal applications
+                    if (($data['nature_of_application'] ?? '') !== 'Renew') {
+                        return true;
+                    }
+
+                    // Pass when applicant declares compliance with no-sidewalk-parking policy.
+                    // Expects a boolean/truthy field 'no_sidewalk_parking' submitted by the form.
+                    return !empty($data['no_sidewalk_parking']) && $data['no_sidewalk_parking'] == true;
+                }
+            ],
+            'action' => 'mark_no_sidewalk_parking',
+            'priority' => 3
+        ];
+
+        $this->rules[] = [
+            'id' => 'R10',
+            'name' => 'RA 9165 Drug-Free Workplace Compliance Rule',
+            'conditions' => [
+                'function' => function ($data) {
+                    // Only enforce for renewal applications
+                    if (($data['nature_of_application'] ?? '') !== 'Renew') {
+                        return true;
+                    }
+
+                    $employees = intval($data['no_of_employees'] ?? 0);
+
+                    // All renewal applicants must declare RA 9165 compliance.
+                    // For businesses with 10 or more employees, a visible anti-drug
+                    // signage/policy must additionally be confirmed.
+                    $ra9165Compliant = !empty($data['ra9165_compliant']) && $data['ra9165_compliant'] == true;
+
+                    if ($employees >= 10) {
+                        $hasVisiblePolicy = !empty($data['drug_policy_signage']) && $data['drug_policy_signage'] == true;
+                        return $ra9165Compliant && $hasVisiblePolicy;
+                    }
+
+                    return $ra9165Compliant;
+                }
+            ],
+            'action' => 'mark_ra9165_compliant',
+            'priority' => 2
         ];
     }
 
@@ -538,6 +601,33 @@ class DSSRuleEngine
                     $evaluationDetails['recommendations'][] =
                         "The uploaded documents do not match the selected requirements. Missing or mismatched: " .
                         implode(', ', $missing) . ". Staff review recommended.";
+                }
+                break;
+
+            case 'R8':
+                $evaluationDetails['recommendations'][] =
+                    "Renewal requirement not met: There shall be no signs put up on the outside of the residence. " .
+                    "Please confirm compliance by checking the appropriate declaration on the application form.";
+                break;
+
+            case 'R9':
+                $evaluationDetails['recommendations'][] =
+                    "Renewal requirement not met: Public sidewalks must not be used as parking areas for customer " .
+                    "vehicles or own vehicles. Please confirm compliance by checking the appropriate declaration " .
+                    "on the application form.";
+                break;
+
+            case 'R10':
+                $employees = intval($data['no_of_employees'] ?? 0);
+                if ($employees >= 10) {
+                    $evaluationDetails['recommendations'][] =
+                        "Renewal requirement not met: Business must comply with RA 9165 (drug-free workplace). " .
+                        "With {$employees} employees, a visible company policy against drug use (signage) " .
+                        "must be adopted and declared on the application form.";
+                } else {
+                    $evaluationDetails['recommendations'][] =
+                        "Renewal requirement not met: Business must comply with RA 9165 to promote a " .
+                        "drug-free workplace. Please confirm compliance on the application form.";
                 }
                 break;
         }

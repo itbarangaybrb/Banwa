@@ -165,14 +165,13 @@
                         </div>
 
                         <h3>Business Clearance</h3>
-                        <p class="card-subtitle">New businesses, Renewwals, and Closure</p>
+                        <p class="card-subtitle">New businesses, Renewals, and Closure</p>
 
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Requirements</span>
                             </div>
                             <ul class="preview-list">
-
                                 <li>SEC Registration or DTI Registration</li>
                                 <li>TCT or Lease Contract</li>
                             </ul>

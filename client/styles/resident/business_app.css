@@ -52,32 +52,24 @@ body {
   padding: 32px 16px;
 } */
 
-@media screen and (min-width: 780px) {
-  .sections {
-    width: 100%;
-    max-width: 1440px;
-    width: 100%;
-    padding: 96px 64px;
-    margin-inline: auto;
-  }
-
-  /* .containers {
-    max-width: 1440px;
-    width: 100%;
-    padding: 96px 64px;
-    margin-inline: auto;
-  } */
-}
-
 .containers {
-  max-width: 927px;
-  margin-inline: auto;
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  /* border: 1px solid gray; */
-  /* box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); */
+    max-width: 927px;
+    margin-inline: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
 }
+
+@media screen and (max-width: 780px) {
+    .sections {
+        padding: 96px 16px;
+    }
+
+    .containers {
+        padding: 1rem;
+    }
+}
+
 
 .sections .header-and-parag {
   max-width: 927px;

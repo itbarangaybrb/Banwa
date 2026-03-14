@@ -685,6 +685,11 @@ $full_name = getCurrentUserName();
                                     <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Ready for processing.')">Complete</button>
                                     <button type="button" class="prompt-tag" onclick="applyPrompt('Missing required documents. Please submit.')">Missing Docs</button>
                                     <button type="button" class="prompt-tag" onclick="applyPrompt('Please coordinate with utility provider.')">Coordinate Provider</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('The attached service request from your provider (Meralco/Water) is unclear.')">Unclear Service Req.</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('The specified installation address or lot number is incorrect. Please verify.')">Incorrect Address</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Your plan lacks specific details about the utility installation path or depth.')">Missing Path Details</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Please provide proof of coordination with the utility company (e.g., Reference Number).')">Coordination Proof</button>
+                                    <button type="button" class="prompt-tag" onclick="applyPrompt('Work schedule is missing or conflicts with barangay quiet hours.')">Schedule Issue</button>
                                 </div>
                                 <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                             </div>

@@ -151,6 +151,7 @@ function handleCreateApplication($pdo)
         $addressOfBusiness = trim($businessLotNo . ' ' . $businessStreet);
         $contactNoBusiness = get_input('contactNoBusiness');
         $emailAddress = get_input('emailAddress');
+        $businessStatusSpecify = get_input('businessStatusSpecify');
 
         $firstName = get_input('firstName');
         $middleName = get_input('middleName');
@@ -205,7 +206,7 @@ function handleCreateApplication($pdo)
         $sql = "INSERT INTO business_applications (
             supabase_user_id, business_name, type_of_business, nature_of_business, 
             nature_of_business_specify, address_of_business, latitude, longitude, 
-            business_status, telephone_no_business, email_address, first_name, 
+            business_status, business_status_specify, telephone_no_business, email_address, first_name, 
             middle_name, last_name, suffix, telephone_no_owner, address_owner,
             type_of_structure, type_of_structure_specify, no_of_employees,
             requirements, requirement_upload, requirement_upload_json, application_date, 
@@ -213,7 +214,7 @@ function handleCreateApplication($pdo)
         ) VALUES (
             :supabase_user_id, :business_name, :type_of_business, :nature_of_business, 
             :nature_of_business_specify, :address_of_business, :latitude, :longitude, 
-            :business_status::json, :telephone_no_business, :email_address, :first_name, 
+            :business_status::json, :business_status_specify, :telephone_no_business, :email_address, :first_name, 
             :middle_name, :last_name, :suffix, :telephone_no_owner, :address_owner,
             :type_of_structure, :type_of_structure_specify, :no_of_employees,
             :requirements::json, :requirement_upload, :requirement_upload_json::jsonb, 
@@ -231,6 +232,7 @@ function handleCreateApplication($pdo)
             ':latitude' => $latitude,
             ':longitude' => $longitude,
             ':business_status' => $businessStatus,
+            ':business_status_specify' => $businessStatusSpecify,
             ':telephone_no_business' => $contactNoBusiness,
             ':email_address' => $emailAddress,
             ':first_name' => $firstName,
@@ -447,6 +449,7 @@ function handleUpdateApplication($pdo)
             'natureOfBusiness' => 'nature_of_business',
             'natureOfBusinessSpecify' => 'nature_of_business_specify',
             'contactNoBusiness' => 'telephone_no_business',
+            'businessStatusSpecify' => 'business_status_specify',
             'emailAddress' => 'email_address',
             'firstName' => 'first_name',
             'middleName' => 'middle_name',

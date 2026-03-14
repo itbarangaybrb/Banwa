@@ -121,16 +121,10 @@ if ($_SESSION['role_id'] != 1) {
                             <option value="demolition">Demolition</option>
                             <option value="addition">Extension / Additional Structure</option>
                             <option value="repair">Repair</option>
-                            <option value="other">Other (Please specify)</option>
+                            <option value="Other">Other</option>
                         </select>
                         <div class="error-msg"></div>
                     </div>
-
-                    <!-- <div class="label-and-input">
-                        <label for="natureOfActivity" class="required-field">Nature of Activity <span style="color: #BB1B1B;">*</span></label>
-                        <textarea id="natureOfActivity" name="natureOfActivity" rows="3"></textarea>
-                        <div class="error-msg"></div>
-                    </div> -->
 
                     <div class="label-and-input">
                         <label for="detailsOfWork" class="required-field">Please describe the work to be done <span style="color: #BB1B1B;">*</span></label>
@@ -175,16 +169,6 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <div class="label-and-input">
-                        <label class="label" for="applicationMethod">How will you submit this application? <span style="color: #BB1B1B;">*</span></label>
-                        <select name="applicationMethod" id="applicationMethod">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Online">Online</option>
-                            <option value="In Person">In Person</option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-
-                    <div class="label-and-input">
                         <label class="label" for="constructionLotNo">House no. <span style="color: #BB1B1B;">*</span></label>
                         <input type="tel" name="constructionLotNo" id="constructionLotNo" maxlength="2" pattern="[0-9]{1,2}">
                         <div class="error-msg"></div>
@@ -222,6 +206,16 @@ if ($_SESSION['role_id'] != 1) {
                     <div class="label-and-input">
                         <button type="button" class="map-btn" data-target="2">Pick Location on Map</button>
                         <div class="map-preview" id="map-preview-2" style="margin-top: 10px; display: none;"></div>
+                    </div>
+
+                    <div class="label-and-input">
+                        <label class="label" for="applicationMethod">How will you submit the building plan or blueprint? <span style="color: #BB1B1B;">*</span></label>
+                        <select name="applicationMethod" id="applicationMethod">
+                            <option value="" disabled selected>Select</option>
+                            <option value="Online">Online</option>
+                            <option value="In Person">In Person</option>
+                        </select>
+                        <div class="error-msg"></div>
                     </div>
 
                     <div class="label-and-input">

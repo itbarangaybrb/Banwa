@@ -148,7 +148,7 @@ function setupNavigationButtons() {
     if (forgotPassElements.backBtn) {
         forgotPassElements.backBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            window.location.href = '/client/index.php';
+            window.location.href = '../../index.php';
         });
     }
 }
