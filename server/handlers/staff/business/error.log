@@ -922,3 +922,22 @@ Stack trace:
 [13-Mar-2026 17:55:12 UTC] R1 Check - Required: []
 [13-Mar-2026 17:55:12 UTC] R1 Check - Submitted: ["DTI"]
 [13-Mar-2026 17:55:12 UTC] R1 Check - Missing: []
+[14-Mar-2026 09:52:37 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Mar-2026 09:52:37 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Mar-2026 09:52:53 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Mar-2026 09:52:53 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Mar-2026 09:52:55 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (1).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Previous Business Clearance"],"allVerified":false}}
+[14-Mar-2026 09:52:55 UTC] R1 Check - Required: []
+[14-Mar-2026 09:52:55 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
+[14-Mar-2026 09:52:55 UTC] R1 Check - Missing: []
+[14-Mar-2026 09:52:55 UTC] R1 Check - Required: []
+[14-Mar-2026 09:52:55 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
+[14-Mar-2026 09:52:55 UTC] R1 Check - Missing: []
+[14-Mar-2026 09:55:58 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Mar-2026 09:55:58 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Mar-2026 09:56:18 UTC] R1 Check - Required: []
+[14-Mar-2026 09:56:18 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
+[14-Mar-2026 09:56:18 UTC] R1 Check - Missing: []
+[14-Mar-2026 09:56:18 UTC] R1 Check - Required: []
+[14-Mar-2026 09:56:18 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
+[14-Mar-2026 09:56:18 UTC] R1 Check - Missing: []
