@@ -460,3 +460,7 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [14-Mar-2026 08:32:39 UTC] OCR job queued for application 63 with 1 files
 [14-Mar-2026 08:32:40 UTC] CR1 Check - Has file upload: No
 [14-Mar-2026 08:32:40 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 19:21:51 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Mar-2026 19:21:51 UTC] No files uploaded for application 64, skipping OCR queue.
+[14-Mar-2026 19:21:51 UTC] CR1 Check - Has file upload: No
+[14-Mar-2026 19:21:51 UTC] CR1 Check - Has file upload: No

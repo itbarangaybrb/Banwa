@@ -135,11 +135,30 @@ const validator = (() => {
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
         if (value === '' || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+            }
+            if (value.length < 2) { showError(input, 'Too short'); return false; }
+            if (value.length > 50) { showError(input, 'Too long'); return false; }
+            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 8) {
+                const lower = value.toLowerCase();
+                const chunk = lower.slice(0, 4);
+                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            }
         }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+        }
+
         clearError(input); return true;
     }
 
@@ -168,9 +187,14 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-        if (rules.pattern && !rules.pattern.test(value)) {
-            showError(input, rules.errorMessage || message);
-            return false;
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
@@ -291,7 +315,7 @@ const validator = (() => {
 const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
 
     { el: requestDate, type: 'date', message: 'Request date is required', rules: { todayOnly: true } },
@@ -350,7 +374,7 @@ function validateField(config) {
     [contactNoOwner, utilityLotNo].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
-            validator.clear(el);
+            // validator.clear(el);
         });
     });
 })();
@@ -605,12 +629,12 @@ async function initializeMapPicker(target) {
     osmTile.addTo(map);
 
     const POLY_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
         satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
     };
     const BOUND_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
-        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8,6', weight: 2 }
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
     };
 
     let currentMode = 'street';
@@ -624,19 +648,19 @@ async function initializeMapPicker(target) {
     }
 
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn    = document.getElementById('picker-satellite-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
         streetBtn.addEventListener('click', () => {
             map.removeLayer(satTile); osmTile.addTo(map);
             currentMode = 'street'; applyColors('street');
             streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
-            satBtn.style.background    = 'white';   satBtn.style.color    = '#555';  satBtn.style.border    = '1px solid #ccc';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
         });
         satBtn.addEventListener('click', () => {
             map.removeLayer(osmTile); satTile.addTo(map);
             currentMode = 'satellite'; applyColors('satellite');
-            satBtn.style.background    = '#00247c'; satBtn.style.color    = 'white'; satBtn.style.border    = 'none';
-            streetBtn.style.background = 'white';   streetBtn.style.color = '#555';  streetBtn.style.border = '1px solid #ccc';
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
         });
     }
 
@@ -647,23 +671,23 @@ async function initializeMapPicker(target) {
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        document.getElementById(`latitude${target}`).value  = lat;
+        document.getElementById(`latitude${target}`).value = lat;
         document.getElementById(`longitude${target}`).value = lng;
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
     // Load boundaries from DB
     try {
-        const bRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
         });
         const bData = await bRes.json();
         if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
             bData.boundaries.forEach(b => {
                 try {
-                    const coords  = JSON.parse(b.coordinates);
+                    const coords = JSON.parse(b.coordinates);
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
-                    const layer   = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
@@ -672,7 +696,7 @@ async function initializeMapPicker(target) {
 
     // Load houses
     try {
-        const hRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
         });
         const hData = await hRes.json();
@@ -683,9 +707,9 @@ async function initializeMapPicker(target) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
-                    const coords  = JSON.parse(house.coordinates);
+                    const coords = JSON.parse(house.coordinates);
                     // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
-                    const ring    = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                     const latLngs = ring.map(c => [c[1], c[0]]);
                     latLngs.push(latLngs[0]);
 
@@ -693,7 +717,7 @@ async function initializeMapPicker(target) {
                     housePolygons.push(polygon);
 
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const titleText  = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
                     const subtitleHtml = house.street_name
                         ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>'
                         : '';
@@ -706,13 +730,13 @@ async function initializeMapPicker(target) {
 
                     const popupHtml =
                         '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
-                                subtitleHtml +
-                            '</div>' +
-                            addrHtml +
-                            streetHtml +
-                            '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
+                        subtitleHtml +
+                        '</div>' +
+                        addrHtml +
+                        streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
                         '</div>';
 
                     polygon.bindPopup(popupHtml, { maxWidth: 240 });
@@ -725,7 +749,7 @@ async function initializeMapPicker(target) {
                         if (selectedMarker) map.removeLayer(selectedMarker);
                         const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
                         const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr  = (!isLandmarkSel && house.address)
+                        const selAddr = (!isLandmarkSel && house.address)
                             ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
                             : '';
                         const selStreet = house.street_name
@@ -733,26 +757,26 @@ async function initializeMapPicker(target) {
                             : '';
                         const selPopup =
                             '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                                '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                    '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                                    (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                                '</div>' +
-                                selAddr +
-                                selStreet +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' +
+                            selAddr +
+                            selStreet +
                             '</div>';
                         selectedMarker = L.marker([lat, lng]).addTo(map)
                             .bindPopup(selPopup, { maxWidth: 240 })
                             .openPopup();
 
-                        document.getElementById(`latitude${target}`).value  = lat;
+                        document.getElementById(`latitude${target}`).value = lat;
                         document.getElementById(`longitude${target}`).value = lng;
                         document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                         if (target === '2') {
-                            const utilityLot    = document.getElementById('utilityLotNo');
+                            const utilityLot = document.getElementById('utilityLotNo');
                             const utilityStreet = document.getElementById('utilityStreet');
-                            if (utilityLot)    { utilityLot.value    = house.house_number || ''; utilityLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (utilityStreet) { utilityStreet.value = house.street_name  || ''; utilityStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (utilityLot) { utilityLot.value = house.house_number || ''; utilityLot.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (utilityStreet) { utilityStreet.value = house.street_name || ''; utilityStreet.dispatchEvent(new Event('change', { bubbles: true })); }
                         }
                     });
 

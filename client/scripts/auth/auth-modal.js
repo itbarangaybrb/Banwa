@@ -186,9 +186,25 @@ const validator = (() => {
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
         if (!value || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters allowed'); return false;
+
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters allowed'); return false;
+            }
+            if (/(.)\1{3,}/.test(value)) {
+                showError(input, 'Enter a real name'); return false;
+            }
+            if (value.length < 2) {
+                showError(input, 'Name is too short'); return false;
+            }
+            if (value.length > 50) {
+                showError(input, 'Name is too long'); return false;
+            }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) {
+                showError(input, 'Enter a real name'); return false;
+            }
         }
+
         clearError(input); return true;
     }
 

@@ -165,7 +165,12 @@ const validator = (() => {
      * @param {HTMLElement} el - The input element to clear
      */
     function clearError(el) {
-        const errorEl = getErrorEl(el);
+        if (NodeList.prototype.isPrototypeOf(el) || Array.isArray(el)) {
+            el = el[0];
+        }
+        const wrapper = getWrapper(el);
+        const errorEl = wrapper?.querySelector('.error-msg');
+        if (!wrapper || !errorEl) return;
         el.classList.remove('error');
         errorEl.textContent = '';
         errorEl.classList.remove('show');
@@ -183,11 +188,30 @@ const validator = (() => {
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
         if (value === '' || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+            }
+            if (value.length < 2) { showError(input, 'Too short'); return false; }
+            if (value.length > 50) { showError(input, 'Too long'); return false; }
+            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 8) {
+                const lower = value.toLowerCase();
+                const chunk = lower.slice(0, 4);
+                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            }
         }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+        }
+
         clearError(input); return true;
     }
 
@@ -197,12 +221,35 @@ const validator = (() => {
      * @param {string} message - Required field error message
      * @returns {boolean} - Whether the email is valid
      */
-    function validateEmail(input, message) {
+    function validateEmail(input, message, rules = {}) {
         if (!input) return true;
         const value = input.value.trim();
-        if (value === '') { showError(input, message); return false; }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { showError(input, 'Enter a valid email address'); return false; }
-        clearError(input); return true;
+        if (value === '') {
+            showError(input, message);
+            return false;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            showError(input, rules.errorMessage || 'Enter a valid email address');
+            return false;
+        }
+        if (rules.noSpam) {
+            const localPart = value.split('@')[0].toLowerCase();
+            for (let len = 2; len <= Math.floor(localPart.length / 2); len++) {
+                const pattern = localPart.slice(0, len);
+                const repeated = pattern.repeat(Math.floor(localPart.length / pattern.length));
+                if (repeated === localPart) {
+                    showError(input, rules.errorMessage || 'Invalid email address');
+                    return false;
+                }
+            }
+            if (/(.)\1{3,}/.test(localPart)) {
+                showError(input, rules.errorMessage || 'Invalid email address');
+                return false;
+            }
+        }
+
+        clearError(input);
+        return true;
     }
 
     /**
@@ -230,6 +277,15 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
+        }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
         clearError(input); return true;
@@ -335,16 +391,16 @@ const validator = (() => {
 const validationConfig = [
     { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
-    { el: businessName, type: 'text', message: 'Business Name is required' },
+    { el: businessName, type: 'text', message: 'Business name is required', rules: { noSpam: true, minLength: 1, maxLength: 100 } },
     { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
     { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
     { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
     { el: businessStatus, type: 'radio', message: 'Please select business status' },
     { el: businessStatusSpecify, type: 'text', message: 'Please specify business status' },
-    { el: contactNoBusiness, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
-    { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
+    { el: contactNoBusiness, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
+    { el: emailAddress, type: 'email', message: 'Email is required', rules: { noSpam: true, errorMessage: 'Please enter a valid email address' } },
     { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
     { el: businessLotNo, type: 'number', message: 'House No. is required', rules: { maxLength: 2 } },
     { el: businessStreet, type: 'select', message: 'Street is required' },
@@ -353,7 +409,7 @@ const validationConfig = [
     { el: natureOfApplication, type: 'select', message: 'Nature of application is required' },
     { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
     { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
-    { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } }
+    { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
 ];
 
 // ================== OCR VERIFICATION CONFIG (EDIT AS NEEDED) ==================
@@ -415,6 +471,15 @@ function validateField(config) {
             if (!target) return;
             target.addEventListener('blur', () => validateField(config));
             target.addEventListener('input', () => validator.clear(target));
+            target.addEventListener('change', () => {
+                if (type === 'radio') {
+                    if (Array.from(el).some(r => r.checked)) validator.clear(el);
+                }
+
+                if (type === 'checkboxGroup') {
+                    if (Array.from(el).some(c => c.checked)) validator.clear(el);
+                }
+            });
         });
     });
 
@@ -430,7 +495,7 @@ function validateField(config) {
     [contactNoOwner, contactNoBusiness, businessLotNo, noOfEmployees].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
-            validator.clear(el);
+            // validator.clear(el);
         });
     });
 })();
@@ -469,6 +534,7 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
         natureOfBusinessSelect,
         natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
         selectedBusinessStatus === 'Others' ? businessStatusSpecify : null,
+        businessStatus,
         contactNoBusiness,
         emailAddress,
         requirements,
@@ -482,8 +548,10 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
         noOfEmployees
     ].filter(Boolean);
 
-    if (!validator.address(businessLotNo, businessStreet)) return;
-    if (!validateStep(stepFields)) return;
+    const addressValid = validator.address(businessLotNo, businessStreet);
+    const fieldsValid = validateStep(stepFields);
+
+    if (!addressValid || !fieldsValid) return;
 
     if (requirementUpload.files.length > 0 && !documentVerificationDone) {
         if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
