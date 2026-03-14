@@ -46,7 +46,7 @@ $details = $user['reason_details'] ?? "";
 $suspendedUntil = $user['suspended_until'] ?? null;
 
 $suspensionEndDate = '';
-if ($suspendedUntil && $suspendedUntil !== '1970-01-01 00:00:00') {
+if ($suspendedUntil) {
   $date = new DateTime($suspendedUntil);
   $suspensionEndDate = $date->format('F j, Y');
 
@@ -72,7 +72,7 @@ if ($suspendedUntil && $suspendedUntil !== '1970-01-01 00:00:00') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
   <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-
+  
   <title>Account Suspended</title>
   <link rel="stylesheet" href="../../styles/auth/confirm_verification.css" />
 </head>
@@ -86,9 +86,5 @@ if ($suspendedUntil && $suspendedUntil !== '1970-01-01 00:00:00') {
       Logout
     </a>
   </div>
-
-  <script type="module" src="/client/scripts/auth/signout.js"></script>
-  <script type="module" src="/client/scripts/auth/suspended.js"></script>
 </body>
-
-</html>
+<script type="module" src="/client/scripts/auth/signout.js"></script></html>

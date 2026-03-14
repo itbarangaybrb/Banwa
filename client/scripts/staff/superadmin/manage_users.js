@@ -205,20 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchUsers();
     }
 
-    if (!sockets["suspension_check"]) {
-        initSocket("suspension_check", "ws://localhost:8081", async (data) => {
-            if (data.type === "users_update") {
-                const resp = await fetch('/server/api/shared/check_suspension_status.php', {
-                    credentials: 'include'
-                });
-                const result = await resp.json();
-                if (result.status !== 'suspended') {
-                    window.location.href = '/client/index.php';
-                }
-            }
-        });
-    }
-
     // Initialize forms with validation
     const createForm = document.getElementById('createForm');
     if (createForm) initializeForm(createForm, handleCreateFormSubmit);
@@ -380,9 +366,6 @@ async function unsuspendUser(userId) {
  * @type {Object<string, string[]>}
  */
 const reasonTemplates = {
-    "Test Auto Unsuspend": [
-        "Testing auto unsuspend after 2 minutes."
-    ],
     "Violation of Terms of Service": [
         "User submitted content that violates platform guidelines.",
         "User repeatedly ignored community standards.",

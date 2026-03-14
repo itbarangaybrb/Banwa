@@ -54,21 +54,5 @@ services:
     volumes:
       - .:/var/www/html
 
-  cron:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    env_file:
-      - .env
-    depends_on:
-      - db
-    command: >
-      bash -c "apt-get update && apt-get install -y cron &&
-      echo '*/5 * * * * php /var/www/html/server/scripts/auto_unsuspend.php >> /var/log/auto_unsuspend.log 2>&1' 
-      | crontab - && cron -f"
-    volumes:
-      - .:/var/www/html
-
 volumes:
   postgres_data:
