@@ -827,7 +827,11 @@ $full_name = getCurrentUserName();
                     <label>Quick Responses:</label>
                     <div class="prompt-suggestions">
                         <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid Government ID or DTI Certificate. Please re-upload.')">Missing Docs</button>
+                        <button type="button" class="prompt-tag" onclick="applyPrompt('The application is missing [list missing documents]. Please upload the necessary documents to proceed.')">Missing Docs</button>
+                        <button type="button" class="prompt-tag" onclick="applyPrompt('The copies of the submitted documents are unclear. Please resubmit a clear scan to verify details.')">Unclear Copies</button>
+                        <button type="button" class="prompt-tag" onclick="applyPrompt('There are inconsistencies between the application form and the submitted documents. Please clarify.')">Inconsistent Data</button>
+                        <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures are missing from your documents. Please ensure all forms are signed.')">Missing Signatures</button>
+                        <button type="button" class="prompt-tag" onclick="applyPrompt('The nature of your business is not allowed in this specific zone. Please contact the office.')">Zoning Issue</button>
                     </div>
                     <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                     <div class="button-group">
