@@ -1370,7 +1370,7 @@ function showFloodAreaHighlight(hazardData) {
 
 async function loadFullFloodDetailsForHighlight(hazardId) {
     try {
-        const formData = new FormData();
+        const formData = new URLSearchParams();
         formData.append('action', 'get_flood_details');
         formData.append('id', hazardId);
         
@@ -1427,7 +1427,7 @@ function createConstructionPopup(data) {
             </h4>
             <div class="popup-section">
                 <p><strong>Homeowner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.construction_address || 'Not specified'}</p>
+                <p><strong>Address:</strong> ${data.construction_address || data.address || 'Not specified'}</p>
                 <p><strong>Contractor:</strong> ${data.contractor_name || 'Not specified'}</p>
             </div>
             <div class="popup-section">
@@ -1450,7 +1450,7 @@ function createBusinessPopup(data) {
                 <span class="business-badge">Business</span>
             </h4>
             <div class="popup-section">
-                <p><strong>Address:</strong> ${data.address_of_business || 'Not specified'}</p>
+                <p><strong>Address:</strong> ${data.address_of_business || data.address || 'Not specified'}</p>
                 <p><strong>Type:</strong> ${data.type_of_business || 'Not specified'}</p>
                 <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
             </div>
@@ -1474,7 +1474,7 @@ function createUtilityPopup(data) {
             </h4>
             <div class="popup-section">
                 <p><strong>Applicant:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
-                <p><strong>Address:</strong> ${data.address_of_utility || 'Not specified'}</p>
+                <p><strong>Address:</strong> ${data.address_of_utility || data.address || 'Not specified'}</p>
                 <p><strong>Provider:</strong> ${data.provider || 'Not specified'}</p>
             </div>
             <div class="popup-section">
@@ -1502,7 +1502,7 @@ function createIncidentPopup(data) {
             <div class="popup-section">
                 <p><strong>Date:</strong> ${formatDate(data.incident_timestamp)}</p>
                 <p><strong>Location:</strong> ${data.vic_address || data.rp_address || 'Not specified'}</p>
-                <p><strong>Description:</strong> ${data.description ? data.description.substring(0, 80) + (data.description.length > 80 ? '…' : '') : 'Not specified'}</p>
+                <p><strong>Description:</strong> ${data.description ? data.description.substring(0, 80) + (data.description.length > 80 ? '…' : '') : ''}</p>
             </div>
             <div class="popup-section">
                 <p><strong>Victim:</strong> ${data.vic_full_name || 'Not specified'}</p>
@@ -1580,16 +1580,13 @@ async function viewMapDetails(id, type) {
         didOpen: () => { Swal.showLoading(); }
     });
     try {
-        const formData = new FormData();
         const actionMap = {
             construction: 'get_construction_details',
             business:     'get_business_details',
             utility:      'get_utilities_details',
             incident:     'get_incident_details'
         };
-        formData.append('action', actionMap[type] || `get_${type}_details`);
-        formData.append('id', id);
-        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
+        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: actionMap[type] || `get_${type}_details`, id }) });
         const data = await response.json();
         if (data.success) {
             displayDetailsInModal(data.data, type);
@@ -1610,10 +1607,7 @@ async function viewFloodDetails(id) {
         didOpen: () => { Swal.showLoading(); }
     });
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_flood_details');
-        formData.append('id', id);
-        const response = await fetch(`${MAP_HANDLER_URL}`, { method: 'POST', body: formData });
+        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'get_flood_details', id }) });
         const data = await response.json();
         if (data.success) {
             displayFloodDetailsInModal(data.data);
@@ -1635,8 +1629,8 @@ async function viewHouseDetails(id) {
         didOpen: () => { Swal.showLoading(); }
     });
     try {
-        const fd1 = new FormData(); fd1.append('action', 'get_house_details');    fd1.append('id', id);
-        const fd2 = new FormData(); fd2.append('action', 'get_house_applications'); fd2.append('id', id);
+        const fd1 = new URLSearchParams({ action: 'get_house_details',    id });
+        const fd2 = new URLSearchParams({ action: 'get_house_applications', id });
         const [res1, res2] = await Promise.all([
             fetch(MAP_HANDLER_URL, { method: 'POST', body: fd1 }),
             fetch(MAP_HANDLER_URL, { method: 'POST', body: fd2 })
@@ -1686,200 +1680,116 @@ function getFloodRiskColor(riskLevel) {
 
 // ==================== DATA LOADING FUNCTIONS ====================
 
+// loadAllMarkers: kept for manual refresh calls (filter switch, reset view, etc.)
+// On initial page load the data is supplied by the parallel Promise.all in map.whenReady.
 async function loadAllMarkers() {
     clearAllMarkers();
-    
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_all_markers');
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
+        const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_all_markers'
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
-        }
-
-        // Build allMarkersData for search (flood hazards excluded from search)
-        allMarkersData = [
-            ...(data.markers || []).filter(m => m.type === 'construction'),
-            ...(data.markers || []).filter(m => m.type === 'business'),
-            ...(data.markers || []).filter(m => m.type === 'utility'),
-            ...(data.markers || []).filter(m => m.type === 'incident')
-        ];
-
-        // Process markers by type
-        const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
-        const businessMarkersList = (data.markers || []).filter(m => m.type === 'business');
-        const utilityMarkersList = (data.markers || []).filter(m => m.type === 'utility');
-        const incidentMarkersList = (data.markers || []).filter(m => m.type === 'incident');
-
-        // Load construction markers
-        constructionMarkersList.forEach(construction => {
-            if (construction.latitude && construction.longitude) {
-                try {
-                    const lat = parseFloat(construction.latitude);
-                    const lng = parseFloat(construction.longitude);
-                    
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const popupContent = createConstructionPopup(construction);
-                        const marker = L.marker([lat, lng], { 
-                            icon: constructionIcon,
-                            title: construction.name || 'Construction Site'
-                        }).bindPopup(popupContent);
-                        
-                        // Store the original data with the marker
-                        marker.construction_data = construction;
-                        marker.nature_of_work = construction.nature_of_work || construction.nature_of_activity;
-                        
-                        constructionMarkers.push(marker);
-                        if (activeFilter === 'construction' && shouldShowConstructionMarker(marker)) {
-                            marker.addTo(map);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error processing construction marker:', error);
-                }
-            }
-        });
-
-        // Load business markers
-        businessMarkersList.forEach(business => {
-            if (business.latitude && business.longitude) {
-                try {
-                    const lat = parseFloat(business.latitude);
-                    const lng = parseFloat(business.longitude);
-                    
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const popupContent = createBusinessPopup(business);
-                        const marker = L.marker([lat, lng], { 
-                            icon: businessIcon,
-                            title: business.name || 'Business'
-                        }).bindPopup(popupContent);
-                        
-                        // Store the original data with the marker
-                        marker.business_data = business;
-                        
-                        businessMarkers.push(marker);
-                        if (activeFilter === 'business') {
-                            marker.addTo(map);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error processing business marker:', error);
-                }
-            }
-        });
-
-        // Load utility markers
-        utilityMarkersList.forEach(utility => {
-            if (utility.latitude && utility.longitude) {
-                try {
-                    const lat = parseFloat(utility.latitude);
-                    const lng = parseFloat(utility.longitude);
-                    
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const popupContent = createUtilityPopup(utility);
-                        const marker = L.marker([lat, lng], { 
-                            icon: utilityIcon,
-                            title: utility.name || 'Utility Work'
-                        }).bindPopup(popupContent);
-                        
-                        // Store the original data with the marker
-                        marker.utility_data = utility;
-                        
-                        utilityMarkers.push(marker);
-                        if (activeFilter === 'utility') {
-                            marker.addTo(map);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error processing utility marker:', error);
-                }
-            }
-        });
-
-        // Load incident markers
-        incidentMarkersList.forEach(incident => {
-            if (incident.latitude && incident.longitude) {
-                try {
-                    const lat = parseFloat(incident.latitude);
-                    const lng = parseFloat(incident.longitude);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const popupContent = createIncidentPopup(incident);
-                        const marker = L.marker([lat, lng], {
-                            icon: incidentIcon,
-                            title: incident.incident_type || 'Incident'
-                        }).bindPopup(popupContent);
-                        marker.incident_data = incident;
-                        marker.incident_type = incident.incident_type || '';
-                        incidentMarkers.push(marker);
-                        if (activeFilter === 'incident' && shouldShowIncidentMarker(marker)) {
-                            marker.addTo(map);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error processing incident marker:', error);
-                }
-            }
-        });
-
-        // Load flood layer if active
-        if (floodLayerActive) {
-            loadFloodData();
-        }
-
-        // Load house polygons (not markers)
+        if (!data.success) throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
+        processMarkersData(data);
+        if (floodLayerActive) loadFloodData();
         loadHousePolygons();
-
     } catch (error) {
         console.error('ERROR LOADING MARKERS:', error);
-        showSwal({
-            icon: 'error',
-            title: 'Error Loading Markers',
-            text: 'Please check browser console for details.',
-            confirmButtonColor: '#00247c'
-        });
+        showSwal({ icon: 'error', title: 'Error Loading Markers', text: 'Please refresh the page.', confirmButtonColor: '#00247c' });
     }
 }
 
+// processMarkersData: pure render — accepts the data object from get_all_markers
+// Used by both the parallel init fetch and by loadAllMarkers() on refresh.
+function processMarkersData(data) {
+    const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
+    const businessMarkersList     = (data.markers || []).filter(m => m.type === 'business');
+    const utilityMarkersList      = (data.markers || []).filter(m => m.type === 'utility');
+    const incidentMarkersList     = (data.markers || []).filter(m => m.type === 'incident');
+
+    allMarkersData = [
+        ...constructionMarkersList,
+        ...businessMarkersList,
+        ...utilityMarkersList,
+        ...incidentMarkersList
+    ];
+
+    constructionMarkersList.forEach(construction => {
+        if (!construction.latitude || !construction.longitude) return;
+        const lat = parseFloat(construction.latitude);
+        const lng = parseFloat(construction.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const marker = L.marker([lat, lng], { icon: constructionIcon, title: construction.name || 'Construction Site' })
+            .bindPopup(createConstructionPopup(construction));
+        marker.construction_data = construction;
+        marker.nature_of_work = construction.nature_of_work || construction.nature_of_activity;
+        constructionMarkers.push(marker);
+        if (activeFilter === 'construction' && shouldShowConstructionMarker(marker)) marker.addTo(map);
+    });
+
+    businessMarkersList.forEach(business => {
+        if (!business.latitude || !business.longitude) return;
+        const lat = parseFloat(business.latitude);
+        const lng = parseFloat(business.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const marker = L.marker([lat, lng], { icon: businessIcon, title: business.name || 'Business' })
+            .bindPopup(createBusinessPopup(business));
+        marker.business_data = business;
+        businessMarkers.push(marker);
+        if (activeFilter === 'business') marker.addTo(map);
+    });
+
+    utilityMarkersList.forEach(utility => {
+        if (!utility.latitude || !utility.longitude) return;
+        const lat = parseFloat(utility.latitude);
+        const lng = parseFloat(utility.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const marker = L.marker([lat, lng], { icon: utilityIcon, title: utility.name || 'Utility Work' })
+            .bindPopup(createUtilityPopup(utility));
+        marker.utility_data = utility;
+        utilityMarkers.push(marker);
+        if (activeFilter === 'utility') marker.addTo(map);
+    });
+
+    incidentMarkersList.forEach(incident => {
+        if (!incident.latitude || !incident.longitude) return;
+        const lat = parseFloat(incident.latitude);
+        const lng = parseFloat(incident.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const marker = L.marker([lat, lng], { icon: incidentIcon, title: incident.incident_type || 'Incident' })
+            .bindPopup(createIncidentPopup(incident));
+        marker.incident_data = incident;
+        marker.incident_type = incident.incident_type || '';
+        incidentMarkers.push(marker);
+        if (activeFilter === 'incident' && shouldShowIncidentMarker(marker)) marker.addTo(map);
+    });
+}
+
+
+// renderFloodData: pure render from pre-fetched hazards array (used by parallel init)
+function renderFloodData(hazards) {
+    if (!hazards || !hazards.length) { floodLayer = L.layerGroup(); floodLegend = null; return; }
+    renderFloodAreas(hazards);
+    addFloodLegend();
+    if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) floodLayer.addTo(map);
+    if (floodLayerActive && floodLegend && !hasControl(floodLegend)) floodLegend.addTo(map);
+}
+
+// loadFloodData: fetches then renders — used when toggling flood layer on after init
 async function loadFloodData() {
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_flood_hazards');
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
+        const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_flood_hazards'
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        
         if (data.success && data.hazards) {
-            renderFloodAreas(data.hazards);
-            addFloodLegend();
-            
-            // Add to map if flood layer is active
-            if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
-                floodLayer.addTo(map);
-            }
-            
-            // Ensure legend is also added if active
-            if (floodLayerActive && floodLegend && !hasControl(floodLegend)) {
-                floodLegend.addTo(map);
-            }
+            renderFloodData(data.hazards);
         } else {
             console.warn('No flood data found:', data.message);
             floodLayer = L.layerGroup();
@@ -2042,30 +1952,20 @@ function addFloodLegend() {
     }
 }
 
+// loadHousePolygons: fetch + render — used on manual refresh only.
+// On init, houses are loaded via the parallel Promise.all in map.whenReady.
 async function loadHousePolygons() {
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_houses');
-        
-        const response = await fetch(`${MAP_HANDLER_URL}`, {
+        const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_houses'
         });
-        
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
         const data = await response.json();
-        
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
-            
-            // Add houses to allMarkersData for search
-            const housesForSearch = data.houses.map(house => ({
-                ...house,
-                type: 'household'
-            }));
-            allMarkersData = [...allMarkersData, ...housesForSearch];
-            
+            allMarkersData = [...allMarkersData, ...data.houses.map(h => ({ ...h, type: 'household' }))];
             renderHousePolygons();
         }
     } catch (error) {
@@ -2204,7 +2104,6 @@ function clearAllMarkers() {
  */
 async function getFloodHousesSummary() {
     try {
-        console.log('Fetching flood risk assessment from server...');
         
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
@@ -2217,7 +2116,6 @@ async function getFloodHousesSummary() {
         }
         
         const result = await response.json();
-        console.log('Server response:', result);
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch flood assessment');
@@ -2349,7 +2247,6 @@ async function getFloodHousesSummary() {
 
 async function showFaultLineRiskAssessment() {
     try {
-        console.log('Fetching fault line risk assessment...');
         
         // Show loading indicator
         showSwal({
@@ -2372,7 +2269,6 @@ async function showFaultLineRiskAssessment() {
         }
         
         const result = await response.json();
-        console.log('Fault line assessment result:', result);
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch fault line assessment');
@@ -2477,8 +2373,6 @@ async function showFaultLineRiskAssessment() {
 
 async function showAllBusinessesSDSSReport() {
     try {
-        console.log('Fetching business SDSS report...');
-        console.log('Using URL:', MAP_HANDLER_URL);
         
         // Show loading indicator
         showSwal({
@@ -2498,38 +2392,19 @@ async function showAllBusinessesSDSSReport() {
             body: 'action=get_business_sdss_report'
         });
         
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('HTTP Error Response:', errorText);
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const text = await response.text();
-        console.log('Raw response:', text);
-        
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Raw text was:', text);
-            throw new Error('Invalid JSON response from server: ' + text.substring(0, 200));
-        }
-        
-        console.log('Parsed business SDSS result:', result);
+        const result = await response.json();
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch business SDSS report');
         }
         
         const data = result.data;
-        
-        // Check if data structure is correct
         if (!data || !data.summary || !data.warnings) {
-            console.error('Invalid data structure:', data);
             throw new Error('Invalid data structure received from server');
         }
         
@@ -2538,7 +2413,6 @@ async function showAllBusinessesSDSSReport() {
         
     } catch (error) {
         console.error('Error in business SDSS:', error);
-        console.error('Error stack:', error.stack);
         
         showSwal({
             icon: 'error',
@@ -2570,8 +2444,6 @@ async function showAllBusinessesSDSSReport() {
  */
 async function showAllConstructionSDSSReport() {
     try {
-        console.log('Fetching construction SDSS report...');
-        console.log('Using URL:', MAP_HANDLER_URL);
         
         // Show loading indicator
         showSwal({
@@ -2591,38 +2463,19 @@ async function showAllConstructionSDSSReport() {
             body: 'action=get_construction_sdss_report'
         });
         
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('HTTP Error Response:', errorText);
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const text = await response.text();
-        console.log('Raw response:', text);
-        
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            console.error('Raw text was:', text);
-            throw new Error('Invalid JSON response from server: ' + text.substring(0, 200));
-        }
-        
-        console.log('Parsed construction SDSS result:', result);
+        const result = await response.json();
         
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch construction SDSS report');
         }
         
         const data = result.data;
-        
-        // Check if data structure is correct
         if (!data || !data.summary || !data.warnings) {
-            console.error('Invalid data structure:', data);
             throw new Error('Invalid data structure received from server');
         }
         
@@ -2631,7 +2484,6 @@ async function showAllConstructionSDSSReport() {
         
     } catch (error) {
         console.error('Error in construction SDSS:', error);
-        console.error('Error stack:', error.stack);
         
         showSwal({
             icon: 'error',
@@ -2842,7 +2694,7 @@ async function loadIncidentSubFilters() {
 
     let types = [];
     try {
-        const fd = new FormData();
+        const fd = new URLSearchParams();
         fd.append('action', 'get_incident_types');
         const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
         const data = await res.json();
@@ -2930,8 +2782,7 @@ async function showIncidentSummaryReport() {
     });
 
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_all_incidents');
+        const formData = new URLSearchParams({ action: 'get_all_incidents' });
         const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
         const data = await response.json();
         if (!data.success) throw new Error('Failed to load incident data');
@@ -3120,50 +2971,47 @@ document.addEventListener('DOMContentLoaded', function() {
 // ==================== MAP INITIALIZATION ====================
 
 map.whenReady(async function() {
-    // Create a dedicated pane for the boundary polygon that sits BELOW all flood panes.
-    // pointerEvents: 'none' ensures the boundary fill never intercepts clicks meant for
-    // flood zones, markers, or other interactive layers drawn above it.
+    // ── Pane setup (synchronous, instant) ──────────────────────────────────
     if (!map.getPane('boundaryPane')) {
         map.createPane('boundaryPane');
         map.getPane('boundaryPane').style.zIndex = 300;
         map.getPane('boundaryPane').style.pointerEvents = 'none';
     }
 
-    // Load boundary from database
+    // ── Single combined init request — 1 HTTP round-trip instead of 4 ────────
+    // get_init_data returns boundaries + all markers + houses + optional flood in one shot.
+    let initData = null;
     try {
-        const fd = new FormData();
-        fd.append('action', 'get_boundaries');
-        const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
-        const data = await res.json();
-        if (data.success && data.boundaries && data.boundaries.length > 0) {
-            const b      = data.boundaries[0];
-            let coords = typeof b.coordinates === 'string'
-                ? JSON.parse(b.coordinates)
-                : b.coordinates;
+        const res = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=get_init_data&flood=' + (floodLayerActive ? '1' : '0')
+        });
+        initData = await res.json();
+    } catch(e) { console.warn('Init data fetch failed:', e); }
+
+    const boundaryData = initData;
+    const markersData  = initData;
+    const housesData   = initData ? { success: initData.success, houses: initData.houses } : null;
+    const floodData    = initData;
+
+    // ── Process boundary ────────────────────────────────────────────────────
+    try {
+        if (boundaryData?.success && boundaryData.boundaries?.length > 0) {
+            const b = boundaryData.boundaries[0];
+            let coords = typeof b.coordinates === 'string' ? JSON.parse(b.coordinates) : b.coordinates;
             coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
             blueRidgeGeoJSON = {
                 type: 'FeatureCollection',
-                features: [{
-                    type: 'Feature',
-                    properties: { name: b.name },
-                    geometry: { type: 'Polygon', coordinates: [coords] }
-                }]
+                features: [{ type: 'Feature', properties: { name: b.name }, geometry: { type: 'Polygon', coordinates: [coords] } }]
             };
         }
-    } catch(e) {
-        console.warn('Could not load boundary from DB:', e);
-    }
+    } catch(e) { console.warn('Could not parse boundary:', e); }
 
     // Draw boundary polygon if available
     if (blueRidgeGeoJSON) {
         window._boundaryLayer = L.geoJSON(blueRidgeGeoJSON, {
-            style: {
-                color: '#00247c',
-                weight: 3,
-                fillColor: '#00247c',
-                fillOpacity: 0.08,
-                dashArray: '8, 6'
-            },
+            style: { color: '#00247c', weight: 3, fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8, 6' },
             pane: 'boundaryPane'
         }).addTo(map);
     }
@@ -3236,11 +3084,29 @@ map.whenReady(async function() {
         </div>
     `);
 
+    // ── Process markers (data already fetched above) ──────────────────────
+    if (markersData?.success) {
+        processMarkersData(markersData);
+    } else {
+        console.error('Failed to load markers');
+    }
+
+    // ── Process houses (data already fetched above) ──────────────────────
+    if (housesData?.success && housesData.houses) {
+        housePolygonsData = housesData.houses;
+        const housesForSearch = housesData.houses.map(h => ({ ...h, type: 'household' }));
+        allMarkersData = [...allMarkersData, ...housesForSearch];
+        renderHousePolygons();
+    }
+
+    // ── Process flood layer (data already fetched above) ──────────────────
+    if (floodLayerActive && floodData?.success && floodData.hazards) {
+        renderFloodData(floodData.hazards);
+    }
+
     // Set up soft boundary
     setupSoftBoundary();
 
-    // Load all data
-    loadAllMarkers();
     initDateTime();
     setupMobileMenuClose();
 });
@@ -3442,6 +3308,14 @@ function debugFloodState() {
  */
 async function showSDSSRulesReport() {
     try {
+        // Show loading indicator (missing from original — all other report functions have this)
+        showSwal({
+            title: 'Loading Barangay Rules',
+            html: 'Please wait while we load the rules summary...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
         const [rulesRes, dssRes] = await Promise.all([
             fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_sdss_rules_summary' }),
             fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_dss_evaluations' })
@@ -3836,10 +3710,11 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
     });
 
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_rule_affected_data');
-        formData.append('rule_key', ruleKey);
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
+        const response = await fetch(MAP_HANDLER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ action: 'get_rule_affected_data', rule_key: ruleKey })
+        });
         const result = await response.json();
 
         const bodyEl = document.getElementById('affected-panel-body');
