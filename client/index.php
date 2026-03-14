@@ -689,7 +689,7 @@
                             </div>
 
                             <div class="buttons-container">
-                                <button type="button" id="selectIdBackBtn">Back</button>
+                                <!-- <button type="button" id="selectIdBackBtn">Back</button> -->
                                 <button type="button" id="selectIdNextBtn">Next</button>
                             </div>
                         </form>
@@ -847,7 +847,7 @@
 
     <script src="../client/scripts/resident/nav.js" defer></script>
     <script src="../client/scripts/resident/home.js" defer></script>
-    <script type="module" src="../client/scripts/auth/signup-modal.js"></script>
+    <!-- <script type="module" src="../client/scripts/auth/signup-modal.js"></script> -->
     <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
     <script type="module" src="../client/scripts/components/loader.js"></script>
 

@@ -197,6 +197,25 @@ const validator = (() => {
         const value = input.value.trim();
         if (!value) { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numbers allowed'); return false; }
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) {
+                showError(input, 'Enter a valid PH number (e.g. 09171234567 or 85359822)');
+                return false;
+            }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) {
+                showError(input, 'Enter a real contact number');
+                return false;
+            }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) {
+                showError(input, 'Enter a real contact number');
+                return false;
+            }
+            clearError(input);
+            return true;
+        }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `At least ${rules.minLength} digits required`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Max ${rules.maxLength} digits`); return false; }
         clearError(input); return true;
@@ -268,6 +287,18 @@ const validator = (() => {
         clearError(input); return true;
     }
 
+    function validateAddress(input, message) {
+        if (!input) return true;
+        const value = input.value.trim();
+        if (!value) { showError(input, message); return false; }
+        if (value.length < 10) { showError(input, 'Address is too short'); return false; }
+        if (value.length > 200) { showError(input, 'Address is too long'); return false; }
+        if (!/\d/.test(value)) { showError(input, 'Include your house/unit number (e.g. 12 Rizal St.)'); return false; }
+        if (/(.)\1{3,}/.test(value)) { showError(input, 'Enter a valid address'); return false; }
+        if (!/\S+\s+\S+/.test(value)) { showError(input, 'Enter a complete address'); return false; }
+        clearError(input); return true;
+    }
+
     return {
         text: validateText,
         number: validateNumber,
@@ -277,6 +308,7 @@ const validator = (() => {
         select: validateSelect,
         checkbox: validateCheckbox,
         file: validateFile,
+        address: validateAddress,
         login: {
             email: validateLoginEmail,
             password: validateLoginPassword
@@ -292,9 +324,9 @@ const validationConfig = [
     { el: formElements.firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: formElements.lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: formElements.sex, type: 'select', message: 'Please select sex' },
-    { el: formElements.contactNo, type: 'number', message: 'Contact No. is required', rules: { minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
+    { el: formElements.contactNo, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
     { el: formElements.email, type: 'email', message: 'Email is required' },
-    { el: formElements.address, type: 'text', message: 'Address is required' },
+    { el: formElements.address, type: 'address', message: 'Address is required' },
     { el: formElements.agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
     { el: formElements.idType, type: 'select', message: 'Please select type of ID' },
     { el: formElements.idFile, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
@@ -321,6 +353,7 @@ function validateField(config) {
         case 'checkbox': return validator.checkbox(el, message);
         case 'select': return validator.select(el, message);
         case 'password': return validator.password(el, message);
+        case 'address': return validator.address(el, message);
     }
 }
 
@@ -348,6 +381,10 @@ function setupRealtimeValidation() {
     validationConfig.forEach(config => {
         const { el, type } = config;
         if (!el) return;
+        if (el === formElements.contactNo) {
+            el.addEventListener('blur', () => validateField(validationConfig.find(c => c.el === el)));
+            return;
+        }
         const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
         targets.forEach(target => {
             target.addEventListener('blur', () => validateField(config));
@@ -360,7 +397,14 @@ function setupRealtimeValidation() {
 
     formElements.contactNo?.addEventListener('input', () => {
         formElements.contactNo.value = formElements.contactNo.value.replace(/\D/g, '');
-        validator.clear(formElements.contactNo);
+        const value = formElements.contactNo.value;
+        const isMobile = /^09\d{9}$/.test(value);
+        const isLandline8 = /^[2-9]\d{7}$/.test(value);
+        const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+        const isValidFormat = isMobile || isLandline8 || isLandlineArea;
+        const isRepeated = /^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value);
+        const isSequential = /^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value);
+        if (isValidFormat && !isRepeated && !isSequential) validator.clear(formElements.contactNo);
     });
 
     // Login validation
@@ -498,7 +542,7 @@ function setupNavigationButtons() {
         }
     });
 
-    formElements.personalDetailsBackBtn?.addEventListener('click', () => switchPanel('selectId'));
+    // formElements.personalDetailsBackBtn?.addEventListener('click', () => switchPanel('selectId'));
     formElements.createAccBackBtn?.addEventListener('click', () => switchPanel('personalDetails'));
 
     formElements.selectIdNextBtn?.addEventListener('click', async () => {
