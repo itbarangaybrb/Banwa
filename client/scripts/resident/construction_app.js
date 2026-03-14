@@ -4,6 +4,7 @@ const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/constructi
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
+import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
 registerServiceWorker();
 
 const swalStyle = document.createElement('style');
@@ -323,9 +324,20 @@ function validateField(config) {
     const { el, type, message, rules } = config;
     if (!el) return true;
 
+    // Check if this is a conditional field (file upload that may not be required)
+    if (rules && rules.conditional) {
+        const applicationMethod = document.getElementById('applicationMethod').value;
+        // If method is 'In Person', file upload is not required
+        if (applicationMethod === 'In Person') {
+            validator.clear(el);
+            return true;
+        }
+    }
+
     switch (type) {
         case 'number': return validator.number(el, message, rules);
-        case 'text': return validator.text(el, message, rules);
+        case 'text': if (el.closest('.label-and-input')?.style.display === 'none') { validator.clear(el); return true; }
+            return validator.text(el, message, rules);;
         case 'file': return validator.file(el, message, rules);
         case 'checkbox': return validator.checkbox(el, message);
         case 'select': return validator.select(el, message);
@@ -394,18 +406,18 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
 document.getElementById('nextToWaiver').addEventListener('click', () => {
     const stepFields = [
         typeOfWork,
+        typeOfWork.value === 'Other' ? detailsOfWork : null,
         natureOfActivity,
-        detailsOfWork,
         startDate,
         endDate,
         numberOfWorkers,
         contractorName,
         contractorContactNumber,
-        applicationMethod,
+        natureOfActivity.value !== 'Demolition' ? applicationMethod : null,
         constructionLotNo,
         constructionStreet,
-        requirementUpload
-    ];
+        requirementUpload.closest('.label-and-input').style.display !== 'none' ? requirementUpload : null
+    ].filter(f => f !== null);
 
     if (!validateStep(stepFields)) return;
     if (!validator.address(constructionLotNo, constructionStreet)) return;
@@ -421,9 +433,13 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     const lng = document.getElementById('longitude2').value;
 
     if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
-        document.getElementById('sumTypeOfConstruction').textContent = typeOfWork.value;
+        const typeOfWorkEl = document.getElementById('typeOfWork');
+        const typeOfWorkDisplay = typeOfWorkEl.value === 'Other'
+            ? detailsOfWork.value.trim()
+            : typeOfWorkEl.options[typeOfWorkEl.selectedIndex].text.trim();
+
+        document.getElementById('sumTypeOfConstruction').textContent = typeOfWorkDisplay;
         document.getElementById('sumNatureOfActivity').textContent = natureOfActivity.value;
-        document.getElementById('sumDetailsOfWork').textContent = detailsOfWork.value;
         document.getElementById('sumStartDate').textContent = startDate.value;
         document.getElementById('sumEndDate').textContent = endDate.value;
         document.getElementById('sumNumberOfWorkingDays').textContent = numberOfWorkingDays.value;
@@ -521,7 +537,11 @@ newSummaryForm.addEventListener('submit', async (e) => {
         formData.append('addressOwner', document.getElementById('addressOwner').value);
 
         // Construction Details
-        formData.append('typeOfWork', document.getElementById('typeOfWork').value);
+        const typeOfWorkEl = document.getElementById('typeOfWork');
+        const typeOfWorkValue = typeOfWorkEl.value === 'Other'
+            ? document.getElementById('detailsOfWork').value
+            : typeOfWorkEl.options[typeOfWorkEl.selectedIndex].text;
+        formData.append('typeOfWork', typeOfWorkValue);
         formData.append('natureOfActivity', document.getElementById('natureOfActivity').value);
         formData.append('detailsOfWork', document.getElementById('detailsOfWork').value);
         formData.append('startDate', document.getElementById('startDate').value);
@@ -569,8 +589,8 @@ newSummaryForm.addEventListener('submit', async (e) => {
             .then(data => {
                 if (data.status === 'success') {
 
-                    if (sockets["construction"] && sockets["construction"].readyState === WebSocket.OPEN) {
-                        sockets["construction"].send(JSON.stringify({ type: "construction_update", action: "new_application" }));
+                    if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+                        sockets["construction_applications"].send(JSON.stringify({ type: "construction_applications_update", action: "new_application" }));
                     }
 
                     Swal.fire({
@@ -675,12 +695,12 @@ async function initializeMapPicker(target) {
     osmTile.addTo(map);
 
     const POLY_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
         satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
     };
     const BOUND_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
-        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8,6', weight: 2 }
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
     };
 
     let currentMode = 'street';
@@ -694,19 +714,19 @@ async function initializeMapPicker(target) {
     }
 
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn    = document.getElementById('picker-satellite-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
         streetBtn.addEventListener('click', () => {
             map.removeLayer(satTile); osmTile.addTo(map);
             currentMode = 'street'; applyColors('street');
             streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
-            satBtn.style.background    = 'white';   satBtn.style.color    = '#555';  satBtn.style.border    = '1px solid #ccc';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
         });
         satBtn.addEventListener('click', () => {
             map.removeLayer(osmTile); satTile.addTo(map);
             currentMode = 'satellite'; applyColors('satellite');
-            satBtn.style.background    = '#00247c'; satBtn.style.color    = 'white'; satBtn.style.border    = 'none';
-            streetBtn.style.background = 'white';   streetBtn.style.color = '#555';  streetBtn.style.border = '1px solid #ccc';
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
         });
     }
 
@@ -717,23 +737,23 @@ async function initializeMapPicker(target) {
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        document.getElementById(`latitude${target}`).value  = lat;
+        document.getElementById(`latitude${target}`).value = lat;
         document.getElementById(`longitude${target}`).value = lng;
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
     // Load boundaries from DB
     try {
-        const bRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
         });
         const bData = await bRes.json();
         if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
             bData.boundaries.forEach(b => {
                 try {
-                    const coords  = JSON.parse(b.coordinates);
+                    const coords = JSON.parse(b.coordinates);
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
-                    const layer   = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
@@ -742,7 +762,7 @@ async function initializeMapPicker(target) {
 
     // Load houses
     try {
-        const hRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
         });
         const hData = await hRes.json();
@@ -753,9 +773,9 @@ async function initializeMapPicker(target) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
-                    const coords  = JSON.parse(house.coordinates);
+                    const coords = JSON.parse(house.coordinates);
                     // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
-                    const ring    = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                     const latLngs = ring.map(c => [c[1], c[0]]);
                     latLngs.push(latLngs[0]);
 
@@ -763,7 +783,7 @@ async function initializeMapPicker(target) {
                     housePolygons.push(polygon);
 
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const titleText  = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
                     const subtitleHtml = house.street_name
                         ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>'
                         : '';
@@ -776,13 +796,13 @@ async function initializeMapPicker(target) {
 
                     const popupHtml =
                         '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
-                                subtitleHtml +
-                            '</div>' +
-                            addrHtml +
-                            streetHtml +
-                            '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
+                        subtitleHtml +
+                        '</div>' +
+                        addrHtml +
+                        streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
                         '</div>';
 
                     polygon.bindPopup(popupHtml, { maxWidth: 240 });
@@ -795,7 +815,7 @@ async function initializeMapPicker(target) {
                         if (selectedMarker) map.removeLayer(selectedMarker);
                         const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
                         const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr  = (!isLandmarkSel && house.address)
+                        const selAddr = (!isLandmarkSel && house.address)
                             ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
                             : '';
                         const selStreet = house.street_name
@@ -803,26 +823,26 @@ async function initializeMapPicker(target) {
                             : '';
                         const selPopup =
                             '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                                '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                    '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                                    (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                                '</div>' +
-                                selAddr +
-                                selStreet +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' +
+                            selAddr +
+                            selStreet +
                             '</div>';
                         selectedMarker = L.marker([lat, lng]).addTo(map)
                             .bindPopup(selPopup, { maxWidth: 240 })
                             .openPopup();
 
-                        document.getElementById(`latitude${target}`).value  = lat;
+                        document.getElementById(`latitude${target}`).value = lat;
                         document.getElementById(`longitude${target}`).value = lng;
                         document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                         if (target === '2') {
-                            const constructionLot    = document.getElementById('constructionLotNo');
+                            const constructionLot = document.getElementById('constructionLotNo');
                             const constructionStreet = document.getElementById('constructionStreet');
-                            if (constructionLot)    { constructionLot.value    = house.house_number || ''; constructionLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (constructionStreet) { constructionStreet.value = house.street_name  || ''; constructionStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (constructionLot) { constructionLot.value = house.house_number || ''; constructionLot.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (constructionStreet) { constructionStreet.value = house.street_name || ''; constructionStreet.dispatchEvent(new Event('change', { bubbles: true })); }
                         }
                     });
 
@@ -946,6 +966,68 @@ function calculateTotalDays(startEl, endEl, outputEl) {
     outputEl.value = diffDays > 0 ? diffDays : 0;
 }
 
+/**
+ * Toggles visibility of file upload inputs based on application method selection
+ * Hides the file upload fields when "In Person" is selected, shows them when "Online" is selected
+ */
+function toggleFileUploads() {
+    const applicationMethod = document.getElementById('applicationMethod');
+    const requirementUpload = document.getElementById('requirementUpload').closest('.label-and-input');
+    const additionalFiles = document.getElementById('additionalFiles').closest('.label-and-input');
+
+    if (applicationMethod.value === 'In Person' || applicationMethod.value === '') {
+        // Hide file upload inputs
+        requirementUpload.style.display = 'none';
+        additionalFiles.style.display = 'none';
+
+        // Optional: Clear any existing validation errors
+        validator.clear(document.getElementById('requirementUpload'));
+        validator.clear(document.getElementById('additionalFiles'));
+    } else {
+        // Show file upload inputs (for 'Online' or default)
+        requirementUpload.style.display = 'block';
+        additionalFiles.style.display = 'block';
+    }
+}
+
+/**
+ * Toggles visibility of the application method field based on nature of activity selection
+ * Hides the field and clears its value when 'Demolition' is selected, as submission
+ * method is not applicable for demolition work. Also re-triggers file upload visibility.
+ */
+function toggleApplicationMethod() {
+    const natureOfActivity = document.getElementById('natureOfActivity');
+    const applicationMethodWrapper = document.getElementById('applicationMethod').closest('.label-and-input');
+
+    if (natureOfActivity.value === 'Demolition') {
+        applicationMethodWrapper.style.display = 'none';
+        document.getElementById('applicationMethod').value = '';
+        validator.clear(document.getElementById('applicationMethod'));
+    } else {
+        applicationMethodWrapper.style.display = 'block';
+    }
+
+    toggleFileUploads();
+}
+
+toggleApplicationMethod();
+natureOfActivity.addEventListener('change', toggleApplicationMethod);
+
+/**
+ * Shows or hides "specify" text fields based on "Others" selection in dropdowns
+ * @param {HTMLSelectElement} selectEl - The primary select element
+ * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
+ */
+function handleOthersSelect(selectEl, specifyEl) {
+    const wrapper = specifyEl.closest('.label-and-input');
+    if (selectEl.value === 'Other') {
+        wrapper.style.display = 'block';
+    } else {
+        wrapper.style.display = 'none';
+        specifyEl.value = '';
+    }
+}
+
 // Set up automatic calculation of working days when dates change
 document.addEventListener('DOMContentLoaded', () => {
     if (startDate && endDate) {
@@ -954,7 +1036,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-     if (!sockets["construction_applications"]) {
-            initSocket("construction_applications", "ws://localhost:8081", data => { });
-        }
+    if (!sockets["construction_applications"]) {
+        initSocket("construction_applications", "ws://localhost:8081", data => { });
+    }
+
+    const applicationMethod = document.getElementById('applicationMethod');
+    toggleFileUploads();
+    applicationMethod.addEventListener('change', toggleFileUploads);
+
+    typeOfWork.addEventListener('change', () => handleOthersSelect(typeOfWork, detailsOfWork));
+    handleOthersSelect(typeOfWork, detailsOfWork);
 });

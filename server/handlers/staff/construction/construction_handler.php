@@ -133,7 +133,7 @@ function handleCreateApplication($pdo)
         // Construction Info
         $typeOfWork = get_input('typeOfWork');
         $natureOfActivity = get_input('natureOfActivity');
-        $detailsOfWork = get_input('detailsOfWork');
+        $detailsOfWork = get_input('detailsOfWork') ?? '';
         $startDate = get_input('startDate');
         $endDate = get_input('endDate');
         $numberOfWorkingDays = get_input('numberOfWorkingDays');

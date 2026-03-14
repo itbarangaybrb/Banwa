@@ -4,6 +4,7 @@ const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.p
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
+import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
 
 registerServiceWorker();
 
@@ -102,6 +103,7 @@ const businessLotNo = document.getElementById('businessLotNo');
 const businessStreet = document.getElementById('businessStreet');
 const typeOfStructureSelect = document.getElementById('typeOfStructureSelect');
 const typeOfStructureSpecify = document.getElementById('typeOfStructureSpecify');
+const businessStatusSpecify = document.getElementById('businessStatusSpecify');
 const natureOfApplication = document.getElementById('natureOfApplication');
 const requirements = document.getElementsByName('requirements');
 const requirementUpload = document.getElementById('requirementUpload');
@@ -113,15 +115,17 @@ const agreeCheckBox = document.getElementById('agreeCheckBox');
 // Initialize the form with owner panel visible
 switchPanel('owner');
 
-// Hide specify fields by default as they're only shown when "Others" is selected
 typeOfStructureSpecify.closest('.label-and-input').style.display = 'none';
 natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
 requirementsSection.style.display = 'none';
 
-// Set up event listeners for dynamic field display
 typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
 natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
 natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
+
+document.addEventListener('DOMContentLoaded', () => {
+    handleOthersRadio('businessStatus', businessStatusSpecify);
+});
 
 // OCR runs asynchronously on the server after upload; resident-side verify UI removed.
 
@@ -338,6 +342,7 @@ const validationConfig = [
     { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
     { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
     { el: businessStatus, type: 'radio', message: 'Please select business status' },
+    { el: businessStatusSpecify, type: 'text', message: 'Please specify business status' },
     { el: contactNoBusiness, type: 'number', message: 'Contact No. is required', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
     { el: emailAddress, type: 'email', message: 'Email is required', rules: { errorMessage: 'Please enter a valid email address' } },
     { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
@@ -407,6 +412,7 @@ function validateField(config) {
         const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
 
         targets.forEach(target => {
+            if (!target) return;
             target.addEventListener('blur', () => validateField(config));
             target.addEventListener('input', () => validator.clear(target));
         });
@@ -455,12 +461,14 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
  * Validates all business fields including dynamic requirements based on application type
  */
 document.getElementById('nextToWaiver').addEventListener('click', () => {
+    const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
+
     const stepFields = [
         businessName,
         typeOfBusiness,
         natureOfBusinessSelect,
         natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
-        businessStatus,
+        selectedBusinessStatus === 'Others' ? businessStatusSpecify : null,
         contactNoBusiness,
         emailAddress,
         requirements,
@@ -477,7 +485,6 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
     if (!validator.address(businessLotNo, businessStreet)) return;
     if (!validateStep(stepFields)) return;
 
-    // Soft reminder if not verified
     if (requirementUpload.files.length > 0 && !documentVerificationDone) {
         if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
             return;
@@ -499,7 +506,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumBusinessName').textContent = businessName.value;
         document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
         document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
-        document.getElementById('sumBusinessStatus').textContent = Array.from(businessStatus).find(r => r.checked)?.value || '';
+        document.getElementById('sumBusinessStatus').textContent = (Array.from(businessStatus).find(r => r.checked)?.value === 'Others' ? businessStatusSpecify.value : Array.from(businessStatus).find(r => r.checked)?.value || '').trim();
         document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
         document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
         document.getElementById('sumEmail').textContent = emailAddress.value;
@@ -570,6 +577,29 @@ function handleOthersSelect(selectEl, specifyEl) {
         wrapper.style.display = 'none';
         specifyEl.value = '';
     }
+}
+
+/**
+ * Shows or hides "specify" text field when "Others" is selected in radio group
+ * @param {string} radioGroupName - The name attribute of the radio group
+ * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
+ */
+function handleOthersRadio(radioGroupName, specifyEl) {
+    const radios = document.getElementsByName(radioGroupName);
+    const specifyWrapper = specifyEl.closest('.label-and-input');
+
+    // Initial state
+    const othersSelected = Array.from(radios).some(radio => radio.value === 'Others' && radio.checked);
+    specifyWrapper.style.display = othersSelected ? 'block' : 'none';
+    if (!othersSelected) specifyEl.value = '';
+
+    Array.from(radios).forEach(radio => {
+        radio.addEventListener('change', () => {
+            const isOthersSelected = Array.from(radios).some(r => r.value === 'Others' && r.checked);
+            specifyWrapper.style.display = isOthersSelected ? 'block' : 'none';
+            if (!isOthersSelected) specifyEl.value = '';
+        });
+    });
 }
 
 /**
@@ -676,6 +706,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         // Business Status (radio)
         const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
         if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
+        formData.append('businessStatusSpecify', document.getElementById('businessStatusSpecify').value);
 
         // Owner Details
         formData.append('firstName', document.getElementById('firstName').value);
@@ -726,8 +757,8 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(data => {
                 if (data.status === 'success') {
 
-                    if (sockets["business"] && sockets["business"].readyState === WebSocket.OPEN) {
-                        sockets["business"].send(JSON.stringify({ type: "business_update", action: "new_application" }));
+                    if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+                        sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
                     }
 
                     business_app_swal.fire({
@@ -989,12 +1020,12 @@ async function initializeMapPicker(target) {
 
     // Match main map color system
     const POLY_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
         satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
     };
     const BOUND_COLORS = {
-        street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
-        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8,6', weight: 2 }
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
     };
 
     let currentMode = 'street';
@@ -1009,19 +1040,19 @@ async function initializeMapPicker(target) {
 
     // Street / Satellite toggle
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn    = document.getElementById('picker-satellite-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
         streetBtn.addEventListener('click', () => {
             map.removeLayer(satTile); osmTile.addTo(map);
             currentMode = 'street'; applyColors('street');
             streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
-            satBtn.style.background    = 'white';   satBtn.style.color    = '#555';  satBtn.style.border    = '1px solid #ccc';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
         });
         satBtn.addEventListener('click', () => {
             map.removeLayer(osmTile); satTile.addTo(map);
             currentMode = 'satellite'; applyColors('satellite');
-            satBtn.style.background    = '#00247c'; satBtn.style.color    = 'white'; satBtn.style.border    = 'none';
-            streetBtn.style.background = 'white';   streetBtn.style.color = '#555';  streetBtn.style.border = '1px solid #ccc';
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
         });
     }
 
@@ -1033,23 +1064,23 @@ async function initializeMapPicker(target) {
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        document.getElementById(`latitude${target}`).value  = lat;
+        document.getElementById(`latitude${target}`).value = lat;
         document.getElementById(`longitude${target}`).value = lng;
         document.getElementById(`map-preview-${target}`).style.display = 'block';
     });
 
     // Load barangay boundaries from DB
     try {
-        const bRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
         });
         const bData = await bRes.json();
         if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
             bData.boundaries.forEach(b => {
                 try {
-                    const coords  = JSON.parse(b.coordinates);
+                    const coords = JSON.parse(b.coordinates);
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
-                    const layer   = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
@@ -1058,7 +1089,7 @@ async function initializeMapPicker(target) {
 
     // Load house polygons
     try {
-        const hRes  = await fetch('/server/handlers/map/map_handler.php', {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
         });
         const hData = await hRes.json();
@@ -1069,9 +1100,9 @@ async function initializeMapPicker(target) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
-                    const coords  = JSON.parse(house.coordinates);
+                    const coords = JSON.parse(house.coordinates);
                     // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
-                    const ring    = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                     const latLngs = ring.map(c => [c[1], c[0]]);
                     latLngs.push(latLngs[0]);
 
@@ -1079,7 +1110,7 @@ async function initializeMapPicker(target) {
                     housePolygons.push(polygon);
 
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const titleText  = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
                     const subtitleHtml = house.street_name
                         ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>'
                         : '';
@@ -1092,13 +1123,13 @@ async function initializeMapPicker(target) {
 
                     const popupHtml =
                         '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
-                                subtitleHtml +
-                            '</div>' +
-                            addrHtml +
-                            streetHtml +
-                            '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
+                        subtitleHtml +
+                        '</div>' +
+                        addrHtml +
+                        streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
                         '</div>';
 
                     polygon.bindPopup(popupHtml, { maxWidth: 240 });
@@ -1111,7 +1142,7 @@ async function initializeMapPicker(target) {
                         if (selectedMarker) map.removeLayer(selectedMarker);
                         const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
                         const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr  = (!isLandmarkSel && house.address)
+                        const selAddr = (!isLandmarkSel && house.address)
                             ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
                             : '';
                         const selStreet = house.street_name
@@ -1119,26 +1150,26 @@ async function initializeMapPicker(target) {
                             : '';
                         const selPopup =
                             '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                                '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                                    '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                                    (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                                '</div>' +
-                                selAddr +
-                                selStreet +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' +
+                            selAddr +
+                            selStreet +
                             '</div>';
                         selectedMarker = L.marker([lat, lng]).addTo(map)
                             .bindPopup(selPopup, { maxWidth: 240 })
                             .openPopup();
 
-                        document.getElementById(`latitude${target}`).value  = lat;
+                        document.getElementById(`latitude${target}`).value = lat;
                         document.getElementById(`longitude${target}`).value = lng;
                         document.getElementById(`map-preview-${target}`).style.display = 'block';
 
                         if (target === '2') {
-                            const businessLot    = document.getElementById('businessLotNo');
+                            const businessLot = document.getElementById('businessLotNo');
                             const businessStreet = document.getElementById('businessStreet');
-                            if (businessLot)    { businessLot.value    = house.house_number || ''; businessLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (businessStreet) { businessStreet.value = house.street_name  || ''; businessStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (businessLot) { businessLot.value = house.house_number || ''; businessLot.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (businessStreet) { businessStreet.value = house.street_name || ''; businessStreet.dispatchEvent(new Event('change', { bubbles: true })); }
                         }
                     });
 
