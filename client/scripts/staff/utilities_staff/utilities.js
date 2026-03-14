@@ -33,6 +33,13 @@ swalStyle.innerHTML = `
 `;
 document.head.appendChild(swalStyle);
 
+// Status templates for quick text insertion - Utilities
+const utilityStatusTemplates = {
+    // 'Complied': "Your submitted requirements have been verified.",
+    'Disapproved': "Your utility application was disapproved due to: [reason]. You may re-apply once requirements are met.",
+    'Approved': "Your Utilities Permit is now ready for pick-up/download."
+};
+
 // ===============================================
 // GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
 // ===============================================
@@ -1640,6 +1647,22 @@ document.addEventListener('DOMContentLoaded', () => {
         initSocket("utility", "ws://localhost:8081", data => {
             if (data.type === "utility_update") {
                 refreshActiveTab();
+            }
+        });
+    }
+
+    // Event listener for status change to update textarea with templates
+    const statusSelect = document.getElementById('newStatus');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function () {
+            const status = this.value;
+            const commentBox = document.getElementById('updateComments');
+
+            if (utilityStatusTemplates[status] && commentBox) {
+                commentBox.value = utilityStatusTemplates[status];
+            } else if (commentBox) {
+                // Clear the box if a status without a template is selected
+                commentBox.value = ""; 
             }
         });
     }

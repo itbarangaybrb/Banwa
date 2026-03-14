@@ -340,7 +340,7 @@ $full_name = getCurrentUserName();
                     <select id="statusApplications" style="width: max-content;">
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
-                        <option value="Pre-approved">Pre-approved</option>
+                        <!-- <option value="Pre-approved">Pre-approved</option> -->
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
@@ -670,8 +670,8 @@ $full_name = getCurrentUserName();
                             <label for="newStatus">New Status *</label>
                             <select id="newStatus" name="newStatus" required>
                                 <option value="" disabled selected>Select Action...</option>
-                                <option value="Pre-Approved">Pre-Approved</option>
-                                <option value="Additional Requirements">Additional Requirements</option>
+                                <!-- <option value="Pre-Approved">Pre-Approved</option>
+                                <option value="Additional Requirements">Additional Requirements</option> -->
                                 <option value="Approved">Approved (Final)</option>
                                 <option value="Disapproved">Disapproved</option>
                                 <option value="Cancelled">Cancelled</option>

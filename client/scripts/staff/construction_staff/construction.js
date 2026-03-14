@@ -30,6 +30,15 @@ swalStyle.innerHTML = `
 `;
 document.head.appendChild(swalStyle);
 
+// Status templates for quick text insertion - Construction
+const constructionStatusTemplates = {
+    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Barangay Hall.",
+    'Disapproved': "Your construction application was disapproved due to: [reason]. You may re-apply once requirements are met.",
+    'Additional Requirements': "Some documents are unclear or missing. Please re-upload your construction plans and clearances.",
+    'Approved': "Your Construction Clearance is now ready for pick-up/download.",
+    'Complied': "Your submitted requirements have been verified."
+};
+
 // Configuration
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
@@ -2411,6 +2420,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // Also calculate when user types (for better UX)
         startDateInput.addEventListener('input', calculateWorkingDays);
         endDateInput.addEventListener('input', calculateWorkingDays);
+    }
+
+    // Event listener for status change to update textarea with templates
+    const statusSelect = document.getElementById('newStatus');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function () {
+            const status = this.value;
+            const commentBox = document.getElementById('updateComments');
+            const amountGroup = document.getElementById('amountFieldGroup');
+            const amountInput = document.getElementById('assessmentAmount');
+
+            // Handle Amount Field Visibility
+            if (amountGroup) {
+                if (status === 'For Payment') {
+                    amountGroup.classList.remove('hidden');
+                    if (amountInput) amountInput.setAttribute('required', 'required');
+                } else {
+                    amountGroup.classList.add('hidden');
+                    if (amountInput) amountInput.removeAttribute('required');
+                }
+            }
+
+            // Auto-fill Comments
+            if (constructionStatusTemplates[status] && commentBox) {
+                commentBox.value = constructionStatusTemplates[status];
+            } else if (commentBox) {
+                // Optional: Clear the box if a status without a template is selected
+                commentBox.value = ""; 
+            }
+        });
     }
 });
 // CLOSE MODAL ON OUTSIDE CLICK
