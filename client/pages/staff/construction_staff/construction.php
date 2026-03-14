@@ -627,7 +627,6 @@ $full_name = getCurrentUserName();
                         <label for="newStatus">New Status *</label>
                         <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
                             <option value="" disabled selected>Select Action...</option>
-                            <option value="Pre-Approved">Pre-Approved</option>
                             <option value="Additional Requirements">Additional Requirements</option>
                             <option value="For Payment">For Payment (Assessment)</option>
                             <option value="Approved">Approved (Final)</option>
@@ -648,6 +647,11 @@ $full_name = getCurrentUserName();
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Missing valid ID or DTI. Please re-upload.')">Missing Docs</button>
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Please visit the Barangay Hall for physical verification.')">Visit Hall</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Please provide clear copies of your Engineering Plans and Bill of Materials.')">Missing Plans</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures from the Professional Engineer or Architect are missing.')">Missing Signatures</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Your construction plans do not comply with barangay building setbacks/regulations. Please revise.')">Compliance Issue</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('The construction lot number provided does not match our records. Please verify.')">Incorrect Lot #</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Please include the valid ID and PRC license of the supervising engineer.')">Missing PRC ID</button>
                             </div>
                             <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                         </div>
