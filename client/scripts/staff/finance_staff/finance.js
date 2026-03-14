@@ -198,7 +198,35 @@ function openVerificationModal(appId, appType) {
     if (!app) return;
 
     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
-    const proofLink = proofFile ? `<a href="${proofFile}" target="_blank">View Proof</a>` : '<p style="color:red;">No proof</p>';
+    
+    // --- NEW PREVIEW LOGIC ---
+    let proofPreview = '<p style="color:red;">No proof</p>';
+    
+    if (proofFile) {
+        // Check file extension to determine how to display it
+        const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(proofFile);
+        const isPdf = /\.pdf$/i.test(proofFile);
+
+        if (isImage) {
+            proofPreview = `
+                <div style="text-align: center;">
+                    <img src="${proofFile}" alt="Proof of Payment" style="max-width: 100%; max-height: 350px; border-radius: 4px; border: 1px solid #ccc; object-fit: contain;">
+                </div>
+                <div style="text-align: center; margin-top: 5px;">
+                    <a href="${proofFile}" target="_blank" style="font-size: 12px; color: #007bff;">Open in new tab</a>
+                </div>`;
+        } else if (isPdf) {
+            proofPreview = `
+                <iframe src="${proofFile}" style="width: 100%; height: 350px; border: 1px solid #ccc; border-radius: 4px;"></iframe>
+                <div style="text-align: center; margin-top: 5px;">
+                    <a href="${proofFile}" target="_blank" style="font-size: 12px; color: #007bff;">Open in new tab</a>
+                </div>`;
+        } else {
+            // Fallback for unknown file types (e.g., .docx, .zip)
+            proofPreview = `<a href="${proofFile}" target="_blank" style="display: inline-block; padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Download / View Proof File</a>`;
+        }
+    }
+    // -------------------------
 
     const html = `
         <div style="text-align:left;">
@@ -207,11 +235,15 @@ function openVerificationModal(appId, appType) {
             <p><strong>Status:</strong> ${app.payment_status}</p>
             <hr>
             <p><strong>Resident's Proof:</strong></p>
-            ${proofLink}
+            
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                ${proofPreview}
+            </div>
+            
             <hr>
             <div style="margin-top: 15px; background: #e9ecef; padding: 15px; border-radius: 8px;">
                 <label for="orFile" style="font-weight: bold; display: block; margin-bottom: 5px; color: #00247C;">Upload Official Receipt (OR) *</label>
-                <input type="file" id="orFile" accept=".jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white;">
+                <input type="file" id="orFile" accept=".jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white; box-sizing: border-box;">
             </div>
         </div>
     `;
@@ -219,13 +251,14 @@ function openVerificationModal(appId, appType) {
     Swal.fire({
         title: 'Verify Payment',
         html: html,
-        icon: 'question',
-        showCloseButton: true,           // ← This adds the X close button at the top right
+        icon: 'info', // Changed to 'info' as a preview makes it more of an informational review step
+        showCloseButton: true,
         showDenyButton: true,
         confirmButtonText: 'Approve',
         denyButtonText: 'Reject',
         confirmButtonColor: '#28a745',
         denyButtonColor: '#dc3545',
+        width: '600px', // Slightly wider to accommodate the preview better
         preConfirm: () => {
             const orFileInput = document.getElementById('orFile');
             if (!orFileInput.files.length) {
@@ -240,7 +273,6 @@ function openVerificationModal(appId, appType) {
         } else if (result.isDenied) {
             submitVerification(appId, 'Rejected', appType, null);
         }
-        // If user clicks the X (or outside/esc), nothing happens – modal just closes (default behavior)
     });
 }
 
@@ -682,42 +714,86 @@ function openPaymentModal(appId, amountDue, appType) {
     const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
     if (!app) return;
 
-    const html = '<form style="text-align:left;"><div class="form-group"><label>Amount Due</label><input type="text" value="' + parseFloat(amountDue).toFixed(2) + '" disabled style="width:100%; padding:10px;"></div><div class="form-group"><label>Amount Paid *</label><input type="number" id="amountPaid" required style="width:100%; padding:10px;" step="0.01" min="0"></div><div class="form-group"><label>Payment Method *</label><select id="paymentMethod" required style="width:100%; padding:10px;" onchange="updateRefLabel()"><option>Select</option><option>Cash</option><option>GCash</option><option>Landbank</option></select></div><div class="form-group"><label id="refLabel">OR Number *</label><input type="text" id="refNumber" required style="width:100%; padding:10px;"></div><div class="form-group"><label>Date</label><input type="date" id="paymentDate" style="width:100%; padding:10px;"></div></form>';
+    const html = `
+        <form style="text-align:left;">
+            <div class="form-group">
+                <label>Amount Due</label>
+                <input type="text" value="${parseFloat(amountDue).toFixed(2)}" disabled style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group">
+                <label>Amount Paid *</label>
+                <input type="number" id="amountPaid" required style="width:100%; padding:10px;" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label>Payment Method *</label>
+                <select id="paymentMethod" required style="width:100%; padding:10px;" onchange="updateRefLabel()">
+                    <option value="">Select</option>
+                    <option value="Cash">Cash</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Landbank">Landbank</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="refLabel">OR Number *</label>
+                <input type="text" id="refNumber" required style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="paymentDate" style="width:100%; padding:10px;">
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label>Proof of Payment *</label>
+                <input type="file" id="proofOfPayment" accept="image/*,application/pdf" style="width:100%; padding:10px; border: 1px solid #ccc;">
+            </div>
+            <div class="form-group" style="text-align: center; margin-top: 15px;">
+                <img id="proofPreview" src="" alt="Proof Preview" style="max-width: 100%; max-height: 200px; display: none; border: 1px solid #ddd; padding: 5px; border-radius: 4px;" />
+            </div>
+        </form>`;
 
     Swal.fire({
         title: 'Process Payment',
         html: html,
         icon: 'question',
         confirmButtonText: 'Submit',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#6c757d',
-        background: '#f8f9fa',
-        color: '#333',
-        width: '600px',
         showCancelButton: true,
+        width: '600px',
+        didOpen: () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('paymentDate').value = today;
+
+            const proofInput = document.getElementById('proofOfPayment');
+            const proofPreview = document.getElementById('proofPreview');
+
+            proofInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        proofPreview.src = event.target.result;
+                        proofPreview.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    proofPreview.style.display = 'none';
+                }
+            });
+        },
         preConfirm: () => {
             const amountPaid = document.getElementById('amountPaid').value;
             const method = document.getElementById('paymentMethod').value;
             const refNumber = document.getElementById('refNumber').value;
+            const date = document.getElementById('paymentDate').value;
+            const proofFile = document.getElementById('proofOfPayment').files[0];
 
-            if (!amountPaid || !method || !refNumber) {
-                Swal.showValidationMessage('Fill all fields');
+            if (!amountPaid || !method || !refNumber || !proofFile) {
+                Swal.showValidationMessage('All fields, including Proof of Payment, are required');
                 return false;
             }
-
-            return { amountPaid, method, refNumber, appId, appType };
+            return { amountPaid, method, refNumber, date, proofFile, appId, appType };
         }
     }).then(result => {
-        if (result.isConfirmed) {
-            submitPayment(result.value, amountDue);
-        }
+        if (result.isConfirmed) submitPayment(result.value, amountDue);
     });
-
-    setTimeout(() => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('paymentDate').value = today;
-    }, 100);
 }
 
 function updateRefLabel() {
@@ -735,47 +811,38 @@ function updateRefLabel() {
 
 function submitPayment(paymentData, amountDue) {
     const formData = new FormData();
-    formData.append('action', 'process_payment');
-    formData.append('id', paymentData.appId);
-    formData.append('type', paymentData.appType); // Dynamically set the type
-    formData.append('amountDue', amountDue);
+    
+    // These keys MUST match the get_input() calls in your PHP
+    formData.append('application_id', paymentData.appId);
+    // This ensures the first letter is Uppercase (e.g., "business" becomes "Business")
+const capitalizedType = paymentData.appType.charAt(0).toUpperCase() + paymentData.appType.slice(1).toLowerCase();
+formData.append('payment_purpose_app_type', capitalizedType); 
     formData.append('amountPaid', paymentData.amountPaid);
     formData.append('paymentMethod', paymentData.method);
     formData.append('orNumber', paymentData.refNumber);
+    formData.append('dateOfPayment', paymentData.date);
+    formData.append('proofOfPayment', paymentData.proofFile);
 
     Swal.fire({
         title: 'Processing...',
-        icon: 'info',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
 
-    fetch(API_URL, { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-
-                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "payment_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "payment_update" }));
-                }
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
-                }
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Payment processed',
-                    confirmButtonColor: '#00247c'
-                }).then(() => loadPendingTable());
-            } else {
-                Swal.fire('Error', data.message, 'error');
-            }
-        })
-        .catch(err => Swal.fire('Error', 'Network error', 'error'));
+    // Replace the URL with the actual path to your submit_payment.php
+    fetch('/server/api/resident/submit_payment.php', { 
+        method: 'POST', 
+        body: formData 
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire('Success', data.message, 'success').then(() => loadPendingTable());
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    })
+    .catch(err => Swal.fire('Error', 'Network error or file too large', 'error'));
 }
 
 function generateReceipt(id, appType) {

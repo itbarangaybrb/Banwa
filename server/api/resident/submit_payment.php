@@ -40,10 +40,12 @@ try {
     }
 
     // NEW: Determine the correct database table based on the application type
-    $tableName = '';
-    if ($appType === 'Business') {
+    // Convert input to lowercase for a more flexible check
+    $appTypeLower = strtolower($appType);
+
+    if ($appTypeLower === 'business') {
         $tableName = 'business_applications';
-    } elseif ($appType === 'Construction') {
+    } elseif ($appTypeLower === 'construction') {
         $tableName = 'construction_applications';
     } else {
         throw new Exception("Invalid application type provided.");
