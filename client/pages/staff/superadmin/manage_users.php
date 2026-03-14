@@ -295,6 +295,7 @@ $full_name = getCurrentUserName();
                         <label for="suspendReason">Suspension Reason</label>
                         <select name="suspendReason" id="suspendReason">
                             <option value="" disabled selected>Select</option>
+                            <option value="Test Auto Unsuspend">Test Auto Unsuspend</option>
                             <option value="Violation of Terms of Service">Violation of Terms of Service</option>
                             <option value="Fraudulent Activity">Fraudulent Activity</option>
                             <option value="Suspicious or Unusual Activity">Suspicious or Unusual Activity</option>
