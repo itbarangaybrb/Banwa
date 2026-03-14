@@ -86,7 +86,9 @@ if ($suspendedUntil && $suspendedUntil !== '1970-01-01 00:00:00') {
       Logout
     </a>
   </div>
+
+  <script type="module" src="/client/scripts/auth/signout.js"></script>
+  <script type="module" src="/client/scripts/auth/suspended.js"></script>
 </body>
-<script type="module" src="/client/scripts/auth/signout.js"></script>
 
 </html>
