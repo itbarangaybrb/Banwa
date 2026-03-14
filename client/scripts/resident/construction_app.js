@@ -127,11 +127,30 @@ const validator = (() => {
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
         if (value === '' || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+            }
+            if (value.length < 2) { showError(input, 'Too short'); return false; }
+            if (value.length > 50) { showError(input, 'Too long'); return false; }
+            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 8) {
+                const lower = value.toLowerCase();
+                const chunk = lower.slice(0, 4);
+                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            }
         }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+        }
+
         clearError(input); return true;
     }
 
@@ -160,6 +179,15 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
+        }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
         clearError(input); return true;
@@ -296,18 +324,18 @@ const validator = (() => {
  * Each object specifies element, validation type, error message, and any additional rules
  */
 const validationConfig = [
-    { el: firstName, type: 'text', message: 'Please enter your first name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: lastName, type: 'text', message: 'Please enter your last name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Please enter your contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
+    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
     { el: addressOwner, type: 'text', message: 'Address is required' },
     { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
-    { el: detailsOfWork, type: 'text', message: 'Please provide details of the work' },
+    { el: detailsOfWork, type: 'text', message: 'Details required', rules: { minLength: 10, maxLength: 500 } },
     { el: startDate, type: 'date', message: 'Please select the expected start date' },
     { el: endDate, type: 'date', message: 'Please select the expected completion date' },
     { el: numberOfWorkers, type: 'number', message: 'Please enter the number of workers', rules: { minLength: 1, maxLength: 2, errorMessage: 'Number of workers must be at least 1' } },
     { el: contractorName, type: 'text', message: 'Please enter the contractor\'s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contractorContactNumber, type: 'number', message: 'Please enter the contractor\'s contact number', rules: { pattern: /^[0-9]{11}$/, minLength: 7, maxLength: 11, errorMessage: 'Contact No. must be exactly 11 digits' } },
+    { el: contractorContactNumber, type: 'number', message: 'Contractor contact number is required', rules: { phoneType: 'ph' } },
     { el: applicationMethod, type: 'select', message: 'Please select how you will submit the application' },
     { el: constructionLotNo, type: 'number', message: 'Please enter the lot number', rules: { maxLength: 2 } },
     { el: constructionStreet, type: 'select', message: 'Please select the street' },

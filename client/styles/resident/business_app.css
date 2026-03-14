@@ -53,21 +53,21 @@ body {
 } */
 
 .containers {
-    max-width: 927px;
-    margin-inline: auto;
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
+  max-width: 927px;
+  margin-inline: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
 }
 
 @media screen and (max-width: 780px) {
-    .sections {
-        padding: 96px 16px;
-    }
+  .sections {
+    padding: 96px 16px;
+  }
 
-    .containers {
-        padding: 1rem;
-    }
+  .containers {
+    padding: 1rem;
+  }
 }
 
 
@@ -405,6 +405,10 @@ body {
 .error {
   outline: 1px solid red;
   /* border: 1px solid red !important; */
+}
+
+input[type="radio"].error {
+  outline: none;
 }
 
 .hidden {
