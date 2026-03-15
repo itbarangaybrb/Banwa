@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== NAVIGATION HIGHLIGHTING ====================
 function initNavHighlighting() {
+    // FIRST CHECK: Return if nav container doesn't exist on this page
+    const navContainer = document.querySelector('.nav_list');
+    if (!navContainer) {
+        console.log('Navigation container not found on this page - skipping highlight');
+        return;
+    }
+    
     const currentPath = window.location.pathname;
     const currentPage = currentPath.split('/').pop() || 'home.php';
     const navItems = document.querySelectorAll('.nav_list a, .nav_list button');
@@ -24,12 +31,20 @@ function initNavHighlighting() {
 
     navItems.forEach(item => {
         item.classList.remove('active');
-        item.removeAttribute('aria-current');
+        // ADDED EXTRA SAFETY CHECK: Verify item is a valid DOM element
+        if (item && item.nodeType === 1 && typeof item.hasAttribute === 'function') {
+            if (item.hasAttribute('aria-current')) {
+                item.removeAttribute('aria-current');
+            }
+        }
     });
     
     let foundActive = false;
     
     navItems.forEach(item => {
+        // ADDED SAFETY CHECK: Skip if item is not a valid element
+        if (!item || item.nodeType !== 1) return;
+        
         const linkHref = item.getAttribute('href');
         
         // Skip button (logout) - it doesn't have href
@@ -40,7 +55,10 @@ function initNavHighlighting() {
         // Match if: page filename matches
         if (linkPage === currentPage) {
             item.classList.add('active');
-            item.setAttribute('aria-current', 'page');
+            // Add aria-current only if element is valid
+            if (item && item.nodeType === 1 && typeof item.setAttribute === 'function') {
+                item.setAttribute('aria-current', 'page');
+            }
             foundActive = true;
             console.log('Nav item activated:', linkPage);
         }
@@ -49,9 +67,11 @@ function initNavHighlighting() {
     if (!foundActive) {
         // Fallback: activate home link if no match
         const homeLink = document.querySelector('.nav_list a[href*="home.php"]');
-        if (homeLink) {
+        if (homeLink && homeLink.nodeType === 1) {
             homeLink.classList.add('active');
-            homeLink.setAttribute('aria-current', 'page');
+            if (typeof homeLink.setAttribute === 'function') {
+                homeLink.setAttribute('aria-current', 'page');
+            }
             console.log('Fallback: Home link activated');
         }
     }
@@ -176,46 +196,60 @@ function initMobileNavigation() {
     function handleDropdownClick(e) {
         e.preventDefault();
         const dropdown = this.closest('.dropdown');
-        dropdown.classList.toggle('active');
+        if (dropdown) {
+            dropdown.classList.toggle('active');
+        }
     }
     
     // Check if mobile view and attach handlers
     function checkMobileView() {
         if (window.innerWidth <= 992) {
             dropdownToggles.forEach(toggle => {
-                toggle.removeEventListener('click', handleDropdownClick);
-                toggle.addEventListener('click', handleDropdownClick);
+                if (toggle) {
+                    toggle.removeEventListener('click', handleDropdownClick);
+                    toggle.addEventListener('click', handleDropdownClick);
+                }
             });
         } else {
             dropdownToggles.forEach(toggle => {
-                toggle.removeEventListener('click', handleDropdownClick);
+                if (toggle) {
+                    toggle.removeEventListener('click', handleDropdownClick);
+                }
             });
             
             // Reset dropdowns when switching to desktop
             document.querySelectorAll('.dropdown').forEach(dropdown => {
-                dropdown.classList.remove('active');
+                if (dropdown) {
+                    dropdown.classList.remove('active');
+                }
             });
         }
     }
     
     // Initial check
-    checkMobileView();
+    if (dropdownToggles.length > 0) {
+        checkMobileView();
+    }
     
     // Close menu when clicking on a link
     const navLinks = document.querySelectorAll('.nav_select, .dropdown-menu a');
     navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth <= 992) {
-                hamburgerBtn.classList.remove('active');
-                navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
+        if (link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 992) {
+                    hamburgerBtn.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
     });
     
     // Handle window resize
     window.addEventListener('resize', function() {
-        checkMobileView();
+        if (dropdownToggles.length > 0) {
+            checkMobileView();
+        }
         
         // Close mobile menu if window becomes larger than mobile breakpoint
         if (window.innerWidth > 992) {
