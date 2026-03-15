@@ -44,77 +44,98 @@ const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/constructi
 const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
 
+// Add these with your other DOM element references
+const ownerLotNo = document.getElementById('ownerLotNo');
+const ownerStreet = document.getElementById('ownerStreet');
+const constructionLotNo = document.getElementById('constructionLotNo');
+const constructionStreet = document.getElementById('constructionStreet');
+const contactNoOwner = document.getElementById('contactNoOwner');
+const contractorContactNumber = document.getElementById('contractorContactNumber');
+const numberOfWorkers = document.getElementById('numberOfWorkers');
+
 // Simple address validation function for the create form
-function validateConstructionAddress() {
-    const lotInput = document.getElementById('constructionLotNo');
-    const streetInput = document.getElementById('constructionStreet');
-
-    if (!lotInput || !streetInput) return true;
-
+/**
+ * Validates address fields and verifies existence in addressCoordinates database
+ * Also automatically populates latitude/longitude if address is valid
+ * @param {HTMLInputElement} lotInput - Lot number input element
+ * @param {HTMLSelectElement} streetInput - Street selection element
+ * @param {string} target - '1' for owner, '2' for construction
+ * @returns {boolean} - Whether the address is valid and exists
+ */
+function validateAddress(lotInput, streetInput, target) {
     const lot = lotInput.value.trim();
-    const street = streetInput.value;
+    const street = streetInput.value.trim();
 
-    if (!lot || !street || street === '') {
+    if (!lot) {
+        showFieldError(lotInput, 'House No. is required');
+        return false;
+    }
+
+    if (!street || street === '') {
+        showFieldError(streetInput, 'Street is required');
         return false;
     }
 
     const fullAddress = `${lot} ${street}`;
     const match = addressCoordinates.find(a => a.address === fullAddress);
 
-    if (match) {
-        const lat = document.getElementById('latitude2');
-        const lng = document.getElementById('longitude2');
+    if (!match) {
+        showFieldError(streetInput, 'Address does not exist in our records');
+        return false;
+    }
+
+    // Clear any existing errors
+    clearFieldError(lotInput);
+    clearFieldError(streetInput);
+
+    // Set latitude and longitude if target is provided
+    if (target) {
+        const lat = document.getElementById(`latitude${target}`);
+        const lng = document.getElementById(`longitude${target}`);
         if (lat && lng) {
             lat.value = match.lat.toFixed(6);
             lng.value = match.lng.toFixed(6);
         }
-        return true;
     }
 
-    // Show error message
-    Swal.fire({
-        ...swalTopConfig,
-        icon: 'error',
-        title: 'Invalid Construction Address',
-        text: 'The construction address does not exist in our records. Please check the lot number and street.',
-        confirmButtonColor: '#00247C'
-    });
-    return false;
+    return true;
 }
 
 /**
- * Validates owner address against the addressCoordinates database
- * @returns {boolean} - Whether the address exists in records
+ * Shows error message for a field
+ * @param {HTMLElement} field - The input/select element
+ * @param {string} message - Error message to display
  */
-function validateOwnerAddress() {
-    const lotInput = document.getElementById('ownerLotNo');
-    const streetInput = document.getElementById('ownerStreet');
+function showFieldError(field, message) {
+    const wrapper = field.closest('.form-group');
+    if (!wrapper) return;
 
-    if (!lotInput || !streetInput) return true;
-
-    const lot = lotInput.value.trim();
-    const street = streetInput.value;
-
-    if (!lot || !street || street === '') {
-        return false;
+    let errorEl = wrapper.querySelector('.error-msg');
+    if (!errorEl) {
+        errorEl = document.createElement('div');
+        errorEl.className = 'error-msg';
+        wrapper.appendChild(errorEl);
     }
 
-    const fullAddress = `${lot} ${street}`;
-    const match = addressCoordinates.find(a => a.address === fullAddress);
+    field.classList.add('error');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+}
 
-    if (match) {
-        return true;
+/**
+ * Clears error for a field
+ * @param {HTMLElement} field - The input/select element
+ */
+function clearFieldError(field) {
+    const wrapper = field.closest('.form-group');
+    if (!wrapper) return;
+
+    const errorEl = wrapper.querySelector('.error-msg');
+    if (errorEl) {
+        field.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
     }
-
-    // Show error message
-    Swal.fire({
-        ...swalTopConfig,
-        icon: 'error',
-        title: 'Invalid Owner Address',
-        text: 'The owner address does not exist in our records. Please check the lot number and street.',
-        confirmButtonColor: '#00247C'
-    });
-    return false;
 }
 
 /**
@@ -2004,12 +2025,19 @@ function downloadSummary(appId) {
 function createApplication(event) {
     event.preventDefault();
 
-    // Validate both addresses separately with specific error messages
-    const isOwnerAddressValid = validateOwnerAddress();
-    const isConstructionAddressValid = validateConstructionAddress();
+    // Validate both addresses with the new validateAddress function
+    const isOwnerAddressValid = ownerLotNo && ownerStreet ?
+        validateAddress(ownerLotNo, ownerStreet, '1') : true;
+    const isConstructionAddressValid = constructionLotNo && constructionStreet ?
+        validateAddress(constructionLotNo, constructionStreet, '2') : true;
 
     if (!isOwnerAddressValid || !isConstructionAddressValid) {
-        // Individual validation functions already showed specific error messages
+        // Scroll to the first invalid field
+        if (!isOwnerAddressValid) {
+            ownerLotNo?.focus();
+        } else if (!isConstructionAddressValid) {
+            constructionLotNo?.focus();
+        }
         return;
     }
 
@@ -2266,6 +2294,84 @@ function reRunOCR(appId) {
 }
 
 /**
+ * Toggles visibility of file upload inputs based on application method selection
+ * Hides the file upload fields when "In Person" is selected, shows them when "Online" is selected
+ */
+function toggleFileUploads() {
+    const applicationMethod = document.getElementById('applicationMethod');
+    const requirementUpload = document.getElementById('requirementUpload')?.closest('.form-group');
+    const additionalFiles = document.getElementById('additionalFiles')?.closest('.form-group');
+
+    if (!applicationMethod || !requirementUpload || !additionalFiles) return;
+
+    // Check if "In Person" is selected OR if no value is selected (default to showing)
+    if (applicationMethod.value === 'In Person') {
+        // Hide file upload inputs
+        requirementUpload.style.display = 'none';
+        additionalFiles.style.display = 'none';
+
+        // Remove required attribute from file input when hidden
+        const fileInput = document.getElementById('requirementUpload');
+        if (fileInput) {
+            fileInput.removeAttribute('required');
+        }
+    } else {
+        // Show file upload inputs (for 'Online' or default)
+        requirementUpload.style.display = 'block';
+        additionalFiles.style.display = 'block';
+
+        // Add required attribute back when visible
+        const fileInput = document.getElementById('requirementUpload');
+        if (fileInput) {
+            fileInput.setAttribute('required', 'required');
+        }
+    }
+}
+
+/**
+ * Toggles visibility of the application method field based on nature of activity selection
+ * Hides the field and clears its value when 'Demolition' is selected, as submission
+ * method is not applicable for demolition work. Also re-triggers file upload visibility.
+ */
+function toggleApplicationMethod() {
+    const natureOfActivity = document.getElementById('natureOfActivity');
+    const applicationMethodWrapper = document.getElementById('applicationMethod')?.closest('.form-group');
+
+    if (!natureOfActivity || !applicationMethodWrapper) return;
+
+    if (natureOfActivity.value === 'Demolition') {
+        applicationMethodWrapper.style.display = 'none';
+        const applicationMethod = document.getElementById('applicationMethod');
+        if (applicationMethod) applicationMethod.value = '';
+    } else {
+        applicationMethodWrapper.style.display = 'block';
+    }
+
+    toggleFileUploads();
+}
+
+/**
+ * Shows or hides "specify" text fields based on "Others" selection in dropdowns
+ * @param {HTMLSelectElement} selectEl - The primary select element
+ * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
+ */
+function handleOthersSelect(selectEl, specifyEl) {
+    if (!selectEl || !specifyEl) return;
+
+    const wrapper = specifyEl.closest('.form-group');
+    if (!wrapper) return;
+
+    if (selectEl.value === 'Other') {
+        wrapper.style.display = 'block';
+        specifyEl.setAttribute('required', 'required');
+    } else {
+        wrapper.style.display = 'none';
+        specifyEl.value = '';
+        specifyEl.removeAttribute('required');
+    }
+}
+
+/**
  * Fetch audit logs from the server
  * Clears and re-renders the entire audit table
  *
@@ -2433,6 +2539,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
+    const applicationMethod = document.getElementById('applicationMethod');
+    if (applicationMethod) {
+        applicationMethod.addEventListener('change', toggleFileUploads);
+    }
+
+    const natureOfActivity = document.getElementById('natureOfActivity');
+    if (natureOfActivity) {
+        natureOfActivity.addEventListener('change', toggleApplicationMethod);
+    }
+
+    const typeOfWork = document.getElementById('typeOfWork');
+    const detailsOfWork = document.getElementById('detailsOfWork');
+    if (typeOfWork && detailsOfWork) {
+        typeOfWork.addEventListener('change', () => handleOthersSelect(typeOfWork, detailsOfWork));
+        handleOthersSelect(typeOfWork, detailsOfWork);
+    }
 });
 // CLOSE MODAL ON OUTSIDE CLICK
 window.onclick = function (event) {
@@ -2523,6 +2647,47 @@ document.addEventListener('DOMContentLoaded', function () {
     navLogo.addEventListener('click', () => {
         sideNav.classList.toggle('expanded');
     });
+
+    if (ownerLotNo && ownerStreet) {
+        [ownerLotNo, ownerStreet].forEach(el => {
+            el.addEventListener('blur', () => {
+                if (ownerLotNo.value && ownerStreet.value) {
+                    validateAddress(ownerLotNo, ownerStreet, '1');
+                }
+            });
+            el.addEventListener('input', () => clearFieldError(el));
+            el.addEventListener('change', () => clearFieldError(el));
+        });
+    }
+
+    // Address validation for construction address
+    if (constructionLotNo && constructionStreet) {
+        [constructionLotNo, constructionStreet].forEach(el => {
+            el.addEventListener('blur', () => {
+                if (constructionLotNo.value && constructionStreet.value) {
+                    validateAddress(constructionLotNo, constructionStreet, '2');
+                }
+            });
+            el.addEventListener('input', () => clearFieldError(el));
+            el.addEventListener('change', () => clearFieldError(el));
+        });
+    }
+
+    // Input sanitization for numeric fields (remove non-digit characters)
+    [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers, ownerLotNo].forEach(el => {
+        if (el) {
+            el.addEventListener('input', () => {
+                el.value = el.value.replace(/\D/g, '');
+                clearFieldError(el);
+            });
+        }
+    });
+
+    const applicationMethod = document.getElementById('applicationMethod');
+    if (applicationMethod) {
+        applicationMethod.addEventListener('change', toggleFileUploads);
+        toggleFileUploads();
+    }
 });
 
 // ===============================================
@@ -2545,3 +2710,7 @@ window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
 window.archiveApplication = archiveApplication;
 window.reRunOCR = reRunOCR;
+
+window.toggleFileUploads = toggleFileUploads;
+window.toggleApplicationMethod = toggleApplicationMethod;
+window.handleOthersSelect = handleOthersSelect;

@@ -371,6 +371,7 @@ $full_name = getCurrentUserName();
             </div>
 
             <!-- Create Tab -->
+            <!-- Create Tab -->
             <div id="create" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -391,85 +392,165 @@ $full_name = getCurrentUserName();
                     <div class="section-title">Owner Information</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="firstName">First Name *</label>
-                            <input type="text" name="firstName" required>
+                            <label for="firstName">First Name <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="firstName" name="firstName" required>
+                            <div class="error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="middleName">Middle Name</label>
-                            <input type="text" name="middleName">
+                            <label for="middleName">Middle Name <i>(Optional)</i></label>
+                            <input type="text" id="middleName" name="middleName">
+                            <div class="error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="lastName">Last Name *</label>
-                            <input type="text" name="lastName" required>
+                            <label for="lastName">Last Name <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="lastName" name="lastName" required>
+                            <div class="error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="suffix">Suffix</label>
-                            <input type="text" name="suffix">
+                            <label for="suffix">Suffix <i>(Optional)</i></label>
+                            <input type="text" id="suffix" name="suffix">
+                            <div class="error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="contactNoOwner">Contact No *</label>
-                            <input type="tel" name="contactNoOwner" required>
+                            <label for="contactNoOwner">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                            <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
+                            <div class="error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="ownerAddress">Owner Address *</label>
-                            <input type="text" name="ownerAddress" required>
+                            <label for="addressOwner">Full Address <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="addressOwner" name="addressOwner" required>
+                            <div class="error-msg"></div>
                         </div>
                     </div>
 
                     <!-- Construction Details -->
-                    <div class="section-title">Construction Details</div>
+                    <div class="section-title">Construction Information</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="constructionAddress">Construction Address *</label>
-                            <input type="text" name="constructionAddress" required>
+                            <label for="natureOfActivity">What kind of work will be done? <span style="color: #BB1B1B;">*</span></label>
+                            <select name="natureOfActivity" id="natureOfActivity" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="Demolition">Demolition</option>
+                                <option value="Major Construction">Major Construction</option>
+                                <option value="Minor Construction">Minor Construction</option>
+                                <option value="Repairs">Repairs</option>
+                            </select>
+                            <div class="error-msg"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="natureOfActivity">Nature of Activity *</label>
-                            <input type="text" name="natureOfActivity" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="typeOfWork">Type of Work *</label>
-                            <input type="text" name="typeOfWork" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="detailsOfWork">Details of Work *</label>
-                            <textarea name="detailsOfWork" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="startDate">Start Date</label>
-                            <input type="date" name="startDate">
-                        </div>
-                        <div class="form-group">
-                            <label for="endDate">End Date</label>
-                            <input type="date" name="endDate">
-                        </div>
-                        <div class="form-group">
-                            <label for="numberOfWorkers">Number of Workers</label>
-                            <input type="number" name="numberOfWorkers" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="numberOfWorkingDays">Working Days</label>
-                            <input type="number" name="numberOfWorkingDays" min="0">
-                        </div>
-                    </div>
 
-                    <!-- Contractor Information -->
-                    <div class="section-title">Contractor Information</div>
-                    <div class="form-row">
                         <div class="form-group">
-                            <label for="contractorName">Contractor Name</label>
-                            <input type="text" name="contractorName">
+                            <label for="typeOfWork">Type of Construction Work <span style="color: #BB1B1B;">*</span></label>
+                            <select id="typeOfWork" name="typeOfWork" required>
+                                <option value="" disabled selected>Select Type of Work</option>
+                                <option value="residential">Residential (House)</option>
+                                <option value="commercial">Commercial (Business)</option>
+                                <option value="renovation">Renovation / Remodeling</option>
+                                <option value="demolition">Demolition</option>
+                                <option value="addition">Extension / Additional Structure</option>
+                                <option value="repair">Repair</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="error-msg"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="contractorContactNumber">Contractor Contact</label>
-                            <input type="tel" name="contractorContactNumber">
-                        </div>
-                    </div>
 
-                    <!-- Requirements -->
-                    <div class="section-title">Requirements (Photocopy Only)</div>
-                    <div class="form-group">
-                        <input type="file" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-group">
+                            <label for="detailsOfWork">Please describe the work to be done <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="detailsOfWork" name="detailsOfWork" rows="3" required></textarea>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="startDate">Expected Start Date <span style="color: #BB1B1B;">*</span></label>
+                            <input type="date" id="startDate" name="startDate" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDate">Expected Completion Date <span style="color: #BB1B1B;">*</span></label>
+                            <input type="date" id="endDate" name="endDate" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numberOfWorkingDays">Estimated Number of Working Days <i>(Read only)</i></label>
+                            <input type="tel" id="numberOfWorkingDays" name="numberOfWorkingDays" maxlength="2" pattern="[0-9]{1,2}" readonly>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numberOfWorkers">How Many Workers Will Be Involved? <span style="color: #BB1B1B;">*</span></label>
+                            <input type="tel" id="numberOfWorkers" name="numberOfWorkers" maxlength="2" pattern="[0-9]{1,2}" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contractorName">Name of Contractor <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="contractorName" name="contractorName" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contractorContactNumber">Contractor's Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                            <input type="tel" id="contractorContactNumber" name="contractorContactNumber" maxlength="11" pattern="[0-9]{1,11}" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="constructionLotNo">House no. <span style="color: #BB1B1B;">*</span></label>
+                            <input type="tel" name="constructionLotNo" id="constructionLotNo" maxlength="2" pattern="[0-9]{1,2}" required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="constructionStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
+                            <select name="constructionStreet" id="constructionStreet" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
+                                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
+                                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
+                                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
+                                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
+                                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
+                                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
+                                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
+                                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
+                                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
+                                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
+                                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
+                                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
+                                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <input type="hidden" id="latitude2" name="latitude2" pattern="-?\d{1,2}\.\d{6,8}"
+                            title="Enter latitude in decimal format (e.g., 14.617500)"
+                            placeholder="e.g., 14.617500">
+                        <input type="hidden" id="longitude2" name="longitude2" pattern="-?\d{1,3}\.\d{6,8}"
+                            title="Enter longitude in decimal format (e.g., 121.075600)"
+                            placeholder="e.g., 121.075600">
+
+                        <div class="form-group">
+                            <label for="applicationMethod">How will you submit the building plan or blueprint? <span style="color: #BB1B1B;">*</span></label>
+                            <select name="applicationMethod" id="applicationMethod" required>
+                                <option value="" disabled selected>Select</option>
+                                <option value="Online">Online</option>
+                                <option value="In Person">In Person</option>
+                            </select>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="requirementUpload">Building Plan or Blueprint <span style="color: #BB1B1B;">*</span></label>
+                            <input type="file" id="requirementUpload" name="requirementUpload[]" accept="image/*,.pdf" multiple required>
+                            <div class="error-msg"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="additionalFiles">Additional Images/Documents</label>
+                            <input type="file" id="additionalFiles" name="additionalFiles[]" accept="image/*,.pdf,.doc,.docx" multiple>
+                            <div class="error-msg"></div>
+                        </div>
                     </div>
 
                     <div class="button-group">
@@ -553,7 +634,7 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </div>
-            
+
             <div id="archives" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -569,7 +650,7 @@ $full_name = getCurrentUserName();
                     <h2>Archives</h2>
                     <p class="form-description">View and restore your archived records.</p>
                 </div>
-    
+
                 <div class="table-responsive">
                     <table>
                         <thead>

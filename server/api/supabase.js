@@ -1,8 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const SUPABASE_URL = 'https://owtynidzffffsiftqxbh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93dHluaWR6ZmZmZnNpZnRxeGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyMjE1NjMsImV4cCI6MjA3OTc5NzU2M30._Hbh-nCdTuVf6vuCb2Th2ruanFBF4wdZIVAVvrfLorY';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY );
+const SUPABASE_URL = 'https://iwhpsyzpwrtuevaaaomr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3aHBzeXpwd3J0dWV2YWFhb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1ODk5MjUsImV4cCI6MjA4OTE2NTkyNX0.1oeKdCHbDuDjl2rC7mukKGk_S0chZwIV4-AXtlmbGN0';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default supabase;
