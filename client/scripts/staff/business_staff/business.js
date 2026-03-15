@@ -2217,13 +2217,6 @@ document.addEventListener('DOMContentLoaded', () => {
 //     });
 // }
 
-// Status templates for quick text insertion
-const statusTemplates = {
-    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
-    'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
-    'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
-    'Approved': "Your Business Clearance is now ready for pick-up/download."
-};
 
 /**
  * Fetch audit logs from the server
@@ -2305,6 +2298,14 @@ function appendAuditRow(log) {
 
     tbody.prepend(tr);
 }
+
+// Status templates for quick text insertion
+const statusTemplates = {
+    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
+    'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
+    'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
+    'Approved': "Your Business Clearance is now ready for pick-up/download."
+};
 
 // Event listener for status change to update textarea with templates
 document.addEventListener('DOMContentLoaded', function () {

@@ -429,7 +429,7 @@ function initializeSuspendTemplates() {
         reasonTemplates[selected].forEach(template => {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.classList.add('reason-btn');
+            btn.classList.add('buttons', 'reason-btn');
             btn.textContent = template;
 
             btn.addEventListener('click', () => {

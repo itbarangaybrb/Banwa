@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./03062025_banwa.sql:/docker-entrypoint-initdb.d/03062025_banwa.sql
+      # - ./03062025_banwa.sql:/docker-entrypoint-initdb.d/03062025_banwa.sql
 
   ws:
     build:
@@ -51,6 +51,22 @@ services:
     depends_on:
       - db
     command: php /var/www/html/server/scripts/ocr_worker.php
+    volumes:
+      - .:/var/www/html
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: >
+      bash -c "apt-get update && apt-get install -y cron &&
+      echo '*/5 * * * * php /var/www/html/server/scripts/auto_unsuspend.php >> /var/log/auto_unsuspend.log 2>&1' 
+      | crontab - && cron -f"
     volumes:
       - .:/var/www/html
 
