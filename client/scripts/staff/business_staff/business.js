@@ -2225,9 +2225,9 @@ function appendAuditRow(log) {
 
 // Status templates for quick text insertion
 const statusTemplates = {
-    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Treasury office.",
+    'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Barangay Hall.",
     'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
-    'Missing Docs': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
+    'Additional Requirements': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
     'Approved': "Your Business Clearance is now ready for pick-up/download."
 };
 
@@ -2344,6 +2344,7 @@ document.head.insertAdjacentHTML("beforeend", `
         .swal2-container, .sweetalert-top { z-index: 2147483647 !important; }
         .swal2-backdrop { z-index: 2147483646 !important; }
         .biz-swal-popup { z-index: 2147483647 !important; }
+        .swal2-title, .swal2-html-container { text-align: center !important; } /* ADDED THIS LINE */
     </style>
 `);
 
