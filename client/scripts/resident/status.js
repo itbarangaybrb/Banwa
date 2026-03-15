@@ -315,6 +315,7 @@ async function openPaymentModalFor(appId, appType, appPurpose) {
             paymentForm.addEventListener('submit', (event) => handleSubmitPayment(event, appId));
         }
 
+
         const cancelBtn = document.getElementById('payment-modal-cancel-btn');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', closePaymentModal);
@@ -730,10 +731,14 @@ function sendWebSocketUpdate(appType, appId, action = 'update') {
                 messageType = 'utility_applications_update';
                 break;
 
-            // for now as temporary only
             case 'Incident Reports':
                 socketType = 'incident_reports';
                 messageType = 'incident_reports_update';
+                break;
+
+            case 'payment':
+                socketType = 'finance_applications';
+                messageType = 'finance_applications_update';
                 break;
 
             default:
@@ -985,18 +990,22 @@ async function handleSubmitPayment(event, appId) {
             throw new Error(result.message || 'Failed to submit payment details.');
         }
 
-        // SUCCESS ALERT - Using global BanwaSwal (centered + proper spacing)
         await BanwaSwal.fire({
             icon: 'success',
             title: 'Payment Submitted!',
             html: 'Payment details submitted successfully!<br><br>Your payment is now <strong>Pending Verification</strong>.'
         });
+
+        const appType = formData.get('payment_purpose_app_type') || 'Business';
+
+        sendWebSocketUpdate(appType, appId, 'payment');
+        sendWebSocketUpdate('payment', appId, 'payment');
+
         closePaymentModal();
         loadApplications();
 
     } catch (error) {
         console.error('Error submitting payment:', error);
-        // ERROR ALERT - Using global BanwaSwal (centered + proper spacing)
         BanwaSwal.fire({
             icon: 'error',
             title: 'Submission Failed',
@@ -1165,7 +1174,7 @@ async function loadPayments() {
     try {
         const res = await fetch('/server/api/resident/get_payment.php');
         const data = await res.json();
-        
+
         tableBody.innerHTML = '';
 
         if (!data.success || !data.payments || data.payments.length === 0) {
@@ -1176,7 +1185,7 @@ async function loadPayments() {
         data.payments.forEach(pay => {
             const tr = document.createElement('tr');
             const payDate = pay.payment_date ? new Date(pay.payment_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
-            
+
             // Clean status for CSS class (e.g., "Pending Verification" -> "pending-verification")
             const statusClass = pay.status ? pay.status.toLowerCase().replace(/\s+/g, '-') : 'pending';
 
@@ -1187,7 +1196,7 @@ async function loadPayments() {
                 </td>
                 <td>
                     <div style="font-weight: 600; color: #00247C;">${pay.type}</div>
-                    <div style="font-size: 13px; margin-top: 4px;">Amount: ₱${parseFloat(pay.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    <div style="font-size: 13px; margin-top: 4px;">Amount: ₱${parseFloat(pay.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     <div style="font-size: 11px; color: #666;">Date: ${payDate}</div>
                 </td>
                 <td>
@@ -1215,12 +1224,12 @@ async function loadPayments() {
 
 function attachReceiptListeners() {
     document.querySelectorAll('.view-receipt-btn').forEach(btn => {
-        btn.onclick = function() {
+        btn.onclick = function () {
             const url = this.getAttribute('data-url');
             if (!url) return;
 
             const isPdf = url.toLowerCase().endsWith('.pdf');
-            const content = isPdf 
+            const content = isPdf
                 ? `<iframe src="${url}" style="width:100%; height:500px;" frameborder="0"></iframe>`
                 : `<img src="${url}" id="receipt-img-preview" style="max-width:100%; border-radius:8px;">`;
 
@@ -1270,12 +1279,13 @@ function attachReceiptListeners() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
-    loadCurrentTab();        // loads "Applications" tab by default
-});
-
-
+function refreshActiveTab() {
+    if (currentTab === 'applications') {
+        loadApplications();
+    } else {
+        loadPayments();
+    }
+}
 
 /**
  * Checks for updates on resident applications by fetching data from the server
@@ -1318,6 +1328,14 @@ function showStatusNotification(appId, appType, newStatus) {
         return;
     }
 
+    if (!sockets || !sockets["finance_applications"]) {
+        initSocket("finance_applications", "ws://localhost:8081", data => {
+            if (data.type === "finance_applications_update") {
+                refreshActiveTab();
+            }
+        });
+    }
+
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
             registration.showNotification("Application Status Updated", {
@@ -1330,6 +1348,9 @@ function showStatusNotification(appId, appType, newStatus) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initTabs();
+    loadCurrentTab();
+
     if (!sockets["construction_applications"]) {
         initSocket("construction_applications", "ws://localhost:8081", data => {
             if (data.type === "construction_applications_update") {
