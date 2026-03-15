@@ -18,23 +18,7 @@ const swalTopConfig = {
 };
 
 // Map filter visibility flag for this management page
-const PAGE_CATEGORY = 'business';
-let mapFilterVisible = true;
 
-window.addEventListener('staffMapFilterChanged', (e) => {
-    try {
-        const detail = e && e.detail && e.detail.activeFilters;
-        if (!detail) return;
-        if (Array.isArray(detail)) {
-            mapFilterVisible = detail.includes(PAGE_CATEGORY);
-        } else {
-            mapFilterVisible = !!detail[PAGE_CATEGORY];
-        }
-        filterApplications();
-    } catch (err) {
-        console.warn('Error handling staffMapFilterChanged in business:', err);
-    }
-});
 
 // Initialize sidebar navigation
 document.addEventListener('DOMContentLoaded', function () {
@@ -152,14 +136,6 @@ function filterApplications() {
 
     if (!tbody) {
         console.error('Table body not found');
-        return;
-    }
-
-    if (!mapFilterVisible) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
-            </tr>`;
         return;
     }
 
