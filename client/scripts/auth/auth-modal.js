@@ -467,7 +467,7 @@ async function processOCR() {
             <div class="progress-bar"></div>
         </div>
         <div style="text-align: center; font-weight: bold; margin-top: 8px;">
-            Checking ID fingerprints...
+            Checking ID...
         </div>
     `;
 

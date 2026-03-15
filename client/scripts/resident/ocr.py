@@ -218,7 +218,7 @@ def parse_id_data(text_lines, id_type):
                 'apikey': API_KEY,
                 'language': 'eng',
                 'isOverlayRequired': False,
-                'OCREngine': 2 
+                'OCREngine': 1 
             }
         
             response = requests.post(

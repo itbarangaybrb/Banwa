@@ -676,7 +676,8 @@
                                 <div class="label-and-input" id="idFileWrapper">
                                     <label for="idFile">
                                         Upload ID File <span style="color: #BB1B1B;">*</span><br>
-                                        <i>(Clear image of the front of your ID)</i>
+                                        <i>(Clear image of the front of your ID)</i><br>
+                                        <i style="color: #555; font-size: 0.9em;">(Make sure the image is clear and all information on the ID is readable.)</i>
                                     </label>
                                     <input id="idFile" name="idFile" type="file" accept="image/png, image/jpeg, image/jpg" required />
                                     <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
