@@ -4,7 +4,7 @@ import { fetchUsers } from '../staff/superadmin/manage_users.js';
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
     /* Universal Popup Spacing */
-    .swal2-popup {
+    .archive-swal2-popup {
         padding: 2rem 1.5rem !important; 
         border-radius: 15px !important;
         display: flex !important;
@@ -12,14 +12,14 @@ swalStyle.innerHTML = `
     }
 
     /* Consistent Icon Margins for Success/Error/Warning */
-    .swal2-icon {
+    .archive-swal2-popup .swal2-icon {
         margin-top: 1rem !important;
         margin-bottom: 1rem !important;
         border-width: 4px !important;
     }
 
     /* Standardized Titles */
-    .swal2-title {
+    .archive-swal2-popup .swal2-title {
         color: #00247C !important;
         font-size: 1.6rem !important;
         font-weight: 700 !important;
@@ -28,16 +28,35 @@ swalStyle.innerHTML = `
     }
 
     /* Standardized Text Content */
-    .swal2-html-container {
+    .archive-swal2-popup .swal2-html-container {
         margin: 1rem 0 !important;
         font-size: 1.05rem !important;
         color: #555 !important;
+        text-align: center !important;
     }
 
     /* Button Spacing */
-    .swal2-actions {
-        margin-top: 1.5rem !important;
-        margin-bottom: 0.5rem !important;
+    .archive-swal2-popup .swal2-actions {
+        gap: 4px;
+    }
+
+    .archive-swal2-popup .swal2-actions button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .archive-swal2-popup .swal2-actions .swal2-confirm {
+        background: #00247c !important;
+        color: white;
+    }
+
+    .archive-swal2-popup .swal2-actions .swal2-cancel {
+        background: #ecf0f1 !important;
+        color: #333;
     }
 `;
 document.head.appendChild(swalStyle);
@@ -167,10 +186,7 @@ async function restoreRecord(archiveId) {
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+            popup: 'archive-swal2-popup'
         }
     });
 
@@ -290,7 +306,7 @@ async function fetchArchives() {
             const tr = document.createElement('tr');
             const isRestored = item.restored_at && item.restored_at !== 'Not restored' && item.restored_at !== null;
             const restoreButton = !isRestored
-                ? `<button class="buttons restore-btn" data-id="${item.archive_id}">Restore</button>`
+                ? `<button class="btn buttons restore-btn" data-id="${item.archive_id}">Restore</button>`
                 : '<span style="color:#28a745; font-weight:500;">Restored</span>';
 
             tr.innerHTML = `
@@ -334,10 +350,7 @@ document.addEventListener('click', async (e) => {
                 text: 'Invalid archive ID. Please try again.',
                 buttonsStyling: false,
                 customClass: {
-                    popup: 'swal-popup',
-                    title: 'swal-title',
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
+                    popup: 'archive-swal2-popup'
                 }
             });
             return;
@@ -362,10 +375,7 @@ document.addEventListener('click', async (e) => {
                 text: 'Invalid user ID. Please try again.',
                 buttonsStyling: false,
                 customClass: {
-                    popup: 'swal-popup',
-                    title: 'swal-title',
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
+                    popup: 'archive-swal2-popup'
                 }
             });
             return;
@@ -380,7 +390,7 @@ document.addEventListener('click', async (e) => {
             cancelButtonText: 'Cancel',
             buttonsStyling: false,
             customClass: {
-                popup: 'swal-popup',
+                popup: 'archive-swal2-popup',
                 title: 'swal-title',
                 confirmButton: 'swal-confirm-btn',
                 cancelButton: 'swal-cancel-btn'

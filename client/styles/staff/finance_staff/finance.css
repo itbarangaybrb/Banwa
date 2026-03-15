@@ -2011,7 +2011,7 @@ body {
 .content {
     padding: 20px;
     flex: 1;
-    overflow-y: auto;
+    /* overflow-y: auto; */
 }
 
 .tab-pane {

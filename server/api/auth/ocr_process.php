@@ -17,7 +17,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 ob_start();
 
 // === CONFIG ===
-$OCR_API_KEY = 'K81052119188957';
+$OCR_API_KEY = 'K82731431388957';
 $BLUR_THRESHOLD = 150;
 $CONFIDENCE_THRESHOLD = 70;
 
@@ -176,6 +176,44 @@ function parse_id_data($raw_lines, $id_type) {
         }
     }
 
+    // QUEZON CITY ID - ROBUST FORMATTING
+    elseif ($id_type === 'Quezon') {
+        $found_name = false;
+
+        for ($i = 0; $i < count($lines); $i++) {
+            $line_upper = strtoupper($lines[$i]);
+            
+            // Look for the "LASTNAME, FIRSTNAME MIDDLEINITIAL" format
+            if (strpos($line_upper, ',') !== false && !preg_match('/\d|@|\(|\)|EMERGENCY|CONTACT|RESIDENT|ISSUED/i', $line_upper)) {
+                $parts = explode(',', $lines[$i], 2);
+                $last_part = trim($parts[0]);
+                $rest = trim($parts[1]);
+
+                if (strlen($last_part) > 1 && strlen($rest) > 1) {
+                    $data['lastName'] = ucwords(strtolower($last_part));
+                    
+                    // Separate First Name and Middle Initial/Name
+                    $name_parts = preg_split('/\s+/', $rest);
+                    $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 0 && preg_match('/[A-Za-z]/', $p));
+                    
+                    if (!empty($name_parts)) {
+                        $possible_mi = array_pop($name_parts); // Usually the last word is the MI
+                        
+                        // Check if it's an initial (1-2 chars or contains a dot)
+                        if (strlen($possible_mi) <= 2 || strpos($possible_mi, '.') !== false) {
+                            $data['middleName'] = ucwords(strtolower(str_replace('.', '', $possible_mi)));
+                            $data['firstName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                        } else {
+                            $name_parts[] = $possible_mi; // Put it back if it's a full name
+                            $data['firstName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                        }
+                    }
+                    $found_name = true;
+                    break;
+                }
+            }
+        }
+    }
     // QUEZON CITY ID - ROBUST DUAL METHOD
     elseif ($id_type === 'Quezon') {
         $found_name = false;
@@ -309,7 +347,9 @@ $post_fields = [
     'apikey' => $OCR_API_KEY,
     'language' => 'eng',
     'isOverlayRequired' => 'true',
-    'OCREngine' => '1', // Change '2' to '1'
+    'OCREngine' => '2',             // Upgraded to Engine 2 for structured documents
+    'scale' => 'true',              // Upscales the image internally for better text recognition
+    'detectOrientation' => 'true',  // Auto-rotates if the user uploads sideways
     'file' => $file_field
 ];
 
@@ -320,16 +360,31 @@ curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT => 60,
     CURLOPT_CONNECTTIMEOUT => 15,
-    // --- CHANGE THESE TWO LINES TO FALSE FOR TESTING ---
-    CURLOPT_SSL_VERIFYPEER => false, 
-    CURLOPT_SSL_VERIFYHOST => 0,
-    // ----------------------------------------------------
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
+    CURLOPT_CAINFO => __DIR__ . '/../../cacert.pem',   // ← uses your cacert.pem
     CURLOPT_FOLLOWLOCATION => true
 ]);
 
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curl_error = curl_error($ch);
+
+// === RETRY LOGIC (safety net - never fails even on weird hosting) ===
+if ($response === false && stripos($curl_error, 'SSL certificate') !== false) {
+    $logDir = __DIR__ . '/../../logs/';
+    if (!is_dir($logDir)) @mkdir($logDir, 0777, true);
+    @file_put_contents($logDir . 'ocr_debug.log', 
+        date('c') . " - SSL error for {$file['name']}, retrying with SSL verify disabled.\n", 
+        FILE_APPEND);
+
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+}
+
 curl_close($ch);
 
 if ($response !== false && $http_code === 200) {
