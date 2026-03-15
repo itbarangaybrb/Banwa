@@ -3481,7 +3481,7 @@ function buildDSSTab(dssData) {
     const typeColor   = t => t === 'construction' ? '#ffc107' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
 
     // Sort order: Pre-Approved (green) on top, Additional Requirements Needed (yellow) middle, Rejected (red) at bottom
-    const statusRank = { 'Pre-Approved': 1, 'Additional Requirements Needed': 2, 'Rejected': 3, 'Pending Evaluation': 4 };
+    const statusRank = { 'Pre-Approved': 1, 'Additional Requirements Needed': 2, 'Pending Evaluation': 3, 'Rejected': 4 };
 
     // Group by type
     const groups = { construction: [], business: [], utility: [], incident: [] };

@@ -223,24 +223,7 @@ const swalTopConfig = {
     }
 };
 
-// Map filter visibility flag for this management page
-const PAGE_CATEGORY = 'construction';
-let mapFilterVisible = true;
 
-window.addEventListener('staffMapFilterChanged', (e) => {
-    try {
-        const detail = e && e.detail && e.detail.activeFilters;
-        if (!detail) return;
-        if (Array.isArray(detail)) {
-            mapFilterVisible = detail.includes(PAGE_CATEGORY);
-        } else {
-            mapFilterVisible = !!detail[PAGE_CATEGORY];
-        }
-        filterApplications();
-    } catch (err) {
-        console.warn('Error handling staffMapFilterChanged in construction:', err);
-    }
-});
 
 // Initialize sidebar navigation
 document.addEventListener('DOMContentLoaded', function () {
@@ -340,15 +323,6 @@ function filterApplications() {
         return;
     }
 
-    // If map filter hides this category, show message and do not render
-    if (!mapFilterVisible) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center; padding: 40px; color:#999;">Hidden by map filters.</td>
-            </tr>`;
-        return;
-    }
-
     // 2. GET SEARCH VALUE
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
 
@@ -411,7 +385,7 @@ function filterApplications() {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Generate Permit</button>`;
+            actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
         }
         else {
             actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
@@ -537,12 +511,12 @@ function loadProcessTable() {
             // 2. Build the primary update/action button
             buttonsHtml += `<button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>`;
 
-            // 3. Conditionally add the "Generate Permit" button for valid statuses
+            // 3. Conditionally add the "Clearance" button for valid statuses
             // Add or remove statuses in this array based on your specific workflow
             if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
                 buttonsHtml += `
                     <button class="btn-primary" onclick="generateConstructionPermit(${app.id})" style="margin-left: 5px;">
-                        Generate Permit
+                        Clearance
                     </button>
                 `;
             }
@@ -586,8 +560,8 @@ function generateConstructionPermit(appId) {
     }
 
     const grantee_name = `${app.first_name || ''} ${app.middle_name || ''} ${app.last_name || ''}`.trim() || "N/A";
-    const address = app.address || '_______________________';
-    const contractorName = app.contractor_name || '_______________________';
+    const address = app.construction_address || 'N/A'; // Fixed here
+    const contractorName = app.contractor_name || 'N/A';
     const or_number = app.or_number || 'N/A';
 
     // Uses the helper function defined above
@@ -599,8 +573,8 @@ function generateConstructionPermit(appId) {
         return isNaN(d) ? "N/A" : d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
     };
 
-    const validityStart = formatDate(app.startDate);
-    const validityEnd = formatDate(app.endDate);
+    const validityStart = formatDate(app.start_date); // Fixed here
+    const validityEnd = formatDate(app.end_date);     // Fixed here //Conditional with the extra days if needed: app.end_date ? formatDate(app.end_date) : "N/A";
 
     const currentYear = new Date().getFullYear();
     const permitNumber = `BRB-CP-${currentYear}-${String(app.id).padStart(4, '0')}`;
@@ -609,8 +583,15 @@ function generateConstructionPermit(appId) {
     const month = date.toLocaleString('en-US', { month: 'long' });
     const yearIssued = date.getFullYear();
 
-    const CAPTAIN_NAME = "MARIA DELA CRUZ";
-    const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
+    const CAPTAIN_NAME = "SESSAN CASTRO-LEE";
+    const SECRETARY_NAME = "ROVIE ROSE B. BAYLON";
+
+    const KAGAWAD_1 = "KATHERINE T. DE JESUS";
+    const KAGAWAD_2 = "MARGARETTE K. DE JESUS";
+    const KAGAWAD_3 = "ANA FRANCESCA L. MARISTELA";
+    const KAGAWAD_4 = "AUGUSTO D. ILAGAN";
+    const KAGAWAD_5 = "NATALIA L. MARISTELA";
+    const KAGAWAD_6 = "MODESTO CARLO M. RUIZ JR.";
 
     const nature = (app.nature_of_activity || '').toLowerCase();
     const isMajor = nature.includes('major') ? 'checked' : '';
@@ -635,7 +616,7 @@ function generateConstructionPermit(appId) {
             .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
             .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
             .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
-            .sidebar { background:#e8f0e0; padding:20px 18px; border:1.5px solid #c5d9b8; font-size:13px; line-height:1.65; }
+            .sidebar { background:#b8bad9; padding:20px 18px; border:1.5px solid #b8bad9; font-size:13px; line-height:1.65; }
             .main-body { font-size:15.2px; line-height:1.75; }
             .fill-line { border-bottom:1px solid #000; display:inline-block; min-width:200px; text-align:center; font-weight: bold; }
             .checkbox-group { margin:10px 0 10px 40px; display: grid; grid-template-columns: 1fr 1fr; }
@@ -653,7 +634,7 @@ function generateConstructionPermit(appId) {
     <body>
         <div class="document-container">
             <header>
-                <div class="logo"><img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Logo"></div>
+                <div class="logo"><img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo"></div>
                 <div class="header-center">
                     <div>Republic of the Philippines</div>
                     <div>Quezon City • District III</div>
@@ -668,7 +649,8 @@ function generateConstructionPermit(appId) {
             <div class="content-wrapper">
                 <div class="sidebar">
                     <strong>HON. ${CAPTAIN_NAME}</strong><br><span>Punong Barangay</span><br><br>
-                    <strong>KAGAWADS</strong><br>HON. [KAGAWAD 1]<br>HON. [KAGAWAD 2]<br>HON. [KAGAWAD 3]<br>HON. [KAGAWAD 4]<br>HON. [KAGAWAD 5]<br>HON. [KAGAWAD 6]<br>HON. [KAGAWAD 7]<br><br>
+                    <strong>KAGAWADS</strong>
+                    <br>HON. ${KAGAWAD_1}<br>HON. ${KAGAWAD_2}<br>HON. ${KAGAWAD_3}<br>HON. ${KAGAWAD_4}<br>HON. ${KAGAWAD_5}<br>HON. ${KAGAWAD_6}<br><br>
                     <strong>MR. ${SECRETARY_NAME}</strong><br><span>Barangay Secretary</span>
                 </div>
 
@@ -2563,4 +2545,3 @@ window.downloadSummary = downloadSummary;
 window.printSummary = printSummary;
 window.archiveApplication = archiveApplication;
 window.reRunOCR = reRunOCR;
-
