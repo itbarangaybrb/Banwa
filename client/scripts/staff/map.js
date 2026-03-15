@@ -39,18 +39,18 @@ function initNavbar() {
     const sideNav = document.querySelector('.side_nav');
     const navHeader = document.querySelector('.nav_header');
     let hoverTimer;
-    
+
     if (sideNav) {
         // Hover to expand temporarily
-        sideNav.addEventListener('mouseenter', function() {
+        sideNav.addEventListener('mouseenter', function () {
             clearTimeout(hoverTimer);
             // Only add hover class if not pinned
             if (!this.classList.contains('pinned')) {
                 this.classList.add('expanded');
             }
         });
-        
-        sideNav.addEventListener('mouseleave', function() {
+
+        sideNav.addEventListener('mouseleave', function () {
             // Small delay before collapsing to prevent accidental closes
             hoverTimer = setTimeout(() => {
                 // Remove expanded class but keep pinned if it exists
@@ -59,12 +59,12 @@ function initNavbar() {
                 }
             }, 300);
         });
-        
+
         // Click logo/header to toggle pin/unpin
         if (navHeader) {
-            navHeader.addEventListener('click', function(e) {
+            navHeader.addEventListener('click', function (e) {
                 e.stopPropagation();
-                
+
                 if (sideNav.classList.contains('pinned')) {
                     // Unpin
                     sideNav.classList.remove('pinned');
@@ -76,19 +76,19 @@ function initNavbar() {
                 }
             });
         }
-        
+
         // Close on escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && sideNav.classList.contains('pinned')) {
                 sideNav.classList.remove('pinned');
                 sideNav.classList.remove('expanded');
             }
         });
-        
+
         // On mobile, close when clicking outside
         if (window.innerWidth <= 768) {
-            document.addEventListener('click', function(e) {
-                if (!sideNav.contains(e.target) && 
+            document.addEventListener('click', function (e) {
+                if (!sideNav.contains(e.target) &&
                     !document.querySelector('.mobile-menu-btn')?.contains(e.target)) {
                     sideNav.classList.remove('active');
                     sideNav.classList.remove('expanded');
@@ -146,31 +146,31 @@ let blueRidgeGeoJSON = null;
 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxNativeZoom: 19,
-    maxZoom: 22         
+    maxZoom: 22
 });
 
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: '© Esri',
     maxNativeZoom: 19,
-    maxZoom: 22         
+    maxZoom: 22
 });
 
 osmLayer.addTo(map);
 
 // Icons
-const constructionIcon = L.divIcon({ 
-    className: 'construction-marker', 
-    iconSize: [22, 22] 
+const constructionIcon = L.divIcon({
+    className: 'construction-marker',
+    iconSize: [22, 22]
 });
 
-const businessIcon = L.divIcon({ 
-    className: 'business-marker', 
-    iconSize: [22, 22] 
+const businessIcon = L.divIcon({
+    className: 'business-marker',
+    iconSize: [22, 22]
 });
 
-const utilityIcon = L.divIcon({ 
-    className: 'utility-marker', 
-    iconSize: [18, 18] 
+const utilityIcon = L.divIcon({
+    className: 'utility-marker',
+    iconSize: [18, 18]
 });
 
 const incidentIcon = L.divIcon({
@@ -208,7 +208,7 @@ function rptRow(id, badgeText, badgeColor, name, rightLabel, bodyHTML) {
 /** Builds a single warning block inside an expanded row */
 function rptWarningBlock(warning) {
     const c = warning.severity === 'CRITICAL' ? '#990000'
-             : warning.severity === 'HIGH'     ? '#cc0000' : '#ff9800';
+        : warning.severity === 'HIGH' ? '#cc0000' : '#ff9800';
     return `
         <div style="background:#f8f8f8;border-left:3px solid ${c};padding:10px 12px;border-radius:4px;margin-bottom:8px;">
             <div style="color:${c};font-weight:700;margin-bottom:4px;">⚠ ${warning.type}</div>
@@ -240,11 +240,11 @@ function showReportSwal(html, onOpen) {
 function getTypeBadgeStyle(type) {
     const styles = {
         construction: 'background:#00247c;color:#fff;',
-        business:     'background:#00247c;color:#fff;',
-        utility:      'background:#00247c;color:#fff;',
-        household:    'background:#00247c;color:#fff;',
-        incident:     'background:#cc0000;color:#fff;',
-        flood:        'background:#cc0000;color:#fff;'
+        business: 'background:#00247c;color:#fff;',
+        utility: 'background:#00247c;color:#fff;',
+        household: 'background:#00247c;color:#fff;',
+        incident: 'background:#cc0000;color:#fff;',
+        flood: 'background:#cc0000;color:#fff;'
     };
     return styles[type] || 'background:#555555;color:#fff;';
 }
@@ -292,7 +292,7 @@ function displayDetailsInModal(data, type) {
         const status = data.agreed === '1' ? 'Approved' : 'Pending';
         const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
         tableRows = [
-            detailRow('Homeowner', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''} ${data.suffix||''}`.trim()),
+            detailRow('Homeowner', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.contact_no_owner || 'Not specified'),
             detailRow('Construction Address', data.construction_address || 'Not specified'),
             detailRow('Type of Work', data.type_of_work || 'Not specified'),
@@ -314,7 +314,7 @@ function displayDetailsInModal(data, type) {
             detailRow('Business Address', data.address_of_business || 'Not specified'),
             detailRow('Business Type', data.type_of_business || 'Not specified'),
             detailRow('Nature of Business', data.nature_of_business || 'Not specified'),
-            detailRow('Owner Name', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''}`.trim()),
+            detailRow('Owner Name', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''}`.trim()),
             detailRow('Business Contact', data.telephone_no_business || 'Not specified'),
             detailRow('Owner Contact', data.telephone_no_owner || 'Not specified'),
             detailRow('Email', data.email_address || 'Not specified'),
@@ -329,7 +329,7 @@ function displayDetailsInModal(data, type) {
         const status = data.agreed === '1' ? 'Approved' : 'Pending';
         const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
         tableRows = [
-            detailRow('Applicant', `${data.first_name||''} ${data.middle_name||''} ${data.last_name||''} ${data.suffix||''}`.trim()),
+            detailRow('Applicant', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.owner_contact_no || 'Not specified'),
             detailRow('Utility Address', data.address_of_utility || 'Not specified'),
             detailRow('Provider', data.provider || 'Not specified'),
@@ -357,7 +357,7 @@ function displayDetailsInModal(data, type) {
                             `${w.full_name || w.name || '—'}${w.contact ? ' · ' + w.contact : ''}${w.address ? ' · ' + w.address : ''}`)
                     ).join('');
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
 
         tableRows = [
@@ -426,16 +426,16 @@ function displayFloodDetailsInModal(data) {
     const title = data.hazard_name || 'Flood Hazard Area';
     const tableRows = [
         detailRow('Hazard Name', data.hazard_name || 'Not specified'),
-        detailRow('Risk Level', `<span style="color:${riskColor};font-weight:bold;font-size:15px;">${(data.risk_level||'medium').toUpperCase()}</span>`),
+        detailRow('Risk Level', `<span style="color:${riskColor};font-weight:bold;font-size:15px;">${(data.risk_level || 'medium').toUpperCase()}</span>`),
         detailRow('Description', data.description || 'Not specified'),
         detailRow('Last Flood Date', formatDate(properties.last_flood_date) || 'Not recorded'),
         detailRow('Reported By', properties.reported_by || 'Barangay Office'),
         detailRow('Date Identified', formatDate(properties.date_identified)),
         detailRow('Safety Advice', getFloodSafetyAdvice(data.risk_level)),
     ].join('');
-    showDetailSwal(title, `${(data.risk_level||'medium').toUpperCase()} RISK`, 'flood', tableRows);
+    showDetailSwal(title, `${(data.risk_level || 'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
- // 3/1/2026
+// 3/1/2026
 function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
 
@@ -444,14 +444,14 @@ function displayHouseDetailsInModal(data, apps) {
              text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">${label}</td></tr>`;
 
     const basicRows = [
-        detailRow('Address',      data.address    || 'Not specified'),
-        detailRow('Street Name',  data.street_name || 'Not specified'),
-        detailRow('Created',      formatDate(data.created_at))
+        detailRow('Address', data.address || 'Not specified'),
+        detailRow('Street Name', data.street_name || 'Not specified'),
+        detailRow('Created', formatDate(data.created_at))
     ].join('');
     // 3/1/2026
     const typeBadge = (bg, label, textColor) =>
         `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-                      background:${bg};color:${textColor||'#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
+                      background:${bg};color:${textColor || '#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
     const statusBadge = (label, color) =>
         `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
                       background:${color};color:#fff;display:inline-block;">${label}</span>`;
@@ -476,30 +476,30 @@ function displayHouseDetailsInModal(data, apps) {
             const sc = b.status === 'approved' ? '#28a745' : b.status === 'disapproved' ? '#dc3545' : '#ff9800';
             appRows += detailRow(
                 typeBadge('#9C27B0', 'Business') + (b.business_name || 'Unnamed Business'),
-                `${b.type_of_business || '—'} &nbsp;${statusBadge(b.status || 'Pending', sc)}${viewBtn("viewMapDetails("+b.id+",'business')")}`
+                `${b.type_of_business || '—'} &nbsp;${statusBadge(b.status || 'Pending', sc)}${viewBtn("viewMapDetails(" + b.id + ",'business')")}`
             );
         });
         (apps.constructions || []).forEach(c => {
             const sc = c.agreed === '1' ? '#28a745' : '#ff9800';
-            const name = ((c.first_name||'') + ' ' + (c.last_name||'')).trim();
+            const name = ((c.first_name || '') + ' ' + (c.last_name || '')).trim();
             appRows += detailRow(
                 typeBadge('#ffc107', 'Construction', '#333') + name,
-                `${c.type_of_work || c.nature_of_work || '—'} &nbsp;${statusBadge(c.agreed==='1'?'Approved':'Pending', sc)}${viewBtn("viewMapDetails("+c.id+",'construction')")}`
+                `${c.type_of_work || c.nature_of_work || '—'} &nbsp;${statusBadge(c.agreed === '1' ? 'Approved' : 'Pending', sc)}${viewBtn("viewMapDetails(" + c.id + ",'construction')")}`
             );
         });
         (apps.utilities || []).forEach(u => {
             const sc = u.agreed === '1' ? '#28a745' : '#ff9800';
-            const name = ((u.first_name||'') + ' ' + (u.last_name||'')).trim();
+            const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
             appRows += detailRow(
                 typeBadge('#2196F3', 'Utility') + name,
-                `${u.nature_of_work || u.provider || '—'} &nbsp;${statusBadge(u.agreed==='1'?'Approved':'Pending', sc)}${viewBtn("viewMapDetails("+u.id+",'utility')")}`
+                `${u.nature_of_work || u.provider || '—'} &nbsp;${statusBadge(u.agreed === '1' ? 'Approved' : 'Pending', sc)}${viewBtn("viewMapDetails(" + u.id + ",'utility')")}`
             );
         });
         (apps.incidents || []).forEach(i => {
             const sc = i.status === 'Resolved' ? '#28a745' : i.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
             appRows += detailRow(
                 typeBadge('#cc0000', 'Incident') + (i.incident_type || 'Incident'),
-                `${i.vic_full_name ? 'Victim: '+i.vic_full_name : '—'} &nbsp;${statusBadge(i.status||'Open', sc)}${viewBtn("viewMapDetails("+i.id+",'incident')")}`
+                `${i.vic_full_name ? 'Victim: ' + i.vic_full_name : '—'} &nbsp;${statusBadge(i.status || 'Open', sc)}${viewBtn("viewMapDetails(" + i.id + ",'incident')")}`
             );
         });
     }
@@ -517,7 +517,7 @@ function displayHouseDetailsInModal(data, apps) {
 // Toggle flood layer
 function toggleFloodLayer() {
     floodLayerActive = !floodLayerActive;
-    
+
     // Update button style
     const floodToggleBtn = document.getElementById('floodToggleBtn');
     if (floodToggleBtn) {
@@ -529,7 +529,7 @@ function toggleFloodLayer() {
             floodToggleBtn.classList.remove('flood-active');
         }
     }
-    
+
     if (floodLayerActive) {
         // Show flood layer
         if (!floodLayer) {
@@ -540,7 +540,7 @@ function toggleFloodLayer() {
                 floodLayer.addTo(map);
             }
         }
-        
+
         // Show flood legend
         if (floodLegend && !hasControl(floodLegend)) {
             floodLegend.addTo(map);
@@ -550,7 +550,7 @@ function toggleFloodLayer() {
         if (floodLayer && map.hasLayer(floodLayer)) {
             map.removeLayer(floodLayer);
         }
-        
+
         // Hide flood legend
         removeFloodLegend();
     }
@@ -579,7 +579,7 @@ function removeFloodLegend() {
 // Toggle fault line
 function toggleFaultLine() {
     faultLineActive = !faultLineActive;
-    
+
     // Update button style
     const faultToggleBtn = document.getElementById('faultToggleBtn');
     if (faultToggleBtn) {
@@ -591,7 +591,7 @@ function toggleFaultLine() {
             faultToggleBtn.classList.remove('fault-active');
         }
     }
-    
+
     if (faultLineActive) {
         // Show fault line
         if (faultLine && !map.hasLayer(faultLine)) {
@@ -617,10 +617,10 @@ function toggleFilterDropdown(event) {
     if (event) {
         event.stopPropagation();
     }
-    
+
     const dropdown = document.getElementById('filterDropdown');
     const dropdownBtn = document.getElementById('filterDropdownBtn');
-    
+
     if (dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
         dropdownBtn.classList.remove('active');
@@ -631,7 +631,7 @@ function toggleFilterDropdown(event) {
         document.querySelectorAll('.dropdown-btn.active').forEach(btn => {
             btn.classList.remove('active');
         });
-        
+
         dropdown.classList.add('show');
         dropdownBtn.classList.add('active');
     }
@@ -649,12 +649,12 @@ function selectFilterType(type, event) {
     if (searchInput) searchInput.value = '';
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; }
-    
+
     const dropdown = document.getElementById('filterDropdown');
     const dropdownBtn = document.getElementById('filterDropdownBtn');
     dropdown.classList.remove('show');
     dropdownBtn.classList.remove('active');
-    
+
     const filterTextMap = {
         'household': 'Households',
         'business': 'Businesses',
@@ -662,9 +662,9 @@ function selectFilterType(type, event) {
         'utility': 'Utilities',
         'incident': 'Incidents'
     };
-    
+
     document.getElementById('currentFilterText').textContent = filterTextMap[type] || 'Filter';
-    
+
     const subFilters = document.getElementById('constructionSubFilters');
     const incidentSubFilters = document.getElementById('incidentSubFilters');
     if (subFilters) subFilters.style.display = type === 'construction' ? 'block' : 'none';
@@ -672,14 +672,14 @@ function selectFilterType(type, event) {
         incidentSubFilters.style.display = type === 'incident' ? 'block' : 'none';
         if (type === 'incident') loadIncidentSubFilters();
     }
-    
+
     document.querySelectorAll('.dropdown-content a').forEach(link => {
         link.classList.remove('active');
         if (link.dataset.type === type) {
             link.classList.add('active');
         }
     });
-    
+
     activateFilter(type);
 }
 
@@ -736,7 +736,7 @@ function filterConstructionByType(subtype, event) {
 // 3/1/2026
 function toggleConstructionFilters() {
     const list = document.getElementById('constructionTypeList');
-    const btn  = document.getElementById('constructionToggleBtn');
+    const btn = document.getElementById('constructionToggleBtn');
     if (!list || !btn) return;
     constructionFiltersExpanded = !constructionFiltersExpanded;
     list.classList.toggle('open', constructionFiltersExpanded);
@@ -748,12 +748,12 @@ function shouldShowConstructionMarker(marker) {
     if (constructionSubFilter === 'all') {
         return true;
     }
-    
+
     // Get the nature_of_activity from marker data
-    const nature = marker.nature_of_work || (marker.construction_data ? 
-                   (marker.construction_data.nature_of_work || marker.construction_data.nature_of_activity) : '') || '';
+    const nature = marker.nature_of_work || (marker.construction_data ?
+        (marker.construction_data.nature_of_work || marker.construction_data.nature_of_activity) : '') || '';
     const mappedType = natureToSubtypeMap[nature] || 'other';
-    
+
     return mappedType === constructionSubFilter;
 }
 
@@ -824,12 +824,12 @@ function setActiveNav(element) {
 
 // Palette for each map mode — easy to tweak in one place
 const POLY_COLORS = {
-    street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12 },
+    street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12 },
     satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15 }
 };
 const BOUNDARY_COLORS = {
-    street:    { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8, 6' },
-    satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0,    dashArray: '8, 6' }
+    street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8, 6' },
+    satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8, 6' }
 };
 
 // Returns the current accent color based on active tile layer
@@ -885,15 +885,16 @@ function resetView() {
 function performSearch() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const resultsContainer = document.getElementById('search-results');
-    
+
+
     if (!searchTerm) {
         if (resultsContainer) resultsContainer.style.display = 'none';
         return;
     }
-    
+
     searchResults = [];
     if (resultsContainer) resultsContainer.innerHTML = '';
-    
+
     allMarkersData.forEach(marker => {
         const searchFields = [
             marker.title || '',
@@ -921,13 +922,16 @@ function performSearch() {
             marker.rp_full_name || '',
             marker.vic_address || ''
         ];
-        
+
         let matchScore = 0;
-        
+
+        // YD TEMPORARY ONLY NEED LANG SA VIDEO - JEP 
         searchFields.forEach(field => {
-            const fieldLower = field.toLowerCase();
+            // Convert to string if it exists, otherwise use empty string
+            const fieldStr = field ? String(field) : '';
+            const fieldLower = fieldStr.toLowerCase();
             if (fieldLower === searchTerm) {
-                matchScore += 100; 
+                matchScore += 100;
             } else if (fieldLower.startsWith(searchTerm)) {
                 matchScore += 50;
             } else if (fieldLower.includes(searchTerm)) {
@@ -941,7 +945,7 @@ function performSearch() {
                 });
             }
         });
-        
+
         if (matchScore > 0) {
             searchResults.push({
                 marker: marker,
@@ -949,46 +953,46 @@ function performSearch() {
             });
         }
     });
-    
+
     searchResults.sort((a, b) => b.score - a.score);
-    
+
     if (resultsContainer) {
         if (searchResults.length > 0) {
             const topResults = searchResults.slice(0, 10);
-            
+
             topResults.forEach((result, index) => {
                 const marker = result.marker;
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
                 item.dataset.index = index;
-                
+
                 const type = marker.marker_type || marker.type ||
-                            (marker.construction_id ? 'construction' : 
-                             marker.id ? 'business' : 
-                             marker.utility_id ? 'utility' : 
-                             marker.hazard_id ? 'flood' :
-                             marker.house_id ? 'household' : 'household');
-                
-                const title = marker.title || 
-                             marker.business_name || 
-                             marker.homeowner_name || 
-                             marker.applicant_name ||
-                             marker.hazard_name ||
-                             marker.address ||
-                             marker.address || 'Unnamed Marker';
-                
-                const subtitle = marker.description || 
-                               marker.address_of_construction || 
-                               marker.address_of_business || 
-                               marker.applicant_address ||
-                               marker.location || 
-                               marker.street_name ||
-                               (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
-                               '';
-                
+                    (marker.construction_id ? 'construction' :
+                        marker.id ? 'business' :
+                            marker.utility_id ? 'utility' :
+                                marker.hazard_id ? 'flood' :
+                                    marker.house_id ? 'household' : 'household');
+
+                const title = marker.title ||
+                    marker.business_name ||
+                    marker.homeowner_name ||
+                    marker.applicant_name ||
+                    marker.hazard_name ||
+                    marker.address ||
+                    marker.address || 'Unnamed Marker';
+
+                const subtitle = marker.description ||
+                    marker.address_of_construction ||
+                    marker.address_of_business ||
+                    marker.applicant_address ||
+                    marker.location ||
+                    marker.street_name ||
+                    (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
+                    '';
+
                 const highlightedTitle = highlightText(title, searchTerm);
                 const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
-                
+
                 item.innerHTML = `
                     <div class="result-icon ${type === 'flood' ? 'flood-area' : type + '-marker'}"></div>
                     <div class="result-details">
@@ -997,19 +1001,19 @@ function performSearch() {
                     </div>
                     <span class="result-type ${type}">${type}</span>
                 `;
-                
+
                 item.addEventListener('click', () => {
                     highlightSearchResult(marker);
                 });
-                
+
                 resultsContainer.appendChild(item);
             });
-            
+
             const countElement = document.createElement('div');
             countElement.className = 'search-count';
             countElement.textContent = `Found ${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`;
             resultsContainer.appendChild(countElement);
-            
+
             resultsContainer.style.display = 'block';
         } else {
             resultsContainer.innerHTML = '<div class="search-result-item">No results found</div>';
@@ -1020,7 +1024,7 @@ function performSearch() {
 
 function highlightText(text, searchTerm) {
     if (!searchTerm || !text) return text;
-    
+
     const searchRegex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(searchRegex, '<span class="highlight">$1</span>');
 }
@@ -1029,7 +1033,7 @@ function handleSearchInput() {
     if (searchTimeout) {
         clearTimeout(searchTimeout);
     }
-    
+
     searchTimeout = setTimeout(() => {
         performSearch();
     }, 300);
@@ -1042,13 +1046,13 @@ function clearSearch() {
         resultsContainer.style.display = 'none';
         resultsContainer.innerHTML = '';
     }
-    
+
     // Remove active search marker
     removeActiveSearchMarker();
-    
+
     // Restore visibility based on current states
     updateAllVisibility();
-    
+
     // Restore flood layer if active
     if (floodLayerActive && floodLayer && !map.hasLayer(floodLayer)) {
         floodLayer.addTo(map);
@@ -1057,7 +1061,7 @@ function clearSearch() {
             floodLegend.addTo(map);
         }
     }
-    
+
     // Restore fault line if active
     if (faultLineActive) {
         if (faultLine && !map.hasLayer(faultLine)) {
@@ -1067,14 +1071,14 @@ function clearSearch() {
             warningMarker.addTo(map);
         }
     }
-    
+
     // Restore house polygons if needed
     if (activeFilter === 'household' && housePolygonsLayer) {
         if (!map.hasLayer(housePolygonsLayer)) {
             housePolygonsLayer.addTo(map);
         }
     }
-    
+
     map.closePopup();
 }
 
@@ -1107,22 +1111,22 @@ function removeActiveSearchMarker() {
 function highlightSearchResult(markerData) {
     // First, hide all current markers
     hideAllMarkers();
-    
+
     // Try to find the actual marker object
     let targetMarker = null;
     const type = getMarkerTypeFromData(markerData);
-    
+
     // Search in the appropriate markers array
     if (type === 'construction') {
-        targetMarker = constructionMarkers.find(m => 
+        targetMarker = constructionMarkers.find(m =>
             m.construction_data && m.construction_data.id === markerData.id
         );
     } else if (type === 'business') {
-        targetMarker = businessMarkers.find(m => 
+        targetMarker = businessMarkers.find(m =>
             m.business_data && m.business_data.id === markerData.id
         );
     } else if (type === 'utility') {
-        targetMarker = utilityMarkers.find(m => 
+        targetMarker = utilityMarkers.find(m =>
             m.utility_data && m.utility_data.id === markerData.id
         );
     } else if (type === 'incident') {
@@ -1130,7 +1134,7 @@ function highlightSearchResult(markerData) {
             m.incident_data && m.incident_data.id === markerData.id
         );
     }
-    
+
     if (targetMarker) {
         // We found the actual marker, highlight it
         highlightExistingMarker(targetMarker, markerData);
@@ -1143,12 +1147,12 @@ function highlightSearchResult(markerData) {
 // Helper function to get marker type from data
 function getMarkerTypeFromData(markerData) {
     return markerData.marker_type || markerData.type ||
-           (markerData.construction_id ? 'construction' : 
+        (markerData.construction_id ? 'construction' :
             markerData.incident_type !== undefined ? 'incident' :
-            markerData.id ? 'business' : 
-            markerData.utility_id ? 'utility' : 
-            markerData.hazard_id ? 'flood' :
-            markerData.house_id ? 'household' : 'household');
+                markerData.id ? 'business' :
+                    markerData.utility_id ? 'utility' :
+                        markerData.hazard_id ? 'flood' :
+                            markerData.house_id ? 'household' : 'household');
 }
 
 function highlightExistingMarker(marker, markerData) {
@@ -1178,11 +1182,11 @@ function highlightExistingMarker(marker, markerData) {
         pendingMoveEndHandler = null;
         const type = getMarkerTypeFromData(markerData);
         let popupContent = '';
-        if (type === 'construction')  popupContent = createConstructionPopup(markerData);
+        if (type === 'construction') popupContent = createConstructionPopup(markerData);
         else if (type === 'business') popupContent = createBusinessPopup(markerData);
-        else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else if (type === 'utility') popupContent = createUtilityPopup(markerData);
         else if (type === 'incident') popupContent = createIncidentPopup(markerData);
-        else                          popupContent = createHousePopup(markerData);
+        else popupContent = createHousePopup(markerData);
         marker.bindPopup(popupContent, { autoPan: true }).openPopup();
     };
     map.once('moveend', pendingMoveEndHandler);
@@ -1194,25 +1198,25 @@ function highlightExistingMarker(marker, markerData) {
 
 function createTemporaryHighlight(markerData) {
     const type = getMarkerTypeFromData(markerData);
-    
+
     if (type === 'flood') {
         showFloodAreaHighlight(markerData);
         return;
     }
-    
+
     if (type === 'household' && markerData.coordinates) {
         showHousePolygonHighlight(markerData);
         return;
     }
-    
+
     const lat = parseFloat(markerData.latitude || markerData.center_lat);
     const lng = parseFloat(markerData.longitude || markerData.center_lng);
-    
+
     if (isNaN(lat) || isNaN(lng)) {
         showSwal({ icon: 'error', title: 'Error', text: 'Could not find location for this marker', confirmButtonColor: '#00247c' });
         return;
     }
-    
+
     removeActiveSearchMarker();
 
     // Just fly to location — no extra marker overlay
@@ -1222,11 +1226,11 @@ function createTemporaryHighlight(markerData) {
     pendingMoveEndHandler = () => {
         pendingMoveEndHandler = null;
         let popupContent = '';
-        if (type === 'construction')  popupContent = createConstructionPopup(markerData);
+        if (type === 'construction') popupContent = createConstructionPopup(markerData);
         else if (type === 'business') popupContent = createBusinessPopup(markerData);
-        else if (type === 'utility')  popupContent = createUtilityPopup(markerData);
+        else if (type === 'utility') popupContent = createUtilityPopup(markerData);
         else if (type === 'incident') popupContent = createIncidentPopup(markerData);
-        else                          popupContent = createHousePopup(markerData);
+        else popupContent = createHousePopup(markerData);
         L.popup({ autoPan: true })
             .setLatLng([lat, lng])
             .setContent(popupContent)
@@ -1247,7 +1251,7 @@ function updateSearchResultActiveState(markerData) {
             item.classList.add('active');
         }
     });
-    
+
     const resultsContainer = document.getElementById('search-results');
     if (resultsContainer) {
         resultsContainer.style.display = 'none';
@@ -1260,13 +1264,13 @@ function hideAllMarkers() {
             map.removeLayer(marker);
         }
     });
-    
+
     businessMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
         }
     });
-    
+
     utilityMarkers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
@@ -1278,25 +1282,25 @@ function hideAllMarkers() {
             map.removeLayer(marker);
         }
     });
-    
+
     if (floodLayer && map.hasLayer(floodLayer)) {
         map.removeLayer(floodLayer);
     }
-    
+
     // Remove flood legend if it exists
     removeFloodLegend();
-    
+
     if (faultLine && map.hasLayer(faultLine)) {
         map.removeLayer(faultLine);
     }
     if (warningMarker && map.hasLayer(warningMarker)) {
         map.removeLayer(warningMarker);
     }
-    
+
     if (housePolygonsLayer && map.hasLayer(housePolygonsLayer)) {
         map.removeLayer(housePolygonsLayer);
     }
-    
+
     // Remove active search marker if it exists
     removeActiveSearchMarker();
 }
@@ -1308,10 +1312,10 @@ function showHousePolygonHighlight(houseData) {
         coords = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
         const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
         latLngCoords.push(latLngCoords[0]);
-        
+
         // Remove any existing highlight
         removeActiveSearchMarker();
-        
+
         const accentColor = getMapAccentColor();
         const polygon = L.polygon(latLngCoords, {
             color: accentColor,
@@ -1320,19 +1324,19 @@ function showHousePolygonHighlight(houseData) {
             fillOpacity: 0.2,
             interactive: true
         }).addTo(map);
-        
+
         activeSearchMarker = polygon;
-        
+
         const bounds = polygon.getBounds();
         console.log('Fitting bounds to polygon:', bounds); // Debug log
-        
+
         // Force fit bounds with padding
         map.fitBounds(bounds, {
             padding: [50, 50],
             maxZoom: 20,
             duration: 1.5
         });
-        
+
         // Open popup after animation finishes // 3/1/2026
         if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
         pendingMoveEndHandler = () => {
@@ -1341,15 +1345,15 @@ function showHousePolygonHighlight(houseData) {
             polygon.bindPopup(popupContent, { autoPan: true }).openPopup();
         };
         map.once('moveend', pendingMoveEndHandler);
-        
+
         updateSearchResultActiveState(houseData);
-        
+
         // Hide the search results container
         const resultsContainer = document.getElementById('search-results');
         if (resultsContainer) {
             resultsContainer.style.display = 'none';
         }
-        
+
     } catch (e) {
         console.error('Error highlighting house polygon:', e);
     }
@@ -1374,30 +1378,30 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
         const formData = new URLSearchParams();
         formData.append('action', 'get_flood_details');
         formData.append('id', hazardId);
-        
+
         const response = await fetch(`${MAP_HANDLER_URL}`, {
             method: 'POST',
             body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.data) {
             const hazard = data.data;
-            
+
             if (hazard.geometry) {
                 const geoJson = JSON.parse(hazard.geometry);
-                
+
                 const highlightStyle = getFloodAreaStyle(hazard.risk_level);
                 highlightStyle.fillOpacity += 0.2;
                 highlightStyle.weight += 3;
                 highlightStyle.color = '#00247c';
                 // no pulse animation
-                
+
                 activeSearchMarker = L.geoJSON(geoJson, {
                     style: highlightStyle
                 }).addTo(map);
-                
+
                 const bounds = activeSearchMarker.getBounds();
                 if (bounds.isValid()) {
                     map.fitBounds(bounds, {
@@ -1405,10 +1409,10 @@ async function loadFullFloodDetailsForHighlight(hazardId) {
                         maxZoom: 18
                     });
                 }
-                
+
                 const popupContent = createFloodPopup(hazard);
                 activeSearchMarker.bindPopup(popupContent).openPopup();
-                
+
                 updateSearchResultActiveState({ hazard_id: hazardId });
             }
         }
@@ -1491,9 +1495,9 @@ function createUtilityPopup(data) {
 
 function createIncidentPopup(data) {
     const statusColor = data.status === 'Resolved' ? '#28a745'
-                      : data.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+        : data.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
     const dssColor = data.dss_status === 'High Priority' ? '#cc0000'
-                   : data.dss_status === 'Medium Priority' ? '#ff9800' : '#555';
+        : data.dss_status === 'Medium Priority' ? '#ff9800' : '#555';
     return `
         <div class="popup-content">
             <h4>
@@ -1523,7 +1527,7 @@ function createIncidentPopup(data) {
 function createFloodPopup(data) {
     const riskColor = getFloodRiskColor(data.risk_level);
     const riskClass = `flood-risk-${data.risk_level || 'medium'}`;
-    
+
     // Parse properties JSON if it exists
     let properties = {};
     try {
@@ -1531,7 +1535,7 @@ function createFloodPopup(data) {
     } catch (e) {
         console.warn('Could not parse flood properties:', e);
     }
-    
+
     return `
         <div class="popup-content">
             <h4>
@@ -1583,9 +1587,9 @@ async function viewMapDetails(id, type) {
     try {
         const actionMap = {
             construction: 'get_construction_details',
-            business:     'get_business_details',
-            utility:      'get_utilities_details',
-            incident:     'get_incident_details'
+            business: 'get_business_details',
+            utility: 'get_utilities_details',
+            incident: 'get_incident_details'
         };
         const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: actionMap[type] || `get_${type}_details`, id }) });
         const data = await response.json();
@@ -1630,7 +1634,7 @@ async function viewHouseDetails(id) {
         didOpen: () => { Swal.showLoading(); }
     });
     try {
-        const fd1 = new URLSearchParams({ action: 'get_house_details',    id });
+        const fd1 = new URLSearchParams({ action: 'get_house_details', id });
         const fd2 = new URLSearchParams({ action: 'get_house_applications', id });
         const [res1, res2] = await Promise.all([
             fetch(MAP_HANDLER_URL, { method: 'POST', body: fd1 }),
@@ -1653,10 +1657,10 @@ async function viewHouseDetails(id) {
 function formatDate(dateString) {
     if (!dateString) return 'Not specified';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
     });
 }
 
@@ -1666,15 +1670,15 @@ function getFloodSafetyAdvice(riskLevel) {
         'medium': 'Moderate flood risk. Install check valves and keep drains clear.',
         'low': 'Low flood risk. Monitor weather alerts and prepare emergency kit.',
     };
-    
+
     return advice[riskLevel] || 'Take necessary precautions during heavy rainfall.';
 }
 
 function getFloodRiskColor(riskLevel) {
     const colors = {
-        'high':   '#cc0000',
+        'high': '#cc0000',
         'medium': '#555555',
-        'low':    '#888888',
+        'low': '#888888',
     };
     return colors[riskLevel] || '#555555';
 }
@@ -1707,9 +1711,9 @@ async function loadAllMarkers() {
 // Used by both the parallel init fetch and by loadAllMarkers() on refresh.
 function processMarkersData(data) {
     const constructionMarkersList = (data.markers || []).filter(m => m.type === 'construction');
-    const businessMarkersList     = (data.markers || []).filter(m => m.type === 'business');
-    const utilityMarkersList      = (data.markers || []).filter(m => m.type === 'utility');
-    const incidentMarkersList     = (data.markers || []).filter(m => m.type === 'incident');
+    const businessMarkersList = (data.markers || []).filter(m => m.type === 'business');
+    const utilityMarkersList = (data.markers || []).filter(m => m.type === 'utility');
+    const incidentMarkersList = (data.markers || []).filter(m => m.type === 'incident');
 
     allMarkersData = [
         ...constructionMarkersList,
@@ -1830,58 +1834,58 @@ function renderFloodAreas(hazards) {
     if (floodLayer) {
         map.removeLayer(floodLayer);
     }
-    
+
     // Ensure dedicated panes exist for each risk level
     createFloodPanes();
-    
+
     // Create new layer group
     floodLayer = L.layerGroup();
-    
+
     // Map each risk level to its dedicated pane.
     // Each pane has a different z-index so HIGH is always physically on top in the DOM,
     // meaning click events reach it first regardless of geometry overlap.
     const riskPaneMap = {
-        'low':    'floodLowPane',
+        'low': 'floodLowPane',
         'medium': 'floodMediumPane',
-        'high':   'floodHighPane'
+        'high': 'floodHighPane'
     };
-    
+
     hazards.forEach(hazard => {
         try {
             if (!hazard.geometry) {
                 console.warn('Flood hazard missing geometry:', hazard.hazard_id);
                 return;
             }
-            
+
             const geoJson = JSON.parse(hazard.geometry);
             const style = getFloodAreaStyle(hazard.risk_level);
             const paneName = riskPaneMap[(hazard.risk_level || '').toLowerCase()] || 'floodLowPane';
-            
+
             const layer = L.geoJSON(geoJson, {
                 style: style,
                 pane: paneName,
-                onEachFeature: function(feature, featureLayer) {
+                onEachFeature: function (feature, featureLayer) {
                     featureLayer.options.pane = paneName;
                     const popupContent = createFloodPopup(hazard);
                     featureLayer.bindPopup(popupContent);
-                    
-                    featureLayer.on('mouseover', function() {
+
+                    featureLayer.on('mouseover', function () {
                         this.setStyle({
                             fillOpacity: style.fillOpacity + 0.2,
                             weight: style.weight + 2
                         });
                     });
-                    
-                    featureLayer.on('mouseout', function() {
+
+                    featureLayer.on('mouseout', function () {
                         this.setStyle(style);
                     });
-                    
+
                     featureLayer.hazardData = hazard;
                 }
             });
-            
+
             layer.addTo(floodLayer);
-            
+
         } catch (e) {
             console.error('Error rendering flood hazard:', e, hazard);
         }
@@ -1915,7 +1919,7 @@ function getFloodAreaStyle(riskLevel) {
             dashArray: '3, 3'
         },
     };
-    
+
     return styles[riskLevel] || styles.medium;
 }
 
@@ -1924,10 +1928,10 @@ function addFloodLegend() {
     if (floodLegend) {
         removeFloodLegend();
     }
-    
+
     floodLegend = L.control({ position: 'bottomright' });
-    
-    floodLegend.onAdd = function(map) {
+
+    floodLegend.onAdd = function (map) {
         const div = L.DomUtil.create('div', 'info legend flood-legend');
         div.innerHTML = `
             <h4>Flood Risk Levels</h4>
@@ -1946,7 +1950,7 @@ function addFloodLegend() {
         `;
         return div;
     };
-    
+
     // Only add to map if flood layer is active
     if (floodLayerActive) {
         floodLegend.addTo(map);
@@ -1978,7 +1982,7 @@ function renderHousePolygons() {
     if (housePolygonsLayer) {
         map.removeLayer(housePolygonsLayer);
     }
-    
+
     // Create a dedicated pane for house polygons sitting above flood layers
     // but below the default overlay pane (markers, fault line etc. at 400).
     // This means flood zones are still clickable in any area not covered by a house footprint.
@@ -1987,9 +1991,9 @@ function renderHousePolygons() {
         map.getPane('housePane').style.zIndex = 380;
         map.getPane('housePane').style.pointerEvents = 'auto';
     }
-    
+
     housePolygonsLayer = L.layerGroup();
-    
+
     housePolygonsData.forEach(house => {
         if (house.coordinates) {
             try {
@@ -1998,7 +2002,7 @@ function renderHousePolygons() {
                 const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                 const latLngCoords = ring.map(coord => [coord[1], coord[0]]);
                 latLngCoords.push(latLngCoords[0]);
-                
+
                 const polygon = L.polygon(latLngCoords, {
                     color: '#00247c',
                     weight: 2,
@@ -2007,18 +2011,18 @@ function renderHousePolygons() {
                     interactive: true,
                     pane: 'housePane'
                 });
-                
+
                 polygon.addTo(housePolygonsLayer);
                 const popupContent = createHousePopup(house);
                 polygon.bindPopup(popupContent);
                 polygon.houseData = house;
-                
+
             } catch (e) {
                 console.error('Error parsing house coordinates:', e);
             }
         }
     });
-    
+
     if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
@@ -2034,9 +2038,9 @@ function renderHousePolygons() {
 function tagMarkersWithHouseAddress() {
     function markerAddress(m) {
         if (m.construction_data) return (m.construction_data.construction_address || '').trim();
-        if (m.business_data)     return (m.business_data.address_of_business || '').trim();
-        if (m.utility_data)      return (m.utility_data.address_of_utility || '').trim();
-        if (m.incident_data)     return (m.incident_data.vic_address || m.incident_data.rp_address || '').trim();
+        if (m.business_data) return (m.business_data.address_of_business || '').trim();
+        if (m.utility_data) return (m.utility_data.address_of_utility || '').trim();
+        if (m.incident_data) return (m.incident_data.vic_address || m.incident_data.rp_address || '').trim();
         return '';
     }
     function markerDate(m) {
@@ -2064,7 +2068,7 @@ function tagMarkersWithHouseAddress() {
         matched.sort((a, b) => markerDate(b) - markerDate(a));
         matched.slice(1).forEach(m => { m.suppressedByHouse = true; });
     });
-     // 3/1/2026
+    // 3/1/2026
     // Re-run visibility so suppressed markers disappear immediately
     updateAllVisibility();
 }
@@ -2074,21 +2078,21 @@ function clearAllMarkers() {
     businessMarkers.forEach(marker => map.removeLayer(marker));
     utilityMarkers.forEach(marker => map.removeLayer(marker));
     incidentMarkers.forEach(marker => map.removeLayer(marker));
-    
+
     if (floodLayer) {
         map.removeLayer(floodLayer);
     }
-    
+
     // Remove flood legend if it exists
     removeFloodLegend();
-    
+
     if (faultLine && map.hasLayer(faultLine)) {
         map.removeLayer(faultLine);
     }
     if (warningMarker && map.hasLayer(warningMarker)) {
         map.removeLayer(warningMarker);
     }
-    
+
     constructionMarkers = [];
     businessMarkers = [];
     utilityMarkers = [];
@@ -2105,39 +2109,39 @@ function clearAllMarkers() {
  */
 async function getFloodHousesSummary() {
     try {
-        
+
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'action=get_flood_summary'
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch flood assessment');
         }
-        
+
         const data = result.data;
 
         // ── Build flood report with unified layout ──────────────────────────
-        const riskColors = { low:'#ffc107', medium:'#ff9800', high:'#dc3545' };
+        const riskColors = { low: '#ffc107', medium: '#ff9800', high: '#dc3545' };
         const impactColors = {
-            'Minimally Affected':'#ffc107',
-            'Partially Affected':'#ff9800',
-            'Fully Affected':    '#dc3545',
-            'Affected':          '#ff9800'
+            'Minimally Affected': '#ffc107',
+            'Partially Affected': '#ff9800',
+            'Fully Affected': '#dc3545',
+            'Affected': '#ff9800'
         };
 
         let bodyHTML = '';
         // 3/1/2026
         // Houses list is now deduplicated (one row per house, worst impact wins)
         const houses = data.houses || [];
-        const total  = houses.length;
+        const total = houses.length;
         // 3/1/2026
         if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
@@ -2147,36 +2151,36 @@ async function getFloodHousesSummary() {
             </div>`;
         } else {
             // Count by risk level
-            const lowCount    = houses.filter(h => (h.risk_level||'').toLowerCase() === 'low').length;
-            const mediumCount = houses.filter(h => (h.risk_level||'').toLowerCase() === 'medium').length;
-            const highCount   = houses.filter(h => (h.risk_level||'').toLowerCase() === 'high').length;
+            const lowCount = houses.filter(h => (h.risk_level || '').toLowerCase() === 'low').length;
+            const mediumCount = houses.filter(h => (h.risk_level || '').toLowerCase() === 'medium').length;
+            const highCount = houses.filter(h => (h.risk_level || '').toLowerCase() === 'high').length;
 
             // Count by impact level (for subtitles)
-            const fullyAffected    = houses.filter(h => h.impact_level === 'Fully Affected').length;
-            const partiallyAffected= houses.filter(h => h.impact_level === 'Partially Affected').length;
-            const minimallyAffected= houses.filter(h => h.impact_level === 'Minimally Affected').length;
-            const affectedNoPoly   = houses.filter(h => h.impact_level === 'Affected').length;
+            const fullyAffected = houses.filter(h => h.impact_level === 'Fully Affected').length;
+            const partiallyAffected = houses.filter(h => h.impact_level === 'Partially Affected').length;
+            const minimallyAffected = houses.filter(h => h.impact_level === 'Minimally Affected').length;
+            const affectedNoPoly = houses.filter(h => h.impact_level === 'Affected').length;
 
             // Accordion house rows — sorted by risk level: low → medium → high
-            const riskRank = { low:1, medium:2, high:3 };
-            const impactRank = {'Minimally Affected':1,'Partially Affected':2,'Affected':3,'Fully Affected':4};
-            const sortedHouses = [...houses].sort((a,b) =>
-                (riskRank[(a.risk_level||'').toLowerCase()]||9) - (riskRank[(b.risk_level||'').toLowerCase()]||9) ||
-                (impactRank[a.impact_level]||0) - (impactRank[b.impact_level]||0)
+            const riskRank = { low: 1, medium: 2, high: 3 };
+            const impactRank = { 'Minimally Affected': 1, 'Partially Affected': 2, 'Affected': 3, 'Fully Affected': 4 };
+            const sortedHouses = [...houses].sort((a, b) =>
+                (riskRank[(a.risk_level || '').toLowerCase()] || 9) - (riskRank[(b.risk_level || '').toLowerCase()] || 9) ||
+                (impactRank[a.impact_level] || 0) - (impactRank[b.impact_level] || 0)
             );
-            const houseRows = sortedHouses.map((h,i)=>{
-                const riskColor = riskColors[(h.risk_level||'').toLowerCase()]||'#888';
-                const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent||0).toFixed(1)+'%';
+            const houseRows = sortedHouses.map((h, i) => {
+                const riskColor = riskColors[(h.risk_level || '').toLowerCase()] || '#888';
+                const pct = h.impact_level === 'Affected' ? '—' : parseFloat(h.flood_coverage_percent || 0).toFixed(1) + '%';
                 const body = `
                     <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;">
-                        <div><strong>Risk Level:</strong> <span style="color:${riskColor};font-weight:700;">${(h.risk_level||'Unknown').toUpperCase()}</span></div>
-                        <div><strong>Impact:</strong> <span style="color:${riskColor};font-weight:600;">${h.impact_level||'Unknown'}</span></div>
+                        <div><strong>Risk Level:</strong> <span style="color:${riskColor};font-weight:700;">${(h.risk_level || 'Unknown').toUpperCase()}</span></div>
+                        <div><strong>Impact:</strong> <span style="color:${riskColor};font-weight:600;">${h.impact_level || 'Unknown'}</span></div>
                         <div><strong>Flood Coverage:</strong> ${pct}</div>
                     </div>
-                    ${h.street_name?`<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>`:''}
-                    ${h.hazard_description?`<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Description:</strong> ${h.hazard_description}</div>`:''}`;
-                return rptRow(`fh-${i}`, h.impact_level||'?', riskColor, h.address||'Address not specified',
-                    `${(h.risk_level||'').toUpperCase()} · ${h.impact_level||''}`, body);
+                    ${h.street_name ? `<div style="color:#888;margin-bottom:4px;font-size:12px;">${h.street_name}</div>` : ''}
+                    ${h.hazard_description ? `<div style="margin-top:6px;padding:7px 9px;background:#f8f8f8;border-radius:4px;font-size:12px;"><strong>Description:</strong> ${h.hazard_description}</div>` : ''}`;
+                return rptRow(`fh-${i}`, h.impact_level || '?', riskColor, h.address || 'Address not specified',
+                    `${(h.risk_level || '').toUpperCase()} · ${h.impact_level || ''}`, body);
             }).join('');
 
             bodyHTML = `
@@ -2184,25 +2188,25 @@ async function getFloodHousesSummary() {
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
                         <div class="rpt-stat-num" style="color:#b38600;">${lowCount}</div>
                         <div class="rpt-stat-label">Low Risk</div>
-                        <div style="font-size:10px;color:#b38600;font-weight:600;margin-top:2px;">${total > 0 ? ((lowCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#b38600;font-weight:600;margin-top:2px;">${total > 0 ? ((lowCount / total) * 100).toFixed(1) : '0.0'}%</div>
                         <div style="font-size:10px;color:#aaa;margin-top:1px;">Minimally Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
                         <div class="rpt-stat-num" style="color:#e67e00;">${mediumCount}</div>
                         <div class="rpt-stat-label">Medium Risk</div>
-                        <div style="font-size:10px;color:#e67e00;font-weight:600;margin-top:2px;">${total > 0 ? ((mediumCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#e67e00;font-weight:600;margin-top:2px;">${total > 0 ? ((mediumCount / total) * 100).toFixed(1) : '0.0'}%</div>
                         <div style="font-size:10px;color:#aaa;margin-top:1px;">Partially Affected</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
                         <div class="rpt-stat-num" style="color:#dc3545;">${highCount}</div>
                         <div class="rpt-stat-label">High Risk</div>
-                        <div style="font-size:10px;color:#dc3545;font-weight:600;margin-top:2px;">${total > 0 ? ((highCount/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#dc3545;font-weight:600;margin-top:2px;">${total > 0 ? ((highCount / total) * 100).toFixed(1) : '0.0'}%</div>
                         <div style="font-size:10px;color:#aaa;margin-top:1px;">Fully Affected</div>
                     </div>
                     ${affectedNoPoly > 0 ? `<div class="rpt-stat" style="border-left-color:#888;">
                         <div class="rpt-stat-num" style="color:#555;">${affectedNoPoly}</div>
                         <div class="rpt-stat-label">In Flood Zone (no polygon)</div>
-                        <div style="font-size:10px;color:#888;font-weight:600;margin-top:2px;">${total > 0 ? ((affectedNoPoly/total)*100).toFixed(1) : '0.0'}%</div>
+                        <div style="font-size:10px;color:#888;font-weight:600;margin-top:2px;">${total > 0 ? ((affectedNoPoly / total) * 100).toFixed(1) : '0.0'}%</div>
                     </div>` : ''}
                 </div>
                 <div class="rpt-list-box">
@@ -2233,7 +2237,7 @@ async function getFloodHousesSummary() {
         </div>`;
 
         showReportSwal(reportHTML);
-        
+
     } catch (error) {
         console.error('Error in flood assessment:', error);
         showSwal({
@@ -2248,7 +2252,7 @@ async function getFloodHousesSummary() {
 
 async function showFaultLineRiskAssessment() {
     try {
-        
+
         // Show loading indicator
         showSwal({
             title: 'Analyzing Fault Line Risk',
@@ -2258,23 +2262,23 @@ async function showFaultLineRiskAssessment() {
                 Swal.showLoading();
             }
         });
-        
+
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'action=get_fault_line_assessment'
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch fault line assessment');
         }
-        
+
         const data = result.data;
 
         // ── Build fault line report with unified layout ──────────────────────
@@ -2359,7 +2363,7 @@ async function showFaultLineRiskAssessment() {
         </div>`;
 
         showReportSwal(reportHTML);
-        
+
     } catch (error) {
         console.error('Error in fault line assessment:', error);
         showSwal({
@@ -2374,7 +2378,7 @@ async function showFaultLineRiskAssessment() {
 
 async function showAllBusinessesSDSSReport() {
     try {
-        
+
         // Show loading indicator
         showSwal({
             title: 'Generating Report',
@@ -2384,37 +2388,37 @@ async function showAllBusinessesSDSSReport() {
                 Swal.showLoading();
             }
         });
-        
+
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded' 
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: 'action=get_business_sdss_report'
         });
-        
-        
+
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch business SDSS report');
         }
-        
+
         const data = result.data;
         if (!data || !data.summary || !data.warnings) {
             throw new Error('Invalid data structure received from server');
         }
-        
+
         // Show report using SweetAlert2
         displayBusinessSDSSReport(data);
-        
+
     } catch (error) {
         console.error('Error in business SDSS:', error);
-        
+
         showSwal({
             icon: 'error',
             title: 'Error Generating Report',
@@ -2445,7 +2449,7 @@ async function showAllBusinessesSDSSReport() {
  */
 async function showAllConstructionSDSSReport() {
     try {
-        
+
         // Show loading indicator
         showSwal({
             title: 'Generating Report',
@@ -2455,37 +2459,37 @@ async function showAllConstructionSDSSReport() {
                 Swal.showLoading();
             }
         });
-        
+
         const response = await fetch(MAP_HANDLER_URL, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded' 
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
             body: 'action=get_construction_sdss_report'
         });
-        
-        
+
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.status !== 'success') {
             throw new Error(result.message || 'Failed to fetch construction SDSS report');
         }
-        
+
         const data = result.data;
         if (!data || !data.summary || !data.warnings) {
             throw new Error('Invalid data structure received from server');
         }
-        
+
         // Show report using SweetAlert2
         displayConstructionSDSSReport(data);
-        
+
     } catch (error) {
         console.error('Error in construction SDSS:', error);
-        
+
         showSwal({
             icon: 'error',
             title: 'Error Generating Report',
@@ -2540,18 +2544,18 @@ function displayBusinessSDSSReport(data) {
 
     // ── Categorise ───────────────────────────────────────────────────────────
     const critical = warnings.filter(w => w.warnings?.some(x => x.severity === 'CRITICAL'));
-    const high     = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH')     && !critical.includes(w));
-    const medium   = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM')   && !critical.includes(w) && !high.includes(w));
-    const sorted   = [...medium, ...high, ...critical];
+    const high = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH') && !critical.includes(w));
+    const medium = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
+    const sorted = [...medium, ...high, ...critical];
 
     // ── Build accordion rows ─────────────────────────────────────────────────
     const rows = sorted.map((item, idx) => {
         if (!item?.business || !item?.warnings) return '';
         const biz = item.business;
         const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
-        const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
+        const hasHigh = item.warnings.some(w => w.severity === 'HIGH');
         const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
-        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
+        const c = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
 
         const body = `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:10px;font-size:12px;color:#555;">
@@ -2618,18 +2622,18 @@ function displayConstructionSDSSReport(data) {
 
     // ── Categorise ───────────────────────────────────────────────────────────
     const critical = warnings.filter(w => w.warnings?.some(x => x.severity === 'CRITICAL'));
-    const high     = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH')     && !critical.includes(w));
-    const medium   = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM')   && !critical.includes(w) && !high.includes(w));
-    const sorted   = [...medium, ...high, ...critical];
+    const high = warnings.filter(w => w.warnings?.some(x => x.severity === 'HIGH') && !critical.includes(w));
+    const medium = warnings.filter(w => w.warnings?.some(x => x.severity === 'MEDIUM') && !critical.includes(w) && !high.includes(w));
+    const sorted = [...medium, ...high, ...critical];
 
     // ── Build accordion rows ─────────────────────────────────────────────────
     const rows = sorted.map((item, idx) => {
         if (!item?.construction || !item?.warnings) return '';
         const site = item.construction;
         const hasCritical = item.warnings.some(w => w.severity === 'CRITICAL');
-        const hasHigh     = item.warnings.some(w => w.severity === 'HIGH');
+        const hasHigh = item.warnings.some(w => w.severity === 'HIGH');
         const sev = hasCritical ? 'CRITICAL' : hasHigh ? 'HIGH' : 'MEDIUM';
-        const c   = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
+        const c = sev === 'CRITICAL' ? '#990000' : sev === 'HIGH' ? '#cc0000' : '#ff9800';
         const owner = [site.first_name, site.last_name].filter(Boolean).join(' ') || 'Unknown Owner';
 
         const body = `
@@ -2681,26 +2685,26 @@ async function loadIncidentSubFilters() {
     if (!panel) return;
 
     const typeIcons = {
-        'theft':       'fas fa-user-secret',
-        'assault':     'fas fa-fist-raised',
-        'vandalism':   'fas fa-spray-can',
+        'theft': 'fas fa-user-secret',
+        'assault': 'fas fa-fist-raised',
+        'vandalism': 'fas fa-spray-can',
         'disturbance': 'fas fa-volume-up',
-        'robbery':     'fas fa-mask',
-        'drug':        'fas fa-pills',
+        'robbery': 'fas fa-mask',
+        'drug': 'fas fa-pills',
         'trespassing': 'fas fa-door-open',
-        'fraud':       'fas fa-file-contract',
-        'harassment':  'fas fa-comment-slash',
-        'fire':        'fas fa-fire'
+        'fraud': 'fas fa-file-contract',
+        'harassment': 'fas fa-comment-slash',
+        'fire': 'fas fa-fire'
     };
 
     let types = [];
     try {
         const fd = new URLSearchParams();
         fd.append('action', 'get_incident_types');
-        const res  = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
+        const res = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
         const data = await res.json();
         types = data.success ? (data.types || []) : [];
-    } catch(e) {
+    } catch (e) {
         console.warn('Could not load incident types:', e);
     }
 
@@ -2743,8 +2747,8 @@ async function loadIncidentSubFilters() {
 }
 
 function toggleIncidentFilters() {
-    const list   = document.getElementById('incidentTypeList');
-    const btn    = document.getElementById('incidentToggleBtn');
+    const list = document.getElementById('incidentTypeList');
+    const btn = document.getElementById('incidentToggleBtn');
     if (!list || !btn) return;
     incidentFiltersExpanded = !incidentFiltersExpanded;
     list.classList.toggle('open', incidentFiltersExpanded);
@@ -2768,7 +2772,7 @@ function filterIncidentByType(subtype, event) {
 function shouldShowIncidentMarker(marker) {
     if (incidentSubFilter === 'all') return true;
     const type = (marker.incident_type ||
-                  (marker.incident_data ? marker.incident_data.incident_type : '') || '').toLowerCase();
+        (marker.incident_data ? marker.incident_data.incident_type : '') || '').toLowerCase();
     return type === incidentSubFilter.toLowerCase();
 }
 
@@ -2839,7 +2843,7 @@ async function showIncidentSummaryReport() {
 
         const rows = sorted.map((inc, i) => {
             const sColor = inc.status === 'Resolved' ? '#28a745'
-                         : inc.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
+                : inc.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
             const body = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;font-size:12px;color:#555;margin-bottom:8px;">
                     <div><strong>Victim:</strong> ${inc.vic_full_name || '—'}</div>
@@ -2914,55 +2918,55 @@ function attachAccordionHandler(popup) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize navbar with hover and click functionality
     initNavbar();
-    
+
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', handleSearchInput);
-        
-        searchInput.addEventListener('keypress', function(e) {
+
+        searchInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 performSearch();
             }
         });
-        
-        document.addEventListener('click', function(e) {
+
+        document.addEventListener('click', function (e) {
             const resultsContainer = document.getElementById('search-results');
             const searchBox = document.querySelector('.gm-search-box') || document.querySelector('.map-overlay--search');
-            
-            if (resultsContainer && 
-                !resultsContainer.contains(e.target) && 
+
+            if (resultsContainer &&
+                !resultsContainer.contains(e.target) &&
                 e.target !== searchInput &&
                 (!searchBox || !searchBox.contains(e.target))) {
-                
+
                 resultsContainer.style.display = 'none';
             }
         });
-        
-        searchInput.addEventListener('focus', function() {
+
+        searchInput.addEventListener('focus', function () {
             if (this.value.trim() !== '') {
                 performSearch();
             }
         });
     }
-    
-    document.addEventListener('click', function(e) {
+
+    document.addEventListener('click', function (e) {
         const dropdown = document.getElementById('filterDropdown');
         const dropdownBtn = document.getElementById('filterDropdownBtn');
-        
-        if (dropdown && dropdownBtn && 
-            !dropdown.contains(e.target) && 
+
+        if (dropdown && dropdownBtn &&
+            !dropdown.contains(e.target) &&
             !dropdownBtn.contains(e.target)) {
             dropdown.classList.remove('show');
             dropdownBtn.classList.remove('active');
         }
     });
-    
+
     // SweetAlert2 handles its own backdrop click and Escape key natively.
     // No additional listeners needed for modal close.
-    
+
     const householdLink = document.querySelector('.dropdown-content a[data-type="household"]');
     if (householdLink) {
         householdLink.classList.add('active');
@@ -2971,7 +2975,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== MAP INITIALIZATION ====================
 
-map.whenReady(async function() {
+map.whenReady(async function () {
     // ── Pane setup (synchronous, instant) ──────────────────────────────────
     if (!map.getPane('boundaryPane')) {
         map.createPane('boundaryPane');
@@ -2989,12 +2993,12 @@ map.whenReady(async function() {
             body: 'action=get_init_data&flood=' + (floodLayerActive ? '1' : '0')
         });
         initData = await res.json();
-    } catch(e) { console.warn('Init data fetch failed:', e); }
+    } catch (e) { console.warn('Init data fetch failed:', e); }
 
     const boundaryData = initData;
-    const markersData  = initData;
-    const housesData   = initData ? { success: initData.success, houses: initData.houses } : null;
-    const floodData    = initData;
+    const markersData = initData;
+    const housesData = initData ? { success: initData.success, houses: initData.houses } : null;
+    const floodData = initData;
 
     // ── Process boundary ────────────────────────────────────────────────────
     try {
@@ -3007,7 +3011,7 @@ map.whenReady(async function() {
                 features: [{ type: 'Feature', properties: { name: b.name }, geometry: { type: 'Polygon', coordinates: [coords] } }]
             };
         }
-    } catch(e) { console.warn('Could not parse boundary:', e); }
+    } catch (e) { console.warn('Could not parse boundary:', e); }
 
     // Draw boundary polygon if available
     if (blueRidgeGeoJSON) {
@@ -3016,7 +3020,7 @@ map.whenReady(async function() {
             pane: 'boundaryPane'
         }).addTo(map);
     }
-    
+
     // ============= ADD FAULT LINE (CORRECTED COORDINATES) =============
     const faultLineCoordinates = [
         [14.6175408, 121.0765329],
@@ -3046,8 +3050,8 @@ map.whenReady(async function() {
         </div>
     `);
 
-    faultLine.on('mouseover', function() { this.setStyle({ weight: 6, opacity: 1, color: '#cc0000' }); });
-    faultLine.on('mouseout',  function() { this.setStyle({ weight: 4, opacity: 0.8, color: '#ff0000' }); });
+    faultLine.on('mouseover', function () { this.setStyle({ weight: 6, opacity: 1, color: '#cc0000' }); });
+    faultLine.on('mouseout', function () { this.setStyle({ weight: 4, opacity: 0.8, color: '#ff0000' }); });
 
     const midIndex = Math.floor(faultLineCoordinates.length / 2);
     const warningPoint = faultLineCoordinates[midIndex];
@@ -3128,31 +3132,31 @@ function setupSoftBoundary() {
     const softBounds = bounds.pad(0.15);
     const warningBounds = bounds.pad(0.05);
     const maxBounds = bounds.pad(0.25);
-    
+
     map.setMaxBounds(maxBounds);
-    
+
     let boundaryTimeout;
-    
-    map.on('move', function() {
+
+    map.on('move', function () {
         clearTimeout(boundaryTimeout);
-        
+
         const currentCenter = map.getCenter();
-        
+
         if (!warningBounds.contains(currentCenter)) {
             showBoundaryMessage("You're leaving Barangay Blue Ridge B");
-            
+
             if (!softBounds.contains(currentCenter)) {
-                boundaryTimeout = setTimeout(function() {
+                boundaryTimeout = setTimeout(function () {
                     let snappedLat = currentCenter.lat;
                     let snappedLng = currentCenter.lng;
-                    
+
                     if (snappedLat > warningBounds.getNorth()) snappedLat = warningBounds.getNorth();
                     if (snappedLat < warningBounds.getSouth()) snappedLat = warningBounds.getSouth();
                     if (snappedLng > warningBounds.getEast()) snappedLng = warningBounds.getEast();
                     if (snappedLng < warningBounds.getWest()) snappedLng = warningBounds.getWest();
-                    
+
                     const snappedCenter = L.latLng(snappedLat, snappedLng);
-                    
+
                     map.flyTo(snappedCenter, map.getZoom(), {
                         duration: 1,
                         easeLinearity: 0.25
@@ -3161,21 +3165,21 @@ function setupSoftBoundary() {
             }
         }
     });
-    
-    map.on('moveend', function() {
+
+    map.on('moveend', function () {
         const currentCenter = map.getCenter();
-        
+
         if (!softBounds.contains(currentCenter)) {
             let snappedLat = currentCenter.lat;
             let snappedLng = currentCenter.lng;
-            
+
             if (snappedLat > softBounds.getNorth()) snappedLat = softBounds.getNorth();
             if (snappedLat < softBounds.getSouth()) snappedLat = softBounds.getSouth();
             if (snappedLng > softBounds.getEast()) snappedLng = softBounds.getEast();
             if (snappedLng < softBounds.getWest()) snappedLng = softBounds.getWest();
-            
+
             const snappedCenter = L.latLng(snappedLat, snappedLng);
-            
+
             if (!bounds.contains(currentCenter)) {
                 map.panTo(snappedCenter, {
                     animate: true,
@@ -3184,7 +3188,7 @@ function setupSoftBoundary() {
             }
         }
     });
-    
+
     addBoundaryNotification();
 }
 
@@ -3193,7 +3197,7 @@ function showBoundaryMessage(message = "Returning to Barangay Blue Ridge B") {
     if (notification) {
         notification.textContent = message;
         notification.classList.add('visible');
-        
+
         setTimeout(() => {
             notification.classList.remove('visible');
         }, 3000);
@@ -3203,7 +3207,7 @@ function showBoundaryMessage(message = "Returning to Barangay Blue Ridge B") {
 function addBoundaryNotification() {
     const existing = document.getElementById('boundary-notification');
     if (existing) existing.remove();
-    
+
     const notification = document.createElement('div');
     notification.id = 'boundary-notification';
     notification.style.cssText = `
@@ -3226,9 +3230,9 @@ function addBoundaryNotification() {
         border-left: 4px solid #ffffff;
         pointer-events: none;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     const style = document.createElement('style');
     style.textContent = `
         #boundary-notification.visible {
@@ -3244,7 +3248,7 @@ function addBoundaryNotification() {
 function toggleMobileMenu() {
     const sideNav = document.querySelector('.side_nav');
     sideNav.classList.toggle('active');
-    
+
     const searchResults = document.getElementById('search-results');
     if (searchResults) {
         searchResults.style.display = 'none';
@@ -3254,12 +3258,12 @@ function toggleMobileMenu() {
 function updateDateTime() {
     const dateTimeElement = document.getElementById('currentDateTime');
     if (!dateTimeElement) return;
-    
+
     const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -3274,13 +3278,13 @@ function initDateTime() {
 }
 
 function setupMobileMenuClose() {
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const sideNav = document.querySelector('.side_nav');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    
+
         if (window.getComputedStyle(mobileMenuBtn).display !== 'none') {
-            if (sideNav.classList.contains('active') && 
-                !sideNav.contains(e.target) && 
+            if (sideNav.classList.contains('active') &&
+                !sideNav.contains(e.target) &&
                 !mobileMenuBtn.contains(e.target)) {
                 sideNav.classList.remove('active');
             }
@@ -3296,7 +3300,7 @@ function debugFloodState() {
     console.log('Flood Layer on map:', floodLayer ? map.hasLayer(floodLayer) : false);
     console.log('Flood Legend exists:', !!floodLegend);
     console.log('Flood Legend on map:', floodLegend ? hasControl(floodLegend) : false);
-    
+
     // Check DOM for legend
     const legendElement = document.querySelector('.flood-legend');
     console.log('Flood Legend in DOM:', !!legendElement);
@@ -3323,7 +3327,7 @@ async function showSDSSRulesReport() {
         ]);
 
         const rulesResult = await rulesRes.json();
-        const dssResult   = await dssRes.json();
+        const dssResult = await dssRes.json();
 
         if (rulesResult.status === 'success') {
             displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
@@ -3345,11 +3349,11 @@ function displaySDSSRulesReport(data, dssData) {
     // Group rules by category
     const floodRules = [], seismicRules = [], constructionRules = [], businessRules = [], incidentRules = [];
     for (const [key, rule] of Object.entries(rules)) {
-        if (rule.category === 'Flood Hazard')             floodRules.push({ key, ...rule });
-        else if (rule.category === 'Seismic Hazard')      seismicRules.push({ key, ...rule });
+        if (rule.category === 'Flood Hazard') floodRules.push({ key, ...rule });
+        else if (rule.category === 'Seismic Hazard') seismicRules.push({ key, ...rule });
         else if (rule.category === 'Construction Safety') constructionRules.push({ key, ...rule });
-        else if (rule.category === 'Business Rules')      businessRules.push({ key, ...rule });
-        else if (rule.category === 'Incident Rules')      incidentRules.push({ key, ...rule });
+        else if (rule.category === 'Business Rules') businessRules.push({ key, ...rule });
+        else if (rule.category === 'Incident Rules') incidentRules.push({ key, ...rule });
     }
 
     const renderCategory = (title, icon, rulesArr, totalHouses) => {
@@ -3361,7 +3365,7 @@ function displaySDSSRulesReport(data, dssData) {
                 </h4>
                 <p style="margin:0 0 12px;font-size:11px;color:#aaa;">Click any rule to expand details.</p>
                 <div style="display:grid;gap:8px;">
-                    ${rulesArr.map((rule, i) => createRuleCard(rule, totalHouses, `${title.replace(/\s/g,'')}-${i}`)).join('')}
+                    ${rulesArr.map((rule, i) => createRuleCard(rule, totalHouses, `${title.replace(/\s/g, '')}-${i}`)).join('')}
                 </div>
             </div>`;
     };
@@ -3432,9 +3436,9 @@ function displaySDSSRulesReport(data, dssData) {
                 const bulkBtn = e.target.closest('[data-dss-bulk-type]');
                 if (bulkBtn) {
                     e.stopPropagation();
-                    const type    = bulkBtn.dataset.dssBulkType;
+                    const type = bulkBtn.dataset.dssBulkType;
                     const indices = bulkBtn.dataset.dssBulkIndices.split(',').map(Number);
-                    const evList  = (window._dssEvals || []).filter((_, i) => indices.includes(i));
+                    const evList = (window._dssEvals || []).filter((_, i) => indices.includes(i));
                     if (evList.length > 0) {
                         Swal.close();
                         setTimeout(() => showDSSEvalsOnMap(type, evList), 200);
@@ -3447,15 +3451,15 @@ function displaySDSSRulesReport(data, dssData) {
 
 function switchRulesTab(tab) {
     document.getElementById('tab-rules').style.display = tab === 'rules' ? '' : 'none';
-    document.getElementById('tab-dss').style.display   = tab === 'dss'   ? '' : 'none';
+    document.getElementById('tab-dss').style.display = tab === 'dss' ? '' : 'none';
     const rBtn = document.getElementById('tab-btn-rules');
     const dBtn = document.getElementById('tab-btn-dss');
-    rBtn.style.background  = tab === 'rules' ? '#00247c' : 'transparent';
-    rBtn.style.color       = tab === 'rules' ? 'white'   : '#666';
-    rBtn.style.fontWeight  = tab === 'rules' ? '700'     : '600';
-    dBtn.style.background  = tab === 'dss'   ? '#00247c' : 'transparent';
-    dBtn.style.color       = tab === 'dss'   ? 'white'   : '#666';
-    dBtn.style.fontWeight  = tab === 'dss'   ? '700'     : '600';
+    rBtn.style.background = tab === 'rules' ? '#00247c' : 'transparent';
+    rBtn.style.color = tab === 'rules' ? 'white' : '#666';
+    rBtn.style.fontWeight = tab === 'rules' ? '700' : '600';
+    dBtn.style.background = tab === 'dss' ? '#00247c' : 'transparent';
+    dBtn.style.color = tab === 'dss' ? 'white' : '#666';
+    dBtn.style.fontWeight = tab === 'dss' ? '700' : '600';
 }
 
 function buildDSSTab(dssData) {
@@ -3467,7 +3471,7 @@ function buildDSSTab(dssData) {
     }
 
     const evals = dssData.evaluations || [];
-    const sum   = dssData.summary || {};
+    const sum = dssData.summary || {};
 
     if (evals.length === 0) {
         return `<div style="text-align:center;padding:32px;color:#888;font-size:13px;">
@@ -3477,8 +3481,8 @@ function buildDSSTab(dssData) {
     }
 
     const statusColor = s => s === 'Pre-Approved' ? '#28a745' : s === 'Rejected' ? '#dc3545' : '#ff9800';
-    const typeIcon    = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
-    const typeColor   = t => t === 'construction' ? '#ffc107' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
+    const typeIcon = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
+    const typeColor = t => t === 'construction' ? '#ffc107' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
 
     // Sort order: Pre-Approved (green) on top, Additional Requirements Needed (yellow) middle, Rejected (red) at bottom
     const statusRank = { 'Pre-Approved': 1, 'Additional Requirements Needed': 2, 'Pending Evaluation': 3, 'Rejected': 4 };
@@ -3493,9 +3497,9 @@ function buildDSSTab(dssData) {
 
     const summaryChips = `
         <div class="rpt-chips" style="margin-bottom:12px;">
-            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#28a745;">${sum['Pre-Approved']||0}</span><span class="rpt-chip-label">Pre-Approved</span></div>
-            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#ff9800;">${sum['Additional Requirements Needed']||0}</span><span class="rpt-chip-label">Needs Review</span></div>
-            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#dc3545;">${sum['Rejected']||0}</span><span class="rpt-chip-label">Rejected</span></div>
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#28a745;">${sum['Pre-Approved'] || 0}</span><span class="rpt-chip-label">Pre-Approved</span></div>
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#ff9800;">${sum['Additional Requirements Needed'] || 0}</span><span class="rpt-chip-label">Needs Review</span></div>
+            <div class="rpt-chip"><span class="rpt-chip-num" style="color:#dc3545;">${sum['Rejected'] || 0}</span><span class="rpt-chip-label">Rejected</span></div>
         </div>
         <div class="rpt-footer" style="margin-bottom:14px;">
             <i class="fas fa-info-circle"></i>
@@ -3513,9 +3517,9 @@ function buildDSSTab(dssData) {
         const typeIndices = items.map(ev => evals.indexOf(ev)).join(',');
 
         const rows = items.map((ev, i) => {
-            const sc      = statusColor(ev.dss_status);
-            const pct     = ev.max_score > 0 ? Math.round((ev.score / ev.max_score) * 100) : 0;
-            const uid     = `dss-${type}-${i}`;
+            const sc = statusColor(ev.dss_status);
+            const pct = ev.max_score > 0 ? Math.round((ev.score / ev.max_score) * 100) : 0;
+            const uid = `dss-${type}-${i}`;
 
             const failedList = ev.failed_rules.length > 0
                 ? `<div style="margin-top:8px;"><strong style="font-size:11px;color:#cc0000;">Failed Rules:</strong>
@@ -3589,15 +3593,15 @@ function buildDSSTab(dssData) {
 function createRuleCard(rule, totalHouses, cardId) {
     const severityColors = {
         'CRITICAL': { bg: '#f5f5f5', border: '#990000', text: '#990000' },
-        'HIGH':     { bg: '#f5f5f5', border: '#cc0000', text: '#cc0000' },
-        'MEDIUM':   { bg: '#f5f5f5', border: '#ff9800', text: '#ff9800' }
+        'HIGH': { bg: '#f5f5f5', border: '#cc0000', text: '#cc0000' },
+        'MEDIUM': { bg: '#f5f5f5', border: '#ff9800', text: '#ff9800' }
     };
-    
+
     const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
     const pct = totalHouses > 0 ? ((rule.count / totalHouses) * 100).toFixed(1) : '0.0';
     const uid = `rule-${cardId}-${rule.key || Math.random().toString(36).slice(2)}`;
     const safeKey = rule.key || '';
-    
+
     return `
         <div style="border: 2px solid ${colors.border}; border-radius: 8px; overflow: hidden;">
             <div data-accordion-toggle="${uid}"
@@ -3749,7 +3753,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                         poly.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
                         affectedHighlightLayers.push(poly);
                         return;
-                    } catch(e) { console.warn('Polygon parse error', e); }
+                    } catch (e) { console.warn('Polygon parse error', e); }
                 }
                 const lat = parseFloat(r.lat || r.center_lat), lng = parseFloat(r.lng || r.center_lng);
                 if (!isNaN(lat) && !isNaN(lng)) {
@@ -3783,7 +3787,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                             poly.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="${badgeClass}" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
                             affectedHighlightLayers.push(poly);
                             return;
-                        } catch(e) { console.warn('Polygon parse error for non-household:', e); }
+                        } catch (e) { console.warn('Polygon parse error for non-household:', e); }
                     }
                     // Fallback to circle if no matching house polygon found
                     const badgeClass = r.type === 'business' ? 'business-badge' : 'construction-badge';
@@ -3802,25 +3806,25 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
         }
 
         // ── Build record list ───────────────────────────────────────────────
-// 3/1/2026
-if (records.length === 0) {
-    bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
-    return;
-}
-// 3/1/2026
-// Sort records - households first, then by name/address
-const sortedRecords = [...records].sort((a, b) => {
-    // First sort by type (households first)
-    if (a.type === 'household' && b.type !== 'household') return -1;
-    if (a.type !== 'household' && b.type === 'household') return 1;
-    
-    // Then by name/address alphabetically
-    const nameA = (a.name || a.address || '').toLowerCase();
-    const nameB = (b.name || b.address || '').toLowerCase();
-    return nameA.localeCompare(nameB);
-});
+        // 3/1/2026
+        if (records.length === 0) {
+            bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
+            return;
+        }
+        // 3/1/2026
+        // Sort records - households first, then by name/address
+        const sortedRecords = [...records].sort((a, b) => {
+            // First sort by type (households first)
+            if (a.type === 'household' && b.type !== 'household') return -1;
+            if (a.type !== 'household' && b.type === 'household') return 1;
 
-const rows = sortedRecords.map((r, idx) => `
+            // Then by name/address alphabetically
+            const nameA = (a.name || a.address || '').toLowerCase();
+            const nameB = (b.name || b.address || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        const rows = sortedRecords.map((r, idx) => `
     <div class="affected-record-row" data-record-idx="${idx}">
         <div class="affected-record-name">${r.name}</div>
         <div class="affected-record-addr">${r.address}</div>
@@ -3830,23 +3834,23 @@ const rows = sortedRecords.map((r, idx) => `
         </div>
     </div>`).join('');
 
-bodyEl.innerHTML = `
+        bodyEl.innerHTML = `
     <div class="affected-panel-count">${sortedRecords.length} record${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
     <div class="affected-panel-hint">Click a row to view full details</div>
     <div class="affected-records-list" id="affected-records-list"></div>
 `;
 
-// Inject rows safely and attach click listeners via JS (avoids JSON.stringify in HTML attr)
-const listEl = bodyEl.querySelector('#affected-records-list');
-listEl.innerHTML = rows;
-listEl.querySelectorAll('.affected-record-row').forEach(rowEl => {
-    rowEl.addEventListener('click', () => {
-        const r = sortedRecords[parseInt(rowEl.dataset.recordIdx)];
-        if (!r) return;
-        if (r.type === 'household') viewHouseDetails(r.id);
-        else viewMapDetails(r.id, r.type);
-    });
-});
+        // Inject rows safely and attach click listeners via JS (avoids JSON.stringify in HTML attr)
+        const listEl = bodyEl.querySelector('#affected-records-list');
+        listEl.innerHTML = rows;
+        listEl.querySelectorAll('.affected-record-row').forEach(rowEl => {
+            rowEl.addEventListener('click', () => {
+                const r = sortedRecords[parseInt(rowEl.dataset.recordIdx)];
+                if (!r) return;
+                if (r.type === 'household') viewHouseDetails(r.id);
+                else viewMapDetails(r.id, r.type);
+            });
+        });
 
     } catch (e) {
         const bodyEl = document.getElementById('affected-panel-body');
@@ -3872,8 +3876,8 @@ async function showDSSEvalsOnMap(type, evList) {
     if (oldPanel) oldPanel.remove();
 
     const statusColor = s => s === 'Pre-Approved' ? '#28a745' : s === 'Rejected' ? '#dc3545' : '#ff9800';
-    const typeIcon    = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
-    const typeColor   = t => t === 'construction' ? '#e6a800' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
+    const typeIcon = t => t === 'construction' ? 'fa-hard-hat' : t === 'business' ? 'fa-building' : t === 'utility' ? 'fa-wrench' : 'fa-flag';
+    const typeColor = t => t === 'construction' ? '#e6a800' : t === 'business' ? '#2e7d32' : t === 'utility' ? '#2196f3' : '#cc0000';
     const groupLabels = { construction: 'Construction', business: 'Business', utility: 'Utility', incident: 'Incident Reports' };
 
     const panel = document.createElement('div');
@@ -3943,7 +3947,7 @@ async function showDSSEvalsOnMap(type, evList) {
         const lng = ev.lng != null ? parseFloat(ev.lng) : NaN;
         if (isNaN(lat) || isNaN(lng)) return; // skip if no coordinates
 
-        const sc  = statusColor(ev.dss_status);
+        const sc = statusColor(ev.dss_status);
         const pct = ev.max_score > 0 ? Math.round((ev.score / ev.max_score) * 100) : 0;
 
         // Single consistent marker — a pin divIcon with status color
@@ -4008,8 +4012,8 @@ async function showDSSEvalsOnMap(type, evList) {
             </div>
             <div style="margin-top:4px;">
                 ${ev.failed_rules.length > 0
-                    ? `<div style="font-size:11px;color:#cc0000;"><i class="fas fa-times-circle"></i> ${ev.failed_rules.length} failed rule${ev.failed_rules.length !== 1 ? 's' : ''}</div>`
-                    : `<div style="font-size:11px;color:#28a745;"><i class="fas fa-check-circle"></i> All rules passed</div>`}
+                ? `<div style="font-size:11px;color:#cc0000;"><i class="fas fa-times-circle"></i> ${ev.failed_rules.length} failed rule${ev.failed_rules.length !== 1 ? 's' : ''}</div>`
+                : `<div style="font-size:11px;color:#28a745;"><i class="fas fa-check-circle"></i> All rules passed</div>`}
             </div>
         `;
         div.addEventListener('click', () => {
