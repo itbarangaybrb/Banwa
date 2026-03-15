@@ -1,5 +1,6 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socketUtils.js';
+
 const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
 const swalStyle = document.createElement('style');
@@ -97,6 +98,8 @@ function switchTab(event, tabName) {
         loadPendingTable();
     } else if (tabName === 'history') {
         loadHistoryTable();
+    } else if (tabName === 'audits') {
+        fetchAuditLogs();
     }
 }
 
@@ -188,6 +191,8 @@ function refreshActiveTab() {
         loadPendingTable().finally(finish);
     } else if (activeTabId === 'history') {
         loadHistoryTable().finally(finish);
+    } else if (activeTabId === 'audits') {
+        fetchAuditLogs().finally(finish);
     } else {
         finish();
     }
@@ -198,6 +203,8 @@ function openVerificationModal(appId, appType) {
     if (!app) return;
 
     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
+
+    const paymentMethod = app.payment_method || '';
 
     // --- NEW PREVIEW LOGIC ---
     let proofPreview = '<p style="color:red;">No proof</p>';
@@ -228,11 +235,23 @@ function openVerificationModal(appId, appType) {
     }
     // -------------------------
 
+    // Only show OR number field if payment method is GCash/QR
+    const showOrNumberField = paymentMethod === 'GCash/QR';
+
+    const orNumberFieldHtml = showOrNumberField ? `
+        <!-- OR NUMBER TEXT INPUT -->
+        <div style="margin-top: 16px; background: #e9ecef; padding: 15px; border-radius: 8px;">
+            <label for="orNumberInput" style="font-weight: bold; display: block; margin-bottom: 5px; color: #00247C;">Official Receipt (OR) Number *</label>
+            <input type="text" id="orNumberInput" placeholder="Enter OR number" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background: white; box-sizing: border-box;">
+        </div>
+    ` : '';
+
     const html = `
         <div style="text-align:left;">
             <p><strong>Applicant:</strong> ${app.first_name} ${app.last_name}</p>
             <p><strong>Amount:</strong> PHP ${parseFloat(app.amount_due).toFixed(2)}</p>
             <p><strong>Status:</strong> ${app.payment_status}</p>
+            <p><strong>Payment Method:</strong> ${paymentMethod}</p>
             <hr>
             <p><strong>Resident's Proof:</strong></p>
             
@@ -240,10 +259,15 @@ function openVerificationModal(appId, appType) {
                 ${proofPreview}
             </div>
             
+            ${orNumberFieldHtml}
+            
             <hr>
-            <div style="margin-top: 15px; background: #e9ecef; padding: 15px; border-radius: 8px;">
-                <label for="orFile" style="font-weight: bold; display: block; margin-bottom: 5px; color: #00247C;">Upload Official Receipt (OR) *</label>
-                <input type="file" id="orFile" accept=".jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white; box-sizing: border-box;">
+            
+            <!-- OR FILE UPLOAD - ALWAYS VISIBLE -->
+            <div style="margin-top: 16px; background: #e9ecef; padding: 15px; border-radius: 8px;">
+                <label for="orFileInput" style="font-weight: bold; display: block; margin-bottom: 5px; color: #00247C;">Upload Official Receipt (OR) File *</label>
+                <input type="file" id="orFileInput" accept=".jpg,.jpeg,.png,.pdf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white; box-sizing: border-box;">
+                <small style="display: block; margin-top: 5px; color: #666;">Upload a clear photo or scanned copy of the Official Receipt.</small>
             </div>
         </div>
     `;
@@ -251,372 +275,121 @@ function openVerificationModal(appId, appType) {
     Swal.fire({
         title: 'Verify Payment',
         html: html,
-        icon: 'info', // Changed to 'info' as a preview makes it more of an informational review step
+        icon: 'info',
         showCloseButton: true,
         showDenyButton: true,
         confirmButtonText: 'Approve',
         denyButtonText: 'Reject',
         confirmButtonColor: '#28a745',
         denyButtonColor: '#dc3545',
-        width: '600px', // Slightly wider to accommodate the preview better
+        width: '600px',
         preConfirm: () => {
-            const orFileInput = document.getElementById('orFile');
-            if (!orFileInput.files.length) {
-                Swal.showValidationMessage('You must upload an Official Receipt to approve.');
+            const orFileInput = document.getElementById('orFileInput');
+
+            if (!orFileInput || !orFileInput.files.length) {
+                Swal.showValidationMessage('You must upload an Official Receipt file to approve.');
                 return false;
             }
-            return orFileInput.files[0];
+
+            // Only validate OR number if payment method is GCash/QR
+            if (showOrNumberField) {
+                const orNumber = document.getElementById('orNumberInput')?.value.trim();
+
+                if (!orNumber) {
+                    Swal.showValidationMessage('You must enter an Official Receipt number to approve.');
+                    return false;
+                }
+
+                return {
+                    orNumber: orNumber,
+                    orFile: orFileInput.files[0]
+                };
+            }
+
+            return {
+                orFile: orFileInput.files[0]
+            };
         }
     }).then(result => {
         if (result.isConfirmed) {
-            submitVerification(appId, 'Approved', appType, result.value);
+            // Pass orFile and conditionally orNumber
+            if (showOrNumberField) {
+                submitVerification(appId, 'Approved', appType, result.value.orFile, result.value.orNumber);
+            } else {
+                submitVerification(appId, 'Approved', appType, result.value.orFile, null);
+            }
         } else if (result.isDenied) {
-            submitVerification(appId, 'Rejected', appType, null);
+            submitVerification(appId, 'Rejected', appType, null, null);
         }
     });
 }
 
-function submitVerification(appId, status, appType, orFile = null) {
+function submitVerification(appId, status, appType, orFile = null, orNumber = null) {
     const formData = new FormData();
     formData.append('action', 'verify_payment');
     formData.append('id', appId);
     formData.append('verification_action', status);
     formData.append('type', appType);
-    if (status === 'Approved' && orFile) formData.append('or_file', orFile);
+
+    if (status === 'Approved') {
+        if (orFile) formData.append('or_file', orFile);
+        if (orNumber) formData.append('or_number', orNumber);
+    }
 
     Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    fetch(API_URL, { method: 'POST', body: formData })
+    fetch(`${API_URL}?action=verify_payment`, { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
+                    sockets["finance_applications"].send(JSON.stringify({
+                        type: "finance_applications_update",
+                        action: "verification_update",
+                        application_id: appId,
+                        status: status,
+                        or_number: orNumber
+                    }));
                 }
                 if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
+                    sockets["applications"].send(JSON.stringify({
+                        type: "applications_update",
+                        action: "verification_update",
+                        application_id: appId
+                    }));
+                }
+                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+                    sockets["business_applications"].send(JSON.stringify({
+                        type: "business_applications_update",
+                        action: "verification_update",
+                        application_id: appId
+                    }));
+                }
+                if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+                    sockets["construction_applications"].send(JSON.stringify({
+                        type: "construction_applications_update",
+                        action: "verification_update",
+                        application_id: appId
+                    }));
                 }
                 if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
+                    sockets["audit"].send(JSON.stringify({
+                        type: "new_audit_log",
+                        action: "new_audit_log"
+                    }));
                 }
-                Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => loadPendingTable());
+
+                Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => {
+                    loadPendingTable();
+                    fetchAuditLogs();
+                });
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
-        });
-}
-
-// function openVerificationModal(appId, appType) {
-//     const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
-//     if (!app) return;
-
-//     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
-//     const proofLink = proofFile ? '<a href="' + proofFile + '" target="_blank">View Proof</a>' : '<p style="color:red;">No proof</p>';
-
-//     const html = '<div><p><strong>Applicant:</strong> ' + app.first_name + ' ' + app.last_name + '</p><p><strong>Amount:</strong> PHP ' + parseFloat(app.amount_due).toFixed(2) + '</p><p><strong>Status:</strong> ' + app.payment_status + '</p><hr><p><strong>Proof:</strong></p>' + proofLink + '</div>';
-
-//     Swal.fire({
-//         title: 'Verify Payment',
-//         html: html,
-//         icon: 'question',
-//         showDenyButton: true,
-//         confirmButtonText: 'Approve',
-//         denyButtonText: 'Reject',
-//         confirmButtonColor: '#28a745',
-//         denyButtonColor: '#dc3545',
-//         background: '#f8f9fa',
-//         color: '#333',
-//         width: '600px'
-//     }).then(result => {
-//         if (result.isConfirmed) {
-//             submitVerification(appId, 'Approved', appType);
-//         } else if (result.isDenied) {
-//             submitVerification(appId, 'Rejected', appType);
-//         }
-//     });
-// }
-
-// function submitVerification(appId, status, appType) {
-//     const formData = new FormData();
-//     formData.append('action', 'verify_payment');
-//     formData.append('id', appId);
-//     formData.append('verification_action', status);
-//     formData.append('type', appType); // Dynamically set the type
-
-//     Swal.fire({
-//         title: 'Processing...',
-//         icon: 'info',
-//         allowOutsideClick: false,
-//         allowEscapeKey: false,
-//         didOpen: () => Swal.showLoading()
-//     });
-
-//     fetch(API_URL, { method: 'POST', body: formData })
-//         .then(res => res.json())
-//         .then(data => {
-//             if (data.status === 'success') {
-
-//                 if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-//                     sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
-//                 }
-//                 if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-//                     sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
-//                 }
-//                 if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-//                     sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
-//                 }
-
-//                 Swal.fire({
-//                     icon: 'success',
-//                     title: 'Success',
-//                     text: 'Payment ' + status.toLowerCase(),
-//                     confirmButtonColor: '#00247c',
-//                     background: '#f8f9fa',
-//                     color: '#333'
-//                 }).then(() => loadPendingTable());
-//             } else {
-//                 Swal.fire('Error', data.message, 'error');
-//             }
-//         })
-//         .catch(err => {
-//             console.error(err);
-//             Swal.fire('Error', 'Network error', 'error');
-//         });
-// }
-
-function loadAnalyticsTab() {
-    console.log('Loading analytics tab...');
-
-    // Make sure canvas elements exist
-    const chart1Canvas = document.getElementById('chart1');
-    const chart2Canvas = document.getElementById('chart2');
-    const chart3Canvas = document.getElementById('chart3');
-
-    if (!chart1Canvas || !chart2Canvas || !chart3Canvas) {
-        console.error('Canvas elements not found!');
-        return;
-    }
-
-    // Get date range (you can add a dropdown to change this)
-    const days = 30; // Default to last 30 days
-
-    fetch(`${API_URL}?action=chart_finance_type&days=${days}`)
-        .then(res => {
-            console.log('Response status:', res.status);
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            return res.json();
         })
-        .then(res => {
-            console.log('API Response:', res);
-
-            if (res.status !== 'success') {
-                console.error('API Error:', res.message);
-                // Show error message in chart containers
-                document.querySelectorAll('.charts').forEach(chart => {
-                    chart.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Error loading chart data: ' + (res.message || 'Unknown error') + '</div>';
-                });
-                return;
-            }
-
-            // Add summary cards above charts
-            addSummaryCards(res.summary);
-
-            // Chart 1: Applications by date (timeline)
-            const labels1 = res.data_by_date?.map(x => {
-                const date = new Date(x.application_date);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            }) || [];
-            const values1 = res.data_by_date?.map(x => parseInt(x.total)) || [];
-
-            // Calculate percentages for tooltips
-            const total1 = values1.reduce((a, b) => a + b, 0);
-            const percentages1 = values1.map(v => total1 > 0 ? ((v / total1) * 100).toFixed(1) : '0');
-
-            // Chart 2: Payment Status Distribution (use combined_status)
-            const statusData = res.combined_status || [];
-            const labels2 = statusData.map(x => x.payment_status || 'Unknown');
-            const values2 = statusData.map(x => parseInt(x.total));
-            const total2 = values2.reduce((a, b) => a + b, 0);
-            const percentages2 = values2.map(v => total2 > 0 ? ((v / total2) * 100).toFixed(1) : '0');
-
-            // Chart 3: Payment Method Distribution (use combined_methods)
-            const methodData = res.combined_methods || [];
-            const labels3 = methodData.map(x => x.payment_method || 'Not Specified');
-            const values3 = methodData.map(x => parseInt(x.total));
-            const total3 = values3.reduce((a, b) => a + b, 0);
-            const percentages3 = values3.map(v => total3 > 0 ? ((v / total3) * 100).toFixed(1) : '0');
-
-            // Color schemes
-            const colors = {
-                timeline: '#4F46E5',
-                status: ['#10B981', '#EF4444', '#F59E0B', '#6366F1', '#8B5CF6', '#EC4899'],
-                methods: ['#F59E0B', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444', '#6B7280']
-            };
-
-            // Destroy existing charts if they exist
-            if (window.chart1Instance) window.chart1Instance.destroy();
-            if (window.chart2Instance) window.chart2Instance.destroy();
-            if (window.chart3Instance) window.chart3Instance.destroy();
-
-            try {
-                // Chart 1: Timeline Chart (Line)
-                window.chart1Instance = new Chart(chart1Canvas, {
-                    type: 'line',
-                    data: {
-                        labels: labels1,
-                        datasets: [{
-                            label: 'Applications Over Time',
-                            data: values1,
-                            backgroundColor: colors.timeline + '20',
-                            borderColor: colors.timeline,
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: colors.timeline,
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Daily Application Trends (Last 30 Days)',
-                                font: { size: 16, weight: 'bold' },
-                                color: '#00247C'
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        const value = context.raw;
-                                        const percent = percentages1[context.dataIndex];
-                                        return `Applications: ${value} (${percent}% of total)`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Number of Applications'
-                                },
-                                grid: { color: '#e5e7eb' }
-                            },
-                            x: {
-                                grid: { display: false }
-                            }
-                        }
-                    }
-                });
-
-                // Chart 2: Payment Status Distribution (Pie Chart)
-                window.chart2Instance = new Chart(chart2Canvas, {
-                    type: 'pie',
-                    data: {
-                        labels: labels2,
-                        datasets: [{
-                            data: values2,
-                            backgroundColor: colors.status.slice(0, labels2.length),
-                            borderWidth: 1,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Payment Status Distribution',
-                                font: { size: 16, weight: 'bold' },
-                                color: '#00247C'
-                            },
-                            legend: {
-                                position: 'right',
-                                labels: {
-                                    boxWidth: 12,
-                                    padding: 15,
-                                    font: { size: 12 }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        const label = context.label || '';
-                                        const value = context.raw;
-                                        const percent = percentages2[context.dataIndex];
-                                        return `${label}: ${value} (${percent}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Chart 3: Payment Method Distribution (Doughnut)
-                window.chart3Instance = new Chart(chart3Canvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels3,
-                        datasets: [{
-                            data: values3,
-                            backgroundColor: colors.methods.slice(0, labels3.length),
-                            borderWidth: 1,
-                            borderColor: '#fff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Payment Methods',
-                                font: { size: 16, weight: 'bold' },
-                                color: '#00247C'
-                            },
-                            legend: {
-                                position: 'right',
-                                labels: {
-                                    boxWidth: 12,
-                                    padding: 15,
-                                    font: { size: 12 }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        const label = context.label || '';
-                                        const value = context.raw;
-                                        const percent = percentages3[context.dataIndex];
-                                        return `${label}: ${value} (${percent}%)`;
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '60%'
-                    }
-                });
-
-                console.log('Charts created successfully!');
-            } catch (chartError) {
-                console.error('Error creating charts:', chartError);
-            }
-        })
-        .catch(error => {
-            console.error('Error loading analytics:', error);
-            // Show error message in chart containers
-            document.querySelectorAll('.charts').forEach(chart => {
-                chart.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Error loading charts: ' + error.message + '</div>';
-            });
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'Network error', 'error');
         });
 }
 
@@ -638,7 +411,9 @@ function addSummaryCards(summary) {
 
         // Insert before the first chart
         const analyticsContainer = document.querySelector('.analytics-container');
-        analyticsContainer.parentNode.insertBefore(summaryContainer, analyticsContainer);
+        if (analyticsContainer) {
+            analyticsContainer.parentNode.insertBefore(summaryContainer, analyticsContainer);
+        }
     }
 
     // Format currency
@@ -723,6 +498,8 @@ function openPaymentModal(appId, amountDue, appType) {
     const app = pendingApps.find(a => a.id == appId && a.application_type === appType);
     if (!app) return;
 
+    const dbPaymentMethod = app.payment_method || '';
+
     const html = `
         <form style="text-align:left;">
             <div class="form-group">
@@ -735,16 +512,16 @@ function openPaymentModal(appId, amountDue, appType) {
             </div>
             <div class="form-group">
                 <label>Payment Method *</label>
-                <select id="paymentMethod" required style="width:100%; padding:10px;" onchange="updateRefLabel()">
+                <select id="paymentMethod" required style="width:100%; padding:10px;" onchange="toggleReferenceField()">
                     <option value="">Select</option>
-                    <option value="Cash">Cash</option>
-                    <option value="GCash">GCash</option>
-                    <option value="Landbank">Landbank</option>
+                    <option value="Cash (Over-the-Counter)" ${dbPaymentMethod === 'Cash (Over-the-Counter)' ? 'selected' : ''}>Cash</option>
+                    <option value="GCash/QR" ${dbPaymentMethod === 'GCash/QR' ? 'selected' : ''}>GCash/QR</option>
+                    <option value="Landbank" ${dbPaymentMethod === 'Landbank' ? 'selected' : ''}>Landbank</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label id="refLabel">OR Number *</label>
-                <input type="text" id="refNumber" required style="width:100%; padding:10px;">
+            <div class="form-group" id="referenceFieldGroup" style="display: ${dbPaymentMethod === 'GCash/QR' ? 'block' : 'none'};">
+                <label id="refLabel">OR Number ${dbPaymentMethod === 'GCash/QR' ? '*' : ''}</label>
+                <input type="text" id="refNumber" ${dbPaymentMethod === 'GCash/QR' ? 'required' : ''} style="width:100%; padding:10px;">
             </div>
             <div class="form-group">
                 <label>Date</label>
@@ -794,10 +571,17 @@ function openPaymentModal(appId, amountDue, appType) {
             const date = document.getElementById('paymentDate').value;
             const proofFile = document.getElementById('proofOfPayment').files[0];
 
-            if (!amountPaid || !method || !refNumber || !proofFile) {
-                Swal.showValidationMessage('All fields, including Proof of Payment, are required');
+            if (!amountPaid || !method || !date || !proofFile) {
+                Swal.showValidationMessage('Amount Paid, Payment Method, Date, and Proof of Payment are required');
                 return false;
             }
+
+            // For GCash/QR ONLY, reference number is required
+            if (method === 'GCash/QR' && !refNumber) {
+                Swal.showValidationMessage('OR Number is required for GCash/QR payments');
+                return false;
+            }
+
             return { amountPaid, method, refNumber, date, proofFile, appId, appType };
         }
     }).then(result => {
@@ -805,17 +589,30 @@ function openPaymentModal(appId, amountDue, appType) {
     });
 }
 
-function updateRefLabel() {
+function toggleReferenceField() {
     const method = document.getElementById('paymentMethod').value;
-    const label = document.getElementById('refLabel');
+    const refFieldGroup = document.getElementById('referenceFieldGroup');
+    const refLabel = document.getElementById('refLabel');
+    const refInput = document.getElementById('refNumber');
 
-    if (method === 'GCash') {
-        label.textContent = 'Reference Number *';
-    } else if (method === 'Landbank') {
-        label.textContent = 'Transaction Number *';
+    if (method === 'GCash/QR') {
+        // Show OR number field for GCash/QR
+        refFieldGroup.style.display = 'block';
+        refInput.setAttribute('required', 'required');
+        refLabel.textContent = 'OR Number *';
+    } else if (method) {
+        // Hide reference field for all other methods (Cash, Landbank)
+        refFieldGroup.style.display = 'none';
+        refInput.removeAttribute('required');
     } else {
-        label.textContent = 'OR Number *';
+        // No method selected - hide reference field
+        refFieldGroup.style.display = 'none';
+        refInput.removeAttribute('required');
     }
+}
+
+function updateRefLabel() {
+    toggleReferenceField();
 }
 
 function submitPayment(paymentData, amountDue) {
@@ -846,7 +643,55 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                Swal.fire('Success', data.message, 'success').then(() => loadPendingTable());
+                if (paymentData.appType.toLowerCase() === 'construction') {
+                    if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
+                        sockets["construction_applications"].send(JSON.stringify({
+                            type: "construction_applications_update",
+                            action: "payment_processed",
+                            application_id: paymentData.appId,
+                            payment_status: "Paid"
+                        }));
+                    }
+                }
+
+                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
+                    sockets["business_applications"].send(JSON.stringify({
+                        type: "business_applications_update",
+                        action: "payment_processed",
+                        application_id: paymentData.appId,
+                        payment_status: "Paid"
+                    }));
+                }
+
+                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
+                    sockets["finance_applications"].send(JSON.stringify({
+                        type: "finance_applications_update",
+                        action: "payment_processed",
+                        application_id: paymentData.appId
+                    }));
+                }
+
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({
+                        type: "applications_update",
+                        action: "payment_received",
+                        application_id: paymentData.appId
+                    }));
+                }
+
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({
+                        type: "new_audit_log",
+                        action: "payment_processed",
+                        record_id: paymentData.appId,
+                        details: `Payment of ₱${paymentData.amountPaid} processed for ${paymentData.appType}`
+                    }));
+                }
+
+                Swal.fire('Success', data.message, 'success').then(() => {
+                    loadPendingTable();
+                    fetchAuditLogs();
+                });
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
@@ -953,7 +798,6 @@ function printReceiptWindow(app) {
     setTimeout(() => { w.print(); w.close(); }, 500);
 }
 
-
 function openPenaltyModal() {
     const html = '<form style="text-align:left;"><div><label>Year *</label><input type="number" id="penaltyYear" required style="width:100%;padding:10px;" min="2000" value="' + new Date().getFullYear() + '"></div><div style="margin-top:10px;"><label>Amount *</label><input type="number" id="penaltyAmount" required style="width:100%;padding:10px;" step="0.01" min="0"></div><div style="margin-top:10px;"><label>Description</label><textarea id="penaltyDesc" style="width:100%;padding:10px;font-family:inherit;" rows="3"></textarea></div></form>';
 
@@ -1038,6 +882,7 @@ async function fetchAuditLogs() {
 
         logs.forEach(log => {
             const tr = document.createElement('tr');
+            tr.id = `audit-${log.id}`;
             tr.innerHTML = `
                 <td>${log.id ?? '—'}</td>
                 <td>${log.action ?? '—'}</td>
@@ -1065,11 +910,10 @@ function appendAuditRow(log) {
     const tbody = document.getElementById('auditTableBody');
     if (!tbody) return;
 
-    if (document.getElementById(`audit-${log.id}`)) return; // skip if already exists
+    if (document.getElementById(`audit-${log.id}`)) return;
 
     const tr = document.createElement('tr');
     tr.id = `audit-${log.id}`;
-
     tr.innerHTML = `
         <td>${log.id ?? '—'}</td>
         <td>${log.action ?? '—'}</td>
@@ -1077,47 +921,72 @@ function appendAuditRow(log) {
         <td>${log.full_name ?? '—'}</td>
         <td>${log.created_at ?? '—'}</td>
     `;
-
     tbody.prepend(tr);
 }
-
-window.onload = function () { loadPendingTable(); };
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
 
-    if (!sockets["finance_applications"]) {
-        initSocket("finance_applications", "ws://localhost:8081", data => {
-            if (data.type === "finance_applications_update") {
-                refreshActiveTab();
-            }
-        });
-    }
-
-    if (!sockets["applications"]) {
-        initSocket("applications", "ws://localhost:8081", data => {
-            if (data.type === "applications_update") {
-                refreshActiveTab();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                } else if (data.id) {
-                    appendAuditRow(data);
-                } else {
-                    fetchAuditLogs();
+    try {
+        if (!sockets || !sockets["finance_applications"]) {
+            initSocket("finance_applications", "ws://localhost:8081", data => {
+                if (data.type === "finance_applications_update") {
+                    if (data.action === "new_payment_pending") {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'New Payment Pending',
+                            text: `Application #${data.application_id} is ready for payment processing`,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 5000
+                        });
+                    }
+                    refreshActiveTab();
                 }
-            }
-        });
+            });
+        }
+
+        if (!sockets || !sockets["business_applications"]) {
+            initSocket("business_applications", "ws://localhost:8081", data => {
+                if (data.type === "business_applications_update") {
+                    refreshActiveTab();
+                }
+            });
+        }
+
+        if (!sockets || !sockets["applications"]) {
+            initSocket("applications", "ws://localhost:8081", data => {
+                if (data.type === "applications_update") {
+                    refreshActiveTab();
+                }
+            });
+        }
+
+        if (!sockets || !sockets["audit"]) {
+            initSocket("audit", "ws://localhost:8081", (data) => {
+                if (data.type === "new_audit_log") {
+                    if (data.payload) {
+                        appendAuditRow(data.payload);
+                        fetchAuditLogs();
+                    } else if (data.id) {
+                        appendAuditRow(data);
+                        fetchAuditLogs();
+                    } else {
+                        fetchAuditLogs();
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing WebSockets:', error);
     }
 });
 
-window.onload = function () { loadPendingTable(); };
+window.onload = function () {
+    console.log('Window loaded, loading pending table...'); // Debug log
+    loadPendingTable();
+};
 
 // ===============================================
 // EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE (required for type="module")
@@ -1131,6 +1000,7 @@ window.openVerificationModal = openVerificationModal;
 window.submitPayment = submitPayment;
 window.submitVerification = submitVerification;
 window.updateRefLabel = updateRefLabel;
+window.toggleReferenceField = toggleReferenceField;
 
 // Receipt functions
 window.generateReceipt = generateReceipt;
@@ -1148,3 +1018,7 @@ window.switchTab = switchTab;
 
 // Helper functions
 window.filterTable = filterTable;
+
+// Audit functions
+window.fetchAuditLogs = fetchAuditLogs;
+window.appendAuditRow = appendAuditRow;

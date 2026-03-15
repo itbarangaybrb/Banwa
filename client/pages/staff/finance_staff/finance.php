@@ -71,11 +71,12 @@ $full_name = getCurrentUserName();
                 </li> -->
 
                 <li>
-                    <a href="#" class="nav_select" data-tab="audits">
+                    <a href="#" class="nav_select" onclick="switchTab(event, 'audits')">
                         <i class="fas fa-chart-line nav_icon"></i>
                         <span class="nav_text">Audits</span>
                     </a>
                 </li>
+                
                 <li>
                     <a class="nav_select" id="signoutBtn" href="#">
                         <i class="fa-solid fa-arrow-right-from-bracket fa-lg" style="color: rgb(255, 255, 255);"></i>
