@@ -198,10 +198,10 @@ function openVerificationModal(appId, appType) {
     if (!app) return;
 
     const proofFile = app.requirement_upload_json && Array.isArray(app.requirement_upload_json) ? app.requirement_upload_json[0] : app.requirement_upload;
-    
+
     // --- NEW PREVIEW LOGIC ---
     let proofPreview = '<p style="color:red;">No proof</p>';
-    
+
     if (proofFile) {
         // Check file extension to determine how to display it
         const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(proofFile);
@@ -290,6 +290,15 @@ function submitVerification(appId, status, appType, orFile = null) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
+                    sockets["finance_applications"].send(JSON.stringify({ type: "finance_applications_update", action: "verification_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "verification_update" }));
+                }
+                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
+                    sockets["audit"].send(JSON.stringify({ type: "new_audit_log", action: "new_audit_log" }));
+                }
                 Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => loadPendingTable());
             } else {
                 Swal.fire('Error', data.message, 'error');
@@ -390,7 +399,7 @@ function loadAnalyticsTab() {
 
     // Get date range (you can add a dropdown to change this)
     const days = 30; // Default to last 30 days
-    
+
     fetch(`${API_URL}?action=chart_finance_type&days=${days}`)
         .then(res => {
             console.log('Response status:', res.status);
@@ -420,7 +429,7 @@ function loadAnalyticsTab() {
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             }) || [];
             const values1 = res.data_by_date?.map(x => parseInt(x.total)) || [];
-            
+
             // Calculate percentages for tooltips
             const total1 = values1.reduce((a, b) => a + b, 0);
             const percentages1 = values1.map(v => total1 > 0 ? ((v / total1) * 100).toFixed(1) : '0');
@@ -532,7 +541,7 @@ function loadAnalyticsTab() {
                             },
                             legend: {
                                 position: 'right',
-                                labels: { 
+                                labels: {
                                     boxWidth: 12,
                                     padding: 15,
                                     font: { size: 12 }
@@ -576,7 +585,7 @@ function loadAnalyticsTab() {
                             },
                             legend: {
                                 position: 'right',
-                                labels: { 
+                                labels: {
                                     boxWidth: 12,
                                     padding: 15,
                                     font: { size: 12 }
@@ -615,7 +624,7 @@ function loadAnalyticsTab() {
 function addSummaryCards(summary) {
     // Check if summary container already exists
     let summaryContainer = document.querySelector('.summary-cards');
-    
+
     if (!summaryContainer) {
         // Create summary container
         summaryContainer = document.createElement('div');
@@ -626,12 +635,12 @@ function addSummaryCards(summary) {
             gap: 20px;
             margin-bottom: 30px;
         `;
-        
+
         // Insert before the first chart
         const analyticsContainer = document.querySelector('.analytics-container');
         analyticsContainer.parentNode.insertBefore(summaryContainer, analyticsContainer);
     }
-    
+
     // Format currency
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PH', {
@@ -640,7 +649,7 @@ function addSummaryCards(summary) {
             minimumFractionDigits: 2
         }).format(amount || 0);
     };
-    
+
     // Create summary cards HTML
     summaryContainer.innerHTML = `
         <div class="summary-card" style="background: linear-gradient(135deg, #4F46E5, #6366F1);">
@@ -682,7 +691,7 @@ function addSummaryCards(summary) {
             </div>
         </div>
     `;
-    
+
     // Add styles for summary cards
     const style = document.createElement('style');
     style.textContent = `
@@ -705,7 +714,7 @@ function addSummaryCards(summary) {
 function calculateCollectionRate(summary) {
     const totalApps = (summary?.total_business || 0) + (summary?.total_construction || 0);
     const paidApps = (summary?.business_paid || 0) + (summary?.construction_paid || 0);
-    
+
     if (totalApps === 0) return '0';
     return ((paidApps / totalApps) * 100).toFixed(1);
 }
@@ -764,7 +773,7 @@ function openPaymentModal(appId, amountDue, appType) {
             const proofInput = document.getElementById('proofOfPayment');
             const proofPreview = document.getElementById('proofPreview');
 
-            proofInput.addEventListener('change', function(e) {
+            proofInput.addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
@@ -811,12 +820,12 @@ function updateRefLabel() {
 
 function submitPayment(paymentData, amountDue) {
     const formData = new FormData();
-    
+
     // These keys MUST match the get_input() calls in your PHP
     formData.append('application_id', paymentData.appId);
     // This ensures the first letter is Uppercase (e.g., "business" becomes "Business")
-const capitalizedType = paymentData.appType.charAt(0).toUpperCase() + paymentData.appType.slice(1).toLowerCase();
-formData.append('payment_purpose_app_type', capitalizedType); 
+    const capitalizedType = paymentData.appType.charAt(0).toUpperCase() + paymentData.appType.slice(1).toLowerCase();
+    formData.append('payment_purpose_app_type', capitalizedType);
     formData.append('amountPaid', paymentData.amountPaid);
     formData.append('paymentMethod', paymentData.method);
     formData.append('orNumber', paymentData.refNumber);
@@ -830,19 +839,19 @@ formData.append('payment_purpose_app_type', capitalizedType);
     });
 
     // Replace the URL with the actual path to your submit_payment.php
-    fetch('/server/api/resident/submit_payment.php', { 
-        method: 'POST', 
-        body: formData 
+    fetch('/server/api/resident/submit_payment.php', {
+        method: 'POST',
+        body: formData
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            Swal.fire('Success', data.message, 'success').then(() => loadPendingTable());
-        } else {
-            Swal.fire('Error', data.message, 'error');
-        }
-    })
-    .catch(err => Swal.fire('Error', 'Network error or file too large', 'error'));
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire('Success', data.message, 'success').then(() => loadPendingTable());
+            } else {
+                Swal.fire('Error', data.message, 'error');
+            }
+        })
+        .catch(err => Swal.fire('Error', 'Network error or file too large', 'error'));
 }
 
 function generateReceipt(id, appType) {

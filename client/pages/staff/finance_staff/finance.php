@@ -24,7 +24,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <link rel="stylesheet" href="../../../styles/staff/finance_staff/finance.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
 </head>
@@ -40,12 +40,6 @@ $full_name = getCurrentUserName();
         </div>
         <ul class="nav_list">
             <div>
-                <!-- <li>
-                    <a href="#" class="nav_select active" data-tab="dashboard">
-                        <i class="fas fa-chart-line nav_icon"></i>
-                        <span class="nav_text">Dashboard</span>
-                    </a>
-                </li> -->
                 <li>
                     <a href="#" class="nav_select active" onclick="switchTab(event, 'pending')">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -55,7 +49,6 @@ $full_name = getCurrentUserName();
                         <span class="nav_text">For Payment</span>
                     </a>
                 </li>
-
                 <li>
                     <a href="#" class="nav_select" onclick="switchTab(event, 'history')">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -66,7 +59,7 @@ $full_name = getCurrentUserName();
                     </a>
                 </li>
 
-                <li>
+                <!-- <li>
                     <a href="#" class="nav_select" onclick="openPenaltyModal(); return false;">
                         <svg class="nav_icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -74,6 +67,13 @@ $full_name = getCurrentUserName();
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
                         </svg>
                         <span class="nav_text">Issue Penalty</span>
+                    </a>
+                </li> -->
+
+                <li>
+                    <a href="#" class="nav_select" data-tab="audits">
+                        <i class="fas fa-chart-line nav_icon"></i>
+                        <span class="nav_text">Audits</span>
                     </a>
                 </li>
                 <li>
@@ -84,7 +84,7 @@ $full_name = getCurrentUserName();
                 </li>
             </div>
 
-            <div>
+            <!-- <div>
                 <li>
                     <button class="nav_select_btn" id="userProfileBtn">
                         <div class="user_image_container">
@@ -93,7 +93,7 @@ $full_name = getCurrentUserName();
                         <span class="nav_text">Profile</span>
                     </button>
                 </li>
-            </div>
+            </div> -->
         </ul>
     </aside>
 
@@ -111,39 +111,6 @@ $full_name = getCurrentUserName();
 
         <div class="content">
             <div id="alert-container"></div>
-
-            <div id="dashboard" class="tab-pane active">
-                <div class="section-title">Applications For Payment</div>
-                <p class="form-description">Process over-the-counter payments or verify online transactions.</p>
-
-                <div class="analytics-container">
-                    <div class="charts">
-                        <canvas id="chart1"></canvas>
-                    </div>
-                    <div class="charts">
-                        <canvas id="chart2"></canvas>
-                    </div>
-                    <div class="charts">
-                        <canvas id="chart3"></canvas>
-                    </div>
-                </div>
-
-                <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Activity</th>
-                                <th>Rec. ID</th>
-                                <th>Name</th>
-                                <th>Created At</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="auditTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
 
             <div id="pending" class="tab-pane active">
                 <div class="section-title">Applications For Payment</div>
@@ -226,6 +193,27 @@ $full_name = getCurrentUserName();
                                 </td>
                             </tr>
                         </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="audits" class="tab-pane">
+                <div class="section-title">Audits</div>
+                <p class="form-description">Process over-the-counter payments or verify online transactions.</p>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
                     </table>
                 </div>
             </div>
