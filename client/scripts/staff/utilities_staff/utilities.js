@@ -219,7 +219,7 @@ function filterApplications() {
             actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
         }
         else if (app.status === 'Approved' && !app.or_number) {
-            actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Generate Permit</button>`;
+            actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Clearance</button>`;
         }
         else if (app.status === 'Approved' && app.or_number) {
             actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
@@ -345,7 +345,7 @@ export function loadProcessTable() {
             if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
                 buttonsHtml += `
                     <button class="btn-primary" onclick="generateUtilitiesPermit(${app.id})" style="margin-left: 5px;">
-                        Generate Permit
+                        Clearance
                     </button>
                 `;
             }
@@ -373,13 +373,13 @@ function generateUtilitiesPermit(appId) {
     }
 
     const grantee_name = `${app.first_name} ${app.middle_name || ''} ${app.last_name}`.trim();
-    const address = app.address || '_______________________';
+    const address = app.address_of_utility || 'N/A'; // Fixed here
     const or_number = app.or_number || 'N/A';
     const date_issued = app.payment_date || app.application_date || getCurrentDateString();
 
-    const workDate = app.dateOfWork ?
-        new Date(app.dateOfWork).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })
-        : "_________________";
+    const workDate = app.date_of_work ? // Fixed here
+        new Date(app.date_of_work).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: '2-digit', year: 'numeric' })
+        : "N/A";
 
     const currentYear = new Date().getFullYear();
     const permitNumber = `BRB-UP-${currentYear}-${String(app.id).padStart(4, '0')}`;
@@ -388,10 +388,17 @@ function generateUtilitiesPermit(appId) {
     const month = date.toLocaleString('en-US', { month: 'long' });
     const yearIssued = date.getFullYear();
 
-    const CAPTAIN_NAME = "MARIA DELA CRUZ";
-    const SECRETARY_NAME = "JUAN M. DELOS SANTOS";
+    const CAPTAIN_NAME = "SESSAN CASTRO-LEE";
+    const SECRETARY_NAME = "ROVIE ROSE B. BAYLON";
 
-    const nature = (app.nature_of_application || '').toLowerCase();
+    const KAGAWAD_1 = "KATHERINE T. DE JESUS";
+    const KAGAWAD_2 = "MARGARETTE K. DE JESUS";
+    const KAGAWAD_3 = "ANA FRANCESCA L. MARISTELA";
+    const KAGAWAD_4 = "AUGUSTO D. ILAGAN";
+    const KAGAWAD_5 = "NATALIA L. MARISTELA";
+    const KAGAWAD_6 = "MODESTO CARLO M. RUIZ JR.";
+
+    const nature = (app.nature_of_work || '').toLowerCase(); // Fixed here
     const isInstall = nature.includes('install') ? 'checked' : '';
     const isRepair = (nature.includes('repair') || nature.includes('maintenance')) ? 'checked' : '';
     const isDisconnect = nature.includes('disconnect') ? 'checked' : '';
@@ -413,7 +420,7 @@ function generateUtilitiesPermit(appId) {
         .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
         .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
         .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
-        .sidebar { background:#e8f0e0; padding:20px 18px; border:1.5px solid #c5d9b8; font-size:13px; line-height:1.65; }
+        .sidebar { background:#b8bad9; padding:20px 18px; border:1.5px solid #b8bad9; font-size:13px; line-height:1.65; }
         .main-body { font-size:15.2px; line-height:1.75; }
         .fill-line { border-bottom:1px solid #000; display:inline-block; min-width:200px; text-align:center; font-weight: bold; }
         .gate-pass-highlight { border: 2px dashed #333; padding: 15px; margin: 20px 0; text-align: center; }
@@ -430,7 +437,7 @@ function generateUtilitiesPermit(appId) {
 <body>
     <div class="document-container">
         <header>
-            <div class="logo"><img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Logo"></div>
+            <div class="logo"><img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo"></div>
             <div class="header-center">
                 <div>Republic of the Philippines</div>
                 <div>Quezon City • District III</div>
@@ -445,7 +452,7 @@ function generateUtilitiesPermit(appId) {
         <div class="content-wrapper">
             <div class="sidebar">
                 <strong>HON. ${CAPTAIN_NAME}</strong><br><span>Punong Barangay</span><br><br>
-                <strong>KAGAWADS</strong><br>HON. [KAGAWAD 1]<br>HON. [KAGAWAD 2]<br>HON. [KAGAWAD 3]<br>HON. [KAGAWAD 4]<br>HON. [KAGAWAD 5]<br>HON. [KAGAWAD 6]<br>HON. [KAGAWAD 7]<br><br>
+                <strong>KAGAWADS</strong><br>HON. ${KAGAWAD_1}<br>HON. ${KAGAWAD_2}<br>HON. ${KAGAWAD_3}<br>HON. ${KAGAWAD_4}<br>HON. ${KAGAWAD_5}<br>HON. ${KAGAWAD_6}<br><br>
                 <strong>MR. ${SECRETARY_NAME}</strong><br><span>Barangay Secretary</span>
             </div>
 

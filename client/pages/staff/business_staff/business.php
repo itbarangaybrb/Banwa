@@ -647,6 +647,7 @@ $full_name = getCurrentUserName();
                         <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Clearance"> Previous Business Clearance</label>
+                        <label><input type="checkbox" name="requirements" value="Affidavit of Business Closure"> Affidavit of Business Closure</label>
                     </div>
                     <div class="error-msg"></div>
                 </div>
