@@ -5,74 +5,15 @@ const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.p
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
 
-// ===============================================
-// 1. GLOBAL STYLE FIX (Inject this at the very top)
-// ===============================================
-const swalStyle = document.createElement('style');
-swalStyle.innerHTML = `
-    .swal2-popup {
-        padding: 2.5rem 0 !important; /* Forces vertical breathing room */
-        border-radius: 15px !important;
-    }
-    .swal2-icon {
-        margin-top: 1.5rem !important;
-        margin-bottom: 1.5rem !important;
-        border-width: 4px !important;
-    }
-    .swal2-title {
-        color: #00247C !important;
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
-        margin-bottom: 0.5rem !important;
-    }
-    .swal2-html-container {
-        margin-bottom: 1.5rem !important;
-        font-size: 1.05rem !important;
-        color: #555 !important;
-    }
-`;
-document.head.appendChild(swalStyle);
-
-// ===============================================
-// GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
-// ===============================================
+// SweetAlert config scoped to business page alerts only
 const swalTopConfig = {
     target: document.body,
     backdrop: true,
     allowOutsideClick: false,
-    width: '30rem',         // Slightly wider for better proportions
-    padding: '0',           // Set to 0 because we will handle spacing via didOpen
+    width: '30rem',
     customClass: {
-        container: 'sweetalert-top'
-    },
-    // This function runs the moment the modal opens and applies the styles
-    didOpen: (modal) => {
-        const icon = modal.querySelector('.swal2-icon');
-        const title = modal.querySelector('.swal2-title');
-        const content = modal.querySelector('.swal2-html-container');
-        const actions = modal.querySelector('.swal2-actions');
-
-        // 1. Pushes the Checkmark/Icon down from the very top
-        if (icon) {
-            icon.style.marginTop = '3rem';
-            icon.style.marginBottom = '1rem';
-        }
-        // 2. Adds spacing around the "Success" text
-        if (title) {
-            title.style.margin = '0.5rem 0';
-            title.style.fontSize = '2rem';
-            title.style.color = '#00247C'; // Maintains your blue theme
-        }
-        // 3. Pushes the bottom text away from the edge
-        if (content) {
-            content.style.marginBottom = '2.5rem';
-            content.style.fontSize = '1.1rem';
-        }
-        // 4. Ensures the button (if shown) has breathing room
-        if (actions) {
-            actions.style.marginTop = '0';
-            actions.style.marginBottom = '2rem';
-        }
+        container: 'sweetalert-top',
+        popup: 'biz-swal-popup'
     }
 };
 
@@ -2416,29 +2357,13 @@ document.addEventListener('click', (e) => {
     });
 });
 
-// Enhanced styles - SweetAlert2 forced to front layer
+// Force SweetAlert above all page modals — z-index only, no layout overrides
 document.head.insertAdjacentHTML("beforeend", `
     <style>
         .hidden { display: none !important; }
-        
-        /* FORCE SWEETALERT TO ALWAYS BE ON TOP OF MODALS */
-        .swal2-container,
-        .sweetalert-top {
-            z-index: 2147483647 !important;
-        }
-        .swal2-popup {
-            z-index: 2147483647 !important;
-        }
-        .swal2-backdrop {
-            z-index: 2147483646 !important;
-        }
-    </style>
-`);
-// Center SweetAlert text
-document.head.insertAdjacentHTML("beforeend", `
-    <style>
-        .swal2-title, .swal2-html-container { text-align: center !important; }
-        .swal2-popup { text-align: center !important; }
+        .swal2-container, .sweetalert-top { z-index: 2147483647 !important; }
+        .swal2-backdrop { z-index: 2147483646 !important; }
+        .biz-swal-popup { z-index: 2147483647 !important; }
     </style>
 `);
 
