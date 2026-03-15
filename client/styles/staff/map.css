@@ -1570,11 +1570,16 @@ body {
   display: none;
 }
 
-/* ==================== SWEET ALERT CUSTOMIZATION ==================== */
+/* SweetAlert2 overrides */
 
-/* ── Global popup shell ── */
+/* Override every SweetAlert CSS variable that adds unwanted spacing */
 .swal2-popup {
-  font-family: "Inter", sans-serif;
+  --swal2-padding: 0 !important;
+  --swal2-title-padding: 0 !important;
+  --swal2-html-container-padding: 0 !important;
+  --swal2-actions-margin: 0 !important;
+  --swal2-actions-padding: 0 !important;
+  font-family: "Inter", sans-serif !important;
   padding: 0 !important;
   border-radius: 14px !important;
   overflow: hidden !important;
@@ -1583,7 +1588,19 @@ body {
   flex-direction: column !important;
 }
 
-/* ── Scrollable body ── */
+/* Hide the empty header SweetAlert renders when no title is set */
+.swal2-header {
+  display: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Restore header only when there is a real title (error / loading dialogs) */
+.swal2-popup:has(.swal2-title:not(:empty)) .swal2-header {
+  display: flex !important;
+}
+
+/* Scrollable html container — zero spacing so content bleeds to popup edge */
 .swal2-html-container {
   flex: 1 !important;
   overflow-y: auto !important;
@@ -1591,51 +1608,53 @@ body {
   margin: 0 !important;
   padding: 0 !important;
   max-height: none !important;
-  /* left-align for report modals; overridden to center for loading dialogs below */
   text-align: left !important;
   scrollbar-width: thin;
   scrollbar-color: #00247c #eee;
-}
-
-/* ── Detail modal inner content padding (marker + house modals) ── */
-.swal2-html-container > div[style*="text-align:left"] {
-  padding: 28px 32px 24px !important;
 }
 .swal2-html-container::-webkit-scrollbar { width: 5px; }
 .swal2-html-container::-webkit-scrollbar-track { background: #eee; }
 .swal2-html-container::-webkit-scrollbar-thumb { background: #00247c; border-radius: 3px; }
 
-/* ── Loading / spinner dialogs — override left-align so text and spinner are centered ── */
-/* Targets the popup when the SweetAlert2 loader (spinner) is visible */
+/* Detail modal inner content padding (marker + house modals) */
+.swal2-html-container > div[style*="text-align:left"] {
+  padding: 28px 32px 24px !important;
+}
+
+/* Hide the actions bar when there are no buttons */
+.swal2-actions:not(:has(button:not([style*="display: none"]))) {
+  display: none !important;
+  margin: 0 !important;
+}
+
+/* Loading dialogs — centre text and spinner */
 .swal2-popup.swal2-loading .swal2-html-container,
 .swal2-popup.swal2-loading .swal2-title,
 .swal2-popup.swal2-loading .swal2-content {
   text-align: center !important;
 }
 
-/* Centre every sentence-level paragraph inside all report / SDSS modals */
+/* Close button — anchored to popup top-right corner */
+.swal2-close {
+  position: absolute !important;
+  top: 10px !important;
+  right: 14px !important;
+  z-index: 20 !important;
+  font-size: 22px !important;
+  color: rgba(255,255,255,0.85) !important;
+  display: flex !important;
+}
+.swal2-close:hover { color: #fff !important; }
+
+/* Report / SDSS text alignment */
 .rpt-footer,
 .rpt-subtitle,
 .rpt-chip-label,
-.rpt-chip-num {
-  text-align: center !important;
-}
-
-/* Centre the descriptive note lines inside rule cards and report sections */
+.rpt-chip-num,
 .rpt-content p,
 .rpt-content .rpt-note {
   text-align: center !important;
 }
-
-/* ── Close button ── */
-.swal2-close {
-  position: absolute !important;
-  top: 10px !important; right: 14px !important;
-  z-index: 20 !important;
-  font-size: 22px !important;
-  color: rgba(255,255,255,0.85) !important;
-}
-.swal2-close:hover { color: #fff !important; }
 
 .swal2-title { color: #00247c; }
 .swal2-confirm { background: #00247c !important; }

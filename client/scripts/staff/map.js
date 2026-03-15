@@ -102,11 +102,12 @@ function initNavbar() {
 // ==================== SWEETALERT2 CUSTOM CONFIGURATION ====================
 // Default SweetAlert2 configuration for consistent styling
 const swalDefaultConfig = {
-    confirmButtonColor: '#00247c', // Navy blue
-    cancelButtonColor: '#666666',   // Gray
-    background: '#ffffff',           // White
-    color: '#333333',                // Dark gray for text
-    iconColor: '#00247c',            // Navy blue for icons
+    confirmButtonColor: '#00247c',
+    cancelButtonColor: '#666666',
+    background: '#ffffff',
+    color: '#333333',
+    iconColor: '#00247c',
+    title: false,
     showCloseButton: true,
     closeButtonHtml: '&times;',
     customClass: {
