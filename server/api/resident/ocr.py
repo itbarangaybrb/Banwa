@@ -214,7 +214,7 @@ def process_ocr():
             'apikey': API_KEY,
             'language': 'eng',
             'isOverlayRequired': False,
-            'OCREngine': 2 
+            'OCREngine': 1 
         }
         
         response = requests.post(

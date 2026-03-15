@@ -1725,3 +1725,27 @@ tbody tr:last-child td {
     cursor: pointer;
     transition: background 0.3s ease;
 }
+/* Business page SweetAlert styles — scoped so they don't affect map modals */
+.biz-swal-popup {
+    padding: 2.5rem 0 !important;
+    border-radius: 15px !important;
+}
+.biz-swal-popup .swal2-icon {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    border-width: 4px !important;
+}
+.biz-swal-popup .swal2-title {
+    color: #00247c !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.5rem !important;
+}
+.biz-swal-popup .swal2-html-container {
+    margin-bottom: 1.5rem !important;
+    font-size: 1.05rem !important;
+    color: #555 !important;
+}
+.biz-swal-popup .swal2-actions {
+    margin-bottom: 2rem !important;
+}

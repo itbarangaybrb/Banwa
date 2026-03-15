@@ -1,5 +1,5 @@
 <?php
-// ── Silence HTML error output immediately ────────────────────────────────────
+// Silence HTML error output immediately
 // Errors/warnings must NEVER be printed as HTML into the response body because
 // that corrupts JSON.parse() on the client.  We log them instead.
 ini_set('display_errors', '0');
@@ -15,7 +15,7 @@ ob_start();
 // Every response from this file is JSON.
 header('Content-Type: application/json; charset=utf-8');
 
-// ── Global safety net ────────────────────────────────────────────────────────
+// Global safety net
 // If an uncaught exception or fatal error escapes all try/catch blocks, this
 // handler discards any partial HTML output and returns a clean JSON error so
 // the client always gets parseable JSON — never a PHP crash page.
@@ -38,7 +38,7 @@ register_shutdown_function(function () {
     }
 });
 
-// ── Geometry helper ──────────────────────────────────────────────────────────
+// Geometry helper
 // Builds the best available PostGIS geometry for a house_polygons row.
 // Priority:
 //   1. Dedicated `geom` column (geometry(Polygon,4326)) — fastest, uses spatial index
@@ -83,11 +83,10 @@ function house_has_polygon(string $alias): string {
     return "({$alias}.geom IS NOT NULL OR {$alias}.coordinates IS NOT NULL)";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DB connection — provides the global $pdo variable used by all functions below
 require_once __DIR__ . '/../../configs/database.php';
 
-// ── PERFORMANCE: recommended indexes (run once in psql/pgAdmin) ──────────────
+// PERFORMANCE: recommended indexes (run once in psql/pgAdmin)
 // CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_business_coords
 //     ON business_applications (latitude, longitude) WHERE latitude IS NOT NULL;
 // CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_construction_coords
@@ -100,9 +99,8 @@ require_once __DIR__ . '/../../configs/database.php';
 //     ON house_polygons (center_lat, center_lng) WHERE center_lat IS NOT NULL;
 // CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_house_street
 //     ON house_polygons (street_name, house_number);
-// ─────────────────────────────────────────────────────────────────────────────
 
-// ==================== UTILITY FUNCTIONS ====================
+// UTILITY FUNCTIONS
 
 // Fetches all utility applications that have coordinates (for map markers)
 function getUtilitiesMarkers()
@@ -312,7 +310,7 @@ function getGenericById($id){
     }
 }
 
-// ==================== FLOOD HAZARD FUNCTIONS ====================
+// FLOOD HAZARD FUNCTIONS
 
 // Returns all flood hazard polygons ordered by risk level (high → low).
 // Converts PostGIS GeoJSON geometry to Leaflet-friendly [lat, lng] arrays.
@@ -900,7 +898,7 @@ function sdss_evaluateAllConstruction()
     return $results;
 }
 
-// ==================== HOUSE POLYGON FUNCTIONS ====================
+// HOUSE POLYGON FUNCTIONS
 
 // Fetches all house polygons with their vertex coordinates and metadata
 function getHousePolygons()
@@ -1005,7 +1003,7 @@ function getHouseById($houseId){
     }
 }
 
-// ==================== NEW FAULT LINE ASSESSMENT FUNCTIONS ====================
+// NEW FAULT LINE ASSESSMENT FUNCTIONS
 
 /**
  * Calculates distance from every house to the fault line and categorises risk:
@@ -1184,7 +1182,7 @@ function calculateHaversineDistance($lat1, $lon1, $lat2, $lon2) {
     return $R * $c;
 }
 
-// ==================== NEW BUSINESS SDSS REPORT FUNCTIONS ====================
+// NEW BUSINESS SDSS REPORT FUNCTIONS
 
 /**
  * Evaluates all businesses with coordinates against SDSS rules and returns a full report
@@ -1297,7 +1295,7 @@ function applyBusinessSDSSRules($business, $floodLevel, $faultDist) {
 }
 
 
-// ==================== NEW CONSTRUCTION SDSS REPORT FUNCTIONS ====================
+// NEW CONSTRUCTION SDSS REPORT FUNCTIONS
 
 /**
  * Get SDSS report for all construction sites
@@ -1524,7 +1522,7 @@ function getDistanceToFaultLine($lat, $lng) {
     return round($minDistance);
 }
 
-// ==================== SDSS RULES SUMMARY FUNCTION ====================
+// SDSS RULES SUMMARY FUNCTION
 
 /**
  * Get summary of all SDSS rules and count of houses affected by each rule
@@ -1538,7 +1536,7 @@ function getSDSSRulesSummary() {
 
     try {
 
-        // ── Shared fault-line WKT (same coordinates as getDistanceToFaultLine) ──
+        // Shared fault-line WKT (same coordinates as getDistanceToFaultLine)
         // Using PostGIS geography type so ST_Distance returns metres directly.
         $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
         $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
@@ -1561,10 +1559,8 @@ function getSDSSRulesSummary() {
             }
         };
 
-        // ════════════════════════════════════════════════════════════════════
         //  HOUSES — flood zone counts
         //  Single batch JOIN replaces the old loop that fired one query per house
-        // ════════════════════════════════════════════════════════════════════
         $houseFloodRows = $q("
             SELECT LOWER(bh.risk_level) AS risk_level,
                    COUNT(DISTINCT hp.house_id) AS cnt
@@ -1583,7 +1579,7 @@ function getSDSSRulesSummary() {
             $houseFloodCounts[$r['risk_level']] = (int)$r['cnt'];
         }
 
-        // ── HOUSES — fault distance bands (single batch query) ──────────────
+        // HOUSES — fault distance bands (single batch query)
         $houseFaultRows = $q("
             SELECT
                 SUM(CASE WHEN fd <=   5                   THEN 1 ELSE 0 END) AS le5,
@@ -1598,14 +1594,12 @@ function getSDSSRulesSummary() {
         ");
         $hf = $houseFaultRows[0] ?? [];
 
-        // ── Total house count ────────────────────────────────────────────────
+        // Total house count
         $houseCntRow = $q("SELECT COUNT(*) AS cnt FROM house_polygons
                            WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL");
         $totalHouses = (int)($houseCntRow[0]['cnt'] ?? 0);
 
-        // ════════════════════════════════════════════════════════════════════
         //  CONSTRUCTION — batch flood + fault queries
-        // ════════════════════════════════════════════════════════════════════
         $conFloodRow = $q("
             SELECT COUNT(DISTINCT ca.id) AS cnt
             FROM   construction_applications ca
@@ -1664,9 +1658,7 @@ function getSDSSRulesSummary() {
             }
         }
 
-        // ════════════════════════════════════════════════════════════════════
         //  BUSINESSES — batch flood + fault queries
-        // ════════════════════════════════════════════════════════════════════
         $bizFloodRow = $q("
             SELECT COUNT(DISTINCT ba.id) AS cnt
             FROM   business_applications ba
@@ -1726,9 +1718,7 @@ function getSDSSRulesSummary() {
             if ($nearby >= 5) $bizClusterDensity++;
         }
 
-        // ════════════════════════════════════════════════════════════════════
         //  INCIDENTS — batch flood queries
-        // ════════════════════════════════════════════════════════════════════
         $incFloodRow = $q("
             SELECT
                 COUNT(DISTINCT CASE WHEN LOWER(ir.status) NOT IN ('resolved','closed')
@@ -1768,15 +1758,13 @@ function getSDSSRulesSummary() {
             }
         }
 
-        // ════════════════════════════════════════════════════════════════════
         //  BUILD RULES ARRAY
-        // ════════════════════════════════════════════════════════════════════
         $rules = [
-            // ── Flood Hazard ─────────────────────────────────────────────────
+            // Flood Hazard
             'FLOOD_HIGH_RISK'   => ['name'=>'High Flood Risk Zone',   'description'=>'Houses in high flood risk areas requiring immediate mitigation.',                    'severity'=>'CRITICAL','count'=>$houseFloodCounts['high'],   'category'=>'Flood Hazard'],
             'FLOOD_MEDIUM_RISK' => ['name'=>'Medium Flood Risk Zone', 'description'=>'Houses in moderate flood zones requiring preparedness measures.',                    'severity'=>'HIGH',    'count'=>$houseFloodCounts['medium'], 'category'=>'Flood Hazard'],
             'FLOOD_LOW_RISK'    => ['name'=>'Low Flood Risk Zone',    'description'=>'Houses in low flood risk areas with standard precautions.',                          'severity'=>'MEDIUM',  'count'=>$houseFloodCounts['low'],    'category'=>'Flood Hazard'],
-            // ── Seismic Hazard ───────────────────────────────────────────────
+            // Seismic Hazard
             'FAULT_EXISTING_STRUCTURE_CRITICAL' => [
                 'name'           => 'Existing Structure — Critical Risk (≤5m from Fault)',
                 'description'    => 'Existing house within 5m of fault trace — HIGH RISK. Relocation recommended by PHIVOLCS. Cannot be expanded or renovated without seismic certification.',
@@ -1796,19 +1784,19 @@ function getSDSSRulesSummary() {
             'FAULT_CRITICAL'    => ['name'=>'Fault Line Critical Zone (5–50m)',  'description'=>'Houses within 5–50m of fault line — enhanced seismic standards mandatory.',              'severity'=>'CRITICAL','count'=>(int)($hf['r5_50']    ?? 0),'category'=>'Seismic Hazard'],
             'FAULT_HIGH_RISK'   => ['name'=>'Fault Line High Risk (50–100m)',    'description'=>'Houses requiring seismic design standards and structural certification.',                 'severity'=>'HIGH',    'count'=>(int)($hf['r50_100']  ?? 0),'category'=>'Seismic Hazard'],
             'FAULT_MEDIUM_RISK' => ['name'=>'Fault Line Medium Risk (100–200m)', 'description'=>'Houses requiring enhanced foundation and earthquake preparedness.',                       'severity'=>'MEDIUM',  'count'=>(int)($hf['r100_200'] ?? 0),'category'=>'Seismic Hazard'],
-            // ── Construction Safety ──────────────────────────────────────────
+            // Construction Safety
             'CON_NO_BUILD_ZONE'              => ['name'=>'No Build Zone — Fault Trace (≤5m)',                     'description'=>'Construction permit applications within 5m of fault trace — PERMIT DENIED per PHIVOLCS Fault Rupture Zone.',                                                       'severity'=>'CRITICAL','count'=>$conNoBuildZone,    'category'=>'Construction Safety'],
             'CON_FLOOD_ZONE'                 => ['name'=>'Construction in Flood Zone',                            'description'=>'Active construction sites in any flood hazard area — flood-resistant construction methods required.',                                                               'severity'=>'HIGH',    'count'=>$conFloodZone,      'category'=>'Construction Safety'],
             'CON_FAULT_ZONE'                 => ['name'=>'Construction in Fault Critical Zone (5–50m)',           'description'=>'Construction sites within 5–50m of the fault line — mandatory seismic design and structural engineer certification.',                                              'severity'=>'CRITICAL','count'=>$conFaultZone,      'category'=>'Construction Safety'],
             'CON_DUAL_HAZARD'                => ['name'=>'Dual Hazard Zone — Flood & Fault Line',                 'description'=>'Construction sites inside a flood hazard area AND within 50m of the fault line — mandatory geological and structural review before work begins.',                  'severity'=>'CRITICAL','count'=>$conBothHazards,    'category'=>'Construction Safety'],
             'CON_NEAR_EXISTING_CONSTRUCTION' => ['name'=>'Construction Near Existing Construction (<500m)',       'description'=>'New construction within 500m of other active sites — requires coordinated planning, traffic management, and dust/noise mitigation.',                               'severity'=>'MEDIUM',  'count'=>$conNearOtherCon,   'category'=>'Construction Safety'],
-            // ── Business Rules ───────────────────────────────────────────────
+            // Business Rules
             'BIZ_NO_BUILD_ZONE'        => ['name'=>'No Build Zone — Fault Trace (≤5m)',               'description'=>'New business permit applications within 5m of fault trace — PERMIT DENIED per PHIVOLCS Fault Rupture Zone.',                                             'severity'=>'CRITICAL','count'=>$bizNoBuildZone,   'category'=>'Business Rules'],
             'BIZ_FLOOD_ZONE'           => ['name'=>'Business in Flood Zone',                          'description'=>'Registered businesses in any flood hazard area — emergency plan and flood mitigation measures required.',                                               'severity'=>'HIGH',    'count'=>$bizFloodZone,     'category'=>'Business Rules'],
             'BIZ_FAULT_ZONE'           => ['name'=>'Business in Fault Critical Zone (5–50m)',         'description'=>'Businesses within 5–50m of the fault line — must meet enhanced seismic standards and have an earthquake evacuation plan.',                              'severity'=>'CRITICAL','count'=>$bizFaultZone,     'category'=>'Business Rules'],
             'BIZ_DUAL_HAZARD'          => ['name'=>'Dual Hazard Zone — Flood & Fault Line',           'description'=>'Businesses inside a flood hazard area AND within 50m of the fault line — require disaster resilience plan, elevated structure, and earthquake-resistant design.','severity'=>'CRITICAL','count'=>$bizBothHazards,   'category'=>'Business Rules'],
             'BUSINESS_CLUSTER_DENSITY' => ['name'=>'Business Cluster Density (5+ within 200m)',       'description'=>'Businesses with 5+ others within 200m — over-commercialised area may require coordinated parking or traffic management.',                               'severity'=>'MEDIUM',  'count'=>$bizClusterDensity,'category'=>'Business Rules'],
-            // ── Incident Rules ───────────────────────────────────────────────
+            // Incident Rules
             'INC_OPEN_IN_FLOOD'       => ['name'=>'Unresolved Incident in Flood Zone',               'description'=>'Active/open incident reports inside a flood hazard area — priority follow-up needed as flooding may escalate or obstruct response.',      'severity'=>'HIGH',    'count'=>$incOpenFlood,    'category'=>'Incident Rules'],
             'INC_HIGH_RISK_AREA'      => ['name'=>'Incident in High Flood Risk Zone',                'description'=>'Incident reports (any status) in a HIGH flood risk zone — structural damage, evacuation delays, and recurrence risk are elevated.',      'severity'=>'CRITICAL','count'=>$incHighRiskArea, 'category'=>'Incident Rules'],
             'INCIDENT_CLUSTER_RADIUS' => ['name'=>'Incident Cluster Radius (500m in past 30 days)', 'description'=>'Incidents within 500m of another in the past 30 days — indicates an emerging hotspot. Requires barangay investigation and intervention.','severity'=>'HIGH',    'count'=>$incClusterCount, 'category'=>'Incident Rules'],
@@ -1838,7 +1826,7 @@ function getSDSSRulesSummary() {
 }
 
 
-// ==================== RULE AFFECTED DATA ====================
+// RULE AFFECTED DATA
 
 // Fetches the specific records (houses, businesses, or construction) that violate a given SDSS rule key
 function getRuleAffectedData($ruleKey) {
@@ -1847,7 +1835,7 @@ function getRuleAffectedData($ruleKey) {
         $records = [];
         $label = '';
 
-        // ── Flood / Fault house rules ──
+        // Flood / Fault house rules
         if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_EXISTING_STRUCTURE_CRITICAL','FAULT_NO_BUILD_ZONE','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK'])) {
             $sql = "SELECT house_id, address, street_name, house_number, center_lat, center_lng FROM house_polygons WHERE center_lat IS NOT NULL AND center_lng IS NOT NULL";
             $houses = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
@@ -1891,7 +1879,7 @@ function getRuleAffectedData($ruleKey) {
             $label = 'Household';
         }
 
-        // ── Construction rules ──
+        // Construction rules
         elseif (strpos($ruleKey, 'CON_') === 0) {
             $sql = "SELECT id, first_name, last_name, construction_address, nature_of_work, type_of_work,
                            number_of_workers, number_of_working_days, contractor_name, end_date, latitude, longitude
@@ -1961,8 +1949,8 @@ function getRuleAffectedData($ruleKey) {
             $label = 'Construction';
         }
 
-        // ── Business rules ──
-        elseif (strpos($ruleKey, 'BIZ_') === 0) {
+        // Business rules
+        elseif (strpos($ruleKey, 'BIZ_') === 0 || $ruleKey === 'BUSINESS_CLUSTER_DENSITY') {
             $sql = "SELECT id, business_name, address_of_business, type_of_business, nature_of_business,
                            no_of_employees, type_of_structure, latitude, longitude
                     FROM business_applications WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
@@ -2035,7 +2023,7 @@ function getRuleAffectedData($ruleKey) {
             $label = 'Business';
         }
 
-        // ── Incident rules ──
+        // Incident rules
         elseif (strpos($ruleKey, 'INC_') === 0) {
             $sql = "SELECT id, incident_type, status, vic_address, vic_full_name, latitude, longitude,
                            incident_timestamp
@@ -2116,7 +2104,7 @@ function getRuleAffectedData($ruleKey) {
     }
 }
 
-// ==================== POST REQUEST HANDLER ====================
+// POST REQUEST HANDLER
 // All API calls come in as POST with an 'action' field.
 // Each block handles one action, returns JSON, and exits immediately.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -2125,7 +2113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     ob_clean();
     header('Content-Type: application/json; charset=utf-8');
 
-    // ==================== MARKER FUNCTIONS ====================
+    // MARKER FUNCTIONS
     
     if ($_POST['action'] === 'get_incident_markers') {
         echo json_encode(['success' => true, 'markers' => getIncidentMarkers()]);
@@ -2168,7 +2156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== DETAIL FUNCTIONS ====================
+    // DETAIL FUNCTIONS
     
     if ($_POST['action'] === 'get_utilities_details') {
         $data = getUtilitiesById($_POST['id'] ?? 0);
@@ -2194,7 +2182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== FLOOD HAZARD FUNCTIONS ====================
+    // FLOOD HAZARD FUNCTIONS
     
     if ($_POST['action'] === 'get_flood_hazards') {
         echo json_encode(['success' => true, 'hazards' => getAllFloodHazards()]);
@@ -2341,7 +2329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== HOUSE POLYGON FUNCTIONS ====================
+    // HOUSE POLYGON FUNCTIONS
     
     if ($_POST['action'] === 'get_houses') {
         $houses = getHousePolygons();
@@ -2367,7 +2355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== SDSS FUNCTIONS ====================
+    // SDSS FUNCTIONS
     
     if ($_POST['action'] === 'sdss_evaluate_business') {
         $evaluation = sdss_evaluateBusiness($_POST['business_id'] ?? 0);
@@ -2393,7 +2381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== NEW FAULT LINE FUNCTIONS ====================
+    // NEW FAULT LINE FUNCTIONS
     
     // Fault line assessment
     if ($_POST['action'] === 'get_fault_line_assessment') {
@@ -2420,7 +2408,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== NEW BUSINESS SDSS REPORT FUNCTIONS ====================
+    // NEW BUSINESS SDSS REPORT FUNCTIONS
     
     // Business SDSS report
     if ($_POST['action'] === 'get_business_sdss_report') {
@@ -2429,7 +2417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== NEW CONSTRUCTION SDSS REPORT FUNCTIONS ====================
+    // NEW CONSTRUCTION SDSS REPORT FUNCTIONS
     
     // Construction SDSS report
     if ($_POST['action'] === 'get_construction_sdss_report') {
@@ -2438,7 +2426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== SDSS RULES SUMMARY ====================
+    // SDSS RULES SUMMARY
 
     // SDSS Rules Summary
     if ($_POST['action'] === 'get_sdss_rules_summary') {
@@ -2537,7 +2525,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== COMBINED FUNCTIONS ====================
+    // COMBINED FUNCTIONS
     
     
     // Get all markers (combined) - FIXED TO RETURN COMPLETE DATA
@@ -2596,7 +2584,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== SDSS RULE AFFECTED DATA ====================
+    // SDSS RULE AFFECTED DATA
 
     if ($_POST['action'] === 'get_rule_affected_data') {
         $ruleKey = $_POST['rule_key'] ?? '';
@@ -2605,20 +2593,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== INIT COMBINED ENDPOINT ====================
+    // INIT COMBINED ENDPOINT
     // Single round-trip for all map startup data: boundaries + markers + houses + flood.
     // The JS Promise.all approach still works, but this cuts 4 HTTP requests to 1.
     if ($_POST['action'] === 'get_init_data') {
         $includeFlood = !empty($_POST['flood']) && $_POST['flood'] === '1';
         try {
-            // ── Boundary (only the single active boundary, minimum fields) ──
+            // Boundary (only the single active boundary, minimum fields)
             $boundaries = $pdo->query(
                 "SELECT boundary_id, name, coordinates
                  FROM   barangay_boundaries
                  ORDER  BY created_at DESC LIMIT 1"
             )->fetchAll(PDO::FETCH_ASSOC);
 
-            // ── Markers: only the fields the map pins actually need ──────────
+            // Markers: only the fields the map pins actually need
             // Full detail data is fetched on-demand when a user clicks a pin.
             $businesses = $pdo->query(
                 "SELECT id, business_name AS name, type_of_business, nature_of_business,
@@ -2655,7 +2643,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                  ORDER  BY incident_timestamp DESC"
             )->fetchAll(PDO::FETCH_ASSOC);
 
-            // ── Houses: only geometry + display fields (no created_at, area_sqm etc.) ──
+            // Houses: only geometry + display fields (no created_at, area_sqm etc.)
             $houses = $pdo->query(
                 "SELECT house_id, address, house_number, street_name,
                         coordinates, center_lat, center_lng
@@ -2663,7 +2651,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                  ORDER  BY street_name, house_number"
             )->fetchAll(PDO::FETCH_ASSOC);
 
-            // ── Build markers array (houses are kept separate for polygon rendering) ──
+            // Build markers array (houses are kept separate for polygon rendering)
             $markers = [];
             foreach ($houses as $h) {
                 if (!$h['center_lat'] || !$h['center_lng']) continue;
@@ -2697,7 +2685,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             $flood = $includeFlood ? getAllFloodHazards() : [];
 
-            // ── Encode + gzip compress the response ─────────────────────────
+            // Encode + gzip compress the response
             $json = json_encode([
                 'success'    => true,
                 'boundaries' => $boundaries,
@@ -2724,7 +2712,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // ==================== BOUNDARY MANAGEMENT ====================
+    // BOUNDARY MANAGEMENT
 
     if ($_POST['action'] === 'get_boundaries') {
         try {

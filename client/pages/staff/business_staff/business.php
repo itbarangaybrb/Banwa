@@ -25,6 +25,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
+    <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css"><!-- Just for the swal btns -->
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
@@ -126,7 +127,7 @@ $full_name = getCurrentUserName();
                         <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                             <i class="fas fa-times"></i>
                         </button>
-                        <button class="gm-search-btn" onclick="performSearch()">Search</button>
+                        
                     </div>
                     <!-- Search results appear here dynamically -->
                     <div id="search-results" class="search-results"></div>
