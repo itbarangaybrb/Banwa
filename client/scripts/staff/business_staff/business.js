@@ -2336,10 +2336,7 @@ document.addEventListener('click', (e) => {
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+            popup: 'archive-swal2-popup'
         }
     }).then(async (result) => {
         if (result.isConfirmed) {

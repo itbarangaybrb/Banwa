@@ -1662,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 commentBox.value = utilityStatusTemplates[status];
             } else if (commentBox) {
                 // Clear the box if a status without a template is selected
-                commentBox.value = ""; 
+                commentBox.value = "";
             }
         });
     }
@@ -1697,10 +1697,7 @@ document.addEventListener('click', (e) => {
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+            popup: 'archive-swal2-popup'
         }
     }).then(async (result) => {
         if (result.isConfirmed) {
