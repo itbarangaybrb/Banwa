@@ -1,11 +1,3 @@
-<?php
-require_once __DIR__ . '/../../../server/api/shared/check_session.php';
-if ($_SESSION['role_id'] != 8) {
-    header("Location: /client/index.php");
-    exit;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -21,11 +13,6 @@ if ($_SESSION['role_id'] != 8) {
 </head>
 
 <body>
-    <?php
-    $page_title = "Incident Report";
-    include '_layout/nav.php';
-    ?>
-
     <section class="sections" id="permits">
         <div class="header-and-parag">
             <h4>Incident Report</h4>
@@ -459,8 +446,8 @@ if ($_SESSION['role_id'] != 8) {
         <button id="downloadBtn">Download Report (.doc)</button>
     </section>
 
-    <?php include '_layout/end.php'; ?>
     <script type="module" src="../../scripts/resident/incidentReport.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

@@ -624,10 +624,10 @@ $full_name = getCurrentUserName();
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Update Incident Status</h2>
-                    <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
+                    <button class="close-btn" onclick="closeModal('openUpdateModal')">&times;</button>
                 </div>
                 <form id="updateForm" onsubmit="submitUpdate(event)">
-                    <input type="hidden" id="updateAppId" name="id">
+                    <input type="hidden" id="updateReportId" name="id">
                     <div class="form-group">
                         <label>Current Status:</label>
                         <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">

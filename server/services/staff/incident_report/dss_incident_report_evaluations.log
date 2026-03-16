@@ -9,3 +9,6 @@
 {"timestamp":"2026-02-03 18:50:08","application_id":36,"dss_status":"Medium Priority","priority_level":"Medium Priority","urgency_score":54,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}
 {"timestamp":"2026-02-03 18:50:30","application_id":37,"dss_status":"Medium Priority","priority_level":"Medium Priority","urgency_score":54,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}
 {"timestamp":"2026-02-04 11:46:24","application_id":14,"dss_status":"Medium Priority","priority_level":"Medium Priority","urgency_score":54,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-03-16 15:00:28","application_id":16,"dss_status":"Low Priority","priority_level":"Low Priority","urgency_score":47,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-03-16 15:07:06","application_id":17,"dss_status":"Medium Priority","priority_level":"Medium Priority","urgency_score":62,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}
+{"timestamp":"2026-03-16 15:27:21","application_id":18,"dss_status":"Medium Priority","priority_level":"Medium Priority","urgency_score":62,"score":5,"max_score":6,"passed_rules":5,"failed_rules":1}

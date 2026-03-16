@@ -277,12 +277,12 @@ const validator = (() => {
     }
 
     /**
-     * Validates address fields with optional validation for existence in addressCoordinates database
-     * @param {HTMLInputElement} lotInput - Lot number input element
-     * @param {HTMLSelectElement} streetInput - Street selection element
-     * @param {Object} options - Validation options (optional fields, existence validation)
-     * @returns {boolean} - Whether the address is valid
-     */
+ * Validates address fields with optional validation for existence in addressCoordinates database
+ * @param {HTMLInputElement} lotInput - Lot number input element
+ * @param {HTMLSelectElement} streetInput - Street selection element
+ * @param {Object} options - Validation options (optional fields, existence validation)
+ * @returns {boolean} - Whether the address is valid
+ */
     function validateAddress(lotInput, streetInput, options = {}) {
         const lot = lotInput.value.trim(), street = streetInput.value.trim();
         if (!lot && !options.optional) return validator.number(lotInput, 'House No. is required');
@@ -300,7 +300,21 @@ const validator = (() => {
             errorEl.classList.add('show');
             return false;
         }
+
         clearError(streetInput);
+
+        // AUTO-SET COORDINATES FOR INCIDENT LOCATION WHEN ADDRESS IS VALID
+        if (lotInput.id === 'incidentLotNo' && streetInput.id === 'incidentStreet' && match) {
+            if (incidentLatitude && incidentLongitude) {
+                incidentLatitude.value = match.lat.toFixed(6);
+                incidentLongitude.value = match.lng.toFixed(6);
+                console.log('Coordinates auto-set from address:', {
+                    lat: incidentLatitude.value,
+                    lng: incidentLongitude.value
+                });
+            }
+        }
+
         return true;
     }
 
@@ -671,10 +685,10 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    // Request notification permission for submission alerts
-    if (Notification.permission !== "granted") {
-        await Notification.requestPermission();
-    }
+    // // Request notification permission for submission alerts
+    // if (Notification.permission !== "granted") {
+    //     await Notification.requestPermission();
+    // }
 
     const confirmInciStaffResult = await ir_swal.fire({
         icon: 'question',
@@ -690,15 +704,15 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmInciStaffResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Incident Report Submitted", {
-                    body: "Click to view your report status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
+        // if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+        //     navigator.serviceWorker.ready.then(registration => {
+        //         registration.showNotification("Incident Report Submitted", {
+        //             body: "Click to view your report status",
+        //             icon: "/client/img/banwalogo.png",
+        //             data: { url: "/client/pages/resident/status.php" }
+        //         });
+        //     });
+        // }
 
         const formData = new FormData();
 
@@ -778,9 +792,9 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(data => {
                 if (data.status === 'success') {
 
-                    if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
-                        sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
-                    }
+                    // if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
+                    //     sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
+                    // }
 
                     ir_swal.fire({
                         icon: 'success',
@@ -788,7 +802,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         html: 'Submitted successfully!<br><br>Reference ID: <strong>' + data.id + '</strong>'
                     }).then(() => {
                         generateReportDocument();
-                        window.location.href = '/client/pages/resident/status.php';
+                        // window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     ir_swal.fire({
