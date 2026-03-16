@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Initializes the session and checks if the user is logged in with a valid role.
  * Redirects to the sign-in page if the user is not authenticated.
@@ -16,17 +17,34 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
 require_once __DIR__ . '/../../configs/database.php';
 
 /**
- * Fetches the current user's status from the database.
- * If the user is suspended or not found, destroys the session and redirects to the suspended page.
+ * Fetches the current user's status and role from the database.
+ * If the user is suspended, role has changed, or user not found, 
+ * destroys the session and redirects appropriately.
  */
 $userId = $_SESSION['user_id'];
-$stmt = $pdo->prepare("SELECT status FROM users WHERE user_id = ?");
+$stmt = $pdo->prepare("SELECT status, role_id FROM users WHERE user_id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user || $user['status'] === 'suspended') {
+if (!$user) {
+    // User not found in database - clear session and redirect to login
+    session_destroy();
+    header("Location: /client/index.php");
+    exit;
+}
+
+// Check if user is suspended
+if ($user['status'] === 'suspended') {
     session_destroy();
     header("Location: /client/pages/auth/suspended.php");
+    exit;
+}
+
+// Check if role has changed in the database
+if ($user['role_id'] != $_SESSION['role_id']) {
+    // Role has changed - log the user out immediately
+    session_destroy();
+    header("Location: /client/index.php?message=role_changed");
     exit;
 }
 
@@ -37,5 +55,3 @@ if (!$user || $user['status'] === 'suspended') {
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
-?>
-

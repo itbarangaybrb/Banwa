@@ -18,61 +18,71 @@ if ($_SESSION['role_id'] != 1) {
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
     <link rel="stylesheet" href="../../styles/resident/services.css">
-    
-<style>
-    /* MODAL STYLES - Forced Visibility */
-    .modal-overlay {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(0, 0, 0, 0.8) !important; /* Darker background */
-        display: none; /* Logic handled by JS */
-        justify-content: center;
-        align-items: center;
-        z-index: 999999 !important; /* Extremely high z-index */
-    }
 
-    /* When this class is added, force display */
-    .modal-overlay.active-modal {
-        display: flex !important;
-    }
+    <style>
+        /* MODAL STYLES - Forced Visibility */
+        .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.8) !important;
+            /* Darker background */
+            display: none;
+            /* Logic handled by JS */
+            justify-content: center;
+            align-items: center;
+            z-index: 999999 !important;
+            /* Extremely high z-index */
+        }
 
-    .modal-content {
-        background: #ffffff !important;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 500px;
-        width: 90%;
-        position: relative;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        color: #333 !important;
-    }
+        /* When this class is added, force display */
+        .modal-overlay.active-modal {
+            display: flex !important;
+        }
 
-    .modal-body ul {
-        text-align: left;
-        list-style: none;
-        margin: 20px 0;
-    }
+        .modal-content {
+            background: #ffffff !important;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: #333 !important;
+        }
 
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
+        .modal-body ul {
+            text-align: left;
+            list-style: none;
+            margin: 20px 0;
+        }
 
-    /* Ensure buttons are visible */
-    .btn-modal {
-        padding: 12px 25px;
-        border-radius: 8px;
-        cursor: pointer;
-        border: none;
-        font-weight: bold;
-    }
-    .btn-cancel { background: #ccc; }
-    .btn-proceed { background: #00247C; color: white; }
-</style>
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Ensure buttons are visible */
+        .btn-modal {
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-cancel {
+            background: #ccc;
+        }
+
+        .btn-proceed {
+            background: #00247C;
+            color: white;
+        }
+    </style>
 </head>
 
 <body>
@@ -120,7 +130,7 @@ if ($_SESSION['role_id'] != 1) {
                 <button type="button" class="btn-modal btn-cancel" id="closeModal">Cancel</button>
                 <button type="button" class="btn-modal btn-proceed" id="confirmProceed">Proceed</button>
             </div>
-            
+
         </div>
     </div>
 
@@ -128,4 +138,5 @@ if ($_SESSION['role_id'] != 1) {
 
     <script src="../../scripts/resident/services.js"></script>
 </body>
+
 </html>

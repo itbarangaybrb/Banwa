@@ -181,7 +181,9 @@ function saveHouse($data) {
 
             if ($coordinatesJson !== null) {
                 $setClauses[] = 'coordinates = :coordinates::jsonb';
+                $setClauses[] = "geom = ST_SetSRID(ST_GeomFromGeoJSON(json_build_object('type','Polygon','coordinates',json_build_array(:coordinates2::jsonb))::text), 4326)";
                 $params[':coordinates'] = $coordinatesJson;
+                $params[':coordinates2'] = $coordinatesJson;
             }
 
             $setClauses[] = 'center_lat = :center_lat';
@@ -211,7 +213,10 @@ function saveHouse($data) {
             if ($coordinatesJson !== null) {
                 $cols[] = 'coordinates';
                 $vals[] = ':coordinates::jsonb';
+                $cols[] = 'geom';
+                $vals[] = "ST_SetSRID(ST_GeomFromGeoJSON(json_build_object('type','Polygon','coordinates',json_build_array(:coordinates2::jsonb))::text), 4326)";
                 $params[':coordinates'] = $coordinatesJson;
+                $params[':coordinates2'] = $coordinatesJson;
             }
 
             $sql = "INSERT INTO house_polygons (" . implode(', ', $cols) . ")
@@ -302,6 +307,7 @@ function recalculateAllAreas() {
              SET area_sqm   = :area,
                  center_lat = :clat,
                  center_lng = :clng,
+                 geom       = ST_SetSRID(ST_GeomFromGeoJSON(json_build_object('type','Polygon','coordinates',json_build_array(:coords::jsonb))::text), 4326),
                  updated_at = CURRENT_TIMESTAMP
              WHERE house_id = :id"
         );
@@ -328,10 +334,11 @@ function recalculateAllAreas() {
             $area   = computeApproxAreaSqm($ring);
 
             $upd->execute([
-                ':area' => $area,
-                ':clat' => $clat,
-                ':clng' => $clng,
-                ':id'   => $row['house_id']
+                ':area'   => $area,
+                ':clat'   => $clat,
+                ':clng'   => $clng,
+                ':coords' => json_encode($ring),
+                ':id'     => $row['house_id']
             ]);
             $updated++;
         }

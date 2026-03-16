@@ -24,17 +24,10 @@ if ($_SESSION['role_id'] != 1) {
 </head>
 
 <body>
-    <!-- 
-        TODO: Front-end developer, will change
-        this into modal once the designs is fully completed. 
-      -->
     <?php
     $page_title = "Utilities Application";
     include '_layout/nav.php';
     ?>
-
-
-
 
     <section class="sections">
         <div class="header-and-parag">

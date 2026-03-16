@@ -896,61 +896,50 @@ function performSearch() {
     if (resultsContainer) resultsContainer.innerHTML = '';
 
     allMarkersData.forEach(marker => {
-        const searchFields = [
-            marker.title || '',
-            marker.description || '',
-            marker.location || '',
-            marker.marker_type || '',
-            marker.business_name || '',
-            marker.homeowner_name || '',
-            marker.contractor_name || '',
-            marker.address_of_construction || '',
-            marker.address_of_business || '',
-            marker.applicant_name || '',
-            marker.applicant_address || '',
-            marker.hazard_name || '',
-            marker.risk_level || '',
-            marker.address || '',
-            marker.house_number || '',
-            marker.street_name || '',
-            marker.nature_of_work || '',
-            marker.nature_of_activity || '',
-            marker.type_of_work || '',
-            marker.type_of_business || '',
-            marker.incident_type || '',
-            marker.vic_full_name || '',
-            marker.rp_full_name || '',
-            marker.vic_address || ''
+        // Build full name so "jef" matches "Jeferson Ismael Muring"
+        const fullName = [marker.first_name, marker.middle_name, marker.last_name]
+            .filter(Boolean).join(' ');
+
+        // Weighted fields — name/identity always beats address/type accumulation
+        const weightedFields = [
+            { value: fullName,                          weight: 100 }, // owner / applicant name
+            { value: marker.name || '',                 weight: 100 }, // business_name (aliased as name)
+            { value: marker.vic_full_name || '',        weight: 100 }, // incident victim
+            { value: marker.address || '',              weight: 40  }, // unified address
+            { value: marker.street_name || '',          weight: 40  },
+            { value: String(marker.house_number || ''), weight: 40  },
+            { value: marker.type_of_business || '',     weight: 15  },
+            { value: marker.nature_of_business || '',   weight: 15  },
+            { value: marker.nature_of_work || '',       weight: 15  },
+            { value: marker.type_of_work || '',         weight: 15  },
+            { value: marker.nature_of_activity || '',   weight: 15  },
+            { value: marker.incident_type || '',        weight: 15  },
+            { value: marker.provider || '',             weight: 15  },
+            { value: marker.hazard_name || '',          weight: 15  },
         ];
 
         let matchScore = 0;
 
-        // YD TEMPORARY ONLY NEED LANG SA VIDEO - JEP 
-        searchFields.forEach(field => {
-            // Convert to string if it exists, otherwise use empty string
-            const fieldStr = field ? String(field) : '';
-            const fieldLower = fieldStr.toLowerCase();
-            if (fieldLower === searchTerm) {
-                matchScore += 100;
-            } else if (fieldLower.startsWith(searchTerm)) {
-                matchScore += 50;
-            } else if (fieldLower.includes(searchTerm)) {
-                matchScore += 20;
-            } else if (searchTerm.length >= 3) {
-                const words = searchTerm.split(' ');
-                words.forEach(word => {
-                    if (word.length > 2 && fieldLower.includes(word)) {
-                        matchScore += 5;
+        weightedFields.forEach(({ value, weight }) => {
+            if (!value) return;
+            const v = String(value).toLowerCase();
+            if (v === searchTerm) {
+                matchScore += weight * 3;        // exact match
+            } else if (v.startsWith(searchTerm)) {
+                matchScore += weight * 2;        // starts with — "jef" → "Jeferson"
+            } else if (v.includes(searchTerm)) {
+                matchScore += weight;            // contains anywhere
+            } else {
+                searchTerm.split(' ').forEach(word => {
+                    if (word.length >= 3 && v.includes(word)) {
+                        matchScore += weight * 0.5;
                     }
                 });
             }
         });
 
         if (matchScore > 0) {
-            searchResults.push({
-                marker: marker,
-                score: matchScore
-            });
+            searchResults.push({ marker, score: matchScore });
         }
     });
 
@@ -966,38 +955,60 @@ function performSearch() {
                 item.className = 'search-result-item';
                 item.dataset.index = index;
 
-                const type = marker.marker_type || marker.type ||
-                    (marker.construction_id ? 'construction' :
-                        marker.id ? 'business' :
-                            marker.utility_id ? 'utility' :
-                                marker.hazard_id ? 'flood' :
-                                    marker.house_id ? 'household' : 'household');
+                const type = marker.type ||
+                    (marker.hazard_id ? 'flood' :
+                        marker.house_id ? 'household' : 'unknown');
 
-                const title = marker.title ||
-                    marker.business_name ||
-                    marker.homeowner_name ||
-                    marker.applicant_name ||
-                    marker.hazard_name ||
-                    marker.address ||
-                    marker.address || 'Unnamed Marker';
+                // Build full name for display
+                const fullName = [marker.first_name, marker.middle_name, marker.last_name]
+                    .filter(Boolean).join(' ');
 
-                const subtitle = marker.description ||
-                    marker.address_of_construction ||
-                    marker.address_of_business ||
-                    marker.applicant_address ||
-                    marker.location ||
-                    marker.street_name ||
-                    (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
-                    '';
+                // All labelled fields in priority order
+                const labelledFields = [
+                    { label: 'Name',     value: fullName                                       },
+                    { label: 'Business', value: marker.name                                    },
+                    { label: 'Victim',   value: marker.vic_full_name                           },
+                    { label: 'Address',  value: marker.address                                 },
+                    { label: 'House',    value: marker.house_number
+                                                   ? ('#' + marker.house_number + (marker.street_name ? ' ' + marker.street_name : '')).trim()
+                                                   : null                                      },
+                    { label: 'Street',   value: marker.street_name                             },
+                    { label: 'Type',     value: marker.type_of_business || marker.type_of_work },
+                    { label: 'Work',     value: marker.nature_of_work                          },
+                    { label: 'Incident', value: marker.incident_type                           },
+                    { label: 'Provider', value: marker.provider                                },
+                    { label: 'Hazard',   value: marker.hazard_name                             },
+                ].filter(f => f.value && String(f.value).trim());
 
-                const highlightedTitle = highlightText(title, searchTerm);
-                const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
+                const q = searchTerm.toLowerCase();
+
+                // Show the field that actually matched the search term
+                const matchedField = labelledFields.find(f =>
+                    String(f.value).toLowerCase().includes(q)
+                );
+
+                const titleField = matchedField || labelledFields[0] || { label: '', value: 'Unnamed' };
+                const titleValue = String(titleField.value);
+                const titleLabel = matchedField ? matchedField.label : '';
+
+                // Subtitle: address if match was not address, else next best field
+                const addrField = labelledFields.find(f => f.label === 'Address' || f.label === 'House');
+                const subtitleField = (titleField === addrField)
+                    ? labelledFields.find(f => f !== titleField) || null
+                    : addrField;
+                const subtitleValue = subtitleField ? String(subtitleField.value) : '';
+
+                const highlightedTitle    = highlightText(titleValue, searchTerm);
+                const highlightedSubtitle = highlightText(subtitleValue.substring(0, 60), searchTerm);
+                const labelBadge = titleLabel
+                    ? `<span style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-right:4px;letter-spacing:.4px;">${titleLabel}:</span>`
+                    : '';
 
                 item.innerHTML = `
                     <div class="result-icon ${type === 'flood' ? 'flood-area' : type + '-marker'}"></div>
                     <div class="result-details">
-                        <div class="result-title">${highlightedTitle}</div>
-                        <div class="result-subtitle">${highlightedSubtitle}${subtitle.length > 60 ? '...' : ''}</div>
+                        <div class="result-title">${labelBadge}${highlightedTitle}</div>
+                        <div class="result-subtitle">${highlightedSubtitle}${subtitleValue.length > 60 ? '...' : ''}</div>
                     </div>
                     <span class="result-type ${type}">${type}</span>
                 `;

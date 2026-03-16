@@ -29,7 +29,6 @@ if ($_SESSION['role_id'] != 1) {
     include '_layout/nav.php';
     ?>
 
-
     <section class="sections">
         <div class="header-and-parag">
             <h4>Business Clearance</h4>
