@@ -25,7 +25,6 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
-    <!-- <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css"> -->
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
@@ -127,7 +126,6 @@ $full_name = getCurrentUserName();
                         <button class="gm-clear-btn" onclick="clearSearch()" title="Clear">
                             <i class="fas fa-times"></i>
                         </button>
-                        
                     </div>
                     <!-- Search results appear here dynamically -->
                     <div id="search-results" class="search-results"></div>
@@ -647,7 +645,6 @@ $full_name = getCurrentUserName();
                         <label><input type="checkbox" name="requirements" value="TCT"> TCT (Transfer Certificate of Title)</label>
                         <label><input type="checkbox" name="requirements" value="Lease Contract"> Lease Contract</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Clearance"> Previous Business Clearance</label>
-                        <label><input type="checkbox" name="requirements" value="Affidavit of Business Closure"> Affidavit of Business Closure</label>
                     </div>
                     <div class="error-msg"></div>
                 </div>
