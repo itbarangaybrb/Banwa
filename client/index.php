@@ -1,3 +1,64 @@
+<?php
+
+/**
+ * Start session and check if user is already logged in.
+ * If logged in, redirect to the appropriate page based on their role.
+ */
+session_start();
+
+if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
+
+    require_once __DIR__ . '/../server/configs/database.php';
+
+    $userId = $_SESSION['user_id'];
+    $stmt = $pdo->prepare("SELECT status FROM users WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        if ($user['status'] === 'suspended') {
+            session_destroy();
+            header("Location: /client/pages/auth/suspended.php");
+            exit;
+        }
+
+        switch ($_SESSION['role_id']) {
+            case 1: // Resident
+                header("Location: /client/pages/resident/home.php");
+                break;
+            case 2: // Super Admin
+                header("Location: /client/pages/staff/superadmin/dashboard.php");
+                break;
+            case 3: // Admin
+                header("Location: /client/pages/admin/dashboard.php");
+                break;
+            case 4: // Business Staff
+                header("Location: /client/pages/staff/business_staff/business.php");
+                break;
+            case 5: // Construction Staff
+                header("Location: /client/pages/staff/construction_staff/construction.php");
+                break;
+            case 6: // Utilities Staff
+                header("Location: /client/pages/staff/utilities_staff/utilities.php");
+                break;
+            case 7: // Finance Staff
+                header("Location: /client/pages/staff/finance_staff/finance.php");
+                break;
+            case 8: // Incident Report Staff
+                header("Location: /client/pages/staff/incident_report_staff/incident_report.php");
+                break;
+            default:
+                session_destroy();
+                header("Location: /client/index.php");
+                break;
+        }
+        exit;
+    } else {
+        session_destroy();
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 

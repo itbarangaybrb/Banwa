@@ -441,7 +441,9 @@ function filterApplications() {
  * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
-    return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`)
+    return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
@@ -744,7 +746,9 @@ let chart3Instance;
  * Creates three charts: timeline chart, construction type distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
-    fetch(`${CONSTRUCTION_HANDLER_URL}?action=chart_construction_type`)
+    fetch(`${CONSTRUCTION_HANDLER_URL}?action=chart_construction_type`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -928,7 +932,10 @@ function openUpdateModal(appId) {
  */
 function fetchDSSEvaluation(appId, app) {
     // console.debug('fetchDSSEvaluation ->', CONSTRUCTION_HANDLER_URL, appId);
-    fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, {
+        cache: 'no-store',
+        credentials: 'include'
+    })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
@@ -1169,7 +1176,7 @@ function submitUpdate(event) {
     const formData = new FormData(document.getElementById('updateForm'));
     formData.append('action', 'update_status');
 
-    fetch(`${CONSTRUCTION_HANDLER_URL}`, { method: 'POST', body: formData })
+    fetch(`${CONSTRUCTION_HANDLER_URL}`, { method: 'POST', body: formData, credentials: 'include' })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
@@ -1229,7 +1236,7 @@ async function viewDetails(appId) {
 
     try {
         // 2. Fetch the specific details from the server
-        const response = await fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_application_details&application_id=${appId}`);
+        const response = await fetch(`${CONSTRUCTION_HANDLER_URL}?action=get_application_details&application_id=${appId}`, { credentials: 'include' });
         const data = await response.json();
 
         if (data.status !== 'success') throw new Error(data.message || 'Failed to fetch details');
@@ -1558,7 +1565,7 @@ function archiveApplication(appId) {
         confirmButtonText: 'Yes, archive it!'
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`)
+            fetch(`${CONSTRUCTION_HANDLER_URL}?action=archive&id=${appId}`, { credentials: 'include' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
@@ -2162,7 +2169,8 @@ function createApplication(event) {
             // 3. SEND TO BACKEND
             fetch(CONSTRUCTION_HANDLER_URL, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
@@ -2271,7 +2279,8 @@ function reRunOCR(appId) {
             fetch(CONSTRUCTION_HANDLER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'action=re_run_ocr&id=' + encodeURIComponent(appId)
+                body: 'action=re_run_ocr&id=' + encodeURIComponent(appId),
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {

@@ -468,3 +468,9 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [15-Mar-2026 15:45:11 UTC] No files uploaded for application 65, skipping OCR queue.
 [15-Mar-2026 15:45:11 UTC] CR1 Check - Has file upload: No
 [15-Mar-2026 15:45:11 UTC] CR1 Check - Has file upload: No
+[16-Mar-2026 14:21:55 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[16-Mar-2026 14:21:55 UTC] No files uploaded for application 66, skipping OCR queue.
+[16-Mar-2026 14:21:55 UTC] CR1 Check - Has file upload: No
+[16-Mar-2026 14:21:55 UTC] CR1 Check - Has file upload: No
+[16-Mar-2026 14:23:32 UTC] CR1 Check - Has file upload: No
+[16-Mar-2026 14:23:32 UTC] CR1 Check - Has file upload: No

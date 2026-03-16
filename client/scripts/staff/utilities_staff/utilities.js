@@ -261,7 +261,9 @@ function filterApplications() {
  * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
-    return fetch(`${UTILITY_HANDLER_URL}?action=fetch`)
+    return fetch(`${UTILITY_HANDLER_URL}?action=fetch`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
@@ -513,7 +515,9 @@ let chart3Instance;
  * Loads analytics data and renders charts for utility application statistics
  */
 function loadAnalyticsTab() {
-    fetch(`${UTILITY_HANDLER_URL}?action=chart_utilities_type`)
+    fetch(`${UTILITY_HANDLER_URL}?action=chart_utilities_type`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -682,7 +686,7 @@ function openUpdateModal(appId) {
  * @param {Object} app - The application object containing basic application data
  */
 function fetchDSSEvaluation(appId, app) {
-    fetch(`${UTILITY_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    fetch(`${UTILITY_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'include' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
@@ -892,7 +896,8 @@ function submitUpdate(event) {
 
     fetch(`${UTILITY_HANDLER_URL}?action=update_status`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
     })
         .then(res => res.json())
         .then(data => {
@@ -1451,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Creating Application...';
 
         try {
-            const res = await fetch(UTILITY_HANDLER_URL, { method: 'POST', body: formData });
+            const res = await fetch(UTILITY_HANDLER_URL, { method: 'POST', body: formData, credentials: 'include' });
             const data = await res.json();
 
             if (data.status === 'success') {

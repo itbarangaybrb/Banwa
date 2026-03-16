@@ -87,7 +87,25 @@ document.addEventListener('click', (e) => {
         const form = document.getElementById('editForm');
         form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
         form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
-        form.querySelector('[name="editRole"]').value = btn.dataset.role || '';
+
+        let roleValue = btn.dataset.role;
+
+        const roleMap = {
+            'Resident': '1',
+            'Super Admin': '2',
+            'Admin': '3',
+            'Business staff': '4',
+            'Construction staff': '5',
+            'Utility staff': '6',
+            'Finance staff': '7'
+        };
+
+        if (roleMap[roleValue]) {
+            roleValue = roleMap[roleValue];
+        }
+
+        form.querySelector('[name="editRole"]').value = roleValue || '';
+
         form.querySelector('[name="street"]').value = btn.dataset.street || '';
         form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
 
@@ -97,11 +115,8 @@ document.addEventListener('click', (e) => {
         const suspendBtn = document.getElementById('editSuspendBtn');
         const unsuspendBtn = document.getElementById('editUnsuspendBtn');
 
-        // Set the data-id on the suspend button
         suspendBtn.dataset.id = btn.dataset.id;
         unsuspendBtn.dataset.id = btn.dataset.id;
-
-        console.log('Suspend button after setting:', suspendBtn.dataset);
 
         suspendBtn.style.display = isSuspended ? 'none' : '';
         unsuspendBtn.style.display = isSuspended ? '' : 'none';
@@ -837,11 +852,10 @@ async function handleCreateFormSubmit(form) {
  */
 async function handleUpdateFormSubmit(form) {
     const roleEl = form.querySelector('[name="editRole"]');
-    if (roleEl?.value === '1') {
-        const lotEl = form.querySelector('[name="editLotNo"]');
-        const streetEl = form.querySelector('[name="street"]');
-        if (!validator.address(lotEl, streetEl, 'editLatitude', 'editLongitude')) return;
-    }
+    const lotEl = form.querySelector('[name="editLotNo"]');
+    const streetEl = form.querySelector('[name="street"]');
+    if (!validator.address(lotEl, streetEl, 'editLatitude', 'editLongitude')) return;
+
 
     const confirmResult = await Swal.fire({
         title: 'Are you sure?',
@@ -865,7 +879,7 @@ async function handleUpdateFormSubmit(form) {
         user_id: form.dataset.userId,
         full_name: form.querySelector('[name="editFullName"]').value.trim(),
         email: form.querySelector('[name="editEmail"]').value.trim(),
-        role_id: form.querySelector('[name="editRole"]').value.trim(),
+        role_id: parseInt(form.querySelector('[name="editRole"]').value),
         street: form.querySelector('[name="street"]').value.trim(),
         lot_no: form.querySelector('[name="editLotNo"]').value.trim(),
         latitude: document.getElementById('editLatitude').value.trim(),

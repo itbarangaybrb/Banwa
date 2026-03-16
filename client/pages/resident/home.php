@@ -19,10 +19,10 @@ if ($_SESSION['role_id'] != 1) {
 
 
 <body>
-<?php 
-$page_title = "Home";
-include '../../pages/resident/_layout/nav.php';
-?>
+    <?php
+    $page_title = "Home";
+    include '../../pages/resident/_layout/nav.php';
+    ?>
     <section data-theme="white" class="services-section">
         <div class="cont">
             <!-- Section Header with 24/7 prominence -->
@@ -44,13 +44,13 @@ include '../../pages/resident/_layout/nav.php';
                     <div class="card-icon-wrapper">
                         <div class="card-icon">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M2 20L22 20" stroke-linecap="round"/>
-                                <rect x="4" y="9" width="16" height="11" rx="1" stroke="currentColor"/>
-                                <path d="M8 6L12 3L16 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 20L22 20" stroke-linecap="round" />
+                                <rect x="4" y="9" width="16" height="11" rx="1" stroke="currentColor" />
+                                <path d="M8 6L12 3L16 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </div>
                     </div>
-                    
+
                     <h3>Construction Clearance</h3>
                     <p class="card-subtitle">Home Repairs, Renovations, and New Construction</p>
 
@@ -74,14 +74,14 @@ include '../../pages/resident/_layout/nav.php';
                     <div class="card-icon-wrapper">
                         <div class="card-icon">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <rect x="3" y="7" width="18" height="14" rx="2" stroke="currentColor"/>
-                                <path d="M16 3L16 7" stroke="currentColor" stroke-linecap="round"/>
-                                <path d="M8 3L8 7" stroke="currentColor" stroke-linecap="round"/>
-                                <path d="M8 13L16 13" stroke="currentColor" stroke-linecap="round"/>
+                                <rect x="3" y="7" width="18" height="14" rx="2" stroke="currentColor" />
+                                <path d="M16 3L16 7" stroke="currentColor" stroke-linecap="round" />
+                                <path d="M8 3L8 7" stroke="currentColor" stroke-linecap="round" />
+                                <path d="M8 13L16 13" stroke="currentColor" stroke-linecap="round" />
                             </svg>
                         </div>
                     </div>
-                    
+
                     <h3>Business Clearance</h3>
                     <p class="card-subtitle">New businesses, Renewals, and Closure</p>
 
@@ -104,15 +104,15 @@ include '../../pages/resident/_layout/nav.php';
                     <div class="card-icon-wrapper">
                         <div class="card-icon">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="5" stroke="currentColor"/>
-                                <path d="M12 2L12 7" stroke="currentColor" stroke-linecap="round"/>
-                                <path d="M12 17L12 22" stroke="currentColor" stroke-linecap="round"/>
-                                <path d="M22 12L17 12" stroke="currentColor" stroke-linecap="round"/>
-                                <path d="M7 12L2 12" stroke="currentColor" stroke-linecap="round"/>
+                                <circle cx="12" cy="12" r="5" stroke="currentColor" />
+                                <path d="M12 2L12 7" stroke="currentColor" stroke-linecap="round" />
+                                <path d="M12 17L12 22" stroke="currentColor" stroke-linecap="round" />
+                                <path d="M22 12L17 12" stroke="currentColor" stroke-linecap="round" />
+                                <path d="M7 12L2 12" stroke="currentColor" stroke-linecap="round" />
                             </svg>
                         </div>
                     </div>
-                    
+
                     <h3>Utilities Services</h3>
                     <p class="card-subtitle">Water, Electricity, Internet and Billing Inquiries</p>
 
@@ -159,4 +159,5 @@ include '../../pages/resident/_layout/nav.php';
 
     <?php include '../../pages/resident/_layout/end.php'; ?>
 </body>
+
 </html>

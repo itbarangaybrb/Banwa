@@ -226,7 +226,9 @@ async function loadApplicationsFromDB() {
     const tableBody = document.getElementById('tableBody');
 
     try {
-        const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`);
+        const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`, {
+            credentials: 'include'
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
@@ -361,7 +363,9 @@ let chart3Instance;
  * Creates three charts: timeline chart, business type distribution, and DSS status distribution
  */
 function loadAnalyticsTab() {
-    fetch(`${BUSINESS_HANDLER_URL}?action=chart_business_type`)
+    fetch(`${BUSINESS_HANDLER_URL}?action=chart_business_type`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(res => {
             if (res.status !== 'success') return;
@@ -537,7 +541,7 @@ function openUpdateModal(appId) {
  */
 function fetchDSSEvaluation(appId, app) {
     // console.debug('fetchDSSEvaluation ->', BUSINESS_HANDLER_URL, appId);
-    fetch(`${BUSINESS_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    fetch(`${BUSINESS_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'include' })
         .then(res => {
             if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
             return res.json();
@@ -792,7 +796,8 @@ function submitUpdate(event) {
 
     fetch(`${BUSINESS_HANDLER_URL}`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
     })
         .then(res => res.json())
         .then(data => {
@@ -994,7 +999,7 @@ function viewDetails(appId) {
     openModal('detailsModal');
 
     // Fetch detailed application data (includes OCR results) and render OCR section
-    fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+    fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'include' })
         .then(res => res.json())
         .then(data => {
             if (!data || data.status !== 'success' || !data.application) return;

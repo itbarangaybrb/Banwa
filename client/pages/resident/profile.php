@@ -27,12 +27,12 @@ if ($_SESSION['role_id'] != 1) {
     $page_title = "About Us";
     include '_layout/nav.php';
     ?>
-        <div class="profile-container">
-            <!-- Profile Header -->
-            <div class="profile-header">
-                <h1>My Profile</h1>
-                <p>Manage your account information and preferences</p>
-            </div>
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h1>My Profile</h1>
+            <p>Manage your account information and preferences</p>
+        </div>
 
         <div class="profile-content">
             <!-- Left Column: User Info -->
