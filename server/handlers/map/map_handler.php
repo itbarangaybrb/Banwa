@@ -90,22 +90,25 @@ function house_has_polygon(string $alias): string {
     return "({$alias}.geom IS NOT NULL OR {$alias}.coordinates IS NOT NULL)";
 }
 
+// Fault line WKT — single source of truth, used by all fault distance queries
+define('FAULT_LINE_WKT',
+    'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,' .
+    '121.0765517 14.6180432,121.0765671 14.6182482,' .
+    '121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)'
+);
+
+/**
+ * Returns the PostGIS geography expression for the fault line.
+ * Use inside SQL queries: fault_geog_expr()
+ */
+function fault_geog_expr(): string {
+    return "ST_GeomFromText('" . FAULT_LINE_WKT . "', 4326)::geography";
+}
+
 // DB connection — provides the global $pdo variable used by all functions below
 require_once __DIR__ . '/../../configs/database.php';
 
-// PERFORMANCE: recommended indexes (run once in psql/pgAdmin)
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_business_coords
-//     ON business_applications (latitude, longitude) WHERE latitude IS NOT NULL;
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_construction_coords
-//     ON construction_applications (latitude, longitude) WHERE latitude IS NOT NULL;
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_utility_coords
-//     ON utility_applications (latitude, longitude) WHERE latitude IS NOT NULL;
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_incident_coords
-//     ON incident_reports (latitude, longitude) WHERE latitude IS NOT NULL;
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_house_center
-//     ON house_polygons (center_lat, center_lng) WHERE center_lat IS NOT NULL;
-// CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_house_street
-//     ON house_polygons (street_name, house_number);
+// See /docs/db-indexes.sql for recommended indexes
 
 // UTILITY FUNCTIONS
 
@@ -1020,8 +1023,7 @@ function getFaultLineAssessment() {
     global $pdo;
     set_time_limit(60);
     try {
-        $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
-        $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
+        $faultGeog = fault_geog_expr();
 
         // Returns all houses — no distance cap so nothing is excluded
         $houseGeom = house_geom_expr('hp');
@@ -1203,8 +1205,7 @@ function getBusinessSDSSReport() {
     global $pdo;
     set_time_limit(60);
     try {
-        $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
-        $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
+        $faultGeog = fault_geog_expr();
 
         // Batch query 1: businesses + their worst flood zone in one JOIN
         $floodRows = $pdo->query("
@@ -1316,8 +1317,7 @@ function getConstructionSDSSReport() {
     global $pdo;
     set_time_limit(60);
     try {
-        $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
-        $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
+        $faultGeog = fault_geog_expr();
 
         // Batch query 1: worst flood zone per construction site
         $floodRows = $pdo->query("
@@ -1550,8 +1550,7 @@ function getSDSSRulesSummary() {
 
         // Shared fault-line WKT (same coordinates as getDistanceToFaultLine)
         // Using PostGIS geography type so ST_Distance returns metres directly.
-        $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
-        $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
+        $faultGeog = fault_geog_expr();
 
         // Helper: build a PostGIS geography point from two SQL column references.
         $pt = function(string $latCol, string $lngCol): string {
@@ -1875,8 +1874,7 @@ function getRuleAffectedData($ruleKey) {
         // Flood / Fault house rules
         if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_EXISTING_STRUCTURE_CRITICAL','FAULT_NO_BUILD_ZONE','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK','FAULT_LOW_RISK'])) {
             $houseGeomExpr = house_geom_expr('hp');
-            $faultWKTLocal  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
-            $faultGeogLocal = "ST_GeomFromText('{$faultWKTLocal}', 4326)::geography";
+            $faultGeogLocal = fault_geog_expr();
             $sql = "SELECT hp.house_id, hp.address, hp.street_name, hp.house_number,
                            hp.center_lat, hp.center_lng,
                            ROUND(ST_Distance(({$houseGeomExpr})::geography, {$faultGeogLocal}))::int AS fault_dist_m

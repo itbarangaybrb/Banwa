@@ -28,8 +28,7 @@ let allMarkersData = [];
 let searchResults = [];
 let activeSearchMarker = null;
 let searchTimeout = null;
-let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search // 3/1/2026
-
+let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search
 // Modal state
 let currentMarkerData = null;
 
@@ -137,6 +136,26 @@ function showSwal(options) {
 function hasControl(control) {
     if (!control || !control._map) return false;
     return control._map === map;
+}
+
+// ── Shared fetch helper — all map handler POST calls go through here ──────────
+async function postAction(action, params = {}) {
+    const body = new URLSearchParams({ action, ...params });
+    const res = await fetch(MAP_HANDLER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+function showLoadingSwal(title, text = 'Please wait...') {
+    showSwal({ title, html: text, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+}
+
+function showErrorSwal(title, text = 'An unexpected error occurred.') {
+    showSwal({ icon: 'error', title, text });
 }
 
 // Barangay boundary — loaded from database on init
@@ -435,7 +454,6 @@ function displayFloodDetailsInModal(data) {
     ].join('');
     showDetailSwal(title, `${(data.risk_level || 'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
-// 3/1/2026
 function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
 
@@ -448,7 +466,6 @@ function displayHouseDetailsInModal(data, apps) {
         detailRow('Street Name', data.street_name || 'Not specified'),
         detailRow('Created', formatDate(data.created_at))
     ].join('');
-    // 3/1/2026
     const typeBadge = (bg, label, textColor) =>
         `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
                       background:${bg};color:${textColor || '#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
@@ -503,7 +520,6 @@ function displayHouseDetailsInModal(data, apps) {
             );
         });
     }
-    // 3/1/2026
     const tableRows = [
         sectionHeader('Household Information'), basicRows,
         sectionHeader('Connected Applications'), appRows
@@ -720,7 +736,6 @@ const natureToSubtypeMap = {
     'Complete Demolition': 'demolition',
     'Partial Demolition': 'demolition'
 };
-// 3/1/2026
 function filterConstructionByType(subtype, event) {
     if (event) event.stopPropagation();
     constructionSubFilter = subtype;
@@ -733,7 +748,6 @@ function filterConstructionByType(subtype, event) {
         : `<strong>${subtype.charAt(0).toUpperCase() + subtype.slice(1)}</strong>`;
     if (activeFilter === 'construction') updateMarkerVisibility();
 }
-// 3/1/2026
 function toggleConstructionFilters() {
     const list = document.getElementById('constructionTypeList');
     const btn = document.getElementById('constructionToggleBtn');
@@ -886,7 +900,6 @@ function performSearch() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const resultsContainer = document.getElementById('search-results');
 
-
     if (!searchTerm) {
         if (resultsContainer) resultsContainer.style.display = 'none';
         return;
@@ -896,61 +909,50 @@ function performSearch() {
     if (resultsContainer) resultsContainer.innerHTML = '';
 
     allMarkersData.forEach(marker => {
-        const searchFields = [
-            marker.title || '',
-            marker.description || '',
-            marker.location || '',
-            marker.marker_type || '',
-            marker.business_name || '',
-            marker.homeowner_name || '',
-            marker.contractor_name || '',
-            marker.address_of_construction || '',
-            marker.address_of_business || '',
-            marker.applicant_name || '',
-            marker.applicant_address || '',
-            marker.hazard_name || '',
-            marker.risk_level || '',
-            marker.address || '',
-            marker.house_number || '',
-            marker.street_name || '',
-            marker.nature_of_work || '',
-            marker.nature_of_activity || '',
-            marker.type_of_work || '',
-            marker.type_of_business || '',
-            marker.incident_type || '',
-            marker.vic_full_name || '',
-            marker.rp_full_name || '',
-            marker.vic_address || ''
+        // Build full name so "jef" matches "Jeferson Ismael Muring"
+        const fullName = [marker.first_name, marker.middle_name, marker.last_name]
+            .filter(Boolean).join(' ');
+
+        // Weighted fields — name/identity always beats address/type accumulation
+        const weightedFields = [
+            { value: fullName,                          weight: 100 }, // owner / applicant name
+            { value: marker.name || '',                 weight: 100 }, // business_name (aliased as name)
+            { value: marker.vic_full_name || '',        weight: 100 }, // incident victim
+            { value: marker.address || '',              weight: 40  }, // unified address
+            { value: marker.street_name || '',          weight: 40  },
+            { value: String(marker.house_number || ''), weight: 40  },
+            { value: marker.type_of_business || '',     weight: 15  },
+            { value: marker.nature_of_business || '',   weight: 15  },
+            { value: marker.nature_of_work || '',       weight: 15  },
+            { value: marker.type_of_work || '',         weight: 15  },
+            { value: marker.nature_of_activity || '',   weight: 15  },
+            { value: marker.incident_type || '',        weight: 15  },
+            { value: marker.provider || '',             weight: 15  },
+            { value: marker.hazard_name || '',          weight: 15  },
         ];
 
         let matchScore = 0;
 
-        // YD TEMPORARY ONLY NEED LANG SA VIDEO - JEP 
-        searchFields.forEach(field => {
-            // Convert to string if it exists, otherwise use empty string
-            const fieldStr = field ? String(field) : '';
-            const fieldLower = fieldStr.toLowerCase();
-            if (fieldLower === searchTerm) {
-                matchScore += 100;
-            } else if (fieldLower.startsWith(searchTerm)) {
-                matchScore += 50;
-            } else if (fieldLower.includes(searchTerm)) {
-                matchScore += 20;
-            } else if (searchTerm.length >= 3) {
-                const words = searchTerm.split(' ');
-                words.forEach(word => {
-                    if (word.length > 2 && fieldLower.includes(word)) {
-                        matchScore += 5;
+        weightedFields.forEach(({ value, weight }) => {
+            if (!value) return;
+            const v = String(value).toLowerCase();
+            if (v === searchTerm) {
+                matchScore += weight * 3;        // exact match
+            } else if (v.startsWith(searchTerm)) {
+                matchScore += weight * 2;        // starts with — "jef" → "Jeferson"
+            } else if (v.includes(searchTerm)) {
+                matchScore += weight;            // contains anywhere
+            } else {
+                searchTerm.split(' ').forEach(word => {
+                    if (word.length >= 3 && v.includes(word)) {
+                        matchScore += weight * 0.5;
                     }
                 });
             }
         });
 
         if (matchScore > 0) {
-            searchResults.push({
-                marker: marker,
-                score: matchScore
-            });
+            searchResults.push({ marker, score: matchScore });
         }
     });
 
@@ -966,38 +968,60 @@ function performSearch() {
                 item.className = 'search-result-item';
                 item.dataset.index = index;
 
-                const type = marker.marker_type || marker.type ||
-                    (marker.construction_id ? 'construction' :
-                        marker.id ? 'business' :
-                            marker.utility_id ? 'utility' :
-                                marker.hazard_id ? 'flood' :
-                                    marker.house_id ? 'household' : 'household');
+                const type = marker.type ||
+                    (marker.hazard_id ? 'flood' :
+                        marker.house_id ? 'household' : 'unknown');
 
-                const title = marker.title ||
-                    marker.business_name ||
-                    marker.homeowner_name ||
-                    marker.applicant_name ||
-                    marker.hazard_name ||
-                    marker.address ||
-                    marker.address || 'Unnamed Marker';
+                // Build full name for display
+                const fullName = [marker.first_name, marker.middle_name, marker.last_name]
+                    .filter(Boolean).join(' ');
 
-                const subtitle = marker.description ||
-                    marker.address_of_construction ||
-                    marker.address_of_business ||
-                    marker.applicant_address ||
-                    marker.location ||
-                    marker.street_name ||
-                    (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
-                    '';
+                // All labelled fields in priority order
+                const labelledFields = [
+                    { label: 'Name',     value: fullName                                       },
+                    { label: 'Business', value: marker.name                                    },
+                    { label: 'Victim',   value: marker.vic_full_name                           },
+                    { label: 'Address',  value: marker.address                                 },
+                    { label: 'House',    value: marker.house_number
+                                                   ? ('#' + marker.house_number + (marker.street_name ? ' ' + marker.street_name : '')).trim()
+                                                   : null                                      },
+                    { label: 'Street',   value: marker.street_name                             },
+                    { label: 'Type',     value: marker.type_of_business || marker.type_of_work },
+                    { label: 'Work',     value: marker.nature_of_work                          },
+                    { label: 'Incident', value: marker.incident_type                           },
+                    { label: 'Provider', value: marker.provider                                },
+                    { label: 'Hazard',   value: marker.hazard_name                             },
+                ].filter(f => f.value && String(f.value).trim());
 
-                const highlightedTitle = highlightText(title, searchTerm);
-                const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
+                const q = searchTerm.toLowerCase();
+
+                // Show the field that actually matched the search term
+                const matchedField = labelledFields.find(f =>
+                    String(f.value).toLowerCase().includes(q)
+                );
+
+                const titleField = matchedField || labelledFields[0] || { label: '', value: 'Unnamed' };
+                const titleValue = String(titleField.value);
+                const titleLabel = matchedField ? matchedField.label : '';
+
+                // Subtitle: address if match was not address, else next best field
+                const addrField = labelledFields.find(f => f.label === 'Address' || f.label === 'House');
+                const subtitleField = (titleField === addrField)
+                    ? labelledFields.find(f => f !== titleField) || null
+                    : addrField;
+                const subtitleValue = subtitleField ? String(subtitleField.value) : '';
+
+                const highlightedTitle    = highlightText(titleValue, searchTerm);
+                const highlightedSubtitle = highlightText(subtitleValue.substring(0, 60), searchTerm);
+                const labelBadge = titleLabel
+                    ? `<span style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-right:4px;letter-spacing:.4px;">${titleLabel}:</span>`
+                    : '';
 
                 item.innerHTML = `
                     <div class="result-icon ${type === 'flood' ? 'flood-area' : type + '-marker'}"></div>
                     <div class="result-details">
-                        <div class="result-title">${highlightedTitle}</div>
-                        <div class="result-subtitle">${highlightedSubtitle}${subtitle.length > 60 ? '...' : ''}</div>
+                        <div class="result-title">${labelBadge}${highlightedTitle}</div>
+                        <div class="result-subtitle">${highlightedSubtitle}${subtitleValue.length > 60 ? '...' : ''}</div>
                     </div>
                     <span class="result-type ${type}">${type}</span>
                 `;
@@ -1176,7 +1200,6 @@ function highlightExistingMarker(marker, markerData) {
     if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
 
     map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
-    // 3/1/2026
     if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
     pendingMoveEndHandler = () => {
         pendingMoveEndHandler = null;
@@ -1337,8 +1360,7 @@ function showHousePolygonHighlight(houseData) {
             duration: 1.5
         });
 
-        // Open popup after animation finishes // 3/1/2026
-        if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+        // Open popup after animation finishes        if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
         pendingMoveEndHandler = () => {
             pendingMoveEndHandler = null;
             const popupContent = createHousePopup(houseData);
@@ -1578,78 +1600,34 @@ function createHousePopup(data) {
 
 // View details functions — show Swal loading, then fire detail Swal on success
 async function viewMapDetails(id, type) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const actionMap = {
-            construction: 'get_construction_details',
-            business: 'get_business_details',
-            utility: 'get_utilities_details',
-            incident: 'get_incident_details'
-        };
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: actionMap[type] || `get_${type}_details`, id }) });
-        const data = await response.json();
-        if (data.success) {
-            displayDetailsInModal(data.data, type);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load details.' });
-        }
-    } catch (error) {
-        console.error('Error loading details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load details.' });
-    }
+        const actionMap = { construction: 'get_construction_details', business: 'get_business_details', utility: 'get_utilities_details', incident: 'get_incident_details' };
+        const data = await postAction(actionMap[type] || `get_${type}_details`, { id });
+        if (data.success) displayDetailsInModal(data.data, type);
+        else showErrorSwal('Error', 'Could not load details.');
+    } catch (e) { console.error('viewMapDetails:', e); showErrorSwal('Error', 'Failed to load details.'); }
 }
 
 async function viewFloodDetails(id) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'get_flood_details', id }) });
-        const data = await response.json();
-        if (data.success) {
-            displayFloodDetailsInModal(data.data);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load flood details.' });
-        }
-    } catch (error) {
-        console.error('Error loading flood details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load flood details.' });
-    }
+        const data = await postAction('get_flood_details', { id });
+        if (data.success) displayFloodDetailsInModal(data.data);
+        else showErrorSwal('Error', 'Could not load flood details.');
+    } catch (e) { console.error('viewFloodDetails:', e); showErrorSwal('Error', 'Failed to load flood details.'); }
 }
 
-// 3/1/2026
 async function viewHouseDetails(id) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const fd1 = new URLSearchParams({ action: 'get_house_details', id });
-        const fd2 = new URLSearchParams({ action: 'get_house_applications', id });
-        const [res1, res2] = await Promise.all([
-            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd1 }),
-            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd2 })
+        const [data, appData] = await Promise.all([
+            postAction('get_house_details', { id }),
+            postAction('get_house_applications', { id })
         ]);
-        const [data, appData] = await Promise.all([res1.json(), res2.json()]);
-        if (data.success) {
-            displayHouseDetailsInModal(data.data, appData.success ? appData.applications : null);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load house details.' });
-        }
-    } catch (error) {
-        console.error('Error loading house details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load house details.' });
-    }
+        if (data.success) displayHouseDetailsInModal(data.data, appData.success ? appData.applications : null);
+        else showErrorSwal('Error', 'Could not load house details.');
+    } catch (e) { console.error('viewHouseDetails:', e); showErrorSwal('Error', 'Failed to load house details.'); }
 }
 
 // ==================== HELPER FUNCTIONS ====================
@@ -1690,21 +1668,12 @@ function getFloodRiskColor(riskLevel) {
 async function loadAllMarkers() {
     clearAllMarkers();
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_all_markers'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const data = await postAction('get_all_markers');
         if (!data.success) throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
         loadHousePolygons();
-    } catch (error) {
-        console.error('ERROR LOADING MARKERS:', error);
-        showSwal({ icon: 'error', title: 'Error Loading Markers', text: 'Please refresh the page.', confirmButtonColor: '#00247c' });
-    }
+    } catch (e) { console.error('ERROR LOADING MARKERS:', e); showErrorSwal('Error Loading Markers', 'Please refresh the page.'); }
 }
 
 // processMarkersData: pure render — accepts the data object from get_all_markers
@@ -1773,7 +1742,6 @@ function processMarkersData(data) {
     });
 }
 
-
 // renderFloodData: pure render from pre-fetched hazards array (used by parallel init)
 function renderFloodData(hazards) {
     if (!hazards || !hazards.length) { floodLayer = L.layerGroup(); floodLegend = null; return; }
@@ -1786,25 +1754,10 @@ function renderFloodData(hazards) {
 // loadFloodData: fetches then renders — used when toggling flood layer on after init
 async function loadFloodData() {
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_flood_hazards'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        if (data.success && data.hazards) {
-            renderFloodData(data.hazards);
-        } else {
-            console.warn('No flood data found:', data.message);
-            floodLayer = L.layerGroup();
-            floodLegend = null;
-        }
-    } catch (error) {
-        console.error('ERROR LOADING FLOOD DATA:', error);
-        floodLayer = L.layerGroup();
-        floodLegend = null;
-    }
+        const data = await postAction('get_flood_hazards');
+        if (data.success && data.hazards) renderFloodData(data.hazards);
+        else { console.warn('No flood data found:', data.message); floodLayer = L.layerGroup(); floodLegend = null; }
+    } catch (e) { console.error('ERROR LOADING FLOOD DATA:', e); floodLayer = L.layerGroup(); floodLegend = null; }
 }
 
 function createFloodPanes() {
@@ -1961,21 +1914,13 @@ function addFloodLegend() {
 // On init, houses are loaded via the parallel Promise.all in map.whenReady.
 async function loadHousePolygons() {
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_houses'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const data = await postAction('get_houses');
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
             allMarkersData = [...allMarkersData, ...data.houses.map(h => ({ ...h, type: 'household' }))];
             renderHousePolygons();
         }
-    } catch (error) {
-        console.error('ERROR LOADING HOUSE POLYGONS:', error);
-    }
+    } catch (e) { console.error('ERROR LOADING HOUSE POLYGONS:', e); }
 }
 
 function renderHousePolygons() {
@@ -2026,15 +1971,13 @@ function renderHousePolygons() {
     if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
-    // 3/1/2026
     // Tag application markers by house address — suppress older duplicates
     tagMarkersWithHouseAddress();
 }
 
 /**
  * For each house, find all application markers whose address starts with the house address.
- * Keep only the most recent one visible per house; mark all others suppressedByHouse = true. // 3/1/2026
- */
+ * Keep only the most recent one visible per house; mark all others suppressedByHouse = true. */
 function tagMarkersWithHouseAddress() {
     function markerAddress(m) {
         if (m.construction_data) return (m.construction_data.construction_address || '').trim();
@@ -2068,7 +2011,6 @@ function tagMarkersWithHouseAddress() {
         matched.sort((a, b) => markerDate(b) - markerDate(a));
         matched.slice(1).forEach(m => { m.suppressedByHouse = true; });
     });
-    // 3/1/2026
     // Re-run visibility so suppressed markers disappear immediately
     updateAllVisibility();
 }
@@ -2109,22 +2051,8 @@ function clearAllMarkers() {
  */
 async function getFloodHousesSummary() {
     try {
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_flood_summary'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch flood assessment');
-        }
+        const result = await postAction('get_flood_summary');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch flood assessment');
 
         const data = result.data;
 
@@ -2138,11 +2066,9 @@ async function getFloodHousesSummary() {
         };
 
         let bodyHTML = '';
-        // 3/1/2026
         // Houses list is now deduplicated (one row per house, worst impact wins)
         const houses = data.houses || [];
         const total = houses.length;
-        // 3/1/2026
         if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
@@ -2215,7 +2141,6 @@ async function getFloodHousesSummary() {
                     <div class="rpt-list-scroll">${houseRows}</div>
                 </div>`;
         }
-        // 3/1/2026
         const reportHTML = `<div class="rpt-body">
             <div class="rpt-header">
                 <h3>Flood Risk Assessment</h3>
@@ -2251,33 +2176,10 @@ async function getFloodHousesSummary() {
 // ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
 
 async function showFaultLineRiskAssessment() {
+    showLoadingSwal('Analyzing Fault Line Risk', 'Assessing structures near the fault line...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Analyzing Fault Line Risk',
-            html: 'Please wait while we assess structures near the fault line...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_fault_line_assessment'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch fault line assessment');
-        }
+        const result = await postAction('get_fault_line_assessment');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch fault line assessment');
 
         const data = result.data;
 
@@ -2383,142 +2285,25 @@ async function showFaultLineRiskAssessment() {
 // ==================== BUSINESS SDSS REPORT ====================
 
 async function showAllBusinessesSDSSReport() {
+    showLoadingSwal('Generating Report', 'Analyzing business safety compliance...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Generating Report',
-            html: 'Please wait while we analyze business safety compliance...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'action=get_business_sdss_report'
-        });
-
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch business SDSS report');
-        }
-
+        const result = await postAction('get_business_sdss_report');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch business SDSS report');
         const data = result.data;
-        if (!data || !data.summary || !data.warnings) {
-            throw new Error('Invalid data structure received from server');
-        }
-
-        // Show report using SweetAlert2
+        if (!data?.summary || !data?.warnings) throw new Error('Invalid data structure received from server');
         displayBusinessSDSSReport(data);
-
-    } catch (error) {
-        console.error('Error in business SDSS:', error);
-
-        showSwal({
-            icon: 'error',
-            title: 'Error Generating Report',
-            html: `
-                <div style="text-align: left;">
-                    <p><strong>Failed to generate business SDSS report:</strong></p>
-                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                        ${error.message}
-                    </p>
-                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                        Please check:
-                    </p>
-                    <ul style="text-align: left; font-size: 13px; color: #666;">
-                        <li>Database connection is working</li>
-                        <li>Business applications table has data with coordinates</li>
-                        <li>Flood hazard data is properly configured</li>
-                        <li>Check browser console for detailed error logs</li>
-                    </ul>
-                </div>
-            `,
-            width: 600
-        });
-    }
+    } catch (e) { console.error('Error in business SDSS:', e); showErrorSwal('Error Generating Report', e.message); }
 }
 
-/**
- * Fixed Construction SDSS Report with better error handling
- */
 async function showAllConstructionSDSSReport() {
+    showLoadingSwal('Generating Report', 'Analyzing construction site safety...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Generating Report',
-            html: 'Please wait while we analyze construction site safety...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'action=get_construction_sdss_report'
-        });
-
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch construction SDSS report');
-        }
-
+        const result = await postAction('get_construction_sdss_report');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch construction SDSS report');
         const data = result.data;
-        if (!data || !data.summary || !data.warnings) {
-            throw new Error('Invalid data structure received from server');
-        }
-
-        // Show report using SweetAlert2
+        if (!data?.summary || !data?.warnings) throw new Error('Invalid data structure received from server');
         displayConstructionSDSSReport(data);
-
-    } catch (error) {
-        console.error('Error in construction SDSS:', error);
-
-        showSwal({
-            icon: 'error',
-            title: 'Error Generating Report',
-            html: `
-                <div style="text-align: left;">
-                    <p><strong>Failed to generate construction SDSS report:</strong></p>
-                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                        ${error.message}
-                    </p>
-                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                        Please check:
-                    </p>
-                    <ul style="text-align: left; font-size: 13px; color: #666;">
-                        <li>Database connection is working</li>
-                        <li>Construction applications table has data with coordinates</li>
-                        <li>Flood hazard data is properly configured</li>
-                        <li>Check browser console for detailed error logs</li>
-                    </ul>
-                </div>
-            `,
-            width: 600
-        });
-    }
+    } catch (e) { console.error('Error in construction SDSS:', e); showErrorSwal('Error Generating Report', e.message); }
 }
 
 /**
@@ -2679,13 +2464,11 @@ function displayConstructionSDSSReport(data) {
     showReportSwal(reportHTML);
 }
 
-
 // ==================== INCIDENT SUB-FILTER ====================
 
 // Track whether sub-filter panel is expanded
 let incidentFiltersExpanded = false;
-let constructionFiltersExpanded = false; // 3/1/2026
-
+let constructionFiltersExpanded = false;
 async function loadIncidentSubFilters() {
     const panel = document.getElementById('incidentSubFilters');
     if (!panel) return;
@@ -2705,14 +2488,9 @@ async function loadIncidentSubFilters() {
 
     let types = [];
     try {
-        const fd = new URLSearchParams();
-        fd.append('action', 'get_incident_types');
-        const res = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
-        const data = await res.json();
+        const data = await postAction('get_incident_types');
         types = data.success ? (data.types || []) : [];
-    } catch (e) {
-        console.warn('Could not load incident types:', e);
-    }
+    } catch (e) { console.warn('Could not load incident types:', e); }
 
     // Build type buttons for the expanded section
     const typeButtons = types.map(type => {
@@ -2761,7 +2539,6 @@ function toggleIncidentFilters() {
     btn.classList.toggle('open', incidentFiltersExpanded);
 }
 
-
 function filterIncidentByType(subtype, event) {
     if (event) event.stopPropagation();
     incidentSubFilter = subtype;
@@ -2785,17 +2562,9 @@ function shouldShowIncidentMarker(marker) {
 // ==================== INCIDENT SUMMARY REPORT ====================
 
 async function showIncidentSummaryReport() {
-    showSwal({
-        title: 'Loading Incident Report',
-        html: 'Analyzing incident data...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
-
+    showLoadingSwal('Loading Incident Report', 'Analyzing incident data...');
     try {
-        const formData = new URLSearchParams({ action: 'get_all_incidents' });
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
-        const data = await response.json();
+        const data = await postAction('get_all_incidents');
         if (!data.success) throw new Error('Failed to load incident data');
 
         const incidents = data.incidents || [];
@@ -2826,7 +2595,6 @@ async function showIncidentSummaryReport() {
         const pending = incidents.filter(i => (i.status || 'Pending') === 'Pending').length;
         const investigating = incidents.filter(i => i.status === 'Under Investigation').length;
         const resolved = incidents.filter(i => i.status === 'Resolved').length;
-        // 3/1/2026
         // Type breakdown bars — all red
         const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
         const typeBars = sortedTypes.map(([type, count], i) => {
@@ -3318,32 +3086,15 @@ function debugFloodState() {
  * Show Barangay Rules Summary Report (with DSS Evaluations tab)
  */
 async function showSDSSRulesReport() {
+    showLoadingSwal('Loading Barangay Rules', 'Please wait while we load the rules summary...');
     try {
-        // Show loading indicator (missing from original — all other report functions have this)
-        showSwal({
-            title: 'Loading Barangay Rules',
-            html: 'Please wait while we load the rules summary...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-
-        const [rulesRes, dssRes] = await Promise.all([
-            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_sdss_rules_summary' }),
-            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_dss_evaluations' })
+        const [rulesResult, dssResult] = await Promise.all([
+            postAction('get_sdss_rules_summary'),
+            postAction('get_dss_evaluations')
         ]);
-
-        const rulesResult = await rulesRes.json();
-        const dssResult = await dssRes.json();
-
-        if (rulesResult.status === 'success') {
-            displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: rulesResult.message || 'Failed to load rules summary', confirmButtonColor: '#00247c' });
-        }
-    } catch (error) {
-        console.error('Error fetching Barangay Rules:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to fetch Barangay Rules', confirmButtonColor: '#00247c' });
-    }
+        if (rulesResult.status === 'success') displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
+        else showErrorSwal('Error', rulesResult.message || 'Failed to load rules summary');
+    } catch (e) { console.error('showSDSSRulesReport:', e); showErrorSwal('Error', 'Failed to fetch Barangay Rules'); }
 }
 
 /**
@@ -3591,8 +3342,6 @@ function buildDSSTab(dssData) {
     return summaryChips + groupSections;
 }
 
-
-
 /**
  * Create a collapsible rule card HTML
  */
@@ -3721,12 +3470,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
     });
 
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action: 'get_rule_affected_data', rule_key: ruleKey })
-        });
-        const result = await response.json();
+        const result = await postAction('get_rule_affected_data', { rule_key: ruleKey });
 
         const bodyEl = document.getElementById('affected-panel-body');
         if (!bodyEl) return;
@@ -3812,12 +3556,10 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
         }
 
         // ── Build record list ───────────────────────────────────────────────
-        // 3/1/2026
         if (records.length === 0) {
             bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
             return;
         }
-        // 3/1/2026
         // Sort records - households first, then by name/address
         const sortedRecords = [...records].sort((a, b) => {
             // First sort by type (households first)
@@ -3938,8 +3680,8 @@ async function showDSSEvalsOnMap(type, evList) {
         closePanel();
         setTimeout(() => showSDSSRulesReport(), 320);
     };
-    document.addEventListener('keydown', function escH(e) {
-        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escH); }
+    document.addEventListener('keydown', function escHDss(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escHDss); }
     });
 
     // ── Plot all applications ──────────────────────────────────────────────
@@ -4072,7 +3814,6 @@ function buildEvalPopup(ev, sc, pct) {
             </button>
         </div>`;
 }
-
 
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;
