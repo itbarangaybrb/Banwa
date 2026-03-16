@@ -896,50 +896,61 @@ function performSearch() {
     if (resultsContainer) resultsContainer.innerHTML = '';
 
     allMarkersData.forEach(marker => {
-        // Build full name so "jef" matches "Jeferson Ismael Muring"
-        const fullName = [marker.first_name, marker.middle_name, marker.last_name]
-            .filter(Boolean).join(' ');
-
-        // Weighted fields — name/identity always beats address/type accumulation
-        const weightedFields = [
-            { value: fullName,                          weight: 100 }, // owner / applicant name
-            { value: marker.name || '',                 weight: 100 }, // business_name (aliased as name)
-            { value: marker.vic_full_name || '',        weight: 100 }, // incident victim
-            { value: marker.address || '',              weight: 40  }, // unified address
-            { value: marker.street_name || '',          weight: 40  },
-            { value: String(marker.house_number || ''), weight: 40  },
-            { value: marker.type_of_business || '',     weight: 15  },
-            { value: marker.nature_of_business || '',   weight: 15  },
-            { value: marker.nature_of_work || '',       weight: 15  },
-            { value: marker.type_of_work || '',         weight: 15  },
-            { value: marker.nature_of_activity || '',   weight: 15  },
-            { value: marker.incident_type || '',        weight: 15  },
-            { value: marker.provider || '',             weight: 15  },
-            { value: marker.hazard_name || '',          weight: 15  },
+        const searchFields = [
+            marker.title || '',
+            marker.description || '',
+            marker.location || '',
+            marker.marker_type || '',
+            marker.business_name || '',
+            marker.homeowner_name || '',
+            marker.contractor_name || '',
+            marker.address_of_construction || '',
+            marker.address_of_business || '',
+            marker.applicant_name || '',
+            marker.applicant_address || '',
+            marker.hazard_name || '',
+            marker.risk_level || '',
+            marker.address || '',
+            marker.house_number || '',
+            marker.street_name || '',
+            marker.nature_of_work || '',
+            marker.nature_of_activity || '',
+            marker.type_of_work || '',
+            marker.type_of_business || '',
+            marker.incident_type || '',
+            marker.vic_full_name || '',
+            marker.rp_full_name || '',
+            marker.vic_address || ''
         ];
 
         let matchScore = 0;
 
-        weightedFields.forEach(({ value, weight }) => {
-            if (!value) return;
-            const v = String(value).toLowerCase();
-            if (v === searchTerm) {
-                matchScore += weight * 3;        // exact match
-            } else if (v.startsWith(searchTerm)) {
-                matchScore += weight * 2;        // starts with — "jef" → "Jeferson"
-            } else if (v.includes(searchTerm)) {
-                matchScore += weight;            // contains anywhere
-            } else {
-                searchTerm.split(' ').forEach(word => {
-                    if (word.length >= 3 && v.includes(word)) {
-                        matchScore += weight * 0.5;
+        // YD TEMPORARY ONLY NEED LANG SA VIDEO - JEP 
+        searchFields.forEach(field => {
+            // Convert to string if it exists, otherwise use empty string
+            const fieldStr = field ? String(field) : '';
+            const fieldLower = fieldStr.toLowerCase();
+            if (fieldLower === searchTerm) {
+                matchScore += 100;
+            } else if (fieldLower.startsWith(searchTerm)) {
+                matchScore += 50;
+            } else if (fieldLower.includes(searchTerm)) {
+                matchScore += 20;
+            } else if (searchTerm.length >= 3) {
+                const words = searchTerm.split(' ');
+                words.forEach(word => {
+                    if (word.length > 2 && fieldLower.includes(word)) {
+                        matchScore += 5;
                     }
                 });
             }
         });
 
         if (matchScore > 0) {
-            searchResults.push({ marker, score: matchScore });
+            searchResults.push({
+                marker: marker,
+                score: matchScore
+            });
         }
     });
 
@@ -955,60 +966,38 @@ function performSearch() {
                 item.className = 'search-result-item';
                 item.dataset.index = index;
 
-                const type = marker.type ||
-                    (marker.hazard_id ? 'flood' :
-                        marker.house_id ? 'household' : 'unknown');
+                const type = marker.marker_type || marker.type ||
+                    (marker.construction_id ? 'construction' :
+                        marker.id ? 'business' :
+                            marker.utility_id ? 'utility' :
+                                marker.hazard_id ? 'flood' :
+                                    marker.house_id ? 'household' : 'household');
 
-                // Build full name for display
-                const fullName = [marker.first_name, marker.middle_name, marker.last_name]
-                    .filter(Boolean).join(' ');
+                const title = marker.title ||
+                    marker.business_name ||
+                    marker.homeowner_name ||
+                    marker.applicant_name ||
+                    marker.hazard_name ||
+                    marker.address ||
+                    marker.address || 'Unnamed Marker';
 
-                // All labelled fields in priority order
-                const labelledFields = [
-                    { label: 'Name',     value: fullName                                       },
-                    { label: 'Business', value: marker.name                                    },
-                    { label: 'Victim',   value: marker.vic_full_name                           },
-                    { label: 'Address',  value: marker.address                                 },
-                    { label: 'House',    value: marker.house_number
-                                                   ? ('#' + marker.house_number + (marker.street_name ? ' ' + marker.street_name : '')).trim()
-                                                   : null                                      },
-                    { label: 'Street',   value: marker.street_name                             },
-                    { label: 'Type',     value: marker.type_of_business || marker.type_of_work },
-                    { label: 'Work',     value: marker.nature_of_work                          },
-                    { label: 'Incident', value: marker.incident_type                           },
-                    { label: 'Provider', value: marker.provider                                },
-                    { label: 'Hazard',   value: marker.hazard_name                             },
-                ].filter(f => f.value && String(f.value).trim());
+                const subtitle = marker.description ||
+                    marker.address_of_construction ||
+                    marker.address_of_business ||
+                    marker.applicant_address ||
+                    marker.location ||
+                    marker.street_name ||
+                    (marker.risk_level ? `${marker.risk_level.toUpperCase()} Risk` : '') ||
+                    '';
 
-                const q = searchTerm.toLowerCase();
-
-                // Show the field that actually matched the search term
-                const matchedField = labelledFields.find(f =>
-                    String(f.value).toLowerCase().includes(q)
-                );
-
-                const titleField = matchedField || labelledFields[0] || { label: '', value: 'Unnamed' };
-                const titleValue = String(titleField.value);
-                const titleLabel = matchedField ? matchedField.label : '';
-
-                // Subtitle: address if match was not address, else next best field
-                const addrField = labelledFields.find(f => f.label === 'Address' || f.label === 'House');
-                const subtitleField = (titleField === addrField)
-                    ? labelledFields.find(f => f !== titleField) || null
-                    : addrField;
-                const subtitleValue = subtitleField ? String(subtitleField.value) : '';
-
-                const highlightedTitle    = highlightText(titleValue, searchTerm);
-                const highlightedSubtitle = highlightText(subtitleValue.substring(0, 60), searchTerm);
-                const labelBadge = titleLabel
-                    ? `<span style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-right:4px;letter-spacing:.4px;">${titleLabel}:</span>`
-                    : '';
+                const highlightedTitle = highlightText(title, searchTerm);
+                const highlightedSubtitle = highlightText(subtitle.substring(0, 60), searchTerm);
 
                 item.innerHTML = `
                     <div class="result-icon ${type === 'flood' ? 'flood-area' : type + '-marker'}"></div>
                     <div class="result-details">
-                        <div class="result-title">${labelBadge}${highlightedTitle}</div>
-                        <div class="result-subtitle">${highlightedSubtitle}${subtitleValue.length > 60 ? '...' : ''}</div>
+                        <div class="result-title">${highlightedTitle}</div>
+                        <div class="result-subtitle">${highlightedSubtitle}${subtitle.length > 60 ? '...' : ''}</div>
                     </div>
                     <span class="result-type ${type}">${type}</span>
                 `;
@@ -2293,22 +2282,23 @@ async function showFaultLineRiskAssessment() {
         const data = result.data;
 
         // ── Build fault line report with unified layout ──────────────────────
-        const riskColors = { medium: '#ffc107', high: '#ff9800', critical: '#dc3545' };
+        const riskColors = { low: '#4caf50', medium: '#ffc107', high: '#ff9800', critical: '#dc3545' };
+        const maxDist = Math.max(...(data.structures || []).map(s => s.distance_meters), 350);
 
         let bodyHTML = '';
 
-        if (data.summary.total_at_risk === 0) {
+        if (!data.structures || data.structures.length === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
-                <h3 style="color:#00247c;margin:0 0 6px;">No Structures at Risk</h3>
-                <p style="color:#666;margin:0;font-size:13px;">All structures are at safe distances from the fault line.</p>
+                <h3 style="color:#00247c;margin:0 0 6px;">No Structures Found</h3>
+                <p style="color:#666;margin:0;font-size:13px;">No house data available for assessment.</p>
             </div>`;
         } else {
             const sorted = [...(data.structures || [])].sort((a, b) => a.distance_meters - b.distance_meters);
 
             const rows = sorted.map((s, i) => {
                 const c = riskColors[s.risk_level] || '#888';
-                const barPct = Math.min(100, (s.distance_meters / 200) * 100).toFixed(0);
+                const barPct = Math.min(100, (s.distance_meters / maxDist) * 100).toFixed(0);
                 const body = `
                     <div style="margin-bottom:8px;">
                         <strong>Distance:</strong> <span style="color:${c};font-weight:700;">${s.distance_meters}m</span> from fault line
@@ -2316,7 +2306,7 @@ async function showFaultLineRiskAssessment() {
                             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden;max-width:160px;">
                                 <div style="height:100%;width:${barPct}%;background:${c};"></div>
                             </div>
-                            <span style="font-size:11px;color:#aaa;">/ 200m</span>
+                            <span style="font-size:11px;color:#aaa;">/ ${maxDist}m</span>
                         </div>
                     </div>
                     ${s.address ? `<div style="color:#888;margin-bottom:6px;">${s.address}</div>` : ''}
@@ -2334,13 +2324,17 @@ async function showFaultLineRiskAssessment() {
 
             bodyHTML = `
                 <div class="rpt-stats">
+                    <div class="rpt-stat" style="border-left-color:#4caf50;">
+                        <div class="rpt-stat-num" style="color:#2e7d32;">${data.summary.low_risk || 0}</div>
+                        <div class="rpt-stat-label">Low (&gt;200m)</div>
+                    </div>
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
                         <div class="rpt-stat-num" style="color:#e6a800;">${data.summary.medium_risk}</div>
                         <div class="rpt-stat-label">Medium (100–200m)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
                         <div class="rpt-stat-num" style="color:#e67e00;">${data.summary.high_risk}</div>
-                        <div class="rpt-stat-label">High Risk (50–100m)</div>
+                        <div class="rpt-stat-label">High (50–100m)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
                         <div class="rpt-stat-num" style="color:#dc3545;">${data.summary.critical}</div>
@@ -2348,7 +2342,7 @@ async function showFaultLineRiskAssessment() {
                     </div>
                 </div>
                 <div class="rpt-list-box">
-                    <h4>Structures at Risk <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
+                    <h4>All Structures <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
                     <p class="rpt-list-hint">Sorted by distance · click a row to expand</p>
                     <div class="rpt-list-scroll">${rows}</div>
                 </div>`;
@@ -2358,16 +2352,17 @@ async function showFaultLineRiskAssessment() {
             <div class="rpt-header">
                 <h3>Fault Line Risk Assessment</h3>
                 <div class="rpt-big-num">${data.summary.total_at_risk}</div>
-                <div class="rpt-subtitle">Structures Within Risk Zone (&lt;200m from Fault Line)</div>
+                <div class="rpt-subtitle">All Structures — Distance from Fault Line</div>
             </div>
             <div class="rpt-content">
                 ${bodyHTML}
                 <div class="rpt-footer">
-                    <h4>Legal Requirements</h4>
+                    <h4>Risk Level Guidelines</h4>
                     <ul>
                         <li><strong>Critical (&lt;50m):</strong> Mandatory structural engineer cert, geological survey &amp; reinforced foundation</li>
                         <li><strong>High (50–100m):</strong> Seismic design standards &amp; structural engineer certification required</li>
                         <li><strong>Medium (100–200m):</strong> Enhanced foundation recommended; standard codes with seismic provisions apply</li>
+                        <li><strong>Low (&gt;200m):</strong> Standard building codes apply; basic earthquake preparedness recommended</li>
                     </ul>
                 </div>
             </div>

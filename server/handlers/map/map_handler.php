@@ -1014,7 +1014,7 @@ function getHouseById($houseId){
 
 /**
  * Calculates distance from every house to the fault line and categorises risk:
- * critical (<50m), high (50–100m), medium (100–200m)
+ * critical (<50m), high (50–100m), medium (100–200m), low (200–500m)
  */
 function getFaultLineAssessment() {
     global $pdo;
@@ -1023,8 +1023,7 @@ function getFaultLineAssessment() {
         $faultWKT  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
         $faultGeog = "ST_GeomFromText('{$faultWKT}', 4326)::geography";
 
-        // Single query: PostGIS computes distance from every house to the fault line in one pass.
-        // Only returns houses within 200 m (the maximum band we care about).
+        // Returns all houses — no distance cap so nothing is excluded
         $houseGeom = house_geom_expr('hp');
         $rows = $pdo->query("
             SELECT hp.house_id, hp.address, hp.street_name, hp.house_number,
@@ -1037,15 +1036,11 @@ function getFaultLineAssessment() {
             WHERE  (hp.center_lat IS NOT NULL AND hp.center_lng IS NOT NULL)
                OR  hp.geom IS NOT NULL
                OR  hp.coordinates IS NOT NULL
-            AND    ST_Distance(
-                       ({$houseGeom})::geography,
-                       {$faultGeog}
-                   ) < 200
             ORDER  BY dist_m ASC
         ")->fetchAll(PDO::FETCH_ASSOC);
 
         $structures_at_risk = [];
-        $critical_count = $high_risk_count = $medium_risk_count = 0;
+        $critical_count = $high_risk_count = $medium_risk_count = $low_risk_count = 0;
 
         foreach ($rows as $row) {
             $d = (int)$row['dist_m'];
@@ -1067,12 +1062,19 @@ function getFaultLineAssessment() {
                     'Regular safety inspections needed',
                     'Enhanced foundation required'
                 ];
-            } else {
+            } elseif ($d < 200) {
                 $risk = 'medium'; $medium_risk_count++;
                 $req  = [
                     'Enhanced foundation design recommended',
                     'Earthquake preparedness plan required',
                     'Standard building codes with seismic provisions'
+                ];
+            } else {
+                $risk = 'low'; $low_risk_count++;
+                $req  = [
+                    'Follow standard building codes',
+                    'Basic earthquake preparedness awareness recommended',
+                    'Maintain emergency contacts and evacuation plan'
                 ];
             }
             $structures_at_risk[] = [
@@ -1088,16 +1090,16 @@ function getFaultLineAssessment() {
             ];
         }
 
-        // Sort: critical → high → medium, then by distance
+        // Sort: critical → high → medium → low, then by distance
         usort($structures_at_risk, function($a, $b) {
-            $ord = ['critical'=>0,'high'=>1,'medium'=>2];
+            $ord = ['critical'=>0,'high'=>1,'medium'=>2,'low'=>3];
             $ao  = $ord[$a['risk_level']] ?? 9;
             $bo  = $ord[$b['risk_level']] ?? 9;
             return $ao !== $bo ? $ao - $bo : $a['distance_meters'] - $b['distance_meters'];
         });
 
         return ['status'=>'success','data'=>[
-            'summary'    => ['total_at_risk'=>count($structures_at_risk),'critical'=>$critical_count,'high_risk'=>$high_risk_count,'medium_risk'=>$medium_risk_count],
+            'summary'    => ['total_at_risk'=>count($structures_at_risk),'critical'=>$critical_count,'high_risk'=>$high_risk_count,'medium_risk'=>$medium_risk_count,'low_risk'=>$low_risk_count],
             'structures' => $structures_at_risk
         ]];
     } catch (Exception $e) {
@@ -1276,8 +1278,8 @@ function applyBusinessSDSSRules($business, $floodLevel, $faultDist) {
 
     // Rule 1: Flood zone
     if ($floodLevel === 'high') {
-        $businessData['warnings'][] = ['type'=>'Flood Hazard Violation','description'=>'Business located in HIGH flood risk zone','severity'=>'HIGH','actions'=>['Install flood barriers and elevation systems immediately','Develop and implement emergency evacuation plan','Store inventory and equipment above flood level','Obtain flood insurance coverage','Install early warning systems']];
-        $maxSeverity = 'HIGH';
+        $businessData['warnings'][] = ['type'=>'Flood Hazard Violation','description'=>'Business located in HIGH flood risk zone','severity'=>'CRITICAL','actions'=>['Install flood barriers and elevation systems immediately','Develop and implement emergency evacuation plan','Store inventory and equipment above flood level','Obtain flood insurance coverage','Install early warning systems']];
+        $maxSeverity = 'CRITICAL';
     } elseif ($floodLevel === 'medium') {
         $businessData['warnings'][] = ['type'=>'Flood Risk Warning','description'=>'Business located in MEDIUM flood risk zone','severity'=>'HIGH','actions'=>['Prepare flood mitigation measures','Monitor weather alerts during rainy season','Prepare sandbags and drainage systems','Keep emergency supplies ready']];
         $maxSeverity = $maxSeverity ?? 'HIGH';
@@ -1285,8 +1287,8 @@ function applyBusinessSDSSRules($business, $floodLevel, $faultDist) {
 
     // Rule 2: Fault line proximity
     if ($faultDist < 50) {
-        $businessData['warnings'][] = ['type'=>'Fault Line High Risk Zone Warning','description'=>"Business within {$faultDist}m of fault line (High Risk Zone - Special Requirements)",'severity'=>'HIGH','actions'=>['HIGH RISK ZONE: Business operations allowed ONLY with enhanced safety measures','Mandatory structural assessment and seismic compliance certification','Seismic retrofitting of building required','Emergency evacuation plan and earthquake drills mandatory','Special permits and engineering certification needed','Building insurance covering earthquake damage required','Regular safety inspections and structural monitoring']];
-        $maxSeverity = 'HIGH';
+        $businessData['warnings'][] = ['type'=>'Fault Line Critical Zone Warning','description'=>"Business within {$faultDist}m of fault line (CRITICAL ZONE - Special Requirements)",'severity'=>'CRITICAL','actions'=>['CRITICAL ZONE: Business operations allowed ONLY with enhanced safety measures','Mandatory structural assessment and seismic compliance certification','Seismic retrofitting of building required','Emergency evacuation plan and earthquake drills mandatory','Special permits and engineering certification needed','Building insurance covering earthquake damage required','Regular safety inspections and structural monitoring']];
+        $maxSeverity = 'CRITICAL';
     } elseif ($faultDist < 100) {
         $businessData['warnings'][] = ['type'=>'Fault Line High Risk','description'=>"Business within {$faultDist}m of fault line",'severity'=>'HIGH','actions'=>['Seismic design standards mandatory','Structural engineer certification required','Regular safety inspections needed','Enhanced foundation requirements']];
         $maxSeverity = $maxSeverity ?? 'HIGH';
@@ -1395,14 +1397,14 @@ function applyConstructionSDSSRules($construction, $floodLevel, $faultDist) {
 
     // Rule 1: Flood zone
     if ($floodLevel === 'high') {
-        $constructionData['warnings'][] = ['type'=>'Flood Zone Construction Violation','description'=>'Construction in HIGH flood risk zone','severity'=>'HIGH','actions'=>['Flood-resistant construction methods MANDATORY','Elevated foundation required (minimum 1.5m above ground)','Waterproof materials required for basement/ground floor','Install flood barriers and drainage systems','Obtain special flood zone Construction Clearance']];
-        $maxSeverity = 'HIGH';
+        $constructionData['warnings'][] = ['type'=>'Flood Zone Construction Violation','description'=>'Construction in HIGH flood risk zone','severity'=>'CRITICAL','actions'=>['Flood-resistant construction methods MANDATORY','Elevated foundation required (minimum 1.5m above ground)','Waterproof materials required for basement/ground floor','Install flood barriers and drainage systems','Obtain special flood zone Construction Clearance']];
+        $maxSeverity = 'CRITICAL';
     }
 
     // Rule 2: Fault line setback
     if ($faultDist < 50) {
-        $constructionData['warnings'][] = ['type'=>'Fault Line High Risk Zone Warning','description'=>"Construction within {$faultDist}m of fault line (High Risk Zone - Special Requirements)",'severity'=>'HIGH','actions'=>['HIGH RISK ZONE: Construction allowed ONLY with enhanced seismic standards','Mandatory structural engineer certification and seismic design approval','Reinforced foundation with deep pile requirements','Use of earthquake-resistant materials and construction methods','Building Insurance and geological survey required','Regular structural integrity inspections mandatory','Emergency preparedness and evacuation plan required']];
-        $maxSeverity = 'HIGH';
+        $constructionData['warnings'][] = ['type'=>'Fault Line Critical Zone Warning','description'=>"Construction within {$faultDist}m of fault line (CRITICAL ZONE - Special Requirements)",'severity'=>'CRITICAL','actions'=>['CRITICAL ZONE: Construction allowed ONLY with enhanced seismic standards','Mandatory structural engineer certification and seismic design approval','Reinforced foundation with deep pile requirements','Use of earthquake-resistant materials and construction methods','Building Insurance and geological survey required','Regular structural integrity inspections mandatory','Emergency preparedness and evacuation plan required']];
+        $maxSeverity = 'CRITICAL';
     } elseif ($faultDist < 100) {
         $constructionData['warnings'][] = ['type'=>'Seismic Requirements','description'=>"Construction within {$faultDist}m of fault line",'severity'=>'HIGH','actions'=>['Seismic design standards MANDATORY','Structural engineer certification required','Enhanced foundation and reinforcement','Regular structural inspections during construction']];
         $maxSeverity = $maxSeverity ?? 'HIGH';
@@ -1461,7 +1463,7 @@ function getMinimumWorkersForConstruction($projectType, $natureOfActivity) {
         
     } elseif (strpos($natureOfActivity, 'demolition') !== false) {
         $minimum = max($minimum, 6);
-        $severity = 'HIGH';
+        $severity = 'CRITICAL';
         $reason = "Demolition work is high-risk and requires adequate crew for safe controlled collapse";
         $additionalRequirement = "Establish safety perimeter and assign evacuation coordinator";
         
@@ -1595,7 +1597,8 @@ function getSDSSRulesSummary() {
                 SUM(CASE WHEN fd <=   5                   THEN 1 ELSE 0 END) AS le5,
                 SUM(CASE WHEN fd >   5 AND fd <  50       THEN 1 ELSE 0 END) AS r5_50,
                 SUM(CASE WHEN fd >=  50 AND fd < 100      THEN 1 ELSE 0 END) AS r50_100,
-                SUM(CASE WHEN fd >= 100 AND fd < 200      THEN 1 ELSE 0 END) AS r100_200
+                SUM(CASE WHEN fd >= 100 AND fd < 200      THEN 1 ELSE 0 END) AS r100_200,
+                SUM(CASE WHEN fd >= 200                   THEN 1 ELSE 0 END) AS r200_plus
             FROM (
                 SELECT ST_Distance(
                     (CASE
@@ -1817,6 +1820,7 @@ function getSDSSRulesSummary() {
             'FAULT_CRITICAL'    => ['name'=>'Fault Line Critical Zone (5–50m)',  'description'=>'Houses within 5–50m of fault line — enhanced seismic standards mandatory.',              'severity'=>'CRITICAL','count'=>(int)($hf['r5_50']    ?? 0),'category'=>'Seismic Hazard'],
             'FAULT_HIGH_RISK'   => ['name'=>'Fault Line High Risk (50–100m)',    'description'=>'Houses requiring seismic design standards and structural certification.',                 'severity'=>'HIGH',    'count'=>(int)($hf['r50_100']  ?? 0),'category'=>'Seismic Hazard'],
             'FAULT_MEDIUM_RISK' => ['name'=>'Fault Line Medium Risk (100–200m)', 'description'=>'Houses requiring enhanced foundation and earthquake preparedness.',                       'severity'=>'MEDIUM',  'count'=>(int)($hf['r100_200'] ?? 0),'category'=>'Seismic Hazard'],
+            'FAULT_LOW_RISK'    => ['name'=>'Fault Line Low Risk (>200m)',          'description'=>'Houses beyond 200m — standard seismic building codes apply.',                             'severity'=>'LOW',     'count'=>(int)($hf['r200_plus'] ?? 0),'category'=>'Seismic Hazard'],
             // Construction Safety
             'CON_NO_BUILD_ZONE'              => ['name'=>'No Build Zone — Fault Trace (≤5m)',                     'description'=>'Construction permit applications within 5m of fault trace — PERMIT DENIED per PHIVOLCS Fault Rupture Zone.',                                                       'severity'=>'CRITICAL','count'=>$conNoBuildZone,    'category'=>'Construction Safety'],
             'CON_FLOOD_ZONE'                 => ['name'=>'Construction in Flood Zone',                            'description'=>'Active construction sites in any flood hazard area — flood-resistant construction methods required.',                                                               'severity'=>'HIGH',    'count'=>$conFloodZone,      'category'=>'Construction Safety'],
@@ -1869,7 +1873,7 @@ function getRuleAffectedData($ruleKey) {
         $label = '';
 
         // Flood / Fault house rules
-        if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_EXISTING_STRUCTURE_CRITICAL','FAULT_NO_BUILD_ZONE','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK'])) {
+        if (in_array($ruleKey, ['FLOOD_HIGH_RISK','FLOOD_MEDIUM_RISK','FLOOD_LOW_RISK','FAULT_EXISTING_STRUCTURE_CRITICAL','FAULT_NO_BUILD_ZONE','FAULT_CRITICAL','FAULT_HIGH_RISK','FAULT_MEDIUM_RISK','FAULT_LOW_RISK'])) {
             $houseGeomExpr = house_geom_expr('hp');
             $faultWKTLocal  = 'LINESTRING(121.0765329 14.6175408,121.0765362 14.6177993,121.0765517 14.6180432,121.0765671 14.6182482,121.0765914 14.6185088,121.0766554 14.6188121,121.0767448 14.6190770)';
             $faultGeogLocal = "ST_GeomFromText('{$faultWKTLocal}', 4326)::geography";
@@ -1895,7 +1899,8 @@ function getRuleAffectedData($ruleKey) {
                              ($ruleKey === 'FAULT_NO_BUILD_ZONE' && $dist <= 5) ||
                              ($ruleKey === 'FAULT_CRITICAL' && $dist > 5 && $dist < 50) ||
                              ($ruleKey === 'FAULT_HIGH_RISK' && $dist >= 50 && $dist < 100) ||
-                             ($ruleKey === 'FAULT_MEDIUM_RISK' && $dist >= 100 && $dist < 200);
+                             ($ruleKey === 'FAULT_MEDIUM_RISK' && $dist >= 100 && $dist < 200) ||
+                             ($ruleKey === 'FAULT_LOW_RISK'    && $dist >= 200);
                     if ($match) {
                         if ($ruleKey === 'FAULT_EXISTING_STRUCTURE_CRITICAL') {
                             $h['detail'] = "EXISTING STRUCTURE - CRITICAL RISK: {$dist}m from fault trace — Relocation recommended by PHIVOLCS";
