@@ -146,7 +146,7 @@ function filterApplications() {
     if (!applications || !Array.isArray(applications) || applications.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">
+                <td colspan="10" style="text-align:center; padding: 40px; color:#999;">
                     <div class="spinner"></div>Loading applications...
                 </td>
             </tr>`;
@@ -2298,7 +2298,7 @@ document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('archive-btn')) return;
 
     const tableName = e.target.dataset.table;
-    // FIX: Changed from 'utility_applications' to 'business_applications'
+
     if (tableName !== 'business_applications') return;
 
     e.preventDefault();
@@ -2328,10 +2328,9 @@ document.addEventListener('click', (e) => {
         }
     }).then(async (result) => {
         if (result.isConfirmed) {
-            // FIX: Use the correct table name
+
             await archiveRecord('business_applications', appId);
 
-            // Remove the row immediately from the UI
             const row = e.target.closest('tr');
             if (row) row.remove();
 

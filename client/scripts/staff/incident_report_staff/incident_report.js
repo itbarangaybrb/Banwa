@@ -254,11 +254,15 @@ function filterIncidents() {
  * @returns {Promise} Promise resolving to the incidents array
  */
 function loadIncidentsFromDB() {
-    return fetch(`${IR_HANDLER_URL}?action=fetch`)
+    return fetch(`${IR_HANDLER_URL}?action=fetch`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 incidents = (data.data || []).filter(inc => !inc.is_archived);
+            } else {
+                incidents = [];
             }
             return incidents;
         })
@@ -310,7 +314,7 @@ function loadProcessTable() {
 
         tbody.innerHTML = '';
 
-        const excludedStatuses = ['Closed', 'Cancelled', 'Resolved'];
+        const excludedStatuses = ['Closed', 'Cancelled', 'Resolved', 'Archived'];
         const actionable = incidents.filter(incident => {
             return !excludedStatuses.includes(incident.status);
         });
@@ -452,7 +456,7 @@ function loadAnalyticsTab() {
                 data: {
                     labels: labels3,
                     datasets: [{
-                        label: 'DSS Status Distribution',
+                        label: 'DST Status Distribution',
                         data: totals3,
                         backgroundColor: dssColors,
                         borderWidth: 1
@@ -599,6 +603,7 @@ function fetchDSSEvaluation(appId, incident) {
 
 /**
  * Creates and inserts a detailed DSS evaluation section into the update modal
+ * Displays evaluation scores, priority level, rule results, and recommendations
  * 
  * @param {Object} evaluation - The DSS evaluation data object
  * @param {Object} incident - The incident object for context
@@ -619,98 +624,110 @@ function addDSSSectionToModal(evaluation, incident) {
     const details = evaluation.evaluation_details || {};
     const dssStatus = evaluation.dss_status || 'Pending Evaluation';
     const score = details.score || 0;
-    const maxScore = details.max_score || 5;
-    const probability = typeof details.resolution_probability === 'number' ? details.resolution_probability : (parseFloat(details.resolution_probability) || 0);
+    const maxScore = details.max_score || 6;
+    const urgencyScore = details.urgency_score || 0;
+    const priorityLevel = details.priority_level || 'Low';
 
     const passedRules = details.passed_rules || [];
     const failedRules = details.failed_rules || [];
     const recommendations = details.recommendations || [];
 
-    let statusColor, statusBg;
+    // Get rule results for more detailed display
+    const ruleResults = details.rule_results || {};
+
+    let statusColor, statusBg, statusText;
     switch (dssStatus) {
-        case 'Pre-Approved':
         case 'High Priority':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            statusText = 'High Priority';
             break;
-        case 'Additional Requirements Needed':
         case 'Medium Priority':
             statusColor = '#856404';
             statusBg = '#fff3cd';
+            statusText = 'Medium Priority';
             break;
-        case 'Rejected':
         case 'Low Priority':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            statusText = 'Low Priority';
             break;
         default:
             statusColor = '#0c5460';
             statusBg = '#d1ecf1';
+            statusText = dssStatus;
     }
 
     dssSection.innerHTML = `
-<div class="dss-evaluation-section">
-    <div class="dss-header">
-        <h3>Evaluation Result</h3>
-        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
-            ${dssStatus}
-        </span>
-    </div>
-    
-    <div class="dss-score-summary">
-        <div class="dss-score">
-            <strong>Score</strong>
-            <span>${score}/${maxScore}</span>
-        </div>
-        <div class="dss-probability">
-            <strong>Approval Probability</strong>
-            <span>${probability.toFixed(2)}%</span>
-        </div>
-    </div>
-    
-    <div class="dss-progress-container">
-        <div class="dss-progress-label">
-            <span>Approval Progress</span>
-            <span class="dss-progress-percentage">${probability}%</span>
-        </div>
-        <div class="dss-progress-bar">
-            <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, probability))}%"></div>
-        </div>
-    </div>
-    
-    <div class="dss-rules-summary">
-        <div class="dss-rules-column">
-            <h4>Passed Rules (${passedRules.length})</h4>
-            ${passedRules.length > 0 ?
-            `<ul class="dss-rules-list passed">${passedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
-            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
-        }
+    <div class="dss-evaluation-section">
+        <div class="dss-header">
+            <h3>DST Evaluation Result</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${statusText}
+            </span>
         </div>
         
-        <div class="dss-rules-column">
-            <h4>Failed Rules (${failedRules.length})</h4>
-            ${failedRules.length > 0 ?
+        <div class="dss-score-summary">
+            <div class="dss-score">
+                <strong>Rules Passed</strong>
+                <span>${score}/${maxScore}</span>
+            </div>
+            <div class="dss-probability">
+                <strong>Priority Level</strong>
+                <span>${priorityLevel}</span>
+            </div>
+        </div>
+        
+        <div class="dss-progress-container">
+            <div class="dss-progress-label">
+                <span>Urgency Score</span>
+                <span class="dss-progress-percentage">${urgencyScore}%</span>
+            </div>
+            <div class="dss-progress-bar">
+                <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, urgencyScore))}%"></div>
+            </div>
+        </div>
+        
+        <div class="dss-rules-summary">
+            <div class="dss-rules-column">
+                <h4>Passed Rules (${passedRules.length})</h4>
+                ${passedRules.length > 0 ?
+            `<ul class="dss-rules-list passed">${passedRules.map(rule => {
+                // Get the rule result if available
+                const ruleId = Object.keys(ruleResults).find(key =>
+                    evaluation.rules?.find(r => r.name === rule)?.id === key
+                );
+                const result = ruleId ? ruleResults[ruleId] : '';
+                return `<li>${rule} ${result ? `<span style="color:#666; font-size:11px;">(${result})</span>` : ''}</li>`;
+            }).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
+        }
+            </div>
+            
+            <div class="dss-rules-column">
+                <h4>Failed Rules (${failedRules.length})</h4>
+                ${failedRules.length > 0 ?
             `<ul class="dss-rules-list failed">${failedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
             `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules failed</p>`
         }
+            </div>
         </div>
+        
+        ${recommendations.length > 0 ? `
+            <div class="dss-recommendations">
+                <h4>Recommendations</h4>
+                <ul class="dss-recommendations-list">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
+        
+        ${evaluation.evaluated_at ? `
+            <div class="dss-timestamp">
+                Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+            </div>
+        ` : ''}
     </div>
-    
-    ${recommendations.length > 0 ? `
-        <div class="dss-recommendations">
-            <h4>Recommendations</h4>
-            <ul class="dss-recommendations-list">
-                ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
-            </ul>
-        </div>
-    ` : ''}
-    
-    ${evaluation.evaluated_at ? `
-        <div class="dss-timestamp">
-            Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
-        </div>
-    ` : ''}
-</div>
 `;
 
     updateForm.insertBefore(dssSection, updateForm.firstChild);
@@ -718,6 +735,7 @@ function addDSSSectionToModal(evaluation, incident) {
 
 /**
  * Creates a basic DSS section when detailed evaluation data is unavailable
+ * Provides minimal DSS status display as fallback
  * 
  * @param {Object} incident - The incident object containing basic DSS status
  */
@@ -738,20 +756,17 @@ function addBasicDSSSection(incident) {
     let statusColor, statusBg;
 
     switch (dssStatus) {
-        case 'Pre-Approved':
         case 'High Priority':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
             break;
-        case 'Additional Requirements Needed':
         case 'Medium Priority':
             statusColor = '#856404';
             statusBg = '#fff3cd';
             break;
-        case 'Rejected':
         case 'Low Priority':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
+            statusColor = '#155724';
+            statusBg = '#d4edda';
             break;
         default:
             statusColor = '#0c5460';
@@ -759,14 +774,14 @@ function addBasicDSSSection(incident) {
     }
 
     dssSection.innerHTML = `
-    <div class="dss-header">
-        <h3>DSS Evaluation</h3>
-        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
-            ${dssStatus}
-        </span>
-    </div>
-    <p class="dss-loading">Loading detailed evaluation...</p>
-`;
+        <div class="dss-header">
+            <h3>DST Evaluation</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${dssStatus}
+            </span>
+        </div>
+        <p class="dss-loading">Loading detailed evaluation...</p>
+    `;
 
     updateForm.insertBefore(dssSection, updateForm.firstChild);
 }
@@ -941,8 +956,8 @@ function viewDetails(appId) {
 
         ${incident.dss_status ? `
         <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-            <h3>DSS Evaluation Status</h3>
-            <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
+            <h3>Evaluation Status</h3>
+            <div class="detail-row"><span class="detail-label">DST Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
         </div>
         ` : ''}
     </div>
@@ -1069,7 +1084,7 @@ function loadSummarySelect() {
 //     ${incident.dss_status ? `
 //     <div class="report-section" style="background:#d1ecf1; padding:15px; border-radius:5px; border-color:#bee5eb;">
 //         <h3 style="border:none; margin-bottom:5px; color:#0c5460;">DSS Evaluation</h3>
-//         <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status}</span></div>
+//         <div class="info-row"><span class="info-label">DST Status</span> <span class="info-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status}</span></div>
 //     </div>` : ''}
 
 //     <div class="report-actions">
@@ -1628,6 +1643,87 @@ function updateApplicationDate() {
     }
 }
 
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return;
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
@@ -1639,6 +1735,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshActiveTab()
                 loadManagementTable();
                 loadProcessTable();
+            }
+        });
+    }
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                }
+                else if (data.id) {
+                    appendAuditRow(data);
+                }
+                else {
+                    fetchAuditLogs();
+                }
             }
         });
     }
@@ -1716,6 +1828,7 @@ function formatTime(dateTimeString) {
     }
 }
 
+// Add archive handler for incident reports
 document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('archive-btn')) return;
 
@@ -1745,10 +1858,7 @@ document.addEventListener('click', (e) => {
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+            popup: 'archive-swal2-popup'
         }
     }).then(async (result) => {
         if (result.isConfirmed) {

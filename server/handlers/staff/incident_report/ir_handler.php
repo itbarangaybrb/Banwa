@@ -245,17 +245,9 @@ function handleFetchApplication($pdo)
 {
     try {
         // Fetch all reports with corrected column names
-        $sql = "SELECT 
-                    id, 
-                    supabase_user_id,
-                    rp_full_name, rp_address, rp_contact, rp_relationship,
-                    vic_full_name, vic_address, vic_contact, vic_citizenship, vic_gender, vic_dob, vic_occupation,
-                    sus_full_name, sus_address, sus_contact, sus_gender, sus_description,
-                    incident_type, incident_timestamp, date_reported, description,
-                    witness_data_json, latitude, longitude,
-                    status, dss_status, created_at, updated_at
-                FROM incident_reports 
-                ORDER BY id ASC";
+        $sql = "SELECT ir.*
+                FROM incident_reports ir
+                ORDER BY ir.id ASC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 
