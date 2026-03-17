@@ -946,6 +946,17 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Submitting false information, unapproved plans, or fraudulent documents for a <strong>Construction Clearance</strong> is a serious offense punishable by project suspension and legal penalties.<br><br>By proceeding, you certify that all information and attached documents provided are true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            confirmButtonColor: '#00247C',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
         console.debug('construction_app autofill response:', data);

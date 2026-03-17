@@ -86,16 +86,14 @@ switchPanel('reportingPerson');
 
 // Form element references for reporting person section
 const rpFullName = document.getElementById('rpFullName');
-const rpLotNo = document.getElementById('rpLotNo');
-const rpStreet = document.getElementById('rpStreet');
+const rpAddress = document.getElementById('rpAddress'); // Updated
 const rpContact = document.getElementById('rpContact');
 const rpRelationship = document.getElementById('rpRelationship');
 const victimSameAsRP = document.getElementById('victimSameAsRP');
 
 // Form element references for victim details section
 const vicFullName = document.getElementById('vicFullName');
-const vicLotNo = document.getElementById('vicLotNo');
-const vicStreet = document.getElementById('vicStreet');
+const vicAddress = document.getElementById('vicAddress'); // Updated
 const vicContact = document.getElementById('vicContact');
 const vicCitizenship = document.getElementById('vicCitizenship');
 const vicGender = document.getElementById('vicGender');
@@ -104,8 +102,7 @@ const vicOccupation = document.getElementById('vicOccupation');
 
 // Form element references for suspect details section
 const susFullName = document.getElementById('susFullName');
-const susLotNo = document.getElementById('susLotNo');
-const susStreet = document.getElementById('susStreet');
+const susAddress = document.getElementById('susAddress');
 const susContact = document.getElementById('susContact');
 const susGender = document.getElementById('susGender');
 const susDescription = document.getElementById('susDescription');
@@ -114,8 +111,7 @@ const susDescription = document.getElementById('susDescription');
 const incidentType = document.getElementById('incidentType');
 const otherIncidentType = document.getElementById('otherIncidentType');
 const incidentTimestamp = document.getElementById('incidentTimestamp');
-const incidentLotNo = document.getElementById('incidentLotNo');
-const incidentStreet = document.getElementById('incidentStreet');
+const incidentAddress = document.getElementById('incidentAddress'); // Updated
 const incidentLatitude = document.getElementById('incidentLatitude');
 const incidentLongitude = document.getElementById('incidentLongitude');
 const description = document.getElementById('description');
@@ -337,14 +333,12 @@ const validator = (() => {
 const validationConfig = [
     // Reporting Person validation rules
     { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
-    { el: rpLotNo, type: 'number', message: 'Please enter lot number', rules: { maxLength: 2 } },
-    { el: rpStreet, type: 'select', message: 'Please select street' },
+    { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
     { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
 
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
-    { el: vicLotNo, type: 'number', message: 'Please enter victim lot number', rules: { maxLength: 2 } },
-    { el: vicStreet, type: 'select', message: 'Please select victim street' },
+    { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
     { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
@@ -357,8 +351,7 @@ const validationConfig = [
     // Incident Details validation rules
     { el: incidentType, type: 'select', message: 'Please select incident type' },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
-    { el: incidentLotNo, type: 'number', message: 'Please enter incident lot number', rules: { maxLength: 2 } },
-    { el: incidentStreet, type: 'select', message: 'Please select incident street' },
+    { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
     { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
 ];
 
@@ -399,25 +392,25 @@ function validateField(config) {
     });
 
     // Address validation setup for different sections with varying requirements
-    const addressPairs = [
-        { lot: rpLotNo, street: rpStreet, validateExistence: false },
-        { lot: vicLotNo, street: vicStreet, validateExistence: false },
-        { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
-        { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
-    ];
+    // const addressPairs = [
+    //     { lot: rpLotNo, street: rpStreet, validateExistence: false },
+    //     { lot: vicLotNo, street: vicStreet, validateExistence: false },
+    //     { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
+    //     { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
+    // ];
 
-    addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
-        if (!lot || !street) return;
+    // addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
+    //     if (!lot || !street) return;
 
-        [lot, street].forEach(el => {
-            el.addEventListener('blur', () => {
-                if (lot.value && street.value) {
-                    validator.address(lot, street, { optional, validateExistence });
-                }
-            });
-            el.addEventListener('input', () => validator.clear(el));
-        });
-    });
+    //     [lot, street].forEach(el => {
+    //         el.addEventListener('blur', () => {
+    //             if (lot.value && street.value) {
+    //                 validator.address(lot, street, { optional, validateExistence });
+    //             }
+    //         });
+    //         el.addEventListener('input', () => validator.clear(el));
+    //     });
+    // });
 
     // Special handling for "Other" incident type selection
     incidentType.addEventListener('change', function () {
@@ -441,14 +434,14 @@ function validateField(config) {
     });
 
     // Input sanitization for lot number fields (remove non-digit characters)
-    [rpLotNo, vicLotNo, susLotNo, incidentLotNo].forEach(el => {
-        if (el) {
-            el.addEventListener('input', function () {
-                this.value = this.value.replace(/\D/g, '');
-                validator.clear(this);
-            });
-        }
-    });
+    // [rpLotNo, vicLotNo, incidentLotNo].forEach(el => {
+    //     if (el) {
+    //         el.addEventListener('input', function () {
+    //             this.value = this.value.replace(/\D/g, '');
+    //             validator.clear(this);
+    //         });
+    //     }
+    // });
 })();
 
 /**
@@ -465,10 +458,9 @@ function validateStep(fields) {
  * Validates all reporting person fields before proceeding
  */
 document.getElementById('nextToVictim').addEventListener('click', () => {
-    const stepFields = [rpFullName, rpLotNo, rpStreet, rpContact];
+    const stepFields = [rpFullName, rpAddress, rpContact];
 
     if (!validateStep(stepFields)) return;
-    if (!validator.address(rpLotNo, rpStreet, { validateExistence: false })) return;
 
     switchPanel('victimDetails');
 });
@@ -481,14 +473,12 @@ document.getElementById('nextToSuspect').addEventListener('click', () => {
     if (victimSameAsRP.checked) {
         // Copy reporting person data to victim
         vicFullName.value = rpFullName.value;
-        vicLotNo.value = rpLotNo.value;
-        vicStreet.value = rpStreet.value;
+        vicAddress.value = rpAddress.value;
         vicContact.value = rpContact.value;
         switchPanel('suspectDetails');
     } else {
-        const stepFields = [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
+        const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
         if (!validateStep(stepFields)) return;
-        if (!validator.address(vicLotNo, vicStreet, { validateExistence: false })) return;
         switchPanel('suspectDetails');
     }
 });
@@ -500,9 +490,6 @@ document.getElementById('nextToSuspect').addEventListener('click', () => {
 document.getElementById('nextToWitnesses').addEventListener('click', () => {
     const stepFields = [susDescription];
     if (!validateStep(stepFields)) return;
-    if (susLotNo.value || susStreet.value) {
-        validator.address(susLotNo, susStreet, { optional: true, validateExistence: false });
-    }
 
     // Add default witness if none exists
     if (witnessCount === 0) {
@@ -523,7 +510,7 @@ document.getElementById('nextToIncident').addEventListener('click', () => {
  * Validates all incident fields and populates summary display with all form data
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    const stepFields = [incidentType, incidentTimestamp, incidentLotNo, incidentStreet, description];
+    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
 
     // Handle "other" incident type with custom specification
     if (incidentType.value === 'other') {
@@ -534,11 +521,10 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     }
 
     if (!validateStep(stepFields)) return;
-    if (!validator.address(incidentLotNo, incidentStreet, { validateExistence: true })) return;
 
     // Populate summary display with all collected data
     document.getElementById('sumRpFullName').textContent = rpFullName.value;
-    document.getElementById('sumRpAddress').textContent = `${rpLotNo.value} ${rpStreet.value}`;
+    document.getElementById('sumRpAddress').textContent = rpAddress.value;
     document.getElementById('sumRpContact').textContent = rpContact.value;
     document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
 
@@ -561,8 +547,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     }
 
     document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
-    document.getElementById('sumSusAddress').textContent = susLotNo.value && susStreet.value ?
-        `${susLotNo.value} ${susStreet.value}` : 'Not specified';
+    document.getElementById('sumSusAddress').textContent = susAddress.value || 'Not specified';
     document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
     document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
     document.getElementById('sumSusDescription').textContent = susDescription.value;
@@ -585,7 +570,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/home.php';
     });
 
     document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
@@ -627,28 +612,8 @@ function addWitness() {
             <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
         </div>
         <div class="label-and-input">
-            <label class="label" for="witnessLotNo${witnessCount}">House No.</label>
-            <input type="tel" class="witness-lotNo" id="witnessLotNo${witnessCount}" maxlength="2" pattern="[0-9]{1,2}">
-        </div>
-        <div class="label-and-input">
-            <label class="label" for="witnessStreet${witnessCount}">Street Name</label>
-            <select class="witness-street" id="witnessStreet${witnessCount}">
-                <option value="" selected>Select</option>
-                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
-                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
-                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
-                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
-                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
-                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
-                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
-                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
-                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
-                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
-                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
-                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
-                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
-            </select>
+            <label class="label" for="witnessAddress${witnessCount}">Complete Address</label>
+            <input type="text" class="witness-address" id="witnessAddress${witnessCount}" placeholder="Address">
         </div>
         <div class="label-and-input">
             <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
@@ -725,8 +690,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Reporting Person data
         formData.append('rpFullName', rpFullName.value);
-        formData.append('rpLotNo', rpLotNo.value);
-        formData.append('rpStreet', rpStreet.value);
+        formData.append('rpAddress', rpAddress.value);
         formData.append('rpContact', rpContact.value);
         formData.append('rpRelationship', rpRelationship.value);
 
@@ -734,8 +698,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('victimSameAsRP', victimSameAsRP.checked ? '1' : '0');
         if (!victimSameAsRP.checked) {
             formData.append('vicFullName', vicFullName.value);
-            formData.append('vicLotNo', vicLotNo.value);
-            formData.append('vicStreet', vicStreet.value);
+            formData.append('vicAddress', vicAddress.value);
             formData.append('vicContact', vicContact.value);
             formData.append('vicCitizenship', vicCitizenship.value);
             formData.append('vicGender', vicGender.value);
@@ -745,8 +708,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Suspect Details data
         formData.append('susFullName', susFullName.value);
-        formData.append('susLotNo', susLotNo.value);
-        formData.append('susStreet', susStreet.value);
+        formData.append('susAddress', susAddress.value);
         formData.append('susContact', susContact.value);
         formData.append('susGender', susGender.value);
         formData.append('susDescription', susDescription.value);
@@ -772,11 +734,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Incident Details data (only this section includes coordinates)
         const incidentTypeVal = incidentType.value;
-        formData.append('incidentType', incidentTypeVal === 'other' ?
-            otherIncidentType.value : incidentTypeVal);
+
+        formData.append('incidentType', incidentTypeVal === 'other' ? otherIncidentType.value : incidentTypeVal);
         formData.append('incidentTimestamp', incidentTimestamp.value);
-        formData.append('incidentLotNo', incidentLotNo.value);
-        formData.append('incidentStreet', incidentStreet.value);
+        formData.append('incidentAddress', incidentAddress.value); // Added!
         formData.append('incidentLatitude', incidentLatitude.value);
         formData.append('incidentLongitude', incidentLongitude.value);
         formData.append('description', description.value);
@@ -878,7 +839,7 @@ function generateReportDocument() {
                     <div class="section">
                         <h2>Suspect Details</h2>
                         <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
-                        <div class="field"><span class="label">Address:</span> ${susLotNo.value && susStreet.value ? `Lot ${susLotNo.value}, ${susStreet.value}` : 'Not specified'}</div>
+                        <div class="field"><span class="label">Address:</span> ${susAddress.value || 'Not specified'}</div>
                         <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
                         <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
                         <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
@@ -1120,44 +1081,70 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const resp = await fetch('/server/api/resident/get_user.php');
+
+        await ir_swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Filing a false, fabricated, or malicious incident report is a serious offense and is punishable by law.<br><br>By proceeding, you certify that all information you provide is true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
+        // 1. Added credentials and cache settings exactly like the business app
+        const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
+        
+        console.debug('incident_report autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
             return;
         }
 
-        // Populate reporting person fields with user data
-        if (data.first_name && data.last_name) {
-            rpFullName.value = `${data.last_name}, ${data.first_name}${data.middle_name ? ' ' + data.middle_name : ''}`;
+        // 2. Added the fallback logic to split 'full_name' if individual fields are missing
+        if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
+            const parts = data.full_name.trim().split(/\s+/);
+            data.first_name = parts[0] || '';
+            data.last_name = parts.length > 1 ? parts[parts.length - 1] : '';
+            data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
+        }
+
+        // 3. Populate reporting person fields with user data safely
+        if (data.first_name || data.last_name) {
+            const last = data.last_name || '';
+            const first = data.first_name || '';
+            const middle = data.middle_name ? ' ' + data.middle_name : '';
+            
+            // Formats to match the input placeholder: "Last, First, Middle Name"
+            if (last && first) {
+                rpFullName.value = `${last}, ${first}${middle}`;
+            } else {
+                rpFullName.value = `${last}${first}${middle}`.trim();
+            }
         }
 
         if (data.contact_no) {
             rpContact.value = data.contact_no;
         }
 
-        // Populate address fields if available
-        if (data.lot_no) {
-            rpLotNo.value = data.lot_no;
-        }
-
-        if (data.street_name) {
-            // Find matching street in dropdown
-            const streetSelect = document.getElementById('rpStreet');
-            for (let option of streetSelect.options) {
-                if (option.value === data.street_name) {
-                    streetSelect.value = data.street_name;
-                    break;
-                }
-            }
+        if (data.address) {
+            // If your DB returns a full address string
+            rpAddress.value = data.address;
+        } else if (data.lot_no || data.street_name) {
+            // Otherwise, combine lot and street into a complete address
+            const lot = data.lot_no ? `House/Unit ${data.lot_no}, ` : '';
+            const street = data.street_name ? `${data.street_name}, ` : '';
+            rpAddress.value = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
         }
 
         // Set default citizenship for victim
-        vicCitizenship.value = 'Filipino';
+        if (vicCitizenship) {
+            vicCitizenship.value = 'Filipino';
+        }
 
     } catch (err) {
-        console.error('Failed to fetch user data:', err);
+        console.error('Failed to fetch user data for autofill:', err);
     }
 
     if (!sockets["incident_report_applications"]) {
