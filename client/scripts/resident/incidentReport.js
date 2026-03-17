@@ -273,34 +273,36 @@ const validator = (() => {
     }
 
     /**
- * Validates address fields with optional validation for existence in addressCoordinates database
- * @param {HTMLInputElement} lotInput - Lot number input element
- * @param {HTMLSelectElement} streetInput - Street selection element
- * @param {Object} options - Validation options (optional fields, existence validation)
- * @returns {boolean} - Whether the address is valid
- */
-    function validateAddress(lotInput, streetInput, options = {}) {
-        const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot && !options.optional) return validator.number(lotInput, 'House No. is required');
-        if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
+     * Validates address fields with optional validation for existence in addressCoordinates database
+     * @param {Object} options - Validation options (optional fields, existence validation)
+     * @returns {boolean} - Whether the address is valid
+     */
+    function validateAddress(addressInput, options = {}) {
+        const address = addressInput.value.trim();
 
-        if (!lot || !street || street === 'select') return true;
+        if (!address && !options.optional) {
+            showError(addressInput, 'Address is required');
+            return false;
+        }
 
-        const fullAddress = `${lot} ${street}`;
-        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!address) return true;
+
+        // Try to find a match in your database (case-insensitive for better UX)
+        const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
+        
         if (!match && options.validateExistence !== false) {
-            const wrapper = streetInput.closest('.label-and-input');
+            const wrapper = addressInput.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
-            streetInput.classList.add('error');
-            errorEl.textContent = 'Street does not exist for this lot';
+            addressInput.classList.add('error');
+            errorEl.textContent = 'Address does not exist in our records';
             errorEl.classList.add('show');
             return false;
         }
 
-        clearError(streetInput);
+        clearError(addressInput);
 
         // AUTO-SET COORDINATES FOR INCIDENT LOCATION WHEN ADDRESS IS VALID
-        if (lotInput.id === 'incidentLotNo' && streetInput.id === 'incidentStreet' && match) {
+        if (addressInput.id === 'incidentAddress' && match) {
             if (incidentLatitude && incidentLongitude) {
                 incidentLatitude.value = match.lat.toFixed(6);
                 incidentLongitude.value = match.lng.toFixed(6);
@@ -538,7 +540,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumVicOccupation').textContent = 'N/A';
     } else {
         document.getElementById('sumVicFullName').textContent = vicFullName.value;
-        document.getElementById('sumVicAddress').textContent = `${vicLotNo.value} ${vicStreet.value}`;
+        document.getElementById('sumVicAddress').textContent = vicAddress.value;
         document.getElementById('sumVicContact').textContent = vicContact.value;
         document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value;
         document.getElementById('sumVicGender').textContent = vicGender.value;
@@ -555,7 +557,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     document.getElementById('sumIncidentType').textContent =
         incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
     document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
-    document.getElementById('sumIncidentLocation').textContent = `${incidentLotNo.value} ${incidentStreet.value}`;
+    document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
     document.getElementById('sumIncidentCoordinates').textContent =
         incidentLatitude.value && incidentLongitude.value ?
             `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
@@ -589,7 +591,7 @@ victimSameAsRP.addEventListener('change', function () {
     if (this.checked) {
         victimContainer.style.display = 'none';
         // Clear validation errors for victim fields
-        [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation].forEach(el => {
+        [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation].forEach(el => {
             validator.clear(el);
         });
     } else {
@@ -717,15 +719,13 @@ newSummaryForm.addEventListener('submit', async function (e) {
         const witnesses = [];
         document.querySelectorAll('.witness-group').forEach((group, index) => {
             const name = group.querySelector('.witness-name').value;
-            const lotNo = group.querySelector('.witness-lotNo').value;
-            const street = group.querySelector('.witness-street').value;
+            const address = group.querySelector('.witness-address').value;
             const contact = group.querySelector('.witness-contact').value;
 
-            if (name || lotNo || street || contact) {
+            if (name || address || contact) {
                 witnesses.push({
                     name,
-                    lotNo,
-                    street,
+                    address,
                     contact
                 });
             }
@@ -817,7 +817,7 @@ function generateReportDocument() {
                     <div class="section">
                         <h2>Reporting Person</h2>
                         <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
-                        <div class="field"><span class="label">Address:</span> Lot ${rpLotNo.value}, ${rpStreet.value}</div>
+                        <div class="field"><span class="label">Address:</span> ${rpAddress.value}</div>
                         <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
                         <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
                     </div>
@@ -827,7 +827,7 @@ function generateReportDocument() {
                     '<div class="field">Same as Reporting Person</div>' :
                     `
                             <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
-                            <div class="field"><span class="label">Address:</span> Lot ${vicLotNo.value}, ${vicStreet.value}</div>
+                            <div class="field"><span class="label">Address:</span> ${vicAddress.value}</div>
                             <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
                             <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
                             <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
@@ -848,7 +848,7 @@ function generateReportDocument() {
                         <h2>Incident Details</h2>
                         <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
                         <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
-                        <div class="field"><span class="label">Location:</span> Lot ${incidentLotNo.value}, ${incidentStreet.value}</div>
+                        <div class="field"><span class="label">Location:</span> ${incidentAddress.value}</div>
                         <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
                         <div class="field"><span class="label">Description:</span> ${description.value}</div>
                     </div>
@@ -1011,13 +1011,23 @@ async function initializeMapPicker(target) {
                                 incidentLatitude.value = lat;
                                 incidentLongitude.value = lng;
 
-                                // Fill lot and street fields for incident location
-                                incidentLotNo.value = house.house_number || '';
-                                incidentStreet.value = house.street_name || '';
-                                [incidentLotNo, incidentStreet].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
+                                // Format the address from the available house data
+                                let formattedAddress = house.address;
+                                if (!formattedAddress) {
+                                    // Fallback just in case house.address is empty
+                                    const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                                    const street = house.street_name ? `${house.street_name}, ` : '';
+                                    formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                                }
+
+                                // Fill the unified address field for incident location
+                                if (incidentAddress) {
+                                    incidentAddress.value = formattedAddress;
+                                    
+                                    // Trigger validation clearing and updates
+                                    incidentAddress.dispatchEvent(new Event('input', { bubbles: true }));
+                                    incidentAddress.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                             }
 
                             document.getElementById(`map-preview-${target}`).style.display = 'block';
