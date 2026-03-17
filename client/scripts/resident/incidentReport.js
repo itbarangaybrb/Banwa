@@ -587,15 +587,25 @@ document.addEventListener('DOMContentLoaded', () => {
  * Shows/hides victim details fields and clears validation errors accordingly
  */
 victimSameAsRP.addEventListener('change', function () {
-    const victimContainer = document.getElementById('victimDetailsContainer');
+    // const victimContainer = document.getElementById('victimDetailsContainer');
+    const victimFullNameWrapper = document.getElementById('vicFullName').closest('.label-and-input');
+    const victimAddressWrapper = document.getElementById('vicAddress').closest('.label-and-input');
+    const victimContactWrapper = document.getElementById('vicContact').closest('.label-and-input');
+
     if (this.checked) {
-        victimContainer.style.display = 'none';
+        // victimContainer.style.display = 'none';
+        victimFullNameWrapper.style.display = 'none';
+        victimAddressWrapper.style.display = 'none';
+        victimContactWrapper.style.display = 'none';
         // Clear validation errors for victim fields
-        [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation].forEach(el => {
+        [vicFullName, vicAddress, vicContact].forEach(el => {
             validator.clear(el);
         });
     } else {
-        victimContainer.style.display = 'block';
+        // victimContainer.style.display = 'block';
+        victimFullNameWrapper.style.display = 'block';
+        victimAddressWrapper.style.display = 'block';
+        victimContactWrapper.style.display = 'block';
     }
 });
 
@@ -762,8 +772,8 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         title: 'Success!',
                         html: 'Submitted successfully!<br><br>Reference ID: <strong>' + data.id + '</strong>'
                     }).then(() => {
-                        generateReportDocument();
-                        // window.location.href = '/client/pages/resident/status.php';
+                        // generateReportDocument();
+                        window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
                     ir_swal.fire({

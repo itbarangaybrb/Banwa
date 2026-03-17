@@ -1458,118 +1458,109 @@ function printSummary() {
 
 /**
  * Downloads a summary report as a Word document
- * 
- * @param {number} appId - The incident ID to download summary for
+ * * @param {number} appId - The incident ID to download summary for
  */
 function downloadSummary(appId) {
-
     const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
 
-    const incidentLocation = incident.incident_location || 'Not specified';
-
-    let notesHtml = '';
-    if (incident.investigation_notes) {
-        notesHtml = `<div class="comment-box investigation"><h3>Investigation Notes</h3><p>${incident.investigation_notes}</p></div>`;
-    }
-
-    let dssHtml = '';
-    if (incident.dss_status) {
-        dssHtml = `<div class="comment-box dss"><h3>DSS Evaluation</h3><p><strong>Status:</strong> ${incident.dss_status}</p></div>`;
-    }
+    // Determine if victim is same as RP based on matching names or missing victim name
+    const isVictimSameAsRP = incident.vic_full_name === incident.rp_full_name || !incident.vic_full_name;
+    const incidentLocation = incident.incident_location || incident.incident_address || 'Not specified';
+    
+    // Safely get coordinates (handling potential property name variations)
+    const lat = incident.incident_latitude || incident.latitude || 'N/A';
+    const lng = incident.incident_longitude || incident.longitude || 'N/A';
 
     const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Incident Report Summary - ${incident.id}</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
-            .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-            h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
-            h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
-            .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
-            .info-list { list-style-type: none; padding: 0; }
-            .info-list li { margin-bottom: 8px; }
-            .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
-            .status-badge { background-color: ${incident.status === 'Resolved' ? '#d4edda' : incident.status === 'Cancelled' ? '#f8d7da' : '#fff3cd'}; color: ${incident.status === 'Resolved' ? '#155724' : incident.status === 'Cancelled' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-            .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
-            .comment-box h3 { font-size: 12pt; }
-            .comment-box.investigation { border: 1px solid #ffeeba; background-color: #fff3cd; }
-            .comment-box.dss { border: 1px solid #bee5eb; background-color: #d1ecf1; }
-            .narrative-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #826EEA; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Incident Report Summary</h1>
-            <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p><strong>Report ID:</strong> ${incident.id}</p>
-            <p><strong>Status:</strong> <span class="status-badge">${incident.status}</span></p>
-
-            <h2>Incident Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Incident Type:</strong> ${incident.incident_type}</li>
-                    <li><strong>Date & Time:</strong> ${formatDateTime(incident.incident_timestamp)}</li>
-                    <li><strong>Location:</strong> ${incidentLocation}</li>
-                    <li><strong>Coordinates:</strong> ${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</li>
-                    <li><strong>Severity:</strong> ${incident.severity || 'Not Rated'}</li>
-                </ul>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Incident Report Summary - ${incident.id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.5; }
+                h1 { color: #00247C; border-bottom: 2px solid #00247C; padding-bottom: 10px; }
+                .section { margin: 20px 0; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+                .section h2 { color: #555; font-size: 14pt; margin-bottom: 10px; }
+                .field { margin: 5px 0; }
+                .label { font-weight: bold; display: inline-block; width: 160px; color: #444; }
+                .status-badge { font-weight: bold; padding: 3px 8px; border: 1px solid #333; background: #f0f0f0; text-transform: uppercase;}
+            </style>
+        </head>
+        <body>
+            <h1>Incident Report (Ref ID: ${incident.id})</h1>
+            
+            <div class="section">
+                <h2>Reporting Person</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.rp_full_name || 'N/A'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.rp_address || 'N/A'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.rp_contact || 'N/A'}</div>
+                <div class="field"><span class="label">Relationship to Victim:</span> ${incident.rp_relationship || 'Not specified'}</div>
             </div>
 
-            <h2>Victim Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.vic_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.vic_contact}</li>
-                    <li><strong>Address:</strong> ${incident.vic_address}</li>
-                    <li><strong>Gender:</strong> ${incident.vic_gender}</li>
-                    <li><strong>Citizenship:</strong> ${incident.vic_citizenship}</li>
-                </ul>
+            <div class="section">
+                <h2>Victim Details</h2>
+                ${isVictimSameAsRP ? 
+                    '<div class="field" style="font-style: italic;">Same as Reporting Person</div>' : 
+                    `
+                    <div class="field"><span class="label">Name:</span> ${incident.vic_full_name || 'N/A'}</div>
+                    <div class="field"><span class="label">Address:</span> ${incident.vic_address || 'N/A'}</div>
+                    <div class="field"><span class="label">Contact:</span> ${incident.vic_contact || 'N/A'}</div>
+                    <div class="field"><span class="label">Citizenship:</span> ${incident.vic_citizenship || 'N/A'}</div>
+                    <div class="field"><span class="label">Gender:</span> ${incident.vic_gender || 'N/A'}</div>
+                    <div class="field"><span class="label">Date of Birth:</span> ${incident.vic_dob || 'N/A'}</div>
+                    <div class="field"><span class="label">Occupation:</span> ${incident.vic_occupation || 'N/A'}</div>
+                    `
+                }
             </div>
 
-            <h2>Reporting Person</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.rp_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.rp_contact}</li>
-                    <li><strong>Address:</strong> ${incident.rp_address}</li>
-                    <li><strong>Relationship:</strong> ${incident.rp_relationship}</li>
-                </ul>
+            <div class="section">
+                <h2>Suspect Details</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.sus_full_name || 'Not specified'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.sus_address || 'Not specified'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.sus_contact || 'Not specified'}</div>
+                <div class="field"><span class="label">Gender:</span> ${incident.sus_gender || 'Not specified'}</div>
+                <div class="field"><span class="label">Description:</span> ${incident.sus_description || 'N/A'}</div>
             </div>
 
-            ${incident.sus_full_name ? `
-            <h2>Suspect Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.sus_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.sus_contact}</li>
-                    <li><strong>Address:</strong> ${incident.sus_address}</li>
-                    <li><strong>Gender:</strong> ${incident.sus_gender}</li>
-                    <li><strong>Description:</strong> ${incident.sus_description}</li>
-                </ul>
-            </div>
-            ` : ''}
-
-            <h2>Incident Narrative</h2>
-            <div class="narrative-box">
-                ${incident.description || 'No description provided.'}
+            <div class="section">
+                <h2>Incident Details</h2>
+                <div class="field"><span class="label">Type:</span> ${incident.incident_type || 'N/A'}</div>
+                <div class="field"><span class="label">Date & Time:</span> ${formatDateTime(incident.incident_timestamp)}</div>
+                <div class="field"><span class="label">Location:</span> ${incidentLocation}</div>
+                <div class="field"><span class="label">Coordinates:</span> ${lat}, ${lng}</div>
+                <div class="field"><span class="label">Narrative Description:</span> 
+                    <p style="margin-top: 5px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00247C;">
+                        ${incident.description || 'N/A'}
+                    </p>
+                </div>
             </div>
 
-            ${notesHtml}
-            ${dssHtml}
-        </div>
-    </body>
-    </html>
-`;
+            <div class="section" style="border-bottom: none;">
+                <h2>Report Information</h2>
+                <div class="field"><span class="label">Date Reported:</span> ${formatDateTime(incident.reported_at || incident.created_at)}</div>
+                <div class="field"><span class="label">Current Status:</span> <span class="status-badge">${incident.status || 'N/A'}</span></div>
+                ${incident.dss_status ? `<div class="field"><span class="label">DST Evaluation:</span> ${incident.dss_status}</div>` : ''}
+                ${incident.investigation_notes ? `
+                    <div class="field"><span class="label">Investigation Notes:</span> 
+                        <p style="margin-top: 5px; font-style: italic;">${incident.investigation_notes}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </body>
+        </html>
+    `;
 
+    // Create and download the file as a Word document (.doc)
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Incident_Report_${incident.id}_Summary.pdf`;
+    
+    // Formats filename to something like: Incident_Report_12_2026-03-18.doc
+    link.download = `Incident_Report_${incident.id}_${new Date().toISOString().split('T')[0]}.doc`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

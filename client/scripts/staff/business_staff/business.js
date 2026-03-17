@@ -858,7 +858,10 @@ function viewDetails(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    const businessStatus = app.business_status || 'Not specified';
+    // FIX 1: Strip out [""] from the business status string using regex
+    const businessStatus = app.business_status 
+        ? app.business_status.replace(/[\[\]"]/g, '') 
+        : 'Not specified';
 
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
@@ -1043,10 +1046,12 @@ function viewDetails(appId) {
             if (ocrResults.length === 0) {
                 ocrHtml += `<p style="color:#666; font-style:italic;">No OCR results available.</p>`;
             } else {
+                // FIX 2: Added overflow-x: hidden to prevent the container from breaking
                 ocrHtml += `
                     <div style="
                         max-height: 250px;
                         overflow-y: auto;
+                        overflow-x: hidden;
                         border: 1px solid #e0e0e0;
                         border-radius: 6px;
                         padding: 8px;
@@ -1071,6 +1076,7 @@ function viewDetails(appId) {
                     const fileUrl = r.file_url || (r.saved_filename ? `${UPLOADS_BASE_PATH}${r.saved_filename}` : '#');
                     const timestamp = formatTimestamp(r.created_at);
 
+                    // FIX 2: Added word-wrap and word-break to the summary tag to wrap long filenames
                     return `
                                 <details style="margin-bottom: 12px;">
                                     <summary style="
@@ -1080,6 +1086,8 @@ function viewDetails(appId) {
                                         border-radius: 4px;
                                         font-weight: ${isLatest ? '600' : '500'};
                                         line-height: 1.5;
+                                        overflow-wrap: break-word;
+                                        word-break: break-word;
                                     ">
                                         <strong>Run on:</strong> ${timestamp}
                                         ${isLatest ? ' <em>(latest)</em>' : ''}
@@ -1143,22 +1151,15 @@ function viewDetails(appId) {
                                 .then(r => r.json())
                                 .then(d => {
                                     if (d && d.status === 'success' && d.application) {
-                                        // Re-render OCR card by triggering the same insertion flow
-                                        const modalBody = document.getElementById('modalBody');
-                                        // Remove old OCR card then re-open modal content (simple approach: close and re-open)
-                                        // Instead we'll call fetchDSSEvaluation and reload the OCR section
                                         fetchDSSEvaluation(appId, app);
-                                        // Re-fetch application details to update the OCR card
                                         // Slight delay to allow DB writes
                                         setTimeout(() => {
                                             fetch(`${BUSINESS_HANDLER_URL}?action=get_application_details&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store', credentials: 'same-origin' })
                                                 .then(r2 => r2.json())
                                                 .then(d2 => {
                                                     if (d2 && d2.status === 'success' && d2.application) {
-                                                        // Replace OCR card
                                                         const existing = document.getElementById('ocrResultsCard');
                                                         if (existing) existing.remove();
-                                                        // Insert updated OCR HTML by reusing this block: simpler to reload modal
                                                         viewDetails(appId); // reopen details to refresh content
                                                     }
                                                 });
@@ -1466,6 +1467,17 @@ function printSummary() {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <link rel="stylesheet" href="../../../styles/staff/business_staff/business.css">
+            <link rel="stylesheet" href="../../../styles/staff/analytics.css">
+            <link rel="stylesheet" href="../../../styles/staff/dss.css" />
+            <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
+            <style>
+                /* Set half-inch margins for the printed page */
+                @media print {
+                    @page {
+                        margin: 0.5in;
+                    }
+                }
+            </style>
         </head>
         <body>
             <div class="print-container">
@@ -1561,30 +1573,20 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })}</p>
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</p>
                     <p>Barangay Business Management System</p>
                 </div>
             </div>
             
             <script>
-                // Auto-print when page loads
+                // Auto-print when page loads, but DO NOT close the window afterwards
                 window.onload = function() {
                     window.print();
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
-                };
-                
-                // Also close when print dialog is cancelled
-                window.onafterprint = function() {
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
                 };
             </script>
         </body>
@@ -1606,10 +1608,19 @@ function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
+    // --- DATA PARSING ---
     const businessStatus = app.business_status || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
+    
+    // Parse requirements
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li style="margin-bottom: 4px;">&#10003; ${r}</li>`).join('')
+        : '<li style="color:#856404;">No documents logged</li>';
 
-    // Determine first uploaded filename (support JSON array or plain string)
+    // Parse uploaded file
     let firstUploaded = null;
     if (app.requirement_upload_json) {
         if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
@@ -1622,91 +1633,156 @@ function downloadSummary(appId) {
     }
 
     const fileUploadText = firstUploaded
-        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#007bff; text-decoration: none;">View Document (${firstUploaded})</a></li>`
-        : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
+        ? `<div style="margin-top: 10px;"><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#00247C; text-decoration: underline;">View Document (${firstUploaded})</a></div>`
+        : '<div style="margin-top: 10px; color:#666;"><strong>Uploaded File:</strong> No file uploaded</div>';
 
-    let commentsHtml = '';
-    if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
-    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
+    // Parse Colors & Financials
+    let statusColor = '#6c757d'; let statusBg = '#e2e3e5';
+    switch (app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    const amountDue = app.amount_due ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '₱0.00';
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // Parse Comments
+    let commentsHtml = '';
+    if (app.status === 'Approved' && app.approval_comments) {
+        commentsHtml = `<div style="background:#d4edda; border:1px solid #c3e6cb; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#155724; font-size:14pt;">Official Remarks (Approval)</h3>
+            <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
+        </div>`;
+    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
+        commentsHtml = `<div style="background:#f8d7da; border:1px solid #f5c6cb; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#721c24; font-size:14pt;">Disapproval Reason</h3>
+            <p style="margin:0; font-style:italic;">"${app.disapproval_reason}"</p>
+        </div>`;
+    } else if (app.approval_comments) {
+        commentsHtml = `<div style="background:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#333; font-size:14pt;">Official Remarks</h3>
+            <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
+        </div>`;
+    }
+
+    // --- HTML CONSTRUCTION FOR MS WORD ---
     const htmlContent = `
-        <!DOCTYPE html>
-        <html>
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head>
             <meta charset="UTF-8">
-            <title>Business Application Summary Report - ${app.id}</title>
+            <title>Business Application Summary - #${app.id}</title>
             <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
-                .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-                h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
-                h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
-                .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
-                .info-list { list-style-type: none; padding: 0; }
-                .info-list li { margin-bottom: 8px; }
-                .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
-                .status-badge { background-color: ${app.status === 'Approved' ? '#d4edda' : app.status === 'Disapproved' ? '#f8d7da' : '#fff3cd'}; color: ${app.status === 'Approved' ? '#155724' : app.status === 'Disapproved' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-                .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
-                .comment-box h3 { font-size: 12pt; }
-                .comment-box.approval { border: 1px solid #c3e6cb; background-color: #d4edda; }
-                .comment-box.disapproval { border: 1px solid #f5c6cb; background-color: #f8d7da; }
+                @page { margin: 0.5in; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.4; color: #333; }
+                .header-table { width: 100%; border-bottom: 2px solid #00247C; padding-bottom: 10px; margin-bottom: 20px; }
+                .title { font-size: 24pt; color: #00247C; margin: 0; font-weight: bold; }
+                .meta { color: #666; font-size: 11pt; }
+                .badge { background: ${statusBg}; color: ${statusColor}; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 11pt; text-align: center; border: 1px solid ${statusColor}; }
+                .section-title { font-size: 14pt; color: #00247C; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
+                .card { background: #fdfdfd; border: 1px solid #e2e2e2; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
+                .label { color: #666; font-size: 9pt; text-transform: uppercase; margin-bottom: 2px; display: block; }
+                .value { font-size: 11pt; font-weight: bold; margin-top: 0; margin-bottom: 12px; display: block; color: #222; }
+                .footer { text-align: center; font-size: 9pt; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>Business Application Summary Report</h1>
-                <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Application ID:</strong> ${app.id}</p>
+            <table class="header-table" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td width="70%">
+                        <h1 class="title">Business Profile</h1>
+                        <div class="meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+                    </td>
+                    <td width="30%" align="right" valign="middle">
+                        <span class="badge">${app.status}</span>
+                    </td>
+                </tr>
+            </table>
 
-                <h2>Business Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Business Name:</strong> ${app.business_name}</li>
-                        <li><strong>Type of Business:</strong> ${app.type_of_business}</li>
-                        <li><strong>Nature of Business:</strong> ${app.nature_of_business}</li>
-                        <li><strong>Business Address:</strong> ${app.address_of_business}</li>
-                        <li><strong>Business Address Status:</strong> ${businessStatus}</li>
-                        <li><strong>Business Telephone:</strong> ${app.telephone_no_business}</li>
-                        <li><strong>Email Address:</strong> ${app.email_address}</li>
-                    </ul>
-                </div>
+            <table width="100%" cellpadding="10" cellspacing="0" border="0">
+                <tr>
+                    <td width="50%" valign="top" style="padding-left: 0;">
+                        <div class="card">
+                            <h3 class="section-title">Business Identity</h3>
+                            
+                            <span class="label">Business Name</span>
+                            <span class="value">${app.business_name}</span>
+                            
+                            <span class="label">Type / Nature</span>
+                            <span class="value">${app.type_of_business} &bull; ${app.nature_of_business}</span>
+                            
+                            <span class="label">Address</span>
+                            <span class="value">${app.address_of_business}</span>
 
-                <h2>Owner Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</li>
-                        <li><strong>Owner Telephone:</strong> ${app.telephone_no_owner}</li>
-                        <li><strong>Owner Address:</strong> ${app.address_owner}</li>
-                    </ul>
-                </div>
+                            <span class="label">Address Status</span>
+                            <span class="value">${businessStatus}</span>
 
-                <h2>Structure & Requirements</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Structure Type:</strong> ${app.type_of_structure}</li>
-                        <li><strong>Number of Employees:</strong> ${app.no_of_employees}</li>
-                        <li><strong>Required Documents:</strong> 
-                            <ul style="padding-left: 20px; margin-top: 5px; list-style-type: disc;"><li>${requirementsList}</li></ul>
-                        </li>
-                        ${fileUploadText}
-                    </ul>
-                </div>
+                            <span class="label">Contact</span>
+                            <span class="value">${app.telephone_no_business} &bull; ${app.email_address || 'N/A'}</span>
+                        </div>
 
-                <h2>Application Status</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Submission Date:</strong> ${app.application_date}</li>
-                        <li><strong>Current Status:</strong> <span class="status-badge">${app.status}</span></li>
-                    </ul>
-                    ${commentsHtml}
-                </div>
+                        <div class="card">
+                            <h3 class="section-title">Ownership</h3>
+                            
+                            <span class="label">Owner Name</span>
+                            <span class="value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
+                            
+                            <span class="label">Owner Contact</span>
+                            <span class="value">${app.telephone_no_owner}</span>
+
+                            <span class="label">Owner Address</span>
+                            <span class="value">${app.address_owner}</span>
+                        </div>
+                    </td>
+                    <td width="50%" valign="top" style="padding-right: 0;">
+                        <div class="card">
+                            <h3 class="section-title">Operations & Docs</h3>
+                            
+                            <span class="label">Structure Type</span>
+                            <span class="value">${app.type_of_structure}</span>
+                            
+                            <span class="label">Number of Employees</span>
+                            <span class="value">${app.no_of_employees}</span>
+                            
+                            <span class="label">Submitted Requirements</span>
+                            <ul style="margin-top: 5px; padding-left: 20px; font-size: 10pt; color: #222;">
+                                ${requirementsHtml}
+                            </ul>
+                            ${fileUploadText}
+                        </div>
+
+                        <div class="card">
+                            <h3 class="section-title">Financial Status</h3>
+                            
+                            <span class="label">Payment Status</span>
+                            <span class="value">${paymentStatus}</span>
+                            
+                            <span class="label">OR Number</span>
+                            <span class="value">${app.or_number || '--'}</span>
+                            
+                            <span class="label">Total Assessment</span>
+                            <span class="value" style="color: #00247C;">${amountDue}</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            ${commentsHtml}
+
+            <div class="footer">
+                Document generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
+                Barangay Business Management System
             </div>
         </body>
         </html>
     `;
 
+    // Trigger Download
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2233,7 +2309,7 @@ const statusTemplates = {
     'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Barangay Hall.",
     'Disapproved': "Your application was disapproved due to: [reason]. You may re-apply once requirements are met.",
     'Additional Requirements': "Some documents are unclear or missing. Please re-upload your DTI and Barangay Clearance.",
-    'Approved': "Your Business Clearance is now ready for pick-up/download."
+    'Approved': "Your Business Clearance is now ready for pick-up."
 };
 
 // Event listener for status change to update textarea with templates
