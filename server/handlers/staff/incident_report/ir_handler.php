@@ -86,31 +86,24 @@ function handleCreateApplication($pdo)
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
-        // Reporting Person Information
+       // Reporting Person Information
         $rpFullName = get_input('rpFullName');
-        $rpLotNo = get_input('rpLotNo');
-        $rpStreet = get_input('rpStreet');
-        $rpAddress = trim($rpLotNo . ' ' . $rpStreet);
+        $rpAddress = get_input('rpAddress'); // Directly grab the textarea
         $rpContact = get_input('rpContact');
         $rpRelationship = get_input('rpRelationship') ?? '';
 
         // Victim Information
         $vicFullName = get_input('vicFullName');
-        $vicLotNo = get_input('vicLotNo');
-        $vicStreet = get_input('vicStreet');
-        $vicAddress = trim($vicLotNo . ' ' . $vicStreet);
+        $vicAddress = get_input('vicAddress'); // Directly grab the textarea
         $vicContact = get_input('vicContact');
         $vicCitizenship = get_input('vicCitizenship');
         $vicGender = get_input('vicGender');
-
         $vicDOB = get_input('vicDOB');
         $vicOccupation = get_input('vicOccupation');
 
         // Suspect Information
         $susFullName = get_input('susFullName') ?? null;
-        $susLotNo = get_input('susLotNo') ?? null;
-        $susStreet = get_input('susStreet') ?? null;
-        $susAddress = ($susLotNo && $susStreet) ? trim($susLotNo . ' ' . $susStreet) : null;
+        $susAddress = get_input('susAddress') ?? null; // Directly grab the textarea
         $susContact = get_input('susContact') ?? null;
         $susGender = get_input('susGender') ?? null;
         $susDescription = get_input('susDescription') ?? '';
@@ -123,8 +116,7 @@ function handleCreateApplication($pdo)
         }
 
         $incidentTimestamp = get_input('incidentTimestamp');
-        $incidentLotNo = get_input('incidentLotNo');
-        $incidentStreet = get_input('incidentStreet');
+        $incidentAddress = get_input('incidentAddress'); // NEW!
         $incidentLatitude = get_input('incidentLatitude');
         $incidentLongitude = get_input('incidentLongitude');
         $description = get_input('description');
@@ -149,17 +141,17 @@ function handleCreateApplication($pdo)
         $witnessDataJson = json_encode($witnessesArray);
 
         // CORRECTED SQL - matches your database schema
-        $sql = "INSERT INTO incident_reports (
+$sql = "INSERT INTO incident_reports (
             rp_full_name, rp_address, rp_contact, rp_relationship,
             vic_full_name, vic_address, vic_contact, vic_citizenship, vic_gender, vic_dob, vic_occupation,
             sus_full_name, sus_address, sus_contact, sus_gender, sus_description,
-            incident_type, incident_timestamp, date_reported, description, 
+            incident_type, incident_timestamp, incident_address, date_reported, description, 
             witness_data_json, latitude, longitude, supabase_user_id
         ) VALUES (
             :rp_full_name, :rp_address, :rp_contact, :rp_relationship,
             :vic_full_name, :vic_address, :vic_contact, :vic_citizenship, :vic_gender, :vic_dob, :vic_occupation,
             :sus_full_name, :sus_address, :sus_contact, :sus_gender, :sus_description,
-            :incident_type, :incident_timestamp, :date_reported, :description,
+            :incident_type, :incident_timestamp, :incident_address, :date_reported, :description,
             :witness_data_json, :latitude, :longitude, :supabase_user_id
         ) RETURNING id";
 
@@ -187,9 +179,10 @@ function handleCreateApplication($pdo)
             ':sus_gender' => $susGender,
             ':sus_description' => $susDescription,
 
-            // Incident Details
+// Incident Details
             ':incident_type' => $incidentType,
             ':incident_timestamp' => $incidentTimestamp,
+            ':incident_address' => $incidentAddress, // Added!
             ':date_reported' => $dateReported,
             ':description' => $description,
 
