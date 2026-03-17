@@ -838,7 +838,7 @@ function loadAnalyticsTab() {
                 data: {
                     labels: labels3,
                     datasets: [{
-                        label: 'DSS Status Distribution',
+                        label: 'DST Status Distribution',
                         data: totals3,
                         backgroundColor: dssColors,
                         borderWidth: 1

@@ -295,6 +295,22 @@ $full_name = getCurrentUserName();
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Management Tab -->
@@ -624,7 +640,7 @@ $full_name = getCurrentUserName();
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Update Incident Status</h2>
-                    <button class="close-btn" onclick="closeModal('openUpdateModal')">&times;</button>
+                    <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                 </div>
                 <form id="updateForm" onsubmit="submitUpdate(event)">
                     <input type="hidden" id="updateReportId" name="id">
