@@ -36,6 +36,7 @@ swalStyle.innerHTML = `
         margin: 1rem 0 !important;
         font-size: 1.05rem !important;
         color: #555 !important;
+        text-align: center !important;
     }
 
     /* Button Spacing */
@@ -1766,6 +1767,7 @@ function createApplication(event) {
 
 /**
  * Creates and opens a dynamic map picker specifically for the "Create" form
+ * (Updated to include Street/Satellite toggle buttons in the header)
  */
 function openMapPicker(target) {
     let modal = document.querySelector('.dynamic-map-modal');
@@ -1774,9 +1776,13 @@ function openMapPicker(target) {
         modal.className = 'modal dynamic-map-modal';
         modal.innerHTML = `
             <div class="modal-content" style="max-width: 900px; width: 90%; height: 85%;">
-                <div class="modal-header">
-                    <h2>Select Incident Location</h2>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0;">Select Incident Location</h2>
+                    <div class="map-picker-controls" style="display: flex; gap: 8px;">
+                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
+                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
+                    </div>
+                    <button type="button" class="close-btn" onclick="this.closest('.modal').remove()" style="margin-left: 15px;">&times;</button>
                 </div>
                 <div id="dynamic-map-container" style="width: 100%; height: calc(100% - 60px); margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
             </div>
@@ -1789,120 +1795,194 @@ function openMapPicker(target) {
 }
 
 /**
- * Initializes the map, draws the barangay boundary, and fetches clickable 
- * house polygons from the database schema to auto-fill addresses.
+ * Initializes the map, dynamically fetches barangay boundary & clickable house polygons,
+ * and includes a street/satellite toggle.
  */
-function initializeMapPicker(containerId, target) {
+async function initializeMapPicker(containerId, target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
+    // 1. Clean up existing Leaflet instance if reopening modal
     const container = document.getElementById(containerId);
     if (container._leaflet_id) {
         container._leaflet_id = null;
         container.innerHTML = '';
     }
 
+    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    });
+    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri World Imagery'
+    });
+
     const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
+    osmTile.addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+    // Match main map color system
+    const POLY_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
+    };
+    const BOUND_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
+    };
 
-    let marker = null;
+    let currentMode = 'street';
+    let housePolygons = [];
+    let boundaryLayers = [];
+    let selectedMarker = null;
 
-    // 1. Fallback: Manual map click for areas without a house polygon
+    function applyColors(mode) {
+        housePolygons.forEach(p => p.setStyle(POLY_COLORS[mode]));
+        boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
+    }
+
+    // Street / Satellite toggle listeners
+    const streetBtn = document.getElementById('picker-street-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
+    if (streetBtn && satBtn) {
+        streetBtn.addEventListener('click', () => {
+            map.removeLayer(satTile); osmTile.addTo(map);
+            currentMode = 'street'; applyColors('street');
+            streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
+        });
+        satBtn.addEventListener('click', () => {
+            map.removeLayer(osmTile); satTile.addTo(map);
+            currentMode = 'satellite'; applyColors('satellite');
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
+        });
+    }
+
+    // Manual click fallback for areas without polygons
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
-
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Map Location').openPopup();
-
+        
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        
+        selectedMarker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .openPopup();
+            
         document.getElementById('incidentLatitude').value = lat;
         document.getElementById('incidentLongitude').value = lng;
     });
 
-    // 2. Barangay Boundary (Visual Guide)
-    const blueRidgeGeoJSON = {
-        "type": "FeatureCollection",
-        "features": [{
-            "type": "Feature",
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [121.07278956348526, 14.61639406374255], [121.07392145567032, 14.61595803532421], [121.07419772320655, 14.616251316435923], [121.07617987565104, 14.616430399403944], [121.07651515177966, 14.617647640629082], [121.07800914220171, 14.617803363969443], [121.07872851395038, 14.617316502559932], [121.07891090415784, 14.617705811277993], [121.07449698388697, 14.62017411386342]
-                ]]
-            }
-        }]
-    };
-    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.1 } }).addTo(map);
-
-    // 3. Fetch House Polygons from the schema
-    const formData = new FormData();
-    formData.append('action', 'get_houses'); // Ensure map_handler.php handles this
-    
-    fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success && data.houses) {
-            const houseLayer = L.layerGroup();
-            
-            data.houses.forEach(house => {
-                if (house.coordinates) {
-                    try {
-                        // Parse JSONB coordinates
-                        const coords = typeof house.coordinates === 'string' ? JSON.parse(house.coordinates) : house.coordinates;
-                        
-                        // Leaflet uses [lat, lng], but PostGIS/GeoJSON usually outputs [lng, lat]
-                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                        
-                        // Draw the clickable house polygon
-                        const polygon = L.polygon(latLngCoords, { 
-                            color: '#28a745', 
-                            weight: 2, 
-                            fillColor: '#28a745', 
-                            fillOpacity: 0.4 
-                        }).addTo(houseLayer);
-                        
-                        // Click event specifically for the house
-                        polygon.on('click', function(e) {
-                            // Prevent the click from bleeding through to the underlying map
-                            L.DomEvent.stopPropagation(e); 
-                            
-                            // Use schema's center_lat/center_lng if available, otherwise use click location
-                            const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
-                            const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                            
-                            if (marker) map.removeLayer(marker);
-                            
-                            // Set marker and popup using the schema's address
-                            const displayAddress = house.address || `${house.house_number || ''} ${house.street_name || ''}`.trim() || 'Selected House';
-                            marker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>Location Selected:</b><br>${displayAddress}`).openPopup();
-                            
-                            // Auto-fill Incident Coordinates
-                            document.getElementById('incidentLatitude').value = lat;
-                            document.getElementById('incidentLongitude').value = lng;
-
-                            // Auto-fill Incident Address
-                            let formattedAddress = house.address;
-                            if (!formattedAddress) {
-                                const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
-                                const street = house.street_name ? `${house.street_name}, ` : '';
-                                formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
-                            }
-                            document.getElementById('incidentAddress').value = formattedAddress;
-                        });
-                    } catch(e) {
-                        console.error('Error parsing house polygon coordinates:', e);
-                    }
-                }
+    // Fetch and draw Barangay Boundaries from DB
+    try {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
+        });
+        const bData = await bRes.json();
+        
+        if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
+            bData.boundaries.forEach(b => {
+                try {
+                    const coords = JSON.parse(b.coordinates);
+                    const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    boundaryLayers.push(layer);
+                } catch (err) { console.error('Boundary parse error:', err); }
             });
+        }
+    } catch (err) { console.error('Failed to load boundaries:', err); }
+
+    // Fetch and draw House Polygons from DB
+    try {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
+        });
+        const hData = await hRes.json();
+
+        if (hData.success && hData.houses) {
+            const houseLayer = L.layerGroup();
+
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                
+                try {
+                    const coords = JSON.parse(house.coordinates);
+                    // Normalize: unwrap GeoJSON array-of-rings
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const latLngs = ring.map(c => [c[1], c[0]]);
+                    
+                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
+                    housePolygons.push(polygon);
+
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const subtitleHtml = house.street_name 
+                        ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
+                    const addrHtml = (!isLandmark && house.address) 
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                    const streetHtml = house.street_name 
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
+
+                    const popupHtml = 
+                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
+                        '</div>' + addrHtml + streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '</div>';
+
+                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
+
+                    polygon.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+
+                        if (selectedMarker) map.removeLayer(selectedMarker);
+                        
+                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
+                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                        const selAddr = (!isLandmarkSel && house.address) 
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                        const selStreet = house.street_name 
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
+                            
+                        const selPopup = 
+                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' + selAddr + selStreet +
+                            '</div>';
+                            
+                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
+
+                        // 1. Auto-fill Coordinates
+                        document.getElementById('incidentLatitude').value = lat;
+                        document.getElementById('incidentLongitude').value = lng;
+
+                        // 2. Auto-fill Incident Address dynamically
+                        let formattedAddress = house.address;
+                        if (!formattedAddress) {
+                            const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                            const street = house.street_name ? `${house.street_name}, ` : '';
+                            formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                        }
+                        const addressInput = document.getElementById('incidentAddress');
+                        if (addressInput) {
+                            addressInput.value = formattedAddress;
+                        }
+                    });
+
+                    polygon.addTo(houseLayer);
+                } catch (err) { console.error('House parse error:', err); }
+            });
+
             houseLayer.addTo(map);
         }
-    })
-    .catch(err => console.error('Failed to load house polygons:', err));
+    } catch (err) { console.error('Failed to load houses:', err); }
     
-    // Fix rendering bug when Leaflet opens inside a modal
+    // Fix rendering bug when Leaflet opens inside a display:none modal
     setTimeout(() => map.invalidateSize(), 300);
 }
 
