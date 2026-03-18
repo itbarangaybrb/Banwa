@@ -1556,7 +1556,6 @@ h2 {
 
 /* Summary: controls non-scrolling */
 #summary .summary-controls {
-    margin-left: 70px;
     /* align with content */
     margin-top: 10px;
     flex-shrink: 0;
