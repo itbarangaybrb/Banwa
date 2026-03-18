@@ -388,10 +388,10 @@ function displayDetailsInModal(data, type) {
             detailRow('Date Reported', formatDate(data.date_reported)),
             detailRow('Description', data.description || 'Not specified'),
             detailRow('Status', `<span style="color:${statusColor};font-weight:700;">${data.status || 'Pending'}</span>`),
-            detailRow('DSS Status', `<span style="color:${dssColor};font-weight:700;">${data.dss_status || 'Pending Evaluation'}</span>`),
+            detailRow('Evaluation Status', `<span style="color:${dssColor};font-weight:700;">${data.dss_status || 'Pending Evaluation'}</span>`),
             // ── Victim ──
             `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Victim</td></tr>`,
-            detailRow('Full Name', data.vic_full_name || 'Not specified'),
+            detailRow('Full Name', data.vic_full_name || data.rp_full_name || 'Not specified'),
             detailRow('Address', data.vic_address || 'Not specified'),
             detailRow('Contact', data.vic_contact || 'Not specified'),
             detailRow('Gender', data.vic_gender || 'Not specified'),
@@ -1533,12 +1533,12 @@ function createIncidentPopup(data) {
                 <p><strong>Description:</strong> ${data.description ? data.description.substring(0, 80) + (data.description.length > 80 ? '…' : '') : ''}</p>
             </div>
             <div class="popup-section">
-                <p><strong>Victim:</strong> ${data.vic_full_name || 'Not specified'}</p>
+                <p><strong>Victim:</strong> ${data.vic_full_name || data.rp_full_name || 'Not specified'}</p>
                 <p><strong>Reporter:</strong> ${data.rp_full_name || 'Not specified'}</p>
             </div>
             <div class="popup-section">
                 <p><strong>Status:</strong> <span style="color:${statusColor};font-weight:600;">${data.status || 'Pending'}</span></p>
-                <p><strong>DSS:</strong> <span style="color:${dssColor};font-weight:600;">${data.dss_status || 'Pending Evaluation'}</span></p>
+                <p><strong>Evaluation:</strong> <span style="color:${dssColor};font-weight:600;">${data.dss_status || 'Pending Evaluation'}</span></p>
             </div>
             <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'incident')">
                 View Full Details
@@ -2625,7 +2625,7 @@ async function showIncidentSummaryReport() {
                     <div><strong>Reporter:</strong> ${inc.rp_full_name || '—'}</div>
                     <div><strong>Location:</strong> ${inc.vic_address || inc.rp_address || '—'}</div>
                     <div><strong>Date:</strong> ${formatDate(inc.incident_timestamp)}</div>
-                    <div><strong>DSS:</strong> ${inc.dss_status || 'Pending'}</div>
+                    <div><strong>Evaluation:</strong> ${inc.dss_status || 'Pending'}</div>
                     <div><strong>Status:</strong> <span style="color:${sColor};font-weight:700;">${inc.status || 'Pending'}</span></div>
                 </div>
                 ${inc.description ? `<div style="background:#f8f8f8;border-left:3px solid #cc0000;padding:8px 10px;border-radius:4px;font-size:12px;color:#555;">${inc.description}</div>` : ''}`;
