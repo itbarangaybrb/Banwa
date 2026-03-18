@@ -567,24 +567,56 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
  * Validates agreement checkbox and populates summary display with all form data
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    const lat = document.getElementById('latitude2').value;
-    const lng = document.getElementById('longitude2').value;
+    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
 
-    if (validateField({ el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' })) {
-        document.getElementById('sumBusinessName').textContent = businessName.value;
-        document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
-        document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
-        document.getElementById('sumBusinessStatus').textContent = (Array.from(businessStatus).find(r => r.checked)?.value === 'Others' ? businessStatusSpecify.value : Array.from(businessStatus).find(r => r.checked)?.value || '').trim();
-        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
-        document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
-        document.getElementById('sumEmail').textContent = emailAddress.value;
-        document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
-        document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
-        document.getElementById('sumAddressOwner').textContent = addressOwner.value;
-        document.getElementById('sumStructureType').textContent = (typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify.value : typeOfStructureSelect.value).trim();
-        document.getElementById('sumRequirements').textContent = Array.from(requirements).filter(r => r.checked).map(r => r.value).join(', ');
-        document.getElementById('sumEmployees').textContent = noOfEmployees.value;
-        document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
+    // Handle "other" incident type with custom specification
+    if (incidentType.value === 'other') {
+        if (!otherIncidentType.value.trim()) {
+            validator.text(otherIncidentType, 'Please specify the incident type');
+            return;
+        }
+    }
+
+    if (!validateStep(stepFields)) return;
+
+    // Populate summary display with all collected data
+    document.getElementById('sumRpFullName').textContent = rpFullName.value;
+    document.getElementById('sumRpAddress').textContent = rpAddress.value;
+    document.getElementById('sumRpContact').textContent = rpContact.value;
+    document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
+
+    if (victimSameAsRP.checked) {
+        document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicContact').textContent = 'Same as Reporting Person';
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
+    } else {
+        document.getElementById('sumVicFullName').textContent = vicFullName.value;
+        document.getElementById('sumVicAddress').textContent = vicAddress.value;
+        document.getElementById('sumVicContact').textContent = vicContact.value;
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
+    }
+
+    document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
+    document.getElementById('sumSusAddress').textContent = susAddress.value || 'Not specified';
+    document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
+    document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
+    document.getElementById('sumSusDescription').textContent = susDescription.value;
+
+    document.getElementById('sumIncidentType').textContent =
+        incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
+    document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
+    document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
+    document.getElementById('sumIncidentCoordinates').textContent =
+        incidentLatitude.value && incidentLongitude.value ?
+            `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
+    document.getElementById('sumDescription').textContent = description.value;
 
         switchPanel('summary');
     }
