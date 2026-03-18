@@ -534,18 +534,18 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
         document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
         document.getElementById('sumVicContact').textContent = 'Same as Reporting Person';
-        document.getElementById('sumVicCitizenship').textContent = 'N/A';
-        document.getElementById('sumVicGender').textContent = 'N/A';
-        document.getElementById('sumVicDOB').textContent = 'N/A';
-        document.getElementById('sumVicOccupation').textContent = 'N/A';
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
     } else {
         document.getElementById('sumVicFullName').textContent = vicFullName.value;
         document.getElementById('sumVicAddress').textContent = vicAddress.value;
         document.getElementById('sumVicContact').textContent = vicContact.value;
-        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value;
-        document.getElementById('sumVicGender').textContent = vicGender.value;
-        document.getElementById('sumVicDOB').textContent = vicDOB.value;
-        document.getElementById('sumVicOccupation').textContent = vicOccupation.value;
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
     }
 
     document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
