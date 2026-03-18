@@ -732,8 +732,8 @@ function sendWebSocketUpdate(appType, appId, action = 'update') {
                 break;
 
             case 'Incident Reports':
-                socketType = 'incident_reports';
-                messageType = 'incident_reports_update';
+                socketType = 'incident_reports_applications';
+                messageType = 'incident_reports_applications_update';
                 break;
 
             case 'payment':
@@ -1372,6 +1372,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sockets["utility_applications"]) {
         initSocket("utility_applications", "ws://localhost:8081", data => {
             if (data.type === "utility_applications_update") {
+                loadApplications();
+                checkStatusUpdates();
+            }
+        });
+    }
+
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => {
+            if (data.type === "incident_report_applications_update") {
                 loadApplications();
                 checkStatusUpdates();
             }

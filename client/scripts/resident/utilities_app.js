@@ -619,10 +619,14 @@ async function initializeMapPicker(target) {
     const defaultLng = 121.0756;
 
     const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        maxNativeZoom: 19,
+        maxZoom: 22
     });
     const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri World Imagery'
+        attribution: '© Esri World Imagery',
+        maxNativeZoom: 19,
+        maxZoom: 22
     });
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
@@ -689,6 +693,36 @@ async function initializeMapPicker(target) {
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
                     const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
+                    // ── Boundary lock: mirrors map.js setupSoftBoundary ──────────────
+                    try {
+                        const _bounds     = layer.getBounds();
+                        const _soft       = _bounds.pad(0.15);
+                        const _warn       = _bounds.pad(0.05);
+                        const _hard       = _bounds.pad(0.25);
+                        map.setMinZoom(18);
+                        map.setMaxZoom(22);
+                        map.setMaxBounds(_hard);
+                        let _bTimer;
+                        map.on('move', function () {
+                            clearTimeout(_bTimer);
+                            if (!_warn.contains(map.getCenter())) {
+                                _bTimer = setTimeout(function () {
+                                    const c   = map.getCenter();
+                                    const lat = Math.max(_warn.getSouth(), Math.min(_warn.getNorth(), c.lat));
+                                    const lng = Math.max(_warn.getWest(),  Math.min(_warn.getEast(),  c.lng));
+                                    map.flyTo([lat, lng], map.getZoom(), { duration: 1, easeLinearity: 0.25 });
+                                }, 800);
+                            }
+                        });
+                        map.on('moveend', function () {
+                            const c = map.getCenter();
+                            if (!_soft.contains(c)) {
+                                const lat = Math.max(_soft.getSouth(), Math.min(_soft.getNorth(), c.lat));
+                                const lng = Math.max(_soft.getWest(),  Math.min(_soft.getEast(),  c.lng));
+                                map.panTo([lat, lng], { animate: true, duration: 0.5 });
+                            }
+                        });
+                    } catch (_le) { console.warn('Boundary lock error:', _le); }
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
         }
