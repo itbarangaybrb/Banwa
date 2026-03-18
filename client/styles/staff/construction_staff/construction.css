@@ -1538,8 +1538,8 @@ h2 {
 
 /* Create: createForm scrolls */
 #create #createForm,
-#createStaffForm {
-    /* margin-left: 70px; align with content */
+#createStaffForm, #createIncidentForm {
+    /* margin-left: 70px; */
     flex: 1 1 auto;
     overflow-y: auto !important;
     min-height: 0;

@@ -1,3 +1,4 @@
+import { initSocket, sockets } from '/client/scripts/utils/socketUtils.js';
 const MAP_HANDLER_URL = '/server/handlers/map/map_handler.php';
 
 // Map variables
@@ -3815,6 +3816,40 @@ function buildEvalPopup(ev, sc, pct) {
         </div>`;
 }
 
+// ==================== WEBSOCKET LISTENER FOR BUSINESS APPLICATIONS ====================
+if (!sockets["business_applications"]) {
+    initSocket("business_applications", "ws://localhost:8081", data => {
+        if (data.type === "business_applications_update") {
+            loadAllMarkers();
+            showBoundaryMessage("New business application added to map");
+        }
+    });
+}
+if (!sockets["incident_reports"]) {
+    initSocket("incident_reports", "ws://localhost:8081", data => {
+        if (data.type === "incident_reports_update") {
+            loadAllMarkers();
+            showBoundaryMessage("New incident_reports application added to map");
+        }
+    });
+}
+if (!sockets["construction_applications"]) {
+    initSocket("construction_applications", "ws://localhost:8081", data => {
+        if (data.type === "construction_applications_update") {
+            loadAllMarkers();
+            showBoundaryMessage("New construction application added to map");
+        }
+    });
+}
+if (!sockets["utility_applications"]) {
+    initSocket("utility_applications", "ws://localhost:8081", data => {
+        if (data.type === "utility_applications_update") {
+            loadAllMarkers();
+            showBoundaryMessage("New utility application added to map");
+        }
+    });
+}
+
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;
 window.showFaultLineRiskAssessment = showFaultLineRiskAssessment;
@@ -3830,8 +3865,49 @@ window.showIncidentSummaryReport = showIncidentSummaryReport;
 window.filterIncidentByType = filterIncidentByType;
 window.loadIncidentSubFilters = loadIncidentSubFilters;
 
-// Popup detail button handlers - must be on window so Leaflet popup onclick attributes can reach them
+// Filter and dropdown functions
+window.toggleFilterDropdown = toggleFilterDropdown;
+window.selectFilterType = selectFilterType;
+window.toggleFloodLayer = toggleFloodLayer;
+window.toggleFaultLine = toggleFaultLine;
+window.filterConstructionByType = filterConstructionByType;
+window.toggleConstructionFilters = toggleConstructionFilters;
+window.toggleIncidentFilters = toggleIncidentFilters;
+
+// Map control functions
+window.toggleStreetMap = toggleStreetMap;
+window.toggleSatellite = toggleSatellite;
+window.resetView = resetView;
+
+// Search functions
+window.clearSearch = clearSearch;
+window.performSearch = performSearch;
+window.handleSearchInput = handleSearchInput;
+window.highlightSearchResult = highlightSearchResult;
+window.removeActiveSearchMarker = removeActiveSearchMarker;
+
+// Navigation and UI functions
+window.toggleMobileMenu = toggleMobileMenu;
+window.setActiveNav = setActiveNav;
+window.updateDateTime = updateDateTime;
+window.initDateTime = initDateTime;
+window.showBoundaryMessage = showBoundaryMessage;
+
+// Popup detail button handlers (for Leaflet popups)
 window.viewMapDetails = viewMapDetails;
 window.viewFloodDetails = viewFloodDetails;
 window.viewHouseDetails = viewHouseDetails;
 window.closeModal = closeModal;
+
+// Helper functions that might be needed
+window.formatDate = formatDate;
+window.getFloodRiskColor = getFloodRiskColor;
+window.getFloodSafetyAdvice = getFloodSafetyAdvice;
+window.shouldShowConstructionMarker = shouldShowConstructionMarker;
+window.shouldShowIncidentMarker = shouldShowIncidentMarker;
+
+// Debug functions
+window.debugFloodState = debugFloodState;
+
+// Tab switching function (for rules report)
+window.switchRulesTab = switchRulesTab;

@@ -984,3 +984,23 @@ Stack trace:
 [16-Mar-2026 13:43:06 UTC] R1 Check - Required: []
 [16-Mar-2026 13:43:06 UTC] R1 Check - Submitted: ["Lease Contract"]
 [16-Mar-2026 13:43:06 UTC] R1 Check - Missing: []
+[17-Mar-2026 16:45:26 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[17-Mar-2026 16:45:26 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[17-Mar-2026 16:45:39 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[17-Mar-2026 16:45:39 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[17-Mar-2026 16:45:41 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["TCT"],"allVerified":false}}
+[17-Mar-2026 16:45:41 UTC] R1 Check - Required: []
+[17-Mar-2026 16:45:41 UTC] R1 Check - Submitted: ["TCT"]
+[17-Mar-2026 16:45:41 UTC] R1 Check - Missing: []
+[17-Mar-2026 16:45:41 UTC] R1 Check - Required: []
+[17-Mar-2026 16:45:41 UTC] R1 Check - Submitted: ["TCT"]
+[17-Mar-2026 16:45:41 UTC] R1 Check - Missing: []
+[17-Mar-2026 16:49:33 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[17-Mar-2026 16:49:33 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[17-Mar-2026 16:49:35 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["TCT"],"allVerified":false}}
+[17-Mar-2026 16:49:35 UTC] R1 Check - Required: []
+[17-Mar-2026 16:49:35 UTC] R1 Check - Submitted: ["TCT"]
+[17-Mar-2026 16:49:35 UTC] R1 Check - Missing: []
+[17-Mar-2026 16:49:35 UTC] R1 Check - Required: []
+[17-Mar-2026 16:49:35 UTC] R1 Check - Submitted: ["TCT"]
+[17-Mar-2026 16:49:35 UTC] R1 Check - Missing: []

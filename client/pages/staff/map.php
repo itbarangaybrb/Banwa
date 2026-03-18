@@ -225,7 +225,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="../../scripts/staff/map.js"></script>
+    <script type="module" src="../../scripts/staff/map.js"></script>
 
 </body>
 

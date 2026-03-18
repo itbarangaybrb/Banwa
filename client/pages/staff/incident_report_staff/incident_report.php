@@ -386,7 +386,7 @@ $full_name = getCurrentUserName();
                     <h2>Create New Incident Report</h2>
                     <p class="form-description">Fill in the details to create a new incident report</p>
                 </div>
-                <form id="createForm" onsubmit="createApplication(event)">
+                <form id="createIncidentForm" onsubmit="createApplication(event)">
                     <div class="section-title">Reporting Person Information</div>
                     <div class="form-row">
                         <div class="form-group">
@@ -741,7 +741,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="../../../scripts/staff/map.js"></script>
+    <script type="module" src="../../../scripts/staff/map.js"></script>
 
     <script type="module" src="../../../scripts/staff/incident_report_staff/incident_report.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
