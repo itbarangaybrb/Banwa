@@ -1556,7 +1556,6 @@ h2 {
 
 /* Summary: controls non-scrolling */
 #summary .summary-controls {
-    margin-left: 70px;
     /* align with content */
     margin-top: 10px;
     flex-shrink: 0;
@@ -1685,6 +1684,11 @@ h2 {
     /* Matches your brand blue */
 }
 
+#summaryPlaceholder {
+    color: #555 !important;
+    font-size: 1.1rem !important;
+    margin: 50px !important;
+}
 /* Space out the sub-text */
 .custom-swal-text {
     margin-bottom: 2rem !important;
