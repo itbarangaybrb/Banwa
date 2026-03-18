@@ -865,15 +865,104 @@ function submitUpdate(event) {
         });
 };
 
+/**
+ * Generates a downloadable incident report document in HTML format
+ * Creates a formatted report with all incident details for printing/saving
+ */
+// function generateReportDocument() {
+//     const downloadBtn = document.getElementById('downloadBtn');
+
+//     if (downloadBtn) {
+
+//         downloadBtn.addEventListener('click', () => {
+//             // Create a simple HTML document for the report
+//             const reportHTML = `
+//                 <!DOCTYPE html>
+//                 <html>
+//                 <head>
+//                     <meta charset="UTF-8">
+//                     <title>Incident Report - ${new Date().toLocaleDateString()}</title>
+//                     <style>
+//                         body { font-family: Arial, sans-serif; margin: 40px; }
+//                         h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+//                         .section { margin: 20px 0; }
+//                         .section h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+//                         .field { margin: 5px 0; }
+//                         .label { font-weight: bold; }
+//                     </style>
+//                 </head>
+//                 <body>
+//                     <h1>Incident Report</h1>
+//                     <div class="section">
+//                         <h2>Reporting Person</h2>
+//                         <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
+//                         <div class="field"><span class="label">Address:</span> ${rpAddress.value}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
+//                         <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Victim Details</h2>
+//                         ${victimSameAsRP.checked ?
+//                     '<div class="field">Same as Reporting Person</div>' :
+//                     `
+//                             <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
+//                             <div class="field"><span class="label">Address:</span> ${vicAddress.value}</div>
+//                             <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
+//                             <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
+//                             <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
+//                             <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
+//                             <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
+//                             `
+//                 }
+//                     </div>
+//                     <div class="section">
+//                         <h2>Suspect Details</h2>
+//                         <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Address:</span> ${susAddress.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Incident Details</h2>
+//                         <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
+//                         <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
+//                         <div class="field"><span class="label">Location:</span> ${incidentAddress.value}</div>
+//                         <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${description.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Report Information</h2>
+//                         <div class="field"><span class="label">Date Reported:</span> ${new Date().toLocaleString()}</div>
+//                     </div>
+//                 </body>
+//                 </html>
+//             `;
+
+//             // Create and download the file as a Word document
+//             const blob = new Blob([reportHTML], { type: 'application/msword' });
+//             const url = URL.createObjectURL(blob);
+//             const a = document.createElement('a');
+//             a.href = url;
+//             a.download = `Incident_Report_${new Date().toISOString().split('T')[0]}.doc`;
+//             document.body.appendChild(a);
+//             a.click();
+//             document.body.removeChild(a);
+//             URL.revokeObjectURL(url);
+//         });
+//     }
+// }
+
 
 /**
  * Displays detailed incident information in a modal view
- * 
- * @param {number} appId - The incident ID to view details for
+ * * @param {number} appId - The incident ID to view details for
  */
 function viewDetails(appId) {
     const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
+
+    // REMOVED: generateReportDocument(); (No longer needed)
 
     const incidentLocation = incident.incident_location || 'Not specified';
 
@@ -938,6 +1027,15 @@ function viewDetails(appId) {
                     <div class="detail-row"><span class="detail-label">Description</span> <span class="detail-value">${incident.sus_description || 'N/A'}</span></div>
                 </div>
                 ` : ''}
+
+                <div class="detail-card" style="margin-top:20px; border-color: #c3e6cb;">
+                    <section id="reportOutput">
+                        <p style="margin-bottom: 10px; color: #555;">Click the button below to download the report file.</p>
+                        <button class="btn-primary" onclick="downloadSummary(${incident.id})">
+                            <i class="fas fa-download"></i> Download Report (.doc)
+                        </button>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -960,8 +1058,9 @@ function viewDetails(appId) {
             <div class="detail-row"><span class="detail-label">DST Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
         </div>
         ` : ''}
+
     </div>
-`;
+    `;
 
     document.getElementById('modalBody').innerHTML = content;
     openModal('detailsModal');
@@ -1469,11 +1568,342 @@ function formatDateTime(dateString) {
 
 
 /**
- * Creates a new incident report
+ * DOM event listeners for the "Create New" Incident form toggles and inputs
+ */
+let witnessCount = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Victim same as RP toggle logic
+    const victimSameAsRP = document.getElementById('victimSameAsRP');
+    if (victimSameAsRP) {
+        victimSameAsRP.addEventListener('change', function () {
+            // The specific fields we want to hide/show
+            const fieldsToToggle = ['vicFullName', 'vicContact', 'vicAddress'];
+            
+            fieldsToToggle.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    // Find the parent .form-group wrapper
+                    const wrapper = input.closest('.form-group');
+                    
+                    if (this.checked) {
+                        if (wrapper) wrapper.style.display = 'none';
+                        input.removeAttribute('required');
+                    } else {
+                        if (wrapper) wrapper.style.display = ''; // Reverts to CSS default
+                        input.setAttribute('required', 'required');
+                    }
+                }
+            });
+        });
+    }
+
+    // 2. Add Witness Logic
+    const addWitnessBtn = document.getElementById('addWitnessBtn');
+    if (addWitnessBtn) {
+        addWitnessBtn.addEventListener('click', () => {
+            witnessCount++;
+            const container = document.getElementById('witnessesContainer');
+            const div = document.createElement('div');
+            div.className = 'witness-group form-row';
+            div.style.marginBottom = '15px';
+            div.style.padding = '20px';
+            div.style.border = '1px solid #e0e0e0';
+            div.style.borderRadius = '6px';
+            div.style.background = '#f9f9f9';
+            div.style.position = 'relative';
+
+            div.innerHTML = `
+                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
+                    <strong style="color: #333;">Witness ${witnessCount}</strong>
+                    <button type="button" class="btn-secondary" style="padding: 4px 10px; color: #dc3545; border-color: #dc3545; background: transparent;" onclick="this.closest('.witness-group').remove()"><i class="fas fa-times"></i> Remove</button>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="witness-name" placeholder="Full Name">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" class="witness-contact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Complete Address</label>
+                    <input type="text" class="witness-address" placeholder="Complete Address">
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Contact input digit sanitizer
+            const contactInput = div.querySelector('.witness-contact');
+            if (contactInput) {
+                contactInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+    }
+
+    // 3. Incident Type "Other" logic
+    const incidentType = document.getElementById('incidentType');
+    if (incidentType) {
+        incidentType.addEventListener('change', function () {
+            const otherContainer = document.getElementById('otherSpecifyContainer');
+            const otherInput = document.getElementById('otherIncidentType');
+            if (this.value === 'other') {
+                otherContainer.classList.remove('hidden');
+                otherInput.setAttribute('required', 'required');
+            } else {
+                otherContainer.classList.add('hidden');
+                otherInput.removeAttribute('required');
+                otherInput.value = '';
+            }
+        });
+    }
+
+    // 4. Sanitizer for built-in phone fields
+    ['rpContact', 'vicContact', 'susContact'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
+    });
+});
+
+/**
+ * Main form submission handler for creating reports internally
  */
 function createApplication(event) {
     event.preventDefault();
-    alert('Create functionality not implemented yet');
+
+    incidentAlertConfig.fire({
+        title: 'Create Incident Report?',
+        text: 'Are you sure you want to submit this new report?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
+        confirmButtonText: 'Yes, submit',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('createForm');
+            const formData = new FormData(form);
+
+            formData.append('action', 'create');
+            formData.append('supabase_user_id', 'staff_internal_' + Date.now()); // Internal placeholder
+            formData.append('dateReported', new Date().toISOString());
+
+            // Handle Victim Same As RP
+            const isSame = document.getElementById('victimSameAsRP').checked;
+            if (isSame) {
+                formData.set('vicFullName', formData.get('rpFullName'));
+                formData.set('vicAddress', formData.get('rpAddress'));
+                formData.set('vicContact', formData.get('rpContact'));
+            }
+
+            // Correctly format witnesses array for PHP processing: `witnesses[0][name]`
+            let witnessIdx = 0;
+            document.querySelectorAll('.witness-group').forEach((group) => {
+                const name = group.querySelector('.witness-name').value;
+                const address = group.querySelector('.witness-address').value;
+                const contact = group.querySelector('.witness-contact').value;
+
+                if (name || address || contact) {
+                    formData.append(`witnesses[${witnessIdx}][name]`, name);
+                    formData.append(`witnesses[${witnessIdx}][address]`, address);
+                    formData.append(`witnesses[${witnessIdx}][contact]`, contact);
+                    witnessIdx++;
+                }
+            });
+
+            // Handle "Other" incident type
+            const incidentTypeVal = document.getElementById('incidentType').value;
+            if (incidentTypeVal === 'other') {
+                formData.set('incidentType', document.getElementById('otherIncidentType').value);
+            }
+
+            Swal.showLoading();
+
+            fetch(IR_HANDLER_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    incidentAlertConfig.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Incident Report Created! ID: ' + data.id
+                    }).then(() => {
+                        // Reset form state
+                        form.reset();
+                        document.getElementById('witnessesContainer').innerHTML = '';
+                        document.getElementById('victimDetailsContainer').style.display = 'grid';
+                        document.getElementById('otherSpecifyContainer').classList.add('hidden');
+                        
+                        // Notify system and reload
+                        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+                            sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                        }
+                        loadManagementTable();
+                        switchTab(null, 'management');
+                    });
+                } else {
+                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
+                }
+            })
+            .catch(err => {
+                console.error('Submit error:', err);
+                incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
+            });
+        }
+    });
+}
+
+/**
+ * Creates and opens a dynamic map picker specifically for the "Create" form
+ */
+function openMapPicker(target) {
+    let modal = document.querySelector('.dynamic-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal dynamic-map-modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 900px; width: 90%; height: 85%;">
+                <div class="modal-header">
+                    <h2>Select Incident Location</h2>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div id="dynamic-map-container" style="width: 100%; height: calc(100% - 60px); margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.classList.add('active');
+    initializeMapPicker('dynamic-map-container', target);
+}
+
+/**
+ * Initializes the map, draws the barangay boundary, and fetches clickable 
+ * house polygons from the database schema to auto-fill addresses.
+ */
+function initializeMapPicker(containerId, target) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
+
+    const container = document.getElementById(containerId);
+    if (container._leaflet_id) {
+        container._leaflet_id = null;
+        container.innerHTML = '';
+    }
+
+    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker = null;
+
+    // 1. Fallback: Manual map click for areas without a house polygon
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Map Location').openPopup();
+
+        document.getElementById('incidentLatitude').value = lat;
+        document.getElementById('incidentLongitude').value = lng;
+    });
+
+    // 2. Barangay Boundary (Visual Guide)
+    const blueRidgeGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [121.07278956348526, 14.61639406374255], [121.07392145567032, 14.61595803532421], [121.07419772320655, 14.616251316435923], [121.07617987565104, 14.616430399403944], [121.07651515177966, 14.617647640629082], [121.07800914220171, 14.617803363969443], [121.07872851395038, 14.617316502559932], [121.07891090415784, 14.617705811277993], [121.07449698388697, 14.62017411386342]
+                ]]
+            }
+        }]
+    };
+    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.1 } }).addTo(map);
+
+    // 3. Fetch House Polygons from the schema
+    const formData = new FormData();
+    formData.append('action', 'get_houses'); // Ensure map_handler.php handles this
+    
+    fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.houses) {
+            const houseLayer = L.layerGroup();
+            
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        // Parse JSONB coordinates
+                        const coords = typeof house.coordinates === 'string' ? JSON.parse(house.coordinates) : house.coordinates;
+                        
+                        // Leaflet uses [lat, lng], but PostGIS/GeoJSON usually outputs [lng, lat]
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        
+                        // Draw the clickable house polygon
+                        const polygon = L.polygon(latLngCoords, { 
+                            color: '#28a745', 
+                            weight: 2, 
+                            fillColor: '#28a745', 
+                            fillOpacity: 0.4 
+                        }).addTo(houseLayer);
+                        
+                        // Click event specifically for the house
+                        polygon.on('click', function(e) {
+                            // Prevent the click from bleeding through to the underlying map
+                            L.DomEvent.stopPropagation(e); 
+                            
+                            // Use schema's center_lat/center_lng if available, otherwise use click location
+                            const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                            const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+                            
+                            if (marker) map.removeLayer(marker);
+                            
+                            // Set marker and popup using the schema's address
+                            const displayAddress = house.address || `${house.house_number || ''} ${house.street_name || ''}`.trim() || 'Selected House';
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>Location Selected:</b><br>${displayAddress}`).openPopup();
+                            
+                            // Auto-fill Incident Coordinates
+                            document.getElementById('incidentLatitude').value = lat;
+                            document.getElementById('incidentLongitude').value = lng;
+
+                            // Auto-fill Incident Address
+                            let formattedAddress = house.address;
+                            if (!formattedAddress) {
+                                const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                                const street = house.street_name ? `${house.street_name}, ` : '';
+                                formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                            }
+                            document.getElementById('incidentAddress').value = formattedAddress;
+                        });
+                    } catch(e) {
+                        console.error('Error parsing house polygon coordinates:', e);
+                    }
+                }
+            });
+            houseLayer.addTo(map);
+        }
+    })
+    .catch(err => console.error('Failed to load house polygons:', err));
+    
+    // Fix rendering bug when Leaflet opens inside a modal
+    setTimeout(() => map.invalidateSize(), 300);
 }
 
 /**
@@ -1756,6 +2186,8 @@ document.addEventListener('click', (e) => {
 // ===============================================
 // EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
 // ===============================================
+window.createApplication = createApplication;
+window.openMapPicker = openMapPicker;
 window.loadIncidentsFromDB = loadIncidentsFromDB;
 window.filterIncidents = filterIncidents;
 window.openUpdateModal = openUpdateModal;
