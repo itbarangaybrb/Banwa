@@ -474,3 +474,20 @@ LINE 7:             LEFT JOIN construction_evaluations ce ON ca.id =...
 [16-Mar-2026 14:21:55 UTC] CR1 Check - Has file upload: No
 [16-Mar-2026 14:23:32 UTC] CR1 Check - Has file upload: No
 [16-Mar-2026 14:23:32 UTC] CR1 Check - Has file upload: No
+[18-Mar-2026 17:04:28 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[18-Mar-2026 17:04:28 UTC] SQL Error in handleCreateApplication: SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type uuid: "undefined"
+CONTEXT:  unnamed portal parameter $1 = '...'
+[18-Mar-2026 17:06:33 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[18-Mar-2026 17:06:33 UTC] SQL Error in handleCreateApplication: SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type uuid: "undefined"
+CONTEXT:  unnamed portal parameter $1 = '...'
+[18-Mar-2026 17:13:19 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"localhost_8080_Banwa_client_pages_resident_status.php (4).png","saved_filename":"const_69badd2f36a11_localhost_8080_Banwa_client_pages_resident_status.php (4).png","file_url":"\/server\/handlers\/staff\/construction\/uploads\/const_69badd2f36a11_localhost_8080_Banwa_client_pages_resident_status.php (4).png"}]
+[18-Mar-2026 17:13:19 UTC] SQL Error in handleCreateApplication: SQLSTATE[22P02]: Invalid text representation: 7 ERROR:  invalid input syntax for type uuid: "undefined"
+CONTEXT:  unnamed portal parameter $1 = '...'
+[18-Mar-2026 17:18:49 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[18-Mar-2026 17:18:50 UTC] No files uploaded for application 67, skipping OCR queue.
+[18-Mar-2026 17:18:50 UTC] CR1 Check - Has file upload: No
+[18-Mar-2026 17:18:50 UTC] CR1 Check - Has file upload: No
+[18-Mar-2026 17:19:44 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[18-Mar-2026 17:19:45 UTC] No files uploaded for application 68, skipping OCR queue.
+[18-Mar-2026 17:19:45 UTC] CR1 Check - Has file upload: No
+[18-Mar-2026 17:19:45 UTC] CR1 Check - Has file upload: No
