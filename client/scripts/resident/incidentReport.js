@@ -1,9 +1,11 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
+
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import supabase from '../../../server/api/supabase.js';
+import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
 
 registerServiceWorker();
 
@@ -174,11 +176,30 @@ const validator = (() => {
         let value = input.value.trim();
         if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
         if (value === '' || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly && !/^[A-Za-z\s]+$/.test(value)) {
-            showError(input, rules.errorMessage || 'Only letters with single spaces are allowed'); return false;
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+            }
+            if (value.length < 2) { showError(input, 'Too short'); return false; }
+            if (value.length > 50) { showError(input, 'Too long'); return false; }
+            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 8) {
+                const lower = value.toLowerCase();
+                const chunk = lower.slice(0, 4);
+                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            }
         }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || message); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || message); return false; }
+
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+        }
+
         clearError(input); return true;
     }
 
@@ -207,15 +228,17 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-        if (rules.pattern && !rules.pattern.test(value)) {
-            showError(input, rules.errorMessage || message);
-            return false;
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-        if (rules.exactLength && value.length !== rules.exactLength) {
-            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false;
-        }
         clearError(input); return true;
     }
 
@@ -289,7 +312,7 @@ const validator = (() => {
 
         // Try to find a match in your database (case-insensitive for better UX)
         const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
-        
+
         if (!match && options.validateExistence !== false) {
             const wrapper = addressInput.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
@@ -336,12 +359,12 @@ const validationConfig = [
     // Reporting Person validation rules
     { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
     { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
-    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
+    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { phoneType: 'ph' } },
 
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
     { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
-    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
+    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
     { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
@@ -354,7 +377,7 @@ const validationConfig = [
     { el: incidentType, type: 'select', message: 'Please select incident type' },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
     { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
-    { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
+    { el: description, type: 'textarea', message: 'Please describe the incident', rules: { noSpam: true, minLength: 1, maxLength: 100 } },
 ];
 
 /**
@@ -944,7 +967,7 @@ async function initializeMapPicker(target) {
                                 // Fill the unified address field for incident location
                                 if (incidentAddress) {
                                     incidentAddress.value = formattedAddress;
-                                    
+
                                     // Trigger validation clearing and updates
                                     incidentAddress.dispatchEvent(new Event('input', { bubbles: true }));
                                     incidentAddress.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1025,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Added credentials and cache settings exactly like the business app
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        
+
         console.debug('incident_report autofill response:', data);
 
         if (data.error) {
@@ -1046,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const last = data.last_name || '';
             const first = data.first_name || '';
             const middle = data.middle_name ? ' ' + data.middle_name : '';
-            
+
             // Formats to match the input placeholder: "Last, First, Middle Name"
             if (last && first) {
                 rpFullName.value = `${last}, ${first}${middle}`;

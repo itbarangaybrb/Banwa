@@ -3825,11 +3825,11 @@ if (!sockets["business_applications"]) {
         }
     });
 }
-if (!sockets["incident_reports"]) {
-    initSocket("incident_reports", "ws://localhost:8081", data => {
-        if (data.type === "incident_reports_update") {
+if (!sockets["incident_report_applications"]) {
+    initSocket("incident_report_applications", "ws://localhost:8081", data => {
+        if (data.type === "incident_report_applications_update") {
             loadAllMarkers();
-            showBoundaryMessage("New incident_reports application added to map");
+            showBoundaryMessage("New incident report applications application added to map");
         }
     });
 }
