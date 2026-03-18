@@ -492,7 +492,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/home.php';
     });
 
     document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));

@@ -594,7 +594,7 @@ $full_name = getCurrentUserName();
                 <div id="summaryOutput" class="summary-report-container">
                     <div class="placeholder-state">
                         <i class="fas fa-file-invoice fa-3x"></i>
-                        <p>Select a utility from the list above to view the full report.</p>
+                        <p id="summaryPlaceholder">Select a utility from the list above to view the full report.</p>
                     </div>
                 </div>
             </div>
