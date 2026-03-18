@@ -1688,7 +1688,7 @@ function createApplication(event) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            const form = document.getElementById('createForm');
+            const form = document.getElementById('createIncidentForm');
             const formData = new FormData(form);
 
             formData.append('action', 'create');

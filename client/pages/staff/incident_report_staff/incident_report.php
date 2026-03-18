@@ -386,7 +386,7 @@ $full_name = getCurrentUserName();
                     <h2>Create New Incident Report</h2>
                     <p class="form-description">Fill in the details to create a new incident report</p>
                 </div>
-                <form id="createForm" onsubmit="createApplication(event)">
+                <form id="createIncidentForm" onsubmit="createApplication(event)">
                     <div class="section-title">Reporting Person Information</div>
                     <div class="form-row">
                         <div class="form-group">
