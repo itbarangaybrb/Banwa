@@ -1,14 +1,9 @@
-// Configuration imports for service worker registration, address data, and Supabase authentication
+// Configuration
+import { initSocket, sockets } from '../../utils/socketUtils.js';
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
+import { archiveRecord } from '../../utils/archives.js';
 
-
-import supabase from '../../../server/api/supabase.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
-import { addressCoordinates } from '../../../server/api/resident/addresses.js';
-import { registerServiceWorker } from '../../../register_sw.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
-
-registerServiceWorker();
+let incidents = [];
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
@@ -51,594 +46,1892 @@ swalStyle.innerHTML = `
 `;
 document.head.appendChild(swalStyle);
 
-const business_app_swal = Swal.mixin({
-    confirmButtonColor: '#00247C',
-    confirmButtonText: 'OK',
-    color: '#363636',
+// Global SweetAlert Configuration for Incident Alerts
+const incidentAlertConfig = Swal.mixin({
+    padding: '2em',
     customClass: {
-        popup: 'modal-content',
-        confirmButton: 'btn-proceed',
-        title: 'swal-title',
-        htmlContainer: 'swal-text'
+        title: 'swal-title-center',
+        htmlContainer: 'swal-text-center',
+        actions: 'swal-actions-spacing'
     },
-    // Force perfect centering + spacing for every alert
     didOpen: (popup) => {
-        const container = popup.querySelector('.swal2-html-container');
-        if (container) {
-            container.style.textAlign = 'center';
-            container.style.padding = '15px 30px';
-            container.style.lineHeight = '1.65';
-            container.style.marginBottom = '20px';
+        popup.style.textAlign = 'center';
+        const content = popup.querySelector('.swal2-html-container');
+        if (content) {
+            content.style.textAlign = 'center';
+            content.style.lineHeight = '1.6';
+            content.style.marginTop = '1em';
         }
     }
+});
+
+// Map filter visibility flag for this management page
+
+
+// Initialize sidebar navigation
+document.addEventListener('DOMContentLoaded', function () {
+    initializeSidebarNav();
 });
 
 /**
- * Switches the visible panel in the multi-step form interface
- * @param {string} panelId - The ID of the panel to display ('owner', 'business', 'waiver', or 'summary')
+ * Initializes the sidebar navigation with tab switching functionality
+ * and adds hamburger menu toggle for mobile responsiveness
  */
-function switchPanel(panelId) {
-    const panels = ['owner', 'business', 'waiver', 'summary']
-        .map(id => document.getElementById(id));
-    panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
-    window.scrollTo(0, 0);
+function initializeSidebarNav() {
+    const navItems = document.querySelectorAll('.nav_select[data-tab]');
+    const navLogo = document.querySelector('.nav_logo');
+    const sideNav = document.querySelector('.side_nav');
+
+    if (navLogo && sideNav) {
+        navLogo.addEventListener('click', function () {
+            sideNav.classList.toggle('expanded');
+            // Redraw Leaflet map after sidebar transition
+            setTimeout(function () {
+                if (typeof map !== 'undefined' && map) {
+                    map.invalidateSize();
+                }
+            }, 320);
+        });
+    }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
+            switchTab(e, tabName);
+        });
+    });
+
+    loadAnalyticsTab();
 }
 
-// Form element references for owner information section
-const firstName = document.getElementById('firstName');
-const middleName = document.getElementById('middleName');
-const suffix = document.getElementById('suffix');
-const lastName = document.getElementById('lastName');
-const contactNoOwner = document.getElementById('contactNoOwner');
-const addressOwner = document.getElementById('addressOwner');
+/**
+ * Switches between different incident tabs and loads appropriate data
+ * 
+ * @param {Event} event - The click event triggering tab switch
+ * @param {string} tabName - Name of the tab to switch to
+ */
+function switchTab(event, tabName) {
+    if (event) event.preventDefault();
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav_select').forEach(b => b.classList.remove('active'));
 
-// Form element references for business information section
-const businessName = document.getElementById('businessName');
-const typeOfBusiness = document.getElementsByName('typeOfBusiness');
-const natureOfBusinessSelect = document.getElementById('natureOfBusinessSelect');
-const natureOfBusinessSpecify = document.getElementById('natureOfBusinessSpecify');
-const businessStatus = document.getElementsByName('businessStatus');
-const contactNoBusiness = document.getElementById('contactNoBusiness');
-const emailAddress = document.getElementById('emailAddress');
-const noOfEmployees = document.getElementById('noOfEmployees');
-const businessLotNo = document.getElementById('businessLotNo');
-const businessStreet = document.getElementById('businessStreet');
-const typeOfStructureSelect = document.getElementById('typeOfStructureSelect');
-const typeOfStructureSpecify = document.getElementById('typeOfStructureSpecify');
-const businessStatusSpecify = document.getElementById('businessStatusSpecify');
-const natureOfApplication = document.getElementById('natureOfApplication');
-const requirements = document.getElementsByName('requirements');
-const requirementUpload = document.getElementById('requirementUpload');
-const requirementsSection = document.getElementById('requirementsSection');
+    const target = document.getElementById(tabName);
+    if (target) target.classList.add('active');
 
-// Form element reference for waiver agreement
-const agreeCheckBox = document.getElementById('agreeCheckBox');
-
-// Initialize the form with owner panel visible
-switchPanel('owner');
-
-typeOfStructureSpecify.closest('.label-and-input').style.display = 'none';
-natureOfBusinessSpecify.closest('.label-and-input').style.display = 'none';
-requirementsSection.style.display = 'none';
-
-typeOfStructureSelect.addEventListener('change', () => handleOthersSelect(typeOfStructureSelect, typeOfStructureSpecify));
-natureOfBusinessSelect.addEventListener('change', () => handleOthersSelect(natureOfBusinessSelect, natureOfBusinessSpecify));
-natureOfApplication.addEventListener('change', (e) => natureOfApplicationSel(e.target));
-
-document.addEventListener('DOMContentLoaded', () => {
-    handleOthersRadio('businessStatus', businessStatusSpecify);
-});
-
-    /**
-     * Gets the wrapper element containing the input and error message
-     * @param {HTMLElement} el - The input element
-     * @returns {HTMLElement} - The parent wrapper element
-     */
-    function getWrapper(el) { return el.closest('.label-and-input'); }
-
-    /**
-     * Gets the error message element associated with an input
-     * @param {HTMLElement} el - The input element
-     * @returns {HTMLElement} - The error message span element
-     */
-    function getErrorEl(el) { return getWrapper(el).querySelector('.error-msg'); }
-
-    /**
-     * Displays an error message for an invalid input field
-     * @param {HTMLElement} el - The input element with validation error
-     * @param {string} message - The error message to display
-     */
-    function showError(el, message) {
-        const errorEl = getErrorEl(el);
-        el.classList.add('error');
-        errorEl.textContent = message;
-        errorEl.classList.add('show');
+    if (event) {
+        const link = event.target.closest('.nav_select');
+        if (link) link.classList.add('active');
     }
 
-    /**
-     * Clears any error state from a validated input field
-     * @param {HTMLElement} el - The input element to clear
-     */
-    function clearError(el) {
-        if (NodeList.prototype.isPrototypeOf(el) || Array.isArray(el)) {
-            el = el[0];
+    if (tabName === 'management') {
+        loadManagementTable();
+    } else if (tabName === 'process') {
+        loadProcessTable();
+    } else if (tabName === 'summary') {
+        loadSummarySelect();
+    } else if (tabName === 'dashboard') {
+        loadAnalyticsTab();
+    } else if (tabName === 'create') {
+        resetIncidentForm();
+    }
+}
+
+/**
+ * Loads the management table with incidents from database
+ */
+function loadManagementTable() {
+    loadIncidentsFromDB().finally(() => {
+        filterIncidents();
+    });
+}
+
+/**
+ * Filters and renders incidents in the management table based on search criteria
+ */
+function filterIncidents() {
+    const searchEl = document.getElementById('managementSearch');
+    const tbody = document.getElementById('tableBody');
+
+    if (!tbody) {
+        console.error('Table body not found');
+        return;
+    }
+
+    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+    tbody.innerHTML = '';
+
+    if (!incidents || !Array.isArray(incidents) || incidents.length === 0) {
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#999;">
+                <div class="spinner"></div>Loading incidents...
+            </td>
+        </tr>`;
+        return;
+    }
+
+    const filtered = incidents.filter(incident => {
+        const incidentType = (incident.incident_type || '').toLowerCase();
+        const victimName = (incident.vic_full_name || '').toLowerCase();
+        const location = (incident.incident_location || '').toLowerCase();
+        const reportId = (incident.id || '').toString();
+        const reporterName = (incident.rp_full_name || '').toLowerCase();
+        const suspectName = (incident.sus_full_name || '').toLowerCase();
+
+        return incidentType.includes(searchTerm) ||
+            victimName.includes(searchTerm) ||
+            location.includes(searchTerm) ||
+            reportId.includes(searchTerm) ||
+            reporterName.includes(searchTerm) ||
+            suspectName.includes(searchTerm);
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#999;">
+                No matching incidents found.
+            </td>
+        </tr>`;
+        return;
+    }
+
+    filtered.forEach(incident => {
+        let badgeClass = 'reported';
+        if (incident.status === 'Pending') badgeClass = 'pending';
+        if (incident.status === 'Resolved') badgeClass = 'resolved';
+        if (incident.status === 'Under Investigation') badgeClass = 'investigation';
+        if (incident.status === 'Closed') badgeClass = 'closed';
+        if (incident.status === 'Cancelled') badgeClass = 'cancelled';
+
+        let actionBtn = '';
+
+        if (incident.status === 'Pending') {
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Process</button>`;
         }
-        const wrapper = getWrapper(el);
-        const errorEl = wrapper?.querySelector('.error-msg');
-        if (!wrapper || !errorEl) return;
-        el.classList.remove('error');
-        errorEl.textContent = '';
-        errorEl.classList.remove('show');
-    }
+        else if (incident.status === 'Reported') {
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Review</button>`;
+        }
+        else if (incident.status === 'Under Investigation') {
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Investigate</button>`;
+        }
+        else if (incident.status === 'Referred to Authorities') {
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${incident.id})">Follow Up</button>`;
+        }
+        else if (incident.status === 'Resolved') {
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${incident.id})">Finalize</button>`;
+        }
+        else {
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">Update</button>`;
+        }
 
-    /**
-     * Validates text input fields with optional normalization and pattern rules
-     * @param {HTMLInputElement} input - The text input element
-     * @param {string} message - Required field error message
-     * @param {Object} rules - Validation rules configuration
-     * @returns {boolean} - Whether the input is valid
-     */
-    function validateText(input, message, rules = {}) {
-        if (!input) return true;
-        let value = input.value.trim();
-        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
-        if (value === '' || value === 'select') { showError(input, message); return false; }
-        if (rules.lettersOnly) {
-            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+        <td>${incident.id}</td>
+        <td>${incident.rp_full_name || 'N/A'}</td>
+        <td>${incident.vic_full_name || 'N/A'}</td>
+        <td>${incident.sus_full_name || 'N/A'}</td>
+        <td>${incident.incident_type || 'N/A'}</td>
+        <td>${incident.rp_address || 'N/A'}</td>
+        <td>${formatDateTime(incident.incident_timestamp)}</td>
+        <td><span class="status-badge status-${badgeClass}">${incident.status}</span></td>
+        <td>
+            <div class="action-buttons">
+                ${actionBtn}
+                <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
+                <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="incident_reports">Archive</button>
+            </div>
+        </td>
+    `;
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Fetches incident reports from the server API
+ * 
+ * @returns {Promise} Promise resolving to the incidents array
+ */
+function loadIncidentsFromDB() {
+    return fetch(`${IR_HANDLER_URL}?action=fetch`, {
+        credentials: 'include'
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                incidents = (data.data || []).filter(inc => !inc.is_archived);
+            } else {
+                incidents = [];
             }
-            if (value.length < 2) { showError(input, 'Too short'); return false; }
-            if (value.length > 50) { showError(input, 'Too long'); return false; }
-            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (value.length >= 8) {
-                const lower = value.toLowerCase();
-                const chunk = lower.slice(0, 4);
-                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            }
-        }
+            return incidents;
+        })
+        .catch(error => {
+            console.error('Error fetching incidents:', error);
+            incidents = [];
+            return incidents;
+        });
+}
 
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
-        if (rules.noSpam) {
-            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-        }
+/**
+ * Refreshes the currently active tab's content with latest application data.
+ * Triggered by WebSocket construction updates.
+ * 
+ * Uses `isRefreshing` flag to prevent concurrent refreshes.
+ * 
+ * @see {@link loadApplicationsFromDB} - Fetches fresh data
+ */
+let isRefreshing = false;
+function refreshActiveTab() {
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab || isRefreshing) return;
 
-        if (rules.lettersOnly) {
-            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
-                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
-            }
-            if (value.length < 2) { showError(input, 'Too short'); return false; }
-            if (value.length > 50) { showError(input, 'Too long'); return false; }
-            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (value.length >= 8) {
-                const lower = value.toLowerCase();
-                const chunk = lower.slice(0, 4);
-                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            }
-        }
+    const activeTabId = activeTab.id;
+    isRefreshing = true;
 
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
-        if (rules.noSpam) {
-            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
-        }
+    const finish = () => { isRefreshing = false; };
 
-        clearError(input); return true;
+    if (activeTabId === 'management') {
+        loadIncidentsFromDB().finally(() => { filterIncidents(); finish(); });
+    } else if (activeTabId === 'process') {
+        loadIncidentsFromDB().finally(() => { loadProcessTable(); finish(); });
+    } else if (activeTabId === 'summary') {
+        loadIncidentsFromDB().finally(() => { loadSummarySelect(); finish(); });
+    } else if (activeTabId === 'dashboard') {
+        loadIncidentsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+    } else {
+        finish();
     }
-
-    /**
-     * Validates email input format and presence
-     * @param {HTMLInputElement} input - The email input element
-     * @param {string} message - Required field error message
-     * @returns {boolean} - Whether the email is valid
-     */
-    function validateEmail(input, message, rules = {}) {
-        if (!input) return true;
-        const value = input.value.trim();
-        if (value === '') {
-            showError(input, message);
-            return false;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-            showError(input, rules.errorMessage || 'Enter a valid email address');
-            return false;
-        }
-        if (rules.noSpam) {
-            const localPart = value.split('@')[0].toLowerCase();
-            for (let len = 2; len <= Math.floor(localPart.length / 2); len++) {
-                const pattern = localPart.slice(0, len);
-                const repeated = pattern.repeat(Math.floor(localPart.length / pattern.length));
-                if (repeated === localPart) {
-                    showError(input, rules.errorMessage || 'Invalid email address');
-                    return false;
-                }
-            }
-            if (/(.)\1{3,}/.test(localPart)) {
-                showError(input, rules.errorMessage || 'Invalid email address');
-                return false;
-            }
-        }
-
-        clearError(input);
-        return true;
-    }
-
-    /**
-     * Validates select/dropdown elements for required selection
-     * @param {HTMLSelectElement} input - The select element
-     * @param {string} message - Required field error message
-     * @returns {boolean} - Whether a valid option is selected
-     */
-    function validateSelect(input, message) {
-        if (!input) return true;
-        const value = input.value.trim();
-        if (value === '' || value === 'select') { showError(input, message); return false; }
-        clearError(input); return true;
-    }
-
-    /**
-     * Validates numeric input fields with digit and length constraints
-     * @param {HTMLInputElement} input - The number input element
-     * @param {string} message - Required field error message
-     * @param {Object} rules - Validation rules for numeric input
-     * @returns {boolean} - Whether the number is valid
-     */
-    function validateNumber(input, message, rules = {}) {
-        if (!input) return true;
-        const value = input.value.trim();
-        if (value === '') { showError(input, message); return false; }
-        if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-        if (rules.phoneType === 'ph') {
-            const isMobile = /^09\d{9}$/.test(value);
-            const isLandline8 = /^[2-9]\d{7}$/.test(value);
-            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
-            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
-            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
-            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
-            clearError(input); return true;
-        if (rules.phoneType === 'ph') {
-            const isMobile = /^09\d{9}$/.test(value);
-            const isLandline8 = /^[2-9]\d{7}$/.test(value);
-            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
-            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
-            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
-            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
-            clearError(input); return true;
-        }
-        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
-        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-        clearError(input); return true;
-    }
-
-    /**
-     * Validates checkbox elements for required agreement/selection
-     * @param {HTMLInputElement} input - The checkbox element
-     * @param {string} message - Required field error message
-     * @returns {boolean} - Whether the checkbox is checked
-     */
-    function validateCheckbox(input, message) { if (!input.checked) { showError(input, message); return false; } clearError(input); return true; }
-
-    /**
-     * Validates file upload inputs for presence, type, and size constraints
-     * @param {HTMLInputElement} input - The file input element
-     * @param {string} message - Required field error message
-     * @param {Object} options - File validation options (accept types, size limit)
-     * @returns {boolean} - Whether the file is valid
-     */
-    function validateFile(input, message, options = {}) {
-        if (!input || input.files.length === 0) { showError(input, message); return false; }
-        const file = input.files[0];
-        if (options.accept?.length > 0) {
-            const isValid = options.accept.some(a => a.startsWith('.') ? file.name.toLowerCase().endsWith(a.toLowerCase()) : file.type === a);
-            if (!isValid) { showError(input, options.errorMessage || `Invalid file type. Accepted: ${options.accept.join(', ')}`); return false; }
-        }
-        if (file.size > 5 * 1024 * 1024) { showError(input, 'File exceeds 5MB'); return false; }
-        clearError(input); return true;
-    }
-
-    /**
-     * Validates that at least one checkbox in a group is selected
-     * @param {NodeList} checkboxes - Collection of checkbox elements
-     * @param {string} message - Required selection error message
-     * @returns {boolean} - Whether at least one checkbox is checked
-     */
-    function validateCheckboxGroup(checkboxes, message) {
-        const wrapper = checkboxes[0].closest('.label-and-input');
-        if (wrapper.style.display === 'none') return true;
-        if (!Array.from(checkboxes).some(c => c.checked)) { showError(checkboxes[0], message); return false; }
-        clearError(checkboxes[0]); return true;
-    }
-
-    /**
-     * Validates that one radio button in a group is selected
-     * @param {NodeList} radios - Collection of radio button elements
-     * @param {string} message - Required selection error message
-     * @returns {boolean} - Whether a radio button is selected
-     */
-    function validateAddress(addressInput, options = {}) {
-        const address = addressInput.value.trim();
-
-        if (!address && !options.optional) {
-            showError(addressInput, 'Address is required');
-            return false;
-        }
-
-        if (!address) return true;
-
-        // Try to find a match in your database (case-insensitive for better UX)
-        const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
-
-        if (!match && options.validateExistence !== false) {
-            const wrapper = addressInput.closest('.label-and-input');
-            const errorEl = wrapper.querySelector('.error-msg');
-            streetInput.classList.add('error');
-            errorEl.textContent = 'Street does not exist for this lot';
-            errorEl.classList.add('show');
-            return false;
-        }
-        clearError(streetInput);
-        const lat = document.getElementById('latitude2');
-        const lng = document.getElementById('longitude2');
-        if (lat && lng) { lat.value = match.lat.toFixed(6); lng.value = match.lng.toFixed(6); }
-        return true;
-    }
-
-    // Public API of the validator module
-    return {
-        text: validateText,
-        email: validateEmail,
-        file: validateFile,
-        select: validateSelect,
-        number: validateNumber,
-        checkbox: validateCheckbox,
-        checkboxGroup: validateCheckboxGroup,
-        radioGroup: validateRadioGroup,
-        address: validateAddress,
-        clear: clearError
-    };
 };
 
 /**
- * Configuration array defining validation rules for all form fields
- * Each object specifies element, validation type, error message, and any additional rules
+ * Loads incidents into the process table with actionable statuses
  */
-const validationConfig = [
-    // Reporting Person validation rules
-    { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
-    { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
-    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { phoneType: 'ph' } },
+function loadProcessTable() {
+    loadIncidentsFromDB().finally(() => {
+        const tbody = document.getElementById('processTableBody');
+        if (!tbody) return;
 
-    // Victim Details validation rules
-    { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
-    { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
-    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
-    { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
-    { el: vicGender, type: 'select', message: 'Please select victim gender' },
-    { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
-    { el: vicOccupation, type: 'text', message: 'Please enter victim occupation', rules: { minLength: 2 } },
+        tbody.innerHTML = '';
 
-    // Suspect Details validation rules
-    { el: susDescription, type: 'textarea', message: 'Please describe the suspect', rules: { minLength: 10 } },
+        const excludedStatuses = ['Closed', 'Cancelled', 'Resolved', 'Archived'];
+        const actionable = incidents.filter(incident => {
+            return !excludedStatuses.includes(incident.status);
+        });
 
-    // Incident Details validation rules
-    { el: incidentType, type: 'select', message: 'Please select incident type' },
-    { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
-    { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
-    { el: description, type: 'textarea', message: 'Please describe the incident', rules: { noSpam: true, minLength: 1, maxLength: 100 } },
-];
+        if (actionable.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No incidents to process.</td></tr>';
+            return;
+        }
+
+        actionable.forEach(incident => {
+            let btnText = "Update";
+            let btnClass = "secondary";
+
+            if (incident.status === 'Pending') { btnClass = "primary"; btnText = "Process"; }
+            else if (incident.status === 'Reported') { btnClass = "primary"; btnText = "Begin Investigation"; }
+            else if (incident.status === 'Under Investigation') { btnClass = "primary"; btnText = "Continue Investigation"; }
+            else if (incident.status === 'Referred to Authorities') { btnClass = "warning"; btnText = "Follow Up"; }
+            else if (incident.status === 'Resolved') { btnText = "Finalize"; btnClass = "success"; }
+
+            tbody.innerHTML += `
+            <tr>
+                <td>${incident.id}</td>
+                <td>${incident.incident_type || 'N/A'}</td>
+                <td>${incident.vic_full_name || 'N/A'}</td>
+                <td>${formatDate(incident.reported_at)}</td>
+                <td><span class="status-badge status-${incident.status.toLowerCase().replace(/ /g, '-')}">${incident.status}</span></td>
+                <td>
+                    <button class="btn-${btnClass}" onclick="openUpdateModal(${incident.id})">${btnText}</button>
+                </td>
+            </tr>
+        `;
+        });
+    });
+}
+
+let chart1Instance;
+let chart2Instance;
+let chart3Instance;
 
 /**
- * Validates a single form field based on its configuration
- * @param {Object} config - Validation configuration object
- * @returns {boolean} - Whether the field passed validation
+ * Loads analytics data and renders charts for incident statistics
  */
-function validateField(config) {
-    const { el, type, message, rules } = config;
-    if (!el) return true;
+function loadAnalyticsTab() {
+    fetch(`${IR_HANDLER_URL}?action=chart_incident_type`)
+        .then(res => res.json())
+        .then(res => {
+            if (res.status !== 'success') return;
 
-    switch (type) {
-        case 'number': return validator.number(el, message, rules);
-        case 'text': return validator.text(el, message, rules);
-        case 'email': return validator.email(el, message, rules);
-        case 'file': return validator.file(el, message, rules);
-        case 'checkbox': return validator.checkbox(el, message);
-        case 'checkboxGroup': return validator.checkboxGroup(el, message);
-        case 'radio': return validator.radioGroup(el, message);
-        case 'select': return validator.select(el, message);
+            const labels1 = res.data_by_date.map(x => x.date_reported);
+            const values1 = res.data_by_date.map(x => x.total);
+            const totals1 = values1.slice();
+            const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
+
+            const labels2 = res.data_by_type.map(x => x.incident_type);
+            const values2 = res.data_by_type.map(x => x.total);
+            const totals2 = values2.slice();
+            const percentages2 = res.data_by_type.map(x => x.percentage);
+
+            const labels3 = res.data_by_dss.map(x => x.dss_status);
+            const totals3 = res.data_by_dss.map(x => x.total);
+            const percentages3 = res.data_by_dss.map(x => x.percentage);
+
+            const dateColors = ['#6366F1'];
+            const typeColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+            const dssColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FDCB6E', '#E17055', '#00CEC9'];
+
+            if (chart1Instance) chart1Instance.destroy();
+            if (chart2Instance) chart2Instance.destroy();
+            if (chart3Instance) chart3Instance.destroy();
+
+            chart1Instance = new Chart(document.getElementById('chart1'), {
+                type: 'line',
+                data: {
+                    labels: labels1,
+                    datasets: [{
+                        label: 'Incidents Timeline',
+                        data: values1,
+                        backgroundColor: dateColors,
+                        borderWidth: 2,
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals1[context.dataIndex];
+                                    const percent = percentages1[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            chart2Instance = new Chart(document.getElementById('chart2'), {
+                type: 'bar',
+                data: {
+                    labels: labels2,
+                    datasets: [{
+                        label: 'Incidents by Type',
+                        data: values2,
+                        backgroundColor: typeColors,
+                        borderWidth: 1,
+                        borderRadius: '4',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false },
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals2[context.dataIndex];
+                                    const percent = percentages2[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            chart3Instance = new Chart(document.getElementById('chart3'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels3,
+                    datasets: [{
+                        label: 'DST Status Distribution',
+                        data: totals3,
+                        backgroundColor: dssColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const total = totals3[context.dataIndex];
+                                    const percent = percentages3[context.dataIndex];
+                                    return `${context.label}: ${total} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
+        });
+}
+
+/**
+ * Applies pre-defined text prompts to the update comments textarea
+ * 
+ * @param {string} text - The text prompt to insert into the comments field
+ */
+function applyPrompt(text) {
+    const textarea = document.getElementById('updateComments');
+    if (textarea) {
+        textarea.value = text;
+        textarea.focus();
     }
 }
 
 /**
- * Sets up real-time validation on form field interactions
- * Validates on blur and clears errors on input for immediate feedback
+ * Opens the update modal for a specific incident and loads current data
+ * Includes Evaluation Results display and status tracking
+ * 
+ * @param {number} appId - The incident ID to open in the update modal
  */
-(() => {
-    validationConfig.forEach(config => {
-        const { el, type } = config;
-        if (!el) return;
+function openUpdateModal(appId) {
+    const incident = incidents.find(i => i.id == appId);
 
-        const targets = ['checkboxGroup', 'radio'].includes(type) ? Array.from(el) : [el];
+    if (!incident) {
+        // REPLACED WITH SWEETALERT2
+        incidentAlertConfig.fire({
+            icon: 'error',
+            title: 'Not Found',
+            text: 'Incident data not found.',
+            confirmButtonText: 'Understood',
+            confirmButtonColor: '#d33'
+        });
+        return;
+    }
 
-        targets.forEach(target => {
-            if (!target) return;
-            target.addEventListener('blur', () => validateField(config));
-            target.addEventListener('input', () => validator.clear(target));
-            target.addEventListener('change', () => {
-                if (type === 'radio') {
-                    if (Array.from(el).some(r => r.checked)) validator.clear(el);
+    document.getElementById('updateReportId').value = incident.id;
+    document.getElementById('displayCurrentStatus').value = incident.status;
+
+    document.getElementById('newStatus').value = "";
+    document.getElementById('updateComments').value = "";
+
+    const existingDSSSection = document.getElementById('dssEvaluationSection');
+    if (existingDSSSection) existingDSSSection.remove();
+
+    addBasicDSSSection(incident);
+
+    fetchDSSEvaluation(appId, incident);
+
+    document.getElementById('updateModal').classList.add('active');
+}
+
+/**
+ * Fetches DSS evaluation details from the server for a specific incident report
+ * 
+ * @param {number} appId - The incident report ID to fetch evaluation for
+ * @param {Object} incident - The incident object containing basic incident data
+ */
+function fetchDSSEvaluation(appId, incident) {
+    // console.debug('fetchDSSEvaluation ->', IR_HANDLER_URL, appId);
+    // Use 'application_id' parameter to match the PHP backend expectation
+    fetch(`${IR_HANDLER_URL}?action=get_evaluation&application_id=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            // console.debug('DSS response for', appId, data);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (data && data.status === 'success' && data.evaluation) {
+                if (existing) existing.remove();
+                addDSSSectionToModal(data.evaluation, incident);
+            } else {
+                if (existing) existing.querySelector('.dss-loading')?.remove();
+                const msg = (data && data.message) ? data.message : 'Detailed evaluation not available.';
+                if (existing) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = msg;
+                    existing.appendChild(note);
+                } else {
+                    addBasicDSSSection(incident);
+                    const created = document.getElementById('dssEvaluationSection');
+                    if (created) {
+                        const note = document.createElement('div');
+                        note.className = 'dss-error-msg';
+                        note.textContent = msg;
+                        created.appendChild(note);
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching DSS evaluation:', error);
+            const existing = document.getElementById('dssEvaluationSection');
+            if (existing) existing.querySelector('.dss-loading')?.remove();
+            const errMsg = error && error.message ? error.message : 'Failed to load evaluation.';
+            if (existing) {
+                const note = document.createElement('div');
+                note.className = 'dss-error-msg';
+                note.textContent = errMsg;
+                existing.appendChild(note);
+            } else {
+                addBasicDSSSection(incident);
+                const created = document.getElementById('dssEvaluationSection');
+                if (created) {
+                    const note = document.createElement('div');
+                    note.className = 'dss-error-msg';
+                    note.textContent = errMsg;
+                    created.appendChild(note);
+                }
+            }
+        });
+}
+
+/**
+ * Creates and inserts a detailed DSS evaluation section into the update modal
+ * Displays evaluation scores, priority level, rule results, and recommendations
+ * 
+ * @param {Object} evaluation - The DSS evaluation data object
+ * @param {Object} incident - The incident object for context
+ */
+function addDSSSectionToModal(evaluation, incident) {
+    const updateForm = document.getElementById('updateForm');
+    if (!updateForm) return;
+
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
+    }
+
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
+
+    const details = evaluation.evaluation_details || {};
+    const dssStatus = evaluation.dss_status || 'Pending Evaluation';
+    const score = details.score || 0;
+    const maxScore = details.max_score || 6;
+    const urgencyScore = details.urgency_score || 0;
+    const priorityLevel = details.priority_level || 'Low';
+
+    const passedRules = details.passed_rules || [];
+    const failedRules = details.failed_rules || [];
+    const recommendations = details.recommendations || [];
+
+    // Get rule results for more detailed display
+    const ruleResults = details.rule_results || {};
+
+    let statusColor, statusBg, statusText;
+    switch (dssStatus) {
+        case 'High Priority':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            statusText = 'High Priority';
+            break;
+        case 'Medium Priority':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            statusText = 'Medium Priority';
+            break;
+        case 'Low Priority':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            statusText = 'Low Priority';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+            statusText = dssStatus;
+    }
+
+    dssSection.innerHTML = `
+    <div class="dss-evaluation-section">
+        <div class="dss-header">
+            <h3>DST Evaluation Result</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${statusText}
+            </span>
+        </div>
+        
+        <div class="dss-score-summary">
+            <div class="dss-score">
+                <strong>Rules Passed</strong>
+                <span>${score}/${maxScore}</span>
+            </div>
+            <div class="dss-probability">
+                <strong>Priority Level</strong>
+                <span>${priorityLevel}</span>
+            </div>
+        </div>
+        
+        <div class="dss-progress-container">
+            <div class="dss-progress-label">
+                <span>Urgency Score</span>
+                <span class="dss-progress-percentage">${urgencyScore}%</span>
+            </div>
+            <div class="dss-progress-bar">
+                <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, urgencyScore))}%"></div>
+            </div>
+        </div>
+        
+        <div class="dss-rules-summary">
+            <div class="dss-rules-column">
+                <h4>Passed Rules (${passedRules.length})</h4>
+                ${passedRules.length > 0 ?
+            `<ul class="dss-rules-list passed">${passedRules.map(rule => {
+                // Get the rule result if available
+                const ruleId = Object.keys(ruleResults).find(key =>
+                    evaluation.rules?.find(r => r.name === rule)?.id === key
+                );
+                const result = ruleId ? ruleResults[ruleId] : '';
+                return `<li>${rule} ${result ? `<span style="color:#666; font-size:11px;">(${result})</span>` : ''}</li>`;
+            }).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
+        }
+            </div>
+            
+            <div class="dss-rules-column">
+                <h4>Failed Rules (${failedRules.length})</h4>
+                ${failedRules.length > 0 ?
+            `<ul class="dss-rules-list failed">${failedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules failed</p>`
+        }
+            </div>
+        </div>
+        
+        ${recommendations.length > 0 ? `
+            <div class="dss-recommendations">
+                <h4>Recommendations</h4>
+                <ul class="dss-recommendations-list">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
+        
+        ${evaluation.evaluated_at ? `
+            <div class="dss-timestamp">
+                Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+            </div>
+        ` : ''}
+    </div>
+`;
+
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
+}
+
+/**
+ * Creates a basic DSS section when detailed evaluation data is unavailable
+ * Provides minimal DSS status display as fallback
+ * 
+ * @param {Object} incident - The incident object containing basic DSS status
+ */
+function addBasicDSSSection(incident) {
+    const updateForm = document.getElementById('updateForm');
+    if (!updateForm) return;
+
+    const existingDSS = document.getElementById('dssEvaluationSection');
+    if (existingDSS) {
+        existingDSS.remove();
+    }
+
+    const dssSection = document.createElement('div');
+    dssSection.id = 'dssEvaluationSection';
+    dssSection.className = 'dss-evaluation-section';
+
+    const dssStatus = incident.dss_status || 'Pending Evaluation';
+    let statusColor, statusBg;
+
+    switch (dssStatus) {
+        case 'High Priority':
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            break;
+        case 'Medium Priority':
+            statusColor = '#856404';
+            statusBg = '#fff3cd';
+            break;
+        case 'Low Priority':
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            break;
+        default:
+            statusColor = '#0c5460';
+            statusBg = '#d1ecf1';
+    }
+
+    dssSection.innerHTML = `
+        <div class="dss-header">
+            <h3>DST Evaluation</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${dssStatus}
+            </span>
+        </div>
+        <p class="dss-loading">Loading detailed evaluation...</p>
+    `;
+
+    updateForm.insertBefore(dssSection, updateForm.firstChild);
+}
+
+/**
+ * Submits incident status update to the server via API
+ * 
+ * @param {Event} event - The form submission event
+ */
+function submitUpdate(event) {
+    event.preventDefault();
+
+    const formData = new FormData(document.getElementById('updateForm'));
+    formData.append('action', 'update_status');
+
+    fetch(`${IR_HANDLER_URL}`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+            }
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return res.text().then(text => {
+                    console.error('Non-JSON response for update:', text.substring(0, 200));
+                    throw new TypeError("Server returned non-JSON response");
+                });
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                closeModal('updateModal');
+
+                // REPLACED WITH SWEETALERT2
+                incidentAlertConfig.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Incident updated successfully!',
+                    confirmButtonText: 'Great',
+                    confirmButtonColor: '#28a745'
+                });
+
+                if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+                    sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
+                }
+                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
+                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
                 }
 
-                if (type === 'checkboxGroup') {
-                    if (Array.from(el).some(c => c.checked)) validator.clear(el);
+                if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
+                    sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "status_update" }));
+                }
+
+                loadManagementTable();
+                loadProcessTable();
+            } else {
+                // REPLACED WITH SWEETALERT2
+                incidentAlertConfig.fire({
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: 'Error: ' + data.message,
+                    confirmButtonText: 'Try Again',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error updating incident:', error);
+
+            // REPLACED WITH SWEETALERT2
+            incidentAlertConfig.fire({
+                icon: 'error',
+                title: 'Update Error',
+                text: 'Error updating incident. Please try again.',
+                confirmButtonText: 'Understood',
+                confirmButtonColor: '#d33'
+            });
+        });
+};
+
+/**
+ * Generates a downloadable incident report document in HTML format
+ * Creates a formatted report with all incident details for printing/saving
+ */
+// function generateReportDocument() {
+//     const downloadBtn = document.getElementById('downloadBtn');
+
+//     if (downloadBtn) {
+
+//         downloadBtn.addEventListener('click', () => {
+//             // Create a simple HTML document for the report
+//             const reportHTML = `
+//                 <!DOCTYPE html>
+//                 <html>
+//                 <head>
+//                     <meta charset="UTF-8">
+//                     <title>Incident Report - ${new Date().toLocaleDateString()}</title>
+//                     <style>
+//                         body { font-family: Arial, sans-serif; margin: 40px; }
+//                         h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+//                         .section { margin: 20px 0; }
+//                         .section h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+//                         .field { margin: 5px 0; }
+//                         .label { font-weight: bold; }
+//                     </style>
+//                 </head>
+//                 <body>
+//                     <h1>Incident Report</h1>
+//                     <div class="section">
+//                         <h2>Reporting Person</h2>
+//                         <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
+//                         <div class="field"><span class="label">Address:</span> ${rpAddress.value}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
+//                         <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Victim Details</h2>
+//                         ${victimSameAsRP.checked ?
+//                     '<div class="field">Same as Reporting Person</div>' :
+//                     `
+//                             <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
+//                             <div class="field"><span class="label">Address:</span> ${vicAddress.value}</div>
+//                             <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
+//                             <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
+//                             <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
+//                             <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
+//                             <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
+//                             `
+//                 }
+//                     </div>
+//                     <div class="section">
+//                         <h2>Suspect Details</h2>
+//                         <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Address:</span> ${susAddress.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Incident Details</h2>
+//                         <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
+//                         <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
+//                         <div class="field"><span class="label">Location:</span> ${incidentAddress.value}</div>
+//                         <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${description.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Report Information</h2>
+//                         <div class="field"><span class="label">Date Reported:</span> ${new Date().toLocaleString()}</div>
+//                     </div>
+//                 </body>
+//                 </html>
+//             `;
+
+//             // Create and download the file as a Word document
+//             const blob = new Blob([reportHTML], { type: 'application/msword' });
+//             const url = URL.createObjectURL(blob);
+//             const a = document.createElement('a');
+//             a.href = url;
+//             a.download = `Incident_Report_${new Date().toISOString().split('T')[0]}.doc`;
+//             document.body.appendChild(a);
+//             a.click();
+//             document.body.removeChild(a);
+//             URL.revokeObjectURL(url);
+//         });
+//     }
+// }
+
+
+/**
+ * Displays detailed incident information in a modal view
+ * * @param {number} appId - The incident ID to view details for
+ */
+function viewDetails(appId) {
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
+
+    // REMOVED: generateReportDocument(); (No longer needed)
+
+    const incidentLocation = incident.incident_location || 'Not specified';
+
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+    switch (incident.status) {
+        case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    const content = `
+    <div class="details-container">
+        <div class="details-header-card">
+            <div class="details-title">
+                <h2>${incident.incident_type || 'Incident Report'}</h2>
+                <div class="details-id">Report ID: ${incident.id}</div>
+            </div>
+            <div style="text-align:right;">
+                <span style="background:${statusBg}; color:${statusColor}; padding:6px 12px; border-radius:20px; font-weight:bold; text-transform:uppercase; font-size:12px;">
+                    ${incident.status}
+                </span>
+                <div style="font-size:12px; color:#666; margin-top:5px;">Reported: ${formatDateTime(incident.reported_at)}</div>
+            </div>
+        </div>
+
+        <div class="details-grid">
+            <div class="col-left">
+                <div class="detail-card">
+                    <h3>Incident Information</h3>
+                    <div class="detail-row"><span class="detail-label">Type</span> <span class="detail-value">${incident.incident_type || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Date & Time</span> <span class="detail-value">${formatDateTime(incident.incident_timestamp)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Location</span> <span class="detail-value">${incidentLocation}</span></div>
+                    <div class="detail-row"><span class="detail-label">Coordinates</span> <span class="detail-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Severity</span> <span class="detail-value">${getSeverityBadge(incident.severity)}</span></div>
+                </div>
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Victim Details</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.vic_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.vic_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.vic_address || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Gender</span> <span class="detail-value">${incident.vic_gender || 'N/A'}</span></div>
+                </div>
+            </div>
+
+            <div class="col-right">
+                <div class="detail-card">
+                    <h3>Reporting Person</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.rp_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.rp_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Relationship</span> <span class="detail-value">${incident.rp_relationship || 'N/A'}</span></div>
+                </div>
+
+                ${incident.sus_full_name ? `
+                <div class="detail-card" style="margin-top:20px; border-color: #f5c6cb;">
+                    <h3>Suspect Details</h3>
+                    <div class="detail-row"><span class="detail-label">Name</span> <span class="detail-value">${incident.sus_full_name || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${incident.sus_contact || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${incident.sus_address || 'N/A'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Description</span> <span class="detail-value">${incident.sus_description || 'N/A'}</span></div>
+                </div>
+                ` : ''}
+
+                <div class="detail-card" style="margin-top:20px; border-color: #c3e6cb;">
+                    <section id="reportOutput">
+                        <p style="margin-bottom: 10px; color: #555;">Click the button below to download the report file.</p>
+                        <button class="btn-primary" onclick="downloadSummary(${incident.id})">
+                            <i class="fas fa-download"></i> Download Report (.doc)
+                        </button>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <h3>Narrative Description</h3>
+            <p style="margin:0; color:#555; line-height:1.6;">${incident.description || 'No description provided.'}</p>
+        </div>
+
+        ${incident.investigation_notes ? `
+        <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
+            <h3 style="color:#856404; border-color:#ffeeba;">Investigation Notes</h3>
+            <p style="margin:0; color:#555;">${incident.investigation_notes}</p>
+            <div style="font-size:12px; color:#666; margin-top:5px;">Updated: ${formatDateTime(incident.updated_at)}</div>
+        </div>
+        ` : ''}
+
+        ${incident.dss_status ? `
+        <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
+            <h3>Evaluation Status</h3>
+            <div class="detail-row"><span class="detail-label">DST Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
+        </div>
+        ` : ''}
+
+    </div>
+    `;
+
+    document.getElementById('modalBody').innerHTML = content;
+    openModal('detailsModal');
+}
+
+/**
+ * Loads incident options into the summary select dropdown
+ */
+function loadSummarySelect() {
+    loadIncidentsFromDB().finally(() => {
+        const select = document.getElementById('summaryApplicationSelect');
+        select.innerHTML = '<option value="">-- Select Incident Report --</option>';
+        incidents.forEach(incident => {
+            select.innerHTML += `<option value="${incident.id}">ID: ${incident.id} - ${incident.incident_type || 'Incident Report'}</option>`;
+        });
+    });
+}
+
+
+/**
+ * Updates the summary display with detailed incident information
+ * Generates a professional report view with formatted data
+ */
+function updateSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    const summaryOutput = document.getElementById('summaryOutput');
+
+    if (!appId) {
+        summaryOutput.innerHTML = `
+            <div class="placeholder-state">
+                <i class="fas fa-file-invoice fa-3x"></i>
+                <p>Select an incident report from the list above to view the full report.</p>
+            </div>`;
+        return;
+    }
+
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
+
+    // --- 1. Data Processing ---
+
+    // Status Badge Color Logic
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+
+    switch (incident.status) {
+        case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Formatted Dates
+    const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // --- 2. Build HTML Structure ---
+
+    summaryOutput.innerHTML = `
+        <div class="report-header">
+            <div class="report-title">
+                <h1>Incident Report Profile</h1>
+                <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
+            </div>
+            <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                ${incident.status}
+            </div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>Incident Details</h3>
+                    <div class="info-row"><span class="info-label">Incident Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span></div>
+                    <div class="info-row"><span class="info-label">Location</span> <span class="info-value" style="max-width: 200px; text-align:right;">${incident.incident_location || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Severity</span> <span class="info-value">${incident.severity || 'Not Rated'}</span></div>
+                </div>
+
+                <div class="report-section">
+                    <h3>Victim Information</h3>
+                    <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.vic_full_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.vic_contact || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.vic_address || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.vic_gender || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Citizenship</span> <span class="info-value">${incident.vic_citizenship || 'N/A'}</span></div>
+                </div>
+            </div>
+
+            <div class="report-column">
+                <div class="report-section">
+                    <h3>Reporting Person</h3>
+                    <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.rp_full_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.rp_contact || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.rp_address || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Relationship</span> <span class="info-value">${incident.rp_relationship || 'N/A'}</span></div>
+                </div>
+
+                ${incident.sus_full_name ? `
+                <div class="financial-box">
+                    <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
+                    <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.sus_gender || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Description</span> <span class="info-value">${incident.sus_description || 'N/A'}</span></div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h3>Incident Narrative</h3>
+            <div id="incident-narrative" style="background:#f8f9fa; padding:15px; border-radius:5px; margin-left: 40px; margin-right: 40px;">
+                ${incident.description || 'No description provided.'}
+            </div>
+        </div>
+
+        ${incident.investigation_notes ? `
+        <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
+            <h3 style="border:none; margin-bottom:5px;">Investigation Notes</h3>
+            <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
+            <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
+        </div>` : ''}
+
+        <div class="report-actions">
+            <button class="btn-secondary" onclick="downloadSummary(${incident.id})"><i class="fas fa-download"></i> Download</button>
+            <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print</button>
+        </div>
+    `;
+}
+
+/**
+ * Opens a modal dialog by adding the 'active' class
+ * 
+ * @param {string} modalId - The ID of the modal element to open    
+ */
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+/**
+ * Closes a modal dialog by removing the 'active' class
+ * 
+ * @param {string} modalId - The ID of the modal element to close
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+/**
+ * Prints the current summary report to a new window
+ */
+// function printSummary() {
+//     const summaryToPrint = document.getElementById('summaryOutput');
+
+//     const printWindow = window.open('', '', 'height=600,width=800');
+//     printWindow.document.write('<html><head><title>Incident Report Summary</title>');
+//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
+//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css">');
+//     printWindow.document.write('</head><body>');
+//     printWindow.document.write(summaryToPrint.innerHTML);
+//     printWindow.document.write('');
+//     printWindow.document.write('</body></html>');
+//     printWindow.document.close();
+//     printWindow.focus();
+// }
+
+/**
+ * Prints the current summary report to a new window
+ * Creates a print-friendly version of the summary content with proper structure
+ */
+function printSummary() {
+    const appId = document.getElementById('summaryApplicationSelect').value;
+    if (!appId) {
+        alert('Please select an incident report to print.');
+        return;
+    }
+
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
+
+    // Get status colors
+    let statusColor = '#6c757d';
+    let statusBg = '#e2e3e5';
+    switch (incident.status) {
+        case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
+    }
+
+    // Format dates
+    const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    // Create print-specific HTML with the same structure as updateIncidentSummary()
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Incident Report Summary - #${incident.id}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css">
+        </head>
+        <body>
+            <div class="print-container">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h1>Incident Report Profile</h1>
+                        <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
+                    </div>
+                    <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
+                        ${incident.status}
+                    </div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Incident Details</h3>
+                            <div class="info-row">
+                                <span class="info-label">Incident Type</span>
+                                <span class="info-value">${incident.incident_type || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Date & Time</span>
+                                <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Location</span>
+                                <span class="info-value">${incident.incident_location || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Coordinates</span>
+                                <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Severity</span>
+                                <span class="info-value">${incident.severity || 'Not Rated'}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3>Victim Information</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.vic_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.vic_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.vic_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Gender</span>
+                                <span class="info-value">${incident.vic_gender || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Citizenship</span>
+                                <span class="info-value">${incident.vic_citizenship || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="report-column">
+                        <div class="report-section">
+                            <h3>Reporting Person</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.rp_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.rp_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.rp_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Relationship</span>
+                                <span class="info-value">${incident.rp_relationship || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        ${incident.sus_full_name ? `
+                        <div class="financial-box">
+                            <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
+                            <div class="info-row">
+                                <span class="info-label">Full Name</span>
+                                <span class="info-value">${incident.sus_full_name || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Contact</span>
+                                <span class="info-value">${incident.sus_contact || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Address</span>
+                                <span class="info-value">${incident.sus_address || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Gender</span>
+                                <span class="info-value">${incident.sus_gender || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Description</span>
+                                <span class="info-value">${incident.sus_description || 'N/A'}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <h3>Incident Narrative</h3>
+                    <div style="background:#f8f9fa; padding:15px; border-radius:5px;">
+                        ${incident.description || 'No description provided.'}
+                    </div>
+                </div>
+
+                ${incident.investigation_notes ? `
+                <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
+                    <h3 style="border:none; margin-top:5px;">Investigation Notes</h3>
+                    <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
+                </div>` : ''}
+
+                <div class="footer-note">
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
+                    <p>Barangay Incident Report Management System</p>
+                </div>
+            </div>
+            
+            <script>
+                // Auto-print when page loads
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+                
+                // Also close when print dialog is cancelled
+                window.onafterprint = function() {
+                    setTimeout(function() {
+                        window.close();
+                    }, 100);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+}
+
+/**
+ * Downloads a summary report as a Word document
+ * * @param {number} appId - The incident ID to download summary for
+ */
+function downloadSummary(appId) {
+    const incident = incidents.find(i => i.id == appId);
+    if (!incident) return;
+
+    // Determine if victim is same as RP based on matching names or missing victim name
+    const isVictimSameAsRP = incident.vic_full_name === incident.rp_full_name || !incident.vic_full_name;
+    const incidentLocation = incident.incident_location || incident.incident_address || 'Not specified';
+    
+    // Safely get coordinates (handling potential property name variations)
+    const lat = incident.incident_latitude || incident.latitude || 'N/A';
+    const lng = incident.incident_longitude || incident.longitude || 'N/A';
+
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Incident Report Summary - ${incident.id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.5; }
+                h1 { color: #00247C; border-bottom: 2px solid #00247C; padding-bottom: 10px; }
+                .section { margin: 20px 0; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+                .section h2 { color: #555; font-size: 14pt; margin-bottom: 10px; }
+                .field { margin: 5px 0; }
+                .label { font-weight: bold; display: inline-block; width: 160px; color: #444; }
+                .status-badge { font-weight: bold; padding: 3px 8px; border: 1px solid #333; background: #f0f0f0; text-transform: uppercase;}
+            </style>
+        </head>
+        <body>
+            <h1>Incident Report (Ref ID: ${incident.id})</h1>
+            
+            <div class="section">
+                <h2>Reporting Person</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.rp_full_name || 'N/A'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.rp_address || 'N/A'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.rp_contact || 'N/A'}</div>
+                <div class="field"><span class="label">Relationship to Victim:</span> ${incident.rp_relationship || 'Not specified'}</div>
+            </div>
+
+            <div class="section">
+                <h2>Victim Details</h2>
+                ${isVictimSameAsRP ? 
+                    '<div class="field" style="font-style: italic;">Same as Reporting Person</div>' : 
+                    `
+                    <div class="field"><span class="label">Name:</span> ${incident.vic_full_name || 'N/A'}</div>
+                    <div class="field"><span class="label">Address:</span> ${incident.vic_address || 'N/A'}</div>
+                    <div class="field"><span class="label">Contact:</span> ${incident.vic_contact || 'N/A'}</div>
+                    <div class="field"><span class="label">Citizenship:</span> ${incident.vic_citizenship || 'N/A'}</div>
+                    <div class="field"><span class="label">Gender:</span> ${incident.vic_gender || 'N/A'}</div>
+                    <div class="field"><span class="label">Date of Birth:</span> ${incident.vic_dob || 'N/A'}</div>
+                    <div class="field"><span class="label">Occupation:</span> ${incident.vic_occupation || 'N/A'}</div>
+                    `
+                }
+            </div>
+
+            <div class="section">
+                <h2>Suspect Details</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.sus_full_name || 'Not specified'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.sus_address || 'Not specified'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.sus_contact || 'Not specified'}</div>
+                <div class="field"><span class="label">Gender:</span> ${incident.sus_gender || 'Not specified'}</div>
+                <div class="field"><span class="label">Description:</span> ${incident.sus_description || 'N/A'}</div>
+            </div>
+
+            <div class="section">
+                <h2>Incident Details</h2>
+                <div class="field"><span class="label">Type:</span> ${incident.incident_type || 'N/A'}</div>
+                <div class="field"><span class="label">Date & Time:</span> ${formatDateTime(incident.incident_timestamp)}</div>
+                <div class="field"><span class="label">Location:</span> ${incidentLocation}</div>
+                <div class="field"><span class="label">Coordinates:</span> ${lat}, ${lng}</div>
+                <div class="field"><span class="label">Narrative Description:</span> 
+                    <p style="margin-top: 5px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00247C;">
+                        ${incident.description || 'N/A'}
+                    </p>
+                </div>
+            </div>
+
+            <div class="section" style="border-bottom: none;">
+                <h2>Report Information</h2>
+                <div class="field"><span class="label">Date Reported:</span> ${formatDateTime(incident.reported_at || incident.created_at)}</div>
+                <div class="field"><span class="label">Current Status:</span> <span class="status-badge">${incident.status || 'N/A'}</span></div>
+                ${incident.dss_status ? `<div class="field"><span class="label">DST Evaluation:</span> ${incident.dss_status}</div>` : ''}
+                ${incident.investigation_notes ? `
+                    <div class="field"><span class="label">Investigation Notes:</span> 
+                        <p style="margin-top: 5px; font-style: italic;">${incident.investigation_notes}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </body>
+        </html>
+    `;
+
+    // Create and download the file as a Word document (.doc)
+    const blob = new Blob([htmlContent], { type: 'application/msword' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Formats filename to something like: Incident_Report_12_2026-03-18.doc
+    link.download = `Incident_Report_${incident.id}_${new Date().toISOString().split('T')[0]}.doc`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
+
+// Helper function for formatting dates
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+
+/**
+ * DOM event listeners for the "Create New" Incident form toggles and inputs
+ */
+let witnessCount = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Victim same as RP toggle logic
+    const victimSameAsRP = document.getElementById('victimSameAsRP');
+    if (victimSameAsRP) {
+        victimSameAsRP.addEventListener('change', function () {
+            // The specific fields we want to hide/show
+            const fieldsToToggle = ['vicFullName', 'vicContact', 'vicAddress'];
+            
+            fieldsToToggle.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    // Find the parent .form-group wrapper
+                    const wrapper = input.closest('.form-group');
+                    
+                    if (this.checked) {
+                        if (wrapper) wrapper.style.display = 'none';
+                        input.removeAttribute('required');
+                    } else {
+                        if (wrapper) wrapper.style.display = ''; // Reverts to CSS default
+                        input.setAttribute('required', 'required');
+                    }
                 }
             });
         });
-    });
+    }
 
-    // Address validation for business address
-    [businessLotNo, businessStreet].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
-        });
-        el.addEventListener('input', () => validator.clear(el));
-    });
+    // 2. Add Witness Logic
+    const addWitnessBtn = document.getElementById('addWitnessBtn');
+    if (addWitnessBtn) {
+        addWitnessBtn.addEventListener('click', () => {
+            witnessCount++;
+            const container = document.getElementById('witnessesContainer');
+            const div = document.createElement('div');
+            div.className = 'witness-group form-row';
+            div.style.marginBottom = '15px';
+            div.style.padding = '20px';
+            div.style.border = '1px solid #e0e0e0';
+            div.style.borderRadius = '6px';
+            div.style.background = '#f9f9f9';
+            div.style.position = 'relative';
 
-    // Input sanitization for numeric fields (remove non-digit characters)
-    [contactNoOwner, contactNoBusiness, businessLotNo, noOfEmployees].forEach(el => {
-        el.addEventListener('input', () => {
-            el.value = el.value.replace(/\D/g, '');
-            // validator.clear(el);
+            div.innerHTML = `
+                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
+                    <strong style="color: #333;">Witness ${witnessCount}</strong>
+                    <button type="button" class="btn-secondary" style="padding: 4px 10px; color: #dc3545; border-color: #dc3545; background: transparent;" onclick="this.closest('.witness-group').remove()"><i class="fas fa-times"></i> Remove</button>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="witness-name" placeholder="Full Name">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" class="witness-contact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Complete Address</label>
+                    <input type="text" class="witness-address" placeholder="Complete Address">
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Contact input digit sanitizer
+            const contactInput = div.querySelector('.witness-contact');
+            if (contactInput) {
+                contactInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
         });
+    }
+
+    // 3. Incident Type "Other" logic
+    const incidentType = document.getElementById('incidentType');
+    if (incidentType) {
+        incidentType.addEventListener('change', function () {
+            const otherContainer = document.getElementById('otherSpecifyContainer');
+            const otherInput = document.getElementById('otherIncidentType');
+            if (this.value === 'other') {
+                otherContainer.classList.remove('hidden');
+                otherInput.setAttribute('required', 'required');
+            } else {
+                otherContainer.classList.add('hidden');
+                otherInput.removeAttribute('required');
+                otherInput.value = '';
+            }
+        });
+    }
+
+    // 4. Sanitizer for built-in phone fields
+    ['rpContact', 'vicContact', 'susContact'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
     });
-})();
+});
 
 /**
- * Validates a group of fields for a specific form step
- * @param {Array} fields - Array of form elements to validate
- * @returns {boolean} - Whether all fields in the step are valid
+ * Main form submission handler for creating reports internally
  */
-function validateStep(fields) {
-    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+function createApplication(event) {
+    event.preventDefault();
+
+    incidentAlertConfig.fire({
+        title: 'Create Incident Report?',
+        text: 'Are you sure you want to submit this new report?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
+        confirmButtonText: 'Yes, submit',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('createForm');
+            const formData = new FormData(form);
+
+            formData.append('action', 'create');
+            formData.append('supabase_user_id', 'staff_internal_' + Date.now()); // Internal placeholder
+            formData.append('dateReported', new Date().toISOString());
+
+            // Handle Victim Same As RP
+            const isSame = document.getElementById('victimSameAsRP').checked;
+            if (isSame) {
+                formData.set('vicFullName', formData.get('rpFullName'));
+                formData.set('vicAddress', formData.get('rpAddress'));
+                formData.set('vicContact', formData.get('rpContact'));
+            }
+
+            // Correctly format witnesses array for PHP processing: `witnesses[0][name]`
+            let witnessIdx = 0;
+            document.querySelectorAll('.witness-group').forEach((group) => {
+                const name = group.querySelector('.witness-name').value;
+                const address = group.querySelector('.witness-address').value;
+                const contact = group.querySelector('.witness-contact').value;
+
+                if (name || address || contact) {
+                    formData.append(`witnesses[${witnessIdx}][name]`, name);
+                    formData.append(`witnesses[${witnessIdx}][address]`, address);
+                    formData.append(`witnesses[${witnessIdx}][contact]`, contact);
+                    witnessIdx++;
+                }
+            });
+
+            // Handle "Other" incident type
+            const incidentTypeVal = document.getElementById('incidentType').value;
+            if (incidentTypeVal === 'other') {
+                formData.set('incidentType', document.getElementById('otherIncidentType').value);
+            }
+
+            Swal.showLoading();
+
+            fetch(IR_HANDLER_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    incidentAlertConfig.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Incident Report Created! ID: ' + data.id
+                    }).then(() => {
+                        // Reset form state
+                        form.reset();
+                        document.getElementById('witnessesContainer').innerHTML = '';
+                        document.getElementById('victimDetailsContainer').style.display = 'grid';
+                        document.getElementById('otherSpecifyContainer').classList.add('hidden');
+                        
+                        // Notify system and reload
+                        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+                            sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                        }
+                        loadManagementTable();
+                        switchTab(null, 'management');
+                    });
+                } else {
+                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
+                }
+            })
+            .catch(err => {
+                console.error('Submit error:', err);
+                incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
+            });
+        }
+    });
 }
 
 /**
- * Handles navigation from owner information panel to business information panel
- * Validates all owner fields and updates waiver display before proceeding
+ * Creates and opens a dynamic map picker specifically for the "Create" form
  */
-document.getElementById('nextToBusiness').addEventListener('click', () => {
-    const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
-    if (!validateStep(stepFields)) return;
-
-    waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
-    switchPanel('business');
-});
+function openMapPicker(target) {
+    let modal = document.querySelector('.dynamic-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal dynamic-map-modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 900px; width: 90%; height: 85%;">
+                <div class="modal-header">
+                    <h2>Select Incident Location</h2>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div id="dynamic-map-container" style="width: 100%; height: calc(100% - 60px); margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.classList.add('active');
+    initializeMapPicker('dynamic-map-container', target);
+}
 
 /**
- * Handles navigation from business information panel to waiver panel
- * Validates all business fields including dynamic requirements based on application type
+ * Initializes the map, draws the barangay boundary, and fetches clickable 
+ * house polygons from the database schema to auto-fill addresses.
  */
-document.getElementById('nextToWaiver').addEventListener('click', () => {
-    const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
+function initializeMapPicker(containerId, target) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
 
-    const stepFields = [
-        businessName,
-        typeOfBusiness,
-        natureOfBusinessSelect,
-        natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify : null,
-        selectedBusinessStatus === 'Others' ? businessStatusSpecify : null,
-        businessStatus,
-        contactNoBusiness,
-        emailAddress,
-        requirements,
-        requirementUpload,
-        noOfEmployees,
-        natureOfApplication,
-        typeOfStructureSelect,
-        typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify : null,
-        businessLotNo,
-        businessStreet,
-        noOfEmployees
-    ].filter(Boolean);
-
-    const addressValid = validator.address(businessLotNo, businessStreet);
-    const fieldsValid = validateStep(stepFields);
-
-    if (!addressValid || !fieldsValid) return;
-
-    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-            return;
-        }
+    const container = document.getElementById(containerId);
+    if (container._leaflet_id) {
+        container._leaflet_id = null;
+        container.innerHTML = '';
     }
 
-    switchPanel('waiver');
-});
+    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
 
-/**
- * Handles navigation from waiver panel to summary panel
- * Validates agreement checkbox and populates summary display with all form data
- */
-document.getElementById('nextToSummary').addEventListener('click', () => {
-    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-    // Handle "other" incident type with custom specification
-    if (incidentType.value === 'other') {
-        if (!otherIncidentType.value.trim()) {
-            validator.text(otherIncidentType, 'Please specify the incident type');
-            return;
-        }
-    }
+    let marker = null;
 
-    if (!validateStep(stepFields)) return;
+    // 1. Fallback: Manual map click for areas without a house polygon
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
 
-    // Populate summary display with all collected data
-    document.getElementById('sumRpFullName').textContent = rpFullName.value;
-    document.getElementById('sumRpAddress').textContent = rpAddress.value;
-    document.getElementById('sumRpContact').textContent = rpContact.value;
-    document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Map Location').openPopup();
 
-    if (victimSameAsRP.checked) {
-        document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
-        document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
-        document.getElementById('sumVicContact').textContent = 'Same as Reporting Person';
-        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
-        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
-        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
-        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
-    } else {
-        document.getElementById('sumVicFullName').textContent = vicFullName.value;
-        document.getElementById('sumVicAddress').textContent = vicAddress.value;
-        document.getElementById('sumVicContact').textContent = vicContact.value;
-        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
-        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
-        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
-        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
-    }
-
-    document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
-    document.getElementById('sumSusAddress').textContent = susAddress.value || 'Not specified';
-    document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
-    document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
-    document.getElementById('sumSusDescription').textContent = susDescription.value;
-
-    document.getElementById('sumIncidentType').textContent =
-        incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
-    document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
-    document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
-    document.getElementById('sumIncidentCoordinates').textContent =
-        incidentLatitude.value && incidentLongitude.value ?
-            `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
-    document.getElementById('sumDescription').textContent = description.value;
-
-        switchPanel('summary');
-    }
-);
-
-/**
- * Sets up navigation between form panels with back button functionality
- * First back button returns to services page, others navigate to previous panel
- */
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/services.php';
+        document.getElementById('incidentLatitude').value = lat;
+        document.getElementById('incidentLongitude').value = lng;
     });
 
-    document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
-    document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
-    document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
-});
+    // 2. Barangay Boundary (Visual Guide)
+    const blueRidgeGeoJSON = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [121.07278956348526, 14.61639406374255], [121.07392145567032, 14.61595803532421], [121.07419772320655, 14.616251316435923], [121.07617987565104, 14.616430399403944], [121.07651515177966, 14.617647640629082], [121.07800914220171, 14.617803363969443], [121.07872851395038, 14.617316502559932], [121.07891090415784, 14.617705811277993], [121.07449698388697, 14.62017411386342]
+                ]]
+            }
+        }]
+    };
+    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.1 } }).addTo(map);
+
+    // 3. Fetch House Polygons from the schema
+    const formData = new FormData();
+    formData.append('action', 'get_houses'); // Ensure map_handler.php handles this
+    
+    fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.houses) {
+            const houseLayer = L.layerGroup();
+            
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        // Parse JSONB coordinates
+                        const coords = typeof house.coordinates === 'string' ? JSON.parse(house.coordinates) : house.coordinates;
+                        
+                        // Leaflet uses [lat, lng], but PostGIS/GeoJSON usually outputs [lng, lat]
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        
+                        // Draw the clickable house polygon
+                        const polygon = L.polygon(latLngCoords, { 
+                            color: '#28a745', 
+                            weight: 2, 
+                            fillColor: '#28a745', 
+                            fillOpacity: 0.4 
+                        }).addTo(houseLayer);
+                        
+                        // Click event specifically for the house
+                        polygon.on('click', function(e) {
+                            // Prevent the click from bleeding through to the underlying map
+                            L.DomEvent.stopPropagation(e); 
+                            
+                            // Use schema's center_lat/center_lng if available, otherwise use click location
+                            const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                            const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+                            
+                            if (marker) map.removeLayer(marker);
+                            
+                            // Set marker and popup using the schema's address
+                            const displayAddress = house.address || `${house.house_number || ''} ${house.street_name || ''}`.trim() || 'Selected House';
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup(`<b>Location Selected:</b><br>${displayAddress}`).openPopup();
+                            
+                            // Auto-fill Incident Coordinates
+                            document.getElementById('incidentLatitude').value = lat;
+                            document.getElementById('incidentLongitude').value = lng;
+
+                            // Auto-fill Incident Address
+                            let formattedAddress = house.address;
+                            if (!formattedAddress) {
+                                const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                                const street = house.street_name ? `${house.street_name}, ` : '';
+                                formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                            }
+                            document.getElementById('incidentAddress').value = formattedAddress;
+                        });
+                    } catch(e) {
+                        console.error('Error parsing house polygon coordinates:', e);
+                    }
+                }
+            });
+            houseLayer.addTo(map);
+        }
+    })
+    .catch(err => console.error('Failed to load house polygons:', err));
+    
+    // Fix rendering bug when Leaflet opens inside a modal
+    setTimeout(() => map.invalidateSize(), 300);
+}
 
 /**
- * Generates current date in YYYY-MM-DD format for application timestamp
- * @returns {string} - Current date formatted as YYYY-MM-DD
+ * Filters incidents in review table
+ */
+function filterReviewIncidents() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableBody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+}
+
+/**
+ * Resets the incident form
+ */
+function resetIncidentForm() {
+    const form = document.getElementById('incidentForm');
+    if (form) form.reset();
+    updateApplicationDate();
+}
+
+/**
+ * Returns the current date as a formatted string (YYYY-MM-DD)
+ * 
+ * @returns {string} Current date in YYYY-MM-DD format
  */
 function getCurrentDateString() {
     const now = new Date();
@@ -649,8 +1942,7 @@ function getCurrentDateString() {
 }
 
 /**
- * Updates the application date field with current date and maintains freshness
- * Runs on page load and refreshes every minute while form is open
+ * Updates the incident date input field with the current date
  */
 function updateApplicationDate() {
     const dateInput = document.getElementById('applicationDate');
@@ -659,571 +1951,276 @@ function updateApplicationDate() {
     }
 }
 
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return;
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
+// Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
-});
 
-/**
- * Shows or hides "specify" text fields based on "Others" selection in dropdowns
- * @param {HTMLSelectElement} selectEl - The primary select element
- * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
- */
-function handleOthersSelect(selectEl, specifyEl) {
-    const wrapper = specifyEl.closest('.label-and-input');
-    if (selectEl.value === 'Others') {
-        wrapper.style.display = 'block';
-    } else {
-        wrapper.style.display = 'none';
-        specifyEl.value = '';
-    }
-}
-
-/**
- * Shows or hides "specify" text field when "Others" is selected in radio group
- * @param {string} radioGroupName - The name attribute of the radio group
- * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
- */
-function handleOthersRadio(radioGroupName, specifyEl) {
-    const radios = document.getElementsByName(radioGroupName);
-    const specifyWrapper = specifyEl.closest('.label-and-input');
-
-    // Initial state
-    const othersSelected = Array.from(radios).some(radio => radio.value === 'Others' && radio.checked);
-    specifyWrapper.style.display = othersSelected ? 'block' : 'none';
-    if (!othersSelected) specifyEl.value = '';
-
-    Array.from(radios).forEach(radio => {
-        radio.addEventListener('change', () => {
-            const isOthersSelected = Array.from(radios).some(r => r.value === 'Others' && r.checked);
-            specifyWrapper.style.display = isOthersSelected ? 'block' : 'none';
-            if (!isOthersSelected) specifyEl.value = '';
-        });
-    });
-}
-
-/**
- * Dynamically shows/hides requirement checkboxes based on application type selection
- * Different application types (New, Renew, Closure) require different documents
- * @param {HTMLSelectElement} selectEl - The nature of application select element
- */
-function natureOfApplicationSel(selectEl) {
-    const checkboxes = requirementsSection.querySelectorAll('input[name="requirements"]');
-
-    const visibleMap = {
-        'New': ['SEC', 'DTI', 'TCT', 'Lease Contract'],
-        'Renew': ['Previous Business Clearance', 'Photocopy of Valid ID of Business Owner'],
-        'Closure': ['Notarized affidavit for Business Closure']
-    };
-
-    const selected = selectEl.value;
-
-    let anyVisible = false;
-
-    checkboxes.forEach(cb => {
-        if (visibleMap[selected] && visibleMap[selected].includes(cb.value)) {
-            cb.parentElement.style.display = 'block';
-            anyVisible = true;
-        } else {
-            cb.parentElement.style.display = 'none';
-            cb.checked = false;
-        }
-    });
-
-    requirementsSection.style.display = anyVisible ? 'block' : 'none';
-}
-
-/**
- * Handles final form submission with Supabase integration
- * Collects all form data, validates, sends to backend, and handles response
- * Includes notification permission request and success/error handling
- */
-const summaryForm = document.getElementById('summaryForm');
-
-// Clone form to prevent duplicate event listeners on page refresh
-const newSummaryForm = summaryForm.cloneNode(true);
-summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
-
-newSummaryForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-
-    // Request notification permission for submission alerts
-    if (Notification.permission !== "granted") {
-        await Notification.requestPermission();
-    }
-
-    const confirmBusResult = await business_app_swal.fire({
-        icon: 'question',
-        title: 'Submit your application?',
-        text: 'Are you sure you want to submit this application?',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, submit it!',
-        cancelButtonText: 'Cancel',
-        cancelButtonColor: '#ad2c2c',
-        customClass: {
-            cancelButton: 'btn-cancel'
-        }
-    });
-
-    if (confirmBusResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Business Application Submitted", {
-                    body: "Click to view your application status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
-
-        const formData = new FormData();
-
-        // Add action for business_handler.php
-        formData.append('action', 'create');
-
-        // Capture form data
-        formData.append('businessName', document.getElementById('businessName').value);
-
-        // Get Supabase user ID
-        const { data: { user } } = await supabase.auth.getUser();
-        const supabaseUserId = user?.id;
-        formData.append('supabase_user_id', supabaseUserId);
-
-        // Type of Business (radio)
-        const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
-        formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
-
-        // Nature of Business
-        formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
-        formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
-
-        // Business Address
-        formData.append('businessLotNo', document.getElementById('businessLotNo').value);
-        formData.append('businessStreet', document.getElementById('businessStreet').value);
-        formData.append('contactNoBusiness', document.getElementById('contactNoBusiness').value);
-        formData.append('emailAddress', document.getElementById('emailAddress').value);
-
-        // Business Status (radio)
-        const bizStatus = document.querySelector('input[name="businessStatus"]:checked');
-        if (bizStatus) formData.append('businessStatus[]', bizStatus.value);
-        formData.append('businessStatusSpecify', document.getElementById('businessStatusSpecify').value);
-
-        // Owner Details
-        formData.append('firstName', document.getElementById('firstName').value);
-        formData.append('middleName', document.getElementById('middleName').value);
-        formData.append('suffix', document.getElementById('suffix').value);
-        formData.append('lastName', document.getElementById('lastName').value);
-        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
-        formData.append('addressOwner', document.getElementById('addressOwner').value);
-
-        // Structure Details
-        formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
-        formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
-        formData.append('noOfEmployees', document.getElementById('noOfEmployees').value);
-
-        // Requirements (checkboxes)
-        const reqCheckboxes = document.querySelectorAll('input[name="requirements"]:checked');
-        reqCheckboxes.forEach((checkbox) => {
-            formData.append('requirements[]', checkbox.value);
-        });
-
-        // File Upload - send ALL files as array
-        const fileInput = document.getElementById('requirementUpload');
-        if (fileInput.files.length > 0) {
-            for (const file of fileInput.files) {
-                formData.append('requirementUpload[]', file);
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => {
+            if (data.type === "incident_report_applications_update") {
+                refreshActiveTab()
+                loadManagementTable();
+                loadProcessTable();
             }
-        } else {
-            // validation already catches this, but safe
-            formData.append('requirementUpload[]', ''); // empty if none
-        }
+        });
+    }
 
-        // Coordinates
-        const lat = document.getElementById('latitude2')?.value || '';
-        const lng = document.getElementById('longitude2')?.value || '';
-        formData.append('latitude2', lat);
-        formData.append('longitude2', lng);
-
-        // Application Date
-        const appDate = document.getElementById('applicationDate')?.value || '';
-        formData.append('applicationDate', appDate);
-
-        fetch(`${BUSINESS_HANDLER_URL}`, {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-
-                    if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                        sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
-                    }
-
-                    business_app_swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        html: 'Submitted successfully!<br><br>Reference ID: <strong>' + data.id + '</strong>'
-                    }).then(() => {
-                        window.location.href = '/client/pages/resident/status.php';
-                    });
-                } else {
-                    business_app_swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        html: 'An error occurred:<br><br><strong>' + data.message + '</strong>'
-                    });
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                business_app_swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    html: 'An error occurred:<br><br><strong>' + err.message + '</strong>'
-                });
-            });
+                else if (data.id) {
+                    appendAuditRow(data);
+                }
+                else {
+                    fetchAuditLogs();
+                }
+            }
+        });
     }
 });
 
+// CLOSE MODAL ON OUTSIDE CLICK
+window.onclick = function (event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target == modal) {
+            modal.classList.remove('active');
+        }
+    });
+}
+
+document.head.insertAdjacentHTML("beforeend", `<style>.hidden { display: none !important; }</style>`);
+
+// ==================== HELPER FUNCTIONS ====================
 
 /**
- * Opens an interactive map modal specifically for incident location selection
- * @param {string} target - Identifier for which address field is being mapped
+ * Gets severity badge HTML
+ * 
+ * @param {string} severity - The severity level (High/Medium/Low)
+ * @returns {string} HTML for the severity badge
  */
-function openMapPicker(target) {
-    if (target !== 'incident') {
-        ir_swal.fire({
-            icon: 'info',
-            title: 'Map Picker Limited',
-            html: 'Map picker is only available for <strong>incident location</strong>.'
+function getSeverityBadge(severity) {
+    let color, bg, text;
+    switch (severity) {
+        case 'High': color = '#721c24'; bg = '#f8d7da'; text = 'High'; break;
+        case 'Medium': color = '#856404'; bg = '#fff3cd'; text = 'Medium'; break;
+        case 'Low': color = '#155724'; bg = '#d4edda'; text = 'Low'; break;
+        default: color = '#6c757d'; bg = '#e2e3e5'; text = 'Not Rated';
+    }
+    return `<span style="color:${color}; background:${bg}; padding:2px 8px; border-radius:12px; font-size:12px;">${text}</span>`;
+}
+
+/**
+ * Formats a date string
+ * 
+ * @param {string} dateString - The date string to format
+ * @returns {string} Formatted date string
+ */
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (e) {
+        // console.warn('Error formatting date:', dateString, e);
+        return 'Invalid Date';
+    }
+}
+
+/**
+ * Formats a time string
+ * 
+ * @param {string} dateTimeString - The date/time string to extract time from
+ * @returns {string} Formatted time string
+ */
+function formatTime(dateTimeString) {
+    if (!dateTimeString) return 'N/A';
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        // console.warn('Error formatting time:', dateTimeString, e);
+        return 'Invalid Time';
+    }
+}
+
+// Add archive handler for incident reports
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'incident_reports') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
         });
         return;
     }
 
-    let modal = document.querySelector('.dynamic-map-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        // Removed 'map-modal' class to detach from external CSS forcing it to the right
-        modal.className = 'dynamic-map-modal'; 
-        
-        // Foolproof full-screen centered overlay
-        modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important;';
-
-        // Removed 'map-modal-content' class and replaced with strict inline styles
-        modal.innerHTML = `
-            <div style="position: relative !important; margin: 0 !important; max-width: 900px !important; width: 90% !important; height: 85vh !important; display: flex !important; flex-direction: column !important; background: white !important; padding: 20px !important; border-radius: 8px !important; box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important; box-sizing: border-box !important;">
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
-                    <h3 style="margin: 0; color: #00247C; font-family: Arial, sans-serif;">Select Incident Location</h3>
-                    <div style="display: flex; gap: 8px;">
-                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
-                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
-                    </div>
-                    <button class="close-map" type="button" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #333; line-height: 1; padding: 0;">&times;</button>
-                </div>
-
-                <div id="dynamic-map-container" style="width: 100%; flex-grow: 1; min-height: 300px; border-radius: 8px; z-index: 1;"></div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        modal.querySelector('.close-map').addEventListener('click', () => {
-            // Revert display back to none when closing
-            modal.style.setProperty('display', 'none', 'important');
-        });
-    }
-
-    // Force it to use flex so centering applies when reopening
-    modal.style.setProperty('display', 'flex', 'important');
-    
-    // Add a slight delay to allow the modal to display before initializing Leaflet
-    setTimeout(() => {
-        initializeMapPicker('dynamic-map-container', target);
-    }, 150);
-}
-
-async function initializeMapPicker(containerId, target) {
-    const defaultLat = 14.6175;
-    const defaultLng = 121.0756;
-
-    // Clean up existing Leaflet instance if reopening modal
-    const container = document.getElementById(containerId);
-    if (container._leaflet_id) {
-        container._leaflet_id = null;
-        container.innerHTML = '';
-    }
-
-    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    });
-    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri World Imagery'
-    });
-
-    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
-    osmTile.addTo(map);
-
-    // Match main map color system
-    const POLY_COLORS = {
-        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
-        satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
-    };
-    const BOUND_COLORS = {
-        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
-        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
-    };
-
-    let currentMode = 'street';
-    let housePolygons = [];
-    let boundaryLayers = [];
-    let selectedMarker = null;
-
-    function applyColors(mode) {
-        housePolygons.forEach(p => p.setStyle(POLY_COLORS[mode]));
-        boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
-    }
-
-    // Street / Satellite toggle listeners
-    const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn = document.getElementById('picker-satellite-btn');
-    if (streetBtn && satBtn) {
-        streetBtn.addEventListener('click', () => {
-            map.removeLayer(satTile); osmTile.addTo(map);
-            currentMode = 'street'; applyColors('street');
-            streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
-            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
-        });
-        satBtn.addEventListener('click', () => {
-            map.removeLayer(osmTile); satTile.addTo(map);
-            currentMode = 'satellite'; applyColors('satellite');
-            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
-            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
-        });
-    }
-
-    // Click anywhere to pick a point (Fallback for areas without polygons)
-    map.on('click', function (e) {
-        const lat = e.latlng.lat.toFixed(6);
-        const lng = e.latlng.lng.toFixed(6);
-        if (selectedMarker) map.removeLayer(selectedMarker);
-        selectedMarker = L.marker([lat, lng]).addTo(map)
-            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
-            .openPopup();
-        
-        document.getElementById('incidentLatitude').value = lat;
-        document.getElementById('incidentLongitude').value = lng;
-    });
-
-    // Load barangay boundaries from DB
-    try {
-        const bRes = await fetch('/server/handlers/map/map_handler.php', {
-            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
-        });
-        const bData = await bRes.json();
-        if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
-            bData.boundaries.forEach(b => {
-                try {
-                    const coords = JSON.parse(b.coordinates);
-                    const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
-                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
-                    boundaryLayers.push(layer);
-                } catch (err) { console.error('Boundary parse error:', err); }
-            });
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'archive-swal2-popup'
         }
-    } catch (err) { console.error('Failed to load boundaries:', err); }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('incident_reports', appId);
 
-    // Load house polygons
-    try {
-        const hRes = await fetch('/server/handlers/map/map_handler.php', {
-            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
-        });
-        const hData = await hRes.json();
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
 
-        if (hData.success && hData.houses) {
-            const houseLayer = L.layerGroup();
-
-            hData.houses.forEach(house => {
-                if (!house.coordinates) return;
-                try {
-                    const coords = JSON.parse(house.coordinates);
-                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
-                    const latLngs = ring.map(c => [c[1], c[0]]);
-                    latLngs.push(latLngs[0]);
-
-                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
-                    housePolygons.push(polygon);
-
-                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                    const subtitleHtml = house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
-                    const addrHtml = (!isLandmark && house.address) ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
-                    const streetHtml = house.street_name ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
-
-                    const popupHtml =
-                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
-                        '</div>' + addrHtml + streetHtml +
-                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
-                        '</div>';
-
-                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
-
-                    polygon.on('click', function (e) {
-                        L.DomEvent.stopPropagation(e);
-                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
-                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-
-                        if (selectedMarker) map.removeLayer(selectedMarker);
-                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
-                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr = (!isLandmarkSel && house.address) ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
-                        const selStreet = house.street_name ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
-                        
-                        const selPopup =
-                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                            '</div>' + selAddr + selStreet + '</div>';
-                            
-                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
-
-                        // Target Resident Incident Report Coordinates
-                        document.getElementById('incidentLatitude').value = lat;
-                        document.getElementById('incidentLongitude').value = lng;
-
-                        // Auto-fill Incident Address dynamically
-                        let formattedAddress = house.address;
-                        if (!formattedAddress) {
-                            const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
-                            const street = house.street_name ? `${house.street_name}, ` : '';
-                            formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
-                        }
-                        const addressInput = document.getElementById('incidentAddress');
-                        if (addressInput) {
-                            addressInput.value = formattedAddress;
-                            // Trigger input event to clear validation errors automatically
-                            addressInput.dispatchEvent(new Event('input')); 
-                        }
-                    });
-
-                    polygon.addTo(houseLayer);
-                } catch (err) { console.error('House parse error:', err); }
-            });
-
-            houseLayer.addTo(map);
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
         }
-    } catch (err) { console.error('Failed to load houses:', err); }
-
-    setTimeout(() => map.invalidateSize(), 300);
-}
-
-/**
- * Sets up coordinate field formatting to ensure proper decimal precision for incident coordinates
- * @param {string} target - Identifier for which coordinate set to format ('incident' only)
- */
-function setupCoordinateAutoFormat(target) {
-    const latInput = document.getElementById(`${target}Latitude`);
-    const lngInput = document.getElementById(`${target}Longitude`);
-    if (!latInput || !lngInput) return;
-
-    [latInput, lngInput].forEach(input => {
-        input.addEventListener('blur', function () {
-            if (this.value && !this.value.includes('.')) {
-                this.value = parseFloat(this.value).toFixed(6);
-            }
-        });
-    });
-}
-
-// Initialize coordinate formatting only for incident location when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    setupCoordinateAutoFormat('incident');
-});
-
-// Initialize map buttons when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.map-btn').forEach(btn => {
-        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
     });
 });
 
-/**
- * Automatically populates reporting person information fields with user data from session
- * Fetches resident profile data to pre-fill the form for convenience
- */
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-
-        await ir_swal.fire({
-            icon: 'warning',
-            title: 'Important Disclaimer',
-            html: 'Filing a false, fabricated, or malicious incident report is a serious offense and is punishable by law.<br><br>By proceeding, you certify that all information you provide is true and accurate to the best of your knowledge.',
-            confirmButtonText: 'I Understand and Agree',
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        });
-
-        // 1. Added credentials and cache settings exactly like the business app
-        const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
-        const data = await resp.json();
-        
-        console.debug('incident_report autofill response:', data);
-
-        if (data.error) {
-            console.log('Autofill error:', data.error);
-            return;
-        }
-
-        // 2. Added the fallback logic to split 'full_name' if individual fields are missing
-        if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
-            const parts = data.full_name.trim().split(/\s+/);
-            data.first_name = parts[0] || '';
-            data.last_name = parts.length > 1 ? parts[parts.length - 1] : '';
-            data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
-        }
-
-        // 3. Populate reporting person fields with user data safely
-        if (data.first_name || data.last_name) {
-            const last = data.last_name || '';
-            const first = data.first_name || '';
-            const middle = data.middle_name ? ' ' + data.middle_name : '';
-            
-            // Formats to match the input placeholder: "Last, First, Middle Name"
-            if (last && first) {
-                rpFullName.value = `${last}, ${first}${middle}`;
-            } else {
-                rpFullName.value = `${last}${first}${middle}`.trim();
-            }
-        }
-
-        if (data.contact_no) {
-            rpContact.value = data.contact_no;
-        }
-
-        if (data.address) {
-            // If your DB returns a full address string
-            rpAddress.value = data.address;
-        } else if (data.lot_no || data.street_name) {
-            // Otherwise, combine lot and street into a complete address
-            const lot = data.lot_no ? `House/Unit ${data.lot_no}, ` : '';
-            const street = data.street_name ? `${data.street_name}, ` : '';
-            rpAddress.value = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
-        }
-
-        // Set default citizenship for victim
-        if (vicCitizenship) {
-            vicCitizenship.value = 'Filipino';
-        }
-
-    } catch (err) {
-        console.error('Failed to fetch user data for autofill:', err);
-    }
-
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
-    }
-});
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
+// ===============================================
+window.createApplication = createApplication;
+window.openMapPicker = openMapPicker;
+window.loadIncidentsFromDB = loadIncidentsFromDB;
+window.filterIncidents = filterIncidents;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.switchTab = switchTab;
+window.initializeSidebarNav = initializeSidebarNav;
+window.getCurrentDateString = getCurrentDateString;
+window.updateApplicationDate = updateApplicationDate;
+window.filterReviewIncidents = filterReviewIncidents;
+window.resetIncidentForm = resetIncidentForm;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.getSeverityBadge = getSeverityBadge;
+window.formatDate = formatDate;
+window.formatDateTime = formatDateTime;
+window.formatTime = formatTime;
+window.filterIncidents = filterIncidents;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.switchTab = switchTab;
