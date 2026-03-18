@@ -351,7 +351,7 @@
     margin-bottom: 30px;
 }
 
-/* ==================== 3 HORIZONTAL CARDS ==================== */
+/* ==================== 4 HORIZONTAL CARDS ==================== */
 .services-section {
     padding: 60px 20px;
     background: white;
@@ -427,11 +427,11 @@
     line-height: 1.6;
 }
 
-/* Horizontal Cards Grid */
+/* Horizontal Cards Grid — 4 columns */
 .services-horizontal {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
     margin-bottom: 40px;
     position: relative;
     z-index: 2;
@@ -443,7 +443,7 @@
     flex-direction: column;
     background: white;
     border-radius: 24px;
-    padding: 25px 20px;
+    padding: 20px 15px;
     box-shadow: 0 10px 30px rgba(0,36,124,0.08);
     border: 1px solid #eef2ff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -487,16 +487,16 @@
     transform: scaleX(1);
 }
 
-/* Card Icon */
+/* Card Icon — slightly smaller to give text more room at 4-col */
 .card-icon-wrapper {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .card-icon {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     background: #f0f4ff;
     border-radius: 50%;
     display: flex;
@@ -514,32 +514,46 @@
     border-color: #3498db;
 }
 
+/*
+ * UNIFORMITY FIX — h3 and .card-subtitle both get a fixed min-height
+ * so the preview box always starts at the same vertical position,
+ * even when "Construction Clearance" wraps to 2 lines.
+ * display:flex + align-items:center keeps shorter text vertically centred.
+ */
 .service-h-card h3 {
     color: #00247C;
-    font-size: clamp(1.2rem, 3vw, 1.4rem);
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
     font-weight: 700;
     text-align: center;
-    margin: 0 0 10px;
+    margin: 0 0 8px;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.3;
 }
 
 .card-subtitle {
     color: #666;
-    font-size: clamp(0.8rem, 2vw, 0.95rem);
+    font-size: clamp(0.72rem, 1.6vw, 0.85rem);
     text-align: center;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    min-height: 45px;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    min-height: 2.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Preview Content */
+/* Preview box stretches to fill remaining card height equally */
 .card-preview-content {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 180px;
+    flex: 1;
     background: #f8faff;
     border-radius: 16px;
-    padding: 15px;
+    padding: 14px;
     transition: all 0.3s ease;
     border: 1px solid #eef2ff;
 }
@@ -554,7 +568,7 @@
 .preview-title {
     color: #00247C;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .preview-list {
@@ -568,12 +582,13 @@
 
 .preview-list li {
     color: #555;
-    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    font-size: clamp(0.7rem, 1.6vw, 0.82rem);
     padding: 4px 0;
     border-bottom: 1px dashed #eef2ff;
     word-break: break-word;
     text-align: center;
-    line-height: normal;
+    line-height: 1.3;
+    width: 100%;
 }
 
 .preview-list li:last-child {
@@ -1563,15 +1578,15 @@ section[data-theme="blue"] .cont {
 /* Desktop / Laptop (992px to 1199px) */
 @media (max-width: 1199px) and (min-width: 993px) {
     .services-horizontal {
-        gap: 20px;
+        gap: 15px;
     }
     
     .service-h-card {
-        padding: 20px 15px;
+        padding: 16px 12px;
     }
     
     .card-preview-content {
-        min-height: 170px;
+        padding: 12px;
     }
     
     .official-image {
@@ -1587,11 +1602,22 @@ section[data-theme="blue"] .cont {
     }
 }
 
-/* Tablet (768px to 992px) */
+/* Tablet — 2×2 grid */
 @media (max-width: 992px) {
     .services-horizontal {
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
+    }
+
+    /* Relax fixed heights at 2-col — cards are wider so less wrapping */
+    .service-h-card h3 {
+        min-height: 2.4rem;
+        font-size: clamp(1.1rem, 3vw, 1.3rem);
+    }
+
+    .card-subtitle {
+        min-height: 2rem;
+        font-size: clamp(0.8rem, 2vw, 0.9rem);
     }
     
     .story-content {
@@ -1639,7 +1665,6 @@ section[data-theme="blue"] .cont {
         grid-template-columns: 1fr;
     }
     
-    /* Office Hours Tablet Improvements */
     .barangay-title-container {
         gap: 12px;
     }
@@ -1665,6 +1690,17 @@ section[data-theme="blue"] .cont {
         grid-template-columns: 1fr;
         max-width: 450px;
         margin: 0 auto 30px;
+    }
+
+    /* Single column — no min-height needed */
+    .service-h-card h3 {
+        min-height: unset;
+        font-size: clamp(1.2rem, 4vw, 1.4rem);
+    }
+
+    .card-subtitle {
+        min-height: unset;
+        font-size: clamp(0.8rem, 2.5vw, 0.95rem);
     }
     
     .services-header h2 {
@@ -1743,7 +1779,6 @@ section[data-theme="blue"] .cont {
         max-width: 100%;
     }
     
-    /* Office Hours Mobile Landscape Improvements */
     .hours-tooltip {
         min-width: 280px;
         left: -20px;
@@ -1825,11 +1860,9 @@ section[data-theme="blue"] .cont {
     
     .card-subtitle {
         font-size: 0.85rem;
-        min-height: auto;
     }
     
     .card-preview-content {
-        min-height: 150px;
         padding: 12px;
     }
     
@@ -1932,7 +1965,6 @@ section[data-theme="blue"] .cont {
         justify-content: center;
     }
     
-    /* Office Hours Mobile Portrait Improvements - UPDATED */
     .hours-tooltip {
         min-width: 280px;
         width: calc(100vw - 40px);
@@ -2049,7 +2081,6 @@ section[data-theme="blue"] .cont {
         font-size: 1.5rem;
     }
     
-    /* Office Hours Small Mobile Improvements - FIXED */
     .barangay-title-container {
         gap: 8px;
         position: relative;
@@ -2076,7 +2107,6 @@ section[data-theme="blue"] .cont {
         height: 5px;
     }
     
-    /* Center the tooltip on very small screens */
     .hours-tooltip {
         min-width: 260px;
         width: calc(100vw - 40px);
