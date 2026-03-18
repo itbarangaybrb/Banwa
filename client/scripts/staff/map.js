@@ -28,8 +28,7 @@ let allMarkersData = [];
 let searchResults = [];
 let activeSearchMarker = null;
 let searchTimeout = null;
-let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search // 3/1/2026
-
+let pendingMoveEndHandler = null; // tracks moveend callback so we can cancel on new search
 // Modal state
 let currentMarkerData = null;
 
@@ -137,6 +136,26 @@ function showSwal(options) {
 function hasControl(control) {
     if (!control || !control._map) return false;
     return control._map === map;
+}
+
+// ── Shared fetch helper — all map handler POST calls go through here ──────────
+async function postAction(action, params = {}) {
+    const body = new URLSearchParams({ action, ...params });
+    const res = await fetch(MAP_HANDLER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+function showLoadingSwal(title, text = 'Please wait...') {
+    showSwal({ title, html: text, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+}
+
+function showErrorSwal(title, text = 'An unexpected error occurred.') {
+    showSwal({ icon: 'error', title, text });
 }
 
 // Barangay boundary — loaded from database on init
@@ -435,7 +454,6 @@ function displayFloodDetailsInModal(data) {
     ].join('');
     showDetailSwal(title, `${(data.risk_level || 'medium').toUpperCase()} RISK`, 'flood', tableRows);
 }
-// 3/1/2026
 function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
 
@@ -448,7 +466,6 @@ function displayHouseDetailsInModal(data, apps) {
         detailRow('Street Name', data.street_name || 'Not specified'),
         detailRow('Created', formatDate(data.created_at))
     ].join('');
-    // 3/1/2026
     const typeBadge = (bg, label, textColor) =>
         `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
                       background:${bg};color:${textColor || '#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
@@ -503,7 +520,6 @@ function displayHouseDetailsInModal(data, apps) {
             );
         });
     }
-    // 3/1/2026
     const tableRows = [
         sectionHeader('Household Information'), basicRows,
         sectionHeader('Connected Applications'), appRows
@@ -720,7 +736,6 @@ const natureToSubtypeMap = {
     'Complete Demolition': 'demolition',
     'Partial Demolition': 'demolition'
 };
-// 3/1/2026
 function filterConstructionByType(subtype, event) {
     if (event) event.stopPropagation();
     constructionSubFilter = subtype;
@@ -733,7 +748,6 @@ function filterConstructionByType(subtype, event) {
         : `<strong>${subtype.charAt(0).toUpperCase() + subtype.slice(1)}</strong>`;
     if (activeFilter === 'construction') updateMarkerVisibility();
 }
-// 3/1/2026
 function toggleConstructionFilters() {
     const list = document.getElementById('constructionTypeList');
     const btn = document.getElementById('constructionToggleBtn');
@@ -885,7 +899,6 @@ function resetView() {
 function performSearch() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
     const resultsContainer = document.getElementById('search-results');
-
 
     if (!searchTerm) {
         if (resultsContainer) resultsContainer.style.display = 'none';
@@ -1187,7 +1200,6 @@ function highlightExistingMarker(marker, markerData) {
     if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
 
     map.flyTo(latLng, 19, { duration: 1.2, easeLinearity: 0.2 });
-    // 3/1/2026
     if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
     pendingMoveEndHandler = () => {
         pendingMoveEndHandler = null;
@@ -1348,8 +1360,7 @@ function showHousePolygonHighlight(houseData) {
             duration: 1.5
         });
 
-        // Open popup after animation finishes // 3/1/2026
-        if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
+        // Open popup after animation finishes        if (pendingMoveEndHandler) map.off('moveend', pendingMoveEndHandler);
         pendingMoveEndHandler = () => {
             pendingMoveEndHandler = null;
             const popupContent = createHousePopup(houseData);
@@ -1589,78 +1600,34 @@ function createHousePopup(data) {
 
 // View details functions — show Swal loading, then fire detail Swal on success
 async function viewMapDetails(id, type) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const actionMap = {
-            construction: 'get_construction_details',
-            business: 'get_business_details',
-            utility: 'get_utilities_details',
-            incident: 'get_incident_details'
-        };
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: actionMap[type] || `get_${type}_details`, id }) });
-        const data = await response.json();
-        if (data.success) {
-            displayDetailsInModal(data.data, type);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load details.' });
-        }
-    } catch (error) {
-        console.error('Error loading details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load details.' });
-    }
+        const actionMap = { construction: 'get_construction_details', business: 'get_business_details', utility: 'get_utilities_details', incident: 'get_incident_details' };
+        const data = await postAction(actionMap[type] || `get_${type}_details`, { id });
+        if (data.success) displayDetailsInModal(data.data, type);
+        else showErrorSwal('Error', 'Could not load details.');
+    } catch (e) { console.error('viewMapDetails:', e); showErrorSwal('Error', 'Failed to load details.'); }
 }
 
 async function viewFloodDetails(id) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ action: 'get_flood_details', id }) });
-        const data = await response.json();
-        if (data.success) {
-            displayFloodDetailsInModal(data.data);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load flood details.' });
-        }
-    } catch (error) {
-        console.error('Error loading flood details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load flood details.' });
-    }
+        const data = await postAction('get_flood_details', { id });
+        if (data.success) displayFloodDetailsInModal(data.data);
+        else showErrorSwal('Error', 'Could not load flood details.');
+    } catch (e) { console.error('viewFloodDetails:', e); showErrorSwal('Error', 'Failed to load flood details.'); }
 }
 
-// 3/1/2026
 async function viewHouseDetails(id) {
-    showSwal({
-        title: 'Loading Details',
-        html: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    showLoadingSwal('Loading Details');
     try {
-        const fd1 = new URLSearchParams({ action: 'get_house_details', id });
-        const fd2 = new URLSearchParams({ action: 'get_house_applications', id });
-        const [res1, res2] = await Promise.all([
-            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd1 }),
-            fetch(MAP_HANDLER_URL, { method: 'POST', body: fd2 })
+        const [data, appData] = await Promise.all([
+            postAction('get_house_details', { id }),
+            postAction('get_house_applications', { id })
         ]);
-        const [data, appData] = await Promise.all([res1.json(), res2.json()]);
-        if (data.success) {
-            displayHouseDetailsInModal(data.data, appData.success ? appData.applications : null);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: 'Could not load house details.' });
-        }
-    } catch (error) {
-        console.error('Error loading house details:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to load house details.' });
-    }
+        if (data.success) displayHouseDetailsInModal(data.data, appData.success ? appData.applications : null);
+        else showErrorSwal('Error', 'Could not load house details.');
+    } catch (e) { console.error('viewHouseDetails:', e); showErrorSwal('Error', 'Failed to load house details.'); }
 }
 
 // ==================== HELPER FUNCTIONS ====================
@@ -1701,21 +1668,12 @@ function getFloodRiskColor(riskLevel) {
 async function loadAllMarkers() {
     clearAllMarkers();
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_all_markers'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const data = await postAction('get_all_markers');
         if (!data.success) throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
         loadHousePolygons();
-    } catch (error) {
-        console.error('ERROR LOADING MARKERS:', error);
-        showSwal({ icon: 'error', title: 'Error Loading Markers', text: 'Please refresh the page.', confirmButtonColor: '#00247c' });
-    }
+    } catch (e) { console.error('ERROR LOADING MARKERS:', e); showErrorSwal('Error Loading Markers', 'Please refresh the page.'); }
 }
 
 // processMarkersData: pure render — accepts the data object from get_all_markers
@@ -1784,7 +1742,6 @@ function processMarkersData(data) {
     });
 }
 
-
 // renderFloodData: pure render from pre-fetched hazards array (used by parallel init)
 function renderFloodData(hazards) {
     if (!hazards || !hazards.length) { floodLayer = L.layerGroup(); floodLegend = null; return; }
@@ -1797,25 +1754,10 @@ function renderFloodData(hazards) {
 // loadFloodData: fetches then renders — used when toggling flood layer on after init
 async function loadFloodData() {
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_flood_hazards'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        if (data.success && data.hazards) {
-            renderFloodData(data.hazards);
-        } else {
-            console.warn('No flood data found:', data.message);
-            floodLayer = L.layerGroup();
-            floodLegend = null;
-        }
-    } catch (error) {
-        console.error('ERROR LOADING FLOOD DATA:', error);
-        floodLayer = L.layerGroup();
-        floodLegend = null;
-    }
+        const data = await postAction('get_flood_hazards');
+        if (data.success && data.hazards) renderFloodData(data.hazards);
+        else { console.warn('No flood data found:', data.message); floodLayer = L.layerGroup(); floodLegend = null; }
+    } catch (e) { console.error('ERROR LOADING FLOOD DATA:', e); floodLayer = L.layerGroup(); floodLegend = null; }
 }
 
 function createFloodPanes() {
@@ -1972,21 +1914,13 @@ function addFloodLegend() {
 // On init, houses are loaded via the parallel Promise.all in map.whenReady.
 async function loadHousePolygons() {
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_houses'
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const data = await postAction('get_houses');
         if (data.success && data.houses) {
             housePolygonsData = data.houses;
             allMarkersData = [...allMarkersData, ...data.houses.map(h => ({ ...h, type: 'household' }))];
             renderHousePolygons();
         }
-    } catch (error) {
-        console.error('ERROR LOADING HOUSE POLYGONS:', error);
-    }
+    } catch (e) { console.error('ERROR LOADING HOUSE POLYGONS:', e); }
 }
 
 function renderHousePolygons() {
@@ -2037,15 +1971,13 @@ function renderHousePolygons() {
     if (activeFilter === 'household') {
         housePolygonsLayer.addTo(map);
     }
-    // 3/1/2026
     // Tag application markers by house address — suppress older duplicates
     tagMarkersWithHouseAddress();
 }
 
 /**
  * For each house, find all application markers whose address starts with the house address.
- * Keep only the most recent one visible per house; mark all others suppressedByHouse = true. // 3/1/2026
- */
+ * Keep only the most recent one visible per house; mark all others suppressedByHouse = true. */
 function tagMarkersWithHouseAddress() {
     function markerAddress(m) {
         if (m.construction_data) return (m.construction_data.construction_address || '').trim();
@@ -2079,7 +2011,6 @@ function tagMarkersWithHouseAddress() {
         matched.sort((a, b) => markerDate(b) - markerDate(a));
         matched.slice(1).forEach(m => { m.suppressedByHouse = true; });
     });
-    // 3/1/2026
     // Re-run visibility so suppressed markers disappear immediately
     updateAllVisibility();
 }
@@ -2120,22 +2051,8 @@ function clearAllMarkers() {
  */
 async function getFloodHousesSummary() {
     try {
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_flood_summary'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch flood assessment');
-        }
+        const result = await postAction('get_flood_summary');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch flood assessment');
 
         const data = result.data;
 
@@ -2149,11 +2066,9 @@ async function getFloodHousesSummary() {
         };
 
         let bodyHTML = '';
-        // 3/1/2026
         // Houses list is now deduplicated (one row per house, worst impact wins)
         const houses = data.houses || [];
         const total = houses.length;
-        // 3/1/2026
         if (total === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
@@ -2226,7 +2141,6 @@ async function getFloodHousesSummary() {
                     <div class="rpt-list-scroll">${houseRows}</div>
                 </div>`;
         }
-        // 3/1/2026
         const reportHTML = `<div class="rpt-body">
             <div class="rpt-header">
                 <h3>Flood Risk Assessment</h3>
@@ -2262,53 +2176,31 @@ async function getFloodHousesSummary() {
 // ==================== FAULT LINE RISK ASSESSMENT FUNCTION ====================
 
 async function showFaultLineRiskAssessment() {
+    showLoadingSwal('Analyzing Fault Line Risk', 'Assessing structures near the fault line...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Analyzing Fault Line Risk',
-            html: 'Please wait while we assess structures near the fault line...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'action=get_fault_line_assessment'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch fault line assessment');
-        }
+        const result = await postAction('get_fault_line_assessment');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch fault line assessment');
 
         const data = result.data;
 
         // ── Build fault line report with unified layout ──────────────────────
-        const riskColors = { medium: '#ffc107', high: '#ff9800', critical: '#dc3545' };
+        const riskColors = { low: '#4caf50', medium: '#ffc107', high: '#ff9800', critical: '#dc3545' };
+        const maxDist = Math.max(...(data.structures || []).map(s => s.distance_meters), 350);
 
         let bodyHTML = '';
 
-        if (data.summary.total_at_risk === 0) {
+        if (!data.structures || data.structures.length === 0) {
             bodyHTML = `<div style="text-align:center;padding:28px 0;">
                 <div style="font-size:42px;margin-bottom:10px;">✓</div>
-                <h3 style="color:#00247c;margin:0 0 6px;">No Structures at Risk</h3>
-                <p style="color:#666;margin:0;font-size:13px;">All structures are at safe distances from the fault line.</p>
+                <h3 style="color:#00247c;margin:0 0 6px;">No Structures Found</h3>
+                <p style="color:#666;margin:0;font-size:13px;">No house data available for assessment.</p>
             </div>`;
         } else {
             const sorted = [...(data.structures || [])].sort((a, b) => a.distance_meters - b.distance_meters);
 
             const rows = sorted.map((s, i) => {
                 const c = riskColors[s.risk_level] || '#888';
-                const barPct = Math.min(100, (s.distance_meters / 200) * 100).toFixed(0);
+                const barPct = Math.min(100, (s.distance_meters / maxDist) * 100).toFixed(0);
                 const body = `
                     <div style="margin-bottom:8px;">
                         <strong>Distance:</strong> <span style="color:${c};font-weight:700;">${s.distance_meters}m</span> from fault line
@@ -2316,7 +2208,7 @@ async function showFaultLineRiskAssessment() {
                             <div style="flex:1;height:6px;background:#e8e8e8;border-radius:3px;overflow:hidden;max-width:160px;">
                                 <div style="height:100%;width:${barPct}%;background:${c};"></div>
                             </div>
-                            <span style="font-size:11px;color:#aaa;">/ 200m</span>
+                            <span style="font-size:11px;color:#aaa;">/ ${maxDist}m</span>
                         </div>
                     </div>
                     ${s.address ? `<div style="color:#888;margin-bottom:6px;">${s.address}</div>` : ''}
@@ -2334,13 +2226,17 @@ async function showFaultLineRiskAssessment() {
 
             bodyHTML = `
                 <div class="rpt-stats">
+                    <div class="rpt-stat" style="border-left-color:#4caf50;">
+                        <div class="rpt-stat-num" style="color:#2e7d32;">${data.summary.low_risk || 0}</div>
+                        <div class="rpt-stat-label">Low (&gt;200m)</div>
+                    </div>
                     <div class="rpt-stat" style="border-left-color:#ffc107;">
                         <div class="rpt-stat-num" style="color:#e6a800;">${data.summary.medium_risk}</div>
                         <div class="rpt-stat-label">Medium (100–200m)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#ff9800;">
                         <div class="rpt-stat-num" style="color:#e67e00;">${data.summary.high_risk}</div>
-                        <div class="rpt-stat-label">High Risk (50–100m)</div>
+                        <div class="rpt-stat-label">High (50–100m)</div>
                     </div>
                     <div class="rpt-stat" style="border-left-color:#dc3545;">
                         <div class="rpt-stat-num" style="color:#dc3545;">${data.summary.critical}</div>
@@ -2348,7 +2244,7 @@ async function showFaultLineRiskAssessment() {
                     </div>
                 </div>
                 <div class="rpt-list-box">
-                    <h4>Structures at Risk <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
+                    <h4>All Structures <span style="font-weight:400;color:#aaa;">(${sorted.length})</span></h4>
                     <p class="rpt-list-hint">Sorted by distance · click a row to expand</p>
                     <div class="rpt-list-scroll">${rows}</div>
                 </div>`;
@@ -2358,16 +2254,17 @@ async function showFaultLineRiskAssessment() {
             <div class="rpt-header">
                 <h3>Fault Line Risk Assessment</h3>
                 <div class="rpt-big-num">${data.summary.total_at_risk}</div>
-                <div class="rpt-subtitle">Structures Within Risk Zone (&lt;200m from Fault Line)</div>
+                <div class="rpt-subtitle">All Structures — Distance from Fault Line</div>
             </div>
             <div class="rpt-content">
                 ${bodyHTML}
                 <div class="rpt-footer">
-                    <h4>Legal Requirements</h4>
+                    <h4>Risk Level Guidelines</h4>
                     <ul>
                         <li><strong>Critical (&lt;50m):</strong> Mandatory structural engineer cert, geological survey &amp; reinforced foundation</li>
                         <li><strong>High (50–100m):</strong> Seismic design standards &amp; structural engineer certification required</li>
                         <li><strong>Medium (100–200m):</strong> Enhanced foundation recommended; standard codes with seismic provisions apply</li>
+                        <li><strong>Low (&gt;200m):</strong> Standard building codes apply; basic earthquake preparedness recommended</li>
                     </ul>
                 </div>
             </div>
@@ -2388,142 +2285,25 @@ async function showFaultLineRiskAssessment() {
 // ==================== BUSINESS SDSS REPORT ====================
 
 async function showAllBusinessesSDSSReport() {
+    showLoadingSwal('Generating Report', 'Analyzing business safety compliance...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Generating Report',
-            html: 'Please wait while we analyze business safety compliance...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'action=get_business_sdss_report'
-        });
-
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch business SDSS report');
-        }
-
+        const result = await postAction('get_business_sdss_report');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch business SDSS report');
         const data = result.data;
-        if (!data || !data.summary || !data.warnings) {
-            throw new Error('Invalid data structure received from server');
-        }
-
-        // Show report using SweetAlert2
+        if (!data?.summary || !data?.warnings) throw new Error('Invalid data structure received from server');
         displayBusinessSDSSReport(data);
-
-    } catch (error) {
-        console.error('Error in business SDSS:', error);
-
-        showSwal({
-            icon: 'error',
-            title: 'Error Generating Report',
-            html: `
-                <div style="text-align: left;">
-                    <p><strong>Failed to generate business SDSS report:</strong></p>
-                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                        ${error.message}
-                    </p>
-                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                        Please check:
-                    </p>
-                    <ul style="text-align: left; font-size: 13px; color: #666;">
-                        <li>Database connection is working</li>
-                        <li>Business applications table has data with coordinates</li>
-                        <li>Flood hazard data is properly configured</li>
-                        <li>Check browser console for detailed error logs</li>
-                    </ul>
-                </div>
-            `,
-            width: 600
-        });
-    }
+    } catch (e) { console.error('Error in business SDSS:', e); showErrorSwal('Error Generating Report', e.message); }
 }
 
-/**
- * Fixed Construction SDSS Report with better error handling
- */
 async function showAllConstructionSDSSReport() {
+    showLoadingSwal('Generating Report', 'Analyzing construction site safety...');
     try {
-
-        // Show loading indicator
-        showSwal({
-            title: 'Generating Report',
-            html: 'Please wait while we analyze construction site safety...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'action=get_construction_sdss_report'
-        });
-
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status !== 'success') {
-            throw new Error(result.message || 'Failed to fetch construction SDSS report');
-        }
-
+        const result = await postAction('get_construction_sdss_report');
+        if (result.status !== 'success') throw new Error(result.message || 'Failed to fetch construction SDSS report');
         const data = result.data;
-        if (!data || !data.summary || !data.warnings) {
-            throw new Error('Invalid data structure received from server');
-        }
-
-        // Show report using SweetAlert2
+        if (!data?.summary || !data?.warnings) throw new Error('Invalid data structure received from server');
         displayConstructionSDSSReport(data);
-
-    } catch (error) {
-        console.error('Error in construction SDSS:', error);
-
-        showSwal({
-            icon: 'error',
-            title: 'Error Generating Report',
-            html: `
-                <div style="text-align: left;">
-                    <p><strong>Failed to generate construction SDSS report:</strong></p>
-                    <p style="color: #cc0000; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-                        ${error.message}
-                    </p>
-                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                        Please check:
-                    </p>
-                    <ul style="text-align: left; font-size: 13px; color: #666;">
-                        <li>Database connection is working</li>
-                        <li>Construction applications table has data with coordinates</li>
-                        <li>Flood hazard data is properly configured</li>
-                        <li>Check browser console for detailed error logs</li>
-                    </ul>
-                </div>
-            `,
-            width: 600
-        });
-    }
+    } catch (e) { console.error('Error in construction SDSS:', e); showErrorSwal('Error Generating Report', e.message); }
 }
 
 /**
@@ -2684,13 +2464,11 @@ function displayConstructionSDSSReport(data) {
     showReportSwal(reportHTML);
 }
 
-
 // ==================== INCIDENT SUB-FILTER ====================
 
 // Track whether sub-filter panel is expanded
 let incidentFiltersExpanded = false;
-let constructionFiltersExpanded = false; // 3/1/2026
-
+let constructionFiltersExpanded = false;
 async function loadIncidentSubFilters() {
     const panel = document.getElementById('incidentSubFilters');
     if (!panel) return;
@@ -2710,14 +2488,9 @@ async function loadIncidentSubFilters() {
 
     let types = [];
     try {
-        const fd = new URLSearchParams();
-        fd.append('action', 'get_incident_types');
-        const res = await fetch(MAP_HANDLER_URL, { method: 'POST', body: fd });
-        const data = await res.json();
+        const data = await postAction('get_incident_types');
         types = data.success ? (data.types || []) : [];
-    } catch (e) {
-        console.warn('Could not load incident types:', e);
-    }
+    } catch (e) { console.warn('Could not load incident types:', e); }
 
     // Build type buttons for the expanded section
     const typeButtons = types.map(type => {
@@ -2766,7 +2539,6 @@ function toggleIncidentFilters() {
     btn.classList.toggle('open', incidentFiltersExpanded);
 }
 
-
 function filterIncidentByType(subtype, event) {
     if (event) event.stopPropagation();
     incidentSubFilter = subtype;
@@ -2790,17 +2562,9 @@ function shouldShowIncidentMarker(marker) {
 // ==================== INCIDENT SUMMARY REPORT ====================
 
 async function showIncidentSummaryReport() {
-    showSwal({
-        title: 'Loading Incident Report',
-        html: 'Analyzing incident data...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
-
+    showLoadingSwal('Loading Incident Report', 'Analyzing incident data...');
     try {
-        const formData = new URLSearchParams({ action: 'get_all_incidents' });
-        const response = await fetch(MAP_HANDLER_URL, { method: 'POST', body: formData });
-        const data = await response.json();
+        const data = await postAction('get_all_incidents');
         if (!data.success) throw new Error('Failed to load incident data');
 
         const incidents = data.incidents || [];
@@ -2831,7 +2595,6 @@ async function showIncidentSummaryReport() {
         const pending = incidents.filter(i => (i.status || 'Pending') === 'Pending').length;
         const investigating = incidents.filter(i => i.status === 'Under Investigation').length;
         const resolved = incidents.filter(i => i.status === 'Resolved').length;
-        // 3/1/2026
         // Type breakdown bars — all red
         const sortedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
         const typeBars = sortedTypes.map(([type, count], i) => {
@@ -3323,32 +3086,15 @@ function debugFloodState() {
  * Show Barangay Rules Summary Report (with DSS Evaluations tab)
  */
 async function showSDSSRulesReport() {
+    showLoadingSwal('Loading Barangay Rules', 'Please wait while we load the rules summary...');
     try {
-        // Show loading indicator (missing from original — all other report functions have this)
-        showSwal({
-            title: 'Loading Barangay Rules',
-            html: 'Please wait while we load the rules summary...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
-
-        const [rulesRes, dssRes] = await Promise.all([
-            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_sdss_rules_summary' }),
-            fetch(MAP_HANDLER_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_dss_evaluations' })
+        const [rulesResult, dssResult] = await Promise.all([
+            postAction('get_sdss_rules_summary'),
+            postAction('get_dss_evaluations')
         ]);
-
-        const rulesResult = await rulesRes.json();
-        const dssResult = await dssRes.json();
-
-        if (rulesResult.status === 'success') {
-            displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
-        } else {
-            showSwal({ icon: 'error', title: 'Error', text: rulesResult.message || 'Failed to load rules summary', confirmButtonColor: '#00247c' });
-        }
-    } catch (error) {
-        console.error('Error fetching Barangay Rules:', error);
-        showSwal({ icon: 'error', title: 'Error', text: 'Failed to fetch Barangay Rules', confirmButtonColor: '#00247c' });
-    }
+        if (rulesResult.status === 'success') displaySDSSRulesReport(rulesResult.data, dssResult.success ? dssResult : null);
+        else showErrorSwal('Error', rulesResult.message || 'Failed to load rules summary');
+    } catch (e) { console.error('showSDSSRulesReport:', e); showErrorSwal('Error', 'Failed to fetch Barangay Rules'); }
 }
 
 /**
@@ -3596,8 +3342,6 @@ function buildDSSTab(dssData) {
     return summaryChips + groupSections;
 }
 
-
-
 /**
  * Create a collapsible rule card HTML
  */
@@ -3726,12 +3470,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
     });
 
     try {
-        const response = await fetch(MAP_HANDLER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ action: 'get_rule_affected_data', rule_key: ruleKey })
-        });
-        const result = await response.json();
+        const result = await postAction('get_rule_affected_data', { rule_key: ruleKey });
 
         const bodyEl = document.getElementById('affected-panel-body');
         if (!bodyEl) return;
@@ -3817,12 +3556,10 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
         }
 
         // ── Build record list ───────────────────────────────────────────────
-        // 3/1/2026
         if (records.length === 0) {
             bodyEl.innerHTML = `<div style="padding:28px;text-align:center;color:#888;font-size:13px;">No affected records found for this rule.</div>`;
             return;
         }
-        // 3/1/2026
         // Sort records - households first, then by name/address
         const sortedRecords = [...records].sort((a, b) => {
             // First sort by type (households first)
@@ -3943,8 +3680,8 @@ async function showDSSEvalsOnMap(type, evList) {
         closePanel();
         setTimeout(() => showSDSSRulesReport(), 320);
     };
-    document.addEventListener('keydown', function escH(e) {
-        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escH); }
+    document.addEventListener('keydown', function escHDss(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', escHDss); }
     });
 
     // ── Plot all applications ──────────────────────────────────────────────
@@ -4077,7 +3814,6 @@ function buildEvalPopup(ev, sc, pct) {
             </button>
         </div>`;
 }
-
 
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;

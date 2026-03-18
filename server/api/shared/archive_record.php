@@ -59,9 +59,7 @@ try {
 
         $archiveFullName = $record['full_name'] ?? null;
         $archiveEmail    = $record['email']     ?? null;
-        // FIX: Use the current user's role (archiver) not the archived user's role
         $archiveRoleId   = $userRoleId;
-        // FIX: Use the current user's ID (archiver) not the archived user's ID
         $archiveUserId   = $supabaseUserId;
 
     } elseif (in_array($table, ['utility_applications', 'business_applications', 'construction_applications', 'incident_reports'])) {

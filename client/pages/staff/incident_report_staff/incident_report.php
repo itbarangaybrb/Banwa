@@ -23,7 +23,7 @@ $full_name = getCurrentUserName();
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    <!-- <link rel="stylesheet" href="../../../styles/staff/incident_report_staff/incident_report.css"> -->
     <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
@@ -295,6 +295,22 @@ $full_name = getCurrentUserName();
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Activity</th>
+                                <th>Rec. ID</th>
+                                <th>Name</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Management Tab -->
@@ -370,127 +386,153 @@ $full_name = getCurrentUserName();
                     <h2>Create New Incident Report</h2>
                     <p class="form-description">Fill in the details to create a new incident report</p>
                 </div>
-                <form id="createForm" onsubmit="createIncident(event)">
-                    <!-- Reporting Person Information -->
+                <form id="createForm" onsubmit="createApplication(event)">
                     <div class="section-title">Reporting Person Information</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="rpFullName">Full Name *</label>
-                            <input type="text" name="rpFullName" required>
+                            <label for="rpFullName">Full Name <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="rpFullName" name="rpFullName" placeholder="Last, First, Middle Name" required>
                         </div>
                         <div class="form-group">
-                            <label for="rpContact">Contact Number *</label>
-                            <input type="tel" name="rpContact" required>
+                            <label for="rpContact">Contact Number <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="rpContact" name="rpContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="rpAddress">Complete Address <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="rpAddress" name="rpAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="rpAddress">Address *</label>
-                            <input type="text" name="rpAddress" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="rpRelationship">Relationship to Victim</label>
-                            <input type="text" name="rpRelationship">
+                            <label for="rpRelationship">Relationship to Victim (if applicable)</label>
+                            <input type="text" id="rpRelationship" name="rpRelationship" placeholder="e.g., Self, Neighbor, Friend">
                         </div>
                     </div>
 
-                    <!-- Victim Details -->
                     <div class="section-title">Victim / Complainant Details</div>
-                    <div class="form-row">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="victimSameAsRP" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;">
+                            <input type="checkbox" id="victimSameAsRP" style="width: auto; margin: 0; cursor: pointer;">
+                            Victim is the same as the Reporting Person
+                        </label>
+                    </div>
+                    <div class="form-row" id="victimDetailsContainer">
                         <div class="form-group">
-                            <label for="vicFullName">Full Name *</label>
-                            <input type="text" name="vicFullName" required>
+                            <label for="vicFullName">Full Name <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="vicFullName" name="vicFullName" required>
                         </div>
                         <div class="form-group">
-                            <label for="vicAddress">Address *</label>
-                            <input type="text" name="vicAddress" required>
+                            <label for="vicContact">Contact Number <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="vicContact" name="vicContact" maxlength="11" pattern="[0-9]{1,11}" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="vicAddress">Complete Address <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="vicAddress" name="vicAddress" rows="2" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="vicContact">Contact Number *</label>
-                            <input type="tel" name="vicContact" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="vicGender">Gender *</label>
-                            <select name="vicGender" required>
-                                <option value="">Select</option>
+                            <label for="vicGender">Gender <span style="color: #BB1B1B;">*</span></label>
+                            <select id="vicGender" name="vicGender" required>
+                                <option value="" disabled selected>Select</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="vicDOB">Date of Birth *</label>
-                            <input type="date" name="vicDOB" required>
+                            <label for="vicCitizenship">Citizenship <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="vicCitizenship" name="vicCitizenship" placeholder="e.g., Filipino" required>
                         </div>
                         <div class="form-group">
-                            <label for="vicOccupation">Occupation *</label>
-                            <input type="text" name="vicOccupation" required>
+                            <label for="vicDOB">Date of Birth <span style="color: #BB1B1B;">*</span></label>
+                            <input type="date" id="vicDOB" name="vicDOB" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="vicOccupation">Occupation <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="vicOccupation" name="vicOccupation" required>
                         </div>
                     </div>
 
-                    <!-- Suspect Details -->
                     <div class="section-title">Suspect / Respondent Details</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="susFullName">Full Name (if known)</label>
-                            <input type="text" name="susFullName">
-                        </div>
-                        <div class="form-group">
-                            <label for="susAddress">Address (if known)</label>
-                            <input type="text" name="susAddress">
+                            <input type="text" id="susFullName" name="susFullName">
                         </div>
                         <div class="form-group">
                             <label for="susContact">Contact Number (if known)</label>
-                            <input type="tel" name="susContact">
+                            <input type="text" id="susContact" name="susContact" maxlength="11" pattern="[0-9]{1,11}">
                         </div>
                         <div class="form-group">
-                            <label for="susDescription">Physical Description *</label>
-                            <textarea name="susDescription" rows="3" required></textarea>
+                            <label for="susGender">Gender</label>
+                            <select id="susGender" name="susGender">
+                                <option value="" disabled selected>Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="susAddress">Complete Address (if known)</label>
+                            <textarea id="susAddress" name="susAddress" rows="2"></textarea>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="susDescription">Physical Description and Affiliations <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="susDescription" name="susDescription" rows="3" placeholder="Describe clothing, distinguishing features, etc." required></textarea>
                         </div>
                     </div>
 
-                    <!-- Incident Details -->
+                    <div class="section-title">Witnesses (If Any)</div>
+                    <div id="witnessesContainer"></div>
+                    <button type="button" id="addWitnessBtn" class="btn-secondary" style="margin-bottom: 25px;"><i class="fas fa-plus"></i> Add Witness</button>
+
                     <div class="section-title">Incident Details</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="incidentType">Incident Type *</label>
-                            <select name="incidentType" required>
-                                <option value="">Select Type</option>
+                            <label for="incidentType">Incident Type <span style="color: #BB1B1B;">*</span></label>
+                            <select id="incidentType" name="incidentType" required>
+                                <option value="" disabled selected>Select Type</option>
                                 <option value="Property/Civil Disputes">Property/Civil Disputes</option>
-                                <option value="Minor Offenses Against Persons">Minor Offenses Against Persons</option>
-                                <option value="VAWC">Violence Against Women and Children</option>
+                                <option value="Minor Offenses Against Persons/Safety">Minor Offenses Against Persons/Safety</option>
+                                <option value="Minor Offenses Against Honor/Property">Minor Offenses Against Honor/Property</option>
+                                <option value="Violence Against Woman and their Children">Violence Against Woman and their Children</option>
                                 <option value="Serious Crime">Serious Crime</option>
-                                <option value="Public Safety">Public Safety and Emergencies</option>
+                                <option value="Public Safety and Emergencies">Public Safety and Emergencies</option>
                                 <option value="Ordinance Violations">Ordinance Violations</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="incidentTimestamp">Date and Time of Incident *</label>
-                            <input type="datetime-local" name="incidentTimestamp" required>
+                        <div class="form-group hidden" id="otherSpecifyContainer">
+                            <label for="otherIncidentType">Please specify other incident type <span style="color: #BB1B1B;">*</span></label>
+                            <input type="text" id="otherIncidentType" name="otherIncidentType">
                         </div>
                         <div class="form-group">
-                            <label for="incidentLocation">Location *</label>
-                            <input type="text" name="incidentLocation" required>
+                            <label for="incidentTimestamp">Date and Time of Incident <span style="color: #BB1B1B;">*</span></label>
+                            <input type="datetime-local" id="incidentTimestamp" name="incidentTimestamp" required>
                         </div>
+                        
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="incidentAddress">Incident Location (Complete Address) <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="incidentAddress" name="incidentAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province" required></textarea>
+                        </div>
+
                         <div class="form-group">
                             <label for="incidentLatitude">Latitude</label>
-                            <input type="text" name="incidentLatitude" placeholder="e.g., 14.617500">
+                            <input type="text" id="incidentLatitude" name="incidentLatitude" readonly placeholder="Auto-filled from map">
                         </div>
                         <div class="form-group">
                             <label for="incidentLongitude">Longitude</label>
-                            <input type="text" name="incidentLongitude" placeholder="e.g., 121.075600">
+                            <input type="text" id="incidentLongitude" name="incidentLongitude" readonly placeholder="Auto-filled from map">
                         </div>
-                        <div class="form-group">
-                            <label for="description">Narrative/Description *</label>
-                            <textarea name="description" rows="4" required></textarea>
+                        
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <button type="button" class="btn-secondary" onclick="openMapPicker('incident')" style="width: max-content;"><i class="fas fa-map-marker-alt"></i> Pick Location on Map</button>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="description">Narrative/Description <span style="color: #BB1B1B;">*</span></label>
+                            <textarea id="description" name="description" rows="5" required></textarea>
                         </div>
                     </div>
 
-                    <!-- Requirements -->
-                    <div class="section-title">Supporting Documents</div>
-                    <div class="form-group">
-                        <input type="file" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png" multiple>
-                    </div>
-
-                    <div class="button-group">
+                    <div class="button-group" style="margin-top: 30px;">
                         <button type="submit" class="btn-primary">Create Report</button>
                         <button type="reset" class="btn-secondary">Clear Form</button>
                     </div>
@@ -624,7 +666,7 @@ $full_name = getCurrentUserName();
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Update Incident Status</h2>
-                    <button class="close-btn" onclick="closeModal('openUpdateModal')">&times;</button>
+                    <button class="close-btn" onclick="closeModal('updateModal')">&times;</button>
                 </div>
                 <form id="updateForm" onsubmit="submitUpdate(event)">
                     <input type="hidden" id="updateReportId" name="id">

@@ -823,6 +823,17 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Submitting false information or fraudulent documents for a <strong>Utilities Clearance</strong> is a serious offense and may result in the denial of your application and legal action.<br><br>By proceeding, you certify that all information and attached documents provided are true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            confirmButtonColor: '#00247C',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
         console.debug('utilities_app autofill response:', data);

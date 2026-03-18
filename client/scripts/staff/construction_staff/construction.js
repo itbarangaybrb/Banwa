@@ -35,7 +35,7 @@ const constructionStatusTemplates = {
     'For Payment': "Your application is approved. Please pay the assessment amount of ₱[amount] via the portal or at the Barangay Hall.",
     'Disapproved': "Your construction application was disapproved due to: [reason]. You may re-apply once requirements are met.",
     'Additional Requirements': "Some documents are unclear or missing. Please re-upload your construction plans and clearances.",
-    'Approved': "Your Construction Clearance is now ready for pick-up/download.",
+    'Approved': "Your Construction Clearance is now ready for pick-up.",
     'Complied': "Your submitted requirements have been verified."
 };
 
@@ -838,7 +838,7 @@ function loadAnalyticsTab() {
                 data: {
                     labels: labels3,
                     datasets: [{
-                        label: 'DSS Status Distribution',
+                        label: 'DST Status Distribution',
                         data: totals3,
                         backgroundColor: dssColors,
                         borderWidth: 1
@@ -1321,7 +1321,8 @@ async function viewDetails(appId) {
         let ocrHtml = `<h3 style="color: #777; font-size: 14px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px;">OCR RESULTS (${ocrRuns.length} RUNS)</h3>`;
 
         if (ocrRuns.length > 0) {
-            ocrHtml += `<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">`;
+            // FIX: Added overflow-x: hidden to prevent container breaking
+            ocrHtml += `<div style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 5px;">`;
             ocrHtml += ocrRuns.map((run, idx) => {
                 const isLatest = idx === 0;
                 const runDate = new Date(run.created_at).toLocaleString('en-US', {
@@ -1335,14 +1336,14 @@ async function viewDetails(appId) {
 
                 return `
                     <details ${isLatest ? 'open' : ''} style="margin-bottom: 10px; border: 1px solid ${isLatest ? '#bbdefb' : '#e9ecef'}; border-radius: 6px; background:${isLatest ? '#f0f7ff' : '#f8f9fa'}; overflow:hidden;">
-                        <summary style="padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600; outline: none; display: flex; align-items: center;">
+                        <summary style="padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600; outline: none; display: flex; align-items: center; overflow-wrap: break-word; word-break: break-word;">
                             <i class="fas fa-play" style="font-size: 10px; margin-right: 10px; color: ${isLatest ? '#1976d2' : '#999'};"></i>
                             Run: ${runDate} ${isLatest ? '<span style="color:#1976d2; margin-left:8px;">(Latest)</span>' : ''}
                         </summary>
                         <div style="padding: 15px; background: #fff; border-top: 1px solid #eee; font-size: 13px;">
                             <div style="margin-bottom:8px;"><strong>File:</strong> <a href="${run.file_url}" target="_blank" style="color:#1976d2;">${run.filename || 'View Source'}</a></div>
                             <div style="margin-bottom:8px;"><strong>Detected:</strong> <span style="color:#28a745;">${(parsedOCR.detected || []).join(', ') || 'None'}</span></div>
-                            <div style="background:#2c3e50; color:#ecf0f1; padding:12px; border-radius:4px; font-family:monospace; white-space:pre-wrap; max-height:150px; overflow-y:auto;">${parsedOCR.text}</div>
+                            <div style="background:#2c3e50; color:#ecf0f1; padding:12px; border-radius:4px; font-family:monospace; white-space:pre-wrap; max-height:150px; overflow-y:auto; word-break: break-word;">${parsedOCR.text}</div>
                         </div>
                     </details>`;
             }).join('');
@@ -1424,6 +1425,8 @@ async function viewDetails(appId) {
 function loadSummarySelect() {
     loadApplicationsFromDB().finally(() => {
         const select = document.getElementById('summaryApplicationSelect');
+        if (!select) return;
+        
         select.innerHTML = '<option value="">-- Select Application --</option>';
         applications.forEach(app => {
             select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.nature_of_activity}</option>`;
@@ -1431,10 +1434,9 @@ function loadSummarySelect() {
     });
 }
 
-
 /**
  * Updates the summary display with detailed application information
- * Generates a professional report view with formatted data
+ * Generates a professional report view with formatted data and action buttons
  */
 function updateSummary() {
     const appId = document.getElementById('summaryApplicationSelect').value;
@@ -1452,9 +1454,9 @@ function updateSummary() {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
+    // Get Status Colors
     let statusColor = '#6c757d';
     let statusBg = '#e2e3e5';
-
     switch (app.status) {
         case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
         case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
@@ -1462,14 +1464,32 @@ function updateSummary() {
         case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
+    // Parse Requirements Checklist
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
         try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
     }
     const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
         ? reqs.map(r => `<li><i class="fas fa-check-circle"></i> ${r}</li>`).join('')
-        : '<li style="background:#fff3cd; color:#856404;">No documents logged</li>';
+        : '<li style="background:#fff3cd; color:#856404;">No checklist items logged</li>';
 
+    // Parse Uploaded File
+    let firstUploaded = null;
+    if (app.requirement_upload_json) {
+        if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
+        else {
+            try { const parsed = JSON.parse(app.requirement_upload_json); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; } catch (e) { }
+        }
+    }
+    if (!firstUploaded && app.requirement_upload) {
+        try { const parsed = JSON.parse(app.requirement_upload); if (Array.isArray(parsed) && parsed.length) firstUploaded = parsed[0]; else firstUploaded = app.requirement_upload; } catch (e) { firstUploaded = app.requirement_upload; }
+    }
+
+    const fileUploadText = firstUploaded
+        ? `<div style="margin-top: 10px; font-size: 14px;"><span class="info-label" style="display:inline;">Uploaded File:</span> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" target="_blank" style="color:#00247C; text-decoration: underline; font-weight: 500;">View Document</a></div>`
+        : '<div style="margin-top: 10px; font-size: 14px; color:#666;"><span class="info-label" style="display:inline;">Uploaded File:</span> No file uploaded</div>';
+
+    // Format Dates and Financials
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -1479,7 +1499,9 @@ function updateSummary() {
         : '₱0.00';
 
     const paymentStatus = app.payment_status || 'Unpaid';
+    const constructionAddress = app.construction_address || 'Not specified';
 
+    // Generate On-Screen HTML
     summaryOutput.innerHTML = `
         <div class="report-header">
             <div class="report-title">
@@ -1497,7 +1519,7 @@ function updateSummary() {
                     <h3>Construction Details</h3>
                     <div class="info-row"><span class="info-label">Activity</span> <span class="info-value">${app.nature_of_activity}</span></div>
                     <div class="info-row"><span class="info-label">Type of Work</span> <span class="info-value">${app.type_of_work}</span></div>
-                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${app.construction_address}</span></div>
+                    <div class="info-row"><span class="info-label">Address</span> <span class="info-value" style="max-width: 200px; text-align:right;">${constructionAddress}</span></div>
                     <div class="info-row"><span class="info-label">Work Details</span> <span class="info-value">${app.details_of_work || 'N/A'}</span></div>
                 </div>
 
@@ -1512,13 +1534,13 @@ function updateSummary() {
             <div class="report-column">
                 <div class="report-section">
                     <h3>Schedule & Workforce</h3>
-                    <div class="info-row"><span class="info-label">Start Date</span> <span class="info-value">${app.start_date}</span></div>
-                    <div class="info-row"><span class="info-label">End Date</span> <span class="info-value">${app.end_date}</span></div>
+                    <div class="info-row"><span class="info-label">Timeline</span> <span class="info-value">${app.start_date} to ${app.end_date}</span></div>
                     <div class="info-row"><span class="info-label">Working Days</span> <span class="info-value">${app.number_of_working_days}</span></div>
                     <div class="info-row"><span class="info-label">Workers</span> <span class="info-value">${app.number_of_workers}</span></div>
                     <div style="margin-top:15px;">
                         <span class="info-label" style="display:block; margin-bottom:5px;">Submitted Requirements:</span>
                         <ul class="doc-list">${requirementsHtml}</ul>
+                        ${fileUploadText}
                     </div>
                 </div>
 
@@ -1689,24 +1711,6 @@ function showAlert(message, type) {
     }, 4000);
 }
 
-/**
- * Prints the current summary report to a new window
- * Creates a print-friendly version of the summary content
- */
-// function printSummary() {
-//     const summaryToPrint = document.getElementById('summaryOutput');
-
-//     const printWindow = window.open('', '', 'height=600,width=800');
-//     printWindow.document.write('<html><head><title>Construction Application Summary</title>');
-//     printWindow.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">');
-//     printWindow.document.write('<link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">');
-//     printWindow.document.write('</head><body>');
-//     printWindow.document.write(summaryToPrint.innerHTML);
-//     printWindow.document.write('');
-//     printWindow.document.write('</body></html>');
-//     printWindow.document.close();
-//     printWindow.focus();
-// }
 
 /**
  * Prints the current summary report to a new window
@@ -1751,7 +1755,7 @@ function printSummary() {
 
     const paymentStatus = app.payment_status || 'Unpaid';
 
-    // Create print-specific HTML with the same structure as updateSummary()
+    // Create print-specific HTML
     const printHTML = `
         <!DOCTYPE html>
         <html>
@@ -1761,6 +1765,12 @@ function printSummary() {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <link rel="stylesheet" href="../../../styles/staff/construction_staff/construction.css">
+            <style>
+                /* Set half-inch margins for the printed page */
+                @media print {
+                    @page { margin: 0.5in; }
+                }
+            </style>
         </head>
         <body>
             <div class="print-container">
@@ -1863,31 +1873,15 @@ function printSummary() {
                 </div>` : ''}
 
                 <div class="footer-note">
-                    <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })}</p>
+                    <p>Document generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                     <p>Barangay Construction Management System</p>
                 </div>
             </div>
             
             <script>
-                // Auto-print when page loads
+                // Auto-print when page loads, do NOT close window
                 window.onload = function() {
                     window.print();
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
-                };
-                
-                // Also close when print dialog is cancelled
-                window.onafterprint = function() {
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
                 };
             </script>
         </body>
@@ -1905,15 +1899,28 @@ function printSummary() {
  * 
  * @param {number} appId - The application ID to download summary for
  */
+/**
+ * Downloads a summary report as a Word document
+ * Generates HTML content with embedded styles (using tables for MS Word) and triggers file download
+ * * @param {number} appId - The application ID to download summary for
+ */
 function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
     if (!app) return;
 
-    // Prepare list data for HTML
+    // --- DATA PARSING ---
     const constructionAddress = app.construction_address || 'Not specified';
-    const requirementsList = Array.isArray(app.requirements) ? app.requirements.join(', ') : 'None';
+    
+    // Parse requirements
+    let reqs = app.requirements;
+    if (typeof reqs === 'string') {
+        try { reqs = JSON.parse(reqs); } catch (e) { reqs = []; }
+    }
+    const requirementsHtml = (Array.isArray(reqs) && reqs.length > 0)
+        ? reqs.map(r => `<li style="margin-bottom: 4px;">&#10003; ${r}</li>`).join('')
+        : '<li style="color:#856404;">No documents logged</li>';
 
-    // Generate HTML for file upload link (support JSON arrays)
+    // Parse uploaded file
     let firstUploaded = null;
     if (app.requirement_upload_json) {
         if (Array.isArray(app.requirement_upload_json) && app.requirement_upload_json.length) firstUploaded = app.requirement_upload_json[0];
@@ -1926,92 +1933,151 @@ function downloadSummary(appId) {
     }
 
     const fileUploadText = firstUploaded
-        ? `<li><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#007bff; text-decoration: none;">View Document (${firstUploaded})</a></li>`
-        : '<li><strong>Uploaded File:</strong> No file uploaded</li>';
+        ? `<div style="margin-top: 10px;"><strong>Uploaded File:</strong> <a href="${UPLOADS_BASE_PATH}${firstUploaded}" style="color:#00247C; text-decoration: underline;">View Document (${firstUploaded})</a></div>`
+        : '<div style="margin-top: 10px; color:#666;"><strong>Uploaded File:</strong> No file uploaded</div>';
 
-    // Generate HTML for comments
-    let commentsHtml = '';
-    if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div class="comment-box approval"><h3>Approval Comments</h3><p>${app.approval_comments}</p></div>`;
-    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div class="comment-box disapproval"><h3>Disapproval Reason</h3><p>${app.disapproval_reason}</p></div>`;
+    // Parse Colors & Financials
+    let statusColor = '#6c757d'; let statusBg = '#e2e3e5';
+    switch (app.status) {
+        case 'Approved': statusColor = '#155724'; statusBg = '#d4edda'; break;
+        case 'For Payment': statusColor = '#856404'; statusBg = '#fff3cd'; break;
+        case 'Paid': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
+        case 'Disapproved': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
     }
 
-    // Generate the full HTML content with embedded CSS for styling
+    const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    const amountDue = app.amount_due ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '₱0.00';
+    const paymentStatus = app.payment_status || 'Unpaid';
+
+    // Parse Comments
+    let commentsHtml = '';
+    if (app.status === 'Approved' && app.approval_comments) {
+        commentsHtml = `<div style="background:#d4edda; border:1px solid #c3e6cb; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#155724; font-size:14pt;">Official Remarks (Approval)</h3>
+            <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
+        </div>`;
+    } else if (app.status === 'Disapproved' && app.disapproval_reason) {
+        commentsHtml = `<div style="background:#f8d7da; border:1px solid #f5c6cb; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#721c24; font-size:14pt;">Disapproval Reason</h3>
+            <p style="margin:0; font-style:italic;">"${app.disapproval_reason}"</p>
+        </div>`;
+    } else if (app.approval_comments) {
+        commentsHtml = `<div style="background:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:5px; margin-top:20px;">
+            <h3 style="margin-top:0; color:#333; font-size:14pt;">Official Remarks</h3>
+            <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
+        </div>`;
+    }
+
+    // --- HTML CONSTRUCTION FOR MS WORD ---
+    // Using tables ensures the two-column layout works when downloaded and opened in Word.
     const htmlContent = `
-        <!DOCTYPE html>
-        <html>
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head>
             <meta charset="UTF-8">
-            <title>Construction Application Summary Report - ${app.id}</title>
+            <title>Construction Application Summary - #${app.id}</title>
             <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
-                .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-                h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
-                h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
-                .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
-                .info-list { list-style-type: none; padding: 0; }
-                .info-list li { margin-bottom: 8px; }
-                .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
-                .status-badge { background-color: ${app.status === 'Approved' ? '#d4edda' : app.status === 'Disapproved' ? '#f8d7da' : '#fff3cd'}; color: ${app.status === 'Approved' ? '#155724' : app.status === 'Disapproved' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-                .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
-                .comment-box h3 { font-size: 12pt; }
-                .comment-box.approval { border: 1px solid #c3e6cb; background-color: #d4edda; }
-                .comment-box.disapproval { border: 1px solid #f5c6cb; background-color: #f8d7da; }
+                @page { margin: 0.5in; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.4; color: #333; }
+                .header-table { width: 100%; border-bottom: 2px solid #00247C; padding-bottom: 10px; margin-bottom: 20px; }
+                .title { font-size: 24pt; color: #00247C; margin: 0; font-weight: bold; }
+                .meta { color: #666; font-size: 11pt; }
+                .badge { background: ${statusBg}; color: ${statusColor}; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 11pt; text-align: center; border: 1px solid ${statusColor}; }
+                .section-title { font-size: 14pt; color: #00247C; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
+                .card { background: #fdfdfd; border: 1px solid #e2e2e2; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
+                .label { color: #666; font-size: 9pt; text-transform: uppercase; margin-bottom: 2px; display: block; }
+                .value { font-size: 11pt; font-weight: bold; margin-top: 0; margin-bottom: 12px; display: block; color: #222; }
+                .footer { text-align: center; font-size: 9pt; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>Construction Clearance Summary Report</h1>
-                <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Application ID:</strong> ${app.id}</p>
+            <table class="header-table" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td width="70%">
+                        <h1 class="title">Construction Clearance Profile</h1>
+                        <div class="meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
+                    </td>
+                    <td width="30%" align="right" valign="middle">
+                        <span class="badge">${app.status}</span>
+                    </td>
+                </tr>
+            </table>
 
-                <h2>Construction Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Nature of Activity:</strong> ${app.nature_of_activity}</li>
-                        <li><strong>Type of Work:</strong> ${app.type_of_work}</li>
-                        <li><strong>Construction Address:</strong> ${constructionAddress}</li>
-                        <li><strong>Details of Work:</strong> ${app.details_of_work || 'N/A'}</li>
-                        <li><strong>Start Date:</strong> ${app.start_date}</li>
-                        <li><strong>End Date:</strong> ${app.end_date}</li>
-                        <li><strong>Working Days:</strong> ${app.number_of_working_days}</li>
-                        <li><strong>Number of Workers:</strong> ${app.number_of_workers}</li>
-                    </ul>
-                </div>
+            <table width="100%" cellpadding="10" cellspacing="0" border="0">
+                <tr>
+                    <td width="50%" valign="top" style="padding-left: 0;">
+                        <div class="card">
+                            <h3 class="section-title">Construction Details</h3>
+                            
+                            <span class="label">Activity / Type</span>
+                            <span class="value">${app.nature_of_activity} &bull; ${app.type_of_work}</span>
+                            
+                            <span class="label">Address</span>
+                            <span class="value">${constructionAddress}</span>
+                            
+                            <span class="label">Work Details</span>
+                            <span class="value">${app.details_of_work || 'N/A'}</span>
+                        </div>
 
-                <h2>Owner Information</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Owner Name:</strong> ${app.first_name} ${app.middle_name || ''} ${app.last_name}</li>
-                        <li><strong>Owner Contact:</strong> ${app.contact_no_owner}</li>
-                        <li><strong>Owner Address:</strong> ${app.address_owner}</li>
-                    </ul>
-                </div>
+                        <div class="card">
+                            <h3 class="section-title">Ownership</h3>
+                            
+                            <span class="label">Owner Name</span>
+                            <span class="value">${app.first_name} ${app.middle_name || ''} ${app.last_name} ${app.suffix || ''}</span>
+                            
+                            <span class="label">Owner Contact</span>
+                            <span class="value">${app.contact_no_owner}</span>
 
-                <h2>Requirements & Documents</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Required Documents:</strong> 
-                            <ul style="padding-left: 20px; margin-top: 5px; list-style-type: disc;"><li>${requirementsList}</li></ul>
-                        </li>
-                        ${fileUploadText}
-                    </ul>
-                </div>
+                            <span class="label">Owner Address</span>
+                            <span class="value">${app.address_owner}</span>
+                        </div>
+                    </td>
+                    <td width="50%" valign="top" style="padding-right: 0;">
+                        <div class="card">
+                            <h3 class="section-title">Schedule & Workforce</h3>
+                            
+                            <span class="label">Timeline</span>
+                            <span class="value">${app.start_date} to ${app.end_date} (${app.number_of_working_days} working days)</span>
+                            
+                            <span class="label">Number of Workers</span>
+                            <span class="value">${app.number_of_workers}</span>
+                            
+                            <span class="label">Submitted Requirements</span>
+                            <ul style="margin-top: 5px; padding-left: 20px; font-size: 10pt; color: #222;">
+                                ${requirementsHtml}
+                            </ul>
+                            ${fileUploadText}
+                        </div>
 
-                <h2>Application Status</h2>
-                <div class="card">
-                    <ul class="info-list">
-                        <li><strong>Submission Date:</strong> ${app.application_date}</li>
-                        <li><strong>Current Status:</strong> <span class="status-badge">${app.status}</span></li>
-                    </ul>
-                    ${commentsHtml}
-                </div>
+                        <div class="card">
+                            <h3 class="section-title">Financial Status</h3>
+                            
+                            <span class="label">Payment Status</span>
+                            <span class="value">${paymentStatus}</span>
+                            
+                            <span class="label">OR Number</span>
+                            <span class="value">${app.or_number || '--'}</span>
+                            
+                            <span class="label">Total Assessment</span>
+                            <span class="value" style="color: #00247C;">${amountDue}</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            ${commentsHtml}
+
+            <div class="footer">
+                Document generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
+                Barangay Construction Management System
             </div>
         </body>
         </html>
     `;
 
+    // Trigger Download
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');

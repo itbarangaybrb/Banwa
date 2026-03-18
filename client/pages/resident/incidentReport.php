@@ -42,30 +42,10 @@
                         <input type="text" id="rpFullName" name="rpFullName" placeholder="Last, First, Middle Name">
                         <div class="error-msg"></div>
                     </div>
-                    <div class="label-and-input">
-                        <label class="label" for="rpLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="tel" name="rpLotNo" id="rpLotNo" maxlength="2" pattern="[0-9]{1,2}">
-                        <div class="error-msg"></div>
-                    </div>
-                    <div class="label-and-input">
-                        <label class="label" for="rpStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
-                        <select name="rpStreet" id="rpStreet">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
+
+                    <div class="label-and-input full-span">
+                        <label class="label" for="rpAddress">Complete Address <span style="color: #BB1B1B;">*</span></label>
+                        <textarea id="rpAddress" name="rpAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province"></textarea>
                         <div class="error-msg"></div>
                     </div>
                     <!-- NO LATITUDE/LONGITUDE FOR REPORTING PERSON -->
@@ -91,56 +71,39 @@
         <div class="containers incident-container hidden" id="victimDetails">
             <form class="form" id="victimDetailsForm">
                 <h6>2. Victim / Complainant Details</h6>
-                <div class="inputs-container" id="victimDetailsContainer">
-                    <div class="checkbox-group">
-                        <label for="victimSameAsRP">
-                            <input type="checkbox" id="victimSameAsRP">
-                            Victim is the same as the Reporting Person
-                        </label>
-                    </div>
+                
+                <div class="checkbox-group" style="margin-bottom: 20px;">
+                    <label for="victimSameAsRP">
+                        <input type="checkbox" id="victimSameAsRP">
+                        Victim is the same as the Reporting Person
+                    </label>
+                </div>
 
+                <div class="inputs-container" id="victimDetailsContainer">
                     <div class="label-and-input">
                         <label class="label" for="vicFullName">Full Name <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicFullName" name="vicFullName" placeholder="Full Name">
                         <div class="error-msg"></div>
                     </div>
-                    <div class="label-and-input">
-                        <label class="label" for="vicLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="tel" name="vicLotNo" id="vicLotNo" maxlength="2" pattern="[0-9]{1,2}">
+                    
+                    <div class="label-and-input full-span">
+                        <label class="label" for="vicAddress">Complete Address <span style="color: #BB1B1B;">*</span></label>
+                        <textarea id="vicAddress" name="vicAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province"></textarea>
                         <div class="error-msg"></div>
                     </div>
-                    <div class="label-and-input">
-                        <label class="label" for="vicStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
-                        <select name="vicStreet" id="vicStreet">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-                    <!-- NO LATITUDE/LONGITUDE FOR VICTIM -->
+                    
                     <div class="label-and-input">
                         <label class="label" for="vicContact">MobilePhone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicContact" name="vicContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
                         <div class="error-msg"></div>
                     </div>
+                    
                     <div class="label-and-input">
                         <label class="label" for="vicCitizenship">Citizenship <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicCitizenship" name="vicCitizenship" placeholder="e.g., Filipino">
                         <div class="error-msg"></div>
                     </div>
+                    
                     <div class="label-and-input">
                         <label class="label" for="vicGender">Gender <span style="color: #BB1B1B;">*</span></label>
                         <select id="vicGender" name="vicGender">
@@ -151,17 +114,20 @@
                         </select>
                         <div class="error-msg"></div>
                     </div>
+                    
                     <div class="label-and-input">
                         <label class="label" for="vicDOB">Date of Birth <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" id="vicDOB" name="vicDOB">
                         <div class="error-msg"></div>
                     </div>
+                    
                     <div class="label-and-input">
                         <label class="label" for="vicOccupation">Occupation <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicOccupation" name="vicOccupation" placeholder="Occupation">
                         <div class="error-msg"></div>
                     </div>
                 </div>
+
                 <div class="buttons-container">
                     <button type="button" id="victimBackBtn">Back</button>
                     <button type="button" id="nextToSuspect">Next</button>
@@ -179,33 +145,11 @@
                         <input type="text" id="susFullName" name="susFullName" placeholder="Full Name">
                         <div class="error-msg"></div>
                     </div>
-                    <div class="label-and-input">
-                        <label class="label" for="susLotNo">House No. (if known)</label>
-                        <input type="tel" name="susLotNo" id="susLotNo" maxlength="2" pattern="[0-9]{1,2}">
+                    <div class="label-and-input full-span">
+                        <label class="label" for="susAddress">Complete Address (if known)</label>
+                        <textarea id="susAddress" name="susAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province"></textarea>
                         <div class="error-msg"></div>
                     </div>
-                    <div class="label-and-input">
-                        <label class="label" for="susStreet">Street Name (if known)</label>
-                        <select name="susStreet" id="susStreet">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-                    <!-- NO LATITUDE/LONGITUDE FOR SUSPECT -->
                     <div class="label-and-input">
                         <label class="label" for="susContact">Mobile Phone or Landline Number (if known)</label>
                         <input type="text" id="susContact" name="susContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="Contact Number">
@@ -284,34 +228,11 @@
                         <div class="error-msg"></div>
                     </div>
 
-                    <div class="label-and-input">
-                        <label class="label" for="incidentLotNo">Incident Location - House No. <span style="color: #BB1B1B;">*</span></label>
-                        <input type="tel" name="incidentLotNo" id="incidentLotNo" maxlength="2" pattern="[0-9]{1,2}">
+                    <div class="label-and-input full-span">
+                        <label class="label" for="incidentAddress">Incident Location (Complete Address) <span style="color: #BB1B1B;">*</span></label>
+                        <textarea id="incidentAddress" name="incidentAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province"></textarea>
                         <div class="error-msg"></div>
                     </div>
-
-                    <div class="label-and-input">
-                        <label class="label" for="incidentStreet">Incident Location - Street Name <span style="color: #BB1B1B;">*</span></label>
-                        <select name="incidentStreet" id="incidentStreet">
-                            <option value="" disabled selected>Select</option>
-                            <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
-                            <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City </option>
-                            <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City </option>
-                            <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City </option>
-                            <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                            <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City </option>
-                            <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City </option>
-                            <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City </option>
-                            <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City </option>
-                            <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City </option>
-                        </select>
-                        <div class="error-msg"></div>
-                    </div>
-                    <!-- ONLY INCIDENT HAS LATITUDE/LONGITUDE -->
                     <input type="hidden" id="incidentLatitude" name="incidentLatitude" pattern="-?\d{1,2}\.\d{6,8}"
                         title="Enter latitude in decimal format (e.g., 14.617500)"
                         placeholder="e.g., 14.617500"

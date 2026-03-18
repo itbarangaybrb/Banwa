@@ -23064,3 +23064,15 @@ Unpaid',
 2026-03-15T04:23:24+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_status.php (1).png, retrying with SSL verify disabled.
 2026-03-16T13:10:27+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_status.php (1).png, retrying with SSL verify disabled.
 2026-03-16T13:10:50+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_status.php (1).png, retrying with SSL verify disabled.
+2026-03-17T16:51:37+00:00 - SSL error for IMG_6468.PNG, retrying with SSL verify disabled.
+2026-03-17T16:51:43+00:00 - ERROR for IMG_6468.PNG: array (
+  'OCRExitCode' => 3,
+  'IsErroredOnProcessing' => true,
+  'ErrorMessage' => 
+  array (
+    0 => 'File failed validation. File size exceeds the maximum permissible file size limit of 1024 KB',
+  ),
+  'ErrorDetails' => '',
+  'ProcessingTimeInMilliseconds' => '0',
+)
+2026-03-17T16:52:32+00:00 - SSL error for localhost_8080_Banwa_client_pages_resident_status.php (1).png, retrying with SSL verify disabled.

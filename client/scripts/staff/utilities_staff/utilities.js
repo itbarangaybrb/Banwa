@@ -607,7 +607,7 @@ function loadAnalyticsTab() {
                 data: {
                     labels: labels3,
                     datasets: [{
-                        label: 'DSS Status Distribution',
+                        label: 'DST Status Distribution',
                         data: totals3,
                         backgroundColor: dssColors,
                         borderWidth: 1
@@ -1011,7 +1011,7 @@ function viewDetails(appId) {
                     </div>
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
                         <h3>Evaluation Status</h3>
-                        <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${app.dss_status || 'Pending Evaluation'}</span></div>
+                        <div class="detail-row"><span class="detail-label">DST Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${app.dss_status || 'Pending Evaluation'}</span></div>
                     </div>
                 </div>
             </div>

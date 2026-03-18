@@ -1277,6 +1277,16 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Submitting false information or fraudulent documents for a <strong>Business Clearance</strong> is a serious offense and may result in the immediate revocation of your permit and legal action.<br><br>By proceeding, you certify that all information and attached documents provided are true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
         console.debug('business_app autofill response:', data);

@@ -1164,16 +1164,6 @@ h2 {
     max-width: 400px;
 }
 
-/* Report Container (The Paper Look) */
-.summary-report-container {
-    background: white;
-    min-height: 600px;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
-    margin: 0 auto;
-}
 
 /* Placeholder State */
 .placeholder-state {
@@ -1193,10 +1183,22 @@ h2 {
     width: 100%;
 }
 
+/* Report Container (The Paper Look) */
+.summary-report-container {
+    background: white;
+    min-height: 600px;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
 /* Report Header */
 .report-header {
     border-bottom: 2px solid #eee;
     padding-bottom: 20px;
+    padding-top: 20px;
     margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
@@ -1240,6 +1242,18 @@ h2 {
     padding-bottom: 10px;
     margin-bottom: 15px;
     letter-spacing: 0.5px;
+}
+
+/* Action Buttons Footer */
+.report-actions {
+    margin-top: 40px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid #eee;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
 }
 
 .info-row {
