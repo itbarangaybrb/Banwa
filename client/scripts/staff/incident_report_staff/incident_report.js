@@ -835,8 +835,8 @@ function submitUpdate(event) {
                     sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
                 }
 
-                if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
-                    sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "status_update" }));
+                if (sockets["incident_reports"] && sockets["incident_reports"].readyState === WebSocket.OPEN) {
+                    sockets["incident_reports"].send(JSON.stringify({ type: "incident_reports_update", action: "status_update" }));
                 }
 
                 loadManagementTable();

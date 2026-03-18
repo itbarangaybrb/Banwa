@@ -1,7 +1,9 @@
-// Configuration imports for Supabase, address data, and service worker registration
-const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
+// Configuration imports for service worker registration, address data, and Supabase authentication
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
+
 
 import supabase from '../../../server/api/supabase.js';
+import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
@@ -212,6 +214,30 @@ const validator = (() => {
             if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
         }
 
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); return false;
+            }
+            if (value.length < 2) { showError(input, 'Too short'); return false; }
+            if (value.length > 50) { showError(input, 'Too long'); return false; }
+            if (/(.)\1{3,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (value.length >= 8) {
+                const lower = value.toLowerCase();
+                const chunk = lower.slice(0, 4);
+                if (lower.split(chunk).length - 1 >= 3) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            }
+        }
+
+        if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); return false; }
+        if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); return false; }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { showError(input, rules.errorMessage || 'Invalid input'); return false; }
+        }
+
         clearError(input); return true;
     }
 
@@ -285,6 +311,14 @@ const validator = (() => {
             if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
             if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
             clearError(input); return true;
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
@@ -336,26 +370,21 @@ const validator = (() => {
      * @param {string} message - Required selection error message
      * @returns {boolean} - Whether a radio button is selected
      */
-    function validateRadioGroup(radios, message) {
-        if (!Array.from(radios).some(r => r.checked)) { showError(radios[0], message); return false; }
-        clearError(radios[0]); return true;
-    }
+    function validateAddress(addressInput, options = {}) {
+        const address = addressInput.value.trim();
 
-    /**
-     * Validates address fields and verifies existence in addressCoordinates database
-     * Also automatically populates latitude/longitude if address is valid
-     * @param {HTMLInputElement} lotInput - Lot number input element
-     * @param {HTMLSelectElement} streetInput - Street selection element
-     * @returns {boolean} - Whether the address is valid and exists
-     */
-    function validateAddress(lotInput, streetInput) {
-        const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot) return validator.number(lotInput, 'House No. is required');
-        if (!street || street === 'select') return validator.select(streetInput, 'Street is required');
-        const fullAddress = `${lot} ${street}`;
-        const match = addressCoordinates.find(a => a.address === fullAddress);
-        if (!match) {
-            const wrapper = streetInput.closest('.label-and-input');
+        if (!address && !options.optional) {
+            showError(addressInput, 'Address is required');
+            return false;
+        }
+
+        if (!address) return true;
+
+        // Try to find a match in your database (case-insensitive for better UX)
+        const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
+
+        if (!match && options.validateExistence !== false) {
+            const wrapper = addressInput.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
             streetInput.classList.add('error');
             errorEl.textContent = 'Street does not exist for this lot';
@@ -389,51 +418,29 @@ const validator = (() => {
  * Each object specifies element, validation type, error message, and any additional rules
  */
 const validationConfig = [
-    { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
-    { el: contactNoOwner, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
-    { el: addressOwner, type: 'text', message: 'Address is required' },
-    { el: businessName, type: 'text', message: 'Business name is required', rules: { noSpam: true, minLength: 1, maxLength: 100 } },
-    { el: natureOfBusinessSelect, type: 'select', message: 'Nature of business is required' },
-    { el: natureOfBusinessSpecify, type: 'text', message: 'Please specify the business details' },
-    { el: typeOfBusiness, type: 'radio', message: 'Please select a type of business' },
-    { el: businessStatus, type: 'radio', message: 'Please select business status' },
-    { el: businessStatusSpecify, type: 'text', message: 'Please specify business status' },
-    { el: contactNoBusiness, type: 'number', message: 'Contact No. is required', rules: { phoneType: 'ph' } },
-    { el: emailAddress, type: 'email', message: 'Email is required', rules: { noSpam: true, errorMessage: 'Please enter a valid email address' } },
-    { el: noOfEmployees, type: 'number', message: 'No. of employees is required', rules: { errorMessage: 'Number of employees must be 1 or 2 digits' } },
-    { el: businessLotNo, type: 'number', message: 'House No. is required', rules: { maxLength: 2 } },
-    { el: businessStreet, type: 'select', message: 'Street is required' },
-    { el: typeOfStructureSelect, type: 'select', message: 'Type of structure is required' },
-    { el: typeOfStructureSpecify, type: 'text', message: 'Please specify the business details' },
-    { el: natureOfApplication, type: 'select', message: 'Nature of application is required' },
-    { el: agreeCheckBox, type: 'checkbox', message: 'You must agree to proceed' },
-    { el: requirements, type: 'checkboxGroup', message: 'Please select at least one requirement' },
-    { el: requirementUpload, type: 'file', message: 'Please upload a document', rules: { accept: ['.pdf', '.jpg', '.png'], errorMessage: 'Only .pdf, .jpg, or .png files are allowed' } },
+    // Reporting Person validation rules
+    { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
+    { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
+    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { phoneType: 'ph' } },
+
+    // Victim Details validation rules
+    { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
+    { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
+    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
+    { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
+    { el: vicGender, type: 'select', message: 'Please select victim gender' },
+    { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
+    { el: vicOccupation, type: 'text', message: 'Please enter victim occupation', rules: { minLength: 2 } },
+
+    // Suspect Details validation rules
+    { el: susDescription, type: 'textarea', message: 'Please describe the suspect', rules: { minLength: 10 } },
+
+    // Incident Details validation rules
+    { el: incidentType, type: 'select', message: 'Please select incident type' },
+    { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
+    { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
+    { el: description, type: 'textarea', message: 'Please describe the incident', rules: { noSpam: true, minLength: 1, maxLength: 100 } },
 ];
-
-// ================== OCR VERIFICATION CONFIG (EDIT AS NEEDED) ==================
-// These are fallbacks only — the real matching happens in your analyze_files() $KEYWORDS array
-const requirementKeywords = {
-    'SEC': ['securities and exchange commission', 'sec registration', 'certificate of registration', 'articles of incorporation'],
-    'DTI': ['department of trade and industry', 'dti registration', 'business name registration'],
-    'TCT': ['transfer certificate of title', 'tct no.', "owner's duplicate copy"],
-    'Lease Contract': ['contract of lease', 'lease agreement', 'lessor', 'lessee'],
-    'Previous Business Clearance': ['Business Clearance', "mayor's permit", 'barangay business clearance', 'business clearance']
-    // ← ADD MORE HERE when you add new requirement types
-};
-
-// ================== PER-REQUIREMENT NAME CHECKING RULES ==================
-const requirementNameRules = {
-    'DTI': 'business',           // must contain business name
-    'TCT': 'owner',              // must contain owner name
-    'Lease Contract': 'owner',   // must contain owner name
-    'SEC': 'either',             // business OR owner name
-    'Previous Business Clearance': 'either'
-};
-
-// let documentVerificationDone = false;
-// const BUSINESS_NAME_FIELD = document.getElementById('businessName');
 
 /**
  * Validates a single form field based on its configuration
@@ -1231,84 +1238,69 @@ async function initializeMapPicker(target) {
         if (hData.success && hData.houses) {
             const houseLayer = L.layerGroup();
 
-            hData.houses.forEach(house => {
-                if (!house.coordinates) return;
-                try {
-                    const coords = JSON.parse(house.coordinates);
-                    // Normalise: unwrap GeoJSON array-of-rings [[[lng,lat],...]] → [[lng,lat],...]
-                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
-                    const latLngs = ring.map(c => [c[1], c[0]]);
-                    latLngs.push(latLngs[0]);
+            data.houses.forEach(house => {
+                if (house.coordinates) {
+                    try {
+                        const coords = JSON.parse(house.coordinates);
+                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
+                        latLngCoords.push(latLngCoords[0]); // close polygon
 
-                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
-                    housePolygons.push(polygon);
+                        const polygon = L.polygon(latLngCoords, {
+                            color: '#3388ff',
+                            weight: 1,
+                            fillColor: '#3388ff',
+                            fillOpacity: 0.1,
+                            interactive: true
+                        }).addTo(houseLayer);
 
-                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                    const subtitleHtml = house.street_name
-                        ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>'
-                        : '';
-                    const addrHtml = (!isLandmark && house.address)
-                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
-                        : '';
-                    const streetHtml = house.street_name
-                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>'
-                        : '';
+                        // Polygon click autofill - populate incident fields when house is selected
+                        polygon.on('click', function (e) {
+                            const lat = e.latlng.lat.toFixed(6);
+                            const lng = e.latlng.lng.toFixed(6);
 
-                    const popupHtml =
-                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
-                        subtitleHtml +
-                        '</div>' +
-                        addrHtml +
-                        streetHtml +
-                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
-                        '</div>';
+                            if (marker) map.removeLayer(marker);
+                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
 
-                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
+                            // ONLY set coordinates for incident location
+                            if (target === 'incident') {
+                                incidentLatitude.value = lat;
+                                incidentLongitude.value = lng;
 
-                    polygon.on('click', function (e) {
-                        L.DomEvent.stopPropagation(e);
-                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
-                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+                                // Format the address from the available house data
+                                let formattedAddress = house.address;
+                                if (!formattedAddress) {
+                                    // Fallback just in case house.address is empty
+                                    const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                                    const street = house.street_name ? `${house.street_name}, ` : '';
+                                    formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                                }
 
-                        if (selectedMarker) map.removeLayer(selectedMarker);
-                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
-                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr = (!isLandmarkSel && house.address)
-                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>'
-                            : '';
-                        const selStreet = house.street_name
-                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>'
-                            : '';
-                        const selPopup =
-                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                            '</div>' +
-                            selAddr +
-                            selStreet +
-                            '</div>';
-                        selectedMarker = L.marker([lat, lng]).addTo(map)
-                            .bindPopup(selPopup, { maxWidth: 240 })
-                            .openPopup();
+                                // Fill the unified address field for incident location
+                                if (incidentAddress) {
+                                    incidentAddress.value = formattedAddress;
 
-                        document.getElementById(`latitude${target}`).value = lat;
-                        document.getElementById(`longitude${target}`).value = lng;
-                        document.getElementById(`map-preview-${target}`).style.display = 'block';
+                                    // Trigger validation clearing and updates
+                                    incidentAddress.dispatchEvent(new Event('input', { bubbles: true }));
+                                    incidentAddress.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
 
-                        if (target === '2') {
-                            const businessLot = document.getElementById('businessLotNo');
-                            const businessStreet = document.getElementById('businessStreet');
-                            if (businessLot) { businessLot.value = house.house_number || ''; businessLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (businessStreet) { businessStreet.value = house.street_name || ''; businessStreet.dispatchEvent(new Event('change', { bubbles: true })); }
-                        }
-                    });
+                            document.getElementById(`map-preview-${target}`).style.display = 'block';
+                        });
 
-                    polygon.addTo(houseLayer);
-                } catch (err) { console.error('House parse error:', err); }
+                        polygon.bindPopup(`
+                            <div class="house-popup">
+                                <h4>🏠 ${house.address}</h4>
+                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
+                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
+                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
+                            </div>
+                        `);
+
+                    } catch (err) {
+                        console.error('Error parsing house coordinates:', err);
+                    }
+                }
             });
 
             houseLayer.addTo(map);
@@ -1355,7 +1347,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('business_app autofill response:', data);
+
+        console.debug('incident_report autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
@@ -1370,12 +1363,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
         }
 
-        if (data.first_name) firstName.value = data.first_name;
-        if (data.middle_name) middleName.value = data.middle_name;
-        if (data.last_name) lastName.value = data.last_name;
-        if (data.suffix) suffix.value = data.suffix;
-        if (data.contact_no) contactNoOwner.value = data.contact_no;
-        if (data.address) addressOwner.value = data.address;
+        // 3. Populate reporting person fields with user data safely
+        if (data.first_name || data.last_name) {
+            const last = data.last_name || '';
+            const first = data.first_name || '';
+            const middle = data.middle_name ? ' ' + data.middle_name : '';
+
+            // Formats to match the input placeholder: "Last, First, Middle Name"
+            if (last && first) {
+                rpFullName.value = `${last}, ${first}${middle}`;
+            } else {
+                rpFullName.value = `${last}${first}${middle}`.trim();
+            }
+        }
+
+        if (data.contact_no) {
+            rpContact.value = data.contact_no;
+        }
+
+        if (data.address) {
+            // If your DB returns a full address string
+            rpAddress.value = data.address;
+        } else if (data.lot_no || data.street_name) {
+            // Otherwise, combine lot and street into a complete address
+            const lot = data.lot_no ? `House/Unit ${data.lot_no}, ` : '';
+            const street = data.street_name ? `${data.street_name}, ` : '';
+            rpAddress.value = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+        }
+
+        // Set default citizenship for victim
+        if (vicCitizenship) {
+            vicCitizenship.value = 'Filipino';
+        }
+
     } catch (err) {
         console.error('Failed to fetch user data for autofill:', err);
     }
