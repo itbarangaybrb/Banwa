@@ -980,119 +980,6 @@ function loadSummarySelect() {
     });
 }
 
-/**
- * Updates the summary display with detailed incident information
- */
-// function updateIncidentSummary() {
-//     const appId = document.getElementById('summaryIncidentSelect').value;
-//     const summaryOutput = document.getElementById('summaryOutput');
-
-//     if (!appId) {
-//         summaryOutput.innerHTML = `
-//         <div class="placeholder-state">
-//             <i class="fas fa-file-invoice fa-3x"></i>
-//             <p>Select an incident report from the list above to view the full report.</p>
-//         </div>`;
-//         return;
-//     }
-
-//     const incident = incidents.find(i => i.id == appId);
-//     if (!incident) return;
-
-//     let statusColor = '#6c757d';
-//     let statusBg = '#e2e3e5';
-
-//     switch (incident.status) {
-//         case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
-//         case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
-//         case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
-//         case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
-//     }
-
-//     const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
-//         year: 'numeric', month: 'long', day: 'numeric'
-//     });
-
-//     summaryOutput.innerHTML = `
-//     <div class="report-header">
-//         <div class="report-title">
-//             <h1>Incident Report Profile</h1>
-//             <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
-//         </div>
-//         <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
-//             ${incident.status}
-//         </div>
-//     </div>
-
-//     <div class="report-grid">
-//         <div class="report-column">
-//             <div class="report-section">
-//                 <h3>Incident Details</h3>
-//                 <div class="info-row"><span class="info-label">Incident Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span></div>
-//                 <div class="info-row"><span class="info-label">Location</span> <span class="info-value" style="max-width: 200px; text-align:right;">${incident.incident_location || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Severity</span> <span class="info-value">${incident.severity || 'Not Rated'}</span></div>
-//             </div>
-
-//             <div class="report-section">
-//                 <h3>Victim Information</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.vic_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.vic_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.vic_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.vic_gender || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Citizenship</span> <span class="info-value">${incident.vic_citizenship || 'N/A'}</span></div>
-//             </div>
-//         </div>
-
-//         <div class="report-column">
-//             <div class="report-section">
-//                 <h3>Reporting Person</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.rp_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.rp_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.rp_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Relationship</span> <span class="info-value">${incident.rp_relationship || 'N/A'}</span></div>
-//             </div>
-
-//             ${incident.sus_full_name ? `
-//             <div class="financial-box">
-//                 <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.sus_gender || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Description</span> <span class="info-value">${incident.sus_description || 'N/A'}</span></div>
-//             </div>
-//             ` : ''}
-//         </div>
-//     </div>
-
-//     <div class="report-section">
-//         <h3>Incident Narrative</h3>
-//         <div style="background:#f8f9fa; padding:15px; border-radius:5px; border-left:4px solid #6366F1;">
-//             ${incident.description || 'No description provided.'}
-//         </div>
-//     </div>
-
-//     ${incident.investigation_notes ? `
-//     <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
-//         <h3 style="border:none; margin-bottom:5px;">Investigation Notes</h3>
-//         <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
-//         <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
-//     </div>` : ''}
-
-//     ${incident.dss_status ? `
-//     <div class="report-section" style="background:#d1ecf1; padding:15px; border-radius:5px; border-color:#bee5eb;">
-//         <h3 style="border:none; margin-bottom:5px; color:#0c5460;">DSS Evaluation</h3>
-//         <div class="info-row"><span class="info-label">DST Status</span> <span class="info-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status}</span></div>
-//     </div>` : ''}
-
-//     <div class="report-actions">
-//         <button class="btn-secondary" onclick="downloadSummary(${incident.id})"><i class="fas fa-download"></i> Download Word</button>
-//         <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
-//     </div>
-// `;
-// }
 
 /**
  * Updates the summary display with detailed incident information
@@ -1190,7 +1077,7 @@ function updateSummary() {
 
         <div class="report-section">
             <h3>Incident Narrative</h3>
-            <div style="background:#f8f9fa; padding:15px; border-radius:5px;">
+            <div id="incident-narrative" style="background:#f8f9fa; padding:15px; border-radius:5px; margin-left: 40px; margin-right: 40px;">
                 ${incident.description || 'No description provided.'}
             </div>
         </div>

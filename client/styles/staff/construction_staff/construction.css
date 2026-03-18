@@ -1202,16 +1202,6 @@ h2 {
     max-width: 400px;
 }
 
-/* Report Container (The Paper Look) */
-.summary-report-container {
-    background: white;
-    min-height: 600px;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
-    margin: 0 auto;
-}
 
 /* Placeholder State */
 .placeholder-state {
@@ -1231,11 +1221,25 @@ h2 {
     width: 100%;
 }
 
+/* Report Container (The Paper Look) */
+.summary-report-container {
+    background: white;
+    min-height: 600px;
+    padding:40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 0 auto 40px auto;
+}
+
 /* Report Header */
 .report-header {
     border-bottom: 2px solid #eee;
     padding-bottom: 20px;
+    padding-top: 20px;
     margin-bottom: 30px;
+    margin-left: 40px;
+    margin-right: 40px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -1268,6 +1272,8 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 40px;
     margin-bottom: 40px;
+    margin-left: 40px;
+    margin-right: 40px;
 }
 
 .report-section h3 {
@@ -1277,9 +1283,28 @@ h2 {
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 15px;
+    margin-left: 40px;
+    margin-right: 40px;
     letter-spacing: 0.5px;
 }
+/* #incidentNarrative {
+    margin-left: 40px;
+    margin-right: 40px;
+} */
 
+/* Action Buttons Footer */
+.report-actions {
+    margin-top: 40px;
+    margin-left: 40px;
+    margin-right: 40px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid #eee;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
 .info-row {
     display: flex;
     justify-content: space-between;
