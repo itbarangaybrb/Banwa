@@ -2,9 +2,6 @@
 // ===============================
 // Database Connection Diagnostic
 // ===============================
-// ===============================
-// Database Connection Diagnostic
-// ===============================
 
 // Configuration
 $host = 'localhost';
