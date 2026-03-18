@@ -36,6 +36,7 @@
                             <li><a href="../resident/construction_app.php" <?php echo ($page_title == "Construction Application") ? 'class="active"' : ''; ?>>Construction Application</a></li>
                             <li><a href="../resident/business_app.php" <?php echo ($page_title == "Business Application") ? 'class="active"' : ''; ?>>Business Application</a></li>
                             <li><a href="../resident/utilities_app.php" <?php echo ($page_title == "Utilities Application") ? 'class="active"' : ''; ?>>Utilities Application</a></li>
+                            <li><a href="../resident/incidentReport.php" <?php echo ($page_title == "Incident Report") ? 'class="active"' : ''; ?>>Incident Report</a></li>
                         </ul>
                     </li>
                 </ul>
