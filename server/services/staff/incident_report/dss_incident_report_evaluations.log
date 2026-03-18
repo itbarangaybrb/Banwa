@@ -19,3 +19,4 @@
 {"timestamp":"2026-03-18 15:19:36","application_id":21,"dss_status":"Low Priority","priority_level":"Low Priority","urgency_score":47,"score":6,"max_score":6,"passed_rules":6,"failed_rules":0}
 {"timestamp":"2026-03-18 15:22:32","application_id":22,"dss_status":"Low Priority","priority_level":"Low Priority","urgency_score":47,"score":6,"max_score":6,"passed_rules":6,"failed_rules":0}
 {"timestamp":"2026-03-18 15:38:13","application_id":23,"dss_status":"Low Priority","priority_level":"Low Priority","urgency_score":47,"score":6,"max_score":6,"passed_rules":6,"failed_rules":0}
+{"timestamp":"2026-03-18 16:18:40","application_id":24,"dss_status":"Low Priority","priority_level":"Low Priority","urgency_score":32,"score":6,"max_score":6,"passed_rules":6,"failed_rules":0}

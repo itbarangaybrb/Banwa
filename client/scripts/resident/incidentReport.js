@@ -129,13 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
     handleOthersRadio('businessStatus', businessStatusSpecify);
 });
 
-// OCR runs asynchronously on the server after upload; resident-side verify UI removed.
-
-/**
- * Comprehensive validation utility for form input fields
- * Provides methods to validate different input types and display error messages
- */
-const validator = (() => {
     /**
      * Gets the wrapper element containing the input and error message
      * @param {HTMLElement} el - The input element
@@ -411,7 +404,7 @@ const validator = (() => {
         address: validateAddress,
         clear: clearError
     };
-})();
+};
 
 /**
  * Configuration array defining validation rules for all form fields
@@ -627,7 +620,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
 
         switchPanel('summary');
     }
-});
+);
 
 /**
  * Sets up navigation between form panels with back button functionality
@@ -895,238 +888,81 @@ newSummaryForm.addEventListener('submit', async function (e) {
 });
 
 
-// ====================== OCR DOCUMENT VERIFICATION ======================
-
-let documentVerificationDone = false;
-const BUSINESS_NAME_FIELD = document.getElementById('businessName');
-
-// Get full owner name for cross-checking
-function getFullOwnerName() {
-    const first = (document.getElementById('firstName').value || '').trim();
-    const middle = (document.getElementById('middleName').value || '').trim();
-    const last = (document.getElementById('lastName').value || '').trim();
-    const suffix = (document.getElementById('suffix').value || '').trim();
-    return [first, middle, last, suffix].filter(Boolean).join(' ').toLowerCase();
-}
-
-// Show section + auto-verify exactly 1 second after file selection
-requirementUpload.addEventListener('change', () => {
-    if (requirementUpload.files.length > 0) {
-        document.getElementById('verificationSection').style.display = 'block';
-        setTimeout(verifyUploadedDocuments, 1000);
-    }
-});
-
-document.getElementById('verifyDocumentsBtn').addEventListener('click', verifyUploadedDocuments);
-
-async function verifyUploadedDocuments() {
-    const verifyBtn = document.getElementById('verifyDocumentsBtn');
-    const resultsDiv = document.getElementById('verificationResults');
-
-    const selectedReqs = Array.from(document.querySelectorAll('input[name="requirements"]:checked'))
-        .map(cb => cb.value);
-
-    if (selectedReqs.length === 0) {
-        resultsDiv.innerHTML = `<p style="color:#e74c3c;">Please select at least one requirement first.</p>`;
-        return;
-    }
-
-    const total = requirementUpload.files.length;
-    if (total > 5) {
-        if (total > 5) {
-            business_app_swal.fire({
-                icon: 'warning',
-                title: 'Too Many Files',
-                html: 'Maximum <strong>5 files</strong> allowed for verification.'
-            });
-            return;
-        }
-        return;
-    }
-
-    verifyBtn.textContent = `Processing file 1 of ${total}...`;
-    verifyBtn.disabled = true;
-
-    let allResults = { results: [] };
-
-    try {
-        for (let i = 0; i < total; i++) {
-            const file = requirementUpload.files[i];
-            verifyBtn.textContent = `OCR on file ${i + 1}/${total}: ${file.name}`;
-
-            const formData = new FormData();
-            formData.append('action', 'analyze_documents');
-            formData.append('requirementUpload[]', file);   // ← matches your main upload name
-            selectedReqs.forEach(r => formData.append('requirements[]', r));
-
-            const res = await fetch(BUSINESS_HANDLER_URL, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            });
-
-            const raw = await res.text();
-            if (!raw.trim()) throw new Error('Empty response from server');
-
-            const data = JSON.parse(raw);
-
-            if (data.status === 'success' && data.analysis) {
-                allResults.results = allResults.results.concat(data.analysis.results || []);
-            }
-        }
-
-        renderVerificationResults(allResults, selectedReqs);
-        documentVerificationDone = true;
-
-    } catch (err) {
-        console.error('OCR Error:', err);
-        resultsDiv.innerHTML = `
-            <p style="color:#e74c3c; font-weight:600;">❌ OCR Verification Failed</p>
-            <p style="color:#666; font-size:0.9em;">Error: ${err.message}</p>
-            <p style="color:#e67e22;">You can still submit — staff will review manually.</p>
-        `;
-    } finally {
-        verifyBtn.textContent = 'Re-Verify Documents with OCR';
-        verifyBtn.disabled = false;
-    }
-}
-
-
-function renderVerificationResults(analysis, selectedReqs) {
-    const div = document.getElementById('verificationResults');
-    let html = `<strong style="color:#1e40af;">OCR Results (per file):</strong><br><br>`;
-
-    const businessName = (BUSINESS_NAME_FIELD.value || '').toLowerCase().trim();
-    const ownerName = getFullOwnerName();
-    let overallGood = true;
-
-    analysis.results.forEach((result, index) => {
-        const filename = result.filename || `File ${index + 1}`;
-        const textLower = (result.text || '').toLowerCase();
-        const detected = result.detected || [];
-
-        let fileStatus = [];
-
-        selectedReqs.forEach(reqType => {
-            const rule = requirementNameRules[reqType] || 'either';
-            let nameMatched = false;
-
-            // Smart name check based on rule
-            if (rule === 'business' && businessName) {
-                nameMatched = textLower.includes(businessName);
-            } else if (rule === 'owner' && ownerName) {
-                nameMatched = textLower.includes(ownerName);
-            } else if (rule === 'either') {
-                nameMatched = (businessName && textLower.includes(businessName)) ||
-                    (ownerName && textLower.includes(ownerName));
-            }
-
-            // Keyword detection from backend
-            const keywordMatched = detected.includes(reqType);
-
-            const finalMatch = keywordMatched && nameMatched;
-
-            if (!finalMatch) overallGood = false;
-
-            fileStatus.push(`
-                <div style="margin:4px 0;">
-                    <strong>${reqType}</strong>: 
-                    ${keywordMatched ? '✅ Keywords' : '⚠️ Keywords'} 
-                    ${nameMatched ? '✅ Name' : '⚠️ Name'}
-                </div>
-            `);
-        });
-
-        html += `
-            <div style="background:#fff; padding:14px; margin:10px 0; border-radius:8px; border:1px solid #e2e8f0;">
-                <strong>${filename}</strong><br>
-                ${fileStatus.join('')}
-                
-                <details style="margin-top:10px; font-size:0.82em; color:#64748b;">
-                    <summary>Show extracted text</summary>
-                    <pre style="background:#f8fafc; padding:10px; overflow:auto; max-height:180px; font-size:0.78em;">
-${(result.text || 'No text extracted').substring(0, 900)}${(result.text || '').length > 900 ? '...' : ''}
-                    </pre>
-                </details>
-            </div>`;
-    });
-
-    if (overallGood) {
-        html += `<p style="color:#16a34a; margin-top:15px; font-weight:600;">🎉 All requirements verified with correct names!</p>`;
-    } else {
-        html += `<p style="color:#ea580c; margin-top:12px;">Some requirements need staff review but you can proceed.</p>`;
-    }
-
-    div.innerHTML = html;
-}
-
-
 /**
- * Opens an interactive map modal for location selection
- * @param {string} target - Identifier for which address field is being mapped ('1' for owner, '2' for business)
- */
-function openMapPicker(target) {
-    const modal = document.createElement('div');
-    modal.className = 'map-modal';
-    modal.innerHTML = `
-        <div class="map-modal-content">
-            <div class="map-header">
-                <div class="map-modal-header">
-                    <h3>Select Location</h3>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <button id="picker-street-btn" style="padding:5px 12px;border-radius:6px;border:none;background:#00247c;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
-                            <i class="fas fa-map"></i> Street
-                        </button>
-                        <button id="picker-satellite-btn" style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
-                            <i class="fas fa-satellite"></i> Satellite
-                        </button>
-                    </div>
-                    <button class="close-map">Close</button>
-                </div>
-            </div>
-            <div id="map-container"></div>
-        </div>
-    `;
-    modal.dataset.target = target;
-    document.body.appendChild(modal);
-    modal.style.display = 'block';
-
-    modal.querySelector('.close-map').addEventListener('click', () => {
-        const preview = document.getElementById(`map-preview-${target}`);
-        if (preview) preview.style.display = 'none';
-        modal.remove();
-    });
-
-    initializeMapPicker(target);
-}
-
-// Initialize map buttons when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.map-btn').forEach(btn => {
-        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
-    });
-});
-
-/**
- * Initializes Leaflet map for location selection with house polygons and interactivity
+ * Opens an interactive map modal specifically for incident location selection
  * @param {string} target - Identifier for which address field is being mapped
  */
-async function initializeMapPicker(target) {
+function openMapPicker(target) {
+    if (target !== 'incident') {
+        ir_swal.fire({
+            icon: 'info',
+            title: 'Map Picker Limited',
+            html: 'Map picker is only available for <strong>incident location</strong>.'
+        });
+        return;
+    }
+
+    let modal = document.querySelector('.dynamic-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        // Removed 'map-modal' class to detach from external CSS forcing it to the right
+        modal.className = 'dynamic-map-modal'; 
+        
+        // Foolproof full-screen centered overlay
+        modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important;';
+
+        // Removed 'map-modal-content' class and replaced with strict inline styles
+        modal.innerHTML = `
+            <div style="position: relative !important; margin: 0 !important; max-width: 900px !important; width: 90% !important; height: 85vh !important; display: flex !important; flex-direction: column !important; background: white !important; padding: 20px !important; border-radius: 8px !important; box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important; box-sizing: border-box !important;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #00247C; font-family: Arial, sans-serif;">Select Incident Location</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
+                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
+                    </div>
+                    <button class="close-map" type="button" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #333; line-height: 1; padding: 0;">&times;</button>
+                </div>
+
+                <div id="dynamic-map-container" style="width: 100%; flex-grow: 1; min-height: 300px; border-radius: 8px; z-index: 1;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('.close-map').addEventListener('click', () => {
+            // Revert display back to none when closing
+            modal.style.setProperty('display', 'none', 'important');
+        });
+    }
+
+    // Force it to use flex so centering applies when reopening
+    modal.style.setProperty('display', 'flex', 'important');
+    
+    // Add a slight delay to allow the modal to display before initializing Leaflet
+    setTimeout(() => {
+        initializeMapPicker('dynamic-map-container', target);
+    }, 150);
+}
+
+async function initializeMapPicker(containerId, target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
+    // Clean up existing Leaflet instance if reopening modal
+    const container = document.getElementById(containerId);
+    if (container._leaflet_id) {
+        container._leaflet_id = null;
+        container.innerHTML = '';
+    }
+
     const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxNativeZoom: 19,
-        maxZoom: 22
+        attribution: '© OpenStreetMap contributors'
     });
     const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri World Imagery',
-        maxNativeZoom: 19,
-        maxZoom: 22
+        attribution: '© Esri World Imagery'
     });
 
-    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
     osmTile.addTo(map);
 
     // Match main map color system
@@ -1149,7 +985,7 @@ async function initializeMapPicker(target) {
         boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
     }
 
-    // Street / Satellite toggle
+    // Street / Satellite toggle listeners
     const streetBtn = document.getElementById('picker-street-btn');
     const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
@@ -1167,7 +1003,7 @@ async function initializeMapPicker(target) {
         });
     }
 
-    // Click anywhere to pick a point
+    // Click anywhere to pick a point (Fallback for areas without polygons)
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
@@ -1175,9 +1011,9 @@ async function initializeMapPicker(target) {
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        document.getElementById(`latitude${target}`).value = lat;
-        document.getElementById(`longitude${target}`).value = lng;
-        document.getElementById(`map-preview-${target}`).style.display = 'block';
+        
+        document.getElementById('incidentLatitude').value = lat;
+        document.getElementById('incidentLongitude').value = lng;
     });
 
     // Load barangay boundaries from DB
@@ -1193,36 +1029,6 @@ async function initializeMapPicker(target) {
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
                     const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
-                    // ── Boundary lock: mirrors map.js setupSoftBoundary ──────────────
-                    try {
-                        const _bounds     = layer.getBounds();
-                        const _soft       = _bounds.pad(0.15);
-                        const _warn       = _bounds.pad(0.05);
-                        const _hard       = _bounds.pad(0.25);
-                        map.setMinZoom(18);
-                        map.setMaxZoom(22);
-                        map.setMaxBounds(_hard);
-                        let _bTimer;
-                        map.on('move', function () {
-                            clearTimeout(_bTimer);
-                            if (!_warn.contains(map.getCenter())) {
-                                _bTimer = setTimeout(function () {
-                                    const c   = map.getCenter();
-                                    const lat = Math.max(_warn.getSouth(), Math.min(_warn.getNorth(), c.lat));
-                                    const lng = Math.max(_warn.getWest(),  Math.min(_warn.getEast(),  c.lng));
-                                    map.flyTo([lat, lng], map.getZoom(), { duration: 1, easeLinearity: 0.25 });
-                                }, 800);
-                            }
-                        });
-                        map.on('moveend', function () {
-                            const c = map.getCenter();
-                            if (!_soft.contains(c)) {
-                                const lat = Math.max(_soft.getSouth(), Math.min(_soft.getNorth(), c.lat));
-                                const lng = Math.max(_soft.getWest(),  Math.min(_soft.getEast(),  c.lng));
-                                map.panTo([lat, lng], { animate: true, duration: 0.5 });
-                            }
-                        });
-                    } catch (_le) { console.warn('Boundary lock error:', _le); }
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
         }
@@ -1238,116 +1044,133 @@ async function initializeMapPicker(target) {
         if (hData.success && hData.houses) {
             const houseLayer = L.layerGroup();
 
-            data.houses.forEach(house => {
-                if (house.coordinates) {
-                    try {
-                        const coords = JSON.parse(house.coordinates);
-                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                        latLngCoords.push(latLngCoords[0]); // close polygon
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                try {
+                    const coords = JSON.parse(house.coordinates);
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const latLngs = ring.map(c => [c[1], c[0]]);
+                    latLngs.push(latLngs[0]);
 
-                        const polygon = L.polygon(latLngCoords, {
-                            color: '#3388ff',
-                            weight: 1,
-                            fillColor: '#3388ff',
-                            fillOpacity: 0.1,
-                            interactive: true
-                        }).addTo(houseLayer);
+                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
+                    housePolygons.push(polygon);
 
-                        // Polygon click autofill - populate incident fields when house is selected
-                        polygon.on('click', function (e) {
-                            const lat = e.latlng.lat.toFixed(6);
-                            const lng = e.latlng.lng.toFixed(6);
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const subtitleHtml = house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
+                    const addrHtml = (!isLandmark && house.address) ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                    const streetHtml = house.street_name ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
 
-                            if (marker) map.removeLayer(marker);
-                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+                    const popupHtml =
+                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
+                        '</div>' + addrHtml + streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '</div>';
 
-                            // ONLY set coordinates for incident location
-                            if (target === 'incident') {
-                                incidentLatitude.value = lat;
-                                incidentLongitude.value = lng;
+                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
 
-                                // Format the address from the available house data
-                                let formattedAddress = house.address;
-                                if (!formattedAddress) {
-                                    // Fallback just in case house.address is empty
-                                    const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
-                                    const street = house.street_name ? `${house.street_name}, ` : '';
-                                    formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
-                                }
+                    polygon.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
-                                // Fill the unified address field for incident location
-                                if (incidentAddress) {
-                                    incidentAddress.value = formattedAddress;
+                        if (selectedMarker) map.removeLayer(selectedMarker);
+                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
+                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                        const selAddr = (!isLandmarkSel && house.address) ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                        const selStreet = house.street_name ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
+                        
+                        const selPopup =
+                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' + selAddr + selStreet + '</div>';
+                            
+                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
 
-                                    // Trigger validation clearing and updates
-                                    incidentAddress.dispatchEvent(new Event('input', { bubbles: true }));
-                                    incidentAddress.dispatchEvent(new Event('change', { bubbles: true }));
-                                }
-                            }
+                        // Target Resident Incident Report Coordinates
+                        document.getElementById('incidentLatitude').value = lat;
+                        document.getElementById('incidentLongitude').value = lng;
 
-                            document.getElementById(`map-preview-${target}`).style.display = 'block';
-                        });
+                        // Auto-fill Incident Address dynamically
+                        let formattedAddress = house.address;
+                        if (!formattedAddress) {
+                            const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                            const street = house.street_name ? `${house.street_name}, ` : '';
+                            formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                        }
+                        const addressInput = document.getElementById('incidentAddress');
+                        if (addressInput) {
+                            addressInput.value = formattedAddress;
+                            // Trigger input event to clear validation errors automatically
+                            addressInput.dispatchEvent(new Event('input')); 
+                        }
+                    });
 
-                        polygon.bindPopup(`
-                            <div class="house-popup">
-                                <h4>🏠 ${house.address}</h4>
-                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
-                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
-                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
-                            </div>
-                        `);
-
-                    } catch (err) {
-                        console.error('Error parsing house coordinates:', err);
-                    }
-                }
+                    polygon.addTo(houseLayer);
+                } catch (err) { console.error('House parse error:', err); }
             });
 
             houseLayer.addTo(map);
         }
     } catch (err) { console.error('Failed to load houses:', err); }
+
+    setTimeout(() => map.invalidateSize(), 300);
 }
 
 /**
- * Sets up coordinate field formatting to ensure proper decimal precision
- * @param {string} target - Identifier for which coordinate set to format ('1' or '2')
+ * Sets up coordinate field formatting to ensure proper decimal precision for incident coordinates
+ * @param {string} target - Identifier for which coordinate set to format ('incident' only)
  */
 function setupCoordinateAutoFormat(target) {
-    const latInput = document.getElementById(`latitude${target}`);
-    const lngInput = document.getElementById(`longitude${target}`);
+    const latInput = document.getElementById(`${target}Latitude`);
+    const lngInput = document.getElementById(`${target}Longitude`);
     if (!latInput || !lngInput) return;
 
     [latInput, lngInput].forEach(input => {
         input.addEventListener('blur', function () {
-            if (this.value && !this.value.includes('.')) this.value = parseFloat(this.value).toFixed(6);
+            if (this.value && !this.value.includes('.')) {
+                this.value = parseFloat(this.value).toFixed(6);
+            }
         });
     });
 }
 
-// Initialize coordinate formatting for both address sections
+// Initialize coordinate formatting only for incident location when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    [1, 2].forEach(target => setupCoordinateAutoFormat(target));
+    setupCoordinateAutoFormat('incident');
+});
+
+// Initialize map buttons when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.map-btn').forEach(btn => {
+        btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
+    });
 });
 
 /**
- * Automatically populates owner information fields with user data from session
+ * Automatically populates reporting person information fields with user data from session
  * Fetches resident profile data to pre-fill the form for convenience
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
 
-        await business_app_swal.fire({
+        await ir_swal.fire({
             icon: 'warning',
             title: 'Important Disclaimer',
-            html: 'Submitting false information or fraudulent documents for a <strong>Business Clearance</strong> is a serious offense and may result in the immediate revocation of your permit and legal action.<br><br>By proceeding, you certify that all information and attached documents provided are true and accurate to the best of your knowledge.',
+            html: 'Filing a false, fabricated, or malicious incident report is a serious offense and is punishable by law.<br><br>By proceeding, you certify that all information you provide is true and accurate to the best of your knowledge.',
             confirmButtonText: 'I Understand and Agree',
             allowOutsideClick: false,
             allowEscapeKey: false
         });
 
+        // 1. Added credentials and cache settings exactly like the business app
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-
+        
         console.debug('incident_report autofill response:', data);
 
         if (data.error) {
@@ -1355,7 +1178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // fallback from full_name if individual fields missing
+        // 2. Added the fallback logic to split 'full_name' if individual fields are missing
         if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
             const parts = data.full_name.trim().split(/\s+/);
             data.first_name = parts[0] || '';
@@ -1368,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const last = data.last_name || '';
             const first = data.first_name || '';
             const middle = data.middle_name ? ' ' + data.middle_name : '';
-
+            
             // Formats to match the input placeholder: "Last, First, Middle Name"
             if (last && first) {
                 rpFullName.value = `${last}, ${first}${middle}`;
@@ -1400,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => { });
+    if (!sockets["incident_report_applications"]) {
+        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
     }
 });
