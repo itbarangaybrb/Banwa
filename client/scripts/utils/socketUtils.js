@@ -8,9 +8,9 @@ export function initSocket(name, url, onMessage) {
 
     const socket = new WebSocket(url);
 
-    socket.addEventListener("open", () => {
-        console.log(`${name} WebSocket connected`);
-    });
+    // socket.addEventListener("open", () => {
+    //     console.log(`${name} WebSocket connected`);
+    // });
 
     socket.addEventListener("message", (event) => {
         try {
