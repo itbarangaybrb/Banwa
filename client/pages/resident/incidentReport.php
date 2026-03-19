@@ -93,7 +93,7 @@
                     </div>
                     
                     <div class="label-and-input">
-                        <label class="label" for="vicContact">MobilePhone or Landline Number <span style="color: #BB1B1B;">*</span></label>
+                        <label class="label" for="vicContact">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicContact" name="vicContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
                         <div class="error-msg"></div>
                     </div>

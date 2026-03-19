@@ -491,3 +491,15 @@ CONTEXT:  unnamed portal parameter $1 = '...'
 [18-Mar-2026 17:19:45 UTC] No files uploaded for application 68, skipping OCR queue.
 [18-Mar-2026 17:19:45 UTC] CR1 Check - Has file upload: No
 [18-Mar-2026 17:19:45 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:01:56 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[19-Mar-2026 12:01:57 UTC] No files uploaded for application 69, skipping OCR queue.
+[19-Mar-2026 12:01:57 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:01:57 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:04:56 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[19-Mar-2026 12:04:56 UTC] No files uploaded for application 70, skipping OCR queue.
+[19-Mar-2026 12:04:56 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:04:56 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:08:42 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[19-Mar-2026 12:08:42 UTC] No files uploaded for application 71, skipping OCR queue.
+[19-Mar-2026 12:08:42 UTC] CR1 Check - Has file upload: No
+[19-Mar-2026 12:08:42 UTC] CR1 Check - Has file upload: No
