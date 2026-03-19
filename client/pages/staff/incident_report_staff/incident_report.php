@@ -123,7 +123,7 @@ $full_name = getCurrentUserName();
                                 <div class="dropdown">
                                     <button class="gm-chip dropdown-btn" id="filterDropdownBtn" onclick="toggleFilterDropdown(event)">
                                         <i class="fas fa-layer-group"></i>
-                                        <span id="currentFilterText">Incidents</span>
+                                        <span id="currentFilterText">Households</span>
                                         <i class="fas fa-chevron-down dropdown-arrow"></i>
                                     </button>
                                     <div class="dropdown-content" id="filterDropdown">
@@ -247,14 +247,6 @@ $full_name = getCurrentUserName();
                             <button class="gm-action-btn" onclick="showFaultLineRiskAssessment()">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Fault Line Risk</span>
-                            </button>
-                            <button class="gm-action-btn" onclick="showIncidentStatistics()">
-                                <i class="fas fa-chart-pie"></i>
-                                <span>Incident Stats</span>
-                            </button>
-                            <button class="gm-action-btn" onclick="showIncidentHeatmap()">
-                                <i class="fas fa-fire"></i>
-                                <span>Heatmap</span>
                             </button>
                             <button class="gm-action-btn" onclick="showIncidentSummaryReport()">
                                 <i class="fas fa-exclamation-circle"></i>
