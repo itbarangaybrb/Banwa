@@ -596,7 +596,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/home.php';
     });
 
     document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
@@ -734,16 +734,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmBusResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Business Application Submitted", {
-                    body: "Click to view your application status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
-
         const formData = new FormData();
 
         // Add action for business_handler.php
@@ -824,10 +814,21 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-
-                    if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                        sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
+                    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification("Business Application Submitted", {
+                                body: "Click to view your application status",
+                                icon: "/client/img/banwalogo.png",
+                                data: { url: "/client/pages/resident/status.php" }
+                            });
+                        });
                     }
+
+                    sockets["business_applications"]?.readyState === WebSocket.OPEN &&
+                        sockets["business_applications"].send(JSON.stringify({
+                            type: "business_applications_update",
+                            action: "new_application"
+                        }));
 
                     business_app_swal.fire({
                         icon: 'success',
@@ -1077,10 +1078,14 @@ async function initializeMapPicker(target) {
     const defaultLng = 121.0756;
 
     const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        maxNativeZoom: 19,
+        maxZoom: 22
     });
     const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri World Imagery'
+        attribution: '© Esri World Imagery',
+        maxNativeZoom: 19,
+        maxZoom: 22
     });
 
     const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
@@ -1150,6 +1155,36 @@ async function initializeMapPicker(target) {
                     const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
                     const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
                     boundaryLayers.push(layer);
+                    // ── Boundary lock: mirrors map.js setupSoftBoundary ──────────────
+                    try {
+                        const _bounds = layer.getBounds();
+                        const _soft = _bounds.pad(0.15);
+                        const _warn = _bounds.pad(0.05);
+                        const _hard = _bounds.pad(0.25);
+                        map.setMinZoom(18);
+                        map.setMaxZoom(22);
+                        map.setMaxBounds(_hard);
+                        let _bTimer;
+                        map.on('move', function () {
+                            clearTimeout(_bTimer);
+                            if (!_warn.contains(map.getCenter())) {
+                                _bTimer = setTimeout(function () {
+                                    const c = map.getCenter();
+                                    const lat = Math.max(_warn.getSouth(), Math.min(_warn.getNorth(), c.lat));
+                                    const lng = Math.max(_warn.getWest(), Math.min(_warn.getEast(), c.lng));
+                                    map.flyTo([lat, lng], map.getZoom(), { duration: 1, easeLinearity: 0.25 });
+                                }, 800);
+                            }
+                        });
+                        map.on('moveend', function () {
+                            const c = map.getCenter();
+                            if (!_soft.contains(c)) {
+                                const lat = Math.max(_soft.getSouth(), Math.min(_soft.getNorth(), c.lat));
+                                const lng = Math.max(_soft.getWest(), Math.min(_soft.getEast(), c.lng));
+                                map.panTo([lat, lng], { animate: true, duration: 0.5 });
+                            }
+                        });
+                    } catch (_le) { console.warn('Boundary lock error:', _le); }
                 } catch (err) { console.error('Boundary parse error:', err); }
             });
         }
@@ -1277,6 +1312,16 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Submitting false information or fraudulent documents for a <strong>Business Clearance</strong> is a serious offense and may result in the immediate revocation of your permit and legal action.<br><br>By proceeding, you certify that all information and attached documents provided are true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
         console.debug('business_app autofill response:', data);
@@ -1304,7 +1349,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => { });
-    }
+    if (!sockets["business_applications"]) initSocket("business_applications", "ws://localhost:8081", () => { });
 });

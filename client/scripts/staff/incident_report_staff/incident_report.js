@@ -36,6 +36,7 @@ swalStyle.innerHTML = `
         margin: 1rem 0 !important;
         font-size: 1.05rem !important;
         color: #555 !important;
+        text-align: center !important;
     }
 
     /* Button Spacing */
@@ -254,11 +255,15 @@ function filterIncidents() {
  * @returns {Promise} Promise resolving to the incidents array
  */
 function loadIncidentsFromDB() {
-    return fetch(`${IR_HANDLER_URL}?action=fetch`)
+    return fetch(`${IR_HANDLER_URL}?action=fetch`, {
+        credentials: 'include'
+    })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 incidents = (data.data || []).filter(inc => !inc.is_archived);
+            } else {
+                incidents = [];
             }
             return incidents;
         })
@@ -310,7 +315,7 @@ function loadProcessTable() {
 
         tbody.innerHTML = '';
 
-        const excludedStatuses = ['Closed', 'Cancelled', 'Resolved'];
+        const excludedStatuses = ['Closed', 'Cancelled', 'Resolved', 'Archived'];
         const actionable = incidents.filter(incident => {
             return !excludedStatuses.includes(incident.status);
         });
@@ -452,7 +457,7 @@ function loadAnalyticsTab() {
                 data: {
                     labels: labels3,
                     datasets: [{
-                        label: 'DSS Status Distribution',
+                        label: 'DST Status Distribution',
                         data: totals3,
                         backgroundColor: dssColors,
                         borderWidth: 1
@@ -599,6 +604,7 @@ function fetchDSSEvaluation(appId, incident) {
 
 /**
  * Creates and inserts a detailed DSS evaluation section into the update modal
+ * Displays evaluation scores, priority level, rule results, and recommendations
  * 
  * @param {Object} evaluation - The DSS evaluation data object
  * @param {Object} incident - The incident object for context
@@ -619,98 +625,110 @@ function addDSSSectionToModal(evaluation, incident) {
     const details = evaluation.evaluation_details || {};
     const dssStatus = evaluation.dss_status || 'Pending Evaluation';
     const score = details.score || 0;
-    const maxScore = details.max_score || 5;
-    const probability = typeof details.resolution_probability === 'number' ? details.resolution_probability : (parseFloat(details.resolution_probability) || 0);
+    const maxScore = details.max_score || 6;
+    const urgencyScore = details.urgency_score || 0;
+    const priorityLevel = details.priority_level || 'Low';
 
     const passedRules = details.passed_rules || [];
     const failedRules = details.failed_rules || [];
     const recommendations = details.recommendations || [];
 
-    let statusColor, statusBg;
+    // Get rule results for more detailed display
+    const ruleResults = details.rule_results || {};
+
+    let statusColor, statusBg, statusText;
     switch (dssStatus) {
-        case 'Pre-Approved':
         case 'High Priority':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
+            statusText = 'High Priority';
             break;
-        case 'Additional Requirements Needed':
         case 'Medium Priority':
             statusColor = '#856404';
             statusBg = '#fff3cd';
+            statusText = 'Medium Priority';
             break;
-        case 'Rejected':
         case 'Low Priority':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
+            statusColor = '#155724';
+            statusBg = '#d4edda';
+            statusText = 'Low Priority';
             break;
         default:
             statusColor = '#0c5460';
             statusBg = '#d1ecf1';
+            statusText = dssStatus;
     }
 
     dssSection.innerHTML = `
-<div class="dss-evaluation-section">
-    <div class="dss-header">
-        <h3>Evaluation Result</h3>
-        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
-            ${dssStatus}
-        </span>
-    </div>
-    
-    <div class="dss-score-summary">
-        <div class="dss-score">
-            <strong>Score</strong>
-            <span>${score}/${maxScore}</span>
-        </div>
-        <div class="dss-probability">
-            <strong>Approval Probability</strong>
-            <span>${probability.toFixed(2)}%</span>
-        </div>
-    </div>
-    
-    <div class="dss-progress-container">
-        <div class="dss-progress-label">
-            <span>Approval Progress</span>
-            <span class="dss-progress-percentage">${probability}%</span>
-        </div>
-        <div class="dss-progress-bar">
-            <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, probability))}%"></div>
-        </div>
-    </div>
-    
-    <div class="dss-rules-summary">
-        <div class="dss-rules-column">
-            <h4>Passed Rules (${passedRules.length})</h4>
-            ${passedRules.length > 0 ?
-            `<ul class="dss-rules-list passed">${passedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
-            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
-        }
+    <div class="dss-evaluation-section">
+        <div class="dss-header">
+            <h3>DST Evaluation Result</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${statusText}
+            </span>
         </div>
         
-        <div class="dss-rules-column">
-            <h4>Failed Rules (${failedRules.length})</h4>
-            ${failedRules.length > 0 ?
+        <div class="dss-score-summary">
+            <div class="dss-score">
+                <strong>Rules Passed</strong>
+                <span>${score}/${maxScore}</span>
+            </div>
+            <div class="dss-probability">
+                <strong>Priority Level</strong>
+                <span>${priorityLevel}</span>
+            </div>
+        </div>
+        
+        <div class="dss-progress-container">
+            <div class="dss-progress-label">
+                <span>Urgency Score</span>
+                <span class="dss-progress-percentage">${urgencyScore}%</span>
+            </div>
+            <div class="dss-progress-bar">
+                <div class="dss-progress-fill" style="width: ${Math.max(0, Math.min(100, urgencyScore))}%"></div>
+            </div>
+        </div>
+        
+        <div class="dss-rules-summary">
+            <div class="dss-rules-column">
+                <h4>Passed Rules (${passedRules.length})</h4>
+                ${passedRules.length > 0 ?
+            `<ul class="dss-rules-list passed">${passedRules.map(rule => {
+                // Get the rule result if available
+                const ruleId = Object.keys(ruleResults).find(key =>
+                    evaluation.rules?.find(r => r.name === rule)?.id === key
+                );
+                const result = ruleId ? ruleResults[ruleId] : '';
+                return `<li>${rule} ${result ? `<span style="color:#666; font-size:11px;">(${result})</span>` : ''}</li>`;
+            }).join('')}</ul>` :
+            `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules passed</p>`
+        }
+            </div>
+            
+            <div class="dss-rules-column">
+                <h4>Failed Rules (${failedRules.length})</h4>
+                ${failedRules.length > 0 ?
             `<ul class="dss-rules-list failed">${failedRules.map(rule => `<li>${rule}</li>`).join('')}</ul>` :
             `<p style="color:#999; font-size:13px; margin:0; padding:8px 0;">No rules failed</p>`
         }
+            </div>
         </div>
+        
+        ${recommendations.length > 0 ? `
+            <div class="dss-recommendations">
+                <h4>Recommendations</h4>
+                <ul class="dss-recommendations-list">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
+        
+        ${evaluation.evaluated_at ? `
+            <div class="dss-timestamp">
+                Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
+            </div>
+        ` : ''}
     </div>
-    
-    ${recommendations.length > 0 ? `
-        <div class="dss-recommendations">
-            <h4>Recommendations</h4>
-            <ul class="dss-recommendations-list">
-                ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
-            </ul>
-        </div>
-    ` : ''}
-    
-    ${evaluation.evaluated_at ? `
-        <div class="dss-timestamp">
-            Evaluated: ${new Date(evaluation.evaluated_at).toLocaleString()}
-        </div>
-    ` : ''}
-</div>
 `;
 
     updateForm.insertBefore(dssSection, updateForm.firstChild);
@@ -718,6 +736,7 @@ function addDSSSectionToModal(evaluation, incident) {
 
 /**
  * Creates a basic DSS section when detailed evaluation data is unavailable
+ * Provides minimal DSS status display as fallback
  * 
  * @param {Object} incident - The incident object containing basic DSS status
  */
@@ -738,20 +757,17 @@ function addBasicDSSSection(incident) {
     let statusColor, statusBg;
 
     switch (dssStatus) {
-        case 'Pre-Approved':
         case 'High Priority':
-            statusColor = '#155724';
-            statusBg = '#d4edda';
+            statusColor = '#721c24';
+            statusBg = '#f8d7da';
             break;
-        case 'Additional Requirements Needed':
         case 'Medium Priority':
             statusColor = '#856404';
             statusBg = '#fff3cd';
             break;
-        case 'Rejected':
         case 'Low Priority':
-            statusColor = '#721c24';
-            statusBg = '#f8d7da';
+            statusColor = '#155724';
+            statusBg = '#d4edda';
             break;
         default:
             statusColor = '#0c5460';
@@ -759,14 +775,14 @@ function addBasicDSSSection(incident) {
     }
 
     dssSection.innerHTML = `
-    <div class="dss-header">
-        <h3>DSS Evaluation</h3>
-        <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
-            ${dssStatus}
-        </span>
-    </div>
-    <p class="dss-loading">Loading detailed evaluation...</p>
-`;
+        <div class="dss-header">
+            <h3>DST Evaluation</h3>
+            <span class="dss-status-badge" style="color: ${statusColor}; background: ${statusBg}; padding: 8px 12px;">
+                ${dssStatus}
+            </span>
+        </div>
+        <p class="dss-loading">Loading detailed evaluation...</p>
+    `;
 
     updateForm.insertBefore(dssSection, updateForm.firstChild);
 }
@@ -819,8 +835,8 @@ function submitUpdate(event) {
                     sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
                 }
 
-                if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
-                    sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "status_update" }));
+                if (sockets["incident_reports"] && sockets["incident_reports"].readyState === WebSocket.OPEN) {
+                    sockets["incident_reports"].send(JSON.stringify({ type: "incident_reports_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
@@ -850,15 +866,104 @@ function submitUpdate(event) {
         });
 };
 
+/**
+ * Generates a downloadable incident report document in HTML format
+ * Creates a formatted report with all incident details for printing/saving
+ */
+// function generateReportDocument() {
+//     const downloadBtn = document.getElementById('downloadBtn');
+
+//     if (downloadBtn) {
+
+//         downloadBtn.addEventListener('click', () => {
+//             // Create a simple HTML document for the report
+//             const reportHTML = `
+//                 <!DOCTYPE html>
+//                 <html>
+//                 <head>
+//                     <meta charset="UTF-8">
+//                     <title>Incident Report - ${new Date().toLocaleDateString()}</title>
+//                     <style>
+//                         body { font-family: Arial, sans-serif; margin: 40px; }
+//                         h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+//                         .section { margin: 20px 0; }
+//                         .section h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+//                         .field { margin: 5px 0; }
+//                         .label { font-weight: bold; }
+//                     </style>
+//                 </head>
+//                 <body>
+//                     <h1>Incident Report</h1>
+//                     <div class="section">
+//                         <h2>Reporting Person</h2>
+//                         <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
+//                         <div class="field"><span class="label">Address:</span> ${rpAddress.value}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
+//                         <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Victim Details</h2>
+//                         ${victimSameAsRP.checked ?
+//                     '<div class="field">Same as Reporting Person</div>' :
+//                     `
+//                             <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
+//                             <div class="field"><span class="label">Address:</span> ${vicAddress.value}</div>
+//                             <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
+//                             <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
+//                             <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
+//                             <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
+//                             <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
+//                             `
+//                 }
+//                     </div>
+//                     <div class="section">
+//                         <h2>Suspect Details</h2>
+//                         <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Address:</span> ${susAddress.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Incident Details</h2>
+//                         <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
+//                         <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
+//                         <div class="field"><span class="label">Location:</span> ${incidentAddress.value}</div>
+//                         <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
+//                         <div class="field"><span class="label">Description:</span> ${description.value}</div>
+//                     </div>
+//                     <div class="section">
+//                         <h2>Report Information</h2>
+//                         <div class="field"><span class="label">Date Reported:</span> ${new Date().toLocaleString()}</div>
+//                     </div>
+//                 </body>
+//                 </html>
+//             `;
+
+//             // Create and download the file as a Word document
+//             const blob = new Blob([reportHTML], { type: 'application/msword' });
+//             const url = URL.createObjectURL(blob);
+//             const a = document.createElement('a');
+//             a.href = url;
+//             a.download = `Incident_Report_${new Date().toISOString().split('T')[0]}.doc`;
+//             document.body.appendChild(a);
+//             a.click();
+//             document.body.removeChild(a);
+//             URL.revokeObjectURL(url);
+//         });
+//     }
+// }
+
 
 /**
  * Displays detailed incident information in a modal view
- * 
- * @param {number} appId - The incident ID to view details for
+ * * @param {number} appId - The incident ID to view details for
  */
 function viewDetails(appId) {
     const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
+
+    // REMOVED: generateReportDocument(); (No longer needed)
 
     const incidentLocation = incident.incident_location || 'Not specified';
 
@@ -923,6 +1028,15 @@ function viewDetails(appId) {
                     <div class="detail-row"><span class="detail-label">Description</span> <span class="detail-value">${incident.sus_description || 'N/A'}</span></div>
                 </div>
                 ` : ''}
+
+                <div class="detail-card" style="margin-top:20px; border-color: #c3e6cb;">
+                    <section id="reportOutput">
+                        <p style="margin-bottom: 10px; color: #555;">Click the button below to download the report file.</p>
+                        <button class="btn-primary" onclick="downloadSummary(${incident.id})">
+                            <i class="fas fa-download"></i> Download Report (.doc)
+                        </button>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -941,12 +1055,13 @@ function viewDetails(appId) {
 
         ${incident.dss_status ? `
         <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
-            <h3>DSS Evaluation Status</h3>
-            <div class="detail-row"><span class="detail-label">DSS Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
+            <h3>Evaluation Status</h3>
+            <div class="detail-row"><span class="detail-label">DST Status</span> <span class="detail-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status || 'Pending Evaluation'}</span></div>
         </div>
         ` : ''}
+
     </div>
-`;
+    `;
 
     document.getElementById('modalBody').innerHTML = content;
     openModal('detailsModal');
@@ -965,119 +1080,6 @@ function loadSummarySelect() {
     });
 }
 
-/**
- * Updates the summary display with detailed incident information
- */
-// function updateIncidentSummary() {
-//     const appId = document.getElementById('summaryIncidentSelect').value;
-//     const summaryOutput = document.getElementById('summaryOutput');
-
-//     if (!appId) {
-//         summaryOutput.innerHTML = `
-//         <div class="placeholder-state">
-//             <i class="fas fa-file-invoice fa-3x"></i>
-//             <p>Select an incident report from the list above to view the full report.</p>
-//         </div>`;
-//         return;
-//     }
-
-//     const incident = incidents.find(i => i.id == appId);
-//     if (!incident) return;
-
-//     let statusColor = '#6c757d';
-//     let statusBg = '#e2e3e5';
-
-//     switch (incident.status) {
-//         case 'Resolved': statusColor = '#155724'; statusBg = '#d4edda'; break;
-//         case 'Under Investigation': statusColor = '#856404'; statusBg = '#fff3cd'; break;
-//         case 'Closed': statusColor = '#0c5460'; statusBg = '#d1ecf1'; break;
-//         case 'Cancelled': statusColor = '#721c24'; statusBg = '#f8d7da'; break;
-//     }
-
-//     const dateReported = new Date(incident.reported_at || incident.created_at).toLocaleDateString('en-US', {
-//         year: 'numeric', month: 'long', day: 'numeric'
-//     });
-
-//     summaryOutput.innerHTML = `
-//     <div class="report-header">
-//         <div class="report-title">
-//             <h1>Incident Report Profile</h1>
-//             <div class="report-meta">Report ID: ${incident.id} &bull; Date: ${dateReported}</div>
-//         </div>
-//         <div class="report-status-badge" style="color: ${statusColor}; background: ${statusBg};">
-//             ${incident.status}
-//         </div>
-//     </div>
-
-//     <div class="report-grid">
-//         <div class="report-column">
-//             <div class="report-section">
-//                 <h3>Incident Details</h3>
-//                 <div class="info-row"><span class="info-label">Incident Type</span> <span class="info-value">${incident.incident_type || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Date & Time</span> <span class="info-value">${formatDateTime(incident.incident_timestamp)}</span></div>
-//                 <div class="info-row"><span class="info-label">Location</span> <span class="info-value" style="max-width: 200px; text-align:right;">${incident.incident_location || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Coordinates</span> <span class="info-value">${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Severity</span> <span class="info-value">${incident.severity || 'Not Rated'}</span></div>
-//             </div>
-
-//             <div class="report-section">
-//                 <h3>Victim Information</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.vic_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.vic_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.vic_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.vic_gender || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Citizenship</span> <span class="info-value">${incident.vic_citizenship || 'N/A'}</span></div>
-//             </div>
-//         </div>
-
-//         <div class="report-column">
-//             <div class="report-section">
-//                 <h3>Reporting Person</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.rp_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.rp_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.rp_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Relationship</span> <span class="info-value">${incident.rp_relationship || 'N/A'}</span></div>
-//             </div>
-
-//             ${incident.sus_full_name ? `
-//             <div class="financial-box">
-//                 <h3 style="border:none; margin:0 0 10px 0;">Suspect Information</h3>
-//                 <div class="info-row"><span class="info-label">Full Name</span> <span class="info-value">${incident.sus_full_name || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Contact</span> <span class="info-value">${incident.sus_contact || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Address</span> <span class="info-value">${incident.sus_address || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Gender</span> <span class="info-value">${incident.sus_gender || 'N/A'}</span></div>
-//                 <div class="info-row"><span class="info-label">Description</span> <span class="info-value">${incident.sus_description || 'N/A'}</span></div>
-//             </div>
-//             ` : ''}
-//         </div>
-//     </div>
-
-//     <div class="report-section">
-//         <h3>Incident Narrative</h3>
-//         <div style="background:#f8f9fa; padding:15px; border-radius:5px; border-left:4px solid #6366F1;">
-//             ${incident.description || 'No description provided.'}
-//         </div>
-//     </div>
-
-//     ${incident.investigation_notes ? `
-//     <div class="report-section" style="background:#fff8e1; padding:15px; border-radius:5px;">
-//         <h3 style="border:none; margin-bottom:5px;">Investigation Notes</h3>
-//         <p style="margin:0; font-style:italic; color:#555;">"${incident.investigation_notes}"</p>
-//         <div style="font-size:12px; color:#666; margin-top:5px;">Last updated: ${formatDateTime(incident.updated_at)}</div>
-//     </div>` : ''}
-
-//     ${incident.dss_status ? `
-//     <div class="report-section" style="background:#d1ecf1; padding:15px; border-radius:5px; border-color:#bee5eb;">
-//         <h3 style="border:none; margin-bottom:5px; color:#0c5460;">DSS Evaluation</h3>
-//         <div class="info-row"><span class="info-label">DSS Status</span> <span class="info-value" style="color:#0c5460; font-weight:bold;">${incident.dss_status}</span></div>
-//     </div>` : ''}
-
-//     <div class="report-actions">
-//         <button class="btn-secondary" onclick="downloadSummary(${incident.id})"><i class="fas fa-download"></i> Download Word</button>
-//         <button class="btn-primary" onclick="printSummary()"><i class="fas fa-print"></i> Print Report</button>
-//     </div>
-// `;
-// }
 
 /**
  * Updates the summary display with detailed incident information
@@ -1175,7 +1177,7 @@ function updateSummary() {
 
         <div class="report-section">
             <h3>Incident Narrative</h3>
-            <div style="background:#f8f9fa; padding:15px; border-radius:5px;">
+            <div id="incident-narrative" style="background:#f8f9fa; padding:15px; border-radius:5px; margin-left: 40px; margin-right: 40px;">
                 ${incident.description || 'No description provided.'}
             </div>
         </div>
@@ -1443,118 +1445,109 @@ function printSummary() {
 
 /**
  * Downloads a summary report as a Word document
- * 
- * @param {number} appId - The incident ID to download summary for
+ * * @param {number} appId - The incident ID to download summary for
  */
 function downloadSummary(appId) {
-
     const incident = incidents.find(i => i.id == appId);
     if (!incident) return;
 
-    const incidentLocation = incident.incident_location || 'Not specified';
-
-    let notesHtml = '';
-    if (incident.investigation_notes) {
-        notesHtml = `<div class="comment-box investigation"><h3>Investigation Notes</h3><p>${incident.investigation_notes}</p></div>`;
-    }
-
-    let dssHtml = '';
-    if (incident.dss_status) {
-        dssHtml = `<div class="comment-box dss"><h3>DSS Evaluation</h3><p><strong>Status:</strong> ${incident.dss_status}</p></div>`;
-    }
+    // Determine if victim is same as RP based on matching names or missing victim name
+    const isVictimSameAsRP = incident.vic_full_name === incident.rp_full_name || !incident.vic_full_name;
+    const incidentLocation = incident.incident_location || incident.incident_address || 'Not specified';
+    
+    // Safely get coordinates (handling potential property name variations)
+    const lat = incident.incident_latitude || incident.latitude || 'N/A';
+    const lng = incident.incident_longitude || incident.longitude || 'N/A';
 
     const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Incident Report Summary - ${incident.id}</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }
-            .container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-            h1 { color: #5B479B; border-bottom: 3px solid #826EEA; padding-bottom: 10px; font-size: 24pt; }
-            h2 { color: #826EEA; margin-top: 30px; font-size: 16pt; }
-            .card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9; }
-            .info-list { list-style-type: none; padding: 0; }
-            .info-list li { margin-bottom: 8px; }
-            .info-list strong { display: inline-block; width: 180px; font-weight: bold; } 
-            .status-badge { background-color: ${incident.status === 'Resolved' ? '#d4edda' : incident.status === 'Cancelled' ? '#f8d7da' : '#fff3cd'}; color: ${incident.status === 'Resolved' ? '#155724' : incident.status === 'Cancelled' ? '#721c24' : '#856404'}; padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10pt;}
-            .comment-box { margin-top: 20px; padding: 15px; border-radius: 5px; }
-            .comment-box h3 { font-size: 12pt; }
-            .comment-box.investigation { border: 1px solid #ffeeba; background-color: #fff3cd; }
-            .comment-box.dss { border: 1px solid #bee5eb; background-color: #d1ecf1; }
-            .narrative-box { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #826EEA; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Incident Report Summary</h1>
-            <p><strong>Generated Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p><strong>Report ID:</strong> ${incident.id}</p>
-            <p><strong>Status:</strong> <span class="status-badge">${incident.status}</span></p>
-
-            <h2>Incident Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Incident Type:</strong> ${incident.incident_type}</li>
-                    <li><strong>Date & Time:</strong> ${formatDateTime(incident.incident_timestamp)}</li>
-                    <li><strong>Location:</strong> ${incidentLocation}</li>
-                    <li><strong>Coordinates:</strong> ${incident.incident_latitude || 'N/A'}, ${incident.incident_longitude || 'N/A'}</li>
-                    <li><strong>Severity:</strong> ${incident.severity || 'Not Rated'}</li>
-                </ul>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Incident Report Summary - ${incident.id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.5; }
+                h1 { color: #00247C; border-bottom: 2px solid #00247C; padding-bottom: 10px; }
+                .section { margin: 20px 0; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+                .section h2 { color: #555; font-size: 14pt; margin-bottom: 10px; }
+                .field { margin: 5px 0; }
+                .label { font-weight: bold; display: inline-block; width: 160px; color: #444; }
+                .status-badge { font-weight: bold; padding: 3px 8px; border: 1px solid #333; background: #f0f0f0; text-transform: uppercase;}
+            </style>
+        </head>
+        <body>
+            <h1>Incident Report (Ref ID: ${incident.id})</h1>
+            
+            <div class="section">
+                <h2>Reporting Person</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.rp_full_name || 'N/A'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.rp_address || 'N/A'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.rp_contact || 'N/A'}</div>
+                <div class="field"><span class="label">Relationship to Victim:</span> ${incident.rp_relationship || 'Not specified'}</div>
             </div>
 
-            <h2>Victim Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.vic_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.vic_contact}</li>
-                    <li><strong>Address:</strong> ${incident.vic_address}</li>
-                    <li><strong>Gender:</strong> ${incident.vic_gender}</li>
-                    <li><strong>Citizenship:</strong> ${incident.vic_citizenship}</li>
-                </ul>
+            <div class="section">
+                <h2>Victim Details</h2>
+                ${isVictimSameAsRP ? 
+                    '<div class="field" style="font-style: italic;">Same as Reporting Person</div>' : 
+                    `
+                    <div class="field"><span class="label">Name:</span> ${incident.vic_full_name || 'N/A'}</div>
+                    <div class="field"><span class="label">Address:</span> ${incident.vic_address || 'N/A'}</div>
+                    <div class="field"><span class="label">Contact:</span> ${incident.vic_contact || 'N/A'}</div>
+                    <div class="field"><span class="label">Citizenship:</span> ${incident.vic_citizenship || 'N/A'}</div>
+                    <div class="field"><span class="label">Gender:</span> ${incident.vic_gender || 'N/A'}</div>
+                    <div class="field"><span class="label">Date of Birth:</span> ${incident.vic_dob || 'N/A'}</div>
+                    <div class="field"><span class="label">Occupation:</span> ${incident.vic_occupation || 'N/A'}</div>
+                    `
+                }
             </div>
 
-            <h2>Reporting Person</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.rp_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.rp_contact}</li>
-                    <li><strong>Address:</strong> ${incident.rp_address}</li>
-                    <li><strong>Relationship:</strong> ${incident.rp_relationship}</li>
-                </ul>
+            <div class="section">
+                <h2>Suspect Details</h2>
+                <div class="field"><span class="label">Name:</span> ${incident.sus_full_name || 'Not specified'}</div>
+                <div class="field"><span class="label">Address:</span> ${incident.sus_address || 'Not specified'}</div>
+                <div class="field"><span class="label">Contact:</span> ${incident.sus_contact || 'Not specified'}</div>
+                <div class="field"><span class="label">Gender:</span> ${incident.sus_gender || 'Not specified'}</div>
+                <div class="field"><span class="label">Description:</span> ${incident.sus_description || 'N/A'}</div>
             </div>
 
-            ${incident.sus_full_name ? `
-            <h2>Suspect Information</h2>
-            <div class="card">
-                <ul class="info-list">
-                    <li><strong>Full Name:</strong> ${incident.sus_full_name}</li>
-                    <li><strong>Contact Number:</strong> ${incident.sus_contact}</li>
-                    <li><strong>Address:</strong> ${incident.sus_address}</li>
-                    <li><strong>Gender:</strong> ${incident.sus_gender}</li>
-                    <li><strong>Description:</strong> ${incident.sus_description}</li>
-                </ul>
-            </div>
-            ` : ''}
-
-            <h2>Incident Narrative</h2>
-            <div class="narrative-box">
-                ${incident.description || 'No description provided.'}
+            <div class="section">
+                <h2>Incident Details</h2>
+                <div class="field"><span class="label">Type:</span> ${incident.incident_type || 'N/A'}</div>
+                <div class="field"><span class="label">Date & Time:</span> ${formatDateTime(incident.incident_timestamp)}</div>
+                <div class="field"><span class="label">Location:</span> ${incidentLocation}</div>
+                <div class="field"><span class="label">Coordinates:</span> ${lat}, ${lng}</div>
+                <div class="field"><span class="label">Narrative Description:</span> 
+                    <p style="margin-top: 5px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00247C;">
+                        ${incident.description || 'N/A'}
+                    </p>
+                </div>
             </div>
 
-            ${notesHtml}
-            ${dssHtml}
-        </div>
-    </body>
-    </html>
-`;
+            <div class="section" style="border-bottom: none;">
+                <h2>Report Information</h2>
+                <div class="field"><span class="label">Date Reported:</span> ${formatDateTime(incident.reported_at || incident.created_at)}</div>
+                <div class="field"><span class="label">Current Status:</span> <span class="status-badge">${incident.status || 'N/A'}</span></div>
+                ${incident.dss_status ? `<div class="field"><span class="label">DST Evaluation:</span> ${incident.dss_status}</div>` : ''}
+                ${incident.investigation_notes ? `
+                    <div class="field"><span class="label">Investigation Notes:</span> 
+                        <p style="margin-top: 5px; font-style: italic;">${incident.investigation_notes}</p>
+                    </div>
+                ` : ''}
+            </div>
+        </body>
+        </html>
+    `;
 
+    // Create and download the file as a Word document (.doc)
     const blob = new Blob([htmlContent], { type: 'application/msword' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Incident_Report_${incident.id}_Summary.pdf`;
+    
+    // Formats filename to something like: Incident_Report_12_2026-03-18.doc
+    link.download = `Incident_Report_${incident.id}_${new Date().toISOString().split('T')[0]}.doc`;
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1576,11 +1569,421 @@ function formatDateTime(dateString) {
 
 
 /**
- * Creates a new incident report
+ * DOM event listeners for the "Create New" Incident form toggles and inputs
+ */
+let witnessCount = 0;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Victim same as RP toggle logic
+    const victimSameAsRP = document.getElementById('victimSameAsRP');
+    if (victimSameAsRP) {
+        victimSameAsRP.addEventListener('change', function () {
+            // The specific fields we want to hide/show
+            const fieldsToToggle = ['vicFullName', 'vicContact', 'vicAddress'];
+            
+            fieldsToToggle.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    // Find the parent .form-group wrapper
+                    const wrapper = input.closest('.form-group');
+                    
+                    if (this.checked) {
+                        if (wrapper) wrapper.style.display = 'none';
+                        input.removeAttribute('required');
+                    } else {
+                        if (wrapper) wrapper.style.display = ''; // Reverts to CSS default
+                        input.setAttribute('required', 'required');
+                    }
+                }
+            });
+        });
+    }
+
+    // 2. Add Witness Logic
+    const addWitnessBtn = document.getElementById('addWitnessBtn');
+    if (addWitnessBtn) {
+        addWitnessBtn.addEventListener('click', () => {
+            witnessCount++;
+            const container = document.getElementById('witnessesContainer');
+            const div = document.createElement('div');
+            div.className = 'witness-group form-row';
+            div.style.marginBottom = '15px';
+            div.style.padding = '20px';
+            div.style.border = '1px solid #e0e0e0';
+            div.style.borderRadius = '6px';
+            div.style.background = '#f9f9f9';
+            div.style.position = 'relative';
+
+            div.innerHTML = `
+                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
+                    <strong style="color: #333;">Witness ${witnessCount}</strong>
+                    <button type="button" class="btn-secondary" style="padding: 4px 10px; color: #dc3545; border-color: #dc3545; background: transparent;" onclick="this.closest('.witness-group').remove()"><i class="fas fa-times"></i> Remove</button>
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" class="witness-name" placeholder="Full Name">
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="text" class="witness-contact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Complete Address</label>
+                    <input type="text" class="witness-address" placeholder="Complete Address">
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Contact input digit sanitizer
+            const contactInput = div.querySelector('.witness-contact');
+            if (contactInput) {
+                contactInput.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+    }
+
+    // 3. Incident Type "Other" logic
+    const incidentType = document.getElementById('incidentType');
+    if (incidentType) {
+        incidentType.addEventListener('change', function () {
+            const otherContainer = document.getElementById('otherSpecifyContainer');
+            const otherInput = document.getElementById('otherIncidentType');
+            if (this.value === 'other') {
+                otherContainer.classList.remove('hidden');
+                otherInput.setAttribute('required', 'required');
+            } else {
+                otherContainer.classList.add('hidden');
+                otherInput.removeAttribute('required');
+                otherInput.value = '';
+            }
+        });
+    }
+
+    // 4. Sanitizer for built-in phone fields
+    ['rpContact', 'vicContact', 'susContact'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+            });
+        }
+    });
+});
+
+/**
+ * Main form submission handler for creating reports internally
  */
 function createApplication(event) {
     event.preventDefault();
-    alert('Create functionality not implemented yet');
+
+    incidentAlertConfig.fire({
+        title: 'Create Incident Report?',
+        text: 'Are you sure you want to submit this new report?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#00247C',
+        cancelButtonColor: '#ad2c2c',
+        confirmButtonText: 'Yes, submit',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.getElementById('createIncidentForm');
+            const formData = new FormData(form);
+
+            formData.append('action', 'create');
+            formData.append('supabase_user_id', 'staff_internal_' + Date.now()); // Internal placeholder
+            formData.append('dateReported', new Date().toISOString());
+
+            // Handle Victim Same As RP
+            const isSame = document.getElementById('victimSameAsRP').checked;
+            if (isSame) {
+                formData.set('vicFullName', formData.get('rpFullName'));
+                formData.set('vicAddress', formData.get('rpAddress'));
+                formData.set('vicContact', formData.get('rpContact'));
+            }
+
+            // Correctly format witnesses array for PHP processing: `witnesses[0][name]`
+            let witnessIdx = 0;
+            document.querySelectorAll('.witness-group').forEach((group) => {
+                const name = group.querySelector('.witness-name').value;
+                const address = group.querySelector('.witness-address').value;
+                const contact = group.querySelector('.witness-contact').value;
+
+                if (name || address || contact) {
+                    formData.append(`witnesses[${witnessIdx}][name]`, name);
+                    formData.append(`witnesses[${witnessIdx}][address]`, address);
+                    formData.append(`witnesses[${witnessIdx}][contact]`, contact);
+                    witnessIdx++;
+                }
+            });
+
+            // Handle "Other" incident type
+            const incidentTypeVal = document.getElementById('incidentType').value;
+            if (incidentTypeVal === 'other') {
+                formData.set('incidentType', document.getElementById('otherIncidentType').value);
+            }
+
+            Swal.showLoading();
+
+            fetch(IR_HANDLER_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    incidentAlertConfig.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Incident Report Created! ID: ' + data.id
+                    }).then(() => {
+                        // Reset form state
+                        form.reset();
+                        document.getElementById('witnessesContainer').innerHTML = '';
+                        document.getElementById('victimDetailsContainer').style.display = 'grid';
+                        document.getElementById('otherSpecifyContainer').classList.add('hidden');
+                        
+                        // Notify system and reload
+                        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
+                            sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                        }
+                        loadManagementTable();
+                        switchTab(null, 'management');
+                    });
+                } else {
+                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
+                }
+            })
+            .catch(err => {
+                console.error('Submit error:', err);
+                incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
+            });
+        }
+    });
+}
+
+/**
+ * Creates and opens a dynamic map picker specifically for the "Create" form
+ * (Updated to include Street/Satellite toggle buttons in the header)
+ */
+function openMapPicker(target) {
+    let modal = document.querySelector('.dynamic-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal dynamic-map-modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 900px; width: 90%; height: 85%;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0;">Select Incident Location</h2>
+                    <div class="map-picker-controls" style="display: flex; gap: 8px;">
+                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
+                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
+                    </div>
+                    <button type="button" class="close-btn" onclick="this.closest('.modal').remove()" style="margin-left: 15px;">&times;</button>
+                </div>
+                <div id="dynamic-map-container" style="width: 100%; height: calc(100% - 60px); margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.classList.add('active');
+    initializeMapPicker('dynamic-map-container', target);
+}
+
+/**
+ * Initializes the map, dynamically fetches barangay boundary & clickable house polygons,
+ * and includes a street/satellite toggle.
+ */
+async function initializeMapPicker(containerId, target) {
+    const defaultLat = 14.6175;
+    const defaultLng = 121.0756;
+
+    // 1. Clean up existing Leaflet instance if reopening modal
+    const container = document.getElementById(containerId);
+    if (container._leaflet_id) {
+        container._leaflet_id = null;
+        container.innerHTML = '';
+    }
+
+    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    });
+    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri World Imagery'
+    });
+
+    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
+    osmTile.addTo(map);
+
+    // Match main map color system
+    const POLY_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
+    };
+    const BOUND_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
+    };
+
+    let currentMode = 'street';
+    let housePolygons = [];
+    let boundaryLayers = [];
+    let selectedMarker = null;
+
+    function applyColors(mode) {
+        housePolygons.forEach(p => p.setStyle(POLY_COLORS[mode]));
+        boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
+    }
+
+    // Street / Satellite toggle listeners
+    const streetBtn = document.getElementById('picker-street-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
+    if (streetBtn && satBtn) {
+        streetBtn.addEventListener('click', () => {
+            map.removeLayer(satTile); osmTile.addTo(map);
+            currentMode = 'street'; applyColors('street');
+            streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
+        });
+        satBtn.addEventListener('click', () => {
+            map.removeLayer(osmTile); satTile.addTo(map);
+            currentMode = 'satellite'; applyColors('satellite');
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
+        });
+    }
+
+    // Manual click fallback for areas without polygons
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+        
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        
+        selectedMarker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .openPopup();
+            
+        document.getElementById('incidentLatitude').value = lat;
+        document.getElementById('incidentLongitude').value = lng;
+    });
+
+    // Fetch and draw Barangay Boundaries from DB
+    try {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
+        });
+        const bData = await bRes.json();
+        
+        if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
+            bData.boundaries.forEach(b => {
+                try {
+                    const coords = JSON.parse(b.coordinates);
+                    const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    boundaryLayers.push(layer);
+                } catch (err) { console.error('Boundary parse error:', err); }
+            });
+        }
+    } catch (err) { console.error('Failed to load boundaries:', err); }
+
+    // Fetch and draw House Polygons from DB
+    try {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
+        });
+        const hData = await hRes.json();
+
+        if (hData.success && hData.houses) {
+            const houseLayer = L.layerGroup();
+
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                
+                try {
+                    const coords = JSON.parse(house.coordinates);
+                    // Normalize: unwrap GeoJSON array-of-rings
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const latLngs = ring.map(c => [c[1], c[0]]);
+                    
+                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
+                    housePolygons.push(polygon);
+
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const subtitleHtml = house.street_name 
+                        ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
+                    const addrHtml = (!isLandmark && house.address) 
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                    const streetHtml = house.street_name 
+                        ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
+
+                    const popupHtml = 
+                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
+                        '</div>' + addrHtml + streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '</div>';
+
+                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
+
+                    polygon.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+
+                        if (selectedMarker) map.removeLayer(selectedMarker);
+                        
+                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
+                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                        const selAddr = (!isLandmarkSel && house.address) 
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                        const selStreet = house.street_name 
+                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
+                            
+                        const selPopup = 
+                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' + selAddr + selStreet +
+                            '</div>';
+                            
+                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
+
+                        // 1. Auto-fill Coordinates
+                        document.getElementById('incidentLatitude').value = lat;
+                        document.getElementById('incidentLongitude').value = lng;
+
+                        // 2. Auto-fill Incident Address dynamically
+                        let formattedAddress = house.address;
+                        if (!formattedAddress) {
+                            const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                            const street = house.street_name ? `${house.street_name}, ` : '';
+                            formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                        }
+                        const addressInput = document.getElementById('incidentAddress');
+                        if (addressInput) {
+                            addressInput.value = formattedAddress;
+                        }
+                    });
+
+                    polygon.addTo(houseLayer);
+                } catch (err) { console.error('House parse error:', err); }
+            });
+
+            houseLayer.addTo(map);
+        }
+    } catch (err) { console.error('Failed to load houses:', err); }
+    
+    // Fix rendering bug when Leaflet opens inside a display:none modal
+    setTimeout(() => map.invalidateSize(), 300);
 }
 
 /**
@@ -1628,6 +2031,87 @@ function updateApplicationDate() {
     }
 }
 
+/**
+ * Fetch audit logs from the server
+ * Clears and re-renders the entire audit table
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function fetchAuditLogs() {
+    try {
+        const resp = await fetch('/server/api/shared/get_audit_logs.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!resp.ok) {
+            console.error('Audit log fetch failed:', resp.status, resp.statusText);
+            return;
+        }
+
+        const logs = await resp.json();
+
+        if (!Array.isArray(logs)) {
+            console.error('Invalid audit log response:', logs);
+            return;
+        }
+
+        const tbody = document.getElementById('auditTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.id ?? '—'}</td>
+                <td>${log.action ?? '—'}</td>
+                <td>${log.record_id ?? '—'}</td>
+                <td>${log.full_name ?? '—'}</td>
+                <td>${log.created_at ?? '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error('Failed to fetch audit logs:', err);
+    }
+}
+
+/**
+ * Append a new audit log row to the top of the audit table
+ * Prevents duplicate rows based on log ID
+ *
+ * @param {Object} log - Audit log object
+ * @param {number|string} log.id - Unique log identifier
+ * @returns {void}
+ */
+function appendAuditRow(log) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    if (document.getElementById(`audit-${log.id}`)) return;
+
+    const tr = document.createElement('tr');
+    tr.id = `audit-${log.id}`;
+
+    tr.innerHTML = `
+        <td>${log.id ?? '—'}</td>
+        <td>${log.action ?? '—'}</td>
+        <td>${log.record_id ?? '—'}</td>
+        <td>${log.full_name ?? '—'}</td>
+        <td>${log.created_at ?? '—'}</td>
+    `;
+
+    tbody.prepend(tr);
+}
+
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
@@ -1639,6 +2123,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshActiveTab()
                 loadManagementTable();
                 loadProcessTable();
+            }
+        });
+    }
+
+    if (!sockets["audit"]) {
+        initSocket("audit", "ws://localhost:8081", (data) => {
+            if (data.type === "new_audit_log") {
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                }
+                else if (data.id) {
+                    appendAuditRow(data);
+                }
+                else {
+                    fetchAuditLogs();
+                }
             }
         });
     }
@@ -1716,6 +2216,7 @@ function formatTime(dateTimeString) {
     }
 }
 
+// Add archive handler for incident reports
 document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('archive-btn')) return;
 
@@ -1745,10 +2246,7 @@ document.addEventListener('click', (e) => {
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
         customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
+            popup: 'archive-swal2-popup'
         }
     }).then(async (result) => {
         if (result.isConfirmed) {
@@ -1768,6 +2266,8 @@ document.addEventListener('click', (e) => {
 // ===============================================
 // EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
 // ===============================================
+window.createApplication = createApplication;
+window.openMapPicker = openMapPicker;
 window.loadIncidentsFromDB = loadIncidentsFromDB;
 window.filterIncidents = filterIncidents;
 window.openUpdateModal = openUpdateModal;

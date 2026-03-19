@@ -1,3 +1,6 @@
+
+/* ==================== Global Styles ==================== */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 *,
@@ -129,16 +132,13 @@ header {
 }
 
 .logo {
-    width: clamp(30px, 5vw, 40px);
-    height: clamp(30px, 5vw, 40px);
-    border-radius: 50%;
-    display: flex;
-    overflow: visible;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #3498db;
-    font-size: 1.2rem;
+    width: auto;                          /* Let width follow the image's natural ratio */
+    height: clamp(30px, 5vw, 40px);      /* Control only the height */
+    max-width: clamp(30px, 5vw, 40px);   /* Cap width so it doesn't grow too large */
+    /* border-radius: 50%; */
+    object-fit: contain;                  /* Preserve aspect ratio within the box */
+    display: block;
+    overflow: hidden;
 }
 
 .company_name {

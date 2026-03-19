@@ -132,11 +132,11 @@ body {
     white-space: nowrap;
 }
 
-/* .nav_select:hover {
+.nav_select:hover {
     background-color: rgba(52, 152, 219, 0.1);
     border-left-color: #3498db;
     color: white;
-} */
+}
 
 .nav_select.active {
     background-color: rgba(52, 152, 219, 0.2);
@@ -209,7 +209,7 @@ body {
     border: none !important;
 } */
 
- .top-header {
+.top-header {
     position: fixed;
     top: 0;
     left: 70px;
@@ -543,28 +543,30 @@ button {
 
 /* TABLE STYLES */
 .table-responsive {
-    overflow-x: auto;
-    margin-top: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 20px;
     background: white;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 thead {
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #19316b, #1a3a7a);
+    color: white;
 }
 
 th {
     padding: 15px;
     text-align: left;
     font-weight: 600;
-    color: #333;
     border-bottom: 2px solid #ddd;
 }
 
@@ -580,7 +582,7 @@ td:last-child {
     align-items: center;
 }
 
-tr:hover {
+tbody tr:hover {
     background: #f9f9f9;
 }
 
@@ -909,12 +911,14 @@ h2 {
     }
 
     .side_nav .nav_text {
-        opacity: 0; /* Default hidden */
+        opacity: 0;
+        /* Default hidden */
         transition: opacity 0.3s ease;
     }
 
     .side_nav.expanded .nav_text {
-        opacity: 1; /* Show on expanded only */
+        opacity: 1;
+        /* Show on expanded only */
     }
 
     /* .main-wrapper {
@@ -1198,16 +1202,6 @@ h2 {
     max-width: 400px;
 }
 
-/* Report Container (The Paper Look) */
-.summary-report-container {
-    background: white;
-    min-height: 600px;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
-    margin: 0 auto;
-}
 
 /* Placeholder State */
 .placeholder-state {
@@ -1227,11 +1221,25 @@ h2 {
     width: 100%;
 }
 
+/* Report Container (The Paper Look) */
+.summary-report-container {
+    background: white;
+    min-height: 600px;
+    padding:40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 0 auto 40px auto;
+}
+
 /* Report Header */
 .report-header {
     border-bottom: 2px solid #eee;
     padding-bottom: 20px;
+    padding-top: 20px;
     margin-bottom: 30px;
+    margin-left: 40px;
+    margin-right: 40px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -1264,6 +1272,8 @@ h2 {
     grid-template-columns: 1fr 1fr;
     gap: 40px;
     margin-bottom: 40px;
+    margin-left: 40px;
+    margin-right: 40px;
 }
 
 .report-section h3 {
@@ -1273,9 +1283,28 @@ h2 {
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 15px;
+    margin-left: 40px;
+    margin-right: 40px;
     letter-spacing: 0.5px;
 }
+/* #incidentNarrative {
+    margin-left: 40px;
+    margin-right: 40px;
+} */
 
+/* Action Buttons Footer */
+.report-actions {
+    margin-top: 40px;
+    margin-left: 40px;
+    margin-right: 40px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-top: 1px solid #eee;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
 .info-row {
     display: flex;
     justify-content: space-between;
@@ -1316,10 +1345,34 @@ h2 {
 }
 
 /* OCR Result Card */
-.ocr-runs .ocr-run { border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-.ocr-runs .latest { border-color: #4CAF50; background: #f8fff8; }
-.ocr-run-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
-.ocr-text pre { background: #f5f5f5; padding: 10px; border-radius: 4px; white-space: pre-wrap; max-height: 200px; overflow: auto; }
+.ocr-runs .ocr-run {
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.ocr-runs .latest {
+    border-color: #4CAF50;
+    background: #f8fff8;
+}
+
+.ocr-run-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.ocr-text pre {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow: auto;
+}
+
 /* ===== MAP FULLSCREEN FIX (applied from business.css fixes) ===== */
 
 /* staff-content fills full height */
@@ -1385,6 +1438,7 @@ h2 {
 #mapping.active {
     display: block !important;
 }
+
 /* ====================== FORCE SCROLLING + HEADER FIX (OVERRIDES) ====================== */
 
 /* Main wrapper full height */
@@ -1431,21 +1485,22 @@ h2 {
 }
 
 /* Top header sticky */
-.tab-pane:not(#mapping) > .top-header {
+.tab-pane:not(#mapping)>.top-header {
     flex-shrink: 0;
     position: sticky !important;
     top: 0 !important;
     z-index: 100 !important;
     background: #f4f4f4;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin: 0 !important;
 }
 
 /* Page header sticky below top */
-.tab-pane:not(#mapping) > .page-header {
+.tab-pane:not(#mapping)>.page-header {
     flex-shrink: 0;
     position: sticky;
-    top: 60px;  /* adjust to your top-header height, usually 60-70px */
+    top: 60px;
+    /* adjust to your top-header height, usually 60-70px */
     z-index: 99;
     background: #f8f9fc;
     margin-bottom: 20px;
@@ -1459,7 +1514,7 @@ h2 {
 #dashboard .analytics-container {
     /* margin-left: 70px; align with content */
     /* flex: 1 1 auto; */
-    min-height: 0;
+    /* min-height: 0; */
     padding: 0 30px;
 }
 
@@ -1482,8 +1537,9 @@ h2 {
 }
 
 /* Create: createForm scrolls */
-#create #createForm, #createStaffForm {
-    /* margin-left: 70px; align with content */
+#create #createForm,
+#createStaffForm, #createIncidentForm {
+    /* margin-left: 70px; */
     flex: 1 1 auto;
     overflow-y: auto !important;
     min-height: 0;
@@ -1500,7 +1556,7 @@ h2 {
 
 /* Summary: controls non-scrolling */
 #summary .summary-controls {
-    margin-left: 70px; /* align with content */
+    /* align with content */
     margin-top: 10px;
     flex-shrink: 0;
     padding: 0 30px 15px 30px;
@@ -1526,6 +1582,7 @@ h2 {
     font-size: 0.97rem;
     margin: 3px 0 0 0;
 }
+
 /* ====================== CLEAN SIDEBAR FIX (Click-only + Perfect Layout) ====================== */
 
 /* 1. Disable hover expansion completely (only click ☰ works) */
@@ -1567,7 +1624,8 @@ h2 {
 }
 
 #applicationsTable {
-    min-width: 1100px; /* prevents columns from crushing */
+    min-width: 1100px;
+    /* prevents columns from crushing */
 }
 
 #applicationsTable th,
@@ -1580,7 +1638,8 @@ h2 {
 /* Make Applicant column wider and prevent name wrapping */
 #applicationsTable td:nth-child(2) {
     min-width: 220px;
-    white-space: normal !important; /* allow full name on 2 lines if very long */
+    white-space: normal !important;
+    /* allow full name on 2 lines if very long */
     word-break: break-word;
 }
 
@@ -1603,6 +1662,7 @@ h2 {
     gap: 24px;
     padding: 20px;
 }
+
 /* The main white box */
 .custom-swal-popup {
     padding: 3rem !important;
@@ -1620,9 +1680,15 @@ h2 {
     padding: 0 !important;
     margin-bottom: 1rem !important;
     font-size: 1.8rem !important;
-    color: #00247C !important; /* Matches your brand blue */
+    color: #00247C !important;
+    /* Matches your brand blue */
 }
 
+#summaryPlaceholder {
+    color: #555 !important;
+    font-size: 1.1rem !important;
+    margin: 50px !important;
+}
 /* Space out the sub-text */
 .custom-swal-text {
     margin-bottom: 2rem !important;

@@ -11,7 +11,7 @@
     width: 100%;
     background: #ffffff;
     padding: 48px 24px;
-    min-height: calc(100vh - 70px - 300px); /* Adjust based on your layout */
+    min-height: calc(100vh - 70px - 300px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23,7 +23,7 @@
     margin: 0 auto;
 }
 
-/* ==================== Context/Breadcrumb ==================== */
+/* ==================== Context / Breadcrumb ==================== */
 .bfp-context {
     margin-bottom: 24px;
     font-size: 14px;
@@ -59,16 +59,16 @@
     background: #ffffff;
     border-radius: 24px;
     padding: 40px 32px;
-    box-shadow: 
+    box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.05),
         0 10px 15px -3px rgba(0, 36, 124, 0.05),
         0 20px 25px -5px rgba(0, 36, 124, 0.05);
     border: 1px solid #f0f2f5;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.2s ease;
 }
 
 .bfp-card:hover {
-    box-shadow: 
+    box-shadow:
         0 10px 15px -3px rgba(0, 36, 124, 0.08),
         0 20px 25px -5px rgba(0, 36, 124, 0.08);
 }
@@ -203,12 +203,7 @@
 
 .bfp-input:focus {
     border-color: #00247C;
-    background: #ffffff;
     box-shadow: 0 0 0 4px rgba(0, 36, 124, 0.08);
-}
-
-.bfp-input:focus + .bfp-input-icon {
-    color: #00247C;
 }
 
 /* Error State */
@@ -225,12 +220,17 @@
     color: #dc2626;
 }
 
-.bfp-error {
+/* Compatibility: error-msg from global styles */
+.bfp-field .error-msg {
     font-size: 13px;
     color: #dc2626;
-    margin-top: 4px;
     font-weight: 500;
     min-height: 18px;
+    display: none;
+}
+
+.bfp-field .error-msg.show {
+    display: block;
 }
 
 /* ==================== Buttons ==================== */
@@ -263,7 +263,7 @@
     transition: transform 0.2s ease;
 }
 
-/* Primary Button */
+/* Primary */
 .bfp-btn-primary {
     background: #00247C;
     color: white;
@@ -292,7 +292,7 @@
     box-shadow: none;
 }
 
-/* Secondary Button */
+/* Secondary */
 .bfp-btn-secondary {
     background: #f9fafb;
     color: #374151;
@@ -321,40 +321,6 @@
     text-align: center;
 }
 
-.bfp-footer-text {
-    font-size: 15px;
-    color: #6b7280;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-
-.bfp-footer-link {
-    background: none;
-    border: none;
-    color: #00247C;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    font-family: "Inter", sans-serif;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-thickness: 2px;
-    text-decoration-color: #e0e7ff;
-}
-
-.bfp-footer-link:hover {
-    color: #001a5c;
-    background: #f0f7ff;
-    text-decoration-color: #00247C;
-}
-
-/* ==================== Security Note ==================== */
 .bfp-security {
     display: flex;
     align-items: center;
@@ -377,10 +343,7 @@
 /* ==================== Loading Overlay ==================== */
 .bfp-loading {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(4px);
     display: flex;
@@ -395,7 +358,7 @@
     width: 44px;
     height: 44px;
     border: 3px solid #e5e7eb;
-    border-top: 3px solid #00247C;
+    border-top-color: #00247C;
     border-radius: 50%;
     animation: bfpSpin 0.8s linear infinite;
 }
@@ -409,383 +372,82 @@
 
 /* ==================== Animations ==================== */
 @keyframes bfpSpin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
 
 @keyframes bfpSlideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================== Responsive Design ==================== */
+/* ==================== Responsive ==================== */
 
-/* Tablet (768px to 992px) */
 @media (max-width: 992px) {
-    .bfp-section {
-        padding: 40px 20px;
-    }
-    
-    .bfp-card {
-        padding: 36px 28px;
-    }
-    
-    .bfp-title {
-        font-size: 26px;
-    }
+    .bfp-section { padding: 40px 20px; }
+    .bfp-card    { padding: 36px 28px; }
+    .bfp-title   { font-size: 26px; }
 }
 
-/* Mobile Landscape (576px to 768px) */
 @media (max-width: 768px) {
-    .bfp-section {
-        padding: 32px 16px;
-    }
-    
+    .bfp-section { padding: 32px 16px; }
+
     .bfp-card {
         padding: 32px 24px;
         border-radius: 20px;
     }
-    
-    .bfp-icon-circle {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .bfp-icon-circle svg {
-        width: 28px;
-        height: 28px;
-    }
-    
-    .bfp-title {
-        font-size: 24px;
-    }
-    
-    .bfp-description {
-        font-size: 15px;
-    }
-    
-    .bfp-actions {
-        flex-direction: column;
-    }
-    
-    .bfp-btn {
-        width: 100%;
-    }
-    
+
+    .bfp-icon-circle     { width: 60px; height: 60px; }
+    .bfp-icon-circle svg { width: 28px; height: 28px; }
+    .bfp-title           { font-size: 24px; }
+    .bfp-description     { font-size: 15px; }
+
+    .bfp-actions { flex-direction: column; }
+    .bfp-btn     { width: 100%; }
+
     .bfp-security {
         border-radius: 24px;
         padding: 12px 16px;
     }
 }
 
-/* Mobile Portrait (up to 576px) */
 @media (max-width: 576px) {
-    .bfp-section {
-        padding: 24px 12px;
-    }
-    
+    .bfp-section { padding: 24px 12px; }
+
     .bfp-card {
         padding: 28px 20px;
         border-radius: 18px;
     }
-    
-    .bfp-context {
-        margin-bottom: 20px;
-        font-size: 13px;
-    }
-    
-    .bfp-icon-circle {
-        width: 56px;
-        height: 56px;
-        margin-bottom: 16px;
-    }
-    
-    .bfp-icon-circle svg {
-        width: 26px;
-        height: 26px;
-    }
-    
-    .bfp-title {
-        font-size: 22px;
-    }
-    
-    .bfp-description {
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    
+
+    .bfp-context         { margin-bottom: 20px; font-size: 13px; }
+    .bfp-icon-circle     { width: 56px; height: 56px; margin-bottom: 16px; }
+    .bfp-icon-circle svg { width: 26px; height: 26px; }
+    .bfp-title           { font-size: 22px; }
+    .bfp-description     { font-size: 14px; line-height: 1.5; }
+
     .bfp-input {
         padding: 12px 12px 12px 44px;
         font-size: 14px;
         border-radius: 14px;
     }
-    
-    .bfp-input-icon {
-        left: 12px;
-        width: 16px;
-        height: 16px;
-    }
-    
-    .bfp-label {
-        font-size: 14px;
-    }
-    
-    .bfp-btn {
-        padding: 12px 16px;
-        font-size: 14px;
-    }
-    
-    .bfp-footer {
-        margin-top: 24px;
-        padding-top: 18px;
-    }
-    
-    .bfp-footer-text,
-    .bfp-footer-link {
-        font-size: 14px;
-    }
-    
-    .bfp-security {
-        font-size: 13px;
-        padding: 10px 14px;
-        gap: 8px;
-    }
+
+    .bfp-input-icon { left: 12px; width: 16px; height: 16px; }
+    .bfp-label      { font-size: 14px; }
+    .bfp-btn        { padding: 12px 16px; font-size: 14px; }
+
+    .bfp-footer   { margin-top: 24px; padding-top: 18px; }
+    .bfp-security { font-size: 13px; padding: 10px 14px; gap: 8px; }
 }
 
-/* Small Mobile (up to 375px) */
 @media (max-width: 375px) {
-    .bfp-card {
-        padding: 24px 16px;
-    }
-    
-    .bfp-icon-circle {
-        width: 52px;
-        height: 52px;
-    }
-    
-    .bfp-icon-circle svg {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .bfp-title {
-        font-size: 20px;
-    }
-    
+    .bfp-card            { padding: 24px 16px; }
+    .bfp-icon-circle     { width: 52px; height: 52px; }
+    .bfp-icon-circle svg { width: 24px; height: 24px; }
+    .bfp-title           { font-size: 20px; }
+
     .bfp-input {
         padding: 10px 10px 10px 40px;
         font-size: 13px;
     }
-    
-    .bfp-input-icon {
-        left: 10px;
-        width: 14px;
-        height: 14px;
-    }
-    
-    .bfp-footer-text {
-        flex-direction: column;
-        gap: 8px;
-    }
-}
 
-/* ==================== Dark Mode Support (Light theme preferred, but optional) ==================== */
-@media (prefers-color-scheme: dark) {
-    /* Only apply if user explicitly prefers dark, but we keep it light */
-    .bfp-section {
-        background: #ffffff;
-    }
-    
-    .bfp-card {
-        background: #ffffff;
-    }
-}
-
-/* Compatibility styles for old error-msg class */
-.bfp-field .error-msg {
-    font-size: 13px;
-    color: #dc2626;
-    margin-top: 4px;
-    font-weight: 500;
-    min-height: 18px;
-}
-
-/* When error-msg has content, it should be visible */
-.bfp-field .error-msg:not(:empty) {
-    display: block;
-}
-
-/* Style for input with error class */
-.bfp-input.error {
-    border-color: #dc2626;
-    background-color: #fef2f2;
-}
-
-.bfp-input.error:focus {
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
-}
-
-.bfp-input.error ~ .bfp-input-icon {
-    color: #dc2626;
-}
-
-
-
-
-
-
-/* TODO:
-      Front-end dev, later will move this in global.css,
-      not today because of global may affected some files that use global.css 
-      that is why it is isolated for now for safety.
-*/
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-
-:root {
-  --h5: 30px;
-  --h5-lh: 38px;
-
-  --txt2: 18px;
-  --txt2-lh: 28px;
-
-  --txt3: 16;
-  --txt3-lh: 24px;
-
-  --regular: 400;
-  --bold: 700;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-body {
-  font-family: "Inter", sans-serif;
-}
-
-.sections {
-  width: 100%;
-}
-
-.containers {
-  padding: 32px 16px;
-}
-
-@media screen and (min-width: 780px) {
-  .containers {
-    max-width: 1440px;
-    width: 100%;
-    padding: 96px 64px;
-    margin-inline: auto;
-  }
-}
-
-/* ==================== Forgot Password Form ==================== */
-.forgot-pass-container {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  color: #000000E5;
-}
-
-.forgot-pass-container .form {
-  margin-inline: auto;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  row-gap: 32px;
-}
-
-.forgot-pass-container .form h5 {
-  font-size: var(--h5);
-  line-height: var(--h5-lh);
-  font-weight: var(--bold);
-}
-
-/* .forgot-pass-container .form p {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  color: #000000E5;
-} */
-
-.forgot-pass-container .form .inputs-container {
-  display: flex;
-  flex-direction: column;
-  row-gap: 12px;
-}
-
-.forgot-pass-container .form .inputs-container .label-and-input {
-  display: flex;
-  flex-direction: column;
-  row-gap: 4px;
-}
-
-.forgot-pass-container .form .inputs-container .label-and-input input[type="email"] {
-  padding: 12px 8px;
-  border-radius: 8px;
-  border: 1px solid #C4C4C4;
-  width: 100%;
-  background-color: #f5f5f5;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.forgot-pass-container .form .buttons-container {
-  margin-left: auto;
-  width: max-content;
-}
-
-.forgot-pass-container .form .buttons-container button {
-  padding: 16px;
-  border-radius: 8px;
-  border: transparent;
-  transition: background-color 200ms ease;
-  font-weight: 500;
-}
-
-.forgot-pass-container .form .buttons-container button:nth-child(1) {
-  background-color: #dbdbdb;
-  color: black;
-}
-
-.forgot-pass-container .form .buttons-container button:nth-child(2) {
-  background-color: #00247C;
-  color: white;
-  margin-left: 4px;
-}
-
-.forgot-pass-container .form .buttons-container button:nth-child(1):hover {
-  background-color: #c9c9c9;
-}
-
-.forgot-pass-container .form .buttons-container button:nth-child(2):hover {
-  background-color: #00164d;
-}
-
-.error-msg {
-  color: red;
-  font-size: 12px;
-  display: none;
-}
-
-.error-msg.show {
-  display: block;
-}
-
-.error {
-  outline: 1px solid red;
-  /* border: 1px solid red !important; */
+    .bfp-input-icon { left: 10px; width: 14px; height: 14px; }
 }

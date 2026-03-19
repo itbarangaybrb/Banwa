@@ -131,6 +131,39 @@ if ($_SESSION['role_id'] != 1) {
                         </div>
                     </div>
                 </a>
+
+                <!-- Card 3: Incident Report Services -->
+                <a href="incidentReport.php" class="service-h-card" id="incidentReportCard">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-linejoin="round"/>
+                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-linejoin="round"/>
+                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h3>Incident Report</h3>
+                    <p class="card-subtitle">Report Incidents and Seek Assistance</p>
+
+                    <div class="card-preview-content">
+                        <div class="preview-header">
+                            <span class="preview-title">Information Needed</span>
+                        </div>
+                        <ul class="preview-list">
+                            <li>Reporting Person Details</li>
+                            <li>Victim Information</li>
+                            <li>Suspect Description</li>
+                            <li>Incident Location (Map-based)</li>
+                            <li>Witness Statements</li>
+                        </ul>
+                        <div class="preview-footer">
+                            <span class="preview-cta">Proceed →</span>
+                        </div>
+                    </div>
+                </a>
             </div>
 
             <!-- 24/7 Notice -->

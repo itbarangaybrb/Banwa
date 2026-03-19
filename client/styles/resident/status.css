@@ -1,3 +1,10 @@
+/* TODO:
+      Front-end dev, later will move this in global.css,
+      not today because of global may affected some files that use global.css 
+      that is why it is isolated for now for safety.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 :root {
     --color-blue-1: #1249B4;
     --color-blue-2: #00247C;
@@ -13,31 +20,6 @@
     --fw-medium: 500;
     --fw-semibold: 600;
     --fw-bold: 700;
-}
-
-/* TODO:
-      Front-end dev, later will move this in global.css,
-      not today because of global may affected some files that use global.css 
-      that is why it is isolated for now for safety.
-*/
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-
-:root {
-    --h4: 36px;
-    --h4-lh: 44px;
-
-    --h5: 30px;
-    --h5-lh: 38px;
-
-    --h6: 24px;
-    --h6-lh: 32px;
-
-    --txt3: 16;
-    --txt3-lh: 24px;
-
-    --regular: 400;
-    --bold: 700;
 }
 
 *,
@@ -60,10 +42,6 @@ body {
     margin-inline: auto;
 }
 
-/* .containers {
-  padding: 32px 16px;
-} */
-
 @media screen and (min-width: 780px) {
     .sections {
         width: 100%;
@@ -72,13 +50,6 @@ body {
         padding: 96px 64px;
         margin-inline: auto;
     }
-
-    /* .containers {
-    max-width: 1440px;
-    width: 100%;
-    padding: 96px 64px;
-    margin-inline: auto;
-  } */
 }
 
 .containers {

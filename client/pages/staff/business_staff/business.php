@@ -725,7 +725,7 @@ $full_name = getCurrentUserName();
             <div id="summaryOutput" class="summary-report-container">
                 <div class="placeholder-state">
                     <i class="fas fa-file-invoice fa-3x"></i>
-                    <p>Select a business from the list above to view the full report.</p>
+                    <p id="summaryPlaceholder">Select a business from the list above to view the full report.</p>
                 </div>
             </div>
         </div>
@@ -841,14 +841,14 @@ $full_name = getCurrentUserName();
             </div>
         </div>
     </div>
-    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="../../../scripts/staff/map.js"></script>
+    <script type="module" src="../../../scripts/staff/map.js"></script>
 
     <script type="module" src="../../../scripts/staff/business_staff/business.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>

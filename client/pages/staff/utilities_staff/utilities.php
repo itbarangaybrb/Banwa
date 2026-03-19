@@ -594,7 +594,7 @@ $full_name = getCurrentUserName();
                 <div id="summaryOutput" class="summary-report-container">
                     <div class="placeholder-state">
                         <i class="fas fa-file-invoice fa-3x"></i>
-                        <p>Select a utility from the list above to view the full report.</p>
+                        <p id="summaryPlaceholder">Select a utility from the list above to view the full report.</p>
                     </div>
                 </div>
             </div>
@@ -710,7 +710,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="../../../scripts/staff/map.js"></script>
+    <script type="module" src="../../../scripts/staff/map.js"></script>
 
     <script type="module" src="../../../scripts/staff/utilities_staff/utilities.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>

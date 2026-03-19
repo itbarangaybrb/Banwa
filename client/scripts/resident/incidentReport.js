@@ -1,9 +1,10 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
-const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
-
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { initSocket, sockets } from '../utils/socketUtils.js';
 import supabase from '../../../server/api/supabase.js';
+
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 registerServiceWorker();
 
@@ -86,16 +87,14 @@ switchPanel('reportingPerson');
 
 // Form element references for reporting person section
 const rpFullName = document.getElementById('rpFullName');
-const rpLotNo = document.getElementById('rpLotNo');
-const rpStreet = document.getElementById('rpStreet');
+const rpAddress = document.getElementById('rpAddress'); // Updated
 const rpContact = document.getElementById('rpContact');
 const rpRelationship = document.getElementById('rpRelationship');
 const victimSameAsRP = document.getElementById('victimSameAsRP');
 
 // Form element references for victim details section
 const vicFullName = document.getElementById('vicFullName');
-const vicLotNo = document.getElementById('vicLotNo');
-const vicStreet = document.getElementById('vicStreet');
+const vicAddress = document.getElementById('vicAddress'); // Updated
 const vicContact = document.getElementById('vicContact');
 const vicCitizenship = document.getElementById('vicCitizenship');
 const vicGender = document.getElementById('vicGender');
@@ -104,8 +103,7 @@ const vicOccupation = document.getElementById('vicOccupation');
 
 // Form element references for suspect details section
 const susFullName = document.getElementById('susFullName');
-const susLotNo = document.getElementById('susLotNo');
-const susStreet = document.getElementById('susStreet');
+const susAddress = document.getElementById('susAddress');
 const susContact = document.getElementById('susContact');
 const susGender = document.getElementById('susGender');
 const susDescription = document.getElementById('susDescription');
@@ -114,8 +112,7 @@ const susDescription = document.getElementById('susDescription');
 const incidentType = document.getElementById('incidentType');
 const otherIncidentType = document.getElementById('otherIncidentType');
 const incidentTimestamp = document.getElementById('incidentTimestamp');
-const incidentLotNo = document.getElementById('incidentLotNo');
-const incidentStreet = document.getElementById('incidentStreet');
+const incidentAddress = document.getElementById('incidentAddress'); // Updated
 const incidentLatitude = document.getElementById('incidentLatitude');
 const incidentLongitude = document.getElementById('incidentLongitude');
 const description = document.getElementById('description');
@@ -278,29 +275,45 @@ const validator = (() => {
 
     /**
      * Validates address fields with optional validation for existence in addressCoordinates database
-     * @param {HTMLInputElement} lotInput - Lot number input element
-     * @param {HTMLSelectElement} streetInput - Street selection element
      * @param {Object} options - Validation options (optional fields, existence validation)
      * @returns {boolean} - Whether the address is valid
      */
-    function validateAddress(lotInput, streetInput, options = {}) {
-        const lot = lotInput.value.trim(), street = streetInput.value.trim();
-        if (!lot && !options.optional) return validator.number(lotInput, 'House No. is required');
-        if (!street && !options.optional) return validator.select(streetInput, 'Street is required');
+    function validateAddress(addressInput, options = {}) {
+        const address = addressInput.value.trim();
 
-        if (!lot || !street || street === 'select') return true;
+        if (!address && !options.optional) {
+            showError(addressInput, 'Address is required');
+            return false;
+        }
 
-        const fullAddress = `${lot} ${street}`;
-        const match = addressCoordinates.find(a => a.address === fullAddress);
+        if (!address) return true;
+
+        // Try to find a match in your database (case-insensitive for better UX)
+        const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
+
         if (!match && options.validateExistence !== false) {
-            const wrapper = streetInput.closest('.label-and-input');
+            const wrapper = addressInput.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
-            streetInput.classList.add('error');
-            errorEl.textContent = 'Street does not exist for this lot';
+            addressInput.classList.add('error');
+            errorEl.textContent = 'Address does not exist in our records';
             errorEl.classList.add('show');
             return false;
         }
-        clearError(streetInput);
+
+        clearError(addressInput);
+
+        // AUTO-SET COORDINATES FOR INCIDENT LOCATION WHEN ADDRESS IS VALID
+        if (addressInput.id === 'incidentAddress' && match) {
+            if (incidentLatitude && incidentLongitude) {
+                incidentLatitude.value = match.lat.toFixed(6);
+                incidentLongitude.value = match.lng.toFixed(6);
+                console.log('Coordinates auto-set from address:', {
+                    lat: incidentLatitude.value,
+                    lng: incidentLongitude.value
+                });
+            }
+        }
+
         return true;
     }
 
@@ -323,14 +336,12 @@ const validator = (() => {
 const validationConfig = [
     // Reporting Person validation rules
     { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
-    { el: rpLotNo, type: 'number', message: 'Please enter lot number', rules: { maxLength: 2 } },
-    { el: rpStreet, type: 'select', message: 'Please select street' },
+    { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
     { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
 
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
-    { el: vicLotNo, type: 'number', message: 'Please enter victim lot number', rules: { maxLength: 2 } },
-    { el: vicStreet, type: 'select', message: 'Please select victim street' },
+    { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
     { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
@@ -343,8 +354,7 @@ const validationConfig = [
     // Incident Details validation rules
     { el: incidentType, type: 'select', message: 'Please select incident type' },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
-    { el: incidentLotNo, type: 'number', message: 'Please enter incident lot number', rules: { maxLength: 2 } },
-    { el: incidentStreet, type: 'select', message: 'Please select incident street' },
+    { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
     { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
 ];
 
@@ -385,25 +395,25 @@ function validateField(config) {
     });
 
     // Address validation setup for different sections with varying requirements
-    const addressPairs = [
-        { lot: rpLotNo, street: rpStreet, validateExistence: false },
-        { lot: vicLotNo, street: vicStreet, validateExistence: false },
-        { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
-        { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
-    ];
+    // const addressPairs = [
+    //     { lot: rpLotNo, street: rpStreet, validateExistence: false },
+    //     { lot: vicLotNo, street: vicStreet, validateExistence: false },
+    //     { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
+    //     { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
+    // ];
 
-    addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
-        if (!lot || !street) return;
+    // addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
+    //     if (!lot || !street) return;
 
-        [lot, street].forEach(el => {
-            el.addEventListener('blur', () => {
-                if (lot.value && street.value) {
-                    validator.address(lot, street, { optional, validateExistence });
-                }
-            });
-            el.addEventListener('input', () => validator.clear(el));
-        });
-    });
+    //     [lot, street].forEach(el => {
+    //         el.addEventListener('blur', () => {
+    //             if (lot.value && street.value) {
+    //                 validator.address(lot, street, { optional, validateExistence });
+    //             }
+    //         });
+    //         el.addEventListener('input', () => validator.clear(el));
+    //     });
+    // });
 
     // Special handling for "Other" incident type selection
     incidentType.addEventListener('change', function () {
@@ -427,14 +437,14 @@ function validateField(config) {
     });
 
     // Input sanitization for lot number fields (remove non-digit characters)
-    [rpLotNo, vicLotNo, susLotNo, incidentLotNo].forEach(el => {
-        if (el) {
-            el.addEventListener('input', function () {
-                this.value = this.value.replace(/\D/g, '');
-                validator.clear(this);
-            });
-        }
-    });
+    // [rpLotNo, vicLotNo, incidentLotNo].forEach(el => {
+    //     if (el) {
+    //         el.addEventListener('input', function () {
+    //             this.value = this.value.replace(/\D/g, '');
+    //             validator.clear(this);
+    //         });
+    //     }
+    // });
 })();
 
 /**
@@ -451,10 +461,9 @@ function validateStep(fields) {
  * Validates all reporting person fields before proceeding
  */
 document.getElementById('nextToVictim').addEventListener('click', () => {
-    const stepFields = [rpFullName, rpLotNo, rpStreet, rpContact];
+    const stepFields = [rpFullName, rpAddress, rpContact];
 
     if (!validateStep(stepFields)) return;
-    if (!validator.address(rpLotNo, rpStreet, { validateExistence: false })) return;
 
     switchPanel('victimDetails');
 });
@@ -467,14 +476,12 @@ document.getElementById('nextToSuspect').addEventListener('click', () => {
     if (victimSameAsRP.checked) {
         // Copy reporting person data to victim
         vicFullName.value = rpFullName.value;
-        vicLotNo.value = rpLotNo.value;
-        vicStreet.value = rpStreet.value;
+        vicAddress.value = rpAddress.value;
         vicContact.value = rpContact.value;
         switchPanel('suspectDetails');
     } else {
-        const stepFields = [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
+        const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
         if (!validateStep(stepFields)) return;
-        if (!validator.address(vicLotNo, vicStreet, { validateExistence: false })) return;
         switchPanel('suspectDetails');
     }
 });
@@ -486,9 +493,6 @@ document.getElementById('nextToSuspect').addEventListener('click', () => {
 document.getElementById('nextToWitnesses').addEventListener('click', () => {
     const stepFields = [susDescription];
     if (!validateStep(stepFields)) return;
-    if (susLotNo.value || susStreet.value) {
-        validator.address(susLotNo, susStreet, { optional: true, validateExistence: false });
-    }
 
     // Add default witness if none exists
     if (witnessCount === 0) {
@@ -509,7 +513,7 @@ document.getElementById('nextToIncident').addEventListener('click', () => {
  * Validates all incident fields and populates summary display with all form data
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    const stepFields = [incidentType, incidentTimestamp, incidentLotNo, incidentStreet, description];
+    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
 
     // Handle "other" incident type with custom specification
     if (incidentType.value === 'other') {
@@ -520,11 +524,10 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     }
 
     if (!validateStep(stepFields)) return;
-    if (!validator.address(incidentLotNo, incidentStreet, { validateExistence: true })) return;
 
     // Populate summary display with all collected data
     document.getElementById('sumRpFullName').textContent = rpFullName.value;
-    document.getElementById('sumRpAddress').textContent = `${rpLotNo.value} ${rpStreet.value}`;
+    document.getElementById('sumRpAddress').textContent = rpAddress.value;
     document.getElementById('sumRpContact').textContent = rpContact.value;
     document.getElementById('sumRpRelationship').textContent = rpRelationship.value || 'Not specified';
 
@@ -532,23 +535,22 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumVicFullName').textContent = 'Same as Reporting Person';
         document.getElementById('sumVicAddress').textContent = 'Same as Reporting Person';
         document.getElementById('sumVicContact').textContent = 'Same as Reporting Person';
-        document.getElementById('sumVicCitizenship').textContent = 'N/A';
-        document.getElementById('sumVicGender').textContent = 'N/A';
-        document.getElementById('sumVicDOB').textContent = 'N/A';
-        document.getElementById('sumVicOccupation').textContent = 'N/A';
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
     } else {
         document.getElementById('sumVicFullName').textContent = vicFullName.value;
-        document.getElementById('sumVicAddress').textContent = `${vicLotNo.value} ${vicStreet.value}`;
+        document.getElementById('sumVicAddress').textContent = vicAddress.value;
         document.getElementById('sumVicContact').textContent = vicContact.value;
-        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value;
-        document.getElementById('sumVicGender').textContent = vicGender.value;
-        document.getElementById('sumVicDOB').textContent = vicDOB.value;
-        document.getElementById('sumVicOccupation').textContent = vicOccupation.value;
+        document.getElementById('sumVicCitizenship').textContent = vicCitizenship.value || 'Not specified';
+        document.getElementById('sumVicGender').textContent = vicGender.value || 'Not specified';
+        document.getElementById('sumVicDOB').textContent = vicDOB.value || 'Not specified';
+        document.getElementById('sumVicOccupation').textContent = vicOccupation.value || 'Not specified';
     }
 
     document.getElementById('sumSusFullName').textContent = susFullName.value || 'Not specified';
-    document.getElementById('sumSusAddress').textContent = susLotNo.value && susStreet.value ?
-        `${susLotNo.value} ${susStreet.value}` : 'Not specified';
+    document.getElementById('sumSusAddress').textContent = susAddress.value || 'Not specified';
     document.getElementById('sumSusContact').textContent = susContact.value || 'Not specified';
     document.getElementById('sumSusGender').textContent = susGender.value || 'Not specified';
     document.getElementById('sumSusDescription').textContent = susDescription.value;
@@ -556,7 +558,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     document.getElementById('sumIncidentType').textContent =
         incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
     document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
-    document.getElementById('sumIncidentLocation').textContent = `${incidentLotNo.value} ${incidentStreet.value}`;
+    document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
     document.getElementById('sumIncidentCoordinates').textContent =
         incidentLatitude.value && incidentLongitude.value ?
             `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
@@ -571,7 +573,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/services.php';
+        window.location.href = '/client/pages/resident/home.php';
     });
 
     document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
@@ -586,15 +588,25 @@ document.addEventListener('DOMContentLoaded', () => {
  * Shows/hides victim details fields and clears validation errors accordingly
  */
 victimSameAsRP.addEventListener('change', function () {
-    const victimContainer = document.getElementById('victimDetailsContainer');
+    // const victimContainer = document.getElementById('victimDetailsContainer');
+    const victimFullNameWrapper = document.getElementById('vicFullName').closest('.label-and-input');
+    const victimAddressWrapper = document.getElementById('vicAddress').closest('.label-and-input');
+    const victimContactWrapper = document.getElementById('vicContact').closest('.label-and-input');
+
     if (this.checked) {
-        victimContainer.style.display = 'none';
+        // victimContainer.style.display = 'none';
+        victimFullNameWrapper.style.display = 'none';
+        victimAddressWrapper.style.display = 'none';
+        victimContactWrapper.style.display = 'none';
         // Clear validation errors for victim fields
-        [vicFullName, vicLotNo, vicStreet, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation].forEach(el => {
+        [vicFullName, vicAddress, vicContact].forEach(el => {
             validator.clear(el);
         });
     } else {
-        victimContainer.style.display = 'block';
+        // victimContainer.style.display = 'block';
+        victimFullNameWrapper.style.display = 'block';
+        victimAddressWrapper.style.display = 'block';
+        victimContactWrapper.style.display = 'block';
     }
 });
 
@@ -613,28 +625,8 @@ function addWitness() {
             <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
         </div>
         <div class="label-and-input">
-            <label class="label" for="witnessLotNo${witnessCount}">House No.</label>
-            <input type="tel" class="witness-lotNo" id="witnessLotNo${witnessCount}" maxlength="2" pattern="[0-9]{1,2}">
-        </div>
-        <div class="label-and-input">
-            <label class="label" for="witnessStreet${witnessCount}">Street Name</label>
-            <select class="witness-street" id="witnessStreet${witnessCount}">
-                <option value="" selected>Select</option>
-                <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City</option>
-                <option value="Colonel Bonny Serrano Ave.">Colonel Bonny Serrano Ave., Blue Ridge B, Quezon City</option>
-                <option value="Crest line St">Crest Line Street, Blue Ridge B, Quezon City</option>
-                <option value="Evening Glow Rd">Evening Glow Road, Blue Ridge B, Quezon City</option>
-                <option value="Highland Dr">Highland Drive, Blue Ridge B, Quezon City</option>
-                <option value="Hillside Dr">Hillside Drive, Blue Ridge B, Quezon City</option>
-                <option value="Milkyway Dr">Milky Way Drive, Blue Ridge B, Quezon City</option>
-                <option value="Moonlight Loop">Moonlight Loop, Blue Ridge B, Quezon City</option>
-                <option value="Promenade Ln">Promenade Lane, Blue Ridge B, Quezon City</option>
-                <option value="Rajah Matanda Street">Rajah Matanda Street, Blue Ridge B, Quezon City</option>
-                <option value="Riverview Dr">Riverview Drive, Blue Ridge B, Quezon City</option>
-                <option value="Starline Rd">Starline Road, Blue Ridge B, Quezon City</option>
-                <option value="Twin Peaks Dr">Twin Peaks Drive, Blue Ridge B, Quezon City</option>
-                <option value="Union Lane">Union Lane, Blue Ridge B, Quezon City</option>
-            </select>
+            <label class="label" for="witnessAddress${witnessCount}">Complete Address</label>
+            <input type="text" class="witness-address" id="witnessAddress${witnessCount}" placeholder="Address">
         </div>
         <div class="label-and-input">
             <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
@@ -671,7 +663,7 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    // Request notification permission for submission alerts
+    // // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
         await Notification.requestPermission();
     }
@@ -690,16 +682,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmInciStaffResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Incident Report Submitted", {
-                    body: "Click to view your report status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
-
         const formData = new FormData();
 
         formData.append('action', 'create');
@@ -711,8 +693,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Reporting Person data
         formData.append('rpFullName', rpFullName.value);
-        formData.append('rpLotNo', rpLotNo.value);
-        formData.append('rpStreet', rpStreet.value);
+        formData.append('rpAddress', rpAddress.value);
         formData.append('rpContact', rpContact.value);
         formData.append('rpRelationship', rpRelationship.value);
 
@@ -720,8 +701,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('victimSameAsRP', victimSameAsRP.checked ? '1' : '0');
         if (!victimSameAsRP.checked) {
             formData.append('vicFullName', vicFullName.value);
-            formData.append('vicLotNo', vicLotNo.value);
-            formData.append('vicStreet', vicStreet.value);
+            formData.append('vicAddress', vicAddress.value);
             formData.append('vicContact', vicContact.value);
             formData.append('vicCitizenship', vicCitizenship.value);
             formData.append('vicGender', vicGender.value);
@@ -731,8 +711,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Suspect Details data
         formData.append('susFullName', susFullName.value);
-        formData.append('susLotNo', susLotNo.value);
-        formData.append('susStreet', susStreet.value);
+        formData.append('susAddress', susAddress.value);
         formData.append('susContact', susContact.value);
         formData.append('susGender', susGender.value);
         formData.append('susDescription', susDescription.value);
@@ -741,15 +720,13 @@ newSummaryForm.addEventListener('submit', async function (e) {
         const witnesses = [];
         document.querySelectorAll('.witness-group').forEach((group, index) => {
             const name = group.querySelector('.witness-name').value;
-            const lotNo = group.querySelector('.witness-lotNo').value;
-            const street = group.querySelector('.witness-street').value;
+            const address = group.querySelector('.witness-address').value;
             const contact = group.querySelector('.witness-contact').value;
 
-            if (name || lotNo || street || contact) {
+            if (name || address || contact) {
                 witnesses.push({
                     name,
-                    lotNo,
-                    street,
+                    address,
                     contact
                 });
             }
@@ -758,11 +735,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Incident Details data (only this section includes coordinates)
         const incidentTypeVal = incidentType.value;
-        formData.append('incidentType', incidentTypeVal === 'other' ?
-            otherIncidentType.value : incidentTypeVal);
+
+        formData.append('incidentType', incidentTypeVal === 'other' ? otherIncidentType.value : incidentTypeVal);
         formData.append('incidentTimestamp', incidentTimestamp.value);
-        formData.append('incidentLotNo', incidentLotNo.value);
-        formData.append('incidentStreet', incidentStreet.value);
+        formData.append('incidentAddress', incidentAddress.value); // Added!
         formData.append('incidentLatitude', incidentLatitude.value);
         formData.append('incidentLongitude', incidentLongitude.value);
         formData.append('description', description.value);
@@ -777,17 +753,28 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-
-                    if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
-                        sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
+                    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification("Incident Report Submitted", {
+                                body: "Click to view your report status",
+                                icon: "/client/img/banwalogo.png",
+                                data: { url: "/client/pages/resident/status.php" }
+                            });
+                        });
                     }
+
+                    sockets["incident_report"]?.readyState === WebSocket.OPEN &&
+                        sockets["incident_report"].send(JSON.stringify({
+                            type: "incident_report_update",
+                            action: "new_application"
+                        }));
 
                     ir_swal.fire({
                         icon: 'success',
                         title: 'Success!',
                         html: 'Submitted successfully!<br><br>Reference ID: <strong>' + data.id + '</strong>'
                     }).then(() => {
-                        generateReportDocument();
+                        // generateReportDocument();
                         window.location.href = '/client/pages/resident/status.php';
                     });
                 } else {
@@ -810,101 +797,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
 });
 
 /**
- * Generates a downloadable incident report document in HTML format
- * Creates a formatted report with all incident details for printing/saving
- */
-function generateReportDocument() {
-    const reportOutput = document.getElementById('reportOutput');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    if (reportOutput && downloadBtn) {
-        reportOutput.classList.remove('hidden');
-
-        downloadBtn.addEventListener('click', () => {
-            // Create a simple HTML document for the report
-            const reportHTML = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Incident Report - ${new Date().toLocaleDateString()}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 40px; }
-                        h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
-                        .section { margin: 20px 0; }
-                        .section h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-                        .field { margin: 5px 0; }
-                        .label { font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Incident Report</h1>
-                    <div class="section">
-                        <h2>Reporting Person</h2>
-                        <div class="field"><span class="label">Name:</span> ${rpFullName.value}</div>
-                        <div class="field"><span class="label">Address:</span> Lot ${rpLotNo.value}, ${rpStreet.value}</div>
-                        <div class="field"><span class="label">Contact:</span> ${rpContact.value}</div>
-                        <div class="field"><span class="label">Relationship to Victim:</span> ${rpRelationship.value || 'Not specified'}</div>
-                    </div>
-                    <div class="section">
-                        <h2>Victim Details</h2>
-                        ${victimSameAsRP.checked ?
-                    '<div class="field">Same as Reporting Person</div>' :
-                    `
-                            <div class="field"><span class="label">Name:</span> ${vicFullName.value}</div>
-                            <div class="field"><span class="label">Address:</span> Lot ${vicLotNo.value}, ${vicStreet.value}</div>
-                            <div class="field"><span class="label">Contact:</span> ${vicContact.value}</div>
-                            <div class="field"><span class="label">Citizenship:</span> ${vicCitizenship.value}</div>
-                            <div class="field"><span class="label">Gender:</span> ${vicGender.value}</div>
-                            <div class="field"><span class="label">Date of Birth:</span> ${vicDOB.value}</div>
-                            <div class="field"><span class="label">Occupation:</span> ${vicOccupation.value}</div>
-                            `
-                }
-                    </div>
-                    <div class="section">
-                        <h2>Suspect Details</h2>
-                        <div class="field"><span class="label">Name:</span> ${susFullName.value || 'Not specified'}</div>
-                        <div class="field"><span class="label">Address:</span> ${susLotNo.value && susStreet.value ? `Lot ${susLotNo.value}, ${susStreet.value}` : 'Not specified'}</div>
-                        <div class="field"><span class="label">Contact:</span> ${susContact.value || 'Not specified'}</div>
-                        <div class="field"><span class="label">Gender:</span> ${susGender.value || 'Not specified'}</div>
-                        <div class="field"><span class="label">Description:</span> ${susDescription.value}</div>
-                    </div>
-                    <div class="section">
-                        <h2>Incident Details</h2>
-                        <div class="field"><span class="label">Type:</span> ${incidentType.value === 'other' ? otherIncidentType.value : incidentType.value}</div>
-                        <div class="field"><span class="label">Date & Time:</span> ${incidentTimestamp.value}</div>
-                        <div class="field"><span class="label">Location:</span> Lot ${incidentLotNo.value}, ${incidentStreet.value}</div>
-                        <div class="field"><span class="label">Coordinates:</span> ${incidentLatitude.value && incidentLongitude.value ? `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates'}</div>
-                        <div class="field"><span class="label">Description:</span> ${description.value}</div>
-                    </div>
-                    <div class="section">
-                        <h2>Report Information</h2>
-                        <div class="field"><span class="label">Date Reported:</span> ${new Date().toLocaleString()}</div>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Create and download the file as a Word document
-            const blob = new Blob([reportHTML], { type: 'application/msword' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Incident_Report_${new Date().toISOString().split('T')[0]}.doc`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-    }
-}
-
-/**
  * Opens an interactive map modal specifically for incident location selection
- * @param {string} target - Identifier for which address field is being mapped (only 'incident' is supported)
+ * @param {string} target - Identifier for which address field is being mapped
  */
 function openMapPicker(target) {
-    // Only open map picker for incident location (restricted functionality)
     if (target !== 'incident') {
         ir_swal.fire({
             icon: 'info',
@@ -914,160 +810,227 @@ function openMapPicker(target) {
         return;
     }
 
-    const modal = document.createElement('div');
-    modal.className = 'map-modal';
-    modal.innerHTML = `
-        <div class="map-modal-content">
-            <div class="map-header">
-                <div class="map-modal-header">
-                    <h3>Select Incident Location</h3>
-                    <button class="close-map">Close</button>
+    let modal = document.querySelector('.dynamic-map-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        // Removed 'map-modal' class to detach from external CSS forcing it to the right
+        modal.className = 'dynamic-map-modal';
+
+        // Foolproof full-screen centered overlay
+        modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important;';
+
+        // Removed 'map-modal-content' class and replaced with strict inline styles
+        modal.innerHTML = `
+            <div style="position: relative !important; margin: 0 !important; max-width: 900px !important; width: 90% !important; height: 85vh !important; display: flex !important; flex-direction: column !important; background: white !important; padding: 20px !important; border-radius: 8px !important; box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important; box-sizing: border-box !important;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #00247C; font-family: Arial, sans-serif;">Select Incident Location</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
+                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
+                    </div>
+                    <button class="close-map" type="button" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #333; line-height: 1; padding: 0;">&times;</button>
                 </div>
+
+                <div id="dynamic-map-container" style="width: 100%; flex-grow: 1; min-height: 300px; border-radius: 8px; z-index: 1;"></div>
             </div>
-            <div id="map-container"></div>
-        </div>
-    `;
-    modal.dataset.target = target;
-    document.body.appendChild(modal);
-    modal.style.display = 'block';
+        `;
+        document.body.appendChild(modal);
 
-    modal.querySelector('.close-map').addEventListener('click', () => {
-        const preview = document.getElementById(`map-preview-${target}`);
-        if (preview) preview.style.display = 'none';
-        modal.remove();
-    });
+        modal.querySelector('.close-map').addEventListener('click', () => {
+            // Revert display back to none when closing
+            modal.style.setProperty('display', 'none', 'important');
+        });
+    }
 
-    initializeMapPicker(target);
+    // Force it to use flex so centering applies when reopening
+    modal.style.setProperty('display', 'flex', 'important');
+
+    // Add a slight delay to allow the modal to display before initializing Leaflet
+    setTimeout(() => {
+        initializeMapPicker('dynamic-map-container', target);
+    }, 150);
 }
 
 /**
- * Initializes Leaflet map specifically for incident location selection
- * @param {string} target - Identifier for which address field is being mapped (only 'incident' is supported)
+ * Initializes the map, dynamically fetches barangay boundary & clickable house polygons,
+ * and includes a street/satellite toggle. Adapted for Incident Reports.
  */
-async function initializeMapPicker(target) {
+async function initializeMapPicker(containerId, target) {
     const defaultLat = 14.6175;
     const defaultLng = 121.0756;
 
-    const map = L.map('map-container').setView([defaultLat, defaultLng], 17);
+    // Clean up existing Leaflet instance if reopening modal
+    const container = document.getElementById(containerId);
+    if (container._leaflet_id) {
+        container._leaflet_id = null;
+        container.innerHTML = '';
+    }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    });
+    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri World Imagery'
+    });
 
-    let marker = null;
+    const map = L.map(containerId).setView([defaultLat, defaultLng], 17);
+    osmTile.addTo(map);
 
-    // Handle map clicks to set incident location marker and populate coordinates
+    // Match main map color system
+    const POLY_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#FFFFFF', fillOpacity: 0.15, weight: 2 }
+    };
+    const BOUND_COLORS = {
+        street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 },
+        satellite: { color: '#FFFFFF', fillColor: '#000000', fillOpacity: 0, dashArray: '8,6', weight: 2 }
+    };
+
+    let currentMode = 'street';
+    let housePolygons = [];
+    let boundaryLayers = [];
+    let selectedMarker = null;
+
+    function applyColors(mode) {
+        housePolygons.forEach(p => p.setStyle(POLY_COLORS[mode]));
+        boundaryLayers.forEach(b => b.setStyle(BOUND_COLORS[mode]));
+    }
+
+    // Street / Satellite toggle listeners
+    const streetBtn = document.getElementById('picker-street-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
+    if (streetBtn && satBtn) {
+        streetBtn.addEventListener('click', () => {
+            map.removeLayer(satTile); osmTile.addTo(map);
+            currentMode = 'street'; applyColors('street');
+            streetBtn.style.background = '#00247c'; streetBtn.style.color = 'white'; streetBtn.style.border = 'none';
+            satBtn.style.background = 'white'; satBtn.style.color = '#555'; satBtn.style.border = '1px solid #ccc';
+        });
+        satBtn.addEventListener('click', () => {
+            map.removeLayer(osmTile); satTile.addTo(map);
+            currentMode = 'satellite'; applyColors('satellite');
+            satBtn.style.background = '#00247c'; satBtn.style.color = 'white'; satBtn.style.border = 'none';
+            streetBtn.style.background = 'white'; streetBtn.style.color = '#555'; streetBtn.style.border = '1px solid #ccc';
+        });
+    }
+
+    // Click anywhere to pick a point (Fallback for areas without polygons)
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        selectedMarker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .openPopup();
 
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lng]).addTo(map).bindPopup('Selected Location').openPopup();
-
-        // ONLY set coordinates for incident location
-        if (target === 'incident') {
-            incidentLatitude.value = lat;
-            incidentLongitude.value = lng;
-        }
-
-        document.getElementById(`map-preview-${target}`).style.display = 'block';
+        document.getElementById('incidentLatitude').value = lat;
+        document.getElementById('incidentLongitude').value = lng;
     });
 
-    // Barangay polygon for visual reference
-    const blueRidgeGeoJSON = {
-        "type": "FeatureCollection",
-        "features": [{
-            "type": "Feature",
-            "properties": { "name": "Barangay Blue Ridge B" },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [121.07278956348526, 14.61639406374255],
-                    [121.07392145567032, 14.61595803532421],
-                    [121.07419772320655, 14.616251316435923],
-                    [121.07617987565104, 14.616430399403944],
-                    [121.07651515177966, 14.617647640629082],
-                    [121.07800914220171, 14.617803363969443],
-                    [121.07872851395038, 14.617316502559932],
-                    [121.07891090415784, 14.617705811277993],
-                    [121.07449698388697, 14.62017411386342]
-                ]]
-            }
-        }]
-    };
-    L.geoJSON(blueRidgeGeoJSON, { style: { color: "#ff7800", weight: 2, fillColor: "#3388ff", fillOpacity: 0.2 } }).addTo(map);
-
-    // Load houses from server database for selection
+    // Load barangay boundaries from DB
     try {
-        const formData = new FormData();
-        formData.append('action', 'get_houses');
-        const response = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', body: formData });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        const bRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
+        });
+        const bData = await bRes.json();
+        if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
+            bData.boundaries.forEach(b => {
+                try {
+                    const coords = JSON.parse(b.coordinates);
+                    const latLngs = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
+                    const layer = L.polygon(latLngs, BOUND_COLORS.street).addTo(map);
+                    boundaryLayers.push(layer);
+                } catch (err) { console.error('Boundary parse error:', err); }
+            });
+        }
+    } catch (err) { console.error('Failed to load boundaries:', err); }
 
-        if (data.success && data.houses) {
+    // Load house polygons
+    try {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses'
+        });
+        const hData = await hRes.json();
+
+        if (hData.success && hData.houses) {
             const houseLayer = L.layerGroup();
 
-            data.houses.forEach(house => {
-                if (house.coordinates) {
-                    try {
-                        const coords = JSON.parse(house.coordinates);
-                        const latLngCoords = coords.map(coord => [coord[1], coord[0]]);
-                        latLngCoords.push(latLngCoords[0]); // close polygon
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                try {
+                    const coords = JSON.parse(house.coordinates);
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const latLngs = ring.map(c => [c[1], c[0]]);
+                    latLngs.push(latLngs[0]);
 
-                        const polygon = L.polygon(latLngCoords, {
-                            color: '#3388ff',
-                            weight: 1,
-                            fillColor: '#3388ff',
-                            fillOpacity: 0.1,
-                            interactive: true
-                        }).addTo(houseLayer);
+                    const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
+                    housePolygons.push(polygon);
 
-                        // Polygon click autofill - populate incident fields when house is selected
-                        polygon.on('click', function (e) {
-                            const lat = e.latlng.lat.toFixed(6);
-                            const lng = e.latlng.lng.toFixed(6);
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const subtitleHtml = house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
+                    const addrHtml = (!isLandmark && house.address) ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                    const streetHtml = house.street_name ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
 
-                            if (marker) map.removeLayer(marker);
-                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Selected House").openPopup();
+                    const popupHtml =
+                        '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                        '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                        '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
+                        '</div>' + addrHtml + streetHtml +
+                        '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
+                        '</div>';
 
-                            // ONLY set coordinates for incident location
-                            if (target === 'incident') {
-                                incidentLatitude.value = lat;
-                                incidentLongitude.value = lng;
+                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
 
-                                // Fill lot and street fields for incident location
-                                incidentLotNo.value = house.house_number || '';
-                                incidentStreet.value = house.street_name || '';
-                                [incidentLotNo, incidentStreet].forEach(el => {
-                                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                                    el.dispatchEvent(new Event('change', { bubbles: true }));
-                                });
-                            }
+                    polygon.on('click', function (e) {
+                        L.DomEvent.stopPropagation(e);
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
-                            document.getElementById(`map-preview-${target}`).style.display = 'block';
-                        });
+                        if (selectedMarker) map.removeLayer(selectedMarker);
+                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
+                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                        const selAddr = (!isLandmarkSel && house.address) ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
+                        const selStreet = house.street_name ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
 
-                        polygon.bindPopup(`
-                            <div class="house-popup">
-                                <h4>🏠 ${house.address}</h4>
-                                ${house.street_name ? `<p><strong>Street:</strong> ${house.street_name}</p>` : ''}
-                                ${house.house_number ? `<p><strong>House #:</strong> ${house.house_number}</p>` : ''}
-                                <button onclick="zoomToHouse(${house.house_id})" class="view-btn">Zoom To</button>
-                            </div>
-                        `);
+                        const selPopup =
+                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' + selAddr + selStreet + '</div>';
 
-                    } catch (err) {
-                        console.error('Error parsing house coordinates:', err);
-                    }
-                }
+                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
+
+                        // Target Resident Incident Report Coordinates
+                        document.getElementById('incidentLatitude').value = lat;
+                        document.getElementById('incidentLongitude').value = lng;
+
+                        // Auto-fill Incident Address dynamically
+                        let formattedAddress = house.address;
+                        if (!formattedAddress) {
+                            const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
+                            const street = house.street_name ? `${house.street_name}, ` : '';
+                            formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
+                        }
+                        const addressInput = document.getElementById('incidentAddress');
+                        if (addressInput) {
+                            addressInput.value = formattedAddress;
+                            // Trigger input event to clear validation errors automatically
+                            addressInput.dispatchEvent(new Event('input'));
+                        }
+                    });
+
+                    polygon.addTo(houseLayer);
+                } catch (err) { console.error('House parse error:', err); }
             });
 
             houseLayer.addTo(map);
         }
-    } catch (err) {
-        console.error('Error loading houses:', err);
-    }
+    } catch (err) { console.error('Failed to load houses:', err); }
+
+    setTimeout(() => map.invalidateSize(), 300);
 }
 
 /**
@@ -1106,47 +1069,71 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const resp = await fetch('/server/api/resident/get_user.php');
+
+        await ir_swal.fire({
+            icon: 'warning',
+            title: 'Important Disclaimer',
+            html: 'Filing a false, fabricated, or malicious incident report is a serious offense and is punishable by law.<br><br>By proceeding, you certify that all information you provide is true and accurate to the best of your knowledge.',
+            confirmButtonText: 'I Understand and Agree',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+
+        // 1. Added credentials and cache settings exactly like the business app
+        const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
+
+        console.debug('incident_report autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
             return;
         }
 
-        // Populate reporting person fields with user data
-        if (data.first_name && data.last_name) {
-            rpFullName.value = `${data.last_name}, ${data.first_name}${data.middle_name ? ' ' + data.middle_name : ''}`;
+        // 2. Added the fallback logic to split 'full_name' if individual fields are missing
+        if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
+            const parts = data.full_name.trim().split(/\s+/);
+            data.first_name = parts[0] || '';
+            data.last_name = parts.length > 1 ? parts[parts.length - 1] : '';
+            data.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
+        }
+
+        // 3. Populate reporting person fields with user data safely
+        if (data.first_name || data.last_name) {
+            const last = data.last_name || '';
+            const first = data.first_name || '';
+            const middle = data.middle_name ? ' ' + data.middle_name : '';
+
+            // Formats to match the input placeholder: "Last, First, Middle Name"
+            if (last && first) {
+                rpFullName.value = `${last}, ${first}${middle}`;
+            } else {
+                rpFullName.value = `${last}${first}${middle}`.trim();
+            }
         }
 
         if (data.contact_no) {
             rpContact.value = data.contact_no;
         }
 
-        // Populate address fields if available
-        if (data.lot_no) {
-            rpLotNo.value = data.lot_no;
-        }
-
-        if (data.street_name) {
-            // Find matching street in dropdown
-            const streetSelect = document.getElementById('rpStreet');
-            for (let option of streetSelect.options) {
-                if (option.value === data.street_name) {
-                    streetSelect.value = data.street_name;
-                    break;
-                }
-            }
+        if (data.address) {
+            // If your DB returns a full address string
+            rpAddress.value = data.address;
+        } else if (data.lot_no || data.street_name) {
+            // Otherwise, combine lot and street into a complete address
+            const lot = data.lot_no ? `House/Unit ${data.lot_no}, ` : '';
+            const street = data.street_name ? `${data.street_name}, ` : '';
+            rpAddress.value = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
         }
 
         // Set default citizenship for victim
-        vicCitizenship.value = 'Filipino';
+        if (vicCitizenship) {
+            vicCitizenship.value = 'Filipino';
+        }
 
     } catch (err) {
-        console.error('Failed to fetch user data:', err);
+        console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
-    }
+    if (!sockets["incident_report_applications"]) initSocket("incident_report_applications", "ws://localhost:8081", () => { });
 });

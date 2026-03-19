@@ -114,13 +114,7 @@ function getCurrentDateString()
 function handleCreateApplication($pdo)
 {
     try {
-        $supabaseUserId = $_POST['supabase_user_id'] ?? $_SESSION['supabase_user_id'] ?? null;
-
-        if (!$supabaseUserId) {
-            throw new Exception("User authentication required. Please log in again.");
-        }
-
-        // Owner Info
+        $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
         $firstName = get_input('firstName');
         $middleName = get_input('middleName') ?? '';
         $lastName = get_input('lastName');
