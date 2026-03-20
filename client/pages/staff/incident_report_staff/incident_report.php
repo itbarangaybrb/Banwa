@@ -481,7 +481,7 @@ $full_name = getCurrentUserName();
 
                     <div class="section-title">Witnesses (If Any)</div>
                     <div id="witnessesContainer"></div>
-                    <button type="button" id="addWitnessBtn" class="btn-secondary" style="margin-bottom: 25px;"><i class="fas fa-plus"></i> Add Witness</button>
+                    <button type="button" id="addWitnessBtn" class="btn-secondary" style="margin-top: 20px; padding: 12px; font-weight: bold; border-radius: 8px; transition: background-color 0.3s; background-color: #3498db; color: white; border: none;"><i class="fas fa-plus"></i> Add Witness</button>
 
                     <div class="section-title">Incident Details</div>
                     <div class="form-row">
@@ -513,11 +513,11 @@ $full_name = getCurrentUserName();
                             <textarea id="incidentAddress" name="incidentAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province" required></textarea>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group hidden">
                             <label for="incidentLatitude">Latitude</label>
                             <input type="text" id="incidentLatitude" name="incidentLatitude" readonly placeholder="Auto-filled from map">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group hidden">
                             <label for="incidentLongitude">Longitude</label>
                             <input type="text" id="incidentLongitude" name="incidentLongitude" readonly placeholder="Auto-filled from map">
                         </div>

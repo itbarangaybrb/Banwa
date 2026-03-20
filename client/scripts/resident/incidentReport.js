@@ -617,6 +617,7 @@ function addWitness() {
     witnessCount++;
     const witnessDiv = document.createElement('div');
     witnessDiv.className = 'witness-group';
+    witnessDiv.style = 'border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative;';
     witnessDiv.innerHTML = `
         <h7>Witness ${witnessCount}</h7>
         <div class="label-and-input">
@@ -631,7 +632,7 @@ function addWitness() {
             <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
             <input type="text" class="witness-contact" id="witnessContact${witnessCount}" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
         </div>
-        <button type="button" class="remove-witness-btn" style="margin-top: 10px;">Remove Witness</button>
+        <button type="button" class="remove-witness-btn" style="margin-top: 10px; ">Remove Witness</button>
     `;
 
     witnessesContainer.appendChild(witnessDiv);

@@ -1599,49 +1599,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Add Witness Logic
-    const addWitnessBtn = document.getElementById('addWitnessBtn');
-    if (addWitnessBtn) {
-        addWitnessBtn.addEventListener('click', () => {
-            witnessCount++;
-            const container = document.getElementById('witnessesContainer');
-            const div = document.createElement('div');
-            div.className = 'witness-group form-row';
-            div.style.marginBottom = '15px';
-            div.style.padding = '20px';
-            div.style.border = '1px solid #e0e0e0';
-            div.style.borderRadius = '6px';
-            div.style.background = '#f9f9f9';
-            div.style.position = 'relative';
-
-            div.innerHTML = `
-                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
-                    <strong style="color: #333;">Witness ${witnessCount}</strong>
-                    <button type="button" class="btn-secondary" style="padding: 4px 10px; color: #dc3545; border-color: #dc3545; background: transparent;" onclick="this.closest('.witness-group').remove()"><i class="fas fa-times"></i> Remove</button>
-                </div>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" class="witness-name" placeholder="Full Name">
-                </div>
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="text" class="witness-contact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
-                </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Complete Address</label>
-                    <input type="text" class="witness-address" placeholder="Complete Address">
-                </div>
-            `;
-            container.appendChild(div);
-
-            // Contact input digit sanitizer
-            const contactInput = div.querySelector('.witness-contact');
-            if (contactInput) {
-                contactInput.addEventListener('input', function () {
-                    this.value = this.value.replace(/\D/g, '');
-                });
-            }
-        });
+    if (witnessCount === 0) {
+        addWitness();// Add witnesss Function
     }
 
     // 3. Incident Type "Other" logic
@@ -1670,6 +1629,43 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+});
+
+function addWitness(addWitnessBtn) {
+    witnessCount++;
+    const container = document.getElementById('witnessesContainer');
+    const witnessDiv = document.createElement('div');
+    witnessDiv.className = 'witness-group';
+    witnessDiv.style = 'border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative;';
+    witnessDiv.innerHTML = `
+        <h3><strong>Witness ${witnessCount}</strong></h3>
+        <div class="label-and-input">
+            <label class="label" for="witnessName${witnessCount}">Full Name</label>
+            <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessAddress${witnessCount}">Complete Address</label>
+            <input type="text" class="witness-address" id="witnessAddress${witnessCount}" placeholder="Address">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
+            <input type="text" class="witness-contact" id="witnessContact${witnessCount}" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+        </div>
+        <button type="button" class="remove-witness-btn" style="margin-top: 10px; ">Remove Witness</button>
+    `;
+
+    witnessesContainer.appendChild(witnessDiv);
+
+    // Add remove functionality for witness entry
+    witnessDiv.querySelector('.remove-witness-btn').addEventListener('click', () => {
+        witnessDiv.remove();
+        witnessCount--;
+    });
+}
+
+// Set up witness addition button when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addWitnessBtn').addEventListener('click', addWitness);
 });
 
 /**
