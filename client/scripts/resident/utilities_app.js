@@ -428,7 +428,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumDateOfWork').textContent = dateOfWork.value;
         document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
         document.getElementById('sumProvider').textContent = provider.value;
-        document.getElementById('sumAddressOfUtility').textContent = `${utilityLotNo.value} ${utilityStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressOfUtility').textContent = `${utilityLotNo.value} ${utilityStreet.value}`;
 
         switchPanel('summary');
     }
@@ -439,10 +439,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('utilities'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));

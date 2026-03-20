@@ -476,7 +476,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumContractorName').textContent = contractorName.value;
         document.getElementById('sumContractorContactNumber').textContent = contractorContactNumber.value;
         document.getElementById('sumApplicationMethod').textContent = applicationMethod.value;
-        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}`;
         document.getElementById('sumRequirementUpload').textContent = requirementUpload.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
@@ -492,10 +492,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('construction'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));

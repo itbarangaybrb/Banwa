@@ -525,7 +525,16 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
  * Handles navigation from business information panel to waiver panel
  * Validates all business fields including dynamic requirements based on application type
  */
-document.getElementById('nextToWaiver').addEventListener('click', () => {
+document.getElementById('nextToWaiver').addEventListener('click', async () => {
+    if (!documentVerificationDone) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'OCR Not Done',
+            html: 'Documents have not been verified with OCR yet. Please wait for verification to complete before proceeding.',
+        });
+        return;
+    }
+
     const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
 
     const stepFields = [
@@ -553,12 +562,6 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
 
     if (!addressValid || !fieldsValid) return;
 
-    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-            return;
-        }
-    }
-
     switchPanel('waiver');
 });
 
@@ -575,7 +578,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
         document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
         document.getElementById('sumBusinessStatus').textContent = (Array.from(businessStatus).find(r => r.checked)?.value === 'Others' ? businessStatusSpecify.value : Array.from(businessStatus).find(r => r.checked)?.value || '').trim();
-        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}`;
         document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
         document.getElementById('sumEmail').textContent = emailAddress.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
@@ -595,10 +598,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
