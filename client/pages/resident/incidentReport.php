@@ -71,7 +71,7 @@
         <div class="containers incident-container hidden" id="victimDetails">
             <form class="form" id="victimDetailsForm">
                 <h6>2. Victim / Complainant Details</h6>
-                
+
                 <div class="checkbox-group" style="margin-bottom: 20px;">
                     <label for="victimSameAsRP">
                         <input type="checkbox" id="victimSameAsRP">
@@ -85,25 +85,25 @@
                         <input type="text" id="vicFullName" name="vicFullName" placeholder="Full Name">
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input full-span">
                         <label class="label" for="vicAddress">Complete Address <span style="color: #BB1B1B;">*</span></label>
                         <textarea id="vicAddress" name="vicAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province"></textarea>
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input">
                         <label class="label" for="vicContact">Mobile Phone or Landline Number <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicContact" name="vicContact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input">
                         <label class="label" for="vicCitizenship">Citizenship <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicCitizenship" name="vicCitizenship" placeholder="e.g., Filipino">
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input">
                         <label class="label" for="vicGender">Gender <span style="color: #BB1B1B;">*</span></label>
                         <select id="vicGender" name="vicGender">
@@ -114,13 +114,13 @@
                         </select>
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input">
                         <label class="label" for="vicDOB">Date of Birth <span style="color: #BB1B1B;">*</span></label>
                         <input type="date" id="vicDOB" name="vicDOB">
                         <div class="error-msg"></div>
                     </div>
-                    
+
                     <div class="label-and-input">
                         <label class="label" for="vicOccupation">Occupation <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="vicOccupation" name="vicOccupation" placeholder="Occupation">
@@ -211,12 +211,12 @@
                             <option value="Serious Crime">Serious Crime</option>
                             <option value="Public Safety and Emergencies">Public Safety and Emergencies</option>
                             <option value="Ordinance Violations">Ordinance Violations</option>
-                            <option value="other">Other</option>
+                            <option value="Other">Other</option>
                         </select>
                         <div class="error-msg"></div>
                     </div>
 
-                    <div id="otherSpecifyContainer" class="label-and-input hidden">
+                    <div id="otherSpecifyContainer" class="label-and-input">
                         <label class="label" for="otherIncidentType">Please specify other incident type <span style="color: #BB1B1B;">*</span></label>
                         <input type="text" id="otherIncidentType" name="otherIncidentType">
                         <div class="error-msg"></div>
@@ -341,9 +341,6 @@
                             </div>
                             <div>
                                 <p>Location:</p> <span id="sumIncidentLocation"></span>
-                            </div>
-                            <div>
-                                <p>Coordinates:</p> <span id="sumIncidentCoordinates"></span>
                             </div>
                             <div>
                                 <p>Description:</p> <span id="sumDescription"></span>
