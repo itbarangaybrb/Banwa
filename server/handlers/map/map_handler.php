@@ -140,7 +140,7 @@ function getConstructionMarkers(){
                        nature_of_activity, details_of_work, start_date, end_date,
                        number_of_working_days, number_of_workers, contractor_name,
                        contractor_contact_number, application_method, requirement_upload,
-                       agreed, updated_at
+                       agreed, status, updated_at
                 FROM construction_applications 
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
         $stmt = $pdo->prepare($sql);
@@ -2665,7 +2665,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 "SELECT id, first_name, middle_name, last_name,
                         construction_address AS address, latitude, longitude,
                         nature_of_work, type_of_work, nature_of_activity,
-                        number_of_workers, number_of_working_days, start_date, end_date
+                        number_of_workers, number_of_working_days, start_date, end_date,
+                        status, contractor_name
                  FROM   construction_applications
                  WHERE  latitude IS NOT NULL AND longitude IS NOT NULL"
             )->fetchAll(PDO::FETCH_ASSOC);

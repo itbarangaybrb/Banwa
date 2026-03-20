@@ -1,10 +1,11 @@
 // Configuration imports for Supabase, address data, and service worker registration
-const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
-
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
+
+const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
+
 registerServiceWorker();
 
 const swalStyle = document.createElement('style');
@@ -475,7 +476,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumContractorName').textContent = contractorName.value;
         document.getElementById('sumContractorContactNumber').textContent = contractorContactNumber.value;
         document.getElementById('sumApplicationMethod').textContent = applicationMethod.value;
-        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}`;
         document.getElementById('sumRequirementUpload').textContent = requirementUpload.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
@@ -491,10 +492,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('construction'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -536,16 +534,6 @@ newSummaryForm.addEventListener('submit', async (e) => {
     });
 
     if (confirmResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification('Application Submitted', {
-                    body: "Click to view your application status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
-
         const formData = new FormData();
 
         // 1. ADD THE ACTION (Crucial for construction_handler.php)
@@ -616,10 +604,21 @@ newSummaryForm.addEventListener('submit', async (e) => {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-
-                    if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-                        sockets["construction_applications"].send(JSON.stringify({ type: "construction_applications_update", action: "new_application" }));
+                    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification('Application Submitted', {
+                                body: "Click to view your application status",
+                                icon: "/client/img/banwalogo.png",
+                                data: { url: "/client/pages/resident/status.php" }
+                            });
+                        });
                     }
+
+                    sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
+                        sockets["construction_applications"].send(JSON.stringify({
+                            type: "construction_applications_update",
+                            action: "new_application"
+                        }));
 
                     Swal.fire({
                         title: 'Success!',
@@ -789,10 +788,10 @@ async function initializeMapPicker(target) {
                     boundaryLayers.push(layer);
                     // ── Boundary lock: mirrors map.js setupSoftBoundary ──────────────
                     try {
-                        const _bounds     = layer.getBounds();
-                        const _soft       = _bounds.pad(0.15);
-                        const _warn       = _bounds.pad(0.05);
-                        const _hard       = _bounds.pad(0.25);
+                        const _bounds = layer.getBounds();
+                        const _soft = _bounds.pad(0.15);
+                        const _warn = _bounds.pad(0.05);
+                        const _hard = _bounds.pad(0.25);
                         map.setMinZoom(18);
                         map.setMaxZoom(22);
                         map.setMaxBounds(_hard);
@@ -801,9 +800,9 @@ async function initializeMapPicker(target) {
                             clearTimeout(_bTimer);
                             if (!_warn.contains(map.getCenter())) {
                                 _bTimer = setTimeout(function () {
-                                    const c   = map.getCenter();
+                                    const c = map.getCenter();
                                     const lat = Math.max(_warn.getSouth(), Math.min(_warn.getNorth(), c.lat));
-                                    const lng = Math.max(_warn.getWest(),  Math.min(_warn.getEast(),  c.lng));
+                                    const lng = Math.max(_warn.getWest(), Math.min(_warn.getEast(), c.lng));
                                     map.flyTo([lat, lng], map.getZoom(), { duration: 1, easeLinearity: 0.25 });
                                 }, 800);
                             }
@@ -812,7 +811,7 @@ async function initializeMapPicker(target) {
                             const c = map.getCenter();
                             if (!_soft.contains(c)) {
                                 const lat = Math.max(_soft.getSouth(), Math.min(_soft.getNorth(), c.lat));
-                                const lng = Math.max(_soft.getWest(),  Math.min(_soft.getEast(),  c.lng));
+                                const lng = Math.max(_soft.getWest(), Math.min(_soft.getEast(), c.lng));
                                 map.panTo([lat, lng], { animate: true, duration: 0.5 });
                             }
                         });
@@ -1109,9 +1108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["construction_applications"]) {
-        initSocket("construction_applications", "ws://localhost:8081", data => { });
-    }
+    if (!sockets["construction_applications"]) initSocket("construction_applications", "ws://localhost:8081", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();

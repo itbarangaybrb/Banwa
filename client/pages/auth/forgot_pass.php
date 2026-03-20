@@ -20,7 +20,6 @@
                 <img class="logo" src="../../img/banwalogo.png" alt="Banwa Logo">
                 <span class="company_name">BANWA</span>
             </div>
-
             <div class="user_profile">
                 <div class="time_date" id="live_datetime">
                     <div class="time-display">
@@ -33,19 +32,16 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main>
-        <!-- Forgot Password Section - Using BFP (Banwa Forgot Password) namespace -->
+        <!-- ==================== FORGOT PASSWORD SECTION ==================== -->
         <section class="bfp-section">
             <div class="bfp-container">
-                <!-- Simple breadcrumb/context indicator -->
                 <div class="bfp-context">
                     <a href="../../index.php" class="bfp-context-link">Home</a>
                     <span class="bfp-context-separator">•</span>
                     <span class="bfp-context-current">Forgot Password</span>
                 </div>
 
-                <!-- Forgot Password Card - Using ID from old design -->
                 <div class="bfp-card" id="forgotPass">
                     <div class="bfp-card-header">
                         <div class="bfp-icon-circle">
@@ -60,12 +56,9 @@
                         </p>
                     </div>
 
-                    <!-- Form - Using ID from old design -->
                     <form class="bfp-form" id="forgotPassForm">
-                        <!-- Message area - Using ID from old design -->
                         <div id="formMessage" class="bfp-message" style="display: none;"></div>
 
-                        <!-- Email field - Using old IDs and structure -->
                         <div class="bfp-field label-and-input">
                             <label for="email" class="bfp-label">
                                 Email address
@@ -76,20 +69,18 @@
                                     <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/>
                                     <path d="M22 6L12 13L2 6"/>
                                 </svg>
-                                <input 
-                                    type="email" 
-                                    class="bfp-input" 
+                                <input
+                                    type="email"
+                                    class="bfp-input"
                                     id="email"
-                                    name="email" 
+                                    name="email"
                                     placeholder="your.email@example.com"
                                     autocomplete="email"
                                 >
                             </div>
-                            <!-- Error message - Using old class -->
                             <div class="error-msg"></div>
                         </div>
 
-                        <!-- Buttons - Using old IDs -->
                         <div class="bfp-actions buttons-container">
                             <button type="button" class="bfp-btn bfp-btn-secondary" id="forgotPassBackBtn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,7 +97,6 @@
                         </div>
                     </form>
 
-                    <!-- Footer with security note -->
                     <div class="bfp-footer">
                         <div class="bfp-security">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -120,33 +110,7 @@
             </div>
         </section>
 
-        <!-- <section class="sections">
-            <div class="containers">
-                ==================== Forgot Password Form ====================
-                <div class="forgot-pass-container" id="forgotPass">
-                    <form class="form" id="forgotPassForm">
-                        <h5>Forgot Password</h5>
-                        <p></p>
-
-                        <span id="formMessage"></span>
-
-                        <div class="inputs-container">
-                            <div class="label-and-input">
-                                <label for="email">Email</label>
-                                <input type="email" name="email" id="email">
-                                <div class="error-msg"></div>
-                            </div>
-                        </div>
-
-                        <div class="buttons-container">
-                            <button type="button" id="forgotPassBackBtn">Back</button>
-                            <button type="submit" id="forgotPassConfirmBtn">Confirm</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </section> -->
-
+        <!-- ==================== CONTACT US SECTION ==================== -->
         <section data-theme="blue">
             <div class="cont">
                 <div class="contact-content">
@@ -171,7 +135,7 @@
         <p>Loading…</p>
     </div>
 
-    <!-- BFP Loading Overlay (for form submission) -->
+    <!-- Form Submission Loader -->
     <div id="bfpLoader" class="bfp-loading" style="display: none;">
         <div class="bfp-spinner"></div>
         <p>Sending instructions...</p>

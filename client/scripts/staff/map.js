@@ -309,8 +309,13 @@ function displayDetailsInModal(data, type) {
 
     if (type === 'construction') {
         title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Construction Site';
-        const status = data.agreed === '1' ? 'Approved' : 'Pending';
-        const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
+        const status = data.status || 'Pending';
+        const statusColor =
+            status === 'Approved'    ? '#28a745' :
+            status === 'Disapproved' ? '#dc3545' :
+            status === 'For Payment' ? '#856404' :
+            status === 'Paid'        ? '#0c5460' :
+            status === 'Complied'    ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Homeowner', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.contact_no_owner || 'Not specified'),
@@ -328,7 +333,13 @@ function displayDetailsInModal(data, type) {
 
     } else if (type === 'business') {
         title = data.business_name || 'Unnamed Business';
-        const statusColor = data.status === 'approved' ? '#28a745' : data.status === 'disapproved' ? '#dc3545' : '#ff9800';
+        const bStatus = data.status || 'Pending';
+        const bStatusColor =
+            bStatus === 'Approved'    ? '#28a745' :
+            bStatus === 'Disapproved' ? '#dc3545' :
+            bStatus === 'For Payment' ? '#856404' :
+            bStatus === 'Paid'        ? '#0c5460' :
+            bStatus === 'Complied'    ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Business Name', data.business_name || 'Not specified'),
             detailRow('Business Address', data.address_of_business || 'Not specified'),
@@ -340,14 +351,19 @@ function displayDetailsInModal(data, type) {
             detailRow('Email', data.email_address || 'Not specified'),
             detailRow('Employees', data.no_of_employees || '0'),
             detailRow('Structure Type', data.type_of_structure || 'Not specified'),
-            detailRow('Status', `<span style="color:${statusColor};font-weight:bold;text-transform:capitalize;">${data.status || 'Pending'}</span>`)
+            detailRow('Status', `<span style="color:${bStatusColor};font-weight:bold;">${bStatus}</span>`)
         ].join('');
         showDetailSwal(title, 'Business', 'business', tableRows);
 
     } else if (type === 'utility') {
         title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Utility Work';
-        const status = data.agreed === '1' ? 'Approved' : 'Pending';
-        const statusColor = data.agreed === '1' ? '#28a745' : '#ff9800';
+        const uStatus = data.status || 'Pending';
+        const uStatusColor =
+            uStatus === 'Approved'    ? '#28a745' :
+            uStatus === 'Disapproved' ? '#dc3545' :
+            uStatus === 'For Payment' ? '#856404' :
+            uStatus === 'Paid'        ? '#0c5460' :
+            uStatus === 'Complied'    ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Applicant', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.owner_contact_no || 'Not specified'),
@@ -356,7 +372,7 @@ function displayDetailsInModal(data, type) {
             detailRow('Nature of Work', data.nature_of_work || 'Not specified'),
             detailRow('Request Date', formatDate(data.request_date)),
             detailRow('Work Date', formatDate(data.date_of_work)),
-            detailRow('Status', `<span style="color:${statusColor};font-weight:bold;">${status}</span>`)
+            detailRow('Status', `<span style="color:${uStatusColor};font-weight:bold;">${uStatus}</span>`)
         ].join('');
         showDetailSwal(title, 'Utility', 'utility', tableRows);
 
@@ -459,7 +475,7 @@ function displayHouseDetailsInModal(data, apps) {
     const title = data.address || 'House';
 
     const sectionHeader = label =>
-        `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;
+        `<tr><td colspan="3" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;
              text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">${label}</td></tr>`;
 
     const basicRows = [
@@ -467,18 +483,36 @@ function displayHouseDetailsInModal(data, apps) {
         detailRow('Street Name', data.street_name || 'Not specified'),
         detailRow('Created', formatDate(data.created_at))
     ].join('');
-    const typeBadge = (bg, label, textColor) =>
-        `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-                      background:${bg};color:${textColor || '#fff'};margin-right:6px;display:inline-block;">${label}</span>`;
-    const statusBadge = (label, color) =>
-        `<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-                      background:${color};color:#fff;display:inline-block;">${label}</span>`;
-    const viewBtn = (onclick) =>
-        `<button onclick="${onclick}"
-            style="padding:3px 10px;font-size:11px;font-weight:600;background:#00247c;color:#fff;
-                   border:none;border-radius:6px;cursor:pointer;margin-left:6px;font-family:inherit;">
-            View Details
-        </button>`;
+
+    const statusColor = (status) =>
+        status === 'Approved'            ? '#28a745' :
+        status === 'Disapproved'         ? '#dc3545' :
+        status === 'For Payment'         ? '#856404' :
+        status === 'Paid'                ? '#0c5460' :
+        status === 'Complied'            ? '#17a2b8' :
+        status === 'Resolved'            ? '#28a745' :
+        status === 'Under Investigation' ? '#ff9800' :
+        status === 'Pre-Approved'        ? '#17a2b8' : '#ff9800';
+
+    const typeBadge = (color, label, textColor) =>
+        `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:${color};color:${textColor || '#fff'};margin-right:6px;">${label}</span>`;
+
+    const appRow = (badgeColor, badgeLabel, badgeTextColor, name, status, onclickId, type) => {
+        const s = status || 'Pending';
+        return `<tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;width:50%;">
+                ${typeBadge(badgeColor, badgeLabel, badgeTextColor)}${name}
+            </td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;white-space:nowrap;">
+                <span style="color:${statusColor(s)};font-weight:bold;">${s}</span>
+            </td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;white-space:nowrap;">
+                <button onclick="viewMapDetails(${onclickId},'${type}')"
+                    style="padding:3px 10px;font-size:11px;font-weight:600;background:#00247c;color:#fff;
+                           border:none;border-radius:6px;cursor:pointer;font-family:inherit;">View</button>
+            </td>
+        </tr>`;
+    };
 
     let appRows = '';
     const total = apps
@@ -486,41 +520,26 @@ function displayHouseDetailsInModal(data, apps) {
         : 0;
 
     if (total === 0) {
-        appRows = `<tr><td colspan="2" style="padding:14px 12px;color:#888;font-size:13px;
+        appRows = `<tr><td colspan="3" style="padding:14px 12px;color:#888;font-size:13px;
                         text-align:center;font-style:italic;">
                     No applications connected to this household.</td></tr>`;
     } else {
         (apps.businesses || []).forEach(b => {
-            const sc = b.status === 'approved' ? '#28a745' : b.status === 'disapproved' ? '#dc3545' : '#ff9800';
-            appRows += detailRow(
-                typeBadge('#9C27B0', 'Business') + (b.business_name || 'Unnamed Business'),
-                `${b.type_of_business || '—'} &nbsp;${statusBadge(b.status || 'Pending', sc)}${viewBtn("viewMapDetails(" + b.id + ",'business')")}`
-            );
+            appRows += appRow('#9C27B0', 'Business', '#fff', b.business_name || 'Unnamed', b.status, b.id, 'business');
         });
         (apps.constructions || []).forEach(c => {
-            const sc = c.agreed === '1' ? '#28a745' : '#ff9800';
             const name = ((c.first_name || '') + ' ' + (c.last_name || '')).trim();
-            appRows += detailRow(
-                typeBadge('#ffc107', 'Construction', '#333') + name,
-                `${c.type_of_work || c.nature_of_work || '—'} &nbsp;${statusBadge(c.agreed === '1' ? 'Approved' : 'Pending', sc)}${viewBtn("viewMapDetails(" + c.id + ",'construction')")}`
-            );
+            appRows += appRow('#ffc107', 'Construction', '#333', name || '—', c.status, c.id, 'construction');
         });
         (apps.utilities || []).forEach(u => {
-            const sc = u.agreed === '1' ? '#28a745' : '#ff9800';
             const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
-            appRows += detailRow(
-                typeBadge('#2196F3', 'Utility') + name,
-                `${u.nature_of_work || u.provider || '—'} &nbsp;${statusBadge(u.agreed === '1' ? 'Approved' : 'Pending', sc)}${viewBtn("viewMapDetails(" + u.id + ",'utility')")}`
-            );
+            appRows += appRow('#2196F3', 'Utility', '#fff', name || '—', u.status, u.id, 'utility');
         });
         (apps.incidents || []).forEach(i => {
-            const sc = i.status === 'Resolved' ? '#28a745' : i.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
-            appRows += detailRow(
-                typeBadge('#cc0000', 'Incident') + (i.incident_type || 'Incident'),
-                `${i.vic_full_name ? 'Victim: ' + i.vic_full_name : '—'} &nbsp;${statusBadge(i.status || 'Open', sc)}${viewBtn("viewMapDetails(" + i.id + ",'incident')")}`
-            );
+            appRows += appRow('#cc0000', 'Incident', '#fff', i.incident_type || '—', i.status, i.id, 'incident');
         });
     }
+
     const tableRows = [
         sectionHeader('Household Information'), basicRows,
         sectionHeader('Connected Applications'), appRows
@@ -1483,7 +1502,6 @@ function createBusinessPopup(data) {
                 <p><strong>Owner:</strong> ${data.first_name || ''} ${data.last_name || ''}</p>
             </div>
             <div class="popup-section">
-                <p><strong>Status:</strong> <span class="status-${data.status || 'pending'}">${data.status || 'Pending'}</span></p>
                 <p><strong>Employees:</strong> ${data.no_of_employees || '0'}</p>
             </div>
             <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'business')">
@@ -1517,10 +1535,6 @@ function createUtilityPopup(data) {
 }
 
 function createIncidentPopup(data) {
-    const statusColor = data.status === 'Resolved' ? '#28a745'
-        : data.status === 'Under Investigation' ? '#ff9800' : '#cc0000';
-    const dssColor = data.dss_status === 'High Priority' ? '#cc0000'
-        : data.dss_status === 'Medium Priority' ? '#ff9800' : '#555';
     return `
         <div class="popup-content">
             <h4>
@@ -1535,10 +1549,6 @@ function createIncidentPopup(data) {
             <div class="popup-section">
                 <p><strong>Victim:</strong> ${data.vic_full_name || data.rp_full_name || 'Not specified'}</p>
                 <p><strong>Reporter:</strong> ${data.rp_full_name || 'Not specified'}</p>
-            </div>
-            <div class="popup-section">
-                <p><strong>Status:</strong> <span style="color:${statusColor};font-weight:600;">${data.status || 'Pending'}</span></p>
-                <p><strong>Evaluation:</strong> <span style="color:${dssColor};font-weight:600;">${data.dss_status || 'Pending Evaluation'}</span></p>
             </div>
             <button class="view-details-btn" onclick="viewMapDetails(${data.id}, 'incident')">
                 View Full Details
@@ -1697,10 +1707,10 @@ function processMarkersData(data) {
         const lat = parseFloat(construction.latitude);
         const lng = parseFloat(construction.longitude);
         if (isNaN(lat) || isNaN(lng)) return;
-        const marker = L.marker([lat, lng], { icon: constructionIcon, title: construction.name || 'Construction Site' })
-            .bindPopup(createConstructionPopup(construction));
+        const marker = L.marker([lat, lng], { icon: constructionIcon, title: construction.name || 'Construction Site' });
         marker.construction_data = construction;
         marker.nature_of_work = construction.nature_of_work || construction.nature_of_activity;
+        marker.bindPopup(createConstructionPopup(construction));
         constructionMarkers.push(marker);
         if (activeFilter === 'construction' && shouldShowConstructionMarker(marker)) marker.addTo(map);
     });
@@ -3816,7 +3826,7 @@ function buildEvalPopup(ev, sc, pct) {
         </div>`;
 }
 
-// ==================== WEBSOCKET LISTENER FOR BUSINESS APPLICATIONS ====================
+// ==================== WEBSOCKET LISTENERS ====================
 if (!sockets["business_applications"]) {
     initSocket("business_applications", "ws://localhost:8081", data => {
         if (data.type === "business_applications_update") {

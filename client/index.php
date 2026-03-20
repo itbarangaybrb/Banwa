@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Start session and check if user is already logged in.
- * If logged in, redirect to the appropriate page based on their role.
- */
 session_start();
 
 if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
@@ -22,35 +18,23 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             exit;
         }
 
-        switch ($_SESSION['role_id']) {
-            case 1: // Resident
-                header("Location: /client/pages/resident/home.php");
-                break;
-            case 2: // Super Admin
-                header("Location: /client/pages/staff/superadmin/dashboard.php");
-                break;
-            case 3: // Admin
-                header("Location: /client/pages/admin/dashboard.php");
-                break;
-            case 4: // Business Staff
-                header("Location: /client/pages/staff/business_staff/business.php");
-                break;
-            case 5: // Construction Staff
-                header("Location: /client/pages/staff/construction_staff/construction.php");
-                break;
-            case 6: // Utilities Staff
-                header("Location: /client/pages/staff/utilities_staff/utilities.php");
-                break;
-            case 7: // Finance Staff
-                header("Location: /client/pages/staff/finance_staff/finance.php");
-                break;
-            case 8: // Incident Report Staff
-                header("Location: /client/pages/staff/incident_report_staff/incident_report.php");
-                break;
-            default:
-                session_destroy();
-                header("Location: /client/index.php");
-                break;
+        $redirectMap = [
+            1 => '/client/pages/resident/home.php',
+            2 => '/client/pages/staff/superadmin/dashboard.php',
+            3 => '/client/pages/admin/dashboard.php',
+            4 => '/client/pages/staff/business_staff/business.php',
+            5 => '/client/pages/staff/construction_staff/construction.php',
+            6 => '/client/pages/staff/utilities_staff/utilities.php',
+            7 => '/client/pages/staff/finance_staff/finance.php',
+            8 => '/client/pages/staff/incident_report_staff/incident_report.php',
+        ];
+
+        $roleId = $_SESSION['role_id'];
+        if (isset($redirectMap[$roleId])) {
+            header("Location: {$redirectMap[$roleId]}");
+        } else {
+            session_destroy();
+            header("Location: /client/index.php");
         }
         exit;
     } else {
@@ -97,11 +81,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         </div>
     </header>
 
-    <!-- Main Content with Proper Whitespace -->
     <main>
+        <!-- ==================== HERO SECTION ==================== -->
         <section data-theme="banner" class="hero-section">
             <div class="hero-cont">
-                <!-- Background Carousel Container -->
                 <div class="hero-bg-carousel">
                     <div class="carousel-images">
                         <img src="../client/img/building-1.png" alt="Barangay Hall" class="carousel-image active">
@@ -109,9 +92,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         <img src="../client/img/building-3.png" alt="Community Center" class="carousel-image">
                         <img src="../client/img/building-4.png" alt="Barangay Hall-Side View" class="carousel-image">
                         <img src="../client/img/building-5.png" alt="Meeting Table" class="carousel-image">
-                        <!-- Add more images as needed -->
                     </div>
-                    <!-- Optional: Navigation dots -->
                     <div class="carousel-dots">
                         <span class="dot active" data-index="0"></span>
                         <span class="dot" data-index="1"></span>
@@ -121,11 +102,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     </div>
                 </div>
 
-                <!-- Hero Content Overlay -->
                 <div class="hero-content-overlay">
                     <div class="hero_content">
                         <h1>BANWA</h1>
-
                         <div class="barangay-title-container">
                             <h6>Barangay Blue Ridge B</h6>
                             <div class="office-hours-container">
@@ -134,7 +113,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     <div class="hours-tooltip">
                                         <div class="hours-schedule">
                                             <h4>Onsite Office Hours</h4>
-
                                             <div class="schedule-item">
                                                 <span class="days">Monday - Friday</span>
                                                 <span class="time">8:00 AM - 5:00 PM</span>
@@ -165,9 +143,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             </div>
         </section>
 
+        <!-- ==================== SERVICES SECTION ==================== -->
         <section data-theme="white" class="services-section">
             <div class="cont">
-                <!-- Section Header with 24/7 prominence -->
                 <div class="services-header">
                     <div class="header-badge">
                         <span class="live-chip">
@@ -179,10 +157,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     <p class="header-description">All services available online 24 hours a day, 7 days a week.</p>
                 </div>
 
-                <!-- 3 Horizontal Cards -->
                 <div class="services-horizontal">
-                    <!-- Card 1: Construction Clearance -->
-                    <button class="service-h-card" id="getStartedBtn">
+                    <!-- Construction Clearance -->
+                    <button class="service-h-card">
                         <div class="card-icon-wrapper">
                             <div class="card-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -192,10 +169,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </svg>
                             </div>
                         </div>
-
                         <h3>Construction Clearance</h3>
                         <p class="card-subtitle">Home Repairs, Renovations, and New Construction</p>
-
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Requirements</span>
@@ -211,9 +186,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </button>
 
-                    <!-- Card 2: Business Clearance -->
+                    <!-- Business Clearance -->
                     <button class="service-h-card">
-                        <!-- same content, just change opening/closing tags -->
                         <div class="card-icon-wrapper">
                             <div class="card-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -224,10 +198,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </svg>
                             </div>
                         </div>
-
                         <h3>Business Clearance</h3>
                         <p class="card-subtitle">New businesses, Renewals, and Closure</p>
-
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Requirements</span>
@@ -242,9 +214,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </button>
 
-                    <!-- Card 3: Utilities Services -->
+                    <!-- Utilities Services -->
                     <button class="service-h-card">
-                        <!-- same content, just change opening/closing tags -->
                         <div class="card-icon-wrapper">
                             <div class="card-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -256,10 +227,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </svg>
                             </div>
                         </div>
-
                         <h3>Utilities Services</h3>
                         <p class="card-subtitle">Water, Electricity, Internet, and Billing Inquiries</p>
-
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Services</span>
@@ -276,8 +245,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </button>
 
+                    <!-- Incident Report -->
                     <button class="service-h-card">
-                        <!-- same content, just change opening/closing tags -->
                         <div class="card-icon-wrapper">
                             <div class="card-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -288,10 +257,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </svg>
                             </div>
                         </div>
-
                         <h3>Incident Report</h3>
                         <p class="card-subtitle">Report Incidents and Seek Assistance</p>
-
                         <div class="card-preview-content">
                             <div class="preview-header">
                                 <span class="preview-title">Information Needed</span>
@@ -310,13 +277,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     </button>
                 </div>
 
-                <!-- 24/7 Floating Notice (Optional) -->
                 <div class="always-open-note">
                     <span><strong>Applications submitted outside office hours will be processed the next business day.</strong></span>
                 </div>
             </div>
         </section>
 
+        <!-- ==================== OUR STORY SECTION ==================== -->
         <section data-theme="blue">
             <div class="cont">
                 <div class="story-content">
@@ -360,7 +327,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             </div>
         </section>
 
-        <!-- With this: -->
+        <!-- ==================== MISSION & VISION SECTION ==================== -->
         <section data-theme="white" class="mission-vision-section">
             <div class="cont">
                 <div class="quick_align">
@@ -368,21 +335,15 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                 </div>
                 <div class="mission-vision-wrapper">
                     <div class="mv-background-side">
-                        <div class="mv-bg-image">
-                            <!-- This div will have the background image -->
-                        </div>
+                        <div class="mv-bg-image"></div>
                     </div>
                     <div class="mission-vision-content">
-
-                        <!-- Mission Section -->
                         <div class="mv-section">
                             <h3>Mission</h3>
                             <div class="mv-text">
                                 <p>We, as the front-liners of the government to its citizen at the Barangay level, are committed to become models of excellence and to deliver efficient, high quality and good value services to Blue Ridge B towards attainment of our vision.</p>
                             </div>
                         </div>
-
-                        <!-- Vision Section -->
                         <div class="mv-section">
                             <h3>Vision</h3>
                             <div class="mv-text">
@@ -392,28 +353,23 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     </div>
                 </div>
             </div>
-            </div>
         </section>
 
+        <!-- ==================== BARANGAY OFFICIALS SECTION ==================== -->
         <section data-theme="blue" class="officials-section">
             <div class="cont">
                 <div class="quick_align">
                     <h2>Barangay Officials</h2>
                 </div>
 
-                <!-- Officials Carousel Container -->
                 <div class="officials-carousel">
                     <div class="carousel-viewport">
-                        <!-- Carousel Navigation Buttons -->
                         <button class="carousel-nav prev" aria-label="Previous official">
                             <span>&#10094;</span>
                         </button>
 
-                        <!-- Carousel Track Container -->
                         <div class="carousel-container">
-                            <!-- Carousel Track -->
                             <div class="carousel-track">
-                                <!-- Official 1 -->
                                 <div class="official-card" data-index="0">
                                     <div class="official-image">
                                         <img src="../client/img/official-1.png" alt="Kapitan Sessan Castro-Lee">
@@ -424,8 +380,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 2 -->
                                 <div class="official-card" data-index="1">
                                     <div class="official-image">
                                         <img src="../client/img/official-2.png" alt="Katherine T. De Jesus">
@@ -436,8 +390,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 3 -->
                                 <div class="official-card" data-index="2">
                                     <div class="official-image">
                                         <img src="../client/img/official-3.png" alt="Margarette Karra De Jesus">
@@ -448,8 +400,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 4 -->
                                 <div class="official-card" data-index="3">
                                     <div class="official-image">
                                         <img src="../client/img/official-4.png" alt="Anna Francesca L. Maristela">
@@ -460,8 +410,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 5 -->
                                 <div class="official-card" data-index="4">
                                     <div class="official-image">
                                         <img src="../client/img/official-5.png" alt="Augusto D. Ilagan">
@@ -472,8 +420,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 6 -->
                                 <div class="official-card" data-index="5">
                                     <div class="official-image">
                                         <img src="../client/img/official-6.png" alt="Natalia L. Maristela">
@@ -484,8 +430,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 7 -->
                                 <div class="official-card" data-index="6">
                                     <div class="official-image">
                                         <img src="../client/img/official-7.png" alt="Modesto Carlo M. Ruiz Jr.">
@@ -496,8 +440,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 8 -->
                                 <div class="official-card" data-index="7">
                                     <div class="official-image">
                                         <img src="../client/img/official-8.png" alt="Rovie Rose B. Baylon">
@@ -508,8 +450,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                         <div class="official-divider"></div>
                                     </div>
                                 </div>
-
-                                <!-- Official 9 -->
                                 <div class="official-card" data-index="8">
                                     <div class="official-image">
                                         <img src="../client/img/official-9.png" alt="Michell V. Meniano">
@@ -528,7 +468,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </button>
                     </div>
 
-                    <!-- Carousel Indicators/Dots -->
                     <div class="carousel-indicators">
                         <button class="indicator active" data-index="0" aria-label="Go to slide 1"></button>
                         <button class="indicator" data-index="1" aria-label="Go to slide 2"></button>
@@ -544,6 +483,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             </div>
         </section>
 
+        <!-- ==================== FAQ SECTION ==================== -->
         <section data-theme="white" class="faq-section">
             <div class="cont">
                 <div class="quick_align">
@@ -552,7 +492,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                 </div>
 
                 <div class="faq-container">
-                    <!-- FAQ Category: General -->
                     <div class="faq-category">
                         <h3 class="category-title">General Questions</h3>
 
@@ -587,7 +526,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </div>
 
-                    <!-- FAQ Category: Clearances -->
                     <div class="faq-category">
                         <h3 class="category-title">Clearances & Permits</h3>
 
@@ -625,7 +563,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </div>
 
-                    <!-- FAQ Category: Technical -->
                     <div class="faq-category">
                         <h3 class="category-title">Technical Support</h3>
 
@@ -665,7 +602,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </div>
                     </div>
 
-                    <!-- FAQ Category: Payments -->
                     <div class="faq-category">
                         <h3 class="category-title">Payments & Fees</h3>
 
@@ -697,6 +633,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             </div>
         </section>
 
+        <!-- ==================== CONTACT US SECTION ==================== -->
         <section data-theme="blue">
             <div class="cont">
                 <div class="contact-content">
@@ -715,7 +652,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         </section>
     </main>
 
-    <!-- Auth Modal (Signup/Login) -->
+    <!-- ==================== AUTH MODAL ==================== -->
     <div id="authModal" class="signup-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -724,15 +661,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                 <button class="modal-close" id="closeModalBtn">&times;</button>
             </div>
 
-            <!-- Auth Toggle -->
             <div class="auth-toggle">
                 <button class="toggle-btn active" id="showSignupBtn">Sign Up</button>
                 <button class="toggle-btn" id="showLoginBtn">Log In</button>
             </div>
 
-            <!-- Signup Panel (with progress steps) -->
+            <!-- Signup Panel -->
             <div class="auth-panel" id="signupPanel">
-                <!-- Progress Steps -->
                 <div class="progress-steps">
                     <div class="step active" data-step="1">
                         <div class="step-number">1</div>
@@ -748,14 +683,12 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     </div>
                 </div>
 
-                <!-- Modal Body - Contains the signup forms -->
                 <div class="modal-body">
-                    <!-- Select ID Panel (Step 1) -->
+                    <!-- Step 1: Identity Verification -->
                     <div class="form-panel" id="selectId">
                         <form class="form" id="selectIdForm">
                             <h2 class="form2">Identity Verification</h2>
                             <p>Please upload a valid ID to autofill your information.</p>
-
                             <div class="inputs-container">
                                 <div class="label-and-input" id="idTypeWrapper">
                                     <label>Type of ID <span style="color: #BB1B1B;">*</span></label>
@@ -766,7 +699,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     </select>
                                     <div class="error-msg"></div>
                                 </div>
-
                                 <div class="label-and-input" id="idFileWrapper">
                                     <label for="idFile">
                                         Upload ID File <span style="color: #BB1B1B;">*</span><br>
@@ -779,18 +711,15 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     </div>
                                     <div class="error-msg"></div>
                                 </div>
-
                                 <div id="ocrStatus" style="display:none;"></div>
                             </div>
-
                             <div class="buttons-container">
-                                <!-- <button type="button" id="selectIdBackBtn">Back</button> -->
                                 <button type="button" id="selectIdNextBtn">Next</button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Personal Details Panel (Step 2) -->
+                    <!-- Step 2: Personal Information -->
                     <div class="form-panel hidden" id="personalDetails">
                         <form class="form" id="personalDetailsForm">
                             <h2 class="form2">Personal Information</h2>
@@ -836,7 +765,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     <div class="error-msg"></div>
                                 </div>
                             </div>
-
                             <div class="buttons-container">
                                 <button type="button" id="personalDetailsBackBtn">Back</button>
                                 <button type="button" id="personalDetailsNextBtn">Next</button>
@@ -844,13 +772,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                         </form>
                     </div>
 
-                    <!-- Create Account Panel (Step 3) -->
+                    <!-- Step 3: Create Account -->
                     <div class="form-panel hidden" id="createAcc">
                         <form class="form" id="createAccForm">
                             <h2 class="form2">Create Account</h2>
-
                             <span id="formMessage"></span>
-
                             <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="createAccEmail">Email <span style="color: #BB1B1B;">*</span></label>
@@ -874,7 +800,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     <div class="error-msg"></div>
                                 </div>
                             </div>
-
                             <div class="buttons-container">
                                 <button type="button" id="createAccBackBtn">Back</button>
                                 <button type="submit" id="createAccSubmitBtn">Submit</button>
@@ -890,13 +815,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                 <div class="modal-body">
                     <div class="login-container">
                         <form class="form" id="loginForm">
-                            <!-- <div class="header-and-parag">
-                                <img src="../client/img/banwalogo.png" alt="Barangay Blue Ridge B Logo">
-                                <h4>Sign in to BBRB</h4>
-                            </div> -->
-
                             <div id="loginFormMessage" class="form-message"></div>
-
                             <div class="inputs-container">
                                 <div class="label-and-input">
                                     <label for="loginEmail">Email</label>
@@ -910,7 +829,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </div>
                                 <a href="../client/pages/auth/forgot_pass.php">Forgot password?</a>
                             </div>
-
                             <div class="buttons-container">
                                 <button type="submit" id="loginSubmitBtn" class="login-btn">Log in</button>
                             </div>
@@ -942,7 +860,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
 
     <script src="../client/scripts/resident/nav.js" defer></script>
     <script src="../client/scripts/resident/home.js" defer></script>
-    <!-- <script type="module" src="../client/scripts/auth/signup-modal.js"></script> -->
     <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
     <script type="module" src="../client/scripts/components/loader.js"></script>
 

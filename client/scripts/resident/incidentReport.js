@@ -1,9 +1,10 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
-const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
-
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { initSocket, sockets } from '../utils/socketUtils.js';
 import supabase from '../../../server/api/supabase.js';
+
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 registerServiceWorker();
 
@@ -289,7 +290,7 @@ const validator = (() => {
 
         // Try to find a match in your database (case-insensitive for better UX)
         const match = addressCoordinates.find(a => a.address.toLowerCase() === address.toLowerCase());
-        
+
         if (!match && options.validateExistence !== false) {
             const wrapper = addressInput.closest('.label-and-input');
             const errorEl = wrapper.querySelector('.error-msg');
@@ -352,6 +353,7 @@ const validationConfig = [
 
     // Incident Details validation rules
     { el: incidentType, type: 'select', message: 'Please select incident type' },
+    { el: otherIncidentType, type: 'text', message: 'Please specify the incident type', rules: { minLength: 3 } },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
     { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
     { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
@@ -368,7 +370,12 @@ function validateField(config) {
 
     switch (type) {
         case 'number': return validator.number(el, message, rules);
-        case 'text': return validator.text(el, message, rules);
+        case 'text':
+            if (el.closest('.label-and-input')?.style.display === 'none') {
+                validator.clear(el);
+                return true;
+            }
+            return validator.text(el, message, rules);
         case 'textarea': return validator.textarea(el, message, rules);
         case 'select': return validator.select(el, message);
         case 'date': return validator.date(el, message, rules);
@@ -413,17 +420,6 @@ function validateField(config) {
     //         el.addEventListener('input', () => validator.clear(el));
     //     });
     // });
-
-    // Special handling for "Other" incident type selection
-    incidentType.addEventListener('change', function () {
-        const otherContainer = document.getElementById('otherSpecifyContainer');
-        if (this.value === 'other') {
-            otherContainer.classList.remove('hidden');
-        } else {
-            otherContainer.classList.add('hidden');
-            validator.clear(otherIncidentType);
-        }
-    });
 
     // Input sanitization for contact number fields (remove non-digit characters)
     [rpContact, vicContact, susContact].forEach(el => {
@@ -493,10 +489,7 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
     const stepFields = [susDescription];
     if (!validateStep(stepFields)) return;
 
-    // Add default witness if none exists
-    if (witnessCount === 0) {
-        addWitness();
-    }
+    if (witnessCount === 0) addWitness();
     switchPanel('witnessesSection');
 });
 
@@ -512,15 +505,13 @@ document.getElementById('nextToIncident').addEventListener('click', () => {
  * Validates all incident fields and populates summary display with all form data
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
-
-    // Handle "other" incident type with custom specification
-    if (incidentType.value === 'other') {
-        if (!otherIncidentType.value.trim()) {
-            validator.text(otherIncidentType, 'Please specify the incident type');
-            return;
-        }
-    }
+    const stepFields = [
+        incidentType,
+        incidentType.value === 'Other' ? otherIncidentType : null,
+        incidentTimestamp,
+        incidentAddress,
+        description
+    ].filter(f => f !== null);
 
     if (!validateStep(stepFields)) return;
 
@@ -555,12 +546,9 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     document.getElementById('sumSusDescription').textContent = susDescription.value;
 
     document.getElementById('sumIncidentType').textContent =
-        incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
+        incidentType.value === 'Other' ? otherIncidentType.value : incidentType.value;
     document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
     document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
-    document.getElementById('sumIncidentCoordinates').textContent =
-        incidentLatitude.value && incidentLongitude.value ?
-            `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
     document.getElementById('sumDescription').textContent = description.value;
 
     switchPanel('summary');
@@ -571,10 +559,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('reportingPersonBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
     document.getElementById('suspectBackBtn').addEventListener('click', () => switchPanel('victimDetails'));
     document.getElementById('witnessesBackBtn').addEventListener('click', () => switchPanel('suspectDetails'));
@@ -664,9 +649,9 @@ newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     // // Request notification permission for submission alerts
-    // if (Notification.permission !== "granted") {
-    //     await Notification.requestPermission();
-    // }
+    if (Notification.permission !== "granted") {
+        await Notification.requestPermission();
+    }
 
     const confirmInciStaffResult = await ir_swal.fire({
         icon: 'question',
@@ -682,16 +667,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmInciStaffResult.isConfirmed) {
-        // if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-        //     navigator.serviceWorker.ready.then(registration => {
-        //         registration.showNotification("Incident Report Submitted", {
-        //             body: "Click to view your report status",
-        //             icon: "/client/img/banwalogo.png",
-        //             data: { url: "/client/pages/resident/status.php" }
-        //         });
-        //     });
-        // }
-
         const formData = new FormData();
 
         formData.append('action', 'create');
@@ -746,7 +721,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         // Incident Details data (only this section includes coordinates)
         const incidentTypeVal = incidentType.value;
 
-        formData.append('incidentType', incidentTypeVal === 'other' ? otherIncidentType.value : incidentTypeVal);
+        formData.append('incidentType', incidentTypeVal === 'Other' ? otherIncidentType.value : incidentTypeVal);
         formData.append('incidentTimestamp', incidentTimestamp.value);
         formData.append('incidentAddress', incidentAddress.value); // Added!
         formData.append('incidentLatitude', incidentLatitude.value);
@@ -763,10 +738,21 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
+                    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification("Incident Report Submitted", {
+                                body: "Click to view your report status",
+                                icon: "/client/img/banwalogo.png",
+                                data: { url: "/client/pages/resident/status.php" }
+                            });
+                        });
+                    }
 
-                    // if (sockets["incident_report"] && sockets["incident_report"].readyState === WebSocket.OPEN) {
-                    //     sockets["incident_report"].send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
-                    // }
+                    sockets["incident_report"]?.readyState === WebSocket.OPEN &&
+                        sockets["incident_report"].send(JSON.stringify({
+                            type: "incident_report_update",
+                            action: "new_application"
+                        }));
 
                     ir_swal.fire({
                         icon: 'success',
@@ -795,7 +781,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
     }
 });
 
-
 /**
  * Opens an interactive map modal specifically for incident location selection
  * @param {string} target - Identifier for which address field is being mapped
@@ -814,8 +799,8 @@ function openMapPicker(target) {
     if (!modal) {
         modal = document.createElement('div');
         // Removed 'map-modal' class to detach from external CSS forcing it to the right
-        modal.className = 'dynamic-map-modal'; 
-        
+        modal.className = 'dynamic-map-modal';
+
         // Foolproof full-screen centered overlay
         modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; z-index: 99999 !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; padding: 0 !important;';
 
@@ -845,7 +830,7 @@ function openMapPicker(target) {
 
     // Force it to use flex so centering applies when reopening
     modal.style.setProperty('display', 'flex', 'important');
-    
+
     // Add a slight delay to allow the modal to display before initializing Leaflet
     setTimeout(() => {
         initializeMapPicker('dynamic-map-container', target);
@@ -923,7 +908,7 @@ async function initializeMapPicker(containerId, target) {
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        
+
         document.getElementById('incidentLatitude').value = lat;
         document.getElementById('incidentLongitude').value = lng;
     });
@@ -993,14 +978,14 @@ async function initializeMapPicker(containerId, target) {
                         const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
                         const selAddr = (!isLandmarkSel && house.address) ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
                         const selStreet = house.street_name ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
-                        
+
                         const selPopup =
                             '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
                             '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
                             (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
                             '</div>' + selAddr + selStreet + '</div>';
-                            
+
                         selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
 
                         // Target Resident Incident Report Coordinates
@@ -1018,7 +1003,7 @@ async function initializeMapPicker(containerId, target) {
                         if (addressInput) {
                             addressInput.value = formattedAddress;
                             // Trigger input event to clear validation errors automatically
-                            addressInput.dispatchEvent(new Event('input')); 
+                            addressInput.dispatchEvent(new Event('input'));
                         }
                     });
 
@@ -1051,6 +1036,22 @@ function setupCoordinateAutoFormat(target) {
     });
 }
 
+/**
+ * Shows or hides "specify" text fields based on "Others" selection in dropdowns
+ * @param {HTMLSelectElement} selectEl - The primary select element
+ * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
+ */
+function handleOthersSelect(selectEl, specifyEl) {
+    const wrapper = specifyEl.closest('.label-and-input');
+    if (selectEl.value === 'Other') {
+        wrapper.style.display = 'block';
+    } else {
+        wrapper.style.display = 'none';
+        specifyEl.value = '';
+    }
+}
+
+
 // Initialize coordinate formatting only for incident location when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     setupCoordinateAutoFormat('incident');
@@ -1082,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Added credentials and cache settings exactly like the business app
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        
+
         console.debug('incident_report autofill response:', data);
 
         if (data.error) {
@@ -1103,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const last = data.last_name || '';
             const first = data.first_name || '';
             const middle = data.middle_name ? ' ' + data.middle_name : '';
-            
+
             // Formats to match the input placeholder: "Last, First, Middle Name"
             if (last && first) {
                 rpFullName.value = `${last}, ${first}${middle}`;
@@ -1135,7 +1136,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => { });
-    }
+    if (!sockets["incident_report_applications"]) initSocket("incident_report_applications", "ws://localhost:8081", () => { });
+
+    incidentType.addEventListener('change', () => handleOthersSelect(incidentType, otherIncidentType));
+    handleOthersSelect(incidentType, otherIncidentType);
 });

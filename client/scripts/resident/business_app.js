@@ -525,7 +525,16 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
  * Handles navigation from business information panel to waiver panel
  * Validates all business fields including dynamic requirements based on application type
  */
-document.getElementById('nextToWaiver').addEventListener('click', () => {
+document.getElementById('nextToWaiver').addEventListener('click', async () => {
+    if (!documentVerificationDone) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'OCR Not Done',
+            html: 'Documents have not been verified with OCR yet. Please wait for verification to complete before proceeding.',
+        });
+        return;
+    }
+
     const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
 
     const stepFields = [
@@ -553,12 +562,6 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
 
     if (!addressValid || !fieldsValid) return;
 
-    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-            return;
-        }
-    }
-
     switchPanel('waiver');
 });
 
@@ -575,7 +578,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
         document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
         document.getElementById('sumBusinessStatus').textContent = (Array.from(businessStatus).find(r => r.checked)?.value === 'Others' ? businessStatusSpecify.value : Array.from(businessStatus).find(r => r.checked)?.value || '').trim();
-        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}`;
         document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
         document.getElementById('sumEmail').textContent = emailAddress.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
@@ -595,10 +598,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -734,16 +734,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
     });
 
     if (confirmBusResult.isConfirmed) {
-        if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification("Business Application Submitted", {
-                    body: "Click to view your application status",
-                    icon: "/client/img/banwalogo.png",
-                    data: { url: "/client/pages/resident/status.php" }
-                });
-            });
-        }
-
         const formData = new FormData();
 
         // Add action for business_handler.php
@@ -824,10 +814,21 @@ newSummaryForm.addEventListener('submit', async function (e) {
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-
-                    if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                        sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
+                    if (Notification.permission === "granted" && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification("Business Application Submitted", {
+                                body: "Click to view your application status",
+                                icon: "/client/img/banwalogo.png",
+                                data: { url: "/client/pages/resident/status.php" }
+                            });
+                        });
                     }
+
+                    sockets["business_applications"]?.readyState === WebSocket.OPEN &&
+                        sockets["business_applications"].send(JSON.stringify({
+                            type: "business_applications_update",
+                            action: "new_application"
+                        }));
 
                     business_app_swal.fire({
                         icon: 'success',
@@ -1156,10 +1157,10 @@ async function initializeMapPicker(target) {
                     boundaryLayers.push(layer);
                     // ── Boundary lock: mirrors map.js setupSoftBoundary ──────────────
                     try {
-                        const _bounds     = layer.getBounds();
-                        const _soft       = _bounds.pad(0.15);
-                        const _warn       = _bounds.pad(0.05);
-                        const _hard       = _bounds.pad(0.25);
+                        const _bounds = layer.getBounds();
+                        const _soft = _bounds.pad(0.15);
+                        const _warn = _bounds.pad(0.05);
+                        const _hard = _bounds.pad(0.25);
                         map.setMinZoom(18);
                         map.setMaxZoom(22);
                         map.setMaxBounds(_hard);
@@ -1168,9 +1169,9 @@ async function initializeMapPicker(target) {
                             clearTimeout(_bTimer);
                             if (!_warn.contains(map.getCenter())) {
                                 _bTimer = setTimeout(function () {
-                                    const c   = map.getCenter();
+                                    const c = map.getCenter();
                                     const lat = Math.max(_warn.getSouth(), Math.min(_warn.getNorth(), c.lat));
-                                    const lng = Math.max(_warn.getWest(),  Math.min(_warn.getEast(),  c.lng));
+                                    const lng = Math.max(_warn.getWest(), Math.min(_warn.getEast(), c.lng));
                                     map.flyTo([lat, lng], map.getZoom(), { duration: 1, easeLinearity: 0.25 });
                                 }, 800);
                             }
@@ -1179,7 +1180,7 @@ async function initializeMapPicker(target) {
                             const c = map.getCenter();
                             if (!_soft.contains(c)) {
                                 const lat = Math.max(_soft.getSouth(), Math.min(_soft.getNorth(), c.lat));
-                                const lng = Math.max(_soft.getWest(),  Math.min(_soft.getEast(),  c.lng));
+                                const lng = Math.max(_soft.getWest(), Math.min(_soft.getEast(), c.lng));
                                 map.panTo([lat, lng], { animate: true, duration: 0.5 });
                             }
                         });
@@ -1348,7 +1349,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => { });
-    }
+    if (!sockets["business_applications"]) initSocket("business_applications", "ws://localhost:8081", () => { });
 });
