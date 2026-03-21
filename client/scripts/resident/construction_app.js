@@ -44,6 +44,13 @@ function switchPanel(panelId) {
     window.scrollTo(0, 0);
 }
 
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    owner: false,
+    construction: false,
+    waiver: false
+}
+
 // Form element references for owner information section
 const firstName = document.getElementById('firstName');
 const middleName = document.getElementById('middleName');
@@ -353,10 +360,8 @@ function validateField(config) {
     const { el, type, message, rules } = config;
     if (!el) return true;
 
-    // Check if this is a conditional field (file upload that may not be required)
     if (rules && rules.conditional) {
         const applicationMethod = document.getElementById('applicationMethod').value;
-        // If method is 'In Person', file upload is not required
         if (applicationMethod === 'In Person') {
             validator.clear(el);
             return true;
@@ -425,6 +430,8 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
     const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
     if (!validateStep(stepFields)) return;
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+
+    completedPanels.owner = true;
     switchPanel('construction');
 });
 
@@ -450,6 +457,8 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
 
     if (!validateStep(stepFields)) return;
     if (!validator.address(constructionLotNo, constructionStreet)) return;
+
+    completedPanels.construction = true;
     switchPanel('waiver');
 });
 
@@ -483,6 +492,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumAddressOwner').textContent = addressOwner.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
 
+        completedPanels.waiver = true;
         switchPanel('summary');
     }
 });
@@ -511,6 +521,21 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const requiredPanels = ['owner', 'construction', 'waiver'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+            confirmButtonColor: '#00247C',
+        });
+        switchPanel('owner');
+        return;
+    }
 
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -992,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('construction_app autofill response:', data);
+        // console.debug('construction_app autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
@@ -1076,7 +1101,7 @@ function toggleApplicationMethod() {
         document.getElementById('applicationMethod').value = '';
         validator.clear(document.getElementById('applicationMethod'));
     } else {
-        applicationMethodWrapper.style.display = 'block';
+        applicationMethodWrapper.style.display = '';
     }
 
     toggleFileUploads();

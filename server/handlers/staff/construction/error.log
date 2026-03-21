@@ -507,3 +507,9 @@ CONTEXT:  unnamed portal parameter $1 = '...'
 [19-Mar-2026 16:22:34 UTC] No files uploaded for application 72, skipping OCR queue.
 [19-Mar-2026 16:22:34 UTC] CR1 Check - Has file upload: No
 [19-Mar-2026 16:22:34 UTC] CR1 Check - Has file upload: No
+[21-Mar-2026 17:11:13 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[21-Mar-2026 17:11:13 UTC] General Error in handleCreateApplication: Missing required field: natureOfActivity
+[21-Mar-2026 19:04:44 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[21-Mar-2026 19:04:44 UTC] No files uploaded for application 73, skipping OCR queue.
+[21-Mar-2026 19:04:44 UTC] CR1 Check - Has file upload: No
+[21-Mar-2026 19:04:44 UTC] CR1 Check - Has file upload: No

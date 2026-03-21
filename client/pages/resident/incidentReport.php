@@ -1,18 +1,35 @@
+<?php
+require_once __DIR__ . '/../../../server/api/shared/check_session.php';
+
+if ($_SESSION['role_id'] != 1) {
+    header("Location: /client/index.php");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Incident Report</title>
+    <title>Incident Report Application</title>
+    
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <link rel="stylesheet" href="../../styles/resident/incidentReport.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 </head>
 
 <body>
+    <?php
+    $page_title = "Incident Report Application";
+    include '_layout/nav.php';
+    ?>
+
     <section class="sections" id="permits">
         <div class="header-and-parag">
             <h4>Incident Report</h4>
@@ -365,7 +382,10 @@
     </section>
 
     <script type="module" src="../../scripts/resident/incidentReport.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <?php include '_layout/end.php'; ?>
 </body>
 
 </html>

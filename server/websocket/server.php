@@ -6,14 +6,19 @@ use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
 
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->safeLoad();
+
+$port = $_ENV['PORT'] ?? 8081;
+
 $server = IoServer::factory(
     new HttpServer(
         new WsServer(
             new UserSocket()
         )
     ),
-    8081
+    $port
 );
 
-echo "WebSocket server started on port 8081\n";
+echo "WebSocket server started on port {$port}\n";
 $server->run();
