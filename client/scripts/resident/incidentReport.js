@@ -82,6 +82,15 @@ function switchPanel(panelId) {
     window.scrollTo(0, 0);
 }
 
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    reportingPerson: false,
+    victimDetails: false,
+    suspectDetails: false,
+    witnessesSection: false,
+    incidentDetails: false,
+};
+
 // Initialize the form with reporting person panel visible
 switchPanel('reportingPerson');
 
@@ -208,15 +217,17 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-        if (rules.pattern && !rules.pattern.test(value)) {
-            showError(input, rules.errorMessage || message);
-            return false;
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-        if (rules.exactLength && value.length !== rules.exactLength) {
-            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false;
-        }
         clearError(input); return true;
     }
 
@@ -337,12 +348,12 @@ const validationConfig = [
     // Reporting Person validation rules
     { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
     { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
-    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
+    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { phoneType: 'ph' } },
 
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
     { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
-    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
+    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
     { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
@@ -457,9 +468,9 @@ function validateStep(fields) {
  */
 document.getElementById('nextToVictim').addEventListener('click', () => {
     const stepFields = [rpFullName, rpAddress, rpContact];
-
     if (!validateStep(stepFields)) return;
 
+    completedPanels.reportingPerson = true;
     switchPanel('victimDetails');
 });
 
@@ -473,10 +484,12 @@ document.getElementById('nextToSuspect').addEventListener('click', () => {
         vicFullName.value = rpFullName.value;
         vicAddress.value = rpAddress.value;
         vicContact.value = rpContact.value;
+        completedPanels.victimDetails = true;
         switchPanel('suspectDetails');
     } else {
         const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
         if (!validateStep(stepFields)) return;
+        completedPanels.victimDetails = true;
         switchPanel('suspectDetails');
     }
 });
@@ -489,6 +502,7 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
     const stepFields = [susDescription];
     if (!validateStep(stepFields)) return;
 
+    completedPanels.suspectDetails = true;
     if (witnessCount === 0) addWitness();
     switchPanel('witnessesSection');
 });
@@ -497,6 +511,7 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
  * Handles navigation from witnesses section panel to incident details panel
  */
 document.getElementById('nextToIncident').addEventListener('click', () => {
+    completedPanels.witnessesSection = true;
     switchPanel('incidentDetails');
 });
 
@@ -514,6 +529,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     ].filter(f => f !== null);
 
     if (!validateStep(stepFields)) return;
+    completedPanels.incidentDetails = true;
 
     // Populate summary display with all collected data
     document.getElementById('sumRpFullName').textContent = rpFullName.value;
@@ -588,9 +604,9 @@ victimSameAsRP.addEventListener('change', function () {
         });
     } else {
         // victimContainer.style.display = 'block';
-        victimFullNameWrapper.style.display = 'block';
-        victimAddressWrapper.style.display = 'block';
-        victimContactWrapper.style.display = 'block';
+        victimFullNameWrapper.style.display = '';
+        victimAddressWrapper.style.display = '';
+        victimContactWrapper.style.display = '';
     }
 });
 
@@ -647,6 +663,20 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    const requiredPanels = ['reportingPerson', 'victimDetails', 'suspectDetails', 'witnessesSection', 'incidentDetails'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await ir_swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+        });
+        switchPanel('reportingPerson');
+        return;
+    }
 
     // // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -1084,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
 
-        console.debug('incident_report autofill response:', data);
+        // console.debug('incident_report autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);

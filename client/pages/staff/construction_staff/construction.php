@@ -371,7 +371,6 @@ $full_name = getCurrentUserName();
             </div>
 
             <!-- Create Tab -->
-            <!-- Create Tab -->
             <div id="create" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">

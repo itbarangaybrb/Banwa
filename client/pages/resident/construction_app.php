@@ -14,17 +14,19 @@ if ($_SESSION['role_id'] != 1) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Clearance Application</title>
+
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <link rel="stylesheet" href="../../styles/resident/construction_app.css">
-    <script type="module" src="../../scripts/resident/construction_app.js" defer></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 </head>
 
 <body>
     <?php
-    $page_title = "Construction Application";
+    $page_title = "Construction Clearance Application";
     include '_layout/nav.php';
     ?>
 
@@ -343,6 +345,10 @@ if ($_SESSION['role_id'] != 1) {
             </form>
         </div>
     </section>
+
+    <script type="module" src="../../scripts/resident/construction_app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <?php include '_layout/end.php'; ?>
 </body>

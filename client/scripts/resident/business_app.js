@@ -82,6 +82,13 @@ function switchPanel(panelId) {
     window.scrollTo(0, 0);
 }
 
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    owner: false,
+    business: false,
+    waiver: false,
+};
+
 // Form element references for owner information section
 const firstName = document.getElementById('firstName');
 const middleName = document.getElementById('middleName');
@@ -506,7 +513,8 @@ function validateField(config) {
  * @returns {boolean} - Whether all fields in the step are valid
  */
 function validateStep(fields) {
-    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+    const results = fields.map(f => validateField(validationConfig.find(c => c.el === f)));
+    return results.every(v => v);
 }
 
 /**
@@ -518,6 +526,7 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
     if (!validateStep(stepFields)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    completedPanels.owner = true;
     switchPanel('business');
 });
 
@@ -526,15 +535,6 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
  * Validates all business fields including dynamic requirements based on application type
  */
 document.getElementById('nextToWaiver').addEventListener('click', async () => {
-    if (!documentVerificationDone) {
-        await business_app_swal.fire({
-            icon: 'warning',
-            title: 'OCR Not Done',
-            html: 'Documents have not been verified with OCR yet. Please wait for verification to complete before proceeding.',
-        });
-        return;
-    }
-
     const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
 
     const stepFields = [
@@ -557,11 +557,23 @@ document.getElementById('nextToWaiver').addEventListener('click', async () => {
         noOfEmployees
     ].filter(Boolean);
 
+
     const addressValid = validator.address(businessLotNo, businessStreet);
     const fieldsValid = validateStep(stepFields);
 
-    if (!addressValid || !fieldsValid) return;
+    if (!addressValid || !fieldsValid) {
+        return;
+    } else if (!documentVerificationDone) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'OCR Not Done',
+            html: 'Documents have not been verified with OCR yet. Please wait for verification to complete before proceeding.',
+        });
+        return;
+    }
 
+
+    completedPanels.business = true;
     switchPanel('waiver');
 });
 
@@ -589,6 +601,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumEmployees').textContent = noOfEmployees.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
 
+        completedPanels.waiver = true;
         switchPanel('summary');
     }
 });
@@ -714,6 +727,21 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    const requiredPanels = ['owner', 'business', 'waiver'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+            confirmButtonColor: '#00247C',
+        });
+        switchPanel('owner');
+        return;
+    }
 
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -1324,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('business_app autofill response:', data);
+        // console.debug('business_app autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
