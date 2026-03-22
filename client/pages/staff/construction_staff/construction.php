@@ -703,7 +703,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="newStatus">New Status *</label>
+                        <label for="newStatus">New Status <span style="color: #BB1B1B;">*</span></label>
                         <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Additional Requirements">Additional Requirements</option>
@@ -715,12 +715,12 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group hidden" id="amountFieldGroup">
-                        <label for="assessmentAmount">Assessment Amount (PHP) *</label>
+                        <label for="assessmentAmount">Assessment Amount (PHP) <span style="color: #BB1B1B;">*</span></label>
                         <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
                     </div>
 
                     <div class="form-group">
-                        <label for="updateComments">Remarks / Comments *</label>
+                        <label for="updateComments">Remarks / Comments <span style="color: #BB1B1B;">*</span></label>
                         <div class="prompt-container">
                             <div class="prompt-suggestions">
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
