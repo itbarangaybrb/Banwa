@@ -813,27 +813,14 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                    sockets["business_applications"].send(JSON.stringify({ type: "business_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-
-                if (sockets["business"] && sockets["business"].readyState === WebSocket.OPEN) {
-                    sockets["business"].send(JSON.stringify({ type: "business_update", action: "status_update" }));
-                }
-
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "new_audit_log",
-                    }));
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "business_applications_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
                 loadProcessTable();
-                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 Swal.fire({
                     ...swalTopConfig,
@@ -860,8 +847,8 @@ function viewDetails(appId) {
     if (!app) return;
 
     // FIX 1: Strip out [""] from the business status string using regex
-    const businessStatus = app.business_status 
-        ? app.business_status.replace(/[\[\]"]/g, '') 
+    const businessStatus = app.business_status
+        ? app.business_status.replace(/[\[\]"]/g, '')
         : 'Not specified';
 
     let reqs = app.requirements;
@@ -2164,6 +2151,12 @@ async function createApplication(event) {
                 confirmButtonText: 'OK'
             }).then(() => {
                 createApplicationform.reset();
+
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "business_applications_update", action: "status_update" }));
+                }
+
                 if (document.getElementById('management')?.classList.contains('active')) {
                     loadManagementTable();
                 }
@@ -2317,39 +2310,17 @@ const statusTemplates = {
 document.addEventListener('DOMContentLoaded', function () {
     fetchAuditLogs();
 
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => {
-            if (data.type === "business_applications_update") {
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "business_applications_update":
                 refreshActiveTab();
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs();
-                }
-            }
-        });
-    }
-
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => {
-            if (data.type === "business_applications_update") {
-                refreshActiveTab();
-            }
-        });
-    }
+                break;
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                break;
+        }
+    });
 
     const statusSelect = document.getElementById('newStatus');
     if (statusSelect) {

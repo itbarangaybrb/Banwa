@@ -913,25 +913,15 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
-                    sockets["utility_applications"].send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-                if (sockets["utility"] && sockets["utility"].readyState === WebSocket.OPEN) {
-                    sockets["utility"].send(JSON.stringify({ type: "utility_update", action: "status_update" }));
-                }
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "new_audit_log",
-                    }));
+                // After successful submitUpdate
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
                 loadProcessTable();
-                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 Swal.fire({
                     ...swalTopConfig,
@@ -1603,42 +1593,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    if (!sockets["utility_applications"]) {
-        initSocket("utility_applications", "ws://localhost:8081", data => {
-            if (data.type === "utility_applications_update") {
+    // Replace all 4 initSocket calls with one
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "utility_applications_update":
                 refreshActiveTab();
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
+                break;
+            case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
-                else if (data.id) appendAuditRow(data);
                 else fetchAuditLogs();
-            }
-        });
-    }
-
-    if (!sockets["archives"]) {
-        initSocket("archives", "ws://localhost:8081", data => {
-            if (data.type === "archives_update") {
+                break;
+            case "archives_update":
                 loadManagementTable();
                 loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["utility"]) {
-        initSocket("utility", "ws://localhost:8081", data => {
-            if (data.type === "utility_update") {
+                break;
+            case "utility_update":
                 refreshActiveTab();
-            }
-        });
-    }
+                break;
+        }
+    });
 
     // Event listener for status change to update textarea with templates
     const statusSelect = document.getElementById('newStatus');

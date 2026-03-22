@@ -1192,27 +1192,14 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-                    sockets["construction_applications"].send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-
-                if (sockets["construction"] && sockets["construction"].readyState === WebSocket.OPEN) {
-                    sockets["construction"].send(JSON.stringify({ type: "construction_update", action: "status_update" }));
-                }
-
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "new_audit_log",
-                    }));
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
                 loadProcessTable();
-                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Update Failed', text: data.message || 'An unknown error occurred.' });
             }
@@ -1896,12 +1883,6 @@ function printSummary() {
 
 /**
  * Downloads a summary report as a Word document
- * Generates HTML content with embedded styles and triggers file download
- * 
- * @param {number} appId - The application ID to download summary for
- */
-/**
- * Downloads a summary report as a Word document
  * Generates HTML content with embedded styles (using tables for MS Word) and triggers file download
  * * @param {number} appId - The application ID to download summary for
  */
@@ -2256,6 +2237,11 @@ function createApplication(event) {
                             // Reset form
                             form.reset();
 
+                            const socket = sockets["main"];
+                            if (socket?.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
+                            }
+
                             // Refresh applications list
                             loadApplicationsFromDB().then(() => {
                                 // Switch to management tab
@@ -2534,39 +2520,17 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    if (!sockets["construction_applications"]) {
-        initSocket("construction_applications", "ws://localhost:8081", data => {
-            if (data.type === "construction_applications_update") {
-                refreshActiveTab()
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs();
-                }
-            }
-        });
-    }
-
-    if (!sockets["construction"]) {
-        initSocket("construction", "ws://localhost:8081", data => {
-            if (data.type === "construction_update") {
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "construction_applications_update":
                 refreshActiveTab();
-            }
-        });
-    }
+                break;
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                break;
+        }
+    });
 
     const createForm = document.getElementById('createForm');
     if (createForm) {

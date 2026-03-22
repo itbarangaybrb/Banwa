@@ -712,54 +712,23 @@ function generateIncidentReportFormHtml(data) {
  * sendWebSocketUpdate('Business', 'APP-123', 'edit');
  */
 function sendWebSocketUpdate(appType, appId, action = 'update') {
-    try {
-        let socketType = '';
-        let messageType = '';
+    const typeMap = {
+        'Business': 'business_applications_update',
+        'Construction': 'construction_applications_update',
+        'Utilities': 'utility_applications_update',
+        'Incident Reports': 'incident_reports_applications_update',
+    };
 
-        // Map application type to socket type
-        switch (appType) {
-            case 'Business':
-                socketType = 'business_applications';
-                messageType = 'business_applications_update';
-                break;
-            case 'Construction':
-                socketType = 'construction_applications';
-                messageType = 'construction_applications_update';
-                break;
-            case 'Utilities':
-                socketType = 'utility_applications';
-                messageType = 'utility_applications_update';
-                break;
+    const socket = sockets["main"];
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-            case 'Incident Reports':
-                socketType = 'incident_reports_applications';
-                messageType = 'incident_reports_applications_update';
-                break;
+    const messageType = typeMap[appType];
+    if (messageType) {
+        socket.send(JSON.stringify({ type: messageType, action, application_id: appId }));
+    }
 
-            case 'payment':
-                socketType = 'finance_applications';
-                messageType = 'finance_applications_update';
-                break;
-
-            default:
-                console.log(`No socket mapping for application type: ${appType}`);
-                return;
-        }
-
-        // Check if socket exists and is open
-        if (sockets && sockets[socketType] && sockets[socketType].readyState === WebSocket.OPEN) {
-            sockets[socketType].send(JSON.stringify({
-                type: messageType,
-                action: action,
-                application_id: appId,
-                timestamp: new Date().toISOString()
-            }));
-            console.log(`WebSocket update sent for ${appType} application ${appId}`);
-        } else {
-            console.log(`WebSocket ${socketType} not connected or not initialized`);
-        }
-    } catch (error) {
-        console.error('Error sending WebSocket update:', error);
+    if (action === 'payment') {
+        socket.send(JSON.stringify({ type: 'finance_applications_update', action, application_id: appId }));
     }
 }
 
@@ -999,7 +968,7 @@ async function handleSubmitPayment(event, appId) {
         const appType = formData.get('payment_purpose_app_type') || 'Business';
 
         sendWebSocketUpdate(appType, appId, 'payment');
-        sendWebSocketUpdate('payment', appId, 'payment');
+        // sendWebSocketUpdate('payment', appId, 'payment');
 
         closePaymentModal();
         loadApplications();
@@ -1298,20 +1267,25 @@ async function checkStatusUpdates() {
         const res = await fetch('/server/api/resident/get_applications.php');
         const data = await res.json();
 
-        if (data.success && Array.isArray(data.applications)) {
-            data.applications.forEach(app => {
-                const key = `${app.type}_${app.id}`;
-                const prevStatus = lastStatuses[key];
-                const currentStatus = app.status || 'Pending';
+        if (!data.success || !Array.isArray(data.applications)) return;
 
-                if (prevStatus && prevStatus !== currentStatus) {
-                    showStatusNotification(app.id, app.type, currentStatus);
-                    loadApplications();
-                }
+        let hasChanges = false;
 
-                lastStatuses[key] = currentStatus;
-            });
-        }
+        data.applications.forEach(app => {
+            const key = `${app.type}_${app.id}`;
+            const prevStatus = lastStatuses[key];
+            const currentStatus = app.status || 'Pending';
+
+            if (prevStatus && prevStatus !== currentStatus) {
+                showStatusNotification(app.id, app.type, currentStatus);
+                hasChanges = true;
+            }
+
+            lastStatuses[key] = currentStatus;
+        });
+
+        if (hasChanges) loadApplications(); // render once regardless of how many changed
+
     } catch (err) {
         console.error('Error checking status updates:', err);
     }
@@ -1326,14 +1300,6 @@ function showStatusNotification(appId, appType, newStatus) {
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
         return;
-    }
-
-    if (!sockets || !sockets["finance_applications"]) {
-        initSocket("finance_applications", "ws://localhost:8081", data => {
-            if (data.type === "finance_applications_update") {
-                refreshActiveTab();
-            }
-        });
     }
 
     if ('serviceWorker' in navigator) {
@@ -1351,41 +1317,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadCurrentTab();
 
-    if (!sockets["construction_applications"]) {
-        initSocket("construction_applications", "ws://localhost:8081", data => {
-            if (data.type === "construction_applications_update") {
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "construction_applications_update":
+            case "business_applications_update":
+            case "utility_applications_update":
+            case "incident_report_applications_update":
                 loadApplications();
                 checkStatusUpdates();
-            }
-        });
-    }
-
-    if (!sockets["business_applications"]) {
-        initSocket("business_applications", "ws://localhost:8081", data => {
-            if (data.type === "business_applications_update") {
-                loadApplications();
-                checkStatusUpdates();
-            }
-        });
-    }
-
-    if (!sockets["utility_applications"]) {
-        initSocket("utility_applications", "ws://localhost:8081", data => {
-            if (data.type === "utility_applications_update") {
-                loadApplications();
-                checkStatusUpdates();
-            }
-        });
-    }
-
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => {
-            if (data.type === "incident_report_applications_update") {
-                loadApplications();
-                checkStatusUpdates();
-            }
-        });
-    }
+                break;
+            case "finance_applications_update":
+                refreshActiveTab();
+                break;
+        }
+    });
 
     checkStatusUpdates(); // Initial load
 });

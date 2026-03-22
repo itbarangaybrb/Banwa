@@ -852,11 +852,10 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
-                    sockets["business_applications"]?.readyState === WebSocket.OPEN &&
-                        sockets["business_applications"].send(JSON.stringify({
-                            type: "business_applications_update",
-                            action: "new_application"
-                        }));
+                    const socket = sockets["main"];
+                    if (socket?.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
+                    }
 
                     business_app_swal.fire({
                         icon: 'success',
@@ -1377,5 +1376,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["business_applications"]) initSocket("business_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "ws://localhost:8081", () => { });
 });

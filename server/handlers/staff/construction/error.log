@@ -513,3 +513,10 @@ CONTEXT:  unnamed portal parameter $1 = '...'
 [21-Mar-2026 19:04:44 UTC] No files uploaded for application 73, skipping OCR queue.
 [21-Mar-2026 19:04:44 UTC] CR1 Check - Has file upload: No
 [21-Mar-2026 19:04:44 UTC] CR1 Check - Has file upload: No
+[22-Mar-2026 19:06:52 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[22-Mar-2026 19:06:53 UTC] No files uploaded for application 74, skipping OCR queue.
+[22-Mar-2026 19:06:53 UTC] CR1 Check - Has file upload: No
+[22-Mar-2026 19:06:53 UTC] CR1 Check - Has file upload: No
+[22-Mar-2026 19:08:30 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 506
+[22-Mar-2026 19:08:31 UTC] CR1 Check - Has file upload: No
+[22-Mar-2026 19:08:31 UTC] CR1 Check - Has file upload: No

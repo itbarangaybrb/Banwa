@@ -176,23 +176,17 @@ document.addEventListener('DOMContentLoaded', () => {
     handleSearch();
     initExportButton();
 
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs();
-                }
-            }
-        });
-    }
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                break;
+        }
+    });
 
     makeTableSortable('usersTable');
     makeTableSortable('auditTable');
     makeTableSortable('archiveTable');
 });
+

@@ -3827,38 +3827,20 @@ function buildEvalPopup(ev, sc, pct) {
 }
 
 // ==================== WEBSOCKET LISTENERS ====================
-if (!sockets["business_applications"]) {
-    initSocket("business_applications", "ws://localhost:8081", data => {
-        if (data.type === "business_applications_update") {
-            loadAllMarkers();
-            showBoundaryMessage("New business application added to map");
-        }
-    });
-}
-if (!sockets["incident_report_applications"]) {
-    initSocket("incident_report_applications", "ws://localhost:8081", data => {
-        if (data.type === "incident_report_applications_update") {
-            loadAllMarkers();
-            showBoundaryMessage("New incident report applications application added to map");
-        }
-    });
-}
-if (!sockets["construction_applications"]) {
-    initSocket("construction_applications", "ws://localhost:8081", data => {
-        if (data.type === "construction_applications_update") {
-            loadAllMarkers();
-            showBoundaryMessage("New construction application added to map");
-        }
-    });
-}
-if (!sockets["utility_applications"]) {
-    initSocket("utility_applications", "ws://localhost:8081", data => {
-        if (data.type === "utility_applications_update") {
-            loadAllMarkers();
-            showBoundaryMessage("New utility application added to map");
-        }
-    });
-}
+const messageMap = {
+    "business_applications_update": "New business application added to map",
+    "incident_report_applications_update": "New incident report application added to map",
+    "construction_applications_update": "New construction application added to map",
+    "utility_applications_update": "New utility application added to map",
+};
+
+initSocket("main", "ws://localhost:8081", (data) => {
+    const message = messageMap[data.type];
+    if (message) {
+        loadAllMarkers();
+        showBoundaryMessage(message);
+    }
+});
 
 // ==================== BROADCAST CHANNEL (instant cross-tab sync) ====================
 // Listens for status_update messages posted by staff pages in the same browser.

@@ -342,40 +342,14 @@ function submitVerification(appId, status, appType, orFile = null, orNumber = nu
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-                    sockets["finance_applications"].send(JSON.stringify({
+                const socket = sockets["finance"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
                         type: "finance_applications_update",
                         action: "verification_update",
                         application_id: appId,
                         status: status,
                         or_number: orNumber
-                    }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({
-                        type: "applications_update",
-                        action: "verification_update",
-                        application_id: appId
-                    }));
-                }
-                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                    sockets["business_applications"].send(JSON.stringify({
-                        type: "business_applications_update",
-                        action: "verification_update",
-                        application_id: appId
-                    }));
-                }
-                if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-                    sockets["construction_applications"].send(JSON.stringify({
-                        type: "construction_applications_update",
-                        action: "verification_update",
-                        application_id: appId
-                    }));
-                }
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "new_audit_log"
                     }));
                 }
 
@@ -643,48 +617,12 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                if (paymentData.appType.toLowerCase() === 'construction') {
-                    if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-                        sockets["construction_applications"].send(JSON.stringify({
-                            type: "construction_applications_update",
-                            action: "payment_processed",
-                            application_id: paymentData.appId,
-                            payment_status: "Paid"
-                        }));
-                    }
-                }
-
-                if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-                    sockets["business_applications"].send(JSON.stringify({
-                        type: "business_applications_update",
-                        action: "payment_processed",
-                        application_id: paymentData.appId,
-                        payment_status: "Paid"
-                    }));
-                }
-
-                if (sockets["finance_applications"] && sockets["finance_applications"].readyState === WebSocket.OPEN) {
-                    sockets["finance_applications"].send(JSON.stringify({
+                const socket = sockets["finance"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({
                         type: "finance_applications_update",
                         action: "payment_processed",
                         application_id: paymentData.appId
-                    }));
-                }
-
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({
-                        type: "applications_update",
-                        action: "payment_received",
-                        application_id: paymentData.appId
-                    }));
-                }
-
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "payment_processed",
-                        record_id: paymentData.appId,
-                        details: `Payment of ₱${paymentData.amountPaid} processed for ${paymentData.appType}`
                     }));
                 }
 
@@ -927,60 +865,42 @@ function appendAuditRow(log) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
 
-    try {
-        if (!sockets || !sockets["finance_applications"]) {
-            initSocket("finance_applications", "ws://localhost:8081", data => {
-                if (data.type === "finance_applications_update") {
-                    if (data.action === "new_payment_pending") {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'New Payment Pending',
-                            text: `Application #${data.application_id} is ready for payment processing`,
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 5000
-                        });
-                    }
-                    refreshActiveTab();
+    initSocket("finance", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "finance_applications_update":
+                if (data.action === "new_payment_pending") {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'New Payment Pending',
+                        text: `Application #${data.application_id} is ready for payment processing`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 5000
+                    });
                 }
-            });
-        }
+                refreshActiveTab();
+                break;
 
-        if (!sockets || !sockets["business_applications"]) {
-            initSocket("business_applications", "ws://localhost:8081", data => {
-                if (data.type === "business_applications_update") {
-                    refreshActiveTab();
-                }
-            });
-        }
+            case "business_applications_update":
+            case "applications_update":
+            case "construction_applications_update":
+                refreshActiveTab();
+                break;
 
-        if (!sockets || !sockets["applications"]) {
-            initSocket("applications", "ws://localhost:8081", data => {
-                if (data.type === "applications_update") {
-                    refreshActiveTab();
+            case "new_audit_log":
+                if (data.payload) {
+                    appendAuditRow(data.payload);
+                    fetchAuditLogs();
+                } else if (data.id) {
+                    appendAuditRow(data);
+                    fetchAuditLogs();
+                } else {
+                    fetchAuditLogs();
                 }
-            });
+                break;
         }
-
-        if (!sockets || !sockets["audit"]) {
-            initSocket("audit", "ws://localhost:8081", (data) => {
-                if (data.type === "new_audit_log") {
-                    if (data.payload) {
-                        appendAuditRow(data.payload);
-                        fetchAuditLogs();
-                    } else if (data.id) {
-                        appendAuditRow(data);
-                        fetchAuditLogs();
-                    } else {
-                        fetchAuditLogs();
-                    }
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error initializing WebSockets:', error);
-    }
+    });
 });
 
 window.onload = function () {

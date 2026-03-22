@@ -828,20 +828,14 @@ function submitUpdate(event) {
                     confirmButtonColor: '#28a745'
                 });
 
-                if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-                    sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-
-                if (sockets["incident_reports"] && sockets["incident_reports"].readyState === WebSocket.OPEN) {
-                    sockets["incident_reports"].send(JSON.stringify({ type: "incident_reports_update", action: "status_update" }));
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
                 loadProcessTable();
-                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 // REPLACED WITH SWEETALERT2
                 incidentAlertConfig.fire({
@@ -1729,35 +1723,36 @@ function createApplication(event) {
                 body: formData,
                 credentials: 'include'
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    incidentAlertConfig.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Incident Report Created! ID: ' + data.id
-                    }).then(() => {
-                        // Reset form state
-                        form.reset();
-                        document.getElementById('witnessesContainer').innerHTML = '';
-                        document.getElementById('victimDetailsContainer').style.display = 'grid';
-                        document.getElementById('otherSpecifyContainer').classList.add('hidden');
-                        
-                        // Notify system and reload
-                        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-                            sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
-                        }
-                        loadManagementTable();
-                        switchTab(null, 'management');
-                    });
-                } else {
-                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
-                }
-            })
-            .catch(err => {
-                console.error('Submit error:', err);
-                incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        incidentAlertConfig.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Incident Report Created! ID: ' + data.id
+                        }).then(() => {
+                            // Reset form state
+                            form.reset();
+                            document.getElementById('witnessesContainer').innerHTML = '';
+                            document.getElementById('victimDetailsContainer').style.display = 'grid';
+                            document.getElementById('otherSpecifyContainer').classList.add('hidden');
+
+                            const socket = sockets["main"];
+                            if (socket?.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                            }
+                            
+                            loadManagementTable();
+                            switchTab(null, 'management');
+                        });
+                    } else {
+                        incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
+                    }
+                })
+                .catch(err => {
+                    console.error('Submit error:', err);
+                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
+                });
         }
     });
 }
@@ -2111,34 +2106,22 @@ function appendAuditRow(log) {
 
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
+
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => {
-            if (data.type === "incident_report_applications_update") {
-                refreshActiveTab()
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs();
-                }
-            }
-        });
-    }
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "incident_report_applications_update":
+                refreshActiveTab();
+                break;
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                break;
+        }
+    });
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK
