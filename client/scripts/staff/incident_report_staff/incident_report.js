@@ -841,6 +841,7 @@ function submitUpdate(event) {
 
                 loadManagementTable();
                 loadProcessTable();
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
             } else {
                 // REPLACED WITH SWEETALERT2
                 incidentAlertConfig.fire({

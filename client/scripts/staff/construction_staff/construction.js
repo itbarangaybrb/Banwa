@@ -1212,6 +1212,7 @@ function submitUpdate(event) {
 
                 loadManagementTable();
                 loadProcessTable();
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch(e) {}
             } else {
                 Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Update Failed', text: data.message || 'An unknown error occurred.' });
             }

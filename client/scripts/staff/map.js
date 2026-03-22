@@ -1679,7 +1679,7 @@ function getFloodRiskColor(riskLevel) {
 async function loadAllMarkers() {
     clearAllMarkers();
     try {
-        const data = await postAction('get_all_markers');
+        const data = await postAction('get_all_markers', { _t: Date.now() });
         if (!data.success) throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
@@ -3859,6 +3859,21 @@ if (!sockets["utility_applications"]) {
         }
     });
 }
+
+// ==================== BROADCAST CHANNEL (instant cross-tab sync) ====================
+// Listens for status_update messages posted by staff pages in the same browser.
+// This fires immediately when a staff member changes a status — no WebSocket relay needed.
+const _mapChannel = new BroadcastChannel('barangay_status_update');
+_mapChannel.onmessage = () => {
+    loadAllMarkers();
+};
+
+// ==================== AUTO-REFRESH POLLING ====================
+// Fallback: re-fetches every 15 seconds to catch changes from other browsers/devices.
+setInterval(() => {
+    if (document.querySelector('.leaflet-popup') || document.querySelector('.swal2-container')) return;
+    loadAllMarkers();
+}, 15000);
 
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;
