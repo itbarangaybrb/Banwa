@@ -402,7 +402,7 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="firstName">First Name <span style="color: #BB1B1B;">*</span></label>
+                        <label for="firstName">First Name <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="firstName" name="firstName" required>
                         <div class="error-msg"></div>
                     </div>
@@ -414,7 +414,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="lastName">Last Name <span style="color: #BB1B1B;">*</span></label>
+                        <label for="lastName">Last Name <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="lastName" name="lastName" required>
                         <div class="error-msg"></div>
                     </div>
@@ -428,7 +428,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="contactNoOwner">Mobile Phone or Landline No. <span style="color: #BB1B1B;">*</span></label>
+                        <label for="contactNoOwner">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoOwner" name="contactNoOwner" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -438,13 +438,13 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="lotNo">House No. <span style="color: #BB1B1B;">*</span></label>
+                        <label for="lotNo">House No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="lotNo" name="lotNo" maxlength="2" pattern="[0-9]{1,2}" required>
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="street">Street Name <span style="color: #BB1B1B;">*</span></label>
+                        <label for="street">Street Name <span style="color:#BB1B1B;">*</span></label>
                         <select name="street" id="street" required>
                             <option value="" disabled selected>Select</option>
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -483,14 +483,14 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="businessName">Business Name <span style="color: #BB1B1B;">*</span></label>
+                        <label for="businessName">Business Name <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="businessName" name="businessName" required>
                         <div class="error-msg"></div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>What type of business? <span style="color: #BB1B1B;">*</span></label>
+                    <label>What type of business? <span style="color:#BB1B1B;">*</span></label>
                     <div class="radio-group">
                         <label><input type="radio" name="typeOfBusiness" value="Single Proprietorship" required> Single Proprietorship</label>
                         <label><input type="radio" name="typeOfBusiness" value="Partnership"> Partnership</label>
@@ -501,7 +501,7 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="natureOfBusinessSelect">Nature of Business <span style="color: #BB1B1B;">*</span></label>
+                        <label for="natureOfBusinessSelect">Nature of Business <span style="color:#BB1B1B;">*</span></label>
                         <select name="natureOfBusiness" id="natureOfBusinessSelect" required>
                             <option value="" disabled selected>Select</option>
                             <option value="Retailing">Retailing</option>
@@ -514,14 +514,14 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="natureOfBusinessSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
+                        <label for="natureOfBusinessSpecify">Specify Details <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="natureOfBusinessSpecify" name="natureOfBusinessSpecify" required>
                         <div class="error-msg"></div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>What is the status of the business address? <span style="color: #BB1B1B;">*</span></label>
+                    <label>What is the status of the business address? <span style="color:#BB1B1B;">*</span></label>
                     <div class="radio-group">
                         <label><input type="radio" name="businessStatus" value="Owned" required> Owned</label>
                         <label><input type="radio" name="businessStatus" value="Leased"> Leased</label>
@@ -531,7 +531,7 @@ $full_name = getCurrentUserName();
                     <div class="error-msg"></div>
                     <!-- Hidden fields from your original owner code-->
                     <div class="form-group specify-others" id="businessStatusSpecifyGroup" style="display:none;">
-                        <label for="businessStatusSpecify">If Others, please specify <span style="color: #BB1B1B;">*</span></label>
+                        <label for="businessStatusSpecify">If Others, please specify <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="businessStatusSpecify" name="businessStatusSpecify">
                     </div>
                     <div class="error-msg"></div>
@@ -539,13 +539,13 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="contactNoBusiness">Mobile Phone or Landline No. <span style="color: #BB1B1B;">*</span></label>
+                        <label for="contactNoBusiness">Mobile Phone or Landline No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="contactNoBusiness" name="contactNoBusiness" maxlength="11" pattern="[0-9]{1,11}" required>
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="emailAddress">Email Address <span style="color: #BB1B1B;">*</span></label>
+                        <label for="emailAddress">Email Address <span style="color:#BB1B1B;">*</span></label>
                         <input type="email" id="emailAddress" name="emailAddress" required>
                         <div class="error-msg"></div>
                     </div>
@@ -553,7 +553,7 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="noOfEmployees">How many employees does the business have? <span style="color: #BB1B1B;">*</span></label>
+                        <label for="noOfEmployees">How many employees does the business have? <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="noOfEmployees" name="noOfEmployees" maxlength="2" pattern="[0-9]{1,2}" required>
                         <div class="error-msg"></div>
                     </div>
@@ -563,13 +563,13 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="businessLotNo">House No. <span style="color: #BB1B1B;">*</span></label>
+                        <label for="businessLotNo">House No. <span style="color:#BB1B1B;">*</span></label>
                         <input type="tel" id="businessLotNo" name="businessLotNo" maxlength="2" pattern="[0-9]{1,2}" required>
                         <div class="error-msg"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="businessStreet">Street Name <span style="color: #BB1B1B;">*</span></label>
+                        <label for="businessStreet">Street Name <span style="color:#BB1B1B;">*</span></label>
                         <select name="businessStreet" id="businessStreet" required>
                             <option value="" disabled selected>Select</option>
                             <option value="Comets Loop">Comets Loop, Blue Ridge B, Quezon City </option>
@@ -594,16 +594,21 @@ $full_name = getCurrentUserName();
                 <input type="hidden" id="latitude2" name="latitude2" value="">
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
-                <!-- <div class="form-group">
-                    <button type="button" class="btn map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
-                    <div class="map-preview" id="map-preview-2" style="margin-top:10px;display:none;height:200px;"></div>
-                </div> -->
+                <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                    <label>Selected Location</label>
+                    <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <button type="button" class="btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
+                        <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                    </button>
+                </div>
 
                 <div class="section-title"><strong>Business Structure</strong></div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="typeOfStructureSelect">Structure Type <span style="color: #BB1B1B;">*</span></label>
+                        <label for="typeOfStructureSelect">Structure Type <span style="color:#BB1B1B;">*</span></label>
                         <select id="typeOfStructureSelect" name="typeOfStructureSelect" required>
                             <option value="" disabled selected>Select Structure Type</option>
                             <option value="Residence">Residence</option>
@@ -617,7 +622,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="typeOfStructureSpecify">Specify Details <span style="color: #BB1B1B;">*</span></label>
+                        <label for="typeOfStructureSpecify">Specify Details <span style="color:#BB1B1B;">*</span></label>
                         <input type="text" id="typeOfStructureSpecify" name="typeOfStructureSpecify" required>
                         <div class="error-msg"></div>
                     </div>
@@ -625,7 +630,7 @@ $full_name = getCurrentUserName();
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="natureOfApplication">Nature of application <span style="color: #BB1B1B;">*</span></label>
+                        <label for="natureOfApplication">Nature of application <span style="color:#BB1B1B;">*</span></label>
                         <select name="natureOfApplication" id="natureOfApplication" required>
                             <option value="" disabled selected>Select</option>
                             <option value="New">New</option>
@@ -650,7 +655,7 @@ $full_name = getCurrentUserName();
                 </div>
 
                 <div class="form-group">
-                    <label for="requirementUpload">Attachment/s <span style="color: #BB1B1B;">*</span></label>
+                    <label for="requirementUpload">Attachment/s <span style="color:#BB1B1B;">*</span></label>
                     <input type="file" id="requirementUpload" name="requirementUpload[]" multiple accept=".pdf,.jpg,.jpeg,.png">
                     <div class="error-msg"></div>
                 </div>
