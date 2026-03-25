@@ -344,10 +344,14 @@ function submitVerification(appId, status, appType, orFile = null, orNumber = nu
             if (data.status === 'success') {
                 Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => {
                     const socket = sockets["main"];
-                    if (socket) {
-                        socket.emit('business_applications_update', { action: 'status_update' });
-                        socket.emit('construction_applications_update', { action: 'status_update' });
-                    }
+                    if (!socket) return;
+
+                    [
+                        "business_applications_update",
+                        "construction_applications_update"
+                    ].forEach(event => {
+                        socket.emit(event, { action: "status_update" });
+                    });
 
                     loadPendingTable();
                     fetchAuditLogs();
