@@ -11,7 +11,7 @@ function broadcastEvent(string $type, array $data = []): void
 {
     $payload = json_encode(['type' => $type, 'data' => $data]);
 
-    $ch = curl_init('https://banwa.onrender.com:8081/broadcast');
+    $ch = curl_init('https://banwa.onrender.com/broadcast');
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);

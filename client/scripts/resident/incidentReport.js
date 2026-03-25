@@ -1162,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "https://banwa.onrender.com:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "https://banwa.onrender.com", () => { });
 
     incidentType.addEventListener('change', () => handleOthersSelect(incidentType, otherIncidentType));
     handleOthersSelect(incidentType, otherIncidentType);

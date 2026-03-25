@@ -3840,7 +3840,7 @@ const messageMap = {
     "finance_applications_update": "updated status from finance",
 };
 
-initSocket("main", "https://banwa.onrender.com:8081", (data) => {
+initSocket("main", "https://banwa.onrender.com", (data) => {
     const message = messageMap[data.type];
     if (message) {
         loadAllMarkers();

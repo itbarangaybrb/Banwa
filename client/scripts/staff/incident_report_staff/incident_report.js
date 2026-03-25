@@ -2162,7 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "https://banwa.onrender.com:8081", (data) => {
+    initSocket("main", "https://banwa.onrender.com", (data) => {
         switch (data.type) {
             case "incident_report_applications_update":
                 refreshActiveTab();

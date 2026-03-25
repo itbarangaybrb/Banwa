@@ -227,7 +227,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="https://banwa.onrender.com:8081/socket.io/socket.io.js"></script>
+    <script src="https://banwa.onrender.com/socket.io/socket.io.js"></script>
     <script type="module" src="../../../scripts/staff/finance_staff/finance.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
