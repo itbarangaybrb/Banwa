@@ -845,7 +845,7 @@ function appendAuditRow(log) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
 
-    initSocket("main", "https://banwa.onrender.com", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "finance_applications_update":
                 if (data.action === "new_payment_pending") {

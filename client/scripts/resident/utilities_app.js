@@ -913,5 +913,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "https://banwa.onrender.com", () => { });
+    if (!sockets["main"]) initSocket("main", "https://banwa-ws.onrender.com", () => { });
 });

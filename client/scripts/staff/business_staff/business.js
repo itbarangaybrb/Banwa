@@ -2299,7 +2299,7 @@ const statusTemplates = {
 document.addEventListener('DOMContentLoaded', function () {
     fetchAuditLogs();
 
-    initSocket("main", "https://banwa.onrender.com", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "business_applications_update":
             case "finance_applications_update":

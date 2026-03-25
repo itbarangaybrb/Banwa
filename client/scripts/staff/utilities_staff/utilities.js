@@ -1589,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateApplicationDate, 60000);
 
     // Replace all 4 initSocket calls with one
-    initSocket("main", "https://banwa.onrender.com", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "utility_applications_update":
                 refreshActiveTab();
