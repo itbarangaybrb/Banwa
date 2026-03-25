@@ -1328,7 +1328,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case "utility_applications_update":
             case "incident_report_applications_update":
             case "finance_applications_update":
-                loadApplications();
+                refreshActiveTab();
                 checkStatusUpdates();
                 break;
         }
