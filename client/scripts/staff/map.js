@@ -1679,7 +1679,7 @@ function getFloodRiskColor(riskLevel) {
 async function loadAllMarkers() {
     clearAllMarkers();
     try {
-        const data = await postAction('get_all_markers', { _t: Date.now() });
+        const data = await postAction('get_all_markers');
         if (!data.success) throw new Error('Server returned error: ' + (data.message || 'Unknown error'));
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
@@ -2621,10 +2621,14 @@ async function showIncidentSummaryReport() {
             </div>`;
         }).join('');
 
-        // Accordion rows — most recent first
-        const sorted = [...incidents].sort((a, b) =>
-            new Date(b.incident_timestamp || b.date_reported || 0) -
-            new Date(a.incident_timestamp || a.date_reported || 0));
+        // Accordion rows — grouped by type, then most recent first within each type
+        const sorted = [...incidents].sort((a, b) => {
+            const typeA = (a.incident_type || 'Other').toLowerCase();
+            const typeB = (b.incident_type || 'Other').toLowerCase();
+            if (typeA !== typeB) return typeA.localeCompare(typeB);
+            return new Date(b.incident_timestamp || b.date_reported || 0) -
+                   new Date(a.incident_timestamp || a.date_reported || 0);
+        });
 
         const rows = sorted.map((inc, i) => {
             const sColor = inc.status === 'Resolved' ? '#28a745'
@@ -3258,8 +3262,12 @@ function buildDSSTab(dssData) {
     // Group by type
     const groups = { construction: [], business: [], utility: [], incident: [] };
     evals.forEach(e => { if (groups[e.type]) groups[e.type].push(e); });
-    // Sort each group by status rank
-    Object.values(groups).forEach(arr => arr.sort((a, b) => (statusRank[a.dss_status] || 9) - (statusRank[b.dss_status] || 9)));
+    // Sort each group by score descending (highest score first)
+    Object.values(groups).forEach(arr => arr.sort((a, b) => {
+        const pctA = a.max_score > 0 ? a.score / a.max_score : 0;
+        const pctB = b.max_score > 0 ? b.score / b.max_score : 0;
+        return pctB - pctA;
+    }));
 
     const groupLabels = { construction: 'Construction', business: 'Business', utility: 'Utility', incident: 'Incident Reports' };
 
@@ -3360,7 +3368,8 @@ function createRuleCard(rule, totalHouses, cardId) {
     const severityColors = {
         'CRITICAL': { bg: '#f5f5f5', border: '#990000', text: '#990000' },
         'HIGH': { bg: '#f5f5f5', border: '#cc0000', text: '#cc0000' },
-        'MEDIUM': { bg: '#f5f5f5', border: '#ff9800', text: '#ff9800' }
+        'MEDIUM': { bg: '#f5f5f5', border: '#e67e00', text: '#e67e00' },
+        'LOW': { bg: '#f5f5f5', border: '#ffc107', text: '#e6a800' }
     };
 
     const colors = severityColors[rule.severity] || severityColors['MEDIUM'];
@@ -3402,7 +3411,7 @@ function createRuleCard(rule, totalHouses, cardId) {
                         style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
                                background: #00247c; color: white; border: none; border-radius: 6px;
                                font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">
-                    <i class="fas fa-list"></i> View ${rule.count} Affected Record${rule.count !== 1 ? 's' : ''}
+                    <i class="fas fa-list"></i> View ${rule.count} Affected Household${rule.count !== 1 ? 's' : ''}
                 </button>` : ''}
             </div>
         </div>
@@ -3458,7 +3467,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
     panel.innerHTML = `
         <div class="affected-panel-header">
             <button class="affected-panel-close" id="affected-panel-close-btn">&times;</button>
-            <div style="font-size:11px;opacity:0.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Affected Records</div>
+            <div style="font-size:11px;opacity:0.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Affected Households</div>
             <h3 style="margin:0 0 ${fromSDSS ? '10px' : '0'};font-size:15px;font-weight:700;padding-right:28px;">${ruleName}</h3>
             ${backBtn}
         </div>
@@ -3518,9 +3527,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                 }
                 const lat = parseFloat(r.lat || r.center_lat), lng = parseFloat(r.lng || r.center_lng);
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
-                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="household-badge" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
-                    affectedHighlightLayers.push(m);
+                    // No polygon data — skip, household is shown via polygon only
                 }
             } else {
                 // For construction/business records, try to find matching house polygon by proximity
@@ -3550,12 +3557,8 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                             return;
                         } catch (e) { console.warn('Polygon parse error for non-household:', e); }
                     }
-                    // Fallback to circle if no matching house polygon found
-                    const badgeClass = r.type === 'business' ? 'business-badge' : 'construction-badge';
-                    const m = L.circleMarker([lat, lng], { radius: 12, color: '#dc3545', weight: 2.5, fillColor: '#dc3545', fillOpacity: 0.45 }).addTo(map);
-                    m.bindPopup(`<div class="popup-content"><h4><span>${r.name}</span><span class="${badgeClass}" style="background:#dc3545;">Affected</span></h4><div class="popup-section"><p><strong>Address:</strong> ${r.address}</p><p><strong>Detail:</strong> ${r.detail}</p></div></div>`);
-                    affectedHighlightLayers.push(m);
-                }
+                    // Fallback: no matching house polygon found — skip circle marker
+                    }
             }
         });
 
@@ -3594,7 +3597,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
     </div>`).join('');
 
         bodyEl.innerHTML = `
-    <div class="affected-panel-count">${sortedRecords.length} record${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
+    <div class="affected-panel-count">${sortedRecords.length} household${sortedRecords.length !== 1 ? 's' : ''} highlighted on map</div>
     <div class="affected-panel-hint">Click a row to view full details</div>
     <div class="affected-records-list" id="affected-records-list"></div>
 `;
@@ -3852,11 +3855,14 @@ _mapChannel.onmessage = () => {
 };
 
 // ==================== AUTO-REFRESH POLLING ====================
-// Fallback: re-fetches every 15 seconds to catch changes from other browsers/devices.
+// Re-fetches all markers every 30 seconds so status changes made on the
+// staff management page are reflected without a manual page refresh.
+// Skips the refresh while a popup or SweetAlert modal is open so the
+// user is never interrupted mid-read.
 setInterval(() => {
     if (document.querySelector('.leaflet-popup') || document.querySelector('.swal2-container')) return;
     loadAllMarkers();
-}, 15000);
+}, 30000);
 
 // Make functions globally available
 window.getFloodHousesSummary = getFloodHousesSummary;

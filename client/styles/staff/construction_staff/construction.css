@@ -1695,3 +1695,32 @@ h2 {
     font-size: 1.1rem !important;
     color: #555 !important;
 }
+/* ==================== MAP PICKER MODAL OVERRIDE ==================== */
+.dynamic-map-modal {
+    display: none;
+    position: fixed;
+    z-index: 4000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+.dynamic-map-modal.active {
+    display: flex;
+}
+.dynamic-map-modal .modal-content {
+    max-width: 900px;
+    width: 90%;
+    height: 85%;
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 20px;
+}
+.dynamic-map-modal .modal-header {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}

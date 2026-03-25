@@ -529,6 +529,16 @@ $full_name = getCurrentUserName();
                             title="Enter longitude in decimal format (e.g., 121.075600)"
                             placeholder="e.g., 121.075600">
 
+                        <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                            <label>Selected Location</label>
+                            <input type="text" id="constructionLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <button type="button" class="btn-secondary" onclick="openMapPicker('construction')" style="width:max-content;">
+                                <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                            </button>
+                        </div>
+
                         <div class="form-group">
                             <label for="applicationMethod">How will you submit the building plan or blueprint? <span style="color: #BB1B1B;">*</span></label>
                             <select name="applicationMethod" id="applicationMethod" required>
@@ -703,7 +713,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="newStatus">New Status <span style="color: #BB1B1B;">*</span></label>
+                        <label for="newStatus">New Status *</label>
                         <select id="newStatus" name="newStatus" required onchange="toggleAmountField()">
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Additional Requirements">Additional Requirements</option>
@@ -715,12 +725,12 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group hidden" id="amountFieldGroup">
-                        <label for="assessmentAmount">Assessment Amount (PHP) <span style="color: #BB1B1B;">*</span></label>
+                        <label for="assessmentAmount">Assessment Amount (PHP) *</label>
                         <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
                     </div>
 
                     <div class="form-group">
-                        <label for="updateComments">Remarks / Comments <span style="color: #BB1B1B;">*</span></label>
+                        <label for="updateComments">Remarks / Comments *</label>
                         <div class="prompt-container">
                             <div class="prompt-suggestions">
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
