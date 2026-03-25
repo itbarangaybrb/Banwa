@@ -616,6 +616,16 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                const socket = sockets["main"];
+                if (!socket) return;
+
+                [
+                    "business_applications_update",
+                    "construction_applications_update"
+                ].forEach(event => {
+                    socket.emit(event, { action: "status_update" });
+                });
+
                 Swal.fire('Success', data.message, 'success').then(() => {
                     loadPendingTable();
                     fetchAuditLogs();
