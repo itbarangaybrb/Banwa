@@ -1,5 +1,5 @@
 // Configuration
-import { initSocket } from '../../utils/socket.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 
 const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
