@@ -1228,3 +1228,4 @@ Stack trace:
 [25-Mar-2026 16:10:51 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
 [25-Mar-2026 16:10:51 UTC] R1 Check - Submitted: ["DTI"]
 [25-Mar-2026 16:10:51 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:47:42 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

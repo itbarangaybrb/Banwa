@@ -2,7 +2,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script src="https://banwa.onrender.com:8081/socket.io/socket.io.js"></script>
     <script src="../../scripts/resident/nav.js" defer></script>
     <script src="../../scripts/resident/home.js" defer></script>
     <script type="module" src="../../scripts/auth/signout.js"></script>

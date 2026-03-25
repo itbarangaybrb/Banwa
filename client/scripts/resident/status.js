@@ -1321,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadCurrentTab();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa.onrender.com:8081", (data) => {
         switch (data.type) {
             case "construction_applications_update":
             case "business_applications_update":

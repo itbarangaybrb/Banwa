@@ -1445,7 +1445,7 @@ function downloadSummary(appId) {
     // Determine if victim is same as RP based on matching names or missing victim name
     const isVictimSameAsRP = incident.vic_full_name === incident.rp_full_name || !incident.vic_full_name;
     const incidentLocation = incident.incident_location || incident.incident_address || 'Not specified';
-    
+
     // Safely get coordinates (handling potential property name variations)
     const lat = incident.incident_latitude || incident.latitude || 'N/A';
     const lng = incident.incident_longitude || incident.longitude || 'N/A';
@@ -1479,9 +1479,9 @@ function downloadSummary(appId) {
 
             <div class="section">
                 <h2>Victim Details</h2>
-                ${isVictimSameAsRP ? 
-                    '<div class="field" style="font-style: italic;">Same as Reporting Person</div>' : 
-                    `
+                ${isVictimSameAsRP ?
+            '<div class="field" style="font-style: italic;">Same as Reporting Person</div>' :
+            `
                     <div class="field"><span class="label">Name:</span> ${incident.vic_full_name || 'N/A'}</div>
                     <div class="field"><span class="label">Address:</span> ${incident.vic_address || 'N/A'}</div>
                     <div class="field"><span class="label">Contact:</span> ${incident.vic_contact || 'N/A'}</div>
@@ -1490,7 +1490,7 @@ function downloadSummary(appId) {
                     <div class="field"><span class="label">Date of Birth:</span> ${incident.vic_dob || 'N/A'}</div>
                     <div class="field"><span class="label">Occupation:</span> ${incident.vic_occupation || 'N/A'}</div>
                     `
-                }
+        }
             </div>
 
             <div class="section">
@@ -1535,10 +1535,10 @@ function downloadSummary(appId) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    
+
     // Formats filename to something like: Incident_Report_12_2026-03-18.doc
     link.download = `Incident_Report_${incident.id}_${new Date().toISOString().split('T')[0]}.doc`;
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1571,13 +1571,13 @@ document.addEventListener('DOMContentLoaded', () => {
         victimSameAsRP.addEventListener('change', function () {
             // The specific fields we want to hide/show
             const fieldsToToggle = ['vicFullName', 'vicContact', 'vicAddress'];
-            
+
             fieldsToToggle.forEach(id => {
                 const input = document.getElementById(id);
                 if (input) {
                     // Find the parent .form-group wrapper
                     const wrapper = input.closest('.form-group');
-                    
+
                     if (this.checked) {
                         if (wrapper) wrapper.style.display = 'none';
                         input.removeAttribute('required');
@@ -1737,7 +1737,7 @@ function createApplication(event) {
                             if (socket?.readyState === WebSocket.OPEN) {
                                 socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
                             }
-                            
+
                             loadManagementTable();
                             switchTab(null, 'management');
                         });
@@ -1764,9 +1764,9 @@ function openMapPicker(target) {
 
     // Title label per form type
     const titleMap = {
-        incident:     'Select Incident Location',
-        utility:      'Select Utility Work Location',
-        business:     'Select Business Location',
+        incident: 'Select Incident Location',
+        utility: 'Select Utility Work Location',
+        business: 'Select Business Location',
         construction: 'Select Construction Site Location'
     };
 
@@ -1863,10 +1863,10 @@ async function initializeMapPicker(containerId, target) {
     // ── Target-specific field helpers ─────────────────────────────────────
     // Maps each target type to its lat/lng hidden inputs and optional display field
     const fieldMap = {
-        incident:     { lat: 'incidentLatitude',  lng: 'incidentLongitude',   display: null },
-        utility:      { lat: 'latitude2',          lng: 'longitude2',          display: 'utilityLocationDisplay' },
-        business:     { lat: 'latitude2',          lng: 'longitude2',          display: 'businessLocationDisplay' },
-        construction: { lat: 'latitude2',          lng: 'longitude2',          display: 'constructionLocationDisplay' }
+        incident: { lat: 'incidentLatitude', lng: 'incidentLongitude', display: null },
+        utility: { lat: 'latitude2', lng: 'longitude2', display: 'utilityLocationDisplay' },
+        business: { lat: 'latitude2', lng: 'longitude2', display: 'businessLocationDisplay' },
+        construction: { lat: 'latitude2', lng: 'longitude2', display: 'constructionLocationDisplay' }
     };
     const fields = fieldMap[target] || fieldMap.incident;
 
@@ -1893,9 +1893,9 @@ async function initializeMapPicker(containerId, target) {
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
-        
+
         if (selectedMarker) map.removeLayer(selectedMarker);
-        
+
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location<br><small style="color:#888;">Click ✓ Confirm in the popup to use this location</small></div>')
             .openPopup();
@@ -1929,7 +1929,7 @@ async function initializeMapPicker(containerId, target) {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries'
         });
         const bData = await bRes.json();
-        
+
         if (bData.success && bData.boundaries && bData.boundaries.length > 0) {
             bData.boundaries.forEach(b => {
                 try {
@@ -1954,26 +1954,26 @@ async function initializeMapPicker(containerId, target) {
 
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
-                
+
                 try {
                     const coords = JSON.parse(house.coordinates);
                     // Normalize: unwrap GeoJSON array-of-rings
                     const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
                     const latLngs = ring.map(c => [c[1], c[0]]);
-                    
+
                     const polygon = L.polygon(latLngs, { ...POLY_COLORS.street, interactive: true });
                     housePolygons.push(polygon);
 
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
                     const titleText = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                    const subtitleHtml = house.street_name 
+                    const subtitleHtml = house.street_name
                         ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '';
-                    const addrHtml = (!isLandmark && house.address) 
+                    const addrHtml = (!isLandmark && house.address)
                         ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
-                    const streetHtml = house.street_name 
+                    const streetHtml = house.street_name
                         ? '<p style="margin:0 0 4px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
 
-                    const popupHtml = 
+                    const popupHtml =
                         '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
                         '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
                         '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' + subtitleHtml +
@@ -1985,7 +1985,7 @@ async function initializeMapPicker(containerId, target) {
 
                     polygon.on('click', function (e) {
                         L.DomEvent.stopPropagation(e);
-                        
+
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
@@ -1998,7 +1998,7 @@ async function initializeMapPicker(containerId, target) {
                         }
 
                         // Store on window so the inline onclick can reach it
-                        window._pickerSelectFn = function() { setLocation(lat, lng, formattedAddress); };
+                        window._pickerSelectFn = function () { setLocation(lat, lng, formattedAddress); };
 
                         const confirmPopup =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
@@ -2023,7 +2023,7 @@ async function initializeMapPicker(containerId, target) {
             houseLayer.addTo(map);
         }
     } catch (err) { console.error('Failed to load houses:', err); }
-    
+
     // Let the browser finish painting the flex layout before Leaflet measures the container
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);
@@ -2162,7 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa.onrender.com:8081", (data) => {
         switch (data.type) {
             case "incident_report_applications_update":
                 refreshActiveTab();

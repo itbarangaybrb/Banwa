@@ -547,7 +547,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             });
                         });
                     }
-                    
+
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -913,5 +913,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "https://banwa.onrender.com:8081", () => { });
 });
