@@ -1,4 +1,4 @@
-import { initSocket, sockets } from './socketUtils.js';
+import { initSocket, sockets } from './socket.js';
 import { fetchUsers } from '../staff/superadmin/manage_users.js';
 
 const swalStyle = document.createElement('style');
@@ -322,13 +322,13 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchArchives();
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http//localhost:8081", (data) => {
         switch (data.type) {
             case "archives_update":
                 fetchArchives();
                 break;
             case "users_update":
-                if (typeof window.fetchUsers === 'function') window.fetchUsers();
+                fetchUsers;
                 break;
             case "new_audit_log":
                 // Audit log handling delegated to audit module if needed

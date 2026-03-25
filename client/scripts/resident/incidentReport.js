@@ -1,7 +1,7 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
-import { initSocket, sockets } from '../utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 import supabase from '../../../server/api/supabase.js';
 
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
@@ -780,12 +780,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
-
-                    const socket = sockets["main"];
-                    if (socket?.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
-                    }
-
                     ir_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1168,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["incident_report_applications"]) initSocket("incident_report_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 
     incidentType.addEventListener('change', () => handleOthersSelect(incidentType, otherIncidentType));
     handleOthersSelect(incidentType, otherIncidentType);

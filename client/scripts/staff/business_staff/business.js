@@ -1,5 +1,5 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
@@ -813,11 +813,6 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                const socket = sockets["main"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: "business_applications_update", action: "status_update" }));
-                }
-
                 loadManagementTable();
                 loadProcessTable();
                 try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
@@ -1561,12 +1556,12 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}</p>
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
                     <p>Barangay Business Management System</p>
                 </div>
             </div>
@@ -1598,7 +1593,7 @@ function downloadSummary(appId) {
 
     // --- DATA PARSING ---
     const businessStatus = app.business_status || 'Not specified';
-    
+
     // Parse requirements
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
@@ -1636,7 +1631,7 @@ function downloadSummary(appId) {
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
-    
+
     const amountDue = app.amount_due ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '₱0.00';
     const paymentStatus = app.payment_status || 'Unpaid';
 
@@ -2310,15 +2305,19 @@ const statusTemplates = {
 document.addEventListener('DOMContentLoaded', function () {
     fetchAuditLogs();
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "business_applications_update":
-                refreshActiveTab();
-                break;
+            case "finance_applications_update":
+                return refreshActiveTab();
+
             case "new_audit_log":
-                if (data.payload) appendAuditRow(data.payload);
-                else fetchAuditLogs();
-                break;
+                return data.payload
+                    ? appendAuditRow(data.payload)
+                    : fetchAuditLogs();
+
+            default:
+                return;
         }
     });
 

@@ -81,8 +81,10 @@ if ($_SESSION['role_id'] != 1) {
         </div>
     </div>
 
-    <script type="module" src="../../scripts/resident/status.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script type="module" src="../../scripts/resident/status.js"></script>
 </body>
 
 </html>

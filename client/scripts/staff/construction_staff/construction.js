@@ -1,4 +1,4 @@
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';
 
@@ -1191,11 +1191,6 @@ function submitUpdate(event) {
                     timer: 2000,
                     showConfirmButton: false
                 });
-
-                const socket = sockets["main"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
-                }
 
                 loadManagementTable();
                 loadProcessTable();
@@ -2520,7 +2515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "construction_applications_update":
                 refreshActiveTab();

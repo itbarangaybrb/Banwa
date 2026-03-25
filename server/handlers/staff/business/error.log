@@ -1146,3 +1146,85 @@ Stack trace:
 [22-Mar-2026 18:56:54 UTC] R1 Check - Required: []
 [22-Mar-2026 18:56:54 UTC] R1 Check - Submitted: ["DTI"]
 [22-Mar-2026 18:56:54 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:36:39 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[24-Mar-2026 12:36:39 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[24-Mar-2026 12:36:50 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[24-Mar-2026 12:36:50 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[24-Mar-2026 12:36:52 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_client_pages_staff_business_staff_business.php.png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["DTI"],"allVerified":false}}
+[24-Mar-2026 12:36:52 UTC] R1 Check - Required: []
+[24-Mar-2026 12:36:52 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:36:52 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:36:52 UTC] R1 Check - Required: []
+[24-Mar-2026 12:36:52 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:36:52 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:36:52 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 12:37:27 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 12:37:51 UTC] R1 Check - Required: []
+[24-Mar-2026 12:37:51 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:37:51 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:37:51 UTC] R1 Check - Required: []
+[24-Mar-2026 12:37:51 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:37:51 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:37:52 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 12:37:53 UTC] R1 Check - Required: []
+[24-Mar-2026 12:37:53 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:37:53 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:37:53 UTC] R1 Check - Required: []
+[24-Mar-2026 12:37:53 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 12:37:53 UTC] R1 Check - Missing: []
+[24-Mar-2026 12:38:23 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:15:44 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[24-Mar-2026 16:15:44 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[24-Mar-2026 16:15:59 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[24-Mar-2026 16:15:59 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[24-Mar-2026 16:16:00 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_client_pages_staff_business_staff_business.php.png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["DTI"],"allVerified":false}}
+[24-Mar-2026 16:16:00 UTC] R1 Check - Required: []
+[24-Mar-2026 16:16:00 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 16:16:00 UTC] R1 Check - Missing: []
+[24-Mar-2026 16:16:00 UTC] R1 Check - Required: []
+[24-Mar-2026 16:16:00 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 16:16:00 UTC] R1 Check - Missing: []
+[24-Mar-2026 16:16:01 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:16:49 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:24:33 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:35:25 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[24-Mar-2026 16:35:25 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[24-Mar-2026 16:35:31 UTC] R1 Check - Required: []
+[24-Mar-2026 16:35:31 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 16:35:31 UTC] R1 Check - Missing: []
+[24-Mar-2026 16:35:31 UTC] R1 Check - Required: []
+[24-Mar-2026 16:35:31 UTC] R1 Check - Submitted: ["DTI"]
+[24-Mar-2026 16:35:31 UTC] R1 Check - Missing: []
+[24-Mar-2026 16:35:32 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:35:53 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:42:26 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:53:34 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:08:53 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:13:59 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:16:18 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 16:09:10 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[25-Mar-2026 16:09:10 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[25-Mar-2026 16:09:22 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[25-Mar-2026 16:09:22 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[25-Mar-2026 16:09:23 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"localhost_8080_client_pages_staff_business_staff_business.php.png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["DTI"],"allVerified":false}}
+[25-Mar-2026 16:09:23 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:09:23 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:09:23 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:09:23 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:09:23 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:09:23 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:09:24 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 16:10:04 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 16:10:50 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:50 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:10:50 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:50 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:50 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:10:50 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:51 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 16:10:51 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:51 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:10:51 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:51 UTC] R1 Check - Required: ["Articles of Incorporation","Corporate Secretary Certificate"]
+[25-Mar-2026 16:10:51 UTC] R1 Check - Submitted: ["DTI"]
+[25-Mar-2026 16:10:51 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]

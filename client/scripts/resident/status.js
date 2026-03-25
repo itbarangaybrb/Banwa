@@ -1,4 +1,4 @@
-import { initSocket, sockets } from '../utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 
 // =========================
 // MODAL HANDLING 
@@ -720,15 +720,19 @@ function sendWebSocketUpdate(appType, appId, action = 'update') {
     };
 
     const socket = sockets["main"];
-    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!socket) return;
 
     const messageType = typeMap[appType];
     if (messageType) {
-        socket.send(JSON.stringify({ type: messageType, action, application_id: appId }));
+        socket.emit(messageType, { action, application_id: appId });
     }
 
     if (action === 'payment') {
-        socket.send(JSON.stringify({ type: 'finance_applications_update', action, application_id: appId }));
+        socket.emit('finance_applications_update', {
+            action: 'new_payment_pending',
+            application_id: appId,
+            app_type: appType
+        });
     }
 }
 
@@ -1317,20 +1321,17 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadCurrentTab();
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "construction_applications_update":
             case "business_applications_update":
             case "utility_applications_update":
             case "incident_report_applications_update":
+            case "finance_applications_update":
                 loadApplications();
                 checkStatusUpdates();
                 break;
-            case "finance_applications_update":
-                refreshActiveTab();
-                break;
         }
     });
-
     checkStatusUpdates(); // Initial load
 });

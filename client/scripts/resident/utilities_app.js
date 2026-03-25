@@ -1,5 +1,5 @@
 // Configuration imports for service worker registration and address data
-import { initSocket, sockets } from '../utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
@@ -547,13 +547,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             });
                         });
                     }
-
-
-                    const socket = sockets["main"];
-                    if (socket?.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: "utility_applications_update", action: "new_application" }));
-                    }
-
+                    
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -919,5 +913,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });

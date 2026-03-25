@@ -1,5 +1,5 @@
 
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { exportTableAsPDF } from '../../utils/exportAs.js';
 import { makeTableSortable } from '../../utils/sortTable.js';
 
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleSearch();
     initExportButton();
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);

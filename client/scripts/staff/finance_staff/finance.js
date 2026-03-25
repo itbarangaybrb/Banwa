@@ -1,5 +1,5 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket } from '../../utils/socket.js';
 
 const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
@@ -342,17 +342,6 @@ function submitVerification(appId, status, appType, orFile = null, orNumber = nu
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                const socket = sockets["finance"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({
-                        type: "finance_applications_update",
-                        action: "verification_update",
-                        application_id: appId,
-                        status: status,
-                        or_number: orNumber
-                    }));
-                }
-
                 Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => {
                     loadPendingTable();
                     fetchAuditLogs();
@@ -617,15 +606,6 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                const socket = sockets["finance"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({
-                        type: "finance_applications_update",
-                        action: "payment_processed",
-                        application_id: paymentData.appId
-                    }));
-                }
-
                 Swal.fire('Success', data.message, 'success').then(() => {
                     loadPendingTable();
                     fetchAuditLogs();
@@ -865,7 +845,7 @@ function appendAuditRow(log) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
 
-    initSocket("finance", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "finance_applications_update":
                 if (data.action === "new_payment_pending") {
@@ -883,7 +863,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case "business_applications_update":
-            case "applications_update":
             case "construction_applications_update":
                 refreshActiveTab();
                 break;

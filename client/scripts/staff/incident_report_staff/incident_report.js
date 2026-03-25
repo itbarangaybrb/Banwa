@@ -1,7 +1,8 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socketUtils.js';
-const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
+
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 let incidents = [];
 
@@ -827,11 +828,6 @@ function submitUpdate(event) {
                     confirmButtonText: 'Great',
                     confirmButtonColor: '#28a745'
                 });
-
-                const socket = sockets["main"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
-                }
 
                 loadManagementTable();
                 loadProcessTable();
@@ -2111,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "incident_report_applications_update":
                 refreshActiveTab();

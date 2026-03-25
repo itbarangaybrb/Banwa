@@ -1,5 +1,5 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
@@ -913,11 +913,6 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                // After successful submitUpdate
-                const socket = sockets["main"];
-                if (socket?.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
-                }
 
                 loadManagementTable();
                 loadProcessTable();
@@ -1594,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateApplicationDate, 60000);
 
     // Replace all 4 initSocket calls with one
-    initSocket("main", "ws://localhost:8081", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "utility_applications_update":
                 refreshActiveTab();
@@ -1606,9 +1601,6 @@ document.addEventListener('DOMContentLoaded', () => {
             case "archives_update":
                 loadManagementTable();
                 loadProcessTable();
-                break;
-            case "utility_update":
-                refreshActiveTab();
                 break;
         }
     });

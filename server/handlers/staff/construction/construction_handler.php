@@ -8,7 +8,8 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/construction/construction_dss.php';
-require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php'; // Add audit log function
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+require_once __DIR__ . '/../../../services/broadcast.php';
 
 session_start();
 
@@ -247,6 +248,8 @@ function handleCreateApplication($pdo)
         $newStmt->execute([':id' => $applicationId]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
+        broadcastEvent('construction_applications_update', ['id' => $applicationId]);
+
         // Write audit log for CREATE action
         writeAuditLog(
             $pdo,
@@ -374,6 +377,8 @@ function handleUpdateStatus($pdo)
         $newStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        broadcastEvent('construction_applications_update', ['id' => $id, 'status' => $newStatus]);
 
         // Write audit log for status update
         writeAuditLog(
@@ -574,6 +579,8 @@ function handleUpdateApplication($pdo)
             $newStmt = $pdo->prepare("SELECT * FROM construction_applications WHERE id = :id");
             $newStmt->execute([':id' => $applicationId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            broadcastEvent('construction_applications_update', ['id' => $applicationId]);
 
             // Write audit log for UPDATE action
             writeAuditLog(

@@ -2,7 +2,7 @@
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 
@@ -639,17 +639,6 @@ newSummaryForm.addEventListener('submit', async (e) => {
                         });
                     }
 
-                    // sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
-                    //     sockets["construction_applications"].send(JSON.stringify({
-                    //         type: "construction_applications_update",
-                    //         action: "new_application"
-                    //     }));
-
-                    const socket = sockets["main"];
-                    if (socket?.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: "construction_applications_update", action: "new_application" }));
-                    }
-
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -1138,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["main"]) initSocket("main", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();

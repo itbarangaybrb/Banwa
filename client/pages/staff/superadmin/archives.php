@@ -140,15 +140,16 @@ $full_name = getCurrentUserName();
         </section>
     </main>
 
-    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
-    <script type="module" src="../../../scripts/auth/signout.js"></script>
-
-    <script type="module" src="../../../scripts/utils/archives.js"></script>
-    <script type="module" src="../../../scripts/components/loader.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
+    <script type="module" src="../../../scripts/auth/signout.js"></script>
+    <script type="module" src="../../../scripts/utils/archives.js"></script>
+    <script type="module" src="../../../scripts/components/loader.js"></script>
+
 </body>
 
 </html>

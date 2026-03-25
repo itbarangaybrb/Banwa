@@ -1,4 +1,4 @@
-import { initSocket, sockets } from '/client/scripts/utils/socketUtils.js';
+import { initSocket, sockets } from '/client/scripts/utils/socket.js';
 const MAP_HANDLER_URL = '/server/handlers/map/map_handler.php';
 
 // Map variables
@@ -3832,9 +3832,10 @@ const messageMap = {
     "incident_report_applications_update": "New incident report application added to map",
     "construction_applications_update": "New construction application added to map",
     "utility_applications_update": "New utility application added to map",
+    "finance_applications_update": "updated status from finance",
 };
 
-initSocket("main", "ws://localhost:8081", (data) => {
+initSocket("main", "http://localhost:8081", (data) => {
     const message = messageMap[data.type];
     if (message) {
         loadAllMarkers();

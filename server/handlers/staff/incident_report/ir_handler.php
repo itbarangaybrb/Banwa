@@ -8,7 +8,8 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/incident_report/ir_dss.php';
-require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php'; // Add audit log function
+require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+require_once __DIR__ . '/../../../services/broadcast.php';
 
 session_start();
 
@@ -86,7 +87,7 @@ function handleCreateApplication($pdo)
     try {
         $supabaseUserId = $_SESSION['supabase_user_id'] ?? null;
 
-       // Reporting Person Information
+        // Reporting Person Information
         $rpFullName = get_input('rpFullName');
         $rpAddress = get_input('rpAddress'); // Directly grab the textarea
         $rpContact = get_input('rpContact');
@@ -141,7 +142,7 @@ function handleCreateApplication($pdo)
         $witnessDataJson = json_encode($witnessesArray);
 
         // CORRECTED SQL - matches your database schema
-$sql = "INSERT INTO incident_reports (
+        $sql = "INSERT INTO incident_reports (
             rp_full_name, rp_address, rp_contact, rp_relationship,
             vic_full_name, vic_address, vic_contact, vic_citizenship, vic_gender, vic_dob, vic_occupation,
             sus_full_name, sus_address, sus_contact, sus_gender, sus_description,
@@ -179,7 +180,7 @@ $sql = "INSERT INTO incident_reports (
             ':sus_gender' => $susGender,
             ':sus_description' => $susDescription,
 
-// Incident Details
+            // Incident Details
             ':incident_type' => $incidentType,
             ':incident_timestamp' => $incidentTimestamp,
             ':incident_address' => $incidentAddress, // Added!
@@ -206,6 +207,8 @@ $sql = "INSERT INTO incident_reports (
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
         createInitialDSSEvaluation($pdo, $reportId);
+
+        broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
 
         // Write audit log for CREATE action
         writeAuditLog(
@@ -308,6 +311,8 @@ function handleUpdateStatus($pdo)
         $newStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        broadcastEvent('incident_report_applications_update', ['id' => $id, 'status' => $newStatus]);
 
         // Write audit log for status update
         writeAuditLog(
@@ -522,6 +527,8 @@ function handleUpdateApplication($pdo)
             $newStmt = $pdo->prepare("SELECT * FROM incident_reports WHERE id = :id");
             $newStmt->execute([':id' => $reportId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
 
             // Write audit log for UPDATE action
             writeAuditLog(

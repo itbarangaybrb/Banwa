@@ -8,6 +8,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+require_once __DIR__ . '/../../../services/broadcast.php';
 
 ob_start();
 ini_set('display_errors', 0);
@@ -145,6 +146,9 @@ switch ($action) {
             $newStmt->execute([':id' => $id]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
+            broadcastEvent('finance_applications_update', ['id' => $id, 'app_type' => $type]);
+            broadcastEvent($type . '_applications_update', ['id' => $id]);
+
             // Write audit log for payment processing
             writeAuditLog(
                 $pdo,
@@ -238,6 +242,9 @@ switch ($action) {
             $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
             $newStmt->execute([':id' => $id]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            broadcastEvent('finance_applications_update', ['id' => $id, 'app_type' => $type]);
+            broadcastEvent($type . '_applications_update', ['id' => $id]);
 
             writeAuditLog(
                 $pdo,

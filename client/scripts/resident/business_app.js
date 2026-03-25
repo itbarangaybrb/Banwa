@@ -1,10 +1,11 @@
 // Configuration imports for Supabase, address data, and service worker registration
-const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
-
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
+
+const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
+
 
 registerServiceWorker();
 
@@ -852,11 +853,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
-                    const socket = sockets["main"];
-                    if (socket?.readyState === WebSocket.OPEN) {
-                        socket.send(JSON.stringify({ type: "business_applications_update", action: "new_application" }));
-                    }
-
                     business_app_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1376,5 +1372,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });
