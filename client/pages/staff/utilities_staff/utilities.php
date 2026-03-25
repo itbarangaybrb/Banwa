@@ -720,7 +720,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="https://banwa.onrender.com/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/3.1.2/socket.io.min.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/utilities_staff/utilities.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
