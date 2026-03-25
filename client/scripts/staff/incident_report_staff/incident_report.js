@@ -829,6 +829,11 @@ function submitUpdate(event) {
                     confirmButtonColor: '#28a745'
                 });
 
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('incident_report_applications_update', { action: 'status_update' });
+                }
+
                 loadManagementTable();
                 loadProcessTable();
                 try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
@@ -2323,15 +2328,3 @@ window.getSeverityBadge = getSeverityBadge;
 window.formatDate = formatDate;
 window.formatDateTime = formatDateTime;
 window.formatTime = formatTime;
-window.filterIncidents = filterIncidents;
-window.openUpdateModal = openUpdateModal;
-window.viewDetails = viewDetails;
-window.submitUpdate = submitUpdate;
-window.applyPrompt = applyPrompt;
-window.loadSummarySelect = loadSummarySelect;
-window.updateSummary = updateSummary;
-window.downloadSummary = downloadSummary;
-window.printSummary = printSummary;
-window.loadProcessTable = loadProcessTable;
-window.loadAnalyticsTab = loadAnalyticsTab;
-window.switchTab = switchTab;

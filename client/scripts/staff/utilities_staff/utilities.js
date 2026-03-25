@@ -913,6 +913,10 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('utility_applications_update', { action: 'status_update' });
+                }
 
                 loadManagementTable();
                 loadProcessTable();
