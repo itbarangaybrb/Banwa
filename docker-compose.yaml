@@ -26,20 +26,15 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
       - postgres_data:/var/lib/postgresql
-      # - ./03062025_banwa.sql:/docker-entrypoint-initdb.d/03062025_banwa.sql
 
   ws:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./server/socketio
     restart: always
     ports:
       - "8081:8081"
     env_file:
       - .env
-    depends_on:
-      - db
-    command: php /var/www/html/server/websocket/server.php
 
   ocr:
     build:

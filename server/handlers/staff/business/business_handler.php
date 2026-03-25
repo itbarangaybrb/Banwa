@@ -18,6 +18,7 @@ require_once __DIR__ . '/../../../configs/database.php';
 // require_once __DIR__ . '/../../../services/staff/business/business_applications.php';
 require_once __DIR__ . '/../../../services/staff/business/business_dss.php';
 require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+require_once __DIR__ . '/../../../services/broadcast.php';
 
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -305,8 +306,9 @@ function handleCreateApplication($pdo)
         // Always create the evaluation record **once** at the very end
         createInitialDSSEvaluation($pdo, $applicationId);
 
-        echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
+        broadcastEvent('business_applications_update', ['id' => $applicationId]);
 
+        echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Application Created!"]);
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "SQL Error: " . $e->getMessage()]);
@@ -404,6 +406,8 @@ function handleUpdateStatus($pdo)
         $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+        broadcastEvent('business_applications_update', ['id' => $id, 'status' => $newStatus]);
 
         // Log the status update in the audit log
         writeAuditLog(
@@ -634,6 +638,8 @@ function handleUpdateApplication($pdo)
             $newStmt = $pdo->prepare("SELECT * FROM business_applications WHERE id = :id");
             $newStmt->execute([':id' => $applicationId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            broadcastEvent('business_applications_update', ['id' => $applicationId]);
 
             // Log the update in the audit log
             writeAuditLog(

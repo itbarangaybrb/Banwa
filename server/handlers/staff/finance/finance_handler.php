@@ -8,6 +8,7 @@ ini_set('error_log', __DIR__ . '/error.log');
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../api/shared/insert_audit_logs.php';
+require_once __DIR__ . '/../../../services/broadcast.php';
 
 ob_start();
 ini_set('display_errors', 0);
@@ -145,6 +146,9 @@ switch ($action) {
             $newStmt->execute([':id' => $id]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
+            broadcastEvent('finance_applications_update', ['id' => $id, 'app_type' => $type]);
+            broadcastEvent($type . '_applications_update', ['id' => $id]);
+
             // Write audit log for payment processing
             writeAuditLog(
                 $pdo,
@@ -212,9 +216,16 @@ switch ($action) {
             $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
             // Dynamically build SQL to include the OR file path if uploaded
+            // Get OR number from POST if provided
+            $orNumber = $_POST['or_number'] ?? null;
+
+            // Dynamically build SQL to include the OR file path and OR number if provided
             $sql = "UPDATE $table SET status = :new_status, payment_status = :new_payment_status, updated_at = NOW()";
             if ($orFilePath !== null) {
                 $sql .= ", or_file_path = :or_file_path";
+            }
+            if (!empty($orNumber)) {
+                $sql .= ", or_number = :or_number";
             }
             $sql .= " WHERE id = :id";
 
@@ -223,11 +234,17 @@ switch ($action) {
             if ($orFilePath !== null) {
                 $params[':or_file_path'] = $orFilePath;
             }
+            if (!empty($orNumber)) {
+                $params[':or_number'] = trim($orNumber);
+            }
             $stmt->execute($params);
 
             $newStmt = $pdo->prepare("SELECT * FROM $table WHERE id = :id");
             $newStmt->execute([':id' => $id]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
+
+            broadcastEvent('finance_applications_update', ['id' => $id, 'app_type' => $type]);
+            broadcastEvent($type . '_applications_update', ['id' => $id]);
 
             writeAuditLog(
                 $pdo,

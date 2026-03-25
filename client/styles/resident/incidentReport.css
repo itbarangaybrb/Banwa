@@ -216,7 +216,7 @@ textarea:focus {
 
 /* --- 5. BUTTON STYLES --- */
 button {
-    margin-top: 25px;
+    /* margin-top: 25px; */
     padding: 12px;
     font-weight: bold;
     border-radius: 8px;

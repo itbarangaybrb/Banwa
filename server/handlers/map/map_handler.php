@@ -117,11 +117,15 @@ function getUtilitiesMarkers()
 {
     global $pdo;
     try {
-        $sql = "SELECT id, first_name, middle_name, last_name, suffix, owner_contact_no,
+        $sql = "SELECT DISTINCT ON (latitude, longitude)
+                       id, first_name, middle_name, last_name, suffix, owner_contact_no,
                        owner_address, request_date, date_of_work, nature_of_work, provider,
                        address_of_utility, latitude, longitude, status, agreed, supabase_user_id
                 FROM utility_applications 
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                AND status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                AND is_archived = false
+                ORDER BY latitude, longitude, id DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -135,14 +139,18 @@ function getUtilitiesMarkers()
 function getConstructionMarkers(){
     global $pdo;
     try {
-        $sql = "SELECT id, first_name, middle_name, last_name, suffix, contact_no_owner,
+        $sql = "SELECT DISTINCT ON (latitude, longitude)
+                       id, first_name, middle_name, last_name, suffix, contact_no_owner,
                        construction_address, latitude, longitude, nature_of_work, type_of_work,
                        nature_of_activity, details_of_work, start_date, end_date,
                        number_of_working_days, number_of_workers, contractor_name,
                        contractor_contact_number, application_method, requirement_upload,
                        agreed, status, updated_at
                 FROM construction_applications 
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                AND status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                AND is_archived = false
+                ORDER BY latitude, longitude, id DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -156,7 +164,8 @@ function getConstructionMarkers(){
 function getBusinessMarkers(){
     global $pdo;
     try {
-        $sql = "SELECT id, business_name, type_of_business, nature_of_business,
+        $sql = "SELECT DISTINCT ON (latitude, longitude)
+                       id, business_name, type_of_business, nature_of_business,
                        nature_of_business_specify, address_of_business, telephone_no_business,
                        email_address, first_name, middle_name, last_name, telephone_no_owner,
                        address_owner, type_of_structure, type_of_structure_specify,
@@ -164,7 +173,10 @@ function getBusinessMarkers(){
                        application_date, status, approval_comments, disapproval_reason,
                        latitude, longitude 
                 FROM business_applications 
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL";
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                AND status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                AND is_archived = false
+                ORDER BY latitude, longitude, id DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -178,7 +190,8 @@ function getBusinessMarkers(){
 function getIncidentMarkers(){
     global $pdo;
     try {
-        $sql = "SELECT id, rp_full_name, rp_address, rp_contact, rp_relationship,
+        $sql = "SELECT DISTINCT ON (latitude, longitude)
+                       id, rp_full_name, rp_address, rp_contact, rp_relationship,
                        vic_full_name, vic_address, vic_contact, vic_gender, vic_occupation, vic_citizenship, vic_dob,
                        sus_full_name, sus_address, sus_contact, sus_gender, sus_description,
                        incident_type, incident_timestamp, date_reported, description,
@@ -187,7 +200,9 @@ function getIncidentMarkers(){
                        latitude, longitude
                 FROM incident_reports
                 WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-                ORDER BY incident_timestamp DESC";
+                AND status NOT IN ('Resolved', 'Closed', 'Cancelled')
+                AND is_archived = false
+                ORDER BY latitude, longitude, id DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -969,14 +984,14 @@ function getHouseApplications($houseId) {
 
         $params = [];
         $where = $buildWhere(['construction_address']);
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, type_of_work, nature_of_work, agreed, construction_address
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, type_of_work, nature_of_work, status, construction_address
                                FROM construction_applications WHERE $where ORDER BY id DESC");
         $stmt->execute($params);
         $constructions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $params = [];
         $where = $buildWhere(['address_of_utility']);
-        $stmt = $pdo->prepare("SELECT id, first_name, last_name, nature_of_work, provider, agreed, address_of_utility
+        $stmt = $pdo->prepare("SELECT id, first_name, last_name, nature_of_work, provider, status, address_of_utility
                                FROM utility_applications WHERE $where ORDER BY id DESC");
         $stmt->execute($params);
         $utilities = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2654,39 +2669,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             // Markers: only the fields the map pins actually need
             // Full detail data is fetched on-demand when a user clicks a pin.
             $businesses = $pdo->query(
-                "SELECT id, business_name AS name, type_of_business, nature_of_business,
+                "SELECT DISTINCT ON (latitude, longitude)
+                        id, business_name AS name, type_of_business, nature_of_business,
                         address_of_business AS address, no_of_employees,
                         first_name, middle_name, last_name, status, latitude, longitude
                  FROM   business_applications
-                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL"
+                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL
+                 AND    status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                 AND    is_archived = false
+                 ORDER  BY latitude, longitude, id DESC"
             )->fetchAll(PDO::FETCH_ASSOC);
 
             $constructions = $pdo->query(
-                "SELECT id, first_name, middle_name, last_name,
+                "SELECT DISTINCT ON (latitude, longitude)
+                        id, first_name, middle_name, last_name,
                         construction_address AS address, latitude, longitude,
                         nature_of_work, type_of_work, nature_of_activity,
                         number_of_workers, number_of_working_days, start_date, end_date,
                         status, contractor_name
                  FROM   construction_applications
-                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL"
+                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL
+                 AND    status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                 AND    is_archived = false
+                 ORDER  BY latitude, longitude, id DESC"
             )->fetchAll(PDO::FETCH_ASSOC);
 
             $utilities = $pdo->query(
-                "SELECT id, first_name, middle_name, last_name,
+                "SELECT DISTINCT ON (latitude, longitude)
+                        id, first_name, middle_name, last_name,
                         address_of_utility AS address, latitude, longitude,
                         nature_of_work, provider, status, date_of_work
                  FROM   utility_applications
-                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL"
+                 WHERE  latitude IS NOT NULL AND longitude IS NOT NULL
+                 AND    status NOT IN ('Approved', 'Disapproved', 'Cancelled')
+                 AND    is_archived = false
+                 ORDER  BY latitude, longitude, id DESC"
             )->fetchAll(PDO::FETCH_ASSOC);
 
             $incidents = $pdo->query(
-                "SELECT id, incident_type, incident_timestamp, status, dss_status,
+                "SELECT DISTINCT ON (latitude, longitude)
+                        id, incident_type, incident_timestamp, status, dss_status,
                         vic_full_name, vic_address AS address,
                         rp_full_name, rp_address,
                         latitude, longitude
                  FROM   incident_reports
                  WHERE  latitude IS NOT NULL AND longitude IS NOT NULL
-                 ORDER  BY incident_timestamp DESC"
+                 AND    status NOT IN ('Resolved', 'Closed', 'Cancelled')
+                 AND    is_archived = false
+                 ORDER  BY latitude, longitude, id DESC"
             )->fetchAll(PDO::FETCH_ASSOC);
 
             // Houses: only geometry + display fields (no created_at, area_sqm etc.)

@@ -13,7 +13,8 @@ if ($_SESSION['role_id'] != 1) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Application</title>
+    <title>Business Clearance Application</title>
+
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
@@ -25,7 +26,7 @@ if ($_SESSION['role_id'] != 1) {
 
 <body>
     <?php
-    $page_title = "Business Application";
+    $page_title = "Business Clearance Application";
     include '_layout/nav.php';
     ?>
 

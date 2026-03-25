@@ -594,10 +594,15 @@ $full_name = getCurrentUserName();
                 <input type="hidden" id="latitude2" name="latitude2" value="">
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
-                <!-- <div class="form-group">
-                    <button type="button" class="btn map-btn" data-target="2" style="width:100%;">Pick Location on Map</button>
-                    <div class="map-preview" id="map-preview-2" style="margin-top:10px;display:none;height:200px;"></div>
-                </div> -->
+                <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                    <label>Selected Location</label>
+                    <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <button type="button" class="btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
+                        <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                    </button>
+                </div>
 
                 <div class="section-title"><strong>Business Structure</strong></div>
 
@@ -848,8 +853,8 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
-
     <script type="module" src="../../../scripts/staff/business_staff/business.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>

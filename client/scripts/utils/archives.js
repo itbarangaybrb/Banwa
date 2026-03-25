@@ -1,4 +1,4 @@
-import { initSocket, sockets } from './socketUtils.js';
+import { initSocket, sockets } from './socket.js';
 import { fetchUsers } from '../staff/superadmin/manage_users.js';
 
 const swalStyle = document.createElement('style');
@@ -105,58 +105,13 @@ export async function archiveRecord(tableName, recordId) {
             window.fetchUsers();
         }
 
-        if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
-            sockets["archives"].send(JSON.stringify({
+        // Single "main" socket — consistent with utilities.js
+        const socket = sockets["main"];
+        if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
                 type: "archives_update",
                 action: "archive",
                 tableName: tableName,
-                recordId: recordId
-            }));
-        }
-
-        if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
-            sockets["users"].send(JSON.stringify({
-                type: "users_update",
-                action: "archive",
-                recordId: recordId
-            }));
-        }
-
-        if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-            sockets["audit"].send(JSON.stringify({
-                type: "new_audit_log",
-                action: "new_audit_log",
-            }));
-        }
-
-        if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
-            sockets["utility_applications"].send(JSON.stringify({
-                type: "utility_applications_update",
-                action: "archive",
-                recordId: recordId
-            }));
-        }
-
-        if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-            sockets["construction_applications"].send(JSON.stringify({
-                type: "construction_applications_update",
-                action: "archive",
-                recordId: recordId
-            }));
-        }
-
-        if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-            sockets["business_applications"].send(JSON.stringify({
-                type: "business_applications_update",
-                action: "archive",
-                recordId: recordId
-            }));
-        }
-
-        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-            sockets["incident_report_applications"].send(JSON.stringify({
-                type: "incident_report_applications_update",
-                action: "archive",
                 recordId: recordId
             }));
         }
@@ -217,56 +172,11 @@ async function restoreRecord(archiveId) {
         fetchArchives();
         fetchUsers();
 
-        if (sockets["archives"] && sockets["archives"].readyState === WebSocket.OPEN) {
-            sockets["archives"].send(JSON.stringify({
+        // Single "main" socket — consistent with utilities.js
+        const socket = sockets["main"];
+        if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
                 type: "archives_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
-        if (sockets["users"] && sockets["users"].readyState === WebSocket.OPEN) {
-            sockets["users"].send(JSON.stringify({
-                type: "users_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
-        if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-            sockets["audit"].send(JSON.stringify({
-                type: "new_audit_log",
-                action: "new_audit_log",
-            }));
-        }
-
-        if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
-            sockets["utility_applications"].send(JSON.stringify({
-                type: "utility_applications_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
-        if (sockets["construction_applications"] && sockets["construction_applications"].readyState === WebSocket.OPEN) {
-            sockets["construction_applications"].send(JSON.stringify({
-                type: "construction_applications_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
-        if (sockets["business_applications"] && sockets["business_applications"].readyState === WebSocket.OPEN) {
-            sockets["business_applications"].send(JSON.stringify({
-                type: "business_applications_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
-        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-            sockets["incident_report_applications"].send(JSON.stringify({
-                type: "incident_report_applications_update",
                 action: "restore",
                 archiveId: archiveId
             }));
@@ -407,13 +317,22 @@ document.addEventListener('click', async (e) => {
 
 /**
  * Initializes WebSocket connection and fetches archives on page load.
+ * Uses a single "main" socket with a switch statement — consistent with utilities.js.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    if (!sockets["archives"]) {
-        initSocket("archives", "ws://localhost:8081", data => {
-            if (data.type === "archives_update") fetchArchives();
-        });
+    fetchArchives();
 
-        fetchArchives();
-    }
+    initSocket("main", "http//localhost:8081", (data) => {
+        switch (data.type) {
+            case "archives_update":
+                fetchArchives();
+                break;
+            case "users_update":
+                fetchUsers;
+                break;
+            case "new_audit_log":
+                // Audit log handling delegated to audit module if needed
+                break;
+        }
+    });
 });

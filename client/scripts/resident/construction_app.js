@@ -2,7 +2,7 @@
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 
@@ -42,6 +42,13 @@ function switchPanel(panelId) {
         .map(id => document.getElementById(id));
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
     window.scrollTo(0, 0);
+}
+
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    owner: false,
+    construction: false,
+    waiver: false
 }
 
 // Form element references for owner information section
@@ -353,10 +360,8 @@ function validateField(config) {
     const { el, type, message, rules } = config;
     if (!el) return true;
 
-    // Check if this is a conditional field (file upload that may not be required)
     if (rules && rules.conditional) {
         const applicationMethod = document.getElementById('applicationMethod').value;
-        // If method is 'In Person', file upload is not required
         if (applicationMethod === 'In Person') {
             validator.clear(el);
             return true;
@@ -425,6 +430,8 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
     const stepFields = [firstName, lastName, contactNoOwner, addressOwner];
     if (!validateStep(stepFields)) return;
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+
+    completedPanels.owner = true;
     switchPanel('construction');
 });
 
@@ -450,6 +457,8 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
 
     if (!validateStep(stepFields)) return;
     if (!validator.address(constructionLotNo, constructionStreet)) return;
+
+    completedPanels.construction = true;
     switchPanel('waiver');
 });
 
@@ -476,13 +485,14 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumContractorName').textContent = contractorName.value;
         document.getElementById('sumContractorContactNumber').textContent = contractorContactNumber.value;
         document.getElementById('sumApplicationMethod').textContent = applicationMethod.value;
-        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressConstruction').textContent = `${constructionLotNo.value} ${constructionStreet.value}`;
         document.getElementById('sumRequirementUpload').textContent = requirementUpload.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
         document.getElementById('sumContactNoOwner').textContent = contactNoOwner.value;
         document.getElementById('sumAddressOwner').textContent = addressOwner.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
 
+        completedPanels.waiver = true;
         switchPanel('summary');
     }
 });
@@ -492,10 +502,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('constructionBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('construction'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -514,6 +521,21 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const requiredPanels = ['owner', 'construction', 'waiver'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+            confirmButtonColor: '#00247C',
+        });
+        switchPanel('owner');
+        return;
+    }
 
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -616,12 +638,6 @@ newSummaryForm.addEventListener('submit', async (e) => {
                             });
                         });
                     }
-
-                    sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
-                        sockets["construction_applications"].send(JSON.stringify({
-                            type: "construction_applications_update",
-                            action: "new_application"
-                        }));
 
                     Swal.fire({
                         title: 'Success!',
@@ -995,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('construction_app autofill response:', data);
+        // console.debug('construction_app autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
@@ -1079,7 +1095,7 @@ function toggleApplicationMethod() {
         document.getElementById('applicationMethod').value = '';
         validator.clear(document.getElementById('applicationMethod'));
     } else {
-        applicationMethodWrapper.style.display = 'block';
+        applicationMethodWrapper.style.display = '';
     }
 
     toggleFileUploads();
@@ -1111,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["construction_applications"]) initSocket("construction_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();

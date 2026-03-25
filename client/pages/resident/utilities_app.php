@@ -18,9 +18,10 @@ if ($_SESSION['role_id'] != 1) {
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
+    <link rel="stylesheet" href="../../styles/resident/utilities_app.css">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <link rel="stylesheet" href="../../styles/resident/utilities_app.css">
 </head>
 
 <body>
@@ -263,6 +264,7 @@ if ($_SESSION['role_id'] != 1) {
 
     <script type="module" src="../../scripts/resident/utilities_app.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <?php include '_layout/end.php'; ?>
 </body>

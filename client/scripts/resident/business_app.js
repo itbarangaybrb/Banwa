@@ -1,10 +1,11 @@
 // Configuration imports for Supabase, address data, and service worker registration
-const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
-
 import supabase from '../../../server/api/supabase.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
-import { initSocket, sockets } from '../../scripts/utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
+
+const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
+
 
 registerServiceWorker();
 
@@ -81,6 +82,13 @@ function switchPanel(panelId) {
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
     window.scrollTo(0, 0);
 }
+
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    owner: false,
+    business: false,
+    waiver: false,
+};
 
 // Form element references for owner information section
 const firstName = document.getElementById('firstName');
@@ -506,7 +514,8 @@ function validateField(config) {
  * @returns {boolean} - Whether all fields in the step are valid
  */
 function validateStep(fields) {
-    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+    const results = fields.map(f => validateField(validationConfig.find(c => c.el === f)));
+    return results.every(v => v);
 }
 
 /**
@@ -518,6 +527,7 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
     if (!validateStep(stepFields)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    completedPanels.owner = true;
     switchPanel('business');
 });
 
@@ -525,7 +535,7 @@ document.getElementById('nextToBusiness').addEventListener('click', () => {
  * Handles navigation from business information panel to waiver panel
  * Validates all business fields including dynamic requirements based on application type
  */
-document.getElementById('nextToWaiver').addEventListener('click', () => {
+document.getElementById('nextToWaiver').addEventListener('click', async () => {
     const selectedBusinessStatus = Array.from(businessStatus).find(r => r.checked)?.value;
 
     const stepFields = [
@@ -548,17 +558,23 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
         noOfEmployees
     ].filter(Boolean);
 
+
     const addressValid = validator.address(businessLotNo, businessStreet);
     const fieldsValid = validateStep(stepFields);
 
-    if (!addressValid || !fieldsValid) return;
-
-    if (requirementUpload.files.length > 0 && !documentVerificationDone) {
-        if (!confirm("Documents have not been verified with OCR yet.\n\nContinue anyway?")) {
-            return;
-        }
+    if (!addressValid || !fieldsValid) {
+        return;
+    } else if (!documentVerificationDone) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'OCR Not Done',
+            html: 'Documents have not been verified with OCR yet. Please wait for verification to complete before proceeding.',
+        });
+        return;
     }
 
+
+    completedPanels.business = true;
     switchPanel('waiver');
 });
 
@@ -575,7 +591,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumTypeOfBusiness').textContent = Array.from(typeOfBusiness).find(r => r.checked)?.value || '';
         document.getElementById('sumNatureOfBusiness').textContent = (natureOfBusinessSelect.value === 'Others' ? natureOfBusinessSpecify.value : natureOfBusinessSelect.value).trim();
         document.getElementById('sumBusinessStatus').textContent = (Array.from(businessStatus).find(r => r.checked)?.value === 'Others' ? businessStatusSpecify.value : Array.from(businessStatus).find(r => r.checked)?.value || '').trim();
-        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressOfBusiness').textContent = `${businessLotNo.value} ${businessStreet.value}`;
         document.getElementById('sumContactNoBusiness').textContent = contactNoBusiness.value;
         document.getElementById('sumEmail').textContent = emailAddress.value;
         document.getElementById('sumFullname').textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`.trim();
@@ -586,6 +602,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumEmployees').textContent = noOfEmployees.value;
         document.getElementById('sumAgreed').textContent = agreeCheckBox.checked ? 'Yes' : 'No';
 
+        completedPanels.waiver = true;
         switchPanel('summary');
     }
 });
@@ -595,10 +612,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('businessBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('business'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -715,6 +729,21 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
+    const requiredPanels = ['owner', 'business', 'waiver'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await business_app_swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+            confirmButtonColor: '#00247C',
+        });
+        switchPanel('owner');
+        return;
+    }
+
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
         await Notification.requestPermission();
@@ -823,12 +852,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             });
                         });
                     }
-
-                    sockets["business_applications"]?.readyState === WebSocket.OPEN &&
-                        sockets["business_applications"].send(JSON.stringify({
-                            type: "business_applications_update",
-                            action: "new_application"
-                        }));
 
                     business_app_swal.fire({
                         icon: 'success',
@@ -1324,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('business_app autofill response:', data);
+        // console.debug('business_app autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
@@ -1349,5 +1372,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["business_applications"]) initSocket("business_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });

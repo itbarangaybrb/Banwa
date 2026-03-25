@@ -473,7 +473,7 @@ $full_name = getCurrentUserName();
 
                     <div class="section-title">Witnesses (If Any)</div>
                     <div id="witnessesContainer"></div>
-                    <button type="button" id="addWitnessBtn" class="btn-secondary" style="margin-bottom: 25px;"><i class="fas fa-plus"></i> Add Witness</button>
+                    <button type="button" id="addWitnessBtn" class="btn-secondary" style="margin-top: 20px; padding: 12px; font-weight: bold; border-radius: 8px; transition: background-color 0.3s; background-color: #3498db; color: white; border: none;"><i class="fas fa-plus"></i> Add Witness</button>
 
                     <div class="section-title">Incident Details</div>
                     <div class="form-row">
@@ -499,21 +499,21 @@ $full_name = getCurrentUserName();
                             <label for="incidentTimestamp">Date and Time of Incident <span style="color: #BB1B1B;">*</span></label>
                             <input type="datetime-local" id="incidentTimestamp" name="incidentTimestamp" required>
                         </div>
-                        
+
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label for="incidentAddress">Incident Location (Complete Address) <span style="color: #BB1B1B;">*</span></label>
                             <textarea id="incidentAddress" name="incidentAddress" rows="2" placeholder="Unit/House No., Street, Barangay, City/Municipality, Province" required></textarea>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group hidden">
                             <label for="incidentLatitude">Latitude</label>
                             <input type="text" id="incidentLatitude" name="incidentLatitude" readonly placeholder="Auto-filled from map">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group hidden">
                             <label for="incidentLongitude">Longitude</label>
                             <input type="text" id="incidentLongitude" name="incidentLongitude" readonly placeholder="Auto-filled from map">
                         </div>
-                        
+
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <button type="button" class="btn-secondary" onclick="openMapPicker('incident')" style="width: max-content;"><i class="fas fa-map-marker-alt"></i> Pick Location on Map</button>
                         </div>
@@ -668,7 +668,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="newStatus">New Status *</label>
+                        <label for="newStatus">New Status <span style="color: #BB1B1B;">*</span></label>
                         <select id="newStatus" name="newStatus" required>
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Under Investigation">Under Investigation</option>
@@ -680,7 +680,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="updateComments">Remarks / Comments *</label>
+                        <label for="updateComments">Remarks / Comments <span style="color: #BB1B1B;">*</span></label>
                         <div class="prompt-container">
                             <div class="prompt-suggestions">
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Report is complete. Ready for processing.')">Complete</button>
@@ -733,8 +733,8 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
-
     <script type="module" src="../../../scripts/staff/incident_report_staff/incident_report.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>

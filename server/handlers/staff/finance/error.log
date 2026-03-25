@@ -342,3 +342,11 @@ LINE 14:                     requirement_upload_json AS requirement_u...
 [03-Mar-2026 17:19:31 UTC] PDOException [action=fetch_pending]: SQLSTATE[42703]: Undefined column: 7 ERROR:  column "requirement_upload_json" does not exist
 LINE 14:                     requirement_upload_json AS requirement_u...
                              ^
+[24-Mar-2026 12:39:43 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:34:55 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:44:04 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[24-Mar-2026 16:55:42 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:15:46 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:15:46 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:23:15 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[25-Mar-2026 11:23:15 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

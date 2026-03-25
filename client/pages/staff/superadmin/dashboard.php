@@ -21,7 +21,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/dashboard.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
-    <link rel="stylesheet" href="../../../styles/loader.css">
+    <link rel="stylesheet" href="../../../styles/components/loader.css">
 </head>
 
 <body>
@@ -110,12 +110,11 @@ $full_name = getCurrentUserName();
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/dashboard.js"></script>
-
-    <script type="module" src="../../../scripts/utils/loader.js"></script>
-
+    <script type="module" src="../../../scripts/components/loader.js"></script>
 
 </body>
 

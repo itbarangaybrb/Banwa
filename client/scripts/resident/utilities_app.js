@@ -1,5 +1,5 @@
 // Configuration imports for service worker registration and address data
-import { initSocket, sockets } from '../utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 
@@ -57,6 +57,13 @@ function switchPanel(panelId) {
     panels.forEach(panel => { panel.classList.toggle('hidden', panel.id !== panelId) });
     window.scrollTo(0, 0);
 }
+
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    owner: false,
+    utilities: false,
+    waiver: false,
+};
 
 // Initialize the form with owner panel visible
 switchPanel('owner');
@@ -397,6 +404,7 @@ document.getElementById('nextToUtilities').addEventListener('click', () => {
     if (!validateStep(stepFields)) return;
 
     waiverFullname.textContent = `${firstName.value} ${middleName.value} ${lastName.value} ${suffix.value}`;
+    completedPanels.owner = true;
     switchPanel('utilities');
 });
 
@@ -405,10 +413,12 @@ document.getElementById('nextToUtilities').addEventListener('click', () => {
  * Validates all utilities fields before proceeding
  */
 document.getElementById('nextToWaiver').addEventListener('click', () => {
-    const stepFields = [requestDate, dateOfWork, natureOfWork, provider]
-    if (validateStep(stepFields)) {
-        switchPanel('waiver');
-    }
+    const stepFields = [requestDate, dateOfWork, natureOfWork, provider, utilityLotNo, utilityStreet];
+    const addressValid = validator.address(utilityLotNo, utilityStreet);
+    const fieldsValid = validateStep(stepFields);
+    if (!addressValid || !fieldsValid) return;
+    completedPanels.utilities = true;
+    switchPanel('waiver');
 });
 
 /**
@@ -428,8 +438,9 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
         document.getElementById('sumDateOfWork').textContent = dateOfWork.value;
         document.getElementById('sumNatureOfWork').textContent = natureOfWork.value;
         document.getElementById('sumProvider').textContent = provider.value;
-        document.getElementById('sumAddressOfUtility').textContent = `${utilityLotNo.value} ${utilityStreet.value}` + (lat && lng ? ` (Lat: ${lat}, Lng: ${lng})` : '');
+        document.getElementById('sumAddressOfUtility').textContent = `${utilityLotNo.value} ${utilityStreet.value}`;
 
+        completedPanels.waiver = true;
         switchPanel('summary');
     }
 });
@@ -439,10 +450,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('ownerBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('ownerBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('utilitiesBackBtn').addEventListener('click', () => switchPanel('owner'));
     document.getElementById('waiverBackBtn').addEventListener('click', () => switchPanel('utilities'));
     document.getElementById('summaryBackBtn').addEventListener('click', () => switchPanel('waiver'));
@@ -461,6 +469,21 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    const requiredPanels = ['owner', 'utilities', 'waiver'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+            confirmButtonColor: '#00247C',
+        });
+        switchPanel('owner');
+        return;
+    }
 
     // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -524,13 +547,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             });
                         });
                     }
-
-                    sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
-                        sockets["utility_applications"].send(JSON.stringify({
-                            type: "utility_applications_update",
-                            action: "new_application"
-                        }));
-
+                    
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -871,7 +888,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
-        console.debug('utilities_app autofill response:', data);
+        // console.debug('utilities_app autofill response:', data);
 
         // fallback: if first_name missing but full_name present, split it
         if ((!data.first_name || data.first_name.trim() === '') && data.full_name) {
@@ -896,5 +913,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["utility_applications"]) initSocket("utility_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });

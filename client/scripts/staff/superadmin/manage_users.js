@@ -1,5 +1,5 @@
 import supabase from "../../../../server/api/supabase.js";
-import { initSocket, sockets } from '../../utils/socketUtils.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';
 
@@ -211,16 +211,16 @@ document.addEventListener('click', (e) => {
  * all forms with validation and submission handlers.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize WebSocket for real-time updates
-    if (!sockets["users"]) {
-        initSocket("users", "ws://localhost:8081", data => {
-            if (data.type === "users_update") fetchUsers();
-        });
+    initSocket("main", "http://localhost:8081", (data) => {
+        switch (data.type) {
+            case "users_update":
+                fetchUsers();
+                break;
+        }
+    });
 
-        fetchUsers();
-    }
+    fetchUsers();
 
-    // Initialize forms with validation
     const createForm = document.getElementById('createForm');
     if (createForm) initializeForm(createForm, handleCreateFormSubmit);
 

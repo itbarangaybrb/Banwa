@@ -1,7 +1,8 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socketUtils.js';
-const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
+import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
+
+const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 let incidents = [];
 
@@ -828,19 +829,9 @@ function submitUpdate(event) {
                     confirmButtonColor: '#28a745'
                 });
 
-                if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-                    sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-
-                if (sockets["incident_reports"] && sockets["incident_reports"].readyState === WebSocket.OPEN) {
-                    sockets["incident_reports"].send(JSON.stringify({ type: "incident_reports_update", action: "status_update" }));
-                }
-
                 loadManagementTable();
                 loadProcessTable();
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 // REPLACED WITH SWEETALERT2
                 incidentAlertConfig.fire({
@@ -1599,49 +1590,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Add Witness Logic
-    const addWitnessBtn = document.getElementById('addWitnessBtn');
-    if (addWitnessBtn) {
-        addWitnessBtn.addEventListener('click', () => {
-            witnessCount++;
-            const container = document.getElementById('witnessesContainer');
-            const div = document.createElement('div');
-            div.className = 'witness-group form-row';
-            div.style.marginBottom = '15px';
-            div.style.padding = '20px';
-            div.style.border = '1px solid #e0e0e0';
-            div.style.borderRadius = '6px';
-            div.style.background = '#f9f9f9';
-            div.style.position = 'relative';
-
-            div.innerHTML = `
-                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px;">
-                    <strong style="color: #333;">Witness ${witnessCount}</strong>
-                    <button type="button" class="btn-secondary" style="padding: 4px 10px; color: #dc3545; border-color: #dc3545; background: transparent;" onclick="this.closest('.witness-group').remove()"><i class="fas fa-times"></i> Remove</button>
-                </div>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" class="witness-name" placeholder="Full Name">
-                </div>
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="text" class="witness-contact" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
-                </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Complete Address</label>
-                    <input type="text" class="witness-address" placeholder="Complete Address">
-                </div>
-            `;
-            container.appendChild(div);
-
-            // Contact input digit sanitizer
-            const contactInput = div.querySelector('.witness-contact');
-            if (contactInput) {
-                contactInput.addEventListener('input', function () {
-                    this.value = this.value.replace(/\D/g, '');
-                });
-            }
-        });
+    if (witnessCount === 0) {
+        addWitness();// Add witnesss Function
     }
 
     // 3. Incident Type "Other" logic
@@ -1670,6 +1620,43 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+});
+
+function addWitness(addWitnessBtn) {
+    witnessCount++;
+    const container = document.getElementById('witnessesContainer');
+    const witnessDiv = document.createElement('div');
+    witnessDiv.className = 'witness-group';
+    witnessDiv.style = 'border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative;';
+    witnessDiv.innerHTML = `
+        <h3><strong>Witness ${witnessCount}</strong></h3>
+        <div class="label-and-input">
+            <label class="label" for="witnessName${witnessCount}">Full Name</label>
+            <input type="text" class="witness-name" id="witnessName${witnessCount}" placeholder="Full Name">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessAddress${witnessCount}">Complete Address</label>
+            <input type="text" class="witness-address" id="witnessAddress${witnessCount}" placeholder="Address">
+        </div>
+        <div class="label-and-input">
+            <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
+            <input type="text" class="witness-contact" id="witnessContact${witnessCount}" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
+        </div>
+        <button type="button" class="remove-witness-btn" style="margin-top: 10px; ">Remove Witness</button>
+    `;
+
+    witnessesContainer.appendChild(witnessDiv);
+
+    // Add remove functionality for witness entry
+    witnessDiv.querySelector('.remove-witness-btn').addEventListener('click', () => {
+        witnessDiv.remove();
+        witnessCount--;
+    });
+}
+
+// Set up witness addition button when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addWitnessBtn').addEventListener('click', addWitness);
 });
 
 /**
@@ -1732,35 +1719,36 @@ function createApplication(event) {
                 body: formData,
                 credentials: 'include'
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    incidentAlertConfig.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Incident Report Created! ID: ' + data.id
-                    }).then(() => {
-                        // Reset form state
-                        form.reset();
-                        document.getElementById('witnessesContainer').innerHTML = '';
-                        document.getElementById('victimDetailsContainer').style.display = 'grid';
-                        document.getElementById('otherSpecifyContainer').classList.add('hidden');
-                        
-                        // Notify system and reload
-                        if (sockets["incident_report_applications"] && sockets["incident_report_applications"].readyState === WebSocket.OPEN) {
-                            sockets["incident_report_applications"].send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
-                        }
-                        loadManagementTable();
-                        switchTab(null, 'management');
-                    });
-                } else {
-                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
-                }
-            })
-            .catch(err => {
-                console.error('Submit error:', err);
-                incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        incidentAlertConfig.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Incident Report Created! ID: ' + data.id
+                        }).then(() => {
+                            // Reset form state
+                            form.reset();
+                            document.getElementById('witnessesContainer').innerHTML = '';
+                            document.getElementById('victimDetailsContainer').style.display = 'grid';
+                            document.getElementById('otherSpecifyContainer').classList.add('hidden');
+
+                            const socket = sockets["main"];
+                            if (socket?.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                            }
+                            
+                            loadManagementTable();
+                            switchTab(null, 'management');
+                        });
+                    } else {
+                        incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: data.message });
+                    }
+                })
+                .catch(err => {
+                    console.error('Submit error:', err);
+                    incidentAlertConfig.fire({ icon: 'error', title: 'Error!', text: 'Network error occurred.' });
+                });
         }
     });
 }
@@ -1770,27 +1758,42 @@ function createApplication(event) {
  * (Updated to include Street/Satellite toggle buttons in the header)
  */
 function openMapPicker(target) {
-    let modal = document.querySelector('.dynamic-map-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.className = 'modal dynamic-map-modal';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 900px; width: 90%; height: 85%;">
-                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin: 0;">Select Incident Location</h2>
-                    <div class="map-picker-controls" style="display: flex; gap: 8px;">
-                        <button id="picker-street-btn" type="button" style="background: #00247c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Street</button>
-                        <button id="picker-satellite-btn" type="button" style="background: white; color: #555; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;">Satellite</button>
-                    </div>
-                    <button type="button" class="close-btn" onclick="this.closest('.modal').remove()" style="margin-left: 15px;">&times;</button>
+    // Destroy any existing instance so re-opening always starts fresh
+    const old = document.querySelector('.dynamic-map-modal');
+    if (old) old.remove();
+
+    // Title label per form type
+    const titleMap = {
+        incident:     'Select Incident Location',
+        utility:      'Select Utility Work Location',
+        business:     'Select Business Location',
+        construction: 'Select Construction Site Location'
+    };
+
+    const modal = document.createElement('div');
+    modal.className = 'modal dynamic-map-modal';
+    // Use flex centering so the content box is always centred and height works correctly
+    modal.style.cssText = 'display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+    modal.innerHTML = `
+        <div class="modal-content" style="
+            max-width: 900px; width: 100%; height: 80vh;
+            display: flex; flex-direction: column;
+            padding: 0; overflow: hidden; border-radius: 10px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+        ">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; flex-shrink:0;">
+                <h2 style="margin:0; font-size:17px;">${titleMap[target] || 'Select Location'}</h2>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="picker-street-btn" type="button" style="background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;">Street</button>
+                    <button id="picker-satellite-btn" type="button" style="background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;">Satellite</button>
+                    <button type="button" class="close-btn" onclick="this.closest('.dynamic-map-modal').remove()" style="margin-left:8px;">&times;</button>
                 </div>
-                <div id="dynamic-map-container" style="width: 100%; height: calc(100% - 60px); margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
             </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    modal.classList.add('active');
+            <div id="dynamic-map-container" style="flex:1; width:100%; min-height:0;"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    // modal starts visible because of the inline flex display above — no class toggle needed
     initializeMapPicker('dynamic-map-container', target);
 }
 
@@ -1857,6 +1860,35 @@ async function initializeMapPicker(containerId, target) {
         });
     }
 
+    // ── Target-specific field helpers ─────────────────────────────────────
+    // Maps each target type to its lat/lng hidden inputs and optional display field
+    const fieldMap = {
+        incident:     { lat: 'incidentLatitude',  lng: 'incidentLongitude',   display: null },
+        utility:      { lat: 'latitude2',          lng: 'longitude2',          display: 'utilityLocationDisplay' },
+        business:     { lat: 'latitude2',          lng: 'longitude2',          display: 'businessLocationDisplay' },
+        construction: { lat: 'latitude2',          lng: 'longitude2',          display: 'constructionLocationDisplay' }
+    };
+    const fields = fieldMap[target] || fieldMap.incident;
+
+    function setLocation(lat, lng, label) {
+        const latEl = document.getElementById(fields.lat);
+        const lngEl = document.getElementById(fields.lng);
+        if (latEl) latEl.value = lat;
+        if (lngEl) lngEl.value = lng;
+        if (fields.display) {
+            const dispEl = document.getElementById(fields.display);
+            if (dispEl) dispEl.value = label || `${lat}, ${lng}`;
+        }
+        // For incident form: also fill incidentAddress when set via click
+        if (target === 'incident' && label) {
+            const addrEl = document.getElementById('incidentAddress');
+            if (addrEl && !addrEl.value) addrEl.value = label;
+        }
+        // Close the modal after selecting
+        const modal = document.querySelector('.dynamic-map-modal');
+        if (modal) modal.remove();
+    }
+
     // Manual click fallback for areas without polygons
     map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6);
@@ -1865,11 +1897,30 @@ async function initializeMapPicker(containerId, target) {
         if (selectedMarker) map.removeLayer(selectedMarker);
         
         selectedMarker = L.marker([lat, lng]).addTo(map)
-            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location<br><small style="color:#888;">Click ✓ Confirm in the popup to use this location</small></div>')
             .openPopup();
-            
-        document.getElementById('incidentLatitude').value = lat;
-        document.getElementById('incidentLongitude').value = lng;
+
+        // Show a confirm button inside the popup
+        selectedMarker.getPopup().setContent(
+            `<div style="font-family:Inter,sans-serif;text-align:center;">
+                <div style="font-weight:600;margin-bottom:8px;">Selected Location</div>
+                <div style="font-size:12px;color:#555;margin-bottom:10px;">${lat}, ${lng}</div>
+                <button onclick="
+                    (function(){
+                        var m=document.querySelector('.dynamic-map-modal');
+                        var latEl=document.getElementById('${fields.lat}');
+                        var lngEl=document.getElementById('${fields.lng}');
+                        if(latEl) latEl.value='${lat}';
+                        if(lngEl) lngEl.value='${lng}';
+                        var disp=document.getElementById('${fields.display || ''}');
+                        if(disp) disp.value='${lat}, ${lng}';
+                        if(m) m.remove();
+                    })()
+                " style="background:#00247c;color:white;border:none;padding:6px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">
+                    ✓ Confirm
+                </button>
+            </div>`
+        );
     });
 
     // Fetch and draw Barangay Boundaries from DB
@@ -1930,7 +1981,7 @@ async function initializeMapPicker(containerId, target) {
                         '<div style="margin-top:6px;font-size:11px;color:#999;font-style:italic;">Click to select this location</div>' +
                         '</div>';
 
-                    polygon.bindPopup(popupHtml, { maxWidth: 240 });
+                    polygon.bindPopup('', { maxWidth: 260 });
 
                     polygon.on('click', function (e) {
                         L.DomEvent.stopPropagation(e);
@@ -1938,40 +1989,31 @@ async function initializeMapPicker(containerId, target) {
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
-                        if (selectedMarker) map.removeLayer(selectedMarker);
-                        
-                        const isLandmarkSel = house.address && !/^\d/.test(house.address.trim());
-                        const selTitle = isLandmarkSel ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
-                        const selAddr = (!isLandmarkSel && house.address) 
-                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '';
-                        const selStreet = house.street_name 
-                            ? '<p style="margin:4px 0 0;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '';
-                            
-                        const selPopup = 
-                            '<div style="font-family:Inter,sans-serif;min-width:190px;">' +
-                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
-                            '<div style="font-weight:700;font-size:13px;">&#10003; ' + selTitle + '</div>' +
-                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
-                            '</div>' + selAddr + selStreet +
-                            '</div>';
-                            
-                        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup(selPopup, { maxWidth: 240 }).openPopup();
-
-                        // 1. Auto-fill Coordinates
-                        document.getElementById('incidentLatitude').value = lat;
-                        document.getElementById('incidentLongitude').value = lng;
-
-                        // 2. Auto-fill Incident Address dynamically
+                        // Build the human-readable address label
                         let formattedAddress = house.address;
                         if (!formattedAddress) {
                             const lot = house.house_number ? `House/Unit ${house.house_number}, ` : '';
                             const street = house.street_name ? `${house.street_name}, ` : '';
                             formattedAddress = `${lot}${street}Brgy. Blue Ridge B, Quezon City`.trim();
                         }
-                        const addressInput = document.getElementById('incidentAddress');
-                        if (addressInput) {
-                            addressInput.value = formattedAddress;
-                        }
+
+                        // Store on window so the inline onclick can reach it
+                        window._pickerSelectFn = function() { setLocation(lat, lng, formattedAddress); };
+
+                        const confirmPopup =
+                            '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">' + titleText + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:0.85;margin-top:2px;">' + house.street_name + '</div>' : '') +
+                            '</div>' +
+                            (house.address ? '<p style="margin:0 0 5px;font-size:12px;color:#333;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
+                            (house.street_name ? '<p style="margin:0 0 5px;font-size:12px;color:#333;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '') +
+                            '<p style="margin:0 0 10px;font-size:11px;color:#888;">' + lat + ', ' + lng + '</p>' +
+                            '<button onclick="window._pickerSelectFn()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
+                            '</div>';
+
+                        polygon.setPopupContent(confirmPopup);
+                        polygon.openPopup();
                     });
 
                     polygon.addTo(houseLayer);
@@ -1982,8 +2024,9 @@ async function initializeMapPicker(containerId, target) {
         }
     } catch (err) { console.error('Failed to load houses:', err); }
     
-    // Fix rendering bug when Leaflet opens inside a display:none modal
-    setTimeout(() => map.invalidateSize(), 300);
+    // Let the browser finish painting the flex layout before Leaflet measures the container
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 400);
 }
 
 /**
@@ -2114,34 +2157,22 @@ function appendAuditRow(log) {
 
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    fetchAuditLogs();
+
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    if (!sockets["incident_report_applications"]) {
-        initSocket("incident_report_applications", "ws://localhost:8081", data => {
-            if (data.type === "incident_report_applications_update") {
-                refreshActiveTab()
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                }
-                else if (data.id) {
-                    appendAuditRow(data);
-                }
-                else {
-                    fetchAuditLogs();
-                }
-            }
-        });
-    }
+    initSocket("main", "http://localhost:8081", (data) => {
+        switch (data.type) {
+            case "incident_report_applications_update":
+                refreshActiveTab();
+                break;
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                break;
+        }
+    });
 });
 
 // CLOSE MODAL ON OUTSIDE CLICK

@@ -371,7 +371,6 @@ $full_name = getCurrentUserName();
             </div>
 
             <!-- Create Tab -->
-            <!-- Create Tab -->
             <div id="create" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -529,6 +528,16 @@ $full_name = getCurrentUserName();
                         <input type="hidden" id="longitude2" name="longitude2" pattern="-?\d{1,3}\.\d{6,8}"
                             title="Enter longitude in decimal format (e.g., 121.075600)"
                             placeholder="e.g., 121.075600">
+
+                        <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                            <label>Selected Location</label>
+                            <input type="text" id="constructionLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <button type="button" class="btn-secondary" onclick="openMapPicker('construction')" style="width:max-content;">
+                                <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                            </button>
+                        </div>
 
                         <div class="form-group">
                             <label for="applicationMethod">How will you submit the building plan or blueprint? <span style="color: #BB1B1B;">*</span></label>
@@ -753,8 +762,8 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
+    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
-
     <script type="module" src="../../../scripts/staff/construction_staff/construction.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/export.js"></script>

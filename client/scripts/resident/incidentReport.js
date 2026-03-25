@@ -1,7 +1,7 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
-import { initSocket, sockets } from '../utils/socketUtils.js';
+import { initSocket, sockets } from '../utils/socket.js';
 import supabase from '../../../server/api/supabase.js';
 
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
@@ -81,6 +81,15 @@ function switchPanel(panelId) {
     panels.forEach(panel => panel.classList.toggle('hidden', panel.id !== panelId));
     window.scrollTo(0, 0);
 }
+
+// Tracks which panels have been properly validated and completed
+const completedPanels = {
+    reportingPerson: false,
+    victimDetails: false,
+    suspectDetails: false,
+    witnessesSection: false,
+    incidentDetails: false,
+};
 
 // Initialize the form with reporting person panel visible
 switchPanel('reportingPerson');
@@ -208,15 +217,17 @@ const validator = (() => {
         const value = input.value.trim();
         if (value === '') { showError(input, message); return false; }
         if (!/^\d+$/.test(value)) { showError(input, rules.errorMessage || 'Only numeric digits are allowed'); return false; }
-        if (rules.pattern && !rules.pattern.test(value)) {
-            showError(input, rules.errorMessage || message);
-            return false;
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); return false; }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { showError(input, 'Enter a real contact number'); return false; }
+            clearError(input); return true;
         }
         if (rules.minLength && value.length < rules.minLength) { showError(input, rules.errorMessage || `Number must be at least ${rules.minLength} digits`); return false; }
         if (rules.maxLength && value.length > rules.maxLength) { showError(input, rules.errorMessage || `Number cannot exceed ${rules.maxLength} digits`); return false; }
-        if (rules.exactLength && value.length !== rules.exactLength) {
-            showError(input, rules.errorMessage || `Number must be exactly ${rules.exactLength} digits`); return false;
-        }
         clearError(input); return true;
     }
 
@@ -337,12 +348,12 @@ const validationConfig = [
     // Reporting Person validation rules
     { el: rpFullName, type: 'text', message: 'Please enter your full name', rules: { minLength: 3 } },
     { el: rpAddress, type: 'text', message: 'Please enter your address', rules: { minLength: 5 } },
-    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { exactLength: 11 } },
+    { el: rpContact, type: 'number', message: 'Please enter your contact number', rules: { phoneType: 'ph' } },
 
     // Victim Details validation rules
     { el: vicFullName, type: 'text', message: 'Please enter victim full name', rules: { minLength: 3 } },
     { el: vicAddress, type: 'text', message: 'Please enter victim address', rules: { minLength: 5 } },
-    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { exactLength: 11 } },
+    { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
     { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
@@ -353,6 +364,7 @@ const validationConfig = [
 
     // Incident Details validation rules
     { el: incidentType, type: 'select', message: 'Please select incident type' },
+    { el: otherIncidentType, type: 'text', message: 'Please specify the incident type', rules: { minLength: 3 } },
     { el: incidentTimestamp, type: 'date', message: 'Please select incident date and time', rules: { pastOnly: true } },
     { el: incidentAddress, type: 'text', message: 'Please enter incident location address', rules: { minLength: 5 } },
     { el: description, type: 'textarea', message: 'Please describe the incident', rules: { minLength: 20 } },
@@ -369,7 +381,12 @@ function validateField(config) {
 
     switch (type) {
         case 'number': return validator.number(el, message, rules);
-        case 'text': return validator.text(el, message, rules);
+        case 'text':
+            if (el.closest('.label-and-input')?.style.display === 'none') {
+                validator.clear(el);
+                return true;
+            }
+            return validator.text(el, message, rules);
         case 'textarea': return validator.textarea(el, message, rules);
         case 'select': return validator.select(el, message);
         case 'date': return validator.date(el, message, rules);
@@ -415,17 +432,6 @@ function validateField(config) {
     //     });
     // });
 
-    // Special handling for "Other" incident type selection
-    incidentType.addEventListener('change', function () {
-        const otherContainer = document.getElementById('otherSpecifyContainer');
-        if (this.value === 'other') {
-            otherContainer.classList.remove('hidden');
-        } else {
-            otherContainer.classList.add('hidden');
-            validator.clear(otherIncidentType);
-        }
-    });
-
     // Input sanitization for contact number fields (remove non-digit characters)
     [rpContact, vicContact, susContact].forEach(el => {
         if (el) {
@@ -462,9 +468,9 @@ function validateStep(fields) {
  */
 document.getElementById('nextToVictim').addEventListener('click', () => {
     const stepFields = [rpFullName, rpAddress, rpContact];
-
     if (!validateStep(stepFields)) return;
 
+    completedPanels.reportingPerson = true;
     switchPanel('victimDetails');
 });
 
@@ -473,15 +479,19 @@ document.getElementById('nextToVictim').addEventListener('click', () => {
  * Validates victim fields or copies reporting person data if "same as RP" is checked
  */
 document.getElementById('nextToSuspect').addEventListener('click', () => {
-    if (victimSameAsRP.checked) {
+    if (!victimSameAsRP.checked) {
         // Copy reporting person data to victim
         vicFullName.value = rpFullName.value;
         vicAddress.value = rpAddress.value;
         vicContact.value = rpContact.value;
-        switchPanel('suspectDetails');
-    } else {
         const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
         if (!validateStep(stepFields)) return;
+        completedPanels.victimDetails = true;
+        switchPanel('suspectDetails');
+    } else {
+        const stepFields = [vicCitizenship, vicGender, vicDOB, vicOccupation];
+        if (!validateStep(stepFields)) return;
+        completedPanels.victimDetails = true;
         switchPanel('suspectDetails');
     }
 });
@@ -494,10 +504,8 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
     const stepFields = [susDescription];
     if (!validateStep(stepFields)) return;
 
-    // Add default witness if none exists
-    if (witnessCount === 0) {
-        addWitness();
-    }
+    completedPanels.suspectDetails = true;
+    if (witnessCount === 0) addWitness();
     switchPanel('witnessesSection');
 });
 
@@ -505,6 +513,7 @@ document.getElementById('nextToWitnesses').addEventListener('click', () => {
  * Handles navigation from witnesses section panel to incident details panel
  */
 document.getElementById('nextToIncident').addEventListener('click', () => {
+    completedPanels.witnessesSection = true;
     switchPanel('incidentDetails');
 });
 
@@ -513,17 +522,16 @@ document.getElementById('nextToIncident').addEventListener('click', () => {
  * Validates all incident fields and populates summary display with all form data
  */
 document.getElementById('nextToSummary').addEventListener('click', () => {
-    const stepFields = [incidentType, incidentTimestamp, incidentAddress, description];
-
-    // Handle "other" incident type with custom specification
-    if (incidentType.value === 'other') {
-        if (!otherIncidentType.value.trim()) {
-            validator.text(otherIncidentType, 'Please specify the incident type');
-            return;
-        }
-    }
+    const stepFields = [
+        incidentType,
+        incidentType.value === 'Other' ? otherIncidentType : null,
+        incidentTimestamp,
+        incidentAddress,
+        description
+    ].filter(f => f !== null);
 
     if (!validateStep(stepFields)) return;
+    completedPanels.incidentDetails = true;
 
     // Populate summary display with all collected data
     document.getElementById('sumRpFullName').textContent = rpFullName.value;
@@ -556,12 +564,9 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
     document.getElementById('sumSusDescription').textContent = susDescription.value;
 
     document.getElementById('sumIncidentType').textContent =
-        incidentType.value === 'other' ? otherIncidentType.value : incidentType.value;
+        incidentType.value === 'Other' ? otherIncidentType.value : incidentType.value;
     document.getElementById('sumIncidentTimestamp').textContent = incidentTimestamp.value;
     document.getElementById('sumIncidentLocation').textContent = incidentAddress.value;
-    document.getElementById('sumIncidentCoordinates').textContent =
-        incidentLatitude.value && incidentLongitude.value ?
-            `Lat: ${incidentLatitude.value}, Lng: ${incidentLongitude.value}` : 'No coordinates';
     document.getElementById('sumDescription').textContent = description.value;
 
     switchPanel('summary');
@@ -572,10 +577,7 @@ document.getElementById('nextToSummary').addEventListener('click', () => {
  * First back button returns to services page, others navigate to previous panel
  */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('reportingPersonBackBtn').addEventListener('click', () => {
-        window.location.href = '/client/pages/resident/home.php';
-    });
-
+    document.getElementById('reportingPersonBackBtn').addEventListener('click', () => window.location.href = '/client/pages/resident/home.php');
     document.getElementById('victimBackBtn').addEventListener('click', () => switchPanel('reportingPerson'));
     document.getElementById('suspectBackBtn').addEventListener('click', () => switchPanel('victimDetails'));
     document.getElementById('witnessesBackBtn').addEventListener('click', () => switchPanel('suspectDetails'));
@@ -604,9 +606,9 @@ victimSameAsRP.addEventListener('change', function () {
         });
     } else {
         // victimContainer.style.display = 'block';
-        victimFullNameWrapper.style.display = 'block';
-        victimAddressWrapper.style.display = 'block';
-        victimContactWrapper.style.display = 'block';
+        victimFullNameWrapper.style.display = '';
+        victimAddressWrapper.style.display = '';
+        victimContactWrapper.style.display = '';
     }
 });
 
@@ -618,6 +620,7 @@ function addWitness() {
     witnessCount++;
     const witnessDiv = document.createElement('div');
     witnessDiv.className = 'witness-group';
+    witnessDiv.style = 'border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative;';
     witnessDiv.innerHTML = `
         <h7>Witness ${witnessCount}</h7>
         <div class="label-and-input">
@@ -632,7 +635,7 @@ function addWitness() {
             <label class="label" for="witnessContact${witnessCount}">Contact Number</label>
             <input type="text" class="witness-contact" id="witnessContact${witnessCount}" maxlength="11" pattern="[0-9]{1,11}" placeholder="e.g., 09XXXXXXXXX">
         </div>
-        <button type="button" class="remove-witness-btn" style="margin-top: 10px;">Remove Witness</button>
+        <button type="button" class="remove-witness-btn" style="margin-top: 10px; ">Remove Witness</button>
     `;
 
     witnessesContainer.appendChild(witnessDiv);
@@ -662,6 +665,20 @@ summaryForm.parentNode.replaceChild(newSummaryForm, summaryForm);
 
 newSummaryForm.addEventListener('submit', async function (e) {
     e.preventDefault();
+
+    const requiredPanels = ['reportingPerson', 'victimDetails', 'suspectDetails', 'witnessesSection', 'incidentDetails'];
+    const bypassed = requiredPanels.some(panel => !completedPanels[panel]);
+
+    if (bypassed) {
+        await ir_swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Submission',
+            html: 'Your report cannot be submitted because one or more required sections have not been properly completed.<br><br>Please go back and ensure all steps are filled out before proceeding to submission.',
+            confirmButtonText: 'Go Back',
+        });
+        switchPanel('reportingPerson');
+        return;
+    }
 
     // // Request notification permission for submission alerts
     if (Notification.permission !== "granted") {
@@ -736,7 +753,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         // Incident Details data (only this section includes coordinates)
         const incidentTypeVal = incidentType.value;
 
-        formData.append('incidentType', incidentTypeVal === 'other' ? otherIncidentType.value : incidentTypeVal);
+        formData.append('incidentType', incidentTypeVal === 'Other' ? otherIncidentType.value : incidentTypeVal);
         formData.append('incidentTimestamp', incidentTimestamp.value);
         formData.append('incidentAddress', incidentAddress.value); // Added!
         formData.append('incidentLatitude', incidentLatitude.value);
@@ -762,12 +779,6 @@ newSummaryForm.addEventListener('submit', async function (e) {
                             });
                         });
                     }
-
-                    sockets["incident_report"]?.readyState === WebSocket.OPEN &&
-                        sockets["incident_report"].send(JSON.stringify({
-                            type: "incident_report_update",
-                            action: "new_application"
-                        }));
 
                     ir_swal.fire({
                         icon: 'success',
@@ -1051,6 +1062,22 @@ function setupCoordinateAutoFormat(target) {
     });
 }
 
+/**
+ * Shows or hides "specify" text fields based on "Others" selection in dropdowns
+ * @param {HTMLSelectElement} selectEl - The primary select element
+ * @param {HTMLInputElement} specifyEl - The text input for specifying "Other" option
+ */
+function handleOthersSelect(selectEl, specifyEl) {
+    const wrapper = specifyEl.closest('.label-and-input');
+    if (selectEl.value === 'Other') {
+        wrapper.style.display = 'block';
+    } else {
+        wrapper.style.display = 'none';
+        specifyEl.value = '';
+    }
+}
+
+
 // Initialize coordinate formatting only for incident location when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     setupCoordinateAutoFormat('incident');
@@ -1083,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const resp = await fetch('/server/api/resident/get_user.php', { credentials: 'include', cache: 'no-store' });
         const data = await resp.json();
 
-        console.debug('incident_report autofill response:', data);
+        // console.debug('incident_report autofill response:', data);
 
         if (data.error) {
             console.log('Autofill error:', data.error);
@@ -1135,5 +1162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["incident_report_applications"]) initSocket("incident_report_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
+
+    incidentType.addEventListener('change', () => handleOthersSelect(incidentType, otherIncidentType));
+    handleOthersSelect(incidentType, otherIncidentType);
 });
