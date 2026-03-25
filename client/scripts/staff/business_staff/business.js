@@ -815,6 +815,7 @@ function submitUpdate(event) {
 
                 loadManagementTable();
                 loadProcessTable();
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 Swal.fire({
                     ...swalTopConfig,
@@ -841,8 +842,8 @@ function viewDetails(appId) {
     if (!app) return;
 
     // FIX 1: Strip out [""] from the business status string using regex
-    const businessStatus = app.business_status 
-        ? app.business_status.replace(/[\[\]"]/g, '') 
+    const businessStatus = app.business_status
+        ? app.business_status.replace(/[\[\]"]/g, '')
         : 'Not specified';
 
     let reqs = app.requirements;
@@ -2453,21 +2454,21 @@ async function initializeMapPicker(containerId, target) {
     const map = L.map(containerId).setView([14.6175, 121.0756], 17);
     osmTile.addTo(map);
 
-    const POLY = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.12,weight:2 }, satellite: { color:'#fff',fillColor:'#fff',fillOpacity:0.15,weight:2 } };
-    const BOUND = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.08,dashArray:'8,6',weight:2 }, satellite: { color:'#fff',fillColor:'#000',fillOpacity:0,dashArray:'8,6',weight:2 } };
+    const POLY = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 }, satellite: { color: '#fff', fillColor: '#fff', fillOpacity: 0.15, weight: 2 } };
+    const BOUND = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 }, satellite: { color: '#fff', fillColor: '#000', fillOpacity: 0, dashArray: '8,6', weight: 2 } };
     let housePolygons = [], boundaryLayers = [], selectedMarker = null, currentMode = 'street';
 
     const streetBtn = document.getElementById('picker-street-btn');
     const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
-        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); currentMode='street'; housePolygons.forEach(p=>p.setStyle(POLY.street)); boundaryLayers.forEach(b=>b.setStyle(BOUND.street)); streetBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
-        satBtn.onclick = () => { map.removeLayer(osmTile); satTile.addTo(map); currentMode='satellite'; housePolygons.forEach(p=>p.setStyle(POLY.satellite)); boundaryLayers.forEach(b=>b.setStyle(BOUND.satellite)); satBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); currentMode = 'street'; housePolygons.forEach(p => p.setStyle(POLY.street)); boundaryLayers.forEach(b => b.setStyle(BOUND.street)); streetBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        satBtn.onclick = () => { map.removeLayer(osmTile); satTile.addTo(map); currentMode = 'satellite'; housePolygons.forEach(p => p.setStyle(POLY.satellite)); boundaryLayers.forEach(b => b.setStyle(BOUND.satellite)); satBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
     }
 
-    map.on('click', function(e) {
+    map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
         if (selectedMarker) map.removeLayer(selectedMarker);
-        selectedMarker = L.marker([lat,lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
+        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
         document.getElementById('latitude2').value = lat;
         document.getElementById('longitude2').value = lng;
         const disp = document.getElementById('businessLocationDisplay');
@@ -2477,32 +2478,32 @@ async function initializeMapPicker(containerId, target) {
     });
 
     try {
-        const bRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_boundaries' });
+        const bRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries' });
         const bData = await bRes.json();
-        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords=JSON.parse(b.coordinates); const ll=coords.map(c=>Array.isArray(c)?[c[1],c[0]]:[c.lat,c.lng]); boundaryLayers.push(L.polygon(ll,BOUND.street).addTo(map)); } catch(e){} });
-    } catch(e) {}
+        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords = JSON.parse(b.coordinates); const ll = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]); boundaryLayers.push(L.polygon(ll, BOUND.street).addTo(map)); } catch (e) { } });
+    } catch (e) { }
 
     try {
-        const hRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_houses' });
+        const hRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses' });
         const hData = await hRes.json();
         if (hData.success && hData.houses) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
                     const coords = JSON.parse(house.coordinates);
-                    const ring = (Array.isArray(coords[0])&&Array.isArray(coords[0][0]))?coords[0]:coords;
-                    const ll = ring.map(c=>[c[1],c[0]]);
-                    const poly = L.polygon(ll, {...POLY.street, interactive:true});
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ll = ring.map(c => [c[1], c[0]]);
+                    const poly = L.polygon(ll, { ...POLY.street, interactive: true });
                     housePolygons.push(poly);
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const title = isLandmark ? (house.address||'Landmark') : ('House #'+(house.house_number||'—'));
-                    poly.bindPopup('', {maxWidth:260});
-                    poly.on('click', function(e) {
+                    const title = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    poly.bindPopup('', { maxWidth: 260 });
+                    poly.on('click', function (e) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                        let formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        let formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
@@ -2523,10 +2524,10 @@ async function initializeMapPicker(containerId, target) {
                         poly.openPopup();
                     });
                     poly.addTo(map);
-                } catch(e) {}
+                } catch (e) { }
             });
         }
-    } catch(e) {}
+    } catch (e) { }
 
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);

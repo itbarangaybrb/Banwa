@@ -2232,11 +2232,6 @@ function createApplication(event) {
                             // Reset form
                             form.reset();
 
-                            const socket = sockets["main"];
-                            if (socket?.readyState === WebSocket.OPEN) {
-                                socket.send(JSON.stringify({ type: "construction_applications_update", action: "status_update" }));
-                            }
-
                             // Refresh applications list
                             loadApplicationsFromDB().then(() => {
                                 // Switch to management tab
