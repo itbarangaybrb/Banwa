@@ -110,7 +110,7 @@ $full_name = getCurrentUserName();
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <script src="https://banwa-ws.onrender.com"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/dashboard.js"></script>
