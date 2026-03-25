@@ -5,44 +5,53 @@ use Ratchet\ConnectionInterface;
 
 class UserSocket implements MessageComponentInterface
 {
-
-    protected $clients;
+    protected \SplObjectStorage $clients;
 
     public function __construct()
     {
         $this->clients = new \SplObjectStorage;
     }
 
-    public function onOpen(ConnectionInterface $conn)
+    public function onOpen(ConnectionInterface $conn): void
     {
         $this->clients->attach($conn);
-        echo "New connection: {$conn->resourceId}\n";
+        echo "[" . date('H:i:s') . "] Connected: {$conn->resourceId} | Total: {$this->clients->count()}\n";
     }
 
-    public function onClose(ConnectionInterface $conn)
+    public function onClose(ConnectionInterface $conn): void
     {
         $this->clients->detach($conn);
-        echo "Connection closed\n";
+        echo "[" . date('H:i:s') . "] Disconnected: {$conn->resourceId} | Total: {$this->clients->count()}\n";
     }
 
-    public function onMessage(ConnectionInterface $from, $msg)
+    public function onMessage(ConnectionInterface $from, $msg): void
     {
-        // Broadcast to everyone
+        $data = json_decode($msg, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || empty($data['type'])) {
+            $from->send(json_encode(['type' => 'error', 'message' => 'Invalid payload']));
+            return;
+        }
+
+        // Broadcast to all EXCEPT sender
         foreach ($this->clients as $client) {
-            $client->send($msg);
+            if ($client !== $from) {
+                $client->send($msg);
+            }
         }
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e)
+    public function onError(ConnectionInterface $conn, \Exception $e): void
     {
-        echo "Error: {$e->getMessage()}\n";
+        echo "[ERROR] {$e->getMessage()}\n";
         $conn->close();
     }
 
-    public function broadcast($data)
+    public function broadcast(array $data): void
     {
+        $payload = json_encode($data);
         foreach ($this->clients as $client) {
-            $client->send(json_encode($data));
+            $client->send($payload);
         }
     }
 }

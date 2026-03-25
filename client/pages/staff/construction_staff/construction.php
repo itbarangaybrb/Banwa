@@ -529,6 +529,16 @@ $full_name = getCurrentUserName();
                             title="Enter longitude in decimal format (e.g., 121.075600)"
                             placeholder="e.g., 121.075600">
 
+                        <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                            <label>Selected Location</label>
+                            <input type="text" id="constructionLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <button type="button" class="btn-secondary" onclick="openMapPicker('construction')" style="width:max-content;">
+                                <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                            </button>
+                        </div>
+
                         <div class="form-group">
                             <label for="applicationMethod">How will you submit the building plan or blueprint? <span style="color: #BB1B1B;">*</span></label>
                             <select name="applicationMethod" id="applicationMethod" required>

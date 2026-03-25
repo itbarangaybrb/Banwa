@@ -469,6 +469,16 @@ $full_name = getCurrentUserName();
                         <input type="hidden" id="latitude2">
                         <input type="hidden" id="longitude2">
 
+                        <div class="form-group" style="margin-top: 8px;">
+                            <label>Selected Location</label>
+                            <input type="text" id="utilityLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn-secondary" onclick="openMapPicker('utility')" style="width:max-content;">
+                                <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                            </button>
+                        </div>
+
                         <!-- ==================== Utilities Information ==================== -->
                         <div class="section-title">Utilities Information</div>
                         <div class="form-row">

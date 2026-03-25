@@ -639,11 +639,16 @@ newSummaryForm.addEventListener('submit', async (e) => {
                         });
                     }
 
-                    sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
-                        sockets["construction_applications"].send(JSON.stringify({
-                            type: "construction_applications_update",
-                            action: "new_application"
-                        }));
+                    // sockets["construction_applications"]?.readyState === WebSocket.OPEN &&
+                    //     sockets["construction_applications"].send(JSON.stringify({
+                    //         type: "construction_applications_update",
+                    //         action: "new_application"
+                    //     }));
+
+                    const socket = sockets["main"];
+                    if (socket?.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "construction_applications_update", action: "new_application" }));
+                    }
 
                     Swal.fire({
                         title: 'Success!',
@@ -1133,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["construction_applications"]) initSocket("construction_applications", "ws://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "ws://localhost:8081", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();

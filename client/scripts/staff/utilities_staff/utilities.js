@@ -913,24 +913,15 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                if (sockets["utility_applications"] && sockets["utility_applications"].readyState === WebSocket.OPEN) {
-                    sockets["utility_applications"].send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
-                }
-                if (sockets["applications"] && sockets["applications"].readyState === WebSocket.OPEN) {
-                    sockets["applications"].send(JSON.stringify({ type: "applications_update", action: "status_update" }));
-                }
-                if (sockets["utility"] && sockets["utility"].readyState === WebSocket.OPEN) {
-                    sockets["utility"].send(JSON.stringify({ type: "utility_update", action: "status_update" }));
-                }
-                if (sockets["audit"] && sockets["audit"].readyState === WebSocket.OPEN) {
-                    sockets["audit"].send(JSON.stringify({
-                        type: "new_audit_log",
-                        action: "new_audit_log",
-                    }));
+                // After successful submitUpdate
+                const socket = sockets["main"];
+                if (socket?.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: "utility_applications_update", action: "status_update" }));
                 }
 
                 loadManagementTable();
                 loadProcessTable();
+                try { new BroadcastChannel('barangay_status_update').postMessage('status_update'); } catch (e) { }
             } else {
                 Swal.fire({
                     ...swalTopConfig,
@@ -1602,42 +1593,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    if (!sockets["utility_applications"]) {
-        initSocket("utility_applications", "ws://localhost:8081", data => {
-            if (data.type === "utility_applications_update") {
+    // Replace all 4 initSocket calls with one
+    initSocket("main", "ws://localhost:8081", (data) => {
+        switch (data.type) {
+            case "utility_applications_update":
                 refreshActiveTab();
-                loadManagementTable();
-                loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["audit"]) {
-        initSocket("audit", "ws://localhost:8081", (data) => {
-            if (data.type === "new_audit_log") {
+                break;
+            case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
-                else if (data.id) appendAuditRow(data);
                 else fetchAuditLogs();
-            }
-        });
-    }
-
-    if (!sockets["archives"]) {
-        initSocket("archives", "ws://localhost:8081", data => {
-            if (data.type === "archives_update") {
+                break;
+            case "archives_update":
                 loadManagementTable();
                 loadProcessTable();
-            }
-        });
-    }
-
-    if (!sockets["utility"]) {
-        initSocket("utility", "ws://localhost:8081", data => {
-            if (data.type === "utility_update") {
+                break;
+            case "utility_update":
                 refreshActiveTab();
-            }
-        });
-    }
+                break;
+        }
+    });
 
     // Event listener for status change to update textarea with templates
     const statusSelect = document.getElementById('newStatus');
@@ -1746,3 +1720,118 @@ window.updateApplicationDate = updateApplicationDate;
 window.filterReviewApplications = filterReviewApplications;
 window.showAlert = showAlert;
 window.openModal = openModal;
+// ==================== MAP LOCATION PICKER ====================
+
+function openMapPicker(target) {
+    const existing = document.querySelector('.dynamic-map-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'modal dynamic-map-modal';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:900px;width:100%;height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.35);">
+            <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;flex-shrink:0;">
+                <h2 style="margin:0;font-size:17px;">Select Utility Work Location</h2>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button id="picker-street-btn" type="button" style="background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;">Street</button>
+                    <button id="picker-satellite-btn" type="button" style="background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;">Satellite</button>
+                    <button type="button" class="close-btn" onclick="this.closest('.dynamic-map-modal').remove()" style="margin-left:8px;">&times;</button>
+                </div>
+            </div>
+            <div id="dynamic-map-container" style="flex:1;width:100%;min-height:0;"></div>
+        </div>`;
+    document.body.appendChild(modal);
+    initializeMapPicker('dynamic-map-container', target);
+}
+
+async function initializeMapPicker(containerId, target) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (container._leaflet_id) { container._leaflet_id = null; container.innerHTML = ''; }
+
+    const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
+    const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
+    const map = L.map(containerId).setView([14.6175, 121.0756], 17);
+    osmTile.addTo(map);
+
+    const POLY = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.12,weight:2 }, satellite: { color:'#fff',fillColor:'#fff',fillOpacity:0.15,weight:2 } };
+    const BOUND = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.08,dashArray:'8,6',weight:2 }, satellite: { color:'#fff',fillColor:'#000',fillOpacity:0,dashArray:'8,6',weight:2 } };
+    let housePolygons = [], boundaryLayers = [], selectedMarker = null;
+
+    const streetBtn = document.getElementById('picker-street-btn');
+    const satBtn    = document.getElementById('picker-satellite-btn');
+    if (streetBtn && satBtn) {
+        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); housePolygons.forEach(p=>p.setStyle(POLY.street)); boundaryLayers.forEach(b=>b.setStyle(BOUND.street)); streetBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        satBtn.onclick    = () => { map.removeLayer(osmTile); satTile.addTo(map); housePolygons.forEach(p=>p.setStyle(POLY.satellite)); boundaryLayers.forEach(b=>b.setStyle(BOUND.satellite)); satBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+    }
+
+    map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
+        if (selectedMarker) map.removeLayer(selectedMarker);
+        selectedMarker = L.marker([lat,lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
+        document.getElementById('latitude2').value = lat;
+        document.getElementById('longitude2').value = lng;
+        const disp = document.getElementById('utilityLocationDisplay');
+        if (disp) disp.value = `${lat}, ${lng}`;
+        const modal = document.querySelector('.dynamic-map-modal');
+        if (modal) modal.remove();
+    });
+
+    try {
+        const bRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_boundaries' });
+        const bData = await bRes.json();
+        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords=JSON.parse(b.coordinates); const ll=coords.map(c=>Array.isArray(c)?[c[1],c[0]]:[c.lat,c.lng]); boundaryLayers.push(L.polygon(ll,BOUND.street).addTo(map)); } catch(e){} });
+    } catch(e) {}
+
+    try {
+        const hRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_houses' });
+        const hData = await hRes.json();
+        if (hData.success && hData.houses) {
+            hData.houses.forEach(house => {
+                if (!house.coordinates) return;
+                try {
+                    const coords = JSON.parse(house.coordinates);
+                    const ring = (Array.isArray(coords[0])&&Array.isArray(coords[0][0]))?coords[0]:coords;
+                    const ll = ring.map(c=>[c[1],c[0]]);
+                    const poly = L.polygon(ll, {...POLY.street, interactive:true});
+                    housePolygons.push(poly);
+                    const isLandmark = house.address && !/^\d/.test(house.address.trim());
+                    const title = isLandmark ? (house.address||'Landmark') : ('House #'+(house.house_number||'—'));
+                    poly.bindPopup('', {maxWidth:260});
+                    poly.on('click', function(e) {
+                        L.DomEvent.stopPropagation(e);
+                        const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
+                        const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
+                        const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const popupHtml =
+                            '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
+                            '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
+                            '<div style="font-weight:700;font-size:13px;">' + title + '</div>' +
+                            (house.street_name ? '<div style="font-size:11px;opacity:.85;">' + house.street_name + '</div>' : '') +
+                            '</div>' +
+                            (house.address ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
+                            (house.street_name ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '') +
+                            '<p style="margin:0 0 10px;font-size:11px;color:#888;">' + lat + ', ' + lng + '</p>' +
+                            '<button onclick="(function(){' +
+                            'document.getElementById(\'latitude2\').value=\'' + lat + '\';' +
+                            'document.getElementById(\'longitude2\').value=\'' + lng + '\';' +
+                            'var d=document.getElementById(\'utilityLocationDisplay\');if(d)d.value=\'' + addrSafe + '\';' +
+                            'var m=document.querySelector(\'.dynamic-map-modal\');if(m)m.remove();' +
+                            '})()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
+                            '</div>';
+                        poly.setPopupContent(popupHtml);
+                        poly.openPopup();
+                    });
+                    poly.addTo(map);
+                } catch(e) {}
+            });
+        }
+    } catch(e) {}
+
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 400);
+}
+
+window.openMapPicker = openMapPicker;

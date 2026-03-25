@@ -668,7 +668,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="newStatus">New Status *</label>
+                        <label for="newStatus">New Status <span style="color: #BB1B1B;">*</span></label>
                         <select id="newStatus" name="newStatus" required>
                             <option value="" disabled selected>Select Action...</option>
                             <option value="Under Investigation">Under Investigation</option>
@@ -680,7 +680,7 @@ $full_name = getCurrentUserName();
                     </div>
 
                     <div class="form-group">
-                        <label for="updateComments">Remarks / Comments *</label>
+                        <label for="updateComments">Remarks / Comments <span style="color: #BB1B1B;">*</span></label>
                         <div class="prompt-container">
                             <div class="prompt-suggestions">
                                 <button type="button" class="prompt-tag" onclick="applyPrompt('Report is complete. Ready for processing.')">Complete</button>

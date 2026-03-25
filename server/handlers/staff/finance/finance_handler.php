@@ -212,9 +212,16 @@ switch ($action) {
             $oldData = $oldStmt->fetch(PDO::FETCH_ASSOC);
 
             // Dynamically build SQL to include the OR file path if uploaded
+            // Get OR number from POST if provided
+            $orNumber = $_POST['or_number'] ?? null;
+
+            // Dynamically build SQL to include the OR file path and OR number if provided
             $sql = "UPDATE $table SET status = :new_status, payment_status = :new_payment_status, updated_at = NOW()";
             if ($orFilePath !== null) {
                 $sql .= ", or_file_path = :or_file_path";
+            }
+            if (!empty($orNumber)) {
+                $sql .= ", or_number = :or_number";
             }
             $sql .= " WHERE id = :id";
 
@@ -222,6 +229,9 @@ switch ($action) {
             $params = [':new_status' => $newApplicationStatus, ':new_payment_status' => $newPaymentStatus, ':id' => $id];
             if ($orFilePath !== null) {
                 $params[':or_file_path'] = $orFilePath;
+            }
+            if (!empty($orNumber)) {
+                $params[':or_number'] = trim($orNumber);
             }
             $stmt->execute($params);
 

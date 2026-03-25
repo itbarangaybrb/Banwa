@@ -479,15 +479,17 @@ document.getElementById('nextToVictim').addEventListener('click', () => {
  * Validates victim fields or copies reporting person data if "same as RP" is checked
  */
 document.getElementById('nextToSuspect').addEventListener('click', () => {
-    if (victimSameAsRP.checked) {
+    if (!victimSameAsRP.checked) {
         // Copy reporting person data to victim
         vicFullName.value = rpFullName.value;
         vicAddress.value = rpAddress.value;
         vicContact.value = rpContact.value;
+        const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
+        if (!validateStep(stepFields)) return;
         completedPanels.victimDetails = true;
         switchPanel('suspectDetails');
     } else {
-        const stepFields = [vicFullName, vicAddress, vicContact, vicCitizenship, vicGender, vicDOB, vicOccupation];
+        const stepFields = [vicCitizenship, vicGender, vicDOB, vicOccupation];
         if (!validateStep(stepFields)) return;
         completedPanels.victimDetails = true;
         switchPanel('suspectDetails');
@@ -778,11 +780,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
-                    sockets["incident_report"]?.readyState === WebSocket.OPEN &&
-                        sockets["incident_report"].send(JSON.stringify({
-                            type: "incident_report_update",
-                            action: "new_application"
-                        }));
+
+                    const socket = sockets["main"];
+                    if (socket?.readyState === WebSocket.OPEN) {
+                        socket.send(JSON.stringify({ type: "incident_report_update", action: "new_application" }));
+                    }
 
                     ir_swal.fire({
                         icon: 'success',
