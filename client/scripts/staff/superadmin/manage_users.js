@@ -283,7 +283,6 @@ export async function fetchUsers() {
                 <td>${user.street || ''}</td>
                 <td><span class="status-badge status-${user.status}">${user.status}</span></td>
                 <td>${user.role_id}</td>
-                <td>${user.reason_details || ''}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="buttons edit-btn"

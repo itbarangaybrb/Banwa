@@ -99,11 +99,36 @@ $full_name = getCurrentUserName();
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
-                <div class="analytics-row">
+                <!-- <div class="analytics-row">
                     <div class="charts">
                         <canvas id="chart4"></canvas>
                     </div>
-                </div>
+                </div> -->
+            </div>
+        </section>
+
+        <section class="sections">
+            <div class="containers">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Activity</th>
+                            <th id="nameFilter" class="th-filter">
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Name
+                                </span>
+                            </th>
+                            <th>Table</th>
+                            <th>Record ID</th>
+                            <th>Role ID</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="auditTableBody"></tbody>
+                </table>
             </div>
         </section>
     </main>

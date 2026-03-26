@@ -65,12 +65,12 @@ $full_name = getCurrentUserName();
                         <p class="links-name">Audits</p>
                     </a>
                 </li>
-                <li class="items">
+                <!-- <li class="items">
                     <a class="links" href="../superadmin/archives.php">
                         <img src="../../../img/archive-icon.svg" alt="audit" class="icon">
                         <p class="links-name">Audits</p>
                     </a>
-                </li>
+                </li> -->
             </ul>
 
             <ul class="list">
@@ -123,7 +123,7 @@ $full_name = getCurrentUserName();
                             <th>Street</th>
                             <th>Status</th>
                             <th>Role</th>
-                            <th>Details</th>
+                            <!-- <th>Details</th> -->
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -278,8 +278,8 @@ $full_name = getCurrentUserName();
                     <button type="button" class="buttons cancel-btn">Cancel</button>
                     <button type="button" class="buttons archive-btn" id="editArchiveBtn">Archive</button>
                     <button type="submit" class="buttons">Update</button>
-                    <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button>
-                    <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button>
+                    <!-- <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button> -->
+                    <!-- <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button> -->
                 </div>
             </form>
         </div>
