@@ -694,8 +694,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                     <label>Type of ID <span style="color: #BB1B1B;">*</span></label>
                                     <select name="idType" id="idType" required>
                                         <option value="" disabled selected>Select ID Type</option>
-                                        <option value="National">National ID (PhilSys)</option>
                                         <option value="Quezon">Quezon City ID</option>
+                                        <option value="National">National ID (PhilSys)</option>
                                     </select>
                                     <div class="error-msg"></div>
                                 </div>
