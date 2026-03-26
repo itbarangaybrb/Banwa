@@ -300,7 +300,11 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+        loadApplicationsFromDB().finally(() => {
+            loadAnalyticsTab();
+            fetchAuditLogs();
+            finish();
+        });
     } else {
         finish();
     }
@@ -904,7 +908,7 @@ function submitUpdate(event) {
             if (data.status === 'success') {
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
-                
+
                 const socket = sockets["main"];
                 if (socket) {
                     socket.emit('utility_applications_update', { action: 'status_update' });

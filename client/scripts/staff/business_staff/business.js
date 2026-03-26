@@ -299,7 +299,11 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+        loadApplicationsFromDB().finally(() => {
+            loadAnalyticsTab();
+            fetchAuditLogs();
+            finish();
+        });
     } else {
         finish();
     }
@@ -809,7 +813,7 @@ function submitUpdate(event) {
 
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
-                
+
                 Swal.fire({
                     ...swalTopConfig,
                     icon: 'success',

@@ -314,6 +314,8 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
+    } else if (tabName === 'audit') {
+        fetchAuditLogs();
     }
 }
 
@@ -483,7 +485,11 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+        loadApplicationsFromDB().finally(() => {
+            loadAnalyticsTab();
+            fetchAuditLogs();
+            finish();
+        });
     } else if (activeTabId === 'archives') {
 
     } else {
