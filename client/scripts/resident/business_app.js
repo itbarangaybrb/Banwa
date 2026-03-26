@@ -1016,8 +1016,8 @@ function renderVerificationResults(analysis, selectedReqs) {
             fileStatus.push(`
                 <div style="margin:4px 0;">
                     <strong>${reqType}</strong>: 
-                    ${keywordMatched ? '✅ Keywords' : '⚠️ Keywords'} 
-                    ${nameMatched ? '✅ Name' : '⚠️ Name'}
+                    ${keywordMatched ? 'Keywords for the selected document Found.' : 'Keywords for the selected document Not Found'} 
+                    ${nameMatched ? 'Name of the Business Matched' : 'Name of the Business Not Matched'}
                 </div>
             `);
         });
