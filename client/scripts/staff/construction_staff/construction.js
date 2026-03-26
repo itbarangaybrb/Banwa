@@ -314,7 +314,6 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
-    } else if (tabName === 'audit') {
         fetchAuditLogs();
     }
 }
@@ -2528,6 +2527,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
                 else fetchAuditLogs();
+                refreshActiveTab();
                 break;
         }
     });

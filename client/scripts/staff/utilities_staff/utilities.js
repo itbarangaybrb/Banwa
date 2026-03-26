@@ -145,6 +145,7 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
+        fetchAuditLogs();
     }
 }
 
@@ -1606,6 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
                 else fetchAuditLogs();
+                refreshActiveTab();
                 break;
             case "archives_update":
                 loadManagementTable();

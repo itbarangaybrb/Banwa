@@ -112,6 +112,7 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
+        fetchAuditLogs();
     }
 }
 
@@ -2319,15 +2320,17 @@ document.addEventListener('DOMContentLoaded', function () {
         switch (data.type) {
             case "business_applications_update":
             case "finance_applications_update":
-                return refreshActiveTab();
+                refreshActiveTab();
+                break;
 
             case "new_audit_log":
-                return data.payload
-                    ? appendAuditRow(data.payload)
-                    : fetchAuditLogs();
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                refreshActiveTab();
+                break;
 
             default:
-                return;
+                break;
         }
     });
 

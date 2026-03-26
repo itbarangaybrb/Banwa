@@ -134,6 +134,7 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
+        fetchAuditLogs();
     } else if (tabName === 'create') {
         resetIncidentForm();
     }
@@ -300,7 +301,10 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadIncidentsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadIncidentsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+        loadIncidentsFromDB().finally(() => { 
+            loadAnalyticsTab(); 
+            fetchAuditLogs();
+            finish(); });
     } else {
         finish();
     }
@@ -2176,6 +2180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
                 else fetchAuditLogs();
+                refreshActiveTab();
                 break;
         }
     });

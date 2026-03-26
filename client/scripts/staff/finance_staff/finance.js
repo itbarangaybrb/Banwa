@@ -888,15 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case "new_audit_log":
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                    fetchAuditLogs();
-                } else if (data.id) {
-                    appendAuditRow(data);
-                    fetchAuditLogs();
-                } else {
-                    fetchAuditLogs();
-                }
+                if (data.payload) appendAuditRow(data.payload);
+                else if (data.id) appendAuditRow(data);
+                refreshActiveTab();
                 break;
         }
     });
