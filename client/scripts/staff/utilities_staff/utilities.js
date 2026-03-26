@@ -4,6 +4,8 @@ import { archiveRecord } from '../../utils/archives.js';
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
 let applications = [];
+let isDataLoaded = false; // Tracks if the initial fetch is complete
+let filterTimeout;        // Handles the debounce delay for smooth typing
 
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
@@ -163,122 +165,148 @@ function loadManagementTable() {
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
+    const statusEl = document.getElementById('statusApplications'); 
     const tbody = document.getElementById('tableBody');
 
-    if (!tbody) {
-        console.error('Table body not found');
-        return;
-    }
+    if (!tbody) return;
 
-    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-    tbody.innerHTML = '';
+    if (filterTimeout) clearTimeout(filterTimeout);
 
-    if (!applications || !Array.isArray(applications) || applications.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">
-                    <div class="spinner"></div>Loading applications...
-                </td>
-            </tr>`;
-        return;
-    }
-
-    const filtered = applications.filter(app => {
-        const natureOfWork = (app.nature_of_work || '').toLowerCase();
-        const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
-        const id = (app.id || '').toString();
-        const address = (app.address_of_utility || '').toLowerCase();
-
-        return natureOfWork.includes(searchTerm) ||
-            fullName.includes(searchTerm) ||
-            id.includes(searchTerm) ||
-            address.includes(searchTerm);
-    });
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding: 40px; color:#999;">
-                    No matching applications found.
-                </td>
-            </tr>`;
-        return;
-    }
-
-    filtered.forEach(app => {
-        let badgeClass = 'pending';
-        if (app.status === 'Approved') badgeClass = 'approved';
-        if (app.status === 'Disapproved') badgeClass = 'disapproved';
-        if (app.status === 'Complied') badgeClass = 'complied';
-
-        let actionBtn = '';
-
-        if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-        }
-        else if (app.status === 'Complied') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-        }
-        else if (app.status === 'Approved' && !app.or_number) {
-            actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Clearance</button>`;
-        }
-        else if (app.status === 'Approved' && app.or_number) {
-            actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
-        }
-        else if (app.status === 'Disapproved') {
-            actionBtn = ``;
-        }
-        else if (app.status === 'Cancelled') {
-            actionBtn = ``;
-        }
-        else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-        }
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${app.id}</td>
-            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-            <td>${app.owner_contact_no || 'N/A'}</td>
-            <td>${app.provider || 'N/A'}</td>
-            <td>${app.nature_of_work || 'N/A'}</td>
-            <td>${app.address_of_utility || 'N/A'}</td>
-            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-            <td>
-                <div class="action-buttons">
-                    ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
-                </div>
+    // Instantly show the filtering spinner
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Filtering applications...</em>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>`;
+
+    filterTimeout = setTimeout(() => {
+        if (!isDataLoaded) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center; padding: 40px; color:#666;">
+                        <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                        <em>Connecting to database...</em>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        if (!applications || !Array.isArray(applications) || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no utility applications available in the system.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+        const statusTerm = statusEl ? statusEl.value : '';
+
+        const filtered = applications.filter(app => {
+            const natureOfWork = (app.nature_of_work || '').toLowerCase();
+            const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
+            const id = (app.id || '').toString();
+            const address = (app.address_of_utility || '').toLowerCase();
+            const appStatus = (app.status || '');
+
+            const matchesSearch = natureOfWork.includes(searchTerm) || fullName.includes(searchTerm) || id.includes(searchTerm) || address.includes(searchTerm);
+            const matchesStatus = (statusTerm === 'All Status' || statusTerm === '') ? true : (appStatus === statusTerm);
+
+            return matchesSearch && matchesStatus;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-search fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Matches Found</h3>
+                        <p style="margin-top:5px; font-size: 14px;">No applications match your current search or status filter.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        filtered.forEach(app => {
+            let badgeClass = 'pending';
+            if (app.status === 'Approved') badgeClass = 'approved';
+            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+            if (app.status === 'Complied') badgeClass = 'complied';
+
+            let actionBtn = '';
+
+            if (app.status === 'Pending') {
+                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+            } else if (app.status === 'Complied') {
+                actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+            } else if (app.status === 'Approved' && !app.or_number) {
+                actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Clearance</button>`;
+            } else if (app.status === 'Approved' && app.or_number) {
+                actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
+            } else if (['Disapproved', 'Cancelled', 'Rejected'].includes(app.status)) {
+                actionBtn = ``;
+            } else {
+                actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${app.id}</td>
+                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+                <td>${app.owner_contact_no || 'N/A'}</td>
+                <td>${app.provider || 'N/A'}</td>
+                <td>${app.nature_of_work || 'N/A'}</td>
+                <td>${app.address_of_utility || 'N/A'}</td>
+                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        ${actionBtn}
+                        <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                        <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }, 300);
 }
 
 /**
  * Fetches utility applications from the server API
- * 
- * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
+    isDataLoaded = false;
+    filterApplications(); 
+
     return fetch(`${UTILITY_HANDLER_URL}?action=fetch`, {
         credentials: 'include'
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                applications = (data.data || []).filter(app => !app.is_archived);
-            } else {
-                applications = [];
-            }
-            return applications;
-        })
-        .catch(error => {
-            console.error('Error fetching applications:', error);
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            applications = (data.data || []).filter(app => !app.is_archived);
+        } else {
             applications = [];
-            return applications;
-        });
+        }
+        isDataLoaded = true;
+        filterApplications();
+        return applications;
+    })
+    .catch(error => {
+        console.error('Error fetching applications:', error);
+        applications = [];
+        isDataLoaded = true;
+        filterApplications();
+        return applications;
+    });
 }
 
 /**
@@ -315,22 +343,46 @@ function refreshActiveTab() {
  * Loads applications into the process table with actionable statuses
  */
 export function loadProcessTable() {
+    const tbody = document.getElementById('processTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Loading processable applications...</em>
+            </td>
+        </tr>`;
+
     loadApplicationsFromDB().finally(() => {
-        const tbody = document.getElementById('processTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         const excludedStatuses = ['Cancelled', 'Archived'];
+        const actionable = applications.filter(app => !excludedStatuses.includes(app.status));
 
-        const actionable = applications.filter(app => {
-            return !excludedStatuses.includes(app.status);
-        });
-
-        if (actionable.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No applications to process.</td></tr>';
+        if (!applications || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no utility applications in the system.</p>
+                    </td>
+                </tr>`;
             return;
         }
+
+        if (actionable.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-check-circle fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">All Caught Up!</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no applications waiting to be processed right now.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = '';
 
         actionable.forEach(app => {
             let btnText = "Update";
@@ -357,14 +409,20 @@ export function loadProcessTable() {
                 `;
             }
 
+            let badgeClass = (app.status || 'pending').toLowerCase().replace(' ', '-');
+
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
                     <td>${app.nature_of_work || 'N/A'}</td>
                     <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
                     <td>${app.provider}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                    <td>${buttonsHtml}</td>
+                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                    <td>
+                        <div class="action-buttons" style="display:flex; gap:5px;">
+                            ${buttonsHtml}
+                        </div>
+                    </td>
                 </tr>
             `;
         });
@@ -1806,8 +1864,10 @@ async function initializeMapPicker(containerId, target) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                        const formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
@@ -1821,6 +1881,8 @@ async function initializeMapPicker(containerId, target) {
                             'document.getElementById(\'latitude2\').value=\'' + lat + '\';' +
                             'document.getElementById(\'longitude2\').value=\'' + lng + '\';' +
                             'var d=document.getElementById(\'utilityLocationDisplay\');if(d)d.value=\'' + addrSafe + '\';' +
+                            'var ln=document.getElementById(\'utilityLotNo\');if(ln)ln.value=\'' + houseNum + '\';' +
+                            'var st=document.getElementById(\'utilityStreet\');if(st){for(var o=0;o<st.options.length;o++){if(st.options[o].value===\'' + streetVal + '\'){st.selectedIndex=o;break;}}}' +
                             'var m=document.querySelector(\'.dynamic-map-modal\');if(m)m.remove();' +
                             '})()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
                             '</div>';

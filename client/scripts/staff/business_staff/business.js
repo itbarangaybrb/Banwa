@@ -4,6 +4,8 @@ import { archiveRecord } from '../../utils/archives.js';
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
+let isDataLoaded = false; // Add this to track fetch status
+let filterTimeout; // Add this to handle typing delays
 
 // SweetAlert config scoped to business page alerts only
 const swalTopConfig = {
@@ -126,105 +128,144 @@ function loadManagementTable() {
     });
 }
 
+
 /**
  * Filters and renders applications in the management table based on search criteria
  * Handles search term filtering, status filtering, and smart action button generation
- * Displays appropriate status badges and action buttons based on application state
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
+    const statusEl = document.getElementById('statusApplications'); 
     const tbody = document.getElementById('tableBody');
 
-    if (!tbody) {
-        console.error('Table body not found');
-        return;
+    if (!tbody) return;
+
+    // 1. Clear any existing timers (prevents flickering when typing fast)
+    if (filterTimeout) {
+        clearTimeout(filterTimeout);
     }
 
-    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-
-    tbody.innerHTML = '';
-
-    if (!applications || !Array.isArray(applications) || applications.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="10" style="text-align:center; padding: 40px; color:#999;">
-                    <div class="spinner"></div>Loading applications...
-                </td>
-            </tr>`;
-        return;
-    }
-
-    const filtered = applications.filter(app => {
-        const businessName = (app.business_name || '').toLowerCase();
-        const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
-        const id = (app.id || '').toString();
-
-        return businessName.includes(searchTerm) ||
-            fullName.includes(searchTerm) ||
-            id.includes(searchTerm);
-    });
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">
-                    No matching applications found.
-                </td>
-            </tr>`;
-        return;
-    }
-
-    filtered.forEach(app => {
-        let badgeClass = 'pending';
-        if (app.status === 'Approved') badgeClass = 'approved';
-        if (app.status === 'Disapproved') badgeClass = 'disapproved';
-        if (app.status === 'Paid') badgeClass = 'paid';
-        if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-        let actionBtn = '';
-
-        if (app.status === 'Pending') {
-            actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-        }
-        else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
-        }
-        else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-        }
-        else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
-        }
-        else {
-            actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-        }
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${app.id}</td>
-            <td style="font-weight:600;">${app.business_name}</td>
-            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-            <td>${app.payment_status || 'Unpaid'}</td>
-            <td>
-                <div class="action-buttons">
-                    ${actionBtn}
-                    <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
-                </div>
+    // 2. Instantly show the loading spinner when a user types or clicks a filter
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Filtering applications...</em>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>`;
+
+    // 3. Wait 300ms before doing the heavy lifting
+    filterTimeout = setTimeout(() => {
+        
+        // If the database hasn't finished its initial load yet, just stop here.
+        if (!isDataLoaded) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                        <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                        <em>Connecting to database...</em>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State A: Database is completely empty
+        if (!applications || !Array.isArray(applications) || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no applications available in the system.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // Grab current filter values
+        const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+        const statusTerm = statusEl ? statusEl.value : '';
+
+        // Apply logic
+        const filtered = applications.filter(app => {
+            const businessName = (app.business_name || '').toLowerCase();
+            const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
+            const id = (app.id || '').toString();
+            const appStatus = (app.status || '');
+
+            const matchesSearch = businessName.includes(searchTerm) || fullName.includes(searchTerm) || id.includes(searchTerm);
+            const matchesStatus = (statusTerm === 'All Status' || statusTerm === '') ? true : (appStatus === statusTerm);
+
+            return matchesSearch && matchesStatus;
+        });
+
+        // State B: Filter yielded zero results
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-search fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Matches Found</h3>
+                        <p style="margin-top:5px; font-size: 14px;">No applications match your current search or status filter.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State C: Filter has results. Clear the spinner and render rows!
+        tbody.innerHTML = ''; 
+        
+        filtered.forEach(app => {
+            let badgeClass = 'pending';
+            if (app.status === 'Approved') badgeClass = 'approved';
+            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+            if (app.status === 'Paid') badgeClass = 'paid';
+            if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+            let actionBtn = '';
+
+            if (app.status === 'Pending') {
+                actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+            } else if (app.status === 'For Payment') {
+                actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+            } else if (app.status === 'Paid') {
+                actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+            } else if (app.status === 'Approved') {
+                actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${app.id}</td>
+                <td style="font-weight:600;">${app.business_name}</td>
+                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                <td>${app.payment_status || 'Unpaid'}</td>
+                <td>
+                    <div class="action-buttons">
+                        ${actionBtn}
+                        <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                        <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    }, 300); // 300 millisecond delay
 }
 
 /**
  * Fetches business applications from the server API
- * Updates the global applications array with retrieved data
- * Robustly handles JSON errors to prevent infinite loading
  */
 async function loadApplicationsFromDB() {
     const tableBody = document.getElementById('tableBody');
+
+    // Set to false and trigger UI to show "Loading..."
+    isDataLoaded = false;
+    filterApplications(); 
 
     try {
         const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`, {
@@ -255,16 +296,21 @@ async function loadApplicationsFromDB() {
             console.error('Server reported error:', data.message);
             applications = [];
         }
+
+        // Fetch complete! Set to true and re-render the table
+        isDataLoaded = true;
+        filterApplications(); 
         return applications;
 
     } catch (error) {
         console.error('Critical Error fetching applications:', error);
         applications = [];
+        isDataLoaded = true; // Stop the loading spinner even on error
 
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" style="text-align:center; padding: 40px; color:#dc3545;">
+                    <td colspan="6" style="text-align:center; padding: 40px; color:#dc3545;">
                         <i class="fas fa-exclamation-circle"></i> 
                         Error loading data: ${error.message}<br>
                         <small>Check the console (F12) for details.</small>
@@ -274,7 +320,6 @@ async function loadApplicationsFromDB() {
         return applications;
     }
 }
-
 /**
  * Refreshes the currently active tab's content with latest application data.
  * Triggered by WebSocket construction updates.
@@ -2439,14 +2484,15 @@ window.getCurrentDateString = getCurrentDateString;
 window.updateApplicationDate = updateApplicationDate;
 // window.validateOwnerAddress = validateOwnerAddress;
 // window.validateBusinessAddress = validateBusinessAddress;
+
 // ==================== MAP LOCATION PICKER ====================
+
 function openMapPicker(target) {
     const existing = document.querySelector('.dynamic-map-modal');
     if (existing) existing.remove();
 
     const modal = document.createElement('div');
     modal.className = 'modal dynamic-map-modal';
-    // Flex centering fixes the map rendering on the right side
     modal.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
     modal.innerHTML = `
         <div class="modal-content" style="max-width:900px;width:100%;height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.35);">
@@ -2466,6 +2512,7 @@ function openMapPicker(target) {
 
 async function initializeMapPicker(containerId, target) {
     const container = document.getElementById(containerId);
+    if (!container) return;
     if (container._leaflet_id) { container._leaflet_id = null; container.innerHTML = ''; }
 
     const osmTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
@@ -2473,22 +2520,37 @@ async function initializeMapPicker(containerId, target) {
     const map = L.map(containerId).setView([14.6175, 121.0756], 17);
     osmTile.addTo(map);
 
-    const POLY = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 }, satellite: { color: '#fff', fillColor: '#fff', fillOpacity: 0.15, weight: 2 } };
-    const BOUND = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 }, satellite: { color: '#fff', fillColor: '#000', fillOpacity: 0, dashArray: '8,6', weight: 2 } };
-    let housePolygons = [], boundaryLayers = [], selectedMarker = null, currentMode = 'street';
+    const POLY  = { street: { color:'#00247c', fillColor:'#00247c', fillOpacity:0.12, weight:2 },    satellite: { color:'#fff', fillColor:'#fff', fillOpacity:0.15, weight:2 } };
+    const BOUND = { street: { color:'#00247c', fillColor:'#00247c', fillOpacity:0.08, dashArray:'8,6', weight:2 }, satellite: { color:'#fff', fillColor:'#000', fillOpacity:0, dashArray:'8,6', weight:2 } };
+    let housePolygons = [], boundaryLayers = [], selectedMarker = null;
 
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn = document.getElementById('picker-satellite-btn');
+    const satBtn    = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
-        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); currentMode = 'street'; housePolygons.forEach(p => p.setStyle(POLY.street)); boundaryLayers.forEach(b => b.setStyle(BOUND.street)); streetBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
-        satBtn.onclick = () => { map.removeLayer(osmTile); satTile.addTo(map); currentMode = 'satellite'; housePolygons.forEach(p => p.setStyle(POLY.satellite)); boundaryLayers.forEach(b => b.setStyle(BOUND.satellite)); satBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        streetBtn.onclick = () => {
+            map.removeLayer(satTile); osmTile.addTo(map);
+            housePolygons.forEach(p => p.setStyle(POLY.street));
+            boundaryLayers.forEach(b => b.setStyle(BOUND.street));
+            streetBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+            satBtn.style.cssText    = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+        };
+        satBtn.onclick = () => {
+            map.removeLayer(osmTile); satTile.addTo(map);
+            housePolygons.forEach(p => p.setStyle(POLY.satellite));
+            boundaryLayers.forEach(b => b.setStyle(BOUND.satellite));
+            satBtn.style.cssText    = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+            streetBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+        };
     }
 
-    map.on('click', function (e) {
+    // Click anywhere on the map to drop a pin and fill coordinates
+    map.on('click', function(e) {
         const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
         if (selectedMarker) map.removeLayer(selectedMarker);
-        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
-        document.getElementById('latitude2').value = lat;
+        selectedMarker = L.marker([lat, lng]).addTo(map)
+            .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
+            .openPopup();
+        document.getElementById('latitude2').value  = lat;
         document.getElementById('longitude2').value = lng;
         const disp = document.getElementById('businessLocationDisplay');
         if (disp) disp.value = `${lat}, ${lng}`;
@@ -2496,57 +2558,76 @@ async function initializeMapPicker(containerId, target) {
         if (modal) modal.remove();
     });
 
+    // Load barangay boundary polygons
     try {
-        const bRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries' });
+        const bRes  = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_boundaries' });
         const bData = await bRes.json();
-        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords = JSON.parse(b.coordinates); const ll = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]); boundaryLayers.push(L.polygon(ll, BOUND.street).addTo(map)); } catch (e) { } });
-    } catch (e) { }
+        if (bData.success && bData.boundaries) {
+            bData.boundaries.forEach(b => {
+                try {
+                    const coords = JSON.parse(b.coordinates);
+                    const ll = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
+                    boundaryLayers.push(L.polygon(ll, BOUND.street).addTo(map));
+                } catch(e) {}
+            });
+        }
+    } catch(e) {}
 
+    // Load house/lot polygons with clickable popups
     try {
-        const hRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses' });
+        const hRes  = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_houses' });
         const hData = await hRes.json();
         if (hData.success && hData.houses) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
                     const coords = JSON.parse(house.coordinates);
-                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
-                    const ll = ring.map(c => [c[1], c[0]]);
-                    const poly = L.polygon(ll, { ...POLY.street, interactive: true });
+                    const ring   = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ll     = ring.map(c => [c[1], c[0]]);
+                    const poly   = L.polygon(ll, { ...POLY.street, interactive: true });
                     housePolygons.push(poly);
+
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const title = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const title      = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+
                     poly.bindPopup('', { maxWidth: 260 });
-                    poly.on('click', function (e) {
+                    poly.on('click', function(e) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                        let formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+                        const formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe  = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const houseNum  = String(house.house_number || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const streetVal = String(house.street_name  || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
                             '<div style="font-weight:700;font-size:13px;">' + title + '</div>' +
                             (house.street_name ? '<div style="font-size:11px;opacity:.85;">' + house.street_name + '</div>' : '') +
                             '</div>' +
-                            (house.address ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
+                            (house.address    ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
                             (house.street_name ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '') +
                             '<p style="margin:0 0 10px;font-size:11px;color:#888;">' + lat + ', ' + lng + '</p>' +
                             '<button onclick="(function(){' +
                             'document.getElementById(\'latitude2\').value=\'' + lat + '\';' +
                             'document.getElementById(\'longitude2\').value=\'' + lng + '\';' +
                             'var d=document.getElementById(\'businessLocationDisplay\');if(d)d.value=\'' + addrSafe + '\';' +
+                            'var ln=document.getElementById(\'businessLotNo\');if(ln)ln.value=\'' + houseNum + '\';' +
+                            'var st=document.getElementById(\'businessStreet\');if(st){for(var o=0;o<st.options.length;o++){if(st.options[o].value===\'' + streetVal + '\'){st.selectedIndex=o;break;}}}' +
                             'var m=document.querySelector(\'.dynamic-map-modal\');if(m)m.remove();' +
                             '})()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
                             '</div>';
+
                         poly.setPopupContent(popupHtml);
                         poly.openPopup();
                     });
                     poly.addTo(map);
-                } catch (e) { }
+                } catch(e) {}
             });
         }
-    } catch (e) { }
+    } catch(e) {}
 
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);
