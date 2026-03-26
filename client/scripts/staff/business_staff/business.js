@@ -4,6 +4,8 @@ import { archiveRecord } from '../../utils/archives.js';
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
+let isDataLoaded = false; // Add this to track fetch status
+let filterTimeout; // Add this to handle typing delays
 
 // SweetAlert config scoped to business page alerts only
 const swalTopConfig = {
@@ -125,105 +127,144 @@ function loadManagementTable() {
     });
 }
 
+
 /**
  * Filters and renders applications in the management table based on search criteria
  * Handles search term filtering, status filtering, and smart action button generation
- * Displays appropriate status badges and action buttons based on application state
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
+    const statusEl = document.getElementById('statusApplications'); 
     const tbody = document.getElementById('tableBody');
 
-    if (!tbody) {
-        console.error('Table body not found');
-        return;
+    if (!tbody) return;
+
+    // 1. Clear any existing timers (prevents flickering when typing fast)
+    if (filterTimeout) {
+        clearTimeout(filterTimeout);
     }
 
-    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-
-    tbody.innerHTML = '';
-
-    if (!applications || !Array.isArray(applications) || applications.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="10" style="text-align:center; padding: 40px; color:#999;">
-                    <div class="spinner"></div>Loading applications...
-                </td>
-            </tr>`;
-        return;
-    }
-
-    const filtered = applications.filter(app => {
-        const businessName = (app.business_name || '').toLowerCase();
-        const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
-        const id = (app.id || '').toString();
-
-        return businessName.includes(searchTerm) ||
-            fullName.includes(searchTerm) ||
-            id.includes(searchTerm);
-    });
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center; padding: 40px; color:#999;">
-                    No matching applications found.
-                </td>
-            </tr>`;
-        return;
-    }
-
-    filtered.forEach(app => {
-        let badgeClass = 'pending';
-        if (app.status === 'Approved') badgeClass = 'approved';
-        if (app.status === 'Disapproved') badgeClass = 'disapproved';
-        if (app.status === 'Paid') badgeClass = 'paid';
-        if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-        let actionBtn = '';
-
-        if (app.status === 'Pending') {
-            actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-        }
-        else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
-        }
-        else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-        }
-        else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
-        }
-        else {
-            actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-        }
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${app.id}</td>
-            <td style="font-weight:600;">${app.business_name}</td>
-            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-            <td>${app.payment_status || 'Unpaid'}</td>
-            <td>
-                <div class="action-buttons">
-                    ${actionBtn}
-                    <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
-                </div>
+    // 2. Instantly show the loading spinner when a user types or clicks a filter
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Filtering applications...</em>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>`;
+
+    // 3. Wait 300ms before doing the heavy lifting
+    filterTimeout = setTimeout(() => {
+        
+        // If the database hasn't finished its initial load yet, just stop here.
+        if (!isDataLoaded) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                        <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                        <em>Connecting to database...</em>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State A: Database is completely empty
+        if (!applications || !Array.isArray(applications) || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no applications available in the system.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // Grab current filter values
+        const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+        const statusTerm = statusEl ? statusEl.value : '';
+
+        // Apply logic
+        const filtered = applications.filter(app => {
+            const businessName = (app.business_name || '').toLowerCase();
+            const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
+            const id = (app.id || '').toString();
+            const appStatus = (app.status || '');
+
+            const matchesSearch = businessName.includes(searchTerm) || fullName.includes(searchTerm) || id.includes(searchTerm);
+            const matchesStatus = (statusTerm === 'All Status' || statusTerm === '') ? true : (appStatus === statusTerm);
+
+            return matchesSearch && matchesStatus;
+        });
+
+        // State B: Filter yielded zero results
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-search fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Matches Found</h3>
+                        <p style="margin-top:5px; font-size: 14px;">No applications match your current search or status filter.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State C: Filter has results. Clear the spinner and render rows!
+        tbody.innerHTML = ''; 
+        
+        filtered.forEach(app => {
+            let badgeClass = 'pending';
+            if (app.status === 'Approved') badgeClass = 'approved';
+            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+            if (app.status === 'Paid') badgeClass = 'paid';
+            if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+            let actionBtn = '';
+
+            if (app.status === 'Pending') {
+                actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+            } else if (app.status === 'For Payment') {
+                actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+            } else if (app.status === 'Paid') {
+                actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+            } else if (app.status === 'Approved') {
+                actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
+            } else {
+                actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${app.id}</td>
+                <td style="font-weight:600;">${app.business_name}</td>
+                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                <td>${app.payment_status || 'Unpaid'}</td>
+                <td>
+                    <div class="action-buttons">
+                        ${actionBtn}
+                        <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                        <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    }, 300); // 300 millisecond delay
 }
 
 /**
  * Fetches business applications from the server API
- * Updates the global applications array with retrieved data
- * Robustly handles JSON errors to prevent infinite loading
  */
 async function loadApplicationsFromDB() {
     const tableBody = document.getElementById('tableBody');
+
+    // Set to false and trigger UI to show "Loading..."
+    isDataLoaded = false;
+    filterApplications(); 
 
     try {
         const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`, {
@@ -254,16 +295,21 @@ async function loadApplicationsFromDB() {
             console.error('Server reported error:', data.message);
             applications = [];
         }
+
+        // Fetch complete! Set to true and re-render the table
+        isDataLoaded = true;
+        filterApplications(); 
         return applications;
 
     } catch (error) {
         console.error('Critical Error fetching applications:', error);
         applications = [];
+        isDataLoaded = true; // Stop the loading spinner even on error
 
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="8" style="text-align:center; padding: 40px; color:#dc3545;">
+                    <td colspan="6" style="text-align:center; padding: 40px; color:#dc3545;">
                         <i class="fas fa-exclamation-circle"></i> 
                         Error loading data: ${error.message}<br>
                         <small>Check the console (F12) for details.</small>
@@ -273,7 +319,6 @@ async function loadApplicationsFromDB() {
         return applications;
     }
 }
-
 /**
  * Refreshes the currently active tab's content with latest application data.
  * Triggered by WebSocket construction updates.

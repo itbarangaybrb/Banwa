@@ -353,11 +353,15 @@ $full_name = getCurrentUserName();
 
             <div class="search-box">
                 <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
-                <select id="statusApplications" style="width: max-content;">
+                <select id="statusApplications" style="width: max-content;" onchange="filterApplications()">
                     <option value="">All Status</option>
                     <option value="Pending">Pending</option>
-                    <option value="Pre-approved">Pre-approved</option>
+                    <option value="Complied">Complied</option>
+                    <option value="For Payment">For Payment</option>
+                    <option value="Paid">Paid</option>
                     <option value="Approved">Approved</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Disapproved">Disapproved</option>
                     <option value="Rejected">Rejected</option>
                 </select>
                 <button class="btn buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>

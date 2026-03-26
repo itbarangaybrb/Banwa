@@ -336,7 +336,7 @@ $full_name = getCurrentUserName();
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
-                    <select id="statusApplications" style="width: max-content;">
+                    <select id="statusApplications" style="width: max-content;" onchange="filterApplications()">
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
                         <!-- <option value="Pre-approved">Pre-approved</option> -->
