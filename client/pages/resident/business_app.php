@@ -321,6 +321,15 @@ if ($_SESSION['role_id'] != 1) {
                             <div>
                                 <p>Email:</p> <span id="sumEmail"></span>
                             </div>
+                            <div>
+                                <p>Structure Type:</p> <span id="sumStructureType"></span>
+                            </div>
+                            <div>
+                                <p>Requirements:</p> <span id="sumRequirements"></span>
+                            </div>
+                            <div>
+                                <p>No. of Employees:</p> <span id="sumEmployees"></span>
+                            </div>
                         </div>
                     </div>
 
@@ -335,15 +344,6 @@ if ($_SESSION['role_id'] != 1) {
                             </div>
                             <div>
                                 <p>Owner Address:</p> <span id="sumAddressOwner"></span>
-                            </div>
-                            <div>
-                                <p>Structure Type:</p> <span id="sumStructureType"></span>
-                            </div>
-                            <div>
-                                <p>Requirements:</p> <span id="sumRequirements"></span>
-                            </div>
-                            <div>
-                                <p>No. of Employees:</p> <span id="sumEmployees"></span>
                             </div>
                             <div>
                                 <p>Agreed to Terms:</p> <span id="sumAgreed"></span>

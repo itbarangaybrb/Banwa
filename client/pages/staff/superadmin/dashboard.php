@@ -60,12 +60,12 @@ $full_name = getCurrentUserName();
                         <p class="links-name">Manage Users</p>
                     </a>
                 </li>
-                <li class="items">
+                <!-- <li class="items">
                     <a class="links" href="../superadmin/audits.php">
                         <img src="../../../img/file-search-corner-icon.svg" alt="audit" class="icon">
                         <p class="links-name">Audits</p>
                     </a>
-                </li>
+                </li> -->
                 <li class="items">
                     <a class="links" href="../superadmin/archives.php">
                         <img src="../../../img/archive-icon.svg" alt="audit" class="icon">

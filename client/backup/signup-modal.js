@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "../../server/api/supabase.js";
 
 // Modal Management
 const modal = document.getElementById('signupModal');
