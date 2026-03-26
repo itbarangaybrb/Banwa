@@ -21,14 +21,15 @@ export function initSocket(name, url, onMessage) {
             try {
                 handler({ type: event, ...data });
             } catch (err) {
-                console.error(`[${name}] Handler error`, err);
+                // console.error(`[${name}] Handler error`, err);
+                console.error(`[${name}] Handler error`);
             }
         });
     });
 
-    socket.on('connect', () => console.log(`[${name}] Connected`));
-    socket.on('disconnect', () => console.log(`[${name}] Disconnected`));
-    socket.on('connect_error', (err) => console.error(`[${name}] Connection error`, err.message));
+    // socket.on('connect', () => console.log(`[${name}] Connected`));
+    // socket.on('disconnect', () => console.log(`[${name}] Disconnected`));
+    // socket.on('connect_error', (err) => console.error(`[${name}] Connection error`, err.message));
 
     sockets[name] = socket;
 }
