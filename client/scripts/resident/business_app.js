@@ -853,6 +853,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
+                    const socket = sockets["main"]; 
+                    if (socket) { 
+                        socket.emit('business_applications_update', { action: 'status_update' }); 
+                    }
+
                     business_app_swal.fire({
                         icon: 'success',
                         title: 'Success!',

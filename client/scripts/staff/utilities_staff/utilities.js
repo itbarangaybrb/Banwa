@@ -904,6 +904,12 @@ function submitUpdate(event) {
             if (data.status === 'success') {
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
+                
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('utility_applications_update', { action: 'status_update' });
+                }
+
                 Swal.fire({
                     ...swalTopConfig,
                     icon: 'success',
@@ -912,11 +918,6 @@ function submitUpdate(event) {
                     timer: 2000,
                     showConfirmButton: false
                 });
-
-                const socket = sockets["main"];
-                if (socket) {
-                    socket.emit('utility_applications_update', { action: 'status_update' });
-                }
 
                 loadManagementTable();
                 loadProcessTable();

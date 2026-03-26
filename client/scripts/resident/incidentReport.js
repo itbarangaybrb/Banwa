@@ -780,6 +780,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
+                    const socket = sockets["main"];
+                    if (socket) {
+                        socket.emit('incident_report_applications_update', { action: 'status_update' });
+                    }
+
                     ir_swal.fire({
                         icon: 'success',
                         title: 'Success!',

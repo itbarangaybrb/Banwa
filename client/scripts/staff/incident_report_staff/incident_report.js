@@ -818,6 +818,11 @@ function submitUpdate(event) {
         })
         .then(data => {
             if (data.status === 'success') {
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('incident_report_applications_update', { action: 'status_update' });
+                }
+                
                 closeModal('updateModal');
 
                 // REPLACED WITH SWEETALERT2
@@ -829,10 +834,6 @@ function submitUpdate(event) {
                     confirmButtonColor: '#28a745'
                 });
 
-                const socket = sockets["main"];
-                if (socket) {
-                    socket.emit('incident_report_applications_update', { action: 'status_update' });
-                }
 
                 loadManagementTable();
                 loadProcessTable();

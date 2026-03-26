@@ -1180,7 +1180,11 @@ function submitUpdate(event) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                //Closes Update Button after successful update
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('construction_applications_update', { action: 'status_update' });
+                }
+
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
                 Swal.fire({
@@ -1191,11 +1195,6 @@ function submitUpdate(event) {
                     timer: 2000,
                     showConfirmButton: false
                 });
-
-                const socket = sockets["main"];
-                if (socket) {
-                    socket.emit('construction_applications_update', { action: 'status_update' });
-                }
 
                 loadManagementTable();
                 loadProcessTable();

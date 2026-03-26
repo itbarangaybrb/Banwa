@@ -83,29 +83,6 @@ export async function archiveRecord(tableName, recordId) {
     const data = await response.json();
 
     if (data.success) {
-        await Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Archived successfully',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-        });
-
-        const row = document
-            .querySelector(`button.edit-btn[data-id="${recordId}"]`)
-            ?.closest('tr');
-
-        if (row) row.remove();
-
-        fetchArchives();
-
-        if (typeof window.fetchUsers === 'function') {
-            window.fetchUsers();
-        }
-
-        // Single "main" socket — consistent with utilities.js
         const socket = sockets["main"];
         if (socket?.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
@@ -115,7 +92,28 @@ export async function archiveRecord(tableName, recordId) {
                 recordId: recordId
             }));
         }
+        
+        const row = document
+        .querySelector(`button.edit-btn[data-id="${recordId}"]`)
+        ?.closest('tr');
+        
+        if (row) row.remove();
+        
+        fetchArchives();
+        
+        if (typeof window.fetchUsers === 'function') {
+            window.fetchUsers();
+        }
 
+        await Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Archived successfully',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
     } else {
         Swal.fire({
             icon: 'error',
@@ -159,6 +157,15 @@ async function restoreRecord(archiveId) {
     const data = await response.json();
 
     if (data.success) {
+        const socket = sockets["main"];
+        if (socket?.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "archives_update",
+                action: "restore",
+                archiveId: archiveId
+            }));
+        }
+
         await Swal.fire({
             toast: true,
             position: 'top-end',
@@ -171,17 +178,6 @@ async function restoreRecord(archiveId) {
 
         fetchArchives();
         fetchUsers();
-
-        // Single "main" socket — consistent with utilities.js
-        const socket = sockets["main"];
-        if (socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
-                type: "archives_update",
-                action: "restore",
-                archiveId: archiveId
-            }));
-        }
-
     } else {
         await Swal.fire({
             icon: 'error',
@@ -322,16 +318,22 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchArchives();
 
-    initSocket("main", "http//localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "archives_update":
                 fetchArchives();
                 break;
             case "users_update":
-                fetchUsers;
+                if (typeof window.fetchUsers === 'function') {
+                    window.fetchUsers();
+                }
                 break;
-            case "new_audit_log":
-                // Audit log handling delegated to audit module if needed
+            case "business_applications_update":
+            case "construction_applications_update":
+            case "utility_applications_update":
+            case "incident_report_applications_update":
+            case "finance_applications_update":
+                fetchArchives();
                 break;
         }
     });

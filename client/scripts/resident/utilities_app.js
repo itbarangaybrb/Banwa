@@ -548,6 +548,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
+                    const socket = sockets["main"];
+                    if (socket) {
+                        socket.emit('utility_applications_update', { action: 'status_update' });
+                    }
+
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,

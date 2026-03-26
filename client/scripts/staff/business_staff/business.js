@@ -802,8 +802,14 @@ function submitUpdate(event) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('business_applications_update', { action: 'status_update' });
+                }
+
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
+                
                 Swal.fire({
                     ...swalTopConfig,
                     icon: 'success',
@@ -813,10 +819,6 @@ function submitUpdate(event) {
                     showConfirmButton: false
                 });
 
-                const socket = sockets["main"];
-                if (socket) {
-                    socket.emit('business_applications_update', { action: 'status_update' });
-                }
 
                 loadManagementTable();
                 loadProcessTable();
@@ -2143,6 +2145,11 @@ async function createApplication(event) {
         const data = await resp.json();
 
         if (data.status === 'success') {
+            const socket = sockets["main"];
+            if (socket) {
+                socket.emit('business_applications_update', { action: 'status_update' });
+            }
+
             Swal.fire({
                 ...swalTopConfig,
                 icon: 'success',
