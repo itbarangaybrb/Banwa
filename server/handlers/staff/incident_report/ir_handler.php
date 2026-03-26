@@ -1,10 +1,36 @@
 <?php
+// Buffer ALL output from byte 1.
+ob_start();
+
 // Prevent PHP errors from rendering HTML
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
+
+set_exception_handler(function (Throwable $e) {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    error_log('ir_handler uncaught exception: ' . $e->getMessage()
+        . ' in ' . $e->getFile() . ':' . $e->getLine());
+    echo json_encode(['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
+});
+
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+        error_log('ir_handler fatal: ' . $err['message']
+            . ' in ' . $err['file'] . ':' . $err['line']);
+        echo json_encode(['status' => 'error', 'message' => 'Fatal server error. Check logs.']);
+        exit;
+    }
+});
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/incident_report/ir_dss.php';
@@ -13,13 +39,7 @@ require_once __DIR__ . '/../../../services/broadcast.php';
 
 session_start();
 
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error.log');
-
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -208,22 +228,28 @@ function handleCreateApplication($pdo)
 
         createInitialDSSEvaluation($pdo, $reportId);
 
-        broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
+        try {
+            broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
+        } catch (Throwable $broadcastEx) {
+            error_log("broadcastEvent failed in ir handleCreateApplication (id={$reportId}): " . $broadcastEx->getMessage());
+        }
 
         // Write audit log for CREATE action
-        writeAuditLog(
-            $pdo,
-            'CREATE',
-            'incident_reports',
-            $reportId,
-            null,
-            $newData,
-            'INCIDENT_REPORT'
-        );
+        try {
+            writeAuditLog(
+                $pdo,
+                'CREATE',
+                'incident_reports',
+                $reportId,
+                null,
+                $newData,
+                'INCIDENT_REPORT'
+            );
+        } catch (Throwable $auditEx) {
+            error_log("writeAuditLog failed in ir handleCreateApplication (id={$reportId}): " . $auditEx->getMessage());
+        }
 
-        // Commit transaction
-        // $pdo->commit();
-
+        ob_clean();
         echo json_encode(["status" => "success", "id" => $reportId, "message" => "Incident Report Created!"]);
     } catch (PDOException $e) {
         $pdo->rollBack();
@@ -312,24 +338,33 @@ function handleUpdateStatus($pdo)
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-        broadcastEvent('incident_report_applications_update', ['id' => $id, 'status' => $newStatus]);
-
-        // Write audit log for status update
-        writeAuditLog(
-            $pdo,
-            'STATUS UPDATED',
-            'incident_reports',
-            $id,
-            $oldData,
-            $newData,
-            'STATUS_UPDATE'
-        );
-
+        // Send response BEFORE non-critical operations
+        ob_clean();
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
             "dss_status" => $currentDSSStatus
         ]);
+
+        try {
+            broadcastEvent('incident_report_applications_update', ['id' => $id, 'status' => $newStatus]);
+        } catch (Throwable $broadcastEx) {
+            error_log("broadcastEvent failed in ir handleUpdateStatus (id={$id}): " . $broadcastEx->getMessage());
+        }
+
+        try {
+            writeAuditLog(
+                $pdo,
+                'STATUS UPDATED',
+                'incident_reports',
+                $id,
+                $oldData,
+                $newData,
+                'STATUS_UPDATE'
+            );
+        } catch (Throwable $auditEx) {
+            error_log("writeAuditLog failed in ir handleUpdateStatus (id={$id}): " . $auditEx->getMessage());
+        }
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -528,23 +563,32 @@ function handleUpdateApplication($pdo)
             $newStmt->execute([':id' => $reportId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-            broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
+            try {
+                broadcastEvent('incident_report_applications_update', ['id' => $reportId]);
+            } catch (Throwable $broadcastEx) {
+                error_log("broadcastEvent failed in ir handleUpdateApplication (id={$reportId}): " . $broadcastEx->getMessage());
+            }
 
-            // Write audit log for UPDATE action
-            writeAuditLog(
-                $pdo,
-                'UPDATE',
-                'incident_reports',
-                $reportId,
-                $oldData,
-                $newData,
-                'INCIDENT_REPORT'
-            );
+            try {
+                writeAuditLog(
+                    $pdo,
+                    'UPDATE',
+                    'incident_reports',
+                    $reportId,
+                    $oldData,
+                    $newData,
+                    'INCIDENT_REPORT'
+                );
+            } catch (Throwable $auditEx) {
+                error_log("writeAuditLog failed in ir handleUpdateApplication (id={$reportId}): " . $auditEx->getMessage());
+            }
 
             triggerDSSevaluation($pdo, $reportId);
+            ob_clean();
             echo json_encode(["status" => "success", "message" => "Incident report updated successfully! DSS re-evaluation triggered."]);
         } else {
             http_response_code(404);
+            ob_clean();
             echo json_encode(["status" => "error", "message" => "Report not found or not authorized to update."]);
         }
     } catch (PDOException $e) {

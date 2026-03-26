@@ -1656,9 +1656,9 @@ body {
   top: 10px !important; right: 14px !important;
   z-index: 20 !important;
   font-size: 22px !important;
-  color: rgba(255,255,255,0.85) !important;
+  color: #111111 !important;
 }
-.swal2-close:hover { color: #fff !important; }
+.swal2-close:hover { color: #000000 !important; }
 
 .swal2-title { color: var(--navy); }
 .swal2-confirm { background: var(--navy) !important; }

@@ -1,10 +1,39 @@
 <?php
-// Ensure errors don't emit HTML before headers
+// Buffer ALL output from byte 1 — prevents stray PHP notices/warnings from
+// corrupting the JSON body and causing res.json() to throw on the client.
+ob_start();
+
+// Suppress HTML error output; log to file instead.
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
+
+// Global safety net — any uncaught exception or fatal error always returns
+// clean JSON so the client never sees a partial HTML crash page.
+set_exception_handler(function (Throwable $e) {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    error_log('utility_handler uncaught exception: ' . $e->getMessage()
+        . ' in ' . $e->getFile() . ':' . $e->getLine());
+    echo json_encode(['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
+});
+
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+        error_log('utility_handler fatal: ' . $err['message']
+            . ' in ' . $err['file'] . ':' . $err['line']);
+        echo json_encode(['status' => 'error', 'message' => 'Fatal server error. Check logs.']);
+        exit;
+    }
+});
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/utility/utility_dss.php';
@@ -13,13 +42,7 @@ require_once __DIR__ . '/../../../services/broadcast.php';
 
 session_start();
 
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error.log');
-
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -154,19 +177,28 @@ function handleCreateApplication($pdo)
 
         createInitialDSSEvaluation($pdo, $applicationId);
 
-        broadcastEvent('utility_applications_update', ['id' => $applicationId]);
+        try {
+            broadcastEvent('utility_applications_update', ['id' => $applicationId]);
+        } catch (Throwable $broadcastEx) {
+            error_log("broadcastEvent failed in handleCreateApplication (utility, id={$applicationId}): " . $broadcastEx->getMessage());
+        }
 
         // Write audit log for CREATE action
-        writeAuditLog(
-            $pdo,
-            'CREATE',
-            'utility_applications',
-            $applicationId,
-            null,
-            $newData,
-            'UTILITY_APPLICATION'
-        );
+        try {
+            writeAuditLog(
+                $pdo,
+                'CREATE',
+                'utility_applications',
+                $applicationId,
+                null,
+                $newData,
+                'UTILITY_APPLICATION'
+            );
+        } catch (Throwable $auditEx) {
+            error_log("writeAuditLog failed in handleCreateApplication (utility, id={$applicationId}): " . $auditEx->getMessage());
+        }
 
+        ob_clean();
         echo json_encode(["status" => "success", "id" => $applicationId, "message" => "Utility Application Created!"]);
     } catch (PDOException $e) {
         http_response_code(500);
@@ -253,24 +285,35 @@ function handleUpdateStatus($pdo)
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-        broadcastEvent('utility_applications_update', ['id' => $id, 'status' => $newStatus]);
-
-        // Write audit log for status update
-        writeAuditLog(
-            $pdo,
-            'STATUS UPDATED',
-            'utility_applications',
-            $id,
-            $oldData,
-            $newData,
-            'STATUS_UPDATE'
-        );
-
+        // Send success response BEFORE non-critical operations
+        ob_clean();
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
             "dss_status" => $currentDSSStatus
         ]);
+
+        // broadcastEvent and writeAuditLog are non-critical — wrap them so
+        // a failed socket connection never causes the DB update to appear as a 500.
+        try {
+            broadcastEvent('utility_applications_update', ['id' => $id, 'status' => $newStatus]);
+        } catch (Throwable $broadcastEx) {
+            error_log("broadcastEvent failed in handleUpdateStatus (utility, id={$id}): " . $broadcastEx->getMessage());
+        }
+
+        try {
+            writeAuditLog(
+                $pdo,
+                'STATUS UPDATED',
+                'utility_applications',
+                $id,
+                $oldData,
+                $newData,
+                'STATUS_UPDATE'
+            );
+        } catch (Throwable $auditEx) {
+            error_log("writeAuditLog failed in handleUpdateStatus (utility, id={$id}): " . $auditEx->getMessage());
+        }
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -403,23 +446,32 @@ function handleUpdateApplication($pdo)
             $newStmt->execute([':id' => $applicationId]);
             $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-            broadcastEvent('utility_applications_update', ['id' => $applicationId]);
+            try {
+                broadcastEvent('utility_applications_update', ['id' => $applicationId]);
+            } catch (Throwable $broadcastEx) {
+                error_log("broadcastEvent failed in handleUpdateApplication (utility, id={$applicationId}): " . $broadcastEx->getMessage());
+            }
 
-            // Write audit log for UPDATE action
-            writeAuditLog(
-                $pdo,
-                'UPDATE',
-                'utility_applications',
-                $applicationId,
-                $oldData,
-                $newData,
-                'UTILITY_APPLICATION'
-            );
+            try {
+                writeAuditLog(
+                    $pdo,
+                    'UPDATE',
+                    'utility_applications',
+                    $applicationId,
+                    $oldData,
+                    $newData,
+                    'UTILITY_APPLICATION'
+                );
+            } catch (Throwable $auditEx) {
+                error_log("writeAuditLog failed in handleUpdateApplication (utility, id={$applicationId}): " . $auditEx->getMessage());
+            }
 
             triggerDSSevaluation($pdo, $applicationId);
+            ob_clean();
             echo json_encode(["status" => "success", "message" => "Utility application updated successfully! DSS re-evaluation triggered."]);
         } else {
             http_response_code(404);
+            ob_clean();
             echo json_encode(["status" => "error", "message" => "Application not found or not authorized to update."]);
         }
     } catch (PDOException $e) {

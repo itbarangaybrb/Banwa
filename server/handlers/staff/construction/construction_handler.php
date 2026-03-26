@@ -1,10 +1,39 @@
 <?php
-// Prevent PHP errors from rendering HTML
+// Buffer ALL output from byte 1 — prevents stray PHP notices/warnings from
+// corrupting the JSON body and causing res.json() to throw on the client.
+ob_start();
+
+// Suppress HTML error output; log to file instead.
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error.log');
+
+// Global safety net — any uncaught exception or fatal error always returns
+// clean JSON so the client never sees a partial HTML crash page.
+set_exception_handler(function (Throwable $e) {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    error_log('construction_handler uncaught exception: ' . $e->getMessage()
+        . ' in ' . $e->getFile() . ':' . $e->getLine());
+    echo json_encode(['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
+});
+
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+        error_log('construction_handler fatal: ' . $err['message']
+            . ' in ' . $err['file'] . ':' . $err['line']);
+        echo json_encode(['status' => 'error', 'message' => 'Fatal server error. Check logs.']);
+        exit;
+    }
+});
 
 require_once __DIR__ . '/../../../configs/database.php';
 require_once __DIR__ . '/../../../services/staff/construction/construction_dss.php';
@@ -13,13 +42,7 @@ require_once __DIR__ . '/../../../services/broadcast.php';
 
 session_start();
 
-ini_set('display_errors', 0);
-ini_set('display_startup_errors', 0);
-error_reporting(E_ALL);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error.log');
-
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 
 if (!extension_loaded('pdo_pgsql')) {
@@ -378,25 +401,38 @@ function handleUpdateStatus($pdo)
         $newStmt->execute([':id' => $id]);
         $newData = $newStmt->fetch(PDO::FETCH_ASSOC);
 
-        broadcastEvent('construction_applications_update', ['id' => $id, 'status' => $newStatus]);
+        // broadcastEvent talks to the local socket server — if it's down, catch
+        // the error silently so the DB update still returns a success response.
+        try {
+            broadcastEvent('construction_applications_update', ['id' => $id, 'status' => $newStatus]);
+        } catch (Throwable $broadcastEx) {
+            error_log("broadcastEvent failed in handleUpdateStatus (id={$id}): " . $broadcastEx->getMessage());
+        }
 
-        // Write audit log for status update
-        writeAuditLog(
-            $pdo,
-            'STATUS UPDATED',
-            'construction_applications',
-            $id,
-            $oldData,
-            $newData,
-            'STATUS_UPDATE'
-        );
+        // writeAuditLog is non-critical — a missing table or bad data must never
+        // roll back a successful status update.
+        try {
+            writeAuditLog(
+                $pdo,
+                'STATUS UPDATED',
+                'construction_applications',
+                $id,
+                $oldData,
+                $newData,
+                'STATUS_UPDATE'
+            );
+        } catch (Throwable $auditEx) {
+            error_log("writeAuditLog failed in handleUpdateStatus (id={$id}): " . $auditEx->getMessage());
+        }
 
+        ob_clean(); // discard any stray output before the JSON response
         echo json_encode([
             "status" => "success",
             "message" => "Status updated to " . $newStatus,
             "dss_status" => $currentDSSStatus
         ]);
     } catch (PDOException $e) {
+        ob_clean();
         http_response_code(500);
         error_log("Error in handleUpdateStatus: " . $e->getMessage());
         echo json_encode(["status" => "error", "message" => $e->getMessage()]);

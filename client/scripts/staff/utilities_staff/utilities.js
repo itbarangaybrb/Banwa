@@ -1855,6 +1855,8 @@ async function initializeMapPicker(containerId, target) {
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
                         const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
                         const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
@@ -1868,6 +1870,8 @@ async function initializeMapPicker(containerId, target) {
                             'document.getElementById(\'latitude2\').value=\'' + lat + '\';' +
                             'document.getElementById(\'longitude2\').value=\'' + lng + '\';' +
                             'var d=document.getElementById(\'utilityLocationDisplay\');if(d)d.value=\'' + addrSafe + '\';' +
+                            'var ln=document.getElementById(\'utilityLotNo\');if(ln)ln.value=\'' + houseNum + '\';' +
+                            'var st=document.getElementById(\'utilityStreet\');if(st){for(var o=0;o<st.options.length;o++){if(st.options[o].value===\'' + streetVal + '\'){st.selectedIndex=o;break;}}}' +
                             'var m=document.querySelector(\'.dynamic-map-modal\');if(m)m.remove();' +
                             '})()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
                             '</div>';

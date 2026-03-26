@@ -598,14 +598,16 @@ $full_name = getCurrentUserName();
                 <input type="hidden" id="latitude2" name="latitude2" value="">
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
-                <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
-                    <label>Selected Location</label>
-                    <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
-                </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <button type="button" class="btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
-                        <i class="fas fa-map-marker-alt"></i> Pick Location on Map
-                    </button>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                        <label>Selected Location</label>
+                        <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <button type="button" class="btn btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
+                            <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                        </button>
+                    </div>
                 </div>
 
                 <div class="section-title"><strong>Business Structure</strong></div>
