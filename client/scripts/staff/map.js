@@ -1684,6 +1684,13 @@ async function loadAllMarkers() {
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
         loadHousePolygons();
+        // Safety net: re-add fault line if toggle is on.
+        // clearAllMarkers() no longer removes it, but this guard handles any
+        // edge case where the layer was removed by another code path.
+        if (faultLineActive) {
+            if (faultLine && !map.hasLayer(faultLine)) faultLine.addTo(map);
+            if (warningMarker && !map.hasLayer(warningMarker)) warningMarker.addTo(map);
+        }
     } catch (e) { console.error('ERROR LOADING MARKERS:', e); showErrorSwal('Error Loading Markers', 'Please refresh the page.'); }
 }
 
@@ -2039,12 +2046,10 @@ function clearAllMarkers() {
     // Remove flood legend if it exists
     removeFloodLegend();
 
-    if (faultLine && map.hasLayer(faultLine)) {
-        map.removeLayer(faultLine);
-    }
-    if (warningMarker && map.hasLayer(warningMarker)) {
-        map.removeLayer(warningMarker);
-    }
+    // NOTE: The fault line and warningMarker are NOT cleared here.
+    // They are independent overlays controlled only by toggleFaultLine().
+    // Removing them here would cause them to disappear on every marker refresh
+    // (BroadcastChannel update, 30-second poll, WebSocket event).
 
     constructionMarkers = [];
     businessMarkers = [];

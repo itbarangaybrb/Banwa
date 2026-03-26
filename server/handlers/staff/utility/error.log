@@ -15,3 +15,27 @@
 [24-Mar-2026 11:13:26 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [24-Mar-2026 11:13:57 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [24-Mar-2026 11:14:19 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[26-Mar-2026 11:34:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(157): broadcastEvent('utility_applica...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(35): handleCreateApplication(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:35:20 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(256): broadcastEvent('utility_applica...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:40:38 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(157): broadcastEvent('utility_applica...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(35): handleCreateApplication(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:44:58 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(256): broadcastEvent('utility_applica...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
