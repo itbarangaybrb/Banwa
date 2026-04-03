@@ -662,8 +662,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
             </div>
 
             <div class="auth-toggle">
-                <button class="toggle-btn active" id="showSignupBtn">Sign Up</button>
-                <button class="toggle-btn" id="showLoginBtn">Log In</button>
+                <button class="toggle-btn active" id="showLoginBtn">Log In</button>
+                <button class="toggle-btn" id="showSignupBtn">Sign Up</button>
             </div>
 
             <!-- Signup Panel -->

@@ -80,7 +80,7 @@ const MAX_RESENDS = 3;
 function openModal() {
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
-    showSignupView(); // always default to signup on open
+    showLoginView();
 }
 
 function closeModal() {
@@ -799,8 +799,8 @@ function initialize() {
     // Login form
     loginElements.form?.addEventListener('submit', handleLoginSubmit);
 
-    // Start on step 1
-    switchPanel('selectId');
+    // Start on login view
+    showLoginView();
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
