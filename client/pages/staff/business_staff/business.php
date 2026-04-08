@@ -353,11 +353,15 @@ $full_name = getCurrentUserName();
 
             <div class="search-box">
                 <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
-                <select id="statusApplications" style="width: max-content;">
+                <select id="statusApplications" style="width: max-content;" onchange="filterApplications()">
                     <option value="">All Status</option>
                     <option value="Pending">Pending</option>
-                    <option value="Pre-approved">Pre-approved</option>
+                    <option value="Complied">Complied</option>
+                    <option value="For Payment">For Payment</option>
+                    <option value="Paid">Paid</option>
                     <option value="Approved">Approved</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Disapproved">Disapproved</option>
                     <option value="Rejected">Rejected</option>
                 </select>
                 <button class="btn buttons" type="button" data-modal="exportApplicationsTable" style="margin-left: auto;">Export As PDF</button>
@@ -594,14 +598,16 @@ $full_name = getCurrentUserName();
                 <input type="hidden" id="latitude2" name="latitude2" value="">
                 <input type="hidden" id="longitude2" name="longitude2" value="">
 
-                <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
-                    <label>Selected Location</label>
-                    <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
-                </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <button type="button" class="btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
-                        <i class="fas fa-map-marker-alt"></i> Pick Location on Map
-                    </button>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 8px;">
+                        <label>Selected Location</label>
+                        <input type="text" id="businessLocationDisplay" readonly placeholder="No location selected yet" style="background:#f8f9fa;cursor:default;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <button type="button" class="btn btn-secondary" onclick="openMapPicker('business')" style="width:max-content;">
+                            <i class="fas fa-map-marker-alt"></i> Pick Location on Map
+                        </button>
+                    </div>
                 </div>
 
                 <div class="section-title"><strong>Business Structure</strong></div>
@@ -853,7 +859,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/business_staff/business.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>

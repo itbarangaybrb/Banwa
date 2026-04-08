@@ -59,12 +59,12 @@ $full_name = getCurrentUserName();
                         <p class="links-name">Manage Users</p>
                     </a>
                 </li>
-                <li class="items">
+                <!-- <li class="items">
                     <a class="links" href="../superadmin/audits.php">
                         <img src="../../../img/file-search-corner-icon.svg" alt="audit" class="icon">
                         <p class="links-name">Audits</p>
                     </a>
-                </li>
+                </li> -->
                 <li class="items">
                     <a class="links" href="../superadmin/archives.php">
                         <img src="../../../img/archive-icon.svg" alt="audit" class="icon">
@@ -123,7 +123,7 @@ $full_name = getCurrentUserName();
                             <th>Street</th>
                             <th>Status</th>
                             <th>Role</th>
-                            <th>Details</th>
+                            <!-- <th>Details</th> -->
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -278,8 +278,8 @@ $full_name = getCurrentUserName();
                     <button type="button" class="buttons cancel-btn">Cancel</button>
                     <button type="button" class="buttons archive-btn" id="editArchiveBtn">Archive</button>
                     <button type="submit" class="buttons">Update</button>
-                    <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button>
-                    <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button>
+                    <!-- <button type="button" class="buttons suspend-btn" id="editSuspendBtn">Suspend</button> -->
+                    <!-- <button type="button" class="buttons unsuspend-btn" id="editUnsuspendBtn" style="display:none;">Unsuspend</button> -->
                 </div>
             </form>
         </div>
@@ -295,6 +295,7 @@ $full_name = getCurrentUserName();
                         <label for="suspendReason">Suspension Reason</label>
                         <select name="suspendReason" id="suspendReason">
                             <option value="" disabled selected>Select</option>
+                            <option value="Test Auto Unsuspend">Test Auto Unsuspend</option>
                             <option value="Violation of Terms of Service">Violation of Terms of Service</option>
                             <option value="Fraudulent Activity">Fraudulent Activity</option>
                             <option value="Suspicious or Unusual Activity">Suspicious or Unusual Activity</option>
@@ -326,8 +327,8 @@ $full_name = getCurrentUserName();
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    
-    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/manage_users.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>

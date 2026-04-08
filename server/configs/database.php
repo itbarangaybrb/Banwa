@@ -23,4 +23,3 @@ try {
     http_response_code(500);
     die(json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]));
 }
-?>

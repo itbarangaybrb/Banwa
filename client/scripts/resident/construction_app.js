@@ -639,6 +639,11 @@ newSummaryForm.addEventListener('submit', async (e) => {
                         });
                     }
 
+                    const socket = sockets["main"];
+                    if (socket) {
+                        socket.emit('construction_applications_update', { action: 'status_update' });
+                    }
+
                     Swal.fire({
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
@@ -1127,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "https://banwa-ws.onrender.com", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();

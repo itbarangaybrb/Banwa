@@ -853,6 +853,11 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
+                    const socket = sockets["main"]; 
+                    if (socket) { 
+                        socket.emit('business_applications_update', { action: 'status_update' }); 
+                    }
+
                     business_app_swal.fire({
                         icon: 'success',
                         title: 'Success!',
@@ -1016,8 +1021,8 @@ function renderVerificationResults(analysis, selectedReqs) {
             fileStatus.push(`
                 <div style="margin:4px 0;">
                     <strong>${reqType}</strong>: 
-                    ${keywordMatched ? '✅ Keywords' : '⚠️ Keywords'} 
-                    ${nameMatched ? '✅ Name' : '⚠️ Name'}
+                    ${keywordMatched ? 'Keywords for the selected document Found.' : 'Keywords for the selected document Not Found'} 
+                    ${nameMatched ? 'Name of the Business Matched' : 'Name of the Business Not Matched'}
                 </div>
             `);
         });
@@ -1372,5 +1377,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
+    if (!sockets["main"]) initSocket("main", "https://banwa-ws.onrender.com", () => { });
 });

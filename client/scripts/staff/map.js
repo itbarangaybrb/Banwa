@@ -311,11 +311,11 @@ function displayDetailsInModal(data, type) {
         title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Construction Site';
         const status = data.status || 'Pending';
         const statusColor =
-            status === 'Approved'    ? '#28a745' :
-            status === 'Disapproved' ? '#dc3545' :
-            status === 'For Payment' ? '#856404' :
-            status === 'Paid'        ? '#0c5460' :
-            status === 'Complied'    ? '#17a2b8' : '#ff9800';
+            status === 'Approved' ? '#28a745' :
+                status === 'Disapproved' ? '#dc3545' :
+                    status === 'For Payment' ? '#856404' :
+                        status === 'Paid' ? '#0c5460' :
+                            status === 'Complied' ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Homeowner', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.contact_no_owner || 'Not specified'),
@@ -335,11 +335,11 @@ function displayDetailsInModal(data, type) {
         title = data.business_name || 'Unnamed Business';
         const bStatus = data.status || 'Pending';
         const bStatusColor =
-            bStatus === 'Approved'    ? '#28a745' :
-            bStatus === 'Disapproved' ? '#dc3545' :
-            bStatus === 'For Payment' ? '#856404' :
-            bStatus === 'Paid'        ? '#0c5460' :
-            bStatus === 'Complied'    ? '#17a2b8' : '#ff9800';
+            bStatus === 'Approved' ? '#28a745' :
+                bStatus === 'Disapproved' ? '#dc3545' :
+                    bStatus === 'For Payment' ? '#856404' :
+                        bStatus === 'Paid' ? '#0c5460' :
+                            bStatus === 'Complied' ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Business Name', data.business_name || 'Not specified'),
             detailRow('Business Address', data.address_of_business || 'Not specified'),
@@ -359,11 +359,11 @@ function displayDetailsInModal(data, type) {
         title = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Utility Work';
         const uStatus = data.status || 'Pending';
         const uStatusColor =
-            uStatus === 'Approved'    ? '#28a745' :
-            uStatus === 'Disapproved' ? '#dc3545' :
-            uStatus === 'For Payment' ? '#856404' :
-            uStatus === 'Paid'        ? '#0c5460' :
-            uStatus === 'Complied'    ? '#17a2b8' : '#ff9800';
+            uStatus === 'Approved' ? '#28a745' :
+                uStatus === 'Disapproved' ? '#dc3545' :
+                    uStatus === 'For Payment' ? '#856404' :
+                        uStatus === 'Paid' ? '#0c5460' :
+                            uStatus === 'Complied' ? '#17a2b8' : '#ff9800';
         tableRows = [
             detailRow('Applicant', `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim()),
             detailRow('Contact Number', data.owner_contact_no || 'Not specified'),
@@ -485,14 +485,14 @@ function displayHouseDetailsInModal(data, apps) {
     ].join('');
 
     const statusColor = (status) =>
-        status === 'Approved'            ? '#28a745' :
-        status === 'Disapproved'         ? '#dc3545' :
-        status === 'For Payment'         ? '#856404' :
-        status === 'Paid'                ? '#0c5460' :
-        status === 'Complied'            ? '#17a2b8' :
-        status === 'Resolved'            ? '#28a745' :
-        status === 'Under Investigation' ? '#ff9800' :
-        status === 'Pre-Approved'        ? '#17a2b8' : '#ff9800';
+        status === 'Approved' ? '#28a745' :
+            status === 'Disapproved' ? '#dc3545' :
+                status === 'For Payment' ? '#856404' :
+                    status === 'Paid' ? '#0c5460' :
+                        status === 'Complied' ? '#17a2b8' :
+                            status === 'Resolved' ? '#28a745' :
+                                status === 'Under Investigation' ? '#ff9800' :
+                                    status === 'Pre-Approved' ? '#17a2b8' : '#ff9800';
 
     const typeBadge = (color, label, textColor) =>
         `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:${color};color:${textColor || '#fff'};margin-right:6px;">${label}</span>`;
@@ -935,20 +935,20 @@ function performSearch() {
 
         // Weighted fields — name/identity always beats address/type accumulation
         const weightedFields = [
-            { value: fullName,                          weight: 100 }, // owner / applicant name
-            { value: marker.name || '',                 weight: 100 }, // business_name (aliased as name)
-            { value: marker.vic_full_name || '',        weight: 100 }, // incident victim
-            { value: marker.address || '',              weight: 40  }, // unified address
-            { value: marker.street_name || '',          weight: 40  },
-            { value: String(marker.house_number || ''), weight: 40  },
-            { value: marker.type_of_business || '',     weight: 15  },
-            { value: marker.nature_of_business || '',   weight: 15  },
-            { value: marker.nature_of_work || '',       weight: 15  },
-            { value: marker.type_of_work || '',         weight: 15  },
-            { value: marker.nature_of_activity || '',   weight: 15  },
-            { value: marker.incident_type || '',        weight: 15  },
-            { value: marker.provider || '',             weight: 15  },
-            { value: marker.hazard_name || '',          weight: 15  },
+            { value: fullName, weight: 100 }, // owner / applicant name
+            { value: marker.name || '', weight: 100 }, // business_name (aliased as name)
+            { value: marker.vic_full_name || '', weight: 100 }, // incident victim
+            { value: marker.address || '', weight: 40 }, // unified address
+            { value: marker.street_name || '', weight: 40 },
+            { value: String(marker.house_number || ''), weight: 40 },
+            { value: marker.type_of_business || '', weight: 15 },
+            { value: marker.nature_of_business || '', weight: 15 },
+            { value: marker.nature_of_work || '', weight: 15 },
+            { value: marker.type_of_work || '', weight: 15 },
+            { value: marker.nature_of_activity || '', weight: 15 },
+            { value: marker.incident_type || '', weight: 15 },
+            { value: marker.provider || '', weight: 15 },
+            { value: marker.hazard_name || '', weight: 15 },
         ];
 
         let matchScore = 0;
@@ -998,19 +998,21 @@ function performSearch() {
 
                 // All labelled fields in priority order
                 const labelledFields = [
-                    { label: 'Name',     value: fullName                                       },
-                    { label: 'Business', value: marker.name                                    },
-                    { label: 'Victim',   value: marker.vic_full_name                           },
-                    { label: 'Address',  value: marker.address                                 },
-                    { label: 'House',    value: marker.house_number
-                                                   ? ('#' + marker.house_number + (marker.street_name ? ' ' + marker.street_name : '')).trim()
-                                                   : null                                      },
-                    { label: 'Street',   value: marker.street_name                             },
-                    { label: 'Type',     value: marker.type_of_business || marker.type_of_work },
-                    { label: 'Work',     value: marker.nature_of_work                          },
-                    { label: 'Incident', value: marker.incident_type                           },
-                    { label: 'Provider', value: marker.provider                                },
-                    { label: 'Hazard',   value: marker.hazard_name                             },
+                    { label: 'Name', value: fullName },
+                    { label: 'Business', value: marker.name },
+                    { label: 'Victim', value: marker.vic_full_name },
+                    { label: 'Address', value: marker.address },
+                    {
+                        label: 'House', value: marker.house_number
+                            ? ('#' + marker.house_number + (marker.street_name ? ' ' + marker.street_name : '')).trim()
+                            : null
+                    },
+                    { label: 'Street', value: marker.street_name },
+                    { label: 'Type', value: marker.type_of_business || marker.type_of_work },
+                    { label: 'Work', value: marker.nature_of_work },
+                    { label: 'Incident', value: marker.incident_type },
+                    { label: 'Provider', value: marker.provider },
+                    { label: 'Hazard', value: marker.hazard_name },
                 ].filter(f => f.value && String(f.value).trim());
 
                 const q = searchTerm.toLowerCase();
@@ -1031,7 +1033,7 @@ function performSearch() {
                     : addrField;
                 const subtitleValue = subtitleField ? String(subtitleField.value) : '';
 
-                const highlightedTitle    = highlightText(titleValue, searchTerm);
+                const highlightedTitle = highlightText(titleValue, searchTerm);
                 const highlightedSubtitle = highlightText(subtitleValue.substring(0, 60), searchTerm);
                 const labelBadge = titleLabel
                     ? `<span style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;margin-right:4px;letter-spacing:.4px;">${titleLabel}:</span>`
@@ -1684,6 +1686,13 @@ async function loadAllMarkers() {
         processMarkersData(data);
         if (floodLayerActive) loadFloodData();
         loadHousePolygons();
+        // Safety net: re-add fault line if toggle is on.
+        // clearAllMarkers() no longer removes it, but this guard handles any
+        // edge case where the layer was removed by another code path.
+        if (faultLineActive) {
+            if (faultLine && !map.hasLayer(faultLine)) faultLine.addTo(map);
+            if (warningMarker && !map.hasLayer(warningMarker)) warningMarker.addTo(map);
+        }
     } catch (e) { console.error('ERROR LOADING MARKERS:', e); showErrorSwal('Error Loading Markers', 'Please refresh the page.'); }
 }
 
@@ -2039,12 +2048,10 @@ function clearAllMarkers() {
     // Remove flood legend if it exists
     removeFloodLegend();
 
-    if (faultLine && map.hasLayer(faultLine)) {
-        map.removeLayer(faultLine);
-    }
-    if (warningMarker && map.hasLayer(warningMarker)) {
-        map.removeLayer(warningMarker);
-    }
+    // NOTE: The fault line and warningMarker are NOT cleared here.
+    // They are independent overlays controlled only by toggleFaultLine().
+    // Removing them here would cause them to disappear on every marker refresh
+    // (BroadcastChannel update, 30-second poll, WebSocket event).
 
     constructionMarkers = [];
     businessMarkers = [];
@@ -2627,7 +2634,7 @@ async function showIncidentSummaryReport() {
             const typeB = (b.incident_type || 'Other').toLowerCase();
             if (typeA !== typeB) return typeA.localeCompare(typeB);
             return new Date(b.incident_timestamp || b.date_reported || 0) -
-                   new Date(a.incident_timestamp || a.date_reported || 0);
+                new Date(a.incident_timestamp || a.date_reported || 0);
         });
 
         const rows = sorted.map((inc, i) => {
@@ -3558,7 +3565,7 @@ async function showRuleAffectedData(ruleKey, ruleName, fromSDSS = false) {
                         } catch (e) { console.warn('Polygon parse error for non-household:', e); }
                     }
                     // Fallback: no matching house polygon found — skip circle marker
-                    }
+                }
             }
         });
 
@@ -3838,7 +3845,7 @@ const messageMap = {
     "finance_applications_update": "updated status from finance",
 };
 
-initSocket("main", "http://localhost:8081", (data) => {
+initSocket("main", "https://banwa-ws.onrender.com", (data) => {
     const message = messageMap[data.type];
     if (message) {
         loadAllMarkers();

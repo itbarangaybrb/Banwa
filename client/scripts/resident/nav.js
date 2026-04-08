@@ -69,7 +69,7 @@ function initNavHighlighting() {
             if (typeof homeLink.setAttribute === 'function') {
                 homeLink.setAttribute('aria-current', 'page');
             }
-            console.log('Fallback: Home link activated');
+            // console.log('Fallback: Home link activated');
         }
     }
 }
@@ -105,7 +105,7 @@ function displayLiveDateTime() {
     }
 
     update();
-    setInterval(update, 1000); // Update every second
+    setInterval(update, 1000);
 }
 
 // ==================== USER AVATAR ====================

@@ -1,4 +1,4 @@
-import supabase from "../../../server/api/supabase.js";
+import supabase from "../../server/api/supabase.js";
 
 // Modal Management
 const modal = document.getElementById('signupModal');
@@ -343,9 +343,11 @@ async function processOCR() {
             const selectedType = formElements.idType.value;
             const selectedHits = hitsMap[selectedType] || 0;
 
-            if (selectedHits < 1 && fieldsCount < 2) {
+            // FIX: Changed '&&' to '||'. 
+            // Reject if it's NOT the selected ID OR if we couldn't read at least 2 data fields.
+            if (selectedHits < 1 || fieldsCount < 2) {
                 formElements.ocrStatus.className = 'ocr-status-error';
-                formElements.ocrStatus.textContent = `Selected ID type (${selectedType}) not confidently detected. Please upload the correct ID or proceed manually.`;
+                formElements.ocrStatus.textContent = `Selected ID type (${selectedType}) not confidently detected, or the text is illegible. Please upload a clear photo of the correct ID.`;
                 formElements.selectIdNextBtn.disabled = false;
                 formElements.selectIdNextBtn.textContent = "Retry Verification";
                 formElements.selectIdNextBtn.onclick = () => window.location.reload();

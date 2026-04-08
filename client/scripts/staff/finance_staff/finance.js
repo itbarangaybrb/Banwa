@@ -1,5 +1,5 @@
 // Configuration
-import { initSocket } from '../../utils/socket.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 
 const API_URL = '/server/handlers/staff/finance/finance_handler.php';
 
@@ -343,6 +343,16 @@ function submitVerification(appId, status, appType, orFile = null, orNumber = nu
         .then(data => {
             if (data.status === 'success') {
                 Swal.fire('Success', 'Payment processed successfully.', 'success').then(() => {
+                    const socket = sockets["main"];
+                    if (!socket) return;
+
+                    [
+                        "business_applications_update",
+                        "construction_applications_update"
+                    ].forEach(event => {
+                        socket.emit(event, { action: "status_update" });
+                    });
+
                     loadPendingTable();
                     fetchAuditLogs();
                 });
@@ -606,6 +616,16 @@ function submitPayment(paymentData, amountDue) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                const socket = sockets["main"];
+                if (!socket) return;
+
+                [
+                    "business_applications_update",
+                    "construction_applications_update"
+                ].forEach(event => {
+                    socket.emit(event, { action: "status_update" });
+                });
+
                 Swal.fire('Success', data.message, 'success').then(() => {
                     loadPendingTable();
                     fetchAuditLogs();
@@ -845,7 +865,7 @@ function appendAuditRow(log) {
 document.addEventListener('DOMContentLoaded', () => {
     fetchAuditLogs();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "finance_applications_update":
                 if (data.action === "new_payment_pending") {
@@ -868,15 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
 
             case "new_audit_log":
-                if (data.payload) {
-                    appendAuditRow(data.payload);
-                    fetchAuditLogs();
-                } else if (data.id) {
-                    appendAuditRow(data);
-                    fetchAuditLogs();
-                } else {
-                    fetchAuditLogs();
-                }
+                if (data.payload) appendAuditRow(data.payload);
+                else if (data.id) appendAuditRow(data);
+                refreshActiveTab();
                 break;
         }
     });

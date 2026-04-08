@@ -533,3 +533,58 @@ CONTEXT:  unnamed portal parameter $1 = '...'
 [25-Mar-2026 11:20:33 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [25-Mar-2026 11:22:05 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [25-Mar-2026 11:23:35 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[26-Mar-2026 10:39:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(381): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 10:40:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(381): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 10:41:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(381): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 10:41:34 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(381): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 10:41:59 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(381): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:04:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(383): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:05:23 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(383): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:07:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function curl_init() in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php:14
+Stack trace:
+#0 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(383): broadcastEvent('construction_ap...', Array)
+#1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php(41): handleUpdateStatus(Object(PDO))
+#2 {main}
+  thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[26-Mar-2026 11:20:25 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 11:20:40 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 11:23:43 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 11:24:10 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 16:11:45 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 16:12:04 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[26-Mar-2026 16:12:16 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()

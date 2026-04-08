@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleSearch();
     initExportButton();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);

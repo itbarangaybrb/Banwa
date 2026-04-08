@@ -60,12 +60,12 @@ $full_name = getCurrentUserName();
                         <p class="links-name">Manage Users</p>
                     </a>
                 </li>
-                <li class="items">
+                <!-- <li class="items">
                     <a class="links" href="../superadmin/audits.php">
                         <img src="../../../img/file-search-corner-icon.svg" alt="audit" class="icon">
                         <p class="links-name">Audits</p>
                     </a>
-                </li>
+                </li> -->
                 <li class="items">
                     <a class="links" href="../superadmin/archives.php">
                         <img src="../../../img/archive-icon.svg" alt="audit" class="icon">
@@ -99,18 +99,43 @@ $full_name = getCurrentUserName();
                         <canvas id="chart3"></canvas>
                     </div>
                 </div>
-                <div class="analytics-row">
+                <!-- <div class="analytics-row">
                     <div class="charts">
                         <canvas id="chart4"></canvas>
                     </div>
-                </div>
+                </div> -->
+            </div>
+        </section>
+
+        <section class="sections">
+            <div class="containers">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Activity</th>
+                            <th id="nameFilter" class="th-filter">
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Name
+                                </span>
+                            </th>
+                            <th>Table</th>
+                            <th>Record ID</th>
+                            <th>Role ID</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="auditTableBody"></tbody>
+                </table>
             </div>
         </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/main.js"></script>
     <script type="module" src="../../../scripts/staff/superadmin/dashboard.js"></script>

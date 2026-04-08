@@ -50,14 +50,7 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("
-        UPDATE users 
-        SET status = 'active', 
-            suspend_reason = '', 
-            reason_details = '', 
-            suspended_until = '1970-01-01 00:00:00'
-        WHERE user_id = ?
-    ");
+    $stmt = $pdo->prepare("UPDATE users SET status = 'active' WHERE user_id = ?");
     $stmt->execute([$userId]);
 
     writeAuditLog($pdo, 'UNSUSPEND', 'users', $userId, $user, null, 'USER');

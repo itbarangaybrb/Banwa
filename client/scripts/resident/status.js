@@ -963,16 +963,16 @@ async function handleSubmitPayment(event, appId) {
             throw new Error(result.message || 'Failed to submit payment details.');
         }
 
+        const appType = formData.get('payment_purpose_app_type') || 'Business';
+
+        sendWebSocketUpdate(appType, appId, 'payment');
+        // sendWebSocketUpdate('payment', appId, 'payment');
+
         await BanwaSwal.fire({
             icon: 'success',
             title: 'Payment Submitted!',
             html: 'Payment details submitted successfully!<br><br>Your payment is now <strong>Pending Verification</strong>.'
         });
-
-        const appType = formData.get('payment_purpose_app_type') || 'Business';
-
-        sendWebSocketUpdate(appType, appId, 'payment');
-        // sendWebSocketUpdate('payment', appId, 'payment');
 
         closePaymentModal();
         loadApplications();
@@ -1321,14 +1321,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadCurrentTab();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "construction_applications_update":
             case "business_applications_update":
             case "utility_applications_update":
             case "incident_report_applications_update":
             case "finance_applications_update":
-                loadApplications();
+                refreshActiveTab();
                 checkStatusUpdates();
                 break;
         }

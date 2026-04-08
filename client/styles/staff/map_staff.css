@@ -1145,11 +1145,6 @@ body {
   z-index: 1;
 }
 
-/* Leaflet circle ring — static, no animation */
-.search-pulse-ring {
-  /* no animation */
-}
-
 @keyframes bounce {
   from { transform: translateY(0px);   }
   to   { transform: translateY(-10px); }
@@ -1417,9 +1412,9 @@ body {
   top: 10px !important; right: 14px !important;
   z-index: 20 !important;
   font-size: 22px !important;
-  color: rgba(255,255,255,0.85) !important;
+  color: #111111 !important;
 }
-.swal2-close:hover { color: #fff !important; }
+.swal2-close:hover { color: #000000 !important; }
 
 .swal2-title { color: #00247c; }
 .swal2-confirm { background: #00247c !important; }

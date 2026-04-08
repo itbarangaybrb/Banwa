@@ -3,7 +3,7 @@ const ANALYTICS_URL = '../../../../server/api/staff/superadmin/get_analytics.php
 let chart1Instance;
 let chart2Instance;
 let chart3Instance;
-let chart4Instance;
+// let chart4Instance;
 
 function loadAnalytics() {
     fetch(ANALYTICS_URL)
@@ -25,9 +25,9 @@ function loadAnalytics() {
             const totals3 = res.data_by_status.map(x => x.total);
             const percentages3 = res.data_by_status.map(x => x.percentage);
 
-            const labels4 = res.data_by_suspensions.map(x => `${x.suspend_reason} - ${x.suspend_reason_details}`);
-            const totals4 = res.data_by_suspensions.map(x => x.total);
-            const percentages4 = res.data_by_suspensions.map(x => x.percentage);
+            // const labels4 = res.data_by_suspensions.map(x => `${x.suspend_reason} - ${x.suspend_reason_details}`);
+            // const totals4 = res.data_by_suspensions.map(x => x.total);
+            // const percentages4 = res.data_by_suspensions.map(x => x.percentage);
 
             const dateColors = [
                 '#4F46E5',
@@ -60,23 +60,23 @@ function loadAnalytics() {
                 '#14B8A6'
             ];
 
-            const suspensionColors = [
-                '#EF4444',  // strong red for suspended
-                '#F97316',
-                '#F59E0B',
-                '#8B5CF6',
-                '#EC4899',
-                '#6366F1',
-                '#10B981',
-                '#0284C7',
-                '#0D9488'
-            ];
+            // const suspensionColors = [
+            //     '#EF4444',  // strong red for suspended
+            //     '#F97316',
+            //     '#F59E0B',
+            //     '#8B5CF6',
+            //     '#EC4899',
+            //     '#6366F1',
+            //     '#10B981',
+            //     '#0284C7',
+            //     '#0D9488'
+            // ];
 
             // Destroy previous charts if they exist
             if (chart1Instance) chart1Instance.destroy();
             if (chart2Instance) chart2Instance.destroy();
             if (chart3Instance) chart3Instance.destroy();
-            if (chart4Instance) chart4Instance.destroy();
+            // if (chart4Instance) chart4Instance.destroy();
 
             // Chart 1: Users over time
             chart1Instance =
@@ -171,39 +171,39 @@ function loadAnalytics() {
                 );
 
             // Chart 4: Suspensions
-            chart4Instance =
-                new Chart(
-                    document.getElementById('chart4'),
-                    {
-                        type: 'bar',
-                        data: {
-                            labels: labels4,
-                            datasets: [{
-                                label: 'Suspensions',
-                                data: totals4,
-                                backgroundColor: suspensionColors.map(c => c + '99'),
-                                borderWidth: 1,
-                                borderRadius: 4
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y', // makes bars horizontal
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { position: 'right', align: 'center' },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `${ctx.label}: ${totals4[ctx.dataIndex]} (${percentages4[ctx.dataIndex]}%)`
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: { beginAtZero: true }
-                            }
-                        }
-                    }
-                );
+            // chart4Instance =
+            //     new Chart(
+            //         document.getElementById('chart4'),
+            //         {
+            //             type: 'bar',
+            //             data: {
+            //                 labels: labels4,
+            //                 datasets: [{
+            //                     label: 'Suspensions',
+            //                     data: totals4,
+            //                     backgroundColor: suspensionColors.map(c => c + '99'),
+            //                     borderWidth: 1,
+            //                     borderRadius: 4
+            //                 }]
+            //             },
+            //             options: {
+            //                 indexAxis: 'y', // makes bars horizontal
+            //                 responsive: true,
+            //                 maintainAspectRatio: false,
+            //                 plugins: {
+            //                     legend: { position: 'right', align: 'center' },
+            //                     tooltip: {
+            //                         callbacks: {
+            //                             label: ctx => `${ctx.label}: ${totals4[ctx.dataIndex]} (${percentages4[ctx.dataIndex]}%)`
+            //                         }
+            //                     }
+            //                 },
+            //                 scales: {
+            //                     x: { beginAtZero: true }
+            //                 }
+            //             }
+            //         }
+            //     );
 
         })
         .catch(error => console.error('Error loading analytics:', error));

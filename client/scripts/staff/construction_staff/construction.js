@@ -43,6 +43,8 @@ const constructionStatusTemplates = {
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
+let isDataLoaded = false; // Tracks if the initial fetch is complete
+let filterTimeout;        // Handles the debounce delay for smooth typing
 
 // Add these with your other DOM element references
 const ownerLotNo = document.getElementById('ownerLotNo');
@@ -314,6 +316,7 @@ function switchTab(event, tabName) {
         loadSummarySelect();
     } else if (tabName === 'dashboard') {
         loadAnalyticsTab();
+        fetchAuditLogs();
     }
 }
 
@@ -330,132 +333,169 @@ function loadManagementTable() {
 
 /**
  * Filters and renders applications in the management table based on search criteria
- * Handles search term filtering, status filtering, and smart action button generation
- * Displays appropriate status badges and action buttons based on application state
+ * Includes a debounce mechanism and loading spinner for smooth UX
  */
 function filterApplications() {
-    // 1. GET ELEMENTS - Fixed IDs
     const searchEl = document.getElementById('managementSearch');
-    const tbody = document.getElementById('tableBody'); // Direct ID
+    const statusEl = document.getElementById('statusApplications'); 
+    const tbody = document.getElementById('tableBody');
 
-    // If the table body doesn't exist, stop immediately
-    if (!tbody) {
-        console.error('Table body not found');
-        return;
+    if (!tbody) return;
+
+    // 1. Clear existing timers (prevents flickering when typing fast)
+    if (filterTimeout) {
+        clearTimeout(filterTimeout);
     }
 
-    // 2. GET SEARCH VALUE
-    const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-
-    // Clear table body
-    tbody.innerHTML = '';
-
-    // 3. CHECK IF APPLICATIONS ARE LOADED
-    if (!applications || !Array.isArray(applications) || applications.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center; padding: 40px; color:#999;">
-                    <div class="spinner"></div>Loading applications...
-                </td>
-            </tr>`;
-        return;
-    }
-
-    // 4. FILTER LOGIC
-    const filtered = applications.filter(app => {
-        const natureOfActivity = (app.nature_of_activity || '').toLowerCase();
-        const fullName = ((app.first_name || '') + ' ' + (app.last_name || '')).toLowerCase();
-        const id = (app.id || '').toString();
-        const address = (app.construction_address || '').toLowerCase();
-
-        return natureOfActivity.includes(searchTerm) ||
-            fullName.includes(searchTerm) ||
-            id.includes(searchTerm) ||
-            address.includes(searchTerm);
-    });
-
-    // 5. RENDER LOGIC
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center; padding: 40px; color:#999;">
-                    No matching applications found.
-                </td>
-            </tr>`;
-        return;
-    }
-
-    filtered.forEach(app => {
-        // A. Determine Status Color
-        let badgeClass = 'pending';
-        if (app.status === 'Approved') badgeClass = 'approved';
-        if (app.status === 'Disapproved') badgeClass = 'disapproved';
-        if (app.status === 'Paid') badgeClass = 'paid';
-        if (app.status === 'For Payment') badgeClass = 'for-payment';
-
-        // B. Determine "Smart Action" Button
-        let actionBtn = '';
-
-        if (app.status === 'Pending') {
-            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-        }
-        else if (app.status === 'For Payment') {
-            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
-        }
-        else if (app.status === 'Paid') {
-            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-        }
-        else if (app.status === 'Approved') {
-            actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
-        }
-        else {
-            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-        }
-
-        // C. Build Row - Match your table headers
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${app.id}</td>
-            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-            <td>${app.nature_of_activity || 'N/A'}</td>
-            <td>${app.contractor_name || 'N/A'}</td>
-            <td>${app.contractor_contact_number || 'N/A'}</td>
-            <td>${app.construction_address || 'N/A'}</td>
-            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-            <td>${app.payment_status || 'Unpaid'}</td>
-            <td>
-                <div class="action-buttons">
-                    ${actionBtn}
-                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="construction_applications">Archive</button>
-                </div>
+    // 2. Instantly show the loading spinner when a user types or clicks a filter
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="9" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Filtering applications...</em>
             </td>
-        `;
-        tbody.appendChild(row);
-    });
+        </tr>`;
+
+    // 3. Wait 300ms before doing the heavy lifting
+    filterTimeout = setTimeout(() => {
+        
+        // State A: Database hasn't finished its initial load yet
+        if (!isDataLoaded) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center; padding: 40px; color:#666;">
+                        <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                        <em>Connecting to database...</em>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State B: Database is completely empty
+        if (!applications || !Array.isArray(applications) || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no construction applications available in the system.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // Grab current filter values
+        const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
+        const statusTerm = statusEl ? statusEl.value : '';
+
+        // Apply logic
+        const filtered = applications.filter(app => {
+            const natureOfActivity = (app.nature_of_activity || '').toLowerCase();
+            const fullName = ((app.first_name || '') + ' ' + (app.middle_name || '') + ' ' + (app.last_name || '') + ' ' + (app.suffix || '')).toLowerCase();
+            const id = (app.id || '').toString();
+            const address = (app.construction_address || '').toLowerCase();
+            const appStatus = (app.status || '');
+
+            const matchesSearch = natureOfActivity.includes(searchTerm) || fullName.includes(searchTerm) || id.includes(searchTerm) || address.includes(searchTerm);
+            const matchesStatus = (statusTerm === 'All Status' || statusTerm === '') ? true : (appStatus === statusTerm);
+
+            return matchesSearch && matchesStatus;
+        });
+
+        // State C: Filter yielded zero results
+        if (filtered.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-search fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Matches Found</h3>
+                        <p style="margin-top:5px; font-size: 14px;">No applications match your current search or status filter.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State D: Render Results
+        tbody.innerHTML = ''; 
+        
+        filtered.forEach(app => {
+            let badgeClass = 'pending';
+            if (app.status === 'Approved' || app.status === 'Completed') badgeClass = 'approved';
+            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+            if (app.status === 'Paid') badgeClass = 'paid';
+            if (app.status === 'For Payment') badgeClass = 'for-payment';
+            if (app.status === 'Complied') badgeClass = 'complied';
+
+            let actionBtn = '';
+
+            if (app.status === 'Pending') {
+                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+            } else if (app.status === 'For Payment') {
+                actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
+            } else if (app.status === 'Paid' || app.status === 'Complied') {
+                actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+            } else if (app.status === 'Approved' || app.status === 'Completed') {
+                actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
+            } else {
+                actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${app.id}</td>
+                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+                <td>${app.nature_of_activity || 'N/A'}</td>
+                <td>${app.contractor_name || 'N/A'}</td>
+                <td>${app.contractor_contact_number || 'N/A'}</td>
+                <td>${app.construction_address || 'N/A'}</td>
+                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                <td>${app.payment_status || 'Unpaid'}</td>
+                <td>
+                    <div class="action-buttons">
+                        ${actionBtn}
+                        <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                        <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="construction_applications">Archive</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    }, 300); // 300 millisecond debounce
 }
+
 /**
  * Fetches construction applications from the server API
- * Updates the global applications array with retrieved data
- * 
- * @returns {Promise} Promise resolving to the applications array
  */
 function loadApplicationsFromDB() {
+    // 1. Set to false and trigger UI to show "Connecting to database..."
+    isDataLoaded = false;
+    filterApplications(); 
+
     return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`, {
         credentials: 'include'
     })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                applications = (data.data || []).filter(app => !app.is_archived);
-            }
-            return applications;
-        })
-        .catch(error => {
-            console.error('Error fetching applications:', error);
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            applications = (data.data || []).filter(app => !app.is_archived);
+        } else {
             applications = [];
-            return applications;
-        });
+        }
+        
+        // 2. Fetch complete! Set to true and re-render the table
+        isDataLoaded = true;
+        filterApplications(); 
+        
+        return applications;
+    })
+    .catch(error => {
+        console.error('Error fetching applications:', error);
+        applications = [];
+        isDataLoaded = true; // Stop the loading spinner even on error
+        filterApplications();
+        return applications;
+    });
 }
 
 /**
@@ -483,7 +523,11 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadApplicationsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadApplicationsFromDB().finally(() => { loadAnalyticsTab(); finish(); });
+        loadApplicationsFromDB().finally(() => {
+            loadAnalyticsTab();
+            fetchAuditLogs();
+            finish();
+        });
     } else if (activeTabId === 'archives') {
 
     } else {
@@ -494,33 +538,64 @@ function refreshActiveTab() {
 
 /**
  * Loads applications into the process table with actionable statuses
- * Filters out excluded statuses and shows appropriate action buttons based on current status
+ * Includes smooth loading states, polished empty states, and corrected column alignment.
  */
 function loadProcessTable() {
+    const tbody = document.getElementById('processTableBody');
+    if (!tbody) return;
+
+    // 1. Instantly show the loading spinner when the tab is clicked
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" style="text-align:center; padding: 40px; color:#666;">
+                <div class="spinner" style="margin-bottom: 10px;"></div><br>
+                <em>Loading processable applications...</em>
+            </td>
+        </tr>`;
+
+    // 2. Fetch the data
     loadApplicationsFromDB().finally(() => {
-        const tbody = document.getElementById('processTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         const excludedStatuses = ['Cancelled', 'Archived'];
 
         const actionable = applications.filter(app => {
             return !excludedStatuses.includes(app.status);
         });
 
-        if (actionable.length === 0) {
-            // Fixed colspan from 5 to 6 to match the number of <td> elements
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No applications to process.</td></tr>';
+        // State A: Database is completely empty
+        if (!applications || applications.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-folder-open fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">No Applications Yet</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no construction applications in the system.</p>
+                    </td>
+                </tr>`;
             return;
         }
+
+        // State B: There are applications, but none require processing right now
+        if (actionable.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 50px; color:#999;">
+                        <i class="fas fa-check-circle fa-3x" style="color:#ddd; margin-bottom:15px;"></i><br>
+                        <h3 style="margin:0; color:#666;">All Caught Up!</h3>
+                        <p style="margin-top:5px; font-size: 14px;">There are no applications waiting to be processed right now.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        // State C: Render the actionable rows
+        tbody.innerHTML = '';
 
         actionable.forEach(app => {
             let btnText = "Update";
             let btnClass = "secondary";
             let buttonsHtml = "";
 
-            // 1. Determine primary action button based on status
+            // Determine primary action button based on status
             if (app.status === 'Pending') {
                 btnClass = "primary";
             } else if (app.status === 'Complied') {
@@ -531,11 +606,10 @@ function loadProcessTable() {
                 btnClass = "info";
             }
 
-            // 2. Build the primary update/action button
+            // Build the primary update/action button
             buttonsHtml += `<button class="btn-${btnClass}" onclick="openUpdateModal(${app.id})">${btnText}</button>`;
 
-            // 3. Conditionally add the "Clearance" button for valid statuses
-            // Add or remove statuses in this array based on your specific workflow
+            // Conditionally add the "Clearance" button for valid statuses
             if (['Complied', 'Approved', 'Completed'].includes(app.status)) {
                 buttonsHtml += `
                     <button class="btn-primary" onclick="generateConstructionPermit(${app.id})" style="margin-left: 5px;">
@@ -544,15 +618,21 @@ function loadProcessTable() {
                 `;
             }
 
-            // 4. Inject into the table row
+            // Inject into the table row (Fixed Column Alignment!)
+            let badgeClass = (app.status || 'pending').toLowerCase().replace(' ', '-');
+            
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
-                    <td>${app.nature_of_work || 'N/A'}</td>
+                    <td>${app.nature_of_activity || app.type_of_work || 'N/A'}</td>
                     <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-                    <td>${app.provider}</td>
-                    <td><span class="status-badge status-${app.status.toLowerCase().replace(' ', '-')}">${app.status}</span></td>
-                    <td>${buttonsHtml}</td>
+                    <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+                    <td>${app.payment_status || 'Unpaid'}</td>
+                    <td>
+                        <div class="action-buttons" style="display:flex; gap:5px;">
+                            ${buttonsHtml}
+                        </div>
+                    </td>
                 </tr>
             `;
         });
@@ -1180,7 +1260,11 @@ function submitUpdate(event) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                //Closes Update Button after successful update
+                const socket = sockets["main"];
+                if (socket) {
+                    socket.emit('construction_applications_update', { action: 'status_update' });
+                }
+
                 document.getElementById('updateModal').classList.remove('active');
                 document.body.style.overflow = 'auto';
                 Swal.fire({
@@ -1409,7 +1493,7 @@ function loadSummarySelect() {
     loadApplicationsFromDB().finally(() => {
         const select = document.getElementById('summaryApplicationSelect');
         if (!select) return;
-        
+
         select.innerHTML = '<option value="">-- Select Application --</option>';
         applications.forEach(app => {
             select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.nature_of_activity}</option>`;
@@ -1887,7 +1971,7 @@ function downloadSummary(appId) {
 
     // --- DATA PARSING ---
     const constructionAddress = app.construction_address || 'Not specified';
-    
+
     // Parse requirements
     let reqs = app.requirements;
     if (typeof reqs === 'string') {
@@ -1925,7 +2009,7 @@ function downloadSummary(appId) {
     const dateApplied = new Date(app.application_date || app.created_at).toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
-    
+
     const amountDue = app.amount_due ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '₱0.00';
     const paymentStatus = app.payment_status || 'Unpaid';
 
@@ -2510,7 +2594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "construction_applications_update":
                 refreshActiveTab();
@@ -2518,6 +2602,7 @@ document.addEventListener('DOMContentLoaded', () => {
             case "new_audit_log":
                 if (data.payload) appendAuditRow(data.payload);
                 else fetchAuditLogs();
+                refreshActiveTab();
                 break;
         }
     });
@@ -2779,21 +2864,21 @@ async function initializeMapPicker(containerId, target) {
     const map = L.map(containerId).setView([14.6175, 121.0756], 17);
     osmTile.addTo(map);
 
-    const POLY = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.12,weight:2 }, satellite: { color:'#fff',fillColor:'#fff',fillOpacity:0.15,weight:2 } };
-    const BOUND = { street: { color:'#00247c',fillColor:'#00247c',fillOpacity:0.08,dashArray:'8,6',weight:2 }, satellite: { color:'#fff',fillColor:'#000',fillOpacity:0,dashArray:'8,6',weight:2 } };
+    const POLY = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 }, satellite: { color: '#fff', fillColor: '#fff', fillOpacity: 0.15, weight: 2 } };
+    const BOUND = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 }, satellite: { color: '#fff', fillColor: '#000', fillOpacity: 0, dashArray: '8,6', weight: 2 } };
     let housePolygons = [], boundaryLayers = [], selectedMarker = null;
 
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn    = document.getElementById('picker-satellite-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
-        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); housePolygons.forEach(p=>p.setStyle(POLY.street)); boundaryLayers.forEach(b=>b.setStyle(BOUND.street)); streetBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
-        satBtn.onclick    = () => { map.removeLayer(osmTile); satTile.addTo(map); housePolygons.forEach(p=>p.setStyle(POLY.satellite)); boundaryLayers.forEach(b=>b.setStyle(BOUND.satellite)); satBtn.style.cssText='background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText='background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        streetBtn.onclick = () => { map.removeLayer(satTile); osmTile.addTo(map); housePolygons.forEach(p => p.setStyle(POLY.street)); boundaryLayers.forEach(b => b.setStyle(BOUND.street)); streetBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; satBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
+        satBtn.onclick = () => { map.removeLayer(osmTile); satTile.addTo(map); housePolygons.forEach(p => p.setStyle(POLY.satellite)); boundaryLayers.forEach(b => b.setStyle(BOUND.satellite)); satBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; streetBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;'; };
     }
 
-    map.on('click', function(e) {
+    map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
         if (selectedMarker) map.removeLayer(selectedMarker);
-        selectedMarker = L.marker([lat,lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
+        selectedMarker = L.marker([lat, lng]).addTo(map).bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>').openPopup();
         document.getElementById('latitude2').value = lat;
         document.getElementById('longitude2').value = lng;
         const disp = document.getElementById('constructionLocationDisplay');
@@ -2803,32 +2888,34 @@ async function initializeMapPicker(containerId, target) {
     });
 
     try {
-        const bRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_boundaries' });
+        const bRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries' });
         const bData = await bRes.json();
-        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords=JSON.parse(b.coordinates); const ll=coords.map(c=>Array.isArray(c)?[c[1],c[0]]:[c.lat,c.lng]); boundaryLayers.push(L.polygon(ll,BOUND.street).addTo(map)); } catch(e){} });
-    } catch(e) {}
+        if (bData.success && bData.boundaries) bData.boundaries.forEach(b => { try { const coords = JSON.parse(b.coordinates); const ll = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]); boundaryLayers.push(L.polygon(ll, BOUND.street).addTo(map)); } catch (e) { } });
+    } catch (e) { }
 
     try {
-        const hRes = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_houses' });
+        const hRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses' });
         const hData = await hRes.json();
         if (hData.success && hData.houses) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
                     const coords = JSON.parse(house.coordinates);
-                    const ring = (Array.isArray(coords[0])&&Array.isArray(coords[0][0]))?coords[0]:coords;
-                    const ll = ring.map(c=>[c[1],c[0]]);
-                    const poly = L.polygon(ll, {...POLY.street, interactive:true});
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ll = ring.map(c => [c[1], c[0]]);
+                    const poly = L.polygon(ll, { ...POLY.street, interactive: true });
                     housePolygons.push(poly);
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const title = isLandmark ? (house.address||'Landmark') : ('House #'+(house.house_number||'—'));
-                    poly.bindPopup('', {maxWidth:260});
-                    poly.on('click', function(e) {
+                    const title = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    poly.bindPopup('', { maxWidth: 260 });
+                    poly.on('click', function (e) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
                         const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
                         const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +
@@ -2842,6 +2929,8 @@ async function initializeMapPicker(containerId, target) {
                             'document.getElementById(\'latitude2\').value=\'' + lat + '\';' +
                             'document.getElementById(\'longitude2\').value=\'' + lng + '\';' +
                             'var d=document.getElementById(\'constructionLocationDisplay\');if(d)d.value=\'' + addrSafe + '\';' +
+                            'var ln=document.getElementById(\'constructionLotNo\');if(ln)ln.value=\'' + houseNum + '\';' +
+                            'var st=document.getElementById(\'constructionStreet\');if(st){for(var o=0;o<st.options.length;o++){if(st.options[o].value===\'' + streetVal + '\'){st.selectedIndex=o;break;}}}' +
                             'var m=document.querySelector(\'.dynamic-map-modal\');if(m)m.remove();' +
                             '})()" style="width:100%;background:#00247c;color:white;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px;">&#10003; Select This Location</button>' +
                             '</div>';
@@ -2849,10 +2938,10 @@ async function initializeMapPicker(containerId, target) {
                         poly.openPopup();
                     });
                     poly.addTo(map);
-                } catch(e) {}
+                } catch (e) { }
             });
         }
-    } catch(e) {}
+    } catch (e) { }
 
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../services/broadcast.php';
 
 /**
  * Writes an entry to audit_logs table
@@ -39,6 +40,7 @@ function writeAuditLog(
         (supabase_user_id, role_id, full_name, category, action, table_name, record_id, old_data, new_data)
         VALUES
         (:supabaseId, :roleId, :fullName, :category, :action, :tableName, :recordId, :oldData, :newData)
+        RETURNING id, action, full_name, table_name, record_id, role_id, created_at
     ");
 
     $stmt->execute([
@@ -52,4 +54,10 @@ function writeAuditLog(
         ':oldData'    => $oldData ? json_encode($oldData) : null,
         ':newData'    => $newData ? json_encode($newData) : null
     ]);
+
+    $newLog = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($newLog) {
+        broadcastEvent('new_audit_log', ['payload' => $newLog]);
+    }
 }

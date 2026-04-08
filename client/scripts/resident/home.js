@@ -1,7 +1,3 @@
-/**
- * home.js
- */
-
 document.addEventListener('DOMContentLoaded', function () {
 
     function createAutoRotate(callback, delay) {

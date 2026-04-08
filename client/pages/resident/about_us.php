@@ -16,7 +16,7 @@ if ($_SESSION['role_id'] != 1) {
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
     <link rel="stylesheet" href="../../styles/global.css">
-    <link rel="stylesheet" href="../../styles/index.css">
+    <!-- <link rel="stylesheet" href="../../styles/index.css"> -->
     <link rel="stylesheet" href="../../styles/resident/home.css">
 </head>
 
@@ -425,8 +425,6 @@ if ($_SESSION['role_id'] != 1) {
     </section>
     </main>
 
-    <script src="../client/scripts/resident/nav.js" defer></script>
-    <script src="../client/scripts/resident/home.js" defer></script>
     <?php include '../../pages/resident/_layout/end.php'; ?>
 </body>
 

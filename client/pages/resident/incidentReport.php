@@ -375,11 +375,11 @@ if ($_SESSION['role_id'] != 1) {
     </section>
 
     <!-- Report Output Section (hidden by default) -->
-    <section id="reportOutput" class="hidden">
+    <!-- <section id="reportOutput" class="hidden">
         <h2>Report Generated Successfully!</h2>
         <p>Click the button below to download the report file.</p>
         <button id="downloadBtn">Download Report (.doc)</button>
-    </section>
+    </section> -->
 
     <script type="module" src="../../scripts/resident/incidentReport.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

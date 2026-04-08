@@ -40,11 +40,11 @@ if ($_SESSION['role_id'] != 1) {
                 <!-- User Profile Card -->
                 <div class="profile-card">
                     <div class="profile-image-section">
-                        <div class="profile-image-large initial-avatar" id="profileAvatar" role="img" aria-label="User avatar">JC</div>
+                        <div class="profile-image-large initial-avatar" id="profileAvatar" role="img" aria-label="User avatar"></div>
                     </div>
 
                     <div class="user-info">
-                        <h2 class="user-name" id="userFullName">Juan Dela Cruz</h2>
+                        <h2 class="user-name" id="userFullName"></h2>
                         <p class="user-role">Resident</p>
 
                         <div class="info-grid">

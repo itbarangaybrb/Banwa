@@ -334,11 +334,15 @@ $full_name = getCurrentUserName();
 
                 <div class="search-box">
                     <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
-                    <select id="statusApplications" style="width: max-content;">
+                    <select id="statusApplications" style="width: max-content;" onchange="filterApplications()">
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
-                        <option value="Pre-approved">Pre-approved</option>
+                        <option value="Complied">Complied</option>
+                        <option value="For Payment">For Payment</option>
+                        <option value="Paid">Paid</option>
                         <option value="Approved">Approved</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Disapproved">Disapproved</option>
                         <option value="Rejected">Rejected</option>
                     </select>
                     <button class="buttons" type="button" data-modal="exportApplicationsTable">Export As PDF</button>
@@ -762,7 +766,7 @@ $full_name = getCurrentUserName();
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-    <script src="http://localhost:8081/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
     <script type="module" src="../../../scripts/staff/map.js"></script>
     <script type="module" src="../../../scripts/staff/construction_staff/construction.js"></script>
     <script type="module" src="../../../scripts/auth/signout.js"></script>

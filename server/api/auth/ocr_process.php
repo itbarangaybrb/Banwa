@@ -101,7 +101,7 @@ function is_image_blurry($path, $threshold = 150) {
 }
 
 // === PARSING FUNCTION ===
-function parse_id_data($raw_lines, $id_type) {
+function parse_id_data($raw_lines, $id_type, &$type_match) {
     $data = ['firstName' => '', 'lastName' => '', 'middleName' => '', 'address' => ''];
 
     $lines = [];
@@ -114,7 +114,7 @@ function parse_id_data($raw_lines, $id_type) {
 
     $full_text_upper = strtoupper(implode(' ', $lines));
 
-    // RELAXED TYPE VALIDATION
+    // Initialize the reference variable
     $type_match = false;
     if ($id_type === 'National') {
         if (str_contains_array($full_text_upper, ['PAMBANSANG PAGKAKAKILANLAN', 'PHILIPPINE IDENTIFICATION', 'PHILSYS', 'PAGKAKAKILANLAN', 'PAMBANSANG', 'PHILIPPINE IDENTIFICATION CARD'])) {
@@ -176,82 +176,74 @@ function parse_id_data($raw_lines, $id_type) {
         }
     }
 
-    // QUEZON CITY ID - ROBUST FORMATTING
-    elseif ($id_type === 'Quezon') {
-        $found_name = false;
+    // QUEZON CITY ID - UNIFIED & OPTIMIZED METHOD
+        elseif ($id_type === 'Quezon') {
+            $found_name = false;
 
-        for ($i = 0; $i < count($lines); $i++) {
-            $line_upper = strtoupper($lines[$i]);
-            
-            // Look for the "LASTNAME, FIRSTNAME MIDDLEINITIAL" format
-            if (strpos($line_upper, ',') !== false && !preg_match('/\d|@|\(|\)|EMERGENCY|CONTACT|RESIDENT|ISSUED/i', $line_upper)) {
-                $parts = explode(',', $lines[$i], 2);
-                $last_part = trim($parts[0]);
-                $rest = trim($parts[1]);
+            $common_suffixes = ['JR', 'JR.', 'SR', 'SR.', 'II', 'III', 'IV', 'V'];
 
-                if (strlen($last_part) > 1 && strlen($rest) > 1) {
-                    $data['lastName'] = ucwords(strtolower($last_part));
-                    
-                    // Separate First Name and Middle Initial/Name
-                    $name_parts = preg_split('/\s+/', $rest);
-                    $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 0 && preg_match('/[A-Za-z]/', $p));
-                    
-                    if (!empty($name_parts)) {
-                        $possible_mi = array_pop($name_parts); // Usually the last word is the MI
+            foreach ($lines as $index => $line) {
+                $upper_line = strtoupper($line);
+                
+                // 1. Stricter Exclusions: Skip lines that are obviously dates, addresses, or metadata
+                if (str_contains_array($upper_line, array_merge($date_labels, $address_keywords, $civil_status_keywords, $non_name_keywords))) continue;
+                
+                // 2. Reject lines with numbers or symbols (names shouldn't have them)
+                if (preg_match('/\d|@|\(|\)|:/', $line)) continue; 
+
+                // 3. QCitizen Format Target: LASTNAME, FIRSTNAME [SUFFIX] MI.
+                if (strpos($line, ',') !== false) {
+                    $parts = explode(',', $line, 2);
+                    $last_name_part = trim($parts[0]);
+                    $rest_of_name = trim($parts[1]);
+
+                    // Basic length validation to avoid matching stray punctuation
+                    if (strlen($last_name_part) > 1 && strlen($rest_of_name) > 1) {
+                        $data['lastName'] = ucwords(strtolower($last_name_part));
                         
-                        // Check if it's an initial (1-2 chars or contains a dot)
-                        if (strlen($possible_mi) <= 2 || strpos($possible_mi, '.') !== false) {
-                            $data['middleName'] = ucwords(strtolower(str_replace('.', '', $possible_mi)));
-                            $data['firstName'] = ucwords(strtolower(implode(' ', $name_parts)));
-                        } else {
-                            $name_parts[] = $possible_mi; // Put it back if it's a full name
-                            $data['firstName'] = ucwords(strtolower(implode(' ', $name_parts)));
-                        }
-                    }
-                    $found_name = true;
-                    break;
-                }
-            }
-        }
-    }
-    // QUEZON CITY ID - ROBUST DUAL METHOD
-    elseif ($id_type === 'Quezon') {
-        $found_name = false;
+                        // Tokenize the rest of the name to carefully extract First Name, MI, and Suffix
+                        $name_tokens = preg_split('/\s+/', $rest_of_name);
+                        $name_tokens = array_filter($name_tokens);
+                        
+                        $middle_name = '';
+                        $suffix = '';
 
-        // PRIMARY: After label line
-        for ($i = 0; $i < count($lines) - 1; $i++) {
-            $label_upper = strtoupper($lines[$i]);
-            if (str_contains_array($label_upper, ['LAST NAME', 'FIRST NAME', 'M.I.', 'NAME'])) {
-                $candidate = clean_value($lines[$i + 1]);
-                $candidate_upper = strtoupper($candidate);
+                        // Work backwards from the end of the name string
+                        while (!empty($name_tokens)) {
+                            $token = array_pop($name_tokens); 
+                            $token_upper = strtoupper($token);
 
-                // Strict filters for candidate
-                if (str_contains_array($candidate_upper, $non_name_keywords)) continue;
-                if (preg_match('/\d|@|\(|\)/', $candidate)) continue;
-
-                if (strpos($candidate, ',') !== false) {
-                    [$last_part, $rest] = explode(',', $candidate, 2);
-                    $last_part = trim($last_part);
-                    $rest = trim($rest);
-
-                    if (strlen($last_part) > 2 && strlen($rest) > 2) {
-                        $data['lastName'] = ucwords(strtolower($last_part));
-
-                        $name_parts = preg_split('/\s+/', $rest);
-                        $name_parts = array_filter($name_parts, fn($p) => strlen($p) > 1 && preg_match('/[A-Za-z]/', $p));
-
-                        if (!empty($name_parts)) {
-                            $data['firstName'] = ucwords(strtolower(array_shift($name_parts)));
-                            if (!empty($name_parts)) {
-                                $data['middleName'] = ucwords(strtolower(implode(' ', $name_parts)));
+                            if (in_array($token_upper, $common_suffixes)) {
+                                // Catch suffixes like JR or III
+                                $suffix = $token;
+                            } elseif (strlen($token) <= 2 || strpos($token, '.') !== false) {
+                                // Catch middle initials (e.g., "P." or just "P")
+                                // If there are multiple initials (e.g., "A. B."), we prepend to build the full MI
+                                $clean_token = str_replace('.', '', $token);
+                                $middle_name = $middle_name === '' ? $clean_token : $clean_token . ' ' . $middle_name;
+                            } else {
+                                // If it's not a suffix or MI, it belongs to the first name.
+                                // Put it back in the array and break the loop.
+                                $name_tokens[] = $token;
+                                break;
                             }
                         }
+
+                        // Reassemble the first name
+                        $data['firstName'] = ucwords(strtolower(implode(' ', $name_tokens)));
+                        
+                        // Append suffix to the first name if it exists
+                        if ($suffix) {
+                            $data['firstName'] .= ' ' . ucwords(strtolower($suffix)); 
+                        }
+                        
+                        $data['middleName'] = ucwords(strtolower($middle_name));
                         $found_name = true;
-                        break;
+                        break; // Stop after finding the first highly confident name string
                     }
                 }
             }
-        }
+        
 
         // FALLBACK: Any suitable comma line
         if (!$found_name) {
@@ -448,7 +440,18 @@ if ($raw_text === null || trim($raw_text) === '') {
 
 // PARSE
 $raw_lines = array_filter(array_map('trim', explode("\n", $raw_text)));
-$extracted_data = parse_id_data($raw_lines, $id_type);
+$type_match = false;
+$extracted_data = parse_id_data($raw_lines, $id_type, $type_match);
+
+// HARD STOP: If the ID type doesn't match the text, return an error immediately.
+if (!$type_match) {
+    ob_end_clean();
+    echo json_encode([
+        "success" => false,
+        "error" => "ID Mismatch: The uploaded image does not appear to be a valid {$id_type} ID."
+    ]);
+    exit;
+}
 
 $response = [
     "success" => true,
@@ -459,7 +462,7 @@ $response = [
         "detected_type" => $id_type,
         "fields_count" => count(array_filter($extracted_data)),
         "hits_map" => [
-            $id_type => 1 // Tells the frontend that the ID type was matched
+            $id_type => $type_match ? 1 : 0 // Now dynamically reflects reality
         ]
     ]
 ];

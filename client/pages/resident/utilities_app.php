@@ -32,8 +32,8 @@ if ($_SESSION['role_id'] != 1) {
 
     <section class="sections">
         <div class="header-and-parag">
-            <h4>Utilies Clearance</h4>
-            <p>Select a size from the navigation menu to view product details.</p>
+            <h4>Utilities Clearance</h4>
+            <p>Submission permits the barangay and providers to verify documents, inspect the site, and schedule or authorize the requested work. </p>
         </div>
 
         <!-- ==================== owner Form ==================== -->
