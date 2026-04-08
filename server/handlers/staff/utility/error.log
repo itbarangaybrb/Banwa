@@ -39,3 +39,7 @@ Stack trace:
 #1 C:\Users\My PC\Desktop\Banwa\server\handlers\staff\utility\utility_handler.php(41): handleUpdateStatus(Object(PDO))
 #2 {main}
   thrown in C:\Users\My PC\Desktop\Banwa\server\services\broadcast.php on line 14
+[08-Apr-2026 21:07:00 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[08-Apr-2026 21:07:01 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[08-Apr-2026 21:09:38 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[08-Apr-2026 21:09:38 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

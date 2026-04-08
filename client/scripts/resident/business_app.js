@@ -853,9 +853,9 @@ newSummaryForm.addEventListener('submit', async function (e) {
                         });
                     }
 
-                    const socket = sockets["main"]; 
-                    if (socket) { 
-                        socket.emit('business_applications_update', { action: 'status_update' }); 
+                    const socket = sockets["main"];
+                    if (socket) {
+                        socket.emit('business_applications_update', { action: 'status_update' });
                     }
 
                     business_app_swal.fire({
@@ -1377,5 +1377,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to fetch user data for autofill:', err);
     }
 
-    if (!sockets["main"]) initSocket("main", "https://banwa-ws.onrender.com", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });

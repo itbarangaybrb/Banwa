@@ -7,7 +7,7 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
     cors: {
-        origin: 'https://banwa.onrender.com', // lock this down in production to your domain
+        origin: '*', // lock this down in production to your domain
         methods: ['GET', 'POST']
     }
 });
