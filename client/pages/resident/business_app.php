@@ -33,7 +33,7 @@ if ($_SESSION['role_id'] != 1) {
     <section class="sections">
         <div class="header-and-parag">
             <h4>Business Clearance</h4>
-            <p>This form authorizes personnel to perform the requested business service at your address. </p>
+            <p>Submission lets the barangay verify documents, inspect the location, and issue approval or next steps. </p>
         </div>
 
         <!-- ==================== Owner Form ==================== -->

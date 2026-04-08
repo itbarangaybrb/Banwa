@@ -50,8 +50,8 @@ if ($_SESSION['role_id'] != 1) {
 
     <section id="permits" class="sections">
         <div class="header-and-parag">
-            <h4>Infrastructure</h4>
-            <p>This form authorizes personnel to perform the requested infrastructure service at your address. </p>
+            <h4>Construction Clearance</h4>
+            <p>Submission authorizes the barangay to review your application, verify documents, and perform any necessary site inspections. </p>
         </div>
 
         <div class="containers construction-container" id="owner">
