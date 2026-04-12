@@ -28,6 +28,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
+    <link rel="stylesheet" href="../../../styles/utils/pagination.css">
 </head>
 
 <body>
@@ -302,6 +303,7 @@ $full_name = getCurrentUserName();
 
                         <tbody id="auditTableBody"></tbody>
                     </table>
+                    <div class="pagination-container" id="auditsPagination"></div>
                 </div>
             </div>
 
@@ -359,6 +361,7 @@ $full_name = getCurrentUserName();
                             </tr>
                         </tbody>
                     </table>
+                    <div class="pagination-container" id="incidentReportApplicationsPagination"></div>
                 </div>
             </div>
 

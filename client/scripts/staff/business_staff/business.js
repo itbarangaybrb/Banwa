@@ -1,11 +1,15 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
+import { createPaginator } from '../../utils/pagination.js';
+import { initSocket, sockets } from '../../utils/socket.js';
+
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
 const UPLOADS_BASE_PATH = '/server/handlers/staff/business/uploads/';
 let applications = [];
 let isDataLoaded = false; // Add this to track fetch status
 let filterTimeout; // Add this to handle typing delays
+let auditsPaginator;
+let applicationsPaginator;
 
 // SweetAlert config scoped to business page alerts only
 const swalTopConfig = {
@@ -213,48 +217,94 @@ function filterApplications() {
         }
 
         // State C: Filter has results. Clear the spinner and render rows!
-        tbody.innerHTML = '';
+        // tbody.innerHTML = '';
 
-        filtered.forEach(app => {
-            let badgeClass = 'pending';
-            if (app.status === 'Approved') badgeClass = 'approved';
-            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
-            if (app.status === 'Paid') badgeClass = 'paid';
-            if (app.status === 'For Payment') badgeClass = 'for-payment';
+        // filtered.forEach(app => {
+        //     let badgeClass = 'pending';
+        //     if (app.status === 'Approved') badgeClass = 'approved';
+        //     if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+        //     if (app.status === 'Paid') badgeClass = 'paid';
+        //     if (app.status === 'For Payment') badgeClass = 'for-payment';
 
-            let actionBtn = '';
+        //     let actionBtn = '';
 
-            if (app.status === 'Pending') {
-                actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-            } else if (app.status === 'For Payment') {
-                actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
-            } else if (app.status === 'Paid') {
-                actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-            } else if (app.status === 'Approved') {
-                actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
-            } else {
-                actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-            }
+        //     if (app.status === 'Pending') {
+        //         actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+        //     } else if (app.status === 'For Payment') {
+        //         actionBtn = `<button class="btn btn-secondary" id="verifyPaymentBtn" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+        //     } else if (app.status === 'Paid') {
+        //         actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+        //     } else if (app.status === 'Approved') {
+        //         actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
+        //     } else {
+        //         actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+        //     }
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${app.id}</td>
-                <td style="font-weight:600;">${app.business_name}</td>
-                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                <td>${app.payment_status || 'Unpaid'}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${actionBtn}
-                        <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                        <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+        //     const row = document.createElement('tr');
+        //     row.innerHTML = `
+        //         <td>${app.id}</td>
+        //         <td style="font-weight:600;">${app.business_name}</td>
+        //         <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+        //         <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+        //         <td>${app.payment_status || 'Unpaid'}</td>
+        //         <td>
+        //             <div class="action-buttons">
+        //                 ${actionBtn}
+        //                 <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+        //                 <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+        //             </div>
+        //         </td>
+        //     `;
+        //     tbody.appendChild(row);
+        // });
+
+        applicationsPaginator.load(filtered);
 
     }, 300); // 300 millisecond delay
+}
+
+function renderTableRows(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(app => {
+        let badgeClass = 'pending';
+        if (app.status === 'Approved') badgeClass = 'approved';
+        if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+        if (app.status === 'Paid') badgeClass = 'paid';
+        if (app.status === 'For Payment') badgeClass = 'for-payment';
+
+        let actionBtn = '';
+        if (app.status === 'Pending') {
+            actionBtn = `<button class="btn btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+        } else if (app.status === 'For Payment') {
+            actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Verify Payment</button>`;
+        } else if (app.status === 'Paid') {
+            actionBtn = `<button class="btn btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+        } else if (app.status === 'Approved') {
+            actionBtn = `<button class="btn btn-secondary" onclick="generateClearance(${app.id})">Clearance</button>`;
+        } else {
+            actionBtn = `<button class="btn btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${app.id}</td>
+            <td style="font-weight:600;">${app.business_name}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+            <td>${app.payment_status || 'Unpaid'}</td>
+            <td>
+                <div class="action-buttons">
+                    ${actionBtn}
+                    <button class="btn btn-info" onclick="viewDetails(${app.id})">View</button>
+                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 /**
@@ -2294,31 +2344,41 @@ async function fetchAuditLogs() {
             return;
         }
 
-        const tbody = document.getElementById('auditTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         if (logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            const tbody = document.getElementById('auditTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
             return;
         }
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${log.id ?? '—'}</td>
-                <td>${log.action ?? '—'}</td>
-                <td>${log.record_id ?? '—'}</td>
-                <td>${log.full_name ?? '—'}</td>
-                <td>${log.created_at ?? '—'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        auditsPaginator.load(logs);
 
     } catch (err) {
         console.error('Failed to fetch audit logs:', err);
     }
+}
+
+function renderRowsAudit(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.id ?? '—'}</td>
+            <td>${log.action ?? '—'}</td>
+            <td>${log.record_id ?? '—'}</td>
+            <td>${log.full_name ?? '—'}</td>
+            <td>${log.created_at ?? '—'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 /**
@@ -2359,6 +2419,22 @@ const statusTemplates = {
 
 // Event listener for status change to update textarea with templates
 document.addEventListener('DOMContentLoaded', function () {
+    auditsPaginator = createPaginator({
+        containerId: 'auditsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderRowsAudit(pageItems);
+    });
+
+    applicationsPaginator = createPaginator({
+        containerId: 'businessApplicationsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderTableRows(pageItems);
+    });
+
     fetchAuditLogs();
 
     initSocket("main", "http://localhost:8081", (data) => {

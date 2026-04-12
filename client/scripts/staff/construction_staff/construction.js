@@ -1,6 +1,7 @@
 import { initSocket, sockets } from '../../utils/socket.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';
+import { createPaginator } from '../../utils/pagination.js';
 
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
@@ -45,6 +46,8 @@ const UPLOADS_BASE_PATH = '/server/handlers/staff/construction/uploads/';
 let applications = [];
 let isDataLoaded = false; // Tracks if the initial fetch is complete
 let filterTimeout;        // Handles the debounce delay for smooth typing
+let auditsPaginator;
+let applicationsPaginator;
 
 // Add these with your other DOM element references
 const ownerLotNo = document.getElementById('ownerLotNo');
@@ -416,32 +419,85 @@ function filterApplications() {
         }
 
         // State D: Render Results
-        tbody.innerHTML = '';
+        // tbody.innerHTML = '';
 
-        filtered.forEach(app => {
-            let badgeClass = 'pending';
-            if (app.status === 'Approved' || app.status === 'Completed') badgeClass = 'approved';
-            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
-            if (app.status === 'Paid') badgeClass = 'paid';
-            if (app.status === 'For Payment') badgeClass = 'for-payment';
-            if (app.status === 'Complied') badgeClass = 'complied';
+        // filtered.forEach(app => {
+        //     let badgeClass = 'pending';
+        //     if (app.status === 'Approved' || app.status === 'Completed') badgeClass = 'approved';
+        //     if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+        //     if (app.status === 'Paid') badgeClass = 'paid';
+        //     if (app.status === 'For Payment') badgeClass = 'for-payment';
+        //     if (app.status === 'Complied') badgeClass = 'complied';
 
-            let actionBtn = '';
+        //     let actionBtn = '';
 
-            if (app.status === 'Pending') {
-                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-            } else if (app.status === 'For Payment') {
-                actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
-            } else if (app.status === 'Paid' || app.status === 'Complied') {
-                actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-            } else if (app.status === 'Approved' || app.status === 'Completed') {
-                actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
-            } else {
-                actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-            }
+        //     if (app.status === 'Pending') {
+        //         actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+        //     } else if (app.status === 'For Payment') {
+        //         actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
+        //     } else if (app.status === 'Paid' || app.status === 'Complied') {
+        //         actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+        //     } else if (app.status === 'Approved' || app.status === 'Completed') {
+        //         actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
+        //     } else {
+        //         actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+        //     }
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
+        //     const row = document.createElement('tr');
+        //     row.innerHTML = `
+        //         <td>${app.id}</td>
+        //         <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
+        //         <td>${app.nature_of_activity || 'N/A'}</td>
+        //         <td>${app.contractor_name || 'N/A'}</td>
+        //         <td>${app.contractor_contact_number || 'N/A'}</td>
+        //         <td>${app.construction_address || 'N/A'}</td>
+        //         <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+        //         <td>${app.payment_status || 'Unpaid'}</td>
+        //         <td>
+        //             <div class="action-buttons">
+        //                 ${actionBtn}
+        //                 <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+        //                 <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="construction_applications">Archive</button>
+        //             </div>
+        //         </td>
+        //     `;
+        //     tbody.appendChild(row);
+        // });
+
+        applicationsPaginator.load(filtered);
+
+    }, 300); // 300 millisecond debounce
+}
+
+function renderTableRows(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(app => {
+        let badgeClass = 'pending';
+        if (app.status === 'Approved' || app.status === 'Completed') badgeClass = 'approved';
+        if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+        if (app.status === 'Paid') badgeClass = 'paid';
+        if (app.status === 'For Payment') badgeClass = 'for-payment';
+        if (app.status === 'Complied') badgeClass = 'complied';
+
+        let actionBtn = '';
+
+        if (app.status === 'Pending') {
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+        } else if (app.status === 'For Payment') {
+            actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${app.id})">Verify Pay</button>`;
+        } else if (app.status === 'Paid' || app.status === 'Complied') {
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+        } else if (app.status === 'Approved' || app.status === 'Completed') {
+            actionBtn = `<button class="btn-info" onclick="generateConstructionPermit(${app.id})">Clearance</button>`;
+        } else {
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
                 <td>${app.id}</td>
                 <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
                 <td>${app.nature_of_activity || 'N/A'}</td>
@@ -458,10 +514,8 @@ function filterApplications() {
                     </div>
                 </td>
             `;
-            tbody.appendChild(row);
-        });
-
-    }, 300); // 300 millisecond debounce
+        tbody.appendChild(row);
+    });
 }
 
 /**
@@ -2533,31 +2587,41 @@ async function fetchAuditLogs() {
             return;
         }
 
-        const tbody = document.getElementById('auditTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         if (logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            const tbody = document.getElementById('auditTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
             return;
         }
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${log.id ?? '—'}</td>
-                <td>${log.action ?? '—'}</td>
-                <td>${log.record_id ?? '—'}</td>
-                <td>${log.full_name ?? '—'}</td>
-                <td>${log.created_at ?? '—'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        auditsPaginator.load(logs);
 
     } catch (err) {
         console.error('Failed to fetch audit logs:', err);
     }
+}
+
+function renderRowsAudit(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.id ?? '—'}</td>
+            <td>${log.action ?? '—'}</td>
+            <td>${log.record_id ?? '—'}</td>
+            <td>${log.full_name ?? '—'}</td>
+            <td>${log.created_at ?? '—'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 /**
@@ -2590,6 +2654,22 @@ function appendAuditRow(log) {
 
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    auditsPaginator = createPaginator({
+        containerId: 'auditsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderRowsAudit(pageItems);
+    });
+
+    applicationsPaginator = createPaginator({
+        containerId: 'constructionApplicationsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderTableRows(pageItems);
+    });
+
     fetchAuditLogs();
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
