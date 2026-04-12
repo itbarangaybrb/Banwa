@@ -135,7 +135,7 @@ function loadManagementTable() {
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
-    const statusEl = document.getElementById('statusApplications'); 
+    const statusEl = document.getElementById('statusApplications');
     const tbody = document.getElementById('tableBody');
 
     if (!tbody) return;
@@ -156,7 +156,7 @@ function filterApplications() {
 
     // 3. Wait 300ms before doing the heavy lifting
     filterTimeout = setTimeout(() => {
-        
+
         // If the database hasn't finished its initial load yet, just stop here.
         if (!isDataLoaded) {
             tbody.innerHTML = `
@@ -213,8 +213,8 @@ function filterApplications() {
         }
 
         // State C: Filter has results. Clear the spinner and render rows!
-        tbody.innerHTML = ''; 
-        
+        tbody.innerHTML = '';
+
         filtered.forEach(app => {
             let badgeClass = 'pending';
             if (app.status === 'Approved') badgeClass = 'approved';
@@ -265,7 +265,7 @@ async function loadApplicationsFromDB() {
 
     // Set to false and trigger UI to show "Loading..."
     isDataLoaded = false;
-    filterApplications(); 
+    filterApplications();
 
     try {
         const response = await fetch(`${BUSINESS_HANDLER_URL}?action=fetch`, {
@@ -299,7 +299,7 @@ async function loadApplicationsFromDB() {
 
         // Fetch complete! Set to true and re-render the table
         isDataLoaded = true;
-        filterApplications(); 
+        filterApplications();
         return applications;
 
     } catch (error) {
@@ -2361,7 +2361,7 @@ const statusTemplates = {
 document.addEventListener('DOMContentLoaded', function () {
     fetchAuditLogs();
 
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "business_applications_update":
             case "finance_applications_update":
@@ -2520,37 +2520,37 @@ async function initializeMapPicker(containerId, target) {
     const map = L.map(containerId).setView([14.6175, 121.0756], 17);
     osmTile.addTo(map);
 
-    const POLY  = { street: { color:'#00247c', fillColor:'#00247c', fillOpacity:0.12, weight:2 },    satellite: { color:'#fff', fillColor:'#fff', fillOpacity:0.15, weight:2 } };
-    const BOUND = { street: { color:'#00247c', fillColor:'#00247c', fillOpacity:0.08, dashArray:'8,6', weight:2 }, satellite: { color:'#fff', fillColor:'#000', fillOpacity:0, dashArray:'8,6', weight:2 } };
+    const POLY = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.12, weight: 2 }, satellite: { color: '#fff', fillColor: '#fff', fillOpacity: 0.15, weight: 2 } };
+    const BOUND = { street: { color: '#00247c', fillColor: '#00247c', fillOpacity: 0.08, dashArray: '8,6', weight: 2 }, satellite: { color: '#fff', fillColor: '#000', fillOpacity: 0, dashArray: '8,6', weight: 2 } };
     let housePolygons = [], boundaryLayers = [], selectedMarker = null;
 
     const streetBtn = document.getElementById('picker-street-btn');
-    const satBtn    = document.getElementById('picker-satellite-btn');
+    const satBtn = document.getElementById('picker-satellite-btn');
     if (streetBtn && satBtn) {
         streetBtn.onclick = () => {
             map.removeLayer(satTile); osmTile.addTo(map);
             housePolygons.forEach(p => p.setStyle(POLY.street));
             boundaryLayers.forEach(b => b.setStyle(BOUND.street));
             streetBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
-            satBtn.style.cssText    = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+            satBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
         };
         satBtn.onclick = () => {
             map.removeLayer(osmTile); satTile.addTo(map);
             housePolygons.forEach(p => p.setStyle(POLY.satellite));
             boundaryLayers.forEach(b => b.setStyle(BOUND.satellite));
-            satBtn.style.cssText    = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
+            satBtn.style.cssText = 'background:#00247c;color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
             streetBtn.style.cssText = 'background:white;color:#555;border:1px solid #ccc;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;';
         };
     }
 
     // Click anywhere on the map to drop a pin and fill coordinates
-    map.on('click', function(e) {
+    map.on('click', function (e) {
         const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
         if (selectedMarker) map.removeLayer(selectedMarker);
         selectedMarker = L.marker([lat, lng]).addTo(map)
             .bindPopup('<div style="font-family:Inter,sans-serif;font-size:13px;font-weight:600;">Selected Location</div>')
             .openPopup();
-        document.getElementById('latitude2').value  = lat;
+        document.getElementById('latitude2').value = lat;
         document.getElementById('longitude2').value = lng;
         const disp = document.getElementById('businessLocationDisplay');
         if (disp) disp.value = `${lat}, ${lng}`;
@@ -2560,7 +2560,7 @@ async function initializeMapPicker(containerId, target) {
 
     // Load barangay boundary polygons
     try {
-        const bRes  = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_boundaries' });
+        const bRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_boundaries' });
         const bData = await bRes.json();
         if (bData.success && bData.boundaries) {
             bData.boundaries.forEach(b => {
@@ -2568,38 +2568,38 @@ async function initializeMapPicker(containerId, target) {
                     const coords = JSON.parse(b.coordinates);
                     const ll = coords.map(c => Array.isArray(c) ? [c[1], c[0]] : [c.lat, c.lng]);
                     boundaryLayers.push(L.polygon(ll, BOUND.street).addTo(map));
-                } catch(e) {}
+                } catch (e) { }
             });
         }
-    } catch(e) {}
+    } catch (e) { }
 
     // Load house/lot polygons with clickable popups
     try {
-        const hRes  = await fetch('/server/handlers/map/map_handler.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'action=get_houses' });
+        const hRes = await fetch('/server/handlers/map/map_handler.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=get_houses' });
         const hData = await hRes.json();
         if (hData.success && hData.houses) {
             hData.houses.forEach(house => {
                 if (!house.coordinates) return;
                 try {
                     const coords = JSON.parse(house.coordinates);
-                    const ring   = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
-                    const ll     = ring.map(c => [c[1], c[0]]);
-                    const poly   = L.polygon(ll, { ...POLY.street, interactive: true });
+                    const ring = (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) ? coords[0] : coords;
+                    const ll = ring.map(c => [c[1], c[0]]);
+                    const poly = L.polygon(ll, { ...POLY.street, interactive: true });
                     housePolygons.push(poly);
 
                     const isLandmark = house.address && !/^\d/.test(house.address.trim());
-                    const title      = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
+                    const title = isLandmark ? (house.address || 'Landmark') : ('House #' + (house.house_number || '—'));
 
                     poly.bindPopup('', { maxWidth: 260 });
-                    poly.on('click', function(e) {
+                    poly.on('click', function (e) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
 
                         const formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe  = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                        const houseNum  = String(house.house_number || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                        const streetVal = String(house.street_name  || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
@@ -2607,7 +2607,7 @@ async function initializeMapPicker(containerId, target) {
                             '<div style="font-weight:700;font-size:13px;">' + title + '</div>' +
                             (house.street_name ? '<div style="font-size:11px;opacity:.85;">' + house.street_name + '</div>' : '') +
                             '</div>' +
-                            (house.address    ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
+                            (house.address ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Address:</strong> ' + house.address + '</p>' : '') +
                             (house.street_name ? '<p style="margin:0 0 5px;font-size:12px;"><strong style="color:#00247c;">Street:</strong> ' + house.street_name + '</p>' : '') +
                             '<p style="margin:0 0 10px;font-size:11px;color:#888;">' + lat + ', ' + lng + '</p>' +
                             '<button onclick="(function(){' +
@@ -2624,10 +2624,10 @@ async function initializeMapPicker(containerId, target) {
                         poly.openPopup();
                     });
                     poly.addTo(map);
-                } catch(e) {}
+                } catch (e) { }
             });
         }
-    } catch(e) {}
+    } catch (e) { }
 
     setTimeout(() => map.invalidateSize(), 100);
     setTimeout(() => map.invalidateSize(), 400);

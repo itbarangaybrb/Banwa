@@ -337,7 +337,7 @@ function loadManagementTable() {
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
-    const statusEl = document.getElementById('statusApplications'); 
+    const statusEl = document.getElementById('statusApplications');
     const tbody = document.getElementById('tableBody');
 
     if (!tbody) return;
@@ -358,7 +358,7 @@ function filterApplications() {
 
     // 3. Wait 300ms before doing the heavy lifting
     filterTimeout = setTimeout(() => {
-        
+
         // State A: Database hasn't finished its initial load yet
         if (!isDataLoaded) {
             tbody.innerHTML = `
@@ -416,8 +416,8 @@ function filterApplications() {
         }
 
         // State D: Render Results
-        tbody.innerHTML = ''; 
-        
+        tbody.innerHTML = '';
+
         filtered.forEach(app => {
             let badgeClass = 'pending';
             if (app.status === 'Approved' || app.status === 'Completed') badgeClass = 'approved';
@@ -470,32 +470,32 @@ function filterApplications() {
 function loadApplicationsFromDB() {
     // 1. Set to false and trigger UI to show "Connecting to database..."
     isDataLoaded = false;
-    filterApplications(); 
+    filterApplications();
 
     return fetch(`${CONSTRUCTION_HANDLER_URL}?action=fetch`, {
         credentials: 'include'
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            applications = (data.data || []).filter(app => !app.is_archived);
-        } else {
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                applications = (data.data || []).filter(app => !app.is_archived);
+            } else {
+                applications = [];
+            }
+
+            // 2. Fetch complete! Set to true and re-render the table
+            isDataLoaded = true;
+            filterApplications();
+
+            return applications;
+        })
+        .catch(error => {
+            console.error('Error fetching applications:', error);
             applications = [];
-        }
-        
-        // 2. Fetch complete! Set to true and re-render the table
-        isDataLoaded = true;
-        filterApplications(); 
-        
-        return applications;
-    })
-    .catch(error => {
-        console.error('Error fetching applications:', error);
-        applications = [];
-        isDataLoaded = true; // Stop the loading spinner even on error
-        filterApplications();
-        return applications;
-    });
+            isDataLoaded = true; // Stop the loading spinner even on error
+            filterApplications();
+            return applications;
+        });
 }
 
 /**
@@ -620,7 +620,7 @@ function loadProcessTable() {
 
             // Inject into the table row (Fixed Column Alignment!)
             let badgeClass = (app.status || 'pending').toLowerCase().replace(' ', '-');
-            
+
             tbody.innerHTML += `
                 <tr>
                     <td>${app.id}</td>
@@ -2594,7 +2594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "construction_applications_update":
                 refreshActiveTab();
@@ -2912,10 +2912,10 @@ async function initializeMapPicker(containerId, target) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                        const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                        const houseNum = String(house.house_number || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                        const streetVal = String(house.street_name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +

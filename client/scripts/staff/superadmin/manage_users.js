@@ -211,7 +211,7 @@ document.addEventListener('click', (e) => {
  * all forms with validation and submission handlers.
  */
 document.addEventListener('DOMContentLoaded', () => {
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "users_update":
                 fetchUsers();

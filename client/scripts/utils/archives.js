@@ -92,15 +92,15 @@ export async function archiveRecord(tableName, recordId) {
                 recordId: recordId
             }));
         }
-        
+
         const row = document
-        .querySelector(`button.edit-btn[data-id="${recordId}"]`)
-        ?.closest('tr');
-        
+            .querySelector(`button.edit-btn[data-id="${recordId}"]`)
+            ?.closest('tr');
+
         if (row) row.remove();
-        
+
         fetchArchives();
-        
+
         if (typeof window.fetchUsers === 'function') {
             window.fetchUsers();
         }
@@ -318,7 +318,7 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchArchives();
 
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "archives_update":
                 fetchArchives();

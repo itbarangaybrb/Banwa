@@ -165,7 +165,7 @@ function loadManagementTable() {
  */
 function filterApplications() {
     const searchEl = document.getElementById('managementSearch');
-    const statusEl = document.getElementById('statusApplications'); 
+    const statusEl = document.getElementById('statusApplications');
     const tbody = document.getElementById('tableBody');
 
     if (!tbody) return;
@@ -284,29 +284,29 @@ function filterApplications() {
  */
 function loadApplicationsFromDB() {
     isDataLoaded = false;
-    filterApplications(); 
+    filterApplications();
 
     return fetch(`${UTILITY_HANDLER_URL}?action=fetch`, {
         credentials: 'include'
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            applications = (data.data || []).filter(app => !app.is_archived);
-        } else {
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                applications = (data.data || []).filter(app => !app.is_archived);
+            } else {
+                applications = [];
+            }
+            isDataLoaded = true;
+            filterApplications();
+            return applications;
+        })
+        .catch(error => {
+            console.error('Error fetching applications:', error);
             applications = [];
-        }
-        isDataLoaded = true;
-        filterApplications();
-        return applications;
-    })
-    .catch(error => {
-        console.error('Error fetching applications:', error);
-        applications = [];
-        isDataLoaded = true;
-        filterApplications();
-        return applications;
-    });
+            isDataLoaded = true;
+            filterApplications();
+            return applications;
+        });
 }
 
 /**
@@ -1657,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateApplicationDate, 60000);
 
     // Replace all 4 initSocket calls with one
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "utility_applications_update":
                 refreshActiveTab();
@@ -1864,10 +1864,10 @@ async function initializeMapPicker(containerId, target) {
                         L.DomEvent.stopPropagation(e);
                         const lat = house.center_lat ? parseFloat(house.center_lat).toFixed(6) : e.latlng.lat.toFixed(6);
                         const lng = house.center_lng ? parseFloat(house.center_lng).toFixed(6) : e.latlng.lng.toFixed(6);
-                        const formattedAddress = house.address || ((house.house_number?'House/Unit '+house.house_number+', ':'')+(house.street_name?house.street_name+', ':'')+'Brgy. Blue Ridge B, Quezon City').trim();
-                        const addrSafe = formattedAddress.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                        const houseNum = String(house.house_number || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                        const streetVal = String(house.street_name || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                        const formattedAddress = house.address || ((house.house_number ? 'House/Unit ' + house.house_number + ', ' : '') + (house.street_name ? house.street_name + ', ' : '') + 'Brgy. Blue Ridge B, Quezon City').trim();
+                        const addrSafe = formattedAddress.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const houseNum = String(house.house_number || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                        const streetVal = String(house.street_name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                         const popupHtml =
                             '<div style="font-family:Inter,sans-serif;min-width:210px;">' +
                             '<div style="background:#00247c;color:white;padding:9px 12px;margin:-8px -12px 10px;border-radius:6px 6px 0 0;">' +

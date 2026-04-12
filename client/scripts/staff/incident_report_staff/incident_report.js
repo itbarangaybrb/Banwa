@@ -301,10 +301,11 @@ function refreshActiveTab() {
     } else if (activeTabId === 'summary') {
         loadIncidentsFromDB().finally(() => { loadSummarySelect(); finish(); });
     } else if (activeTabId === 'dashboard') {
-        loadIncidentsFromDB().finally(() => { 
-            loadAnalyticsTab(); 
+        loadIncidentsFromDB().finally(() => {
+            loadAnalyticsTab();
             fetchAuditLogs();
-            finish(); });
+            finish();
+        });
     } else {
         finish();
     }
@@ -826,7 +827,7 @@ function submitUpdate(event) {
                 if (socket) {
                     socket.emit('incident_report_applications_update', { action: 'status_update' });
                 }
-                
+
                 closeModal('updateModal');
 
                 // REPLACED WITH SWEETALERT2
@@ -2172,7 +2173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+    initSocket("main", "http://localhost:8081", (data) => {
         switch (data.type) {
             case "incident_report_applications_update":
                 refreshActiveTab();

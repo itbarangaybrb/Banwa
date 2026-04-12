@@ -3845,7 +3845,7 @@ const messageMap = {
     "finance_applications_update": "updated status from finance",
 };
 
-initSocket("main", "https://banwa-ws.onrender.com", (data) => {
+initSocket("main", "http://localhost:8081", (data) => {
     const message = messageMap[data.type];
     if (message) {
         loadAllMarkers();

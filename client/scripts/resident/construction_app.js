@@ -1132,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (!sockets["main"]) initSocket("main", "https://banwa-ws.onrender.com", () => { });
+    if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 
     const applicationMethod = document.getElementById('applicationMethod');
     toggleFileUploads();
