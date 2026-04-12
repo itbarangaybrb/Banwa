@@ -358,14 +358,14 @@ header {
     white-space: nowrap;
 }
 
-.log-btn:hover, .sign-btn {
+.log-btn:hover {
     background: #f4f4f4;
     color: #19316b;
 }
 
 .sign-btn:hover {
-    background: transparent;
-    color: #f4f4f4;
+    background: #f4f4f4;
+    color: #19316b;
 }
 
 /* Nav */
