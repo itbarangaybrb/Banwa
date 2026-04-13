@@ -21,6 +21,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/manage_users.css">
     <link rel="stylesheet" href="../../../styles/components/loader.css">
+    <link rel="stylesheet" href="../../../styles/utils/pagination.css">
 </head>
 
 <body>
@@ -127,9 +128,9 @@ $full_name = getCurrentUserName();
                             <th>Actions</th>
                         </tr>
                     </thead>
-
                     <tbody id="usersTableBody"></tbody>
                 </table>
+                <div class="pagination-container" id="usersPagination"></div>
             </div>
         </section>
 

@@ -1,7 +1,9 @@
-
-import { initSocket, sockets } from '../../utils/socket.js';
 import { exportTableAsPDF } from '../../utils/exportAs.js';
+import { createPaginator } from '../../utils/pagination.js';
+import { initSocket } from '../../utils/socket.js';
 import { makeTableSortable } from '../../utils/sortTable.js';
+
+let auditsPaginator;
 
 /**
  * Initialize side navigation toggle controls
@@ -10,22 +12,6 @@ import { makeTableSortable } from '../../utils/sortTable.js';
 const openMenu = document.getElementById('openMenu');
 const closeMenu = document.getElementById('closeMenu');
 const nav = document.getElementById('sideNav');
-
-nav.classList.remove('open');
-openMenu.style.display = 'inline-flex';
-closeMenu.style.display = 'none';
-
-openMenu.addEventListener('click', () => {
-    nav.classList.add('open');
-    openMenu.style.display = 'none';
-    closeMenu.style.display = 'inline-flex';
-});
-
-closeMenu.addEventListener('click', () => {
-    nav.classList.remove('open');
-    closeMenu.style.display = 'none';
-    openMenu.style.display = 'inline-flex';
-});
 
 /**
  * Initialize export button for users table
@@ -65,27 +51,55 @@ async function fetchAuditLogs() {
         const tbody = document.getElementById('auditTableBody');
         if (!tbody) return;
 
-        tbody.innerHTML = '';
+        // tbody.innerHTML = '';
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
+        // logs.forEach(log => {
+        //     const tr = document.createElement('tr');
 
-            tr.innerHTML = `
-                <td>${log.id}</td>
-                <td>${log.action}</td>
-                <td>${log.full_name}</td>
-                <td>${log.table_name}</td>
-                <td>${log.record_id}</td>
-                <td>${log.role_id}</td>
-                <td>${log.created_at}</td>
-            `;
+        //     tr.innerHTML = `
+        //         <td>${log.id}</td>
+        //         <td>${log.action}</td>
+        //         <td>${log.full_name}</td>
+        //         <td>${log.table_name}</td>
+        //         <td>${log.record_id}</td>
+        //         <td>${log.role_id}</td>
+        //         <td>${log.created_at}</td>
+        //     `;
 
-            tbody.appendChild(tr);
-        });
+        //     tbody.appendChild(tr);
+        // });
+
+        auditsPaginator.load(logs);
 
     } catch (err) {
         console.error('Failed to fetch audit logs:', err);
     }
+}
+
+function renderRowsAudit(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.id}</td>
+            <td>${log.action}</td>
+            <td>${log.full_name}</td>
+            <td>${log.table_name}</td>
+            <td>${log.record_id}</td>
+            <td>${log.role_id}</td>
+            <td>${log.created_at}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 /**
@@ -164,6 +178,22 @@ function handleSearch() {
     });
 }
 
+nav.classList.remove('open');
+openMenu.style.display = 'inline-flex';
+closeMenu.style.display = 'none';
+
+openMenu.addEventListener('click', () => {
+    nav.classList.add('open');
+    openMenu.style.display = 'none';
+    closeMenu.style.display = 'inline-flex';
+});
+
+closeMenu.addEventListener('click', () => {
+    nav.classList.remove('open');
+    closeMenu.style.display = 'none';
+    openMenu.style.display = 'inline-flex';
+});
+
 /**
  * Initialize page features after DOM is fully loaded
  * - Fetch initial audit log snapshot
@@ -172,6 +202,14 @@ function handleSearch() {
  * - Initialize WebSocket connection for real-time audit updates
  */
 document.addEventListener('DOMContentLoaded', () => {
+    auditsPaginator = createPaginator({
+        containerId: 'auditsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderRowsAudit(pageItems);
+    });
+
     fetchAuditLogs();
     handleSearch();
     initExportButton();
@@ -189,4 +227,3 @@ document.addEventListener('DOMContentLoaded', () => {
     makeTableSortable('auditTable');
     makeTableSortable('archiveTable');
 });
-

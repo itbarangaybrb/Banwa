@@ -419,23 +419,6 @@ body {
 
 .error {
   outline: 1px solid red;
-  /* border: 1px solid red !important; */
-}
-
-.error-msg {
-  color: red;
-  font-size: 12px;
-  margin-top: 8px;
-  display: none;
-}
-
-.error-msg.show {
-  display: block;
-}
-
-.error {
-  outline: 1px solid red;
-  /* border: 1px solid red !important; */
 }
 
 .hidden {

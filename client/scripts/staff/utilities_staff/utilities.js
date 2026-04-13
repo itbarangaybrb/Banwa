@@ -1,11 +1,28 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
+import { createPaginator } from '../../utils/pagination.js';
+
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
 let applications = [];
 let isDataLoaded = false; // Tracks if the initial fetch is complete
 let filterTimeout;        // Handles the debounce delay for smooth typing
+let chart1Instance;
+let chart2Instance;
+let chart3Instance;
+let auditsPaginator;
+let applicationsPaginator;
+let isRefreshing = false;
+
+// Map filter visibility flag for this management page
+
+// Status templates for quick text insertion - Utilities
+const utilityStatusTemplates = {
+    // 'Complied': "Your submitted requirements have been verified.",
+    'Disapproved': "Your utility application was disapproved due to: [reason]. You may re-apply once requirements are met.",
+    'Approved': "Your Utilities Permit is now ready for pick-up/download."
+};
 
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
@@ -34,13 +51,6 @@ swalStyle.innerHTML = `
     }
 `;
 document.head.appendChild(swalStyle);
-
-// Status templates for quick text insertion - Utilities
-const utilityStatusTemplates = {
-    // 'Complied': "Your submitted requirements have been verified.",
-    'Disapproved': "Your utility application was disapproved due to: [reason]. You may re-apply once requirements are met.",
-    'Approved': "Your Utilities Permit is now ready for pick-up/download."
-};
 
 // ===============================================
 // GLOBAL SWEETALERT CONFIG - ALWAYS ON TOP
@@ -80,13 +90,26 @@ const swalTopConfig = {
     }
 };
 
-// Map filter visibility flag for this management page
+// Enhanced styles - SweetAlert2 forced to front layer
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .hidden { display: none !important; }
+        .swal2-container, .sweetalert-top { z-index: 2147483647 !important; }
+        .swal2-popup { z-index: 2147483647 !important; }
+        .swal2-backdrop { z-index: 2147483646 !important; }
+    </style>
+`);
 
+document.head.insertAdjacentHTML("beforeend", `
+    <style>
+        .swal2-title, .swal2-html-container { text-align: center !important; }
+        .swal2-popup { text-align: center !important; }
+    </style>
+`);
 
-// Initialize sidebar navigation
-document.addEventListener('DOMContentLoaded', function () {
-    initializeSidebarNav();
-});
+// ===============================================
+// FUNCTIONS
+// ===============================================
 
 /**
  * Initializes the sidebar navigation with tab switching functionality
@@ -232,50 +255,7 @@ function filterApplications() {
                 </tr>`;
             return;
         }
-
-        tbody.innerHTML = '';
-
-        filtered.forEach(app => {
-            let badgeClass = 'pending';
-            if (app.status === 'Approved') badgeClass = 'approved';
-            if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
-            if (app.status === 'Complied') badgeClass = 'complied';
-
-            let actionBtn = '';
-
-            if (app.status === 'Pending') {
-                actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
-            } else if (app.status === 'Complied') {
-                actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
-            } else if (app.status === 'Approved' && !app.or_number) {
-                actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Clearance</button>`;
-            } else if (app.status === 'Approved' && app.or_number) {
-                actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
-            } else if (['Disapproved', 'Cancelled', 'Rejected'].includes(app.status)) {
-                actionBtn = ``;
-            } else {
-                actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
-            }
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${app.id}</td>
-                <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''} ${app.suffix ?? ''}</td>
-                <td>${app.owner_contact_no || 'N/A'}</td>
-                <td>${app.provider || 'N/A'}</td>
-                <td>${app.nature_of_work || 'N/A'}</td>
-                <td>${app.address_of_utility || 'N/A'}</td>
-                <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        ${actionBtn}
-                        <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                        <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+        applicationsPaginator.load(filtered);
     }, 300);
 }
 
@@ -309,10 +289,49 @@ function loadApplicationsFromDB() {
         });
 }
 
+function renderTableRows(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(app => {
+        let badgeClass = 'pending';
+        if (app.status === 'Approved') badgeClass = 'approved';
+        if (app.status === 'Disapproved' || app.status === 'Rejected') badgeClass = 'disapproved';
+        if (app.status === 'Complied') badgeClass = 'complied';
+
+        let actionBtn = '';
+
+        if (app.status === 'Pending') {
+            actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${app.id})">Process</button>`;
+        } else if (app.status === 'Complied') {
+            actionBtn = `<button class="btn-success" onclick="openUpdateModal(${app.id})">Finalize</button>`;
+        } else if (app.status === 'Approved' && !app.or_number) {
+            actionBtn = `<button class="btn-secondary" onclick="generateUtilitiesPermit(${app.id})">Clearance</button>`;
+        } else if (app.status === 'Approved' && app.or_number) {
+            actionBtn = `<button class="btn-info" onclick="viewUtilitiesPermit(${app.id})">View Permit</button>`;
+        } else {
+            actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${app.id})">Update</button>`;
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${app.id}</td>
+            <td>${app.first_name ?? ''} ${app.middle_name ?? ''} ${app.last_name ?? ''}</td>
+            <td>${app.owner_contact_no || 'N/A'}</td>
+            <td>${app.provider || 'N/A'}</td>
+            <td>${app.nature_of_work || 'N/A'}</td>
+            <td>${app.address_of_utility || 'N/A'}</td>
+            <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
+            <td>${actionBtn}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
 /**
  * Refreshes the currently active tab's content with latest application data.
  */
-let isRefreshing = false;
 function refreshActiveTab() {
     const activeTab = document.querySelector('.tab-pane.active');
     if (!activeTab || isRefreshing) return;
@@ -569,10 +588,6 @@ function generateUtilitiesPermit(appId) {
 function viewUtilitiesPermit(appId) {
     generateUtilitiesPermit(appId);
 }
-
-let chart1Instance;
-let chart2Instance;
-let chart3Instance;
 
 /**
  * Loads analytics data and renders charts for utility application statistics
@@ -1192,37 +1207,6 @@ function openModal(modalId) {
 }
 
 /**
- * Closes a modal dialog by removing the 'active' class
- * Restores body scrolling to allow background interaction**/
-document.addEventListener('click', function (e) {
-    if (e.target.classList.contains('close-btn')) {
-        const modal = e.target.closest('.modal');
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-    }
-    if (e.target.classList.contains('cancel-btn')) {
-        const modal = e.target.closest('.modal');
-        if (modal) {
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-    }
-});
-
-// ESC key support
-document.addEventListener('keydown', function (e) {
-    if (e.key === "Escape") {
-        const activeModal = document.querySelector('.modal.active');
-        if (activeModal) {
-            activeModal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-    }
-});
-
-/**
  * Displays a temporary alert message to the user
  * 
  * @param {string} message - The alert message to display
@@ -1444,97 +1428,6 @@ function createApplication(event) {
     });
 }
 
-// ====================== STAFF CREATE FORM ======================
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('staffCreateForm');
-    if (!form) return;
-
-    const submitBtn = document.getElementById('staffSubmitBtn');
-    const clearBtn = document.getElementById('staffClearBtn');
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            form.reset();
-            document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
-            document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
-        });
-    }
-
-    form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        let isValid = true;
-        const requiredIds = ['firstName', 'lastName', 'contactNoOwner', 'addressOwner', 'utilityLotNo', 'utilityStreet', 'requestDate', 'dateOfWork', 'natureOfWork', 'provider'];
-
-        requiredIds.forEach(id => {
-            const field = document.getElementById(id);
-            if (!field) return;
-            const group = field.closest('.form-group');
-            const err = group ? group.querySelector('.error-msg') : null;
-
-            if (!field.value.trim() || (field.tagName === 'SELECT' && (field.value === '' || field.value === 'select'))) {
-                isValid = false;
-                if (group) group.classList.add('error');
-                if (err) err.textContent = 'This field is required';
-            } else {
-                if (group) group.classList.remove('error');
-                if (err) err.textContent = '';
-            }
-        });
-
-        if (!isValid) {
-            Swal.fire({ ...swalTopConfig, icon: 'warning', title: 'Incomplete Form', text: 'Please fill all required fields.' });
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('action', 'create');
-        formData.append('firstName', document.getElementById('firstName').value.trim());
-        formData.append('middleName', document.getElementById('middleName').value.trim());
-        formData.append('lastName', document.getElementById('lastName').value.trim());
-        formData.append('suffix', document.getElementById('suffix').value.trim());
-        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value.trim());
-        formData.append('addressOwner', document.getElementById('addressOwner').value.trim());
-        formData.append('utilityLotNo', document.getElementById('utilityLotNo').value.trim());
-        formData.append('utilityStreet', document.getElementById('utilityStreet').value.trim());
-        formData.append('latitude2', document.getElementById('latitude2').value || '');
-        formData.append('longitude2', document.getElementById('longitude2').value || '');
-        formData.append('requestDate', document.getElementById('requestDate').value);
-        formData.append('dateOfWork', document.getElementById('dateOfWork').value);
-        formData.append('natureOfWork', document.getElementById('natureOfWork').value);
-        formData.append('provider', document.getElementById('provider').value);
-        formData.append('agreed', '1');
-
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating Application...';
-
-        try {
-            const res = await fetch(UTILITY_HANDLER_URL, { method: 'POST', body: formData, credentials: 'include' });
-            const data = await res.json();
-
-            if (data.status === 'success') {
-                Swal.fire({
-                    ...swalTopConfig,
-                    icon: 'success',
-                    title: 'Success!',
-                    text: `Application created! ID: ${data.id || 'N/A'}`,
-                    timer: 2500
-                });
-                form.reset();
-            } else {
-                Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Server error' });
-            }
-        } catch (err) {
-            console.error(err);
-            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Could not connect to server' });
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-        }
-    });
-});
-
 /**
  * Filters applications in review table
  */
@@ -1597,31 +1490,41 @@ async function fetchAuditLogs() {
             return;
         }
 
-        const tbody = document.getElementById('auditTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         if (logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            const tbody = document.getElementById('auditTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
             return;
         }
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${log.id ?? '—'}</td>
-                <td>${log.action ?? '—'}</td>
-                <td>${log.record_id ?? '—'}</td>
-                <td>${log.full_name ?? '—'}</td>
-                <td>${log.created_at ?? '—'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        auditsPaginator.load(logs);
 
     } catch (err) {
         console.error('Failed to fetch audit logs:', err);
     }
+}
+
+function renderRowsAudit(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.id ?? '—'}</td>
+            <td>${log.action ?? '—'}</td>
+            <td>${log.record_id ?? '—'}</td>
+            <td>${log.full_name ?? '—'}</td>
+            <td>${log.created_at ?? '—'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 /**
@@ -1650,137 +1553,6 @@ function appendAuditRow(log) {
     tbody.prepend(tr);
 }
 
-// ====================== DOMContentLoaded: Socket Initialization ======================
-document.addEventListener('DOMContentLoaded', () => {
-    fetchAuditLogs();
-    updateApplicationDate();
-    setInterval(updateApplicationDate, 60000);
-
-    // Replace all 4 initSocket calls with one
-    initSocket("main", "http://localhost:8081", (data) => {
-        switch (data.type) {
-            case "utility_applications_update":
-                refreshActiveTab();
-                break;
-            case "new_audit_log":
-                if (data.payload) appendAuditRow(data.payload);
-                else fetchAuditLogs();
-                refreshActiveTab();
-                break;
-            case "archives_update":
-                loadManagementTable();
-                loadProcessTable();
-                break;
-        }
-    });
-
-    // Event listener for status change to update textarea with templates
-    const statusSelect = document.getElementById('newStatus');
-    if (statusSelect) {
-        statusSelect.addEventListener('change', function () {
-            const status = this.value;
-            const commentBox = document.getElementById('updateComments');
-
-            if (utilityStatusTemplates[status] && commentBox) {
-                commentBox.value = utilityStatusTemplates[status];
-            } else if (commentBox) {
-                // Clear the box if a status without a template is selected
-                commentBox.value = "";
-            }
-        });
-    }
-});
-
-document.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('archive-btn')) return;
-
-    const tableName = e.target.dataset.table;
-    if (tableName !== 'utility_applications') return;
-
-    e.preventDefault();
-    const appId = e.target.dataset.id;
-
-    if (!appId || appId === 'undefined') {
-        console.error('Invalid application ID:', appId);
-        Swal.fire({
-            ...swalTopConfig,
-            icon: 'error',
-            title: 'Error',
-            text: 'Invalid application ID. Please try again.'
-        });
-        return;
-    }
-
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'This application will be archived.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, archive it',
-        cancelButtonText: 'Cancel',
-        buttonsStyling: false,
-        customClass: {
-            popup: 'archive-swal2-popup'
-        }
-    }).then(async (result) => {
-        if (result.isConfirmed) {
-            await archiveRecord('utility_applications', appId);
-
-            // Remove the row immediately from the UI
-            const row = e.target.closest('tr');
-            if (row) row.remove();
-
-            // Refresh both tables to ensure consistency
-            loadManagementTable();
-            loadProcessTable();
-        }
-    });
-});
-
-// Enhanced styles - SweetAlert2 forced to front layer
-document.head.insertAdjacentHTML("beforeend", `
-    <style>
-        .hidden { display: none !important; }
-        .swal2-container, .sweetalert-top { z-index: 2147483647 !important; }
-        .swal2-popup { z-index: 2147483647 !important; }
-        .swal2-backdrop { z-index: 2147483646 !important; }
-    </style>
-`);
-
-document.head.insertAdjacentHTML("beforeend", `
-    <style>
-        .swal2-title, .swal2-html-container { text-align: center !important; }
-        .swal2-popup { text-align: center !important; }
-    </style>
-`);
-
-// ===============================================
-// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
-// ===============================================
-window.loadApplicationsFromDB = loadApplicationsFromDB;
-window.filterApplications = filterApplications;
-window.createApplication = createApplication;
-window.openUpdateModal = openUpdateModal;
-window.viewDetails = viewDetails;
-window.submitUpdate = submitUpdate;
-window.applyPrompt = applyPrompt;
-window.loadSummarySelect = loadSummarySelect;
-window.updateSummary = updateSummary;
-window.downloadSummary = downloadSummary;
-window.printSummary = printSummary;
-window.loadProcessTable = loadProcessTable;
-window.loadAnalyticsTab = loadAnalyticsTab;
-window.generateUtilitiesPermit = generateUtilitiesPermit;
-window.generateUtilityPermit = generateUtilitiesPermit;
-window.generateUtilitiesClearance = generateUtilitiesPermit;
-window.viewUtilitiesPermit = viewUtilitiesPermit;
-window.switchTab = switchTab;
-window.initializeSidebarNav = initializeSidebarNav;
-window.getCurrentDateString = getCurrentDateString;
-window.updateApplicationDate = updateApplicationDate;
-window.filterReviewApplications = filterReviewApplications;
-window.showAlert = showAlert;
-window.openModal = openModal;
 // ==================== MAP LOCATION PICKER ====================
 
 function openMapPicker(target) {
@@ -1899,4 +1671,256 @@ async function initializeMapPicker(containerId, target) {
     setTimeout(() => map.invalidateSize(), 400);
 }
 
+// Close modal via close/cancel buttons
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('close-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+// ESC key support
+document.addEventListener('keydown', function (e) {
+    if (e.key === "Escape") {
+        const activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+    }
+});
+
+// Archive button handler
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('archive-btn')) return;
+
+    const tableName = e.target.dataset.table;
+    if (tableName !== 'utility_applications') return;
+
+    e.preventDefault();
+    const appId = e.target.dataset.id;
+
+    if (!appId || appId === 'undefined') {
+        console.error('Invalid application ID:', appId);
+        Swal.fire({
+            ...swalTopConfig,
+            icon: 'error',
+            title: 'Error',
+            text: 'Invalid application ID. Please try again.'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This application will be archived.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, archive it',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'archive-swal2-popup'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await archiveRecord('utility_applications', appId);
+
+            // Remove the row immediately from the UI
+            const row = e.target.closest('tr');
+            if (row) row.remove();
+
+            // Refresh both tables to ensure consistency
+            loadManagementTable();
+            loadProcessTable();
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize sidebar navigation
+    initializeSidebarNav();
+
+    auditsPaginator = createPaginator({
+        containerId: 'auditsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderRowsAudit(pageItems);
+    });
+
+    applicationsPaginator = createPaginator({
+        containerId: 'utilityApplicationsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderTableRows(pageItems);
+    });
+
+    // Initialize date
+    fetchAuditLogs();
+    updateApplicationDate();
+    setInterval(updateApplicationDate, 60000);
+
+    // Socket initialization
+    initSocket("main", "http://localhost:8081", (data) => {
+        switch (data.type) {
+            case "utility_applications_update":
+                refreshActiveTab();
+                break;
+            case "new_audit_log":
+                if (data.payload) appendAuditRow(data.payload);
+                else fetchAuditLogs();
+                refreshActiveTab();
+                break;
+            case "archives_update":
+                loadManagementTable();
+                loadProcessTable();
+                break;
+        }
+    });
+
+    // Status change listener for template auto-fill
+    const statusSelect = document.getElementById('newStatus');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function () {
+            const status = this.value;
+            const commentBox = document.getElementById('updateComments');
+
+            if (utilityStatusTemplates[status] && commentBox) {
+                commentBox.value = utilityStatusTemplates[status];
+            } else if (commentBox) {
+                // Clear the box if a status without a template is selected
+                commentBox.value = "";
+            }
+        });
+    }
+
+    // Staff create form
+    const form = document.getElementById('staffCreateForm');
+    if (!form) return;
+
+    const submitBtn = document.getElementById('staffSubmitBtn');
+    const clearBtn = document.getElementById('staffClearBtn');
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            form.reset();
+            document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+            document.querySelectorAll('.form-group').forEach(el => el.classList.remove('error'));
+        });
+    }
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        let isValid = true;
+        const requiredIds = ['firstName', 'lastName', 'contactNoOwner', 'addressOwner', 'utilityLotNo', 'utilityStreet', 'requestDate', 'dateOfWork', 'natureOfWork', 'provider'];
+
+        requiredIds.forEach(id => {
+            const field = document.getElementById(id);
+            if (!field) return;
+            const group = field.closest('.form-group');
+            const err = group ? group.querySelector('.error-msg') : null;
+
+            if (!field.value.trim() || (field.tagName === 'SELECT' && (field.value === '' || field.value === 'select'))) {
+                isValid = false;
+                if (group) group.classList.add('error');
+                if (err) err.textContent = 'This field is required';
+            } else {
+                if (group) group.classList.remove('error');
+                if (err) err.textContent = '';
+            }
+        });
+
+        if (!isValid) {
+            Swal.fire({ ...swalTopConfig, icon: 'warning', title: 'Incomplete Form', text: 'Please fill all required fields.' });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('action', 'create');
+        formData.append('firstName', document.getElementById('firstName').value.trim());
+        formData.append('middleName', document.getElementById('middleName').value.trim());
+        formData.append('lastName', document.getElementById('lastName').value.trim());
+        formData.append('suffix', document.getElementById('suffix').value.trim());
+        formData.append('contactNoOwner', document.getElementById('contactNoOwner').value.trim());
+        formData.append('addressOwner', document.getElementById('addressOwner').value.trim());
+        formData.append('utilityLotNo', document.getElementById('utilityLotNo').value.trim());
+        formData.append('utilityStreet', document.getElementById('utilityStreet').value.trim());
+        formData.append('latitude2', document.getElementById('latitude2').value || '');
+        formData.append('longitude2', document.getElementById('longitude2').value || '');
+        formData.append('requestDate', document.getElementById('requestDate').value);
+        formData.append('dateOfWork', document.getElementById('dateOfWork').value);
+        formData.append('natureOfWork', document.getElementById('natureOfWork').value);
+        formData.append('provider', document.getElementById('provider').value);
+        formData.append('agreed', '1');
+
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Application...';
+
+        try {
+            const res = await fetch(UTILITY_HANDLER_URL, { method: 'POST', body: formData, credentials: 'include' });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    ...swalTopConfig,
+                    icon: 'success',
+                    title: 'Success!',
+                    text: `Application created! ID: ${data.id || 'N/A'}`,
+                    timer: 2500
+                });
+                form.reset();
+            } else {
+                Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Failed', text: data.message || 'Server error' });
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire({ ...swalTopConfig, icon: 'error', title: 'Network Error', text: 'Could not connect to server' });
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+});
+
+// ===============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
+// ===============================================
+window.loadApplicationsFromDB = loadApplicationsFromDB;
+window.filterApplications = filterApplications;
+window.createApplication = createApplication;
+window.openUpdateModal = openUpdateModal;
+window.viewDetails = viewDetails;
+window.submitUpdate = submitUpdate;
+window.applyPrompt = applyPrompt;
+window.loadSummarySelect = loadSummarySelect;
+window.updateSummary = updateSummary;
+window.downloadSummary = downloadSummary;
+window.printSummary = printSummary;
+window.loadProcessTable = loadProcessTable;
+window.loadAnalyticsTab = loadAnalyticsTab;
+window.generateUtilitiesPermit = generateUtilitiesPermit;
+window.generateUtilityPermit = generateUtilitiesPermit;
+window.generateUtilitiesClearance = generateUtilitiesPermit;
+window.viewUtilitiesPermit = viewUtilitiesPermit;
+window.switchTab = switchTab;
+window.initializeSidebarNav = initializeSidebarNav;
+window.getCurrentDateString = getCurrentDateString;
+window.updateApplicationDate = updateApplicationDate;
+window.filterReviewApplications = filterReviewApplications;
+window.showAlert = showAlert;
+window.openModal = openModal;
 window.openMapPicker = openMapPicker;

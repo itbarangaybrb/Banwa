@@ -1,0 +1,37 @@
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    margin-block: 16px;
+}
+
+.paginator-btn {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.paginator-btn.active {
+    background: #00247c;
+    color: #fff;
+    border-color: #00247c;
+    cursor: default;
+}
+
+.paginator-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.paginator-btn:not(.active):not(.disabled):hover {
+    background: #f0f0f0;
+}
+
+.paginator-ellipsis {
+    padding: 6px 4px;
+    color: #888;
+}

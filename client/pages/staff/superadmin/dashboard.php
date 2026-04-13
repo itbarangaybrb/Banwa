@@ -22,6 +22,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="../../../styles/staff/superadmin/dashboard.css">
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/components/loader.css">
+    <link rel="stylesheet" href="../../../styles/utils/pagination.css">
 </head>
 
 <body>
@@ -129,6 +130,7 @@ $full_name = getCurrentUserName();
 
                     <tbody id="auditTableBody"></tbody>
                 </table>
+                <div class="pagination-container" id="auditsPagination"></div>
             </div>
         </section>
     </main>

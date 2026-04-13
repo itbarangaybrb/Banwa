@@ -28,6 +28,7 @@ $full_name = getCurrentUserName();
     <link rel="stylesheet" href="../../../styles/staff/analytics.css">
     <link rel="stylesheet" href="../../../styles/staff/dss.css" />
     <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
+    <link rel="stylesheet" href="../../../styles/utils/pagination.css">
 </head>
 
 <body>
@@ -332,6 +333,7 @@ $full_name = getCurrentUserName();
 
                     <tbody id="auditTableBody"></tbody>
                 </table>
+                <div class="pagination-container" id="auditsPagination"></div>
             </div>
         </div>
         <!-- Management tab with application table and search -->
@@ -381,6 +383,7 @@ $full_name = getCurrentUserName();
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
+                <div class="pagination-container" id="businessApplicationsPagination"></div>
             </div>
         </div>
         <!-- Create New Application form with validation and OCR verification -->

@@ -1,10 +1,13 @@
 // Configuration
 import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
+import { createPaginator } from '../../utils/pagination.js';
 
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
 let incidents = [];
+let auditsPaginator;
+let applicationsPaginator;
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
@@ -162,7 +165,7 @@ function filterIncidents() {
     }
 
     const searchTerm = searchEl ? searchEl.value.toLowerCase() : '';
-    tbody.innerHTML = '';
+    // tbody.innerHTML = '';
 
     if (!incidents || !Array.isArray(incidents) || incidents.length === 0) {
         tbody.innerHTML = `
@@ -200,7 +203,66 @@ function filterIncidents() {
         return;
     }
 
-    filtered.forEach(incident => {
+    // filtered.forEach(incident => {
+    //     let badgeClass = 'reported';
+    //     if (incident.status === 'Pending') badgeClass = 'pending';
+    //     if (incident.status === 'Resolved') badgeClass = 'resolved';
+    //     if (incident.status === 'Under Investigation') badgeClass = 'investigation';
+    //     if (incident.status === 'Closed') badgeClass = 'closed';
+    //     if (incident.status === 'Cancelled') badgeClass = 'cancelled';
+
+    //     let actionBtn = '';
+
+    //     if (incident.status === 'Pending') {
+    //         actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Process</button>`;
+    //     }
+    //     else if (incident.status === 'Reported') {
+    //         actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Review</button>`;
+    //     }
+    //     else if (incident.status === 'Under Investigation') {
+    //         actionBtn = `<button class="btn-primary" onclick="openUpdateModal(${incident.id})">Investigate</button>`;
+    //     }
+    //     else if (incident.status === 'Referred to Authorities') {
+    //         actionBtn = `<button class="btn-warning" onclick="openUpdateModal(${incident.id})">Follow Up</button>`;
+    //     }
+    //     else if (incident.status === 'Resolved') {
+    //         actionBtn = `<button class="btn-success" onclick="openUpdateModal(${incident.id})">Finalize</button>`;
+    //     }
+    //     else {
+    //         actionBtn = `<button class="btn-secondary" onclick="openUpdateModal(${incident.id})">Update</button>`;
+    //     }
+
+    //     const row = document.createElement('tr');
+    //     row.innerHTML = `
+    //     <td>${incident.id}</td>
+    //     <td>${incident.rp_full_name || 'N/A'}</td>
+    //     <td>${incident.vic_full_name || 'N/A'}</td>
+    //     <td>${incident.sus_full_name || 'N/A'}</td>
+    //     <td>${incident.incident_type || 'N/A'}</td>
+    //     <td>${incident.rp_address || 'N/A'}</td>
+    //     <td>${formatDateTime(incident.incident_timestamp)}</td>
+    //     <td><span class="status-badge status-${badgeClass}">${incident.status}</span></td>
+    //     <td>
+    //         <div class="action-buttons">
+    //             ${actionBtn}
+    //             <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
+    //             <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="incident_reports">Archive</button>
+    //         </div>
+    //     </td>
+    // `;
+    //     tbody.appendChild(row);
+    // });
+
+    applicationsPaginator.load(filtered);
+
+}
+
+function renderTableRows(data) {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(incident => {
         let badgeClass = 'reported';
         if (incident.status === 'Pending') badgeClass = 'pending';
         if (incident.status === 'Resolved') badgeClass = 'resolved';
@@ -2111,31 +2173,41 @@ async function fetchAuditLogs() {
             return;
         }
 
-        const tbody = document.getElementById('auditTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
         if (logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+            const tbody = document.getElementById('auditTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
             return;
         }
 
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${log.id ?? '—'}</td>
-                <td>${log.action ?? '—'}</td>
-                <td>${log.record_id ?? '—'}</td>
-                <td>${log.full_name ?? '—'}</td>
-                <td>${log.created_at ?? '—'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        auditsPaginator.load(logs);
 
     } catch (err) {
         console.error('Failed to fetch audit logs:', err);
     }
+}
+
+function renderRowsAudit(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No audit logs found.</td></tr>';
+        return;
+    }
+
+    logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.id ?? '—'}</td>
+            <td>${log.action ?? '—'}</td>
+            <td>${log.record_id ?? '—'}</td>
+            <td>${log.full_name ?? '—'}</td>
+            <td>${log.created_at ?? '—'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 /**
@@ -2168,6 +2240,22 @@ function appendAuditRow(log) {
 
 // Wait for the DOM content to fully load before running the script
 document.addEventListener('DOMContentLoaded', () => {
+    auditsPaginator = createPaginator({
+        containerId: 'auditsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderRowsAudit(pageItems);
+    });
+
+    applicationsPaginator = createPaginator({
+        containerId: 'incidentReportApplicationsPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderTableRows(pageItems);
+    });
+
     fetchAuditLogs();
 
     updateApplicationDate();

@@ -1,7 +1,10 @@
-import supabase from "../../../../server/api/supabase.js";
-import { initSocket, sockets } from '../../utils/socket.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
+import supabase from "../../../../server/api/supabase.js";
 import { archiveRecord } from '../../utils/archives.js';
+import { createPaginator } from '../../utils/pagination.js';
+import { initSocket } from '../../utils/socket.js';
+
+let applicationsPaginator;
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
@@ -43,336 +46,6 @@ swalStyle.innerHTML = `
     }
 `;
 document.head.appendChild(swalStyle);
-
-/**
- * Handles all click interactions in the user management interface.
- * Manages modal toggling, form cancellation, and user action buttons.
- * 
- * - Modal triggers: Opens modals via data-modal attributes
- * - Cancel buttons: Closes modals and resets forms with validation clearing
- * - Edit buttons: Populates and opens the edit modal with user data
- * - Suspend buttons: Opens suspend modal for setting suspension period
- * - Unsuspend buttons: Directly unsuspends the user
- * - Archive buttons: Directly archives the user
- * - Back button: Returns from suspend modal to edit modal
- * 
- * @param {Event} e - Click event
- */
-document.addEventListener('click', (e) => {
-    // Handle modal opening via data-modal attribute
-    const modalId = e.target.dataset.modal;
-    if (modalId) document.getElementById(modalId)?.classList.add('active');
-
-    // Handle cancel button clicks - close modal, reset form, clear validation
-    if (e.target.classList.contains('cancel-btn')) {
-        const modal = e.target.closest('.modal');
-        modal?.classList.remove('active');
-
-        const form = modal?.querySelector('form');
-        if (form) {
-            form.reset();
-
-            form.querySelectorAll('input, select, textarea').forEach(input => {
-                validator.clear(input);
-            });
-        }
-    }
-
-    // Handle edit button clicks
-    if (e.target.classList.contains('edit-btn')) {
-        const btn = e.target;
-
-        document.getElementById('editModal').classList.add('active');
-
-        const form = document.getElementById('editForm');
-        form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
-        form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
-
-        let roleValue = btn.dataset.role;
-
-        const roleMap = {
-            'Resident': '1',
-            'Super Admin': '2',
-            'Admin': '3',
-            'Business staff': '4',
-            'Construction staff': '5',
-            'Utility staff': '6',
-            'Finance staff': '7'
-        };
-
-        if (roleMap[roleValue]) {
-            roleValue = roleMap[roleValue];
-        }
-
-        form.querySelector('[name="editRole"]').value = roleValue || '';
-
-        form.querySelector('[name="street"]').value = btn.dataset.street || '';
-        form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
-
-        form.dataset.userId = btn.dataset.id;
-
-        const isSuspended = btn.dataset.status === 'suspended';
-        const suspendBtn = document.getElementById('editSuspendBtn');
-        const unsuspendBtn = document.getElementById('editUnsuspendBtn');
-
-        suspendBtn.dataset.id = btn.dataset.id;
-        unsuspendBtn.dataset.id = btn.dataset.id;
-
-        suspendBtn.style.display = isSuspended ? 'none' : '';
-        unsuspendBtn.style.display = isSuspended ? '' : 'none';
-
-        document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
-    }
-
-    // Handle suspend button clicks
-    if (e.target.classList.contains('suspend-btn')) {
-        if (e.target.type === 'submit' || e.target.closest('#suspendForm')) return;
-
-        const userId = e.target.dataset.id;
-
-        const form = document.getElementById('suspendForm');
-        if (!form) return;
-
-        if (!userId || userId === 'undefined') {
-            console.error('Invalid userId in click handler:', userId);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Invalid user ID. Please try again.',
-                buttonsStyling: false,
-                customClass: {
-                    popup: 'swal-popup',
-                    title: 'swal-title',
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
-                }
-            });
-            return;
-        }
-
-        form.dataset.userId = userId;
-        form.reset();
-
-        const reasonInput = form.querySelector('[name="suspendReason"]');
-        const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
-        if (reasonInput) validator.clear(reasonInput);
-        if (detailsInput) validator.clear(detailsInput);
-
-        document.getElementById('editModal')?.classList.remove('active');
-        form.closest('.modal')?.classList.add('active');
-    }
-
-    // Handle unsuspend button clicks
-    if (e.target.classList.contains('unsuspend-btn')) {
-        const userId = e.target.dataset.id;
-        document.getElementById('editModal')?.classList.remove('active');
-        unsuspendUser(userId);
-    }
-
-    // Handle archive button clicks
-    if (e.target.id === 'editArchiveBtn') {
-        const userId = e.target.dataset.id;
-        document.getElementById('editModal')?.classList.remove('active');
-
-        // Show confirmation dialog before archiving
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'This user will be archived.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, archive it',
-            cancelButtonText: 'Cancel',
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await archiveRecord('users', userId);
-                // Explicitly refresh users table after archiving
-                fetchUsers();
-            }
-        });
-    }
-
-    // Handle suspend modal back button
-    if (e.target.id === 'suspendBackBtn') {
-        document.getElementById('suspendModal').classList.remove('active');
-        document.getElementById('editModal').classList.add('active');
-    }
-});
-
-/**
- * Initialize WebSocket connection and form handlers on page load.
- * Sets up real-time updates for user list changes and initializes
- * all forms with validation and submission handlers.
- */
-document.addEventListener('DOMContentLoaded', () => {
-    initSocket("main", "http://localhost:8081", (data) => {
-        switch (data.type) {
-            case "users_update":
-                fetchUsers();
-                break;
-        }
-    });
-
-    fetchUsers();
-
-    const createForm = document.getElementById('createForm');
-    if (createForm) initializeForm(createForm, handleCreateFormSubmit);
-
-    const editForm = document.getElementById('editForm');
-    if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
-
-    const suspendForm = document.getElementById('suspendForm');
-    if (suspendForm) {
-        initializeForm(suspendForm, handleSuspendFormSubmit);
-        initializeSuspendTemplates();
-    }
-});
-
-/**
- * Fetch all users from the server
- * Filters archived users
- * Dynamically renders user rows into the table body
- *
- * @async
- * @returns {Promise<void>}
- */
-export async function fetchUsers() {
-    const tbody = document.getElementById('usersTableBody');
-    if (!tbody) return;
-
-    try {
-        const resp = await fetch('/server/api/staff/superadmin/get_user_all.php', {
-            credentials: 'include',
-            cache: 'no-store'
-        });
-
-        const users = await resp.json();
-        tbody.innerHTML = '';
-
-        if (!Array.isArray(users) || users.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
-            return;
-        }
-
-        const activeUsers = users.filter(user => !user.is_archived);
-
-        if (activeUsers.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
-            return;
-        }
-
-        activeUsers.forEach(user => {
-            const isSuspended = user.status === 'suspended';
-
-            const suspendButton = isSuspended
-                ? `<button class="buttons unsuspend-btn" data-id="${user.user_id}">Unsuspend</button>`
-                : `<button class="buttons suspend-btn" data-id="${user.user_id}">Suspend</button>`;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${user.user_id}</td>
-                <td>${user.full_name}</td>
-                <td>${user.email}</td>
-                <td>${user.lot_no || ''}</td>
-                <td>${user.street || ''}</td>
-                <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-                <td>${user.role_id}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="buttons edit-btn"
-                                data-modal="editModal"
-                                data-id="${user.user_id}"
-                                data-fullname="${user.full_name}"
-                                data-email="${user.email}"
-                                data-role="${user.role_id}"
-                                data-status="${user.status}"
-                                data-street="${user.street || ''}"
-                                data-lotno="${user.lot_no || ''}">
-                            Manage
-                        </button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-    } catch (err) {
-        console.error('Failed to fetch users:', err);
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading users</td></tr>`;
-    }
-};
-
-/**
- * Unsuspends a user account after confirmation
- * @param {string} userId - ID of the user to unsuspend
- */
-async function unsuspendUser(userId) {
-    const confirmResult = await Swal.fire({
-        title: 'Unsuspend this user?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, unsuspend',
-        cancelButtonText: 'Cancel',
-        buttonsStyling: false,
-        customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
-        }
-    });
-
-    if (!confirmResult.isConfirmed) return;
-
-    try {
-        const response = await fetch("/server/api/staff/superadmin/unsuspend_user.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ user_id: userId })
-        });
-        if (!response.ok) throw new Error("Request failed");
-        const data = await response.json();
-        if (!data.success) throw new Error(data.message || "Failed to unsuspend");
-
-        await Swal.fire({
-            icon: 'success',
-            title: 'User unsuspended',
-            timer: 2000,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
-
-        fetchUsers();
-    } catch (err) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err.message,
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
-    }
-}
 
 /**
  * Object containing predefined suspension reason templates.
@@ -421,40 +94,6 @@ const reasonTemplates = {
         "User failed to complete identity confirmation within the allowed period."
     ]
 };
-
-/**
- * Initializes suspend reason templates.
- * Populates the reasonTemplates container with buttons for the selected reason.
- * Clicking a button fills the suspendReasonDetails textarea with the corresponding template.
- */
-function initializeSuspendTemplates() {
-    const select = document.getElementById('suspendReason');
-    const textarea = document.getElementById('suspendReasonDetails');
-    const container = document.getElementById('reasonTemplates');
-
-    if (!select || !textarea || !container) return;
-
-    select.addEventListener('change', () => {
-        const selected = select.value;
-        container.innerHTML = '';
-
-        if (!reasonTemplates[selected]) return;
-
-        reasonTemplates[selected].forEach(template => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.classList.add('buttons', 'reason-btn');
-            btn.textContent = template;
-
-            btn.addEventListener('click', () => {
-                textarea.value = template;
-                validator.clear(textarea);
-            });
-
-            container.appendChild(btn);
-        });
-    });
-}
 
 /**
  * Validator for form input fields
@@ -556,6 +195,223 @@ const validator = (() => {
         clear: clearError
     };
 })();
+
+/**
+ * Fetch all users from the server
+ * Filters archived users
+ * Dynamically renders user rows into the table body
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+export async function fetchUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+
+    try {
+        const resp = await fetch('/server/api/staff/superadmin/get_user_all.php', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        const users = await resp.json();
+        // tbody.innerHTML = '';
+
+        if (!Array.isArray(users) || users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
+            return;
+        }
+
+        const activeUsers = users.filter(user => !user.is_archived);
+
+        if (activeUsers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No users found</td></tr>`;
+            return;
+        }
+
+        // activeUsers.forEach(user => {
+        //     const isSuspended = user.status === 'suspended';
+
+        //     const suspendButton = isSuspended
+        //         ? `<button class="buttons unsuspend-btn" data-id="${user.user_id}">Unsuspend</button>`
+        //         : `<button class="buttons suspend-btn" data-id="${user.user_id}">Suspend</button>`;
+
+        //     const tr = document.createElement('tr');
+        //     tr.innerHTML = `
+        //         <tr>${user.user_id}</td>
+        //         <td>${user.full_name}</td>
+        //         <td>${user.email}</td>
+        //         <td>${user.lot_no || ''}</td>
+        //         <td>${user.street || ''}</td>
+        //         <td><span class="status-badge status-${user.status}">${user.status}</span></td>
+        //         <td>${user.role_id}</td>
+        //         <td>
+        //             <div class="action-buttons">
+        //                 <button class="buttons edit-btn"
+        //                         data-modal="editModal"
+        //                         data-id="${user.user_id}"
+        //                         data-fullname="${user.full_name}"
+        //                         data-email="${user.email}"
+        //                         data-role="${user.role_id}"
+        //                         data-status="${user.status}"
+        //                         data-street="${user.street || ''}"
+        //                         data-lotno="${user.lot_no || ''}">
+        //                     Manage
+        //                 </button>
+        //             </div>
+        //         </td>
+        //     `;
+        //     tbody.appendChild(tr);
+        // });
+
+        applicationsPaginator.load(activeUsers);
+
+    } catch (err) {
+        console.error('Failed to fetch users:', err);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Error loading users</td></tr>`;
+    }
+};
+
+function renderTableRows(data) {
+    const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    data.forEach(user => {
+        const isSuspended = user.status === 'suspended';
+
+        const suspendButton = isSuspended
+            ? `<button class="buttons unsuspend-btn" data-id="${user.user_id}">Unsuspend</button>`
+            : `<button class="buttons suspend-btn" data-id="${user.user_id}">Suspend</button>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+                <td>${user.user_id}</td>
+                <td>${user.full_name}</td>
+                <td>${user.email}</td>
+                <td>${user.lot_no || ''}</td>
+                <td>${user.street || ''}</td>
+                <td><span class="status-badge status-${user.status}">${user.status}</span></td>
+                <td>${user.role_id}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="buttons edit-btn"
+                                data-modal="editModal"
+                                data-id="${user.user_id}"
+                                data-fullname="${user.full_name}"
+                                data-email="${user.email}"
+                                data-role="${user.role_id}"
+                                data-status="${user.status}"
+                                data-street="${user.street || ''}"
+                                data-lotno="${user.lot_no || ''}">
+                            Manage
+                        </button>
+                    </div>
+                </td>
+            `;
+        tbody.appendChild(tr);
+    });
+}
+
+/**
+ * Unsuspends a user account after confirmation
+ * @param {string} userId - ID of the user to unsuspend
+ */
+async function unsuspendUser(userId) {
+    const confirmResult = await Swal.fire({
+        title: 'Unsuspend this user?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, unsuspend',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        customClass: {
+            popup: 'swal-popup',
+            title: 'swal-title',
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+        const response = await fetch("/server/api/staff/superadmin/unsuspend_user.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user_id: userId })
+        });
+        if (!response.ok) throw new Error("Request failed");
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || "Failed to unsuspend");
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'User unsuspended',
+            timer: 2000,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+
+        fetchUsers();
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        });
+    }
+}
+
+/**
+ * Initializes suspend reason templates.
+ * Populates the reasonTemplates container with buttons for the selected reason.
+ * Clicking a button fills the suspendReasonDetails textarea with the corresponding template.
+ */
+function initializeSuspendTemplates() {
+    const select = document.getElementById('suspendReason');
+    const textarea = document.getElementById('suspendReasonDetails');
+    const container = document.getElementById('reasonTemplates');
+
+    if (!select || !textarea || !container) return;
+
+    select.addEventListener('change', () => {
+        const selected = select.value;
+        container.innerHTML = '';
+
+        if (!reasonTemplates[selected]) return;
+
+        reasonTemplates[selected].forEach(template => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.classList.add('buttons', 'reason-btn');
+            btn.textContent = template;
+
+            btn.addEventListener('click', () => {
+                textarea.value = template;
+                validator.clear(textarea);
+            });
+
+            container.appendChild(btn);
+        });
+    });
+}
 
 /**
  * Generates validation configuration for a form
@@ -1037,3 +893,201 @@ async function handleSuspendFormSubmit(form) {
         });
     }
 }
+
+/**
+ * Handles all click interactions in the user management interface.
+ * Manages modal toggling, form cancellation, and user action buttons.
+ * 
+ * - Modal triggers: Opens modals via data-modal attributes
+ * - Cancel buttons: Closes modals and resets forms with validation clearing
+ * - Edit buttons: Populates and opens the edit modal with user data
+ * - Suspend buttons: Opens suspend modal for setting suspension period
+ * - Unsuspend buttons: Directly unsuspends the user
+ * - Archive buttons: Directly archives the user
+ * - Back button: Returns from suspend modal to edit modal
+ * 
+ * @param {Event} e - Click event
+ */
+document.addEventListener('click', (e) => {
+    // Handle modal opening via data-modal attribute
+    const modalId = e.target.dataset.modal;
+    if (modalId) document.getElementById(modalId)?.classList.add('active');
+
+    // Handle cancel button clicks - close modal, reset form, clear validation
+    if (e.target.classList.contains('cancel-btn')) {
+        const modal = e.target.closest('.modal');
+        modal?.classList.remove('active');
+
+        const form = modal?.querySelector('form');
+        if (form) {
+            form.reset();
+
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                validator.clear(input);
+            });
+        }
+    }
+
+    // Handle edit button clicks
+    if (e.target.classList.contains('edit-btn')) {
+        const btn = e.target;
+
+        document.getElementById('editModal').classList.add('active');
+
+        const form = document.getElementById('editForm');
+        form.querySelector('[name="editFullName"]').value = btn.dataset.fullname || '';
+        form.querySelector('[name="editEmail"]').value = btn.dataset.email || '';
+
+        let roleValue = btn.dataset.role;
+
+        const roleMap = {
+            'Resident': '1',
+            'Super Admin': '2',
+            'Admin': '3',
+            'Business staff': '4',
+            'Construction staff': '5',
+            'Utility staff': '6',
+            'Finance staff': '7'
+        };
+
+        if (roleMap[roleValue]) {
+            roleValue = roleMap[roleValue];
+        }
+
+        form.querySelector('[name="editRole"]').value = roleValue || '';
+
+        form.querySelector('[name="street"]').value = btn.dataset.street || '';
+        form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
+
+        form.dataset.userId = btn.dataset.id;
+
+        const isSuspended = btn.dataset.status === 'suspended';
+        const suspendBtn = document.getElementById('editSuspendBtn');
+        const unsuspendBtn = document.getElementById('editUnsuspendBtn');
+
+        suspendBtn.dataset.id = btn.dataset.id;
+        unsuspendBtn.dataset.id = btn.dataset.id;
+
+        suspendBtn.style.display = isSuspended ? 'none' : '';
+        unsuspendBtn.style.display = isSuspended ? '' : 'none';
+
+        document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
+    }
+
+    // Handle suspend button clicks
+    if (e.target.classList.contains('suspend-btn')) {
+        if (e.target.type === 'submit' || e.target.closest('#suspendForm')) return;
+
+        const userId = e.target.dataset.id;
+
+        const form = document.getElementById('suspendForm');
+        if (!form) return;
+
+        if (!userId || userId === 'undefined') {
+            console.error('Invalid userId in click handler:', userId);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Invalid user ID. Please try again.',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'swal-popup',
+                    title: 'swal-title',
+                    confirmButton: 'swal-confirm-btn',
+                    cancelButton: 'swal-cancel-btn'
+                }
+            });
+            return;
+        }
+
+        form.dataset.userId = userId;
+        form.reset();
+
+        const reasonInput = form.querySelector('[name="suspendReason"]');
+        const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+        if (reasonInput) validator.clear(reasonInput);
+        if (detailsInput) validator.clear(detailsInput);
+
+        document.getElementById('editModal')?.classList.remove('active');
+        form.closest('.modal')?.classList.add('active');
+    }
+
+    // Handle unsuspend button clicks
+    if (e.target.classList.contains('unsuspend-btn')) {
+        const userId = e.target.dataset.id;
+        document.getElementById('editModal')?.classList.remove('active');
+        unsuspendUser(userId);
+    }
+
+    // Handle archive button clicks
+    if (e.target.id === 'editArchiveBtn') {
+        const userId = e.target.dataset.id;
+        document.getElementById('editModal')?.classList.remove('active');
+
+        // Show confirmation dialog before archiving
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This user will be archived.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, archive it',
+            cancelButtonText: 'Cancel',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'swal-popup',
+                title: 'swal-title',
+                confirmButton: 'swal-confirm-btn',
+                cancelButton: 'swal-cancel-btn'
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await archiveRecord('users', userId);
+                // Explicitly refresh users table after archiving
+                fetchUsers();
+            }
+        });
+    }
+
+    // Handle suspend modal back button
+    if (e.target.id === 'suspendBackBtn') {
+        document.getElementById('suspendModal').classList.remove('active');
+        document.getElementById('editModal').classList.add('active');
+    }
+});
+
+/**
+ * Initialize WebSocket connection and form handlers on page load.
+ * Sets up real-time updates for user list changes and initializes
+ * all forms with validation and submission handlers.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    applicationsPaginator = createPaginator({
+        containerId: 'usersPagination',
+        pageSize: 10,
+        windowSize: 5
+    }).onPage((pageItems) => {
+        renderTableRows(pageItems);
+    });
+
+    initSocket("main", "http://localhost:8081", (data) => {
+        switch (data.type) {
+            case "users_update":
+                fetchUsers();
+                break;
+        }
+    });
+
+    fetchUsers();
+
+    const createForm = document.getElementById('createForm');
+    if (createForm) initializeForm(createForm, handleCreateFormSubmit);
+
+    const editForm = document.getElementById('editForm');
+    if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
+
+    const suspendForm = document.getElementById('suspendForm');
+    if (suspendForm) {
+        initializeForm(suspendForm, handleSuspendFormSubmit);
+        initializeSuspendTemplates();
+    }
+});
