@@ -1,7 +1,7 @@
 // Configuration imports for Supabase, address data, and service worker registration
-import supabase from '../../../server/api/supabase.js';
-import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import supabase from '../../../server/api/supabase.js';
 import { initSocket, sockets } from '../utils/socket.js';
 
 const BUSINESS_HANDLER_URL = '/server/handlers/staff/business/business_handler.php';
@@ -491,15 +491,18 @@ function validateField(config) {
         });
     });
 
-    // Address validation for business address
-    [businessLotNo, businessStreet].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
-        });
-        el.addEventListener('input', () => validator.clear(el));
+
+    businessLotNo.addEventListener('blur', () => {
+        if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
     });
 
-    // Input sanitization for numeric fields (remove non-digit characters)
+    businessStreet.addEventListener('blur', () => {
+        if (businessLotNo.value && businessStreet.value) validator.address(businessLotNo, businessStreet);
+    });
+
+    businessLotNo.addEventListener('input', () => validator.clear(businessLotNo));
+    businessStreet.addEventListener('input', () => validator.clear(businessStreet));
+
     [contactNoOwner, contactNoBusiness, businessLotNo, noOfEmployees].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
@@ -553,13 +556,15 @@ document.getElementById('nextToWaiver').addEventListener('click', async () => {
         natureOfApplication,
         typeOfStructureSelect,
         typeOfStructureSelect.value === 'Others' ? typeOfStructureSpecify : null,
-        businessLotNo,
-        businessStreet,
         noOfEmployees
     ].filter(Boolean);
 
 
-    const addressValid = validator.address(businessLotNo, businessStreet);
+    const lotValid = validator.number(businessLotNo, 'House No. is required', { maxLength: 2 });
+    const streetValid = validator.select(businessStreet, 'Street is required');
+    const addressValid = lotValid && streetValid
+        ? validator.address(businessLotNo, businessStreet)
+        : false;
     const fieldsValid = validateStep(stepFields);
 
     if (!addressValid || !fieldsValid) {
@@ -1299,8 +1304,16 @@ async function initializeMapPicker(target) {
                         if (target === '2') {
                             const businessLot = document.getElementById('businessLotNo');
                             const businessStreet = document.getElementById('businessStreet');
-                            if (businessLot) { businessLot.value = house.house_number || ''; businessLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (businessStreet) { businessStreet.value = house.street_name || ''; businessStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (businessLot) {
+                                businessLot.value = house.house_number || '';
+                                businessLot.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(businessLot);
+                            }
+                            if (businessStreet) {
+                                businessStreet.value = house.street_name || '';
+                                businessStreet.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(businessStreet);
+                            }
                         }
                     });
 

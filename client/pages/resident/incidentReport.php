@@ -18,7 +18,7 @@ if ($_SESSION['role_id'] != 1) {
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
-    <link rel="stylesheet" href="../../styles/resident/incidentReport.css">
+    <link rel="stylesheet" href="../../styles/resident/application_forms.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -277,12 +277,13 @@ if ($_SESSION['role_id'] != 1) {
         </div>
 
         <!-- ==================== PANEL 6: Summary ==================== -->
-        <div class="containers incident-container hidden" id="summary">
+        <div class="containers incident-summary hidden" id="summary">
             <form class="form" id="summaryForm">
                 <h6>Summary of Report</h6>
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
                         <p>Reporting Person</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Name:</p> <span id="sumRpFullName"></span>
@@ -301,6 +302,7 @@ if ($_SESSION['role_id'] != 1) {
 
                     <div class="summary-header-and-info">
                         <p>Victim Details</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Name:</p> <span id="sumVicFullName"></span>
@@ -328,6 +330,7 @@ if ($_SESSION['role_id'] != 1) {
 
                     <div class="summary-header-and-info">
                         <p>Suspect Details</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Name:</p> <span id="sumSusFullName"></span>
@@ -349,6 +352,7 @@ if ($_SESSION['role_id'] != 1) {
 
                     <div class="summary-header-and-info">
                         <p>Incident Details</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Type:</p> <span id="sumIncidentType"></span>

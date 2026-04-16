@@ -1,7 +1,7 @@
 // Configuration imports for service worker registration and address data
-import { initSocket, sockets } from '../utils/socket.js';
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import { initSocket, sockets } from '../utils/socket.js';
 
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
@@ -369,15 +369,17 @@ function validateField(config) {
         });
     });
 
-    // Address validation for utilities address
-    [utilityLotNo, utilityStreet].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (utilityLotNo.value && utilityStreet.value) validator.address(utilityLotNo, utilityStreet);
-        });
-        el.addEventListener('input', () => validator.clear(el));
+    utilityLotNo.addEventListener('blur', () => {
+        if (utilityLotNo.value && utilityStreet.value) validator.address(utilityLotNo, utilityStreet);
     });
 
-    // Input sanitization for numeric fields (remove non-digit characters)
+    utilityStreet.addEventListener('blur', () => {
+        if (utilityLotNo.value && utilityStreet.value) validator.address(utilityLotNo, utilityStreet);
+    });
+
+    utilityLotNo.addEventListener('input', () => validator.clear(utilityLotNo));
+    utilityStreet.addEventListener('input', () => validator.clear(utilityStreet));
+
     [contactNoOwner, utilityLotNo].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
@@ -413,10 +415,24 @@ document.getElementById('nextToUtilities').addEventListener('click', () => {
  * Validates all utilities fields before proceeding
  */
 document.getElementById('nextToWaiver').addEventListener('click', () => {
-    const stepFields = [requestDate, dateOfWork, natureOfWork, provider, utilityLotNo, utilityStreet];
-    const addressValid = validator.address(utilityLotNo, utilityStreet);
+    const stepFields = [
+        requestDate,
+        dateOfWork,
+        natureOfWork,
+        provider,
+    ];
+
+    const lotValid = validator.number(utilityLotNo, 'House No. is required', { maxLength: 2 });
+    const streetValid = validator.select(utilityStreet, 'Street is required');
+    const addressValid = lotValid && streetValid
+        ? validator.address(utilityLotNo, utilityStreet)
+        : false;
     const fieldsValid = validateStep(stepFields);
-    if (!addressValid || !fieldsValid) return;
+
+    if (!addressValid || !fieldsValid) {
+        return;
+    }
+
     completedPanels.utilities = true;
     switchPanel('waiver');
 });
@@ -832,8 +848,16 @@ async function initializeMapPicker(target) {
                         if (target === '2') {
                             const utilityLot = document.getElementById('utilityLotNo');
                             const utilityStreet = document.getElementById('utilityStreet');
-                            if (utilityLot) { utilityLot.value = house.house_number || ''; utilityLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (utilityStreet) { utilityStreet.value = house.street_name || ''; utilityStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (utilityLot) {
+                                utilityLot.value = house.house_number || '';
+                                utilityLot.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(utilityLot);
+                            }
+                            if (utilityStreet) {
+                                utilityStreet.value = house.street_name || '';
+                                utilityStreet.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(utilityStreet);
+                            }
                         }
                     });
 
@@ -862,22 +886,16 @@ function setupCoordinateAutoFormat(target) {
     });
 }
 
-// Initialize coordinate formatting for both address sections
 document.addEventListener('DOMContentLoaded', () => {
     [1, 2].forEach(target => setupCoordinateAutoFormat(target));
-});
 
-// Initialize map buttons when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.map-btn').forEach(btn => {
         btn.addEventListener('click', () => openMapPicker(btn.dataset.target));
     });
+
+    setCurrentRequestDate();
 });
 
-/**
- * Automatically populates owner information fields with user data from session
- * Fetches resident profile data to pre-fill the form for convenience
- */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
 
@@ -920,3 +938,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!sockets["main"]) initSocket("main", "http://localhost:8081", () => { });
 });
+
+/**
+ * Automatically sets the request date input to the current date
+ * Formats the date as YYYY-MM-DD for the date input field
+ */
+function setCurrentRequestDate() {
+    const requestDateInput = document.getElementById('requestDate');
+    if (!requestDateInput) return;
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    const formattedDate = `${year}-${month}-${day}`;
+    requestDateInput.value = formattedDate;
+
+    // Trigger validation if needed
+    const validationConfigEntry = validationConfig.find(c => c.el === requestDateInput);
+    if (validationConfigEntry) {
+        validateField(validationConfigEntry);
+    }
+}

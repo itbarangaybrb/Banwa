@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --h4: 36px;
+    --h4-lh: 44px;
+
+    --h5: 30px;
+    --h5-lh: 38px;
+
+    --h6: 24px;
+    --h6-lh: 32px;
+
+    --txt1: 20px;
+    --txt1-lh: 30px;
+
+    --txt3: 16;
+    --txt3-lh: 24px;
+
+    --regular: 400;
+    --mediium: 500;
+    --semibold: 600;
+    --bold: 700;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+}
+
+.sections {
+    width: 100%;
+    max-width: 1440px;
+    width: 100%;
+    padding: 96px 64px;
+    margin-inline: auto;
+}
+
+.containers {
+    max-width: 927px;
+    margin-inline: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 6px 8px 16px 8px #edededfa;
+}
+
+.sections .header-and-parag {
+    max-width: 927px;
+    margin-inline: auto;
+    margin-bottom: 40px;
+}
+
+.sections .header-and-parag h4 {
+    margin-bottom: 8px;
+    font-size: var(--h4);
+    line-height: var(--h4-lh);
+    font-weight: var(--bold);
+}
+
+/* ==================== Forms ==================== */
+.form {
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 32px;
+}
+
+.form .inputs-container h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
+    font-weight: var(--bold);
+}
+
+.form .inputs-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 16px;
+}
+
+.form .inputs-container .label-and-input {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.form .inputs-container .label-and-input label {
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+    font-weight: var(--regular);
+}
+
+.form h6 {
+    font-size: var(--h6);
+    line-height: var(--h6-lh);
+    font-weight: var(--bold);
+}
+
+/* ==================== Waiver Form ==================== */
+.waiver-container .form #waiverContent {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.waiver-container .form .label-and-input label {
+    display: flex;
+    align-items: center;
+    column-gap: 4px;
+}
+
+/* ==================== Summary Form ==================== */
+.summary-container .form #summaryContent,
+.incident-summary .form #summaryContent {
+    display: flex;
+    gap: 32px;
+}
+
+.incident-summary .form #summaryContent {
+    flex-direction: column;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info,
+.incident-summary .form #summaryContent .summary-header-and-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    border: 1px solid lightgray;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info {
+    width: 50%;
+}
+
+.incident-summary .form #summaryContent .summary-header-and-info {
+    width: 100%;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info .divider,
+.incident-summary .form #summaryContent .summary-header-and-info .divider {
+    width: 100%;
+    height: 1px;
+    background-color: lightgray;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info .summary-info,
+.incident-summary .form #summaryContent .summary-header-and-info .summary-info {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div,
+.incident-summary .form #summaryContent .summary-header-and-info .summary-info div {
+    display: flex;
+    gap: 8px;
+}
+
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div p,
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div span,
+.incident-summary .form #summaryContent .summary-header-and-info .summary-info div p,
+.incident-summary .form #summaryContent .summary-header-and-info .summary-info div span {
+    font-size: var(--txt3);
+    line-height: var(--txt3-lh);
+}
+
+.summary-container .form #summaryContent .summary-header-and-info p,
+.incident-summary .form #summaryContent .summary-header-and-info p {
+    font-weight: var(--bold);
+}
+
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div span,
+.incident-summary .form #summaryContent .summary-header-and-info .summary-info div span {
+    font-weight: var(--regular);
+}
+
+/* ==================== Inputs ==================== */
+.form .inputs-container .label-and-input input[type="email"],
+.form .inputs-container .label-and-input input[type="text"],
+.form .inputs-container .label-and-input input[type="date"],
+.form .inputs-container .label-and-input input[type="tel"],
+.form .inputs-container .label-and-input input[type="date"],
+.form .inputs-container .label-and-input input[type="file"],
+.form .inputs-container .label-and-input input[type="datetime-local"],
+.form .inputs-container .label-and-input textarea,
+.form .inputs-container .label-and-input select {
+    padding: 12px 8px;
+    border-radius: 8px;
+    border: 1px solid #C4C4C4;
+    width: 100%;
+    background-color: #f5f5f5;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* ==================== Buttons ==================== */
+.form .buttons-container {
+    margin-left: auto;
+    width: max-content;
+}
+
+.form .buttons-container button {
+    padding: 16px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+}
+
+.form .buttons-container button:nth-child(1) {
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.form .buttons-container button:nth-child(2) {
+    background-color: #00247C;
+    color: white;
+    margin-left: 4px;
+}
+
+.form .buttons-container button:nth-child(1):hover {
+    background-color: #c9c9c9;
+}
+
+.form .buttons-container button:nth-child(2):hover {
+    background-color: #00164d;
+}
+
+.remove-witness-btn,
+#addWitnessBtn {
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+#addWitnessBtn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+}
+
+#addWitnessBtn:hover {
+    background-color: #2980b9;
+}
+
+/* ==================== Mapping ==================== */
+.map-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 3000;
+}
+
+.map-modal-content {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    height: 80%;
+    max-width: 1000px;
+}
+
+.map-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.map-modal-header h3 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+.close-map {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.close-map:hover {
+    background: #c0392b;
+}
+
+.map-preview {
+    position: absolute;
+    inset: 0px;
+    z-index: 999;
+    margin: 20px;
+    outline-style: none;
+    top: calc(94.5938px + 20px);
+}
+
+#map-container {
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    margin: 20px;
+    outline-style: none;
+    top: calc(94.5938px + 20px);
+}
+
+.coordinate-display {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    font-family: monospace;
+    border: 1px solid #e9ecef;
+}
+
+.map-btn {
+    padding: 12px;
+    border-radius: 8px;
+    border: transparent;
+    transition: background-color 200ms ease;
+    font-weight: 500;
+    background-color: #dbdbdb;
+    color: black;
+}
+
+.map-btn:hover {
+    background-color: #c9c9c9;
+}
+
+/* ==================== Error Messages ==================== */
+.error-msg {
+    color: red;
+    font-size: 12px;
+    display: none;
+}
+
+.error-msg.show {
+    display: block;
+}
+
+.error {
+    outline: 1px solid red;
+}
+
+/* Prevent error styling on radio buttons */
+.label-and-input input[type="radio"].error {
+    outline: none;
+}
+
+/* ==================== Error Messages ==================== */
+.hidden {
+    display: none;
+}
+
+/* ==================== Breakpoints ==================== */
+/* mobiles */
+@media screen and (max-width: 780px) {
+    .sections {
+        padding: 96px 16px;
+    }
+
+    .containers {
+        padding: 1rem;
+    }
+}
+
+/* tablets */
+@media screen and (max-width: 900px) {
+    .summary-container .form #summaryContent {
+        flex-direction: column;
+    }
+
+    .summary-container .form #summaryContent .summary-header-and-info{
+        width: 100%;
+    }
+}

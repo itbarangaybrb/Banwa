@@ -51,24 +51,6 @@ async function fetchAuditLogs() {
         const tbody = document.getElementById('auditTableBody');
         if (!tbody) return;
 
-        // tbody.innerHTML = '';
-
-        // logs.forEach(log => {
-        //     const tr = document.createElement('tr');
-
-        //     tr.innerHTML = `
-        //         <td>${log.id}</td>
-        //         <td>${log.action}</td>
-        //         <td>${log.full_name}</td>
-        //         <td>${log.table_name}</td>
-        //         <td>${log.record_id}</td>
-        //         <td>${log.role_id}</td>
-        //         <td>${log.created_at}</td>
-        //     `;
-
-        //     tbody.appendChild(tr);
-        // });
-
         auditsPaginator.load(logs);
 
     } catch (err) {

@@ -1230,3 +1230,53 @@ Stack trace:
 [25-Mar-2026 16:10:51 UTC] R1 Check - Missing: ["Articles of Incorporation","Corporate Secretary Certificate"]
 [26-Mar-2026 12:36:30 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=ajs_anonymous_id,PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
 [26-Mar-2026 12:36:30 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 13:30:05 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 13:30:05 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 13:30:12 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 13:30:12 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 13:33:36 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 13:33:36 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:19:19 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:19:19 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:19:26 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:19:26 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:21:01 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:21:01 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:30:49 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:30:49 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:30:51 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"banwa.onrender.com_client_pages_resident_business_app.php (1).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Lease Contract"],"allVerified":false}}
+[14-Apr-2026 14:30:51 UTC] R1 Check - Required: []
+[14-Apr-2026 14:30:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[14-Apr-2026 14:30:51 UTC] R1 Check - Missing: []
+[14-Apr-2026 14:30:51 UTC] R1 Check - Required: []
+[14-Apr-2026 14:30:51 UTC] R1 Check - Submitted: ["Lease Contract"]
+[14-Apr-2026 14:30:51 UTC] R1 Check - Missing: []
+[14-Apr-2026 14:30:54 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 14:35:39 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:35:39 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 14:37:03 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 14:37:03 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 15:48:03 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 15:48:03 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 15:48:22 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 15:48:22 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 15:48:24 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"banwa.onrender.com_client_pages_resident_business_app.php (1).png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["TCT"],"allVerified":false}}
+[14-Apr-2026 15:48:24 UTC] R1 Check - Required: []
+[14-Apr-2026 15:48:24 UTC] R1 Check - Submitted: ["TCT"]
+[14-Apr-2026 15:48:24 UTC] R1 Check - Missing: []
+[14-Apr-2026 15:48:24 UTC] R1 Check - Required: []
+[14-Apr-2026 15:48:24 UTC] R1 Check - Submitted: ["TCT"]
+[14-Apr-2026 15:48:24 UTC] R1 Check - Missing: []
+[14-Apr-2026 15:48:25 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 15:58:55 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 15:58:55 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 15:59:15 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[14-Apr-2026 15:59:15 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[14-Apr-2026 15:59:17 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"banwa.onrender.com_client_pages_resident_business_app.php.png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["TCT"],"allVerified":false}}
+[14-Apr-2026 15:59:17 UTC] R1 Check - Required: []
+[14-Apr-2026 15:59:17 UTC] R1 Check - Submitted: ["TCT"]
+[14-Apr-2026 15:59:17 UTC] R1 Check - Missing: []
+[14-Apr-2026 15:59:18 UTC] R1 Check - Required: []
+[14-Apr-2026 15:59:18 UTC] R1 Check - Submitted: ["TCT"]
+[14-Apr-2026 15:59:18 UTC] R1 Check - Missing: []
+[14-Apr-2026 15:59:18 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

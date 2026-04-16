@@ -1,7 +1,7 @@
 // Configuration imports for Supabase, address data, and service worker registration
-import supabase from '../../../server/api/supabase.js';
-import { addressCoordinates } from '../../../server/api/resident/addresses.js';
 import { registerServiceWorker } from '../../../register_sw.js';
+import { addressCoordinates } from '../../../server/api/resident/addresses.js';
+import supabase from '../../../server/api/supabase.js';
 import { initSocket, sockets } from '../utils/socket.js';
 
 const CONSTRUCTION_HANDLER_URL = '/server/handlers/staff/construction/construction_handler.php';
@@ -396,15 +396,17 @@ function validateField(config) {
         });
     });
 
-    // Address validation for construction address
-    [constructionLotNo, constructionStreet].forEach(el => {
-        el.addEventListener('blur', () => {
-            if (constructionLotNo.value && constructionStreet.value) validator.address(constructionLotNo, constructionStreet);
-        });
-        el.addEventListener('input', () => validator.clear(el));
+    constructionLotNo.addEventListener('blur', () => {
+        if (constructionLotNo.value && constructionStreet.value) validator.address(constructionLotNo, constructionStreet);
     });
 
-    // Input sanitization for numeric fields (remove non-digit characters)
+    constructionStreet.addEventListener('blur', () => {
+        if (constructionLotNo.value && constructionStreet.value) validator.address(constructionLotNo, constructionStreet);
+    });
+
+    constructionLotNo.addEventListener('input', () => validator.clear(constructionLotNo));
+    constructionStreet.addEventListener('input', () => validator.clear(constructionStreet));
+
     [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
@@ -450,13 +452,19 @@ document.getElementById('nextToWaiver').addEventListener('click', () => {
         contractorName,
         contractorContactNumber,
         natureOfActivity.value !== 'Demolition' ? applicationMethod : null,
-        constructionLotNo,
-        constructionStreet,
         requirementUpload.closest('.label-and-input').style.display !== 'none' ? requirementUpload : null
     ].filter(f => f !== null);
 
-    if (!validateStep(stepFields)) return;
-    if (!validator.address(constructionLotNo, constructionStreet)) return;
+    const lotValid = validator.number(constructionLotNo, 'House No. is required', { maxLength: 2 });
+    const streetValid = validator.select(constructionStreet, 'Street is required');
+    const addressValid = lotValid && streetValid
+        ? validator.address(constructionLotNo, constructionStreet)
+        : false;
+    const fieldsValid = validateStep(stepFields);
+
+    if (!addressValid || !fieldsValid) {
+        return;
+    }
 
     completedPanels.construction = true;
     switchPanel('waiver');
@@ -926,8 +934,16 @@ async function initializeMapPicker(target) {
                         if (target === '2') {
                             const constructionLot = document.getElementById('constructionLotNo');
                             const constructionStreet = document.getElementById('constructionStreet');
-                            if (constructionLot) { constructionLot.value = house.house_number || ''; constructionLot.dispatchEvent(new Event('change', { bubbles: true })); }
-                            if (constructionStreet) { constructionStreet.value = house.street_name || ''; constructionStreet.dispatchEvent(new Event('change', { bubbles: true })); }
+                            if (constructionLot) {
+                                constructionLot.value = house.house_number || '';
+                                constructionLot.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(constructionLot);
+                            }
+                            if (constructionStreet) {
+                                constructionStreet.value = house.street_name || '';
+                                constructionStreet.dispatchEvent(new Event('change', { bubbles: true }));
+                                validator.clear(constructionStreet);
+                            }
                         }
                     });
 
