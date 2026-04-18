@@ -1,3 +1,7 @@
 [02-Feb-2026 07:49:36 UTC] Failed to log status update: SQLSTATE[42P01]: Undefined table: 7 ERROR:  relation "incident_status_history" does not exist
 LINE 1: INSERT INTO incident_status_history 
                     ^
+[14-Apr-2026 16:25:02 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 16:25:02 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 16:39:07 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 16:39:08 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

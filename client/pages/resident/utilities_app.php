@@ -18,7 +18,7 @@ if ($_SESSION['role_id'] != 1) {
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
 
-    <link rel="stylesheet" href="../../styles/resident/utilities_app.css">
+    <link rel="stylesheet" href="../../styles/resident/application_forms.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -216,6 +216,7 @@ if ($_SESSION['role_id'] != 1) {
                 <div id="summaryContent">
                     <div class="summary-header-and-info">
                         <p>Utilities Information</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Request Date:</p> <span id="sumReqDate"></span>
@@ -237,12 +238,13 @@ if ($_SESSION['role_id'] != 1) {
 
                     <div class="summary-header-and-info">
                         <p>Owner Information</p>
+                        <div class="divider"></div>
                         <div class="summary-info">
                             <div>
                                 <p>Name:</p> <span id="sumFullname"></span>
                             </div>
                             <div>
-                                <p>Telephone:</p> <span id="sumContactNoOwner"></span>
+                                <p>Contact No.:</p> <span id="sumContactNoOwner"></span>
                             </div>
                             <div>
                                 <p>Address:</p> <span id="sumAddressOwner"></span>

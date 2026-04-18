@@ -578,6 +578,17 @@ function generateUtilitiesPermit(appId) {
     const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
+    // This triggers the print dialog as soon as the content is loaded
+    w.focus(); // Necessary for some browsers to focus the print dialog
+
+    // Use a slight timeout to ensure styles and images (like your logo) are rendered
+    setTimeout(() => {
+        w.print();
+
+        // Optional: Uncomment the line below if you want the window to close 
+        // automatically after the user clicks 'Print' or 'Cancel'
+        // w.close(); 
+    }, 500);
 }
 
 /**
@@ -1313,14 +1324,17 @@ function printSummary() {
                 </div>
             </div>
             <script>
-                window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 100); };
-                window.onafterprint = function() { setTimeout(function() { window.close(); }, 100); };
+                // Auto-print when page loads, tab remains open
+                window.onload = function() { 
+                    window.print(); 
+                };
             </script>
         </body>
         </html>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    // CHANGED: Removed dimensions to open in a New Tab
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
 }

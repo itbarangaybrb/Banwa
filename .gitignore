@@ -49,3 +49,4 @@ server/api/resident/uploads/payment_proofs/proof_693eedf63fc4f.png
 server/api/resident/uploads/payment_proofs/proof_693f0507ee0d0.png
 server/api/resident/uploads/payment_proofs/proof_693fc75f4317c.png
 server/configs/database.php
+vendor

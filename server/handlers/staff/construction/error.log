@@ -588,3 +588,9 @@ Stack trace:
 [26-Mar-2026 16:11:45 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
 [26-Mar-2026 16:12:04 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
 [26-Mar-2026 16:12:16 UTC] broadcastEvent failed in handleUpdateStatus (id=65): Call to undefined function curl_init()
+[14-Apr-2026 16:00:33 UTC] === CREATE DEBUG === Uploaded files count: 0 | JSON: []
+[14-Apr-2026 16:00:33 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 16:00:33 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[14-Apr-2026 16:00:33 UTC] No files uploaded for application 80, skipping OCR queue.
+[14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No
+[14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No

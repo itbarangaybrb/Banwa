@@ -49,21 +49,21 @@ body {
 }
 
 .containers {
-    max-width: 927px;
-    margin-inline: auto;
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
+  max-width: 927px;
+  margin-inline: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
 }
 
 @media screen and (max-width: 780px) {
-    .sections {
-        padding: 96px 16px;
-    }
+  .sections {
+    padding: 96px 16px;
+  }
 
-    .containers {
-        padding: 1rem;
-    }
+  .containers {
+    padding: 1rem;
+  }
 }
 
 .sections .header-and-parag {
@@ -299,88 +299,60 @@ body {
   font-weight: var(--bold);
 }
 
-.summary-container .form p:first-child {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  color: #000000E5;
-}
-
 .summary-container .form #summaryContent {
   display: flex;
-  flex-direction: column;
-  row-gap: 28px;
+  gap: 32px;
 }
 
 .summary-container .form #summaryContent .summary-header-and-info {
   display: flex;
   flex-direction: column;
-  row-gap: 18px;
+  row-gap: 8px;
+  width: 50%;
+  border: 1px solid lightgray;
+  padding: 16px;
+  border-radius: 8px;
 }
 
-.summary-container .form #summaryContent .summary-header-and-info p {
-  font-size: var(--txt1);
-  line-height: var(--txt1-lh);
-  font-weight: var(--bold);
+.summary-container .form #summaryContent .summary-header-and-info .divider {
+  width: 100%;
+  height: 1px;
+  background-color: lightgray;
 }
 
-.summary-container .form #summaryContent .summary-info {
+.summary-container .form #summaryContent .summary-header-and-info .summary-info {
   display: flex;
   flex-direction: column;
   row-gap: 8px;
 }
 
-.summary-container .form #summaryContent .summary-info div {
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div {
   display: flex;
   gap: 8px;
 }
 
-.summary-container .form #summaryContent .summary-info div p,
-.summary-container .form #summaryContent .summary-info div span {
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div p,
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div span {
   font-size: var(--txt3);
   line-height: var(--txt3-lh);
 }
 
-.summary-container .form #summaryContent .summary-info div p {
+.summary-container .form #summaryContent .summary-header-and-info p {
   font-weight: var(--bold);
 }
 
-.summary-container .form #summaryContent .summary-info div span {
+.summary-container .form #summaryContent .summary-header-and-info .summary-info div span {
   font-weight: var(--regular);
 }
 
-.summary-container .form #summaryContent .divider {
-  margin-block: 8px;
-  height: 1px;
-  background-color: gray;
-  width: 100%;
-}
 
-.summary-container .form p:first-child {
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  color: #000000E5;
-}
-
-.summary-container .form #summaryContent .row {
-  display: flex;
-  row-gap: 8px;
-}
-
-.summary-container .form #summaryContent .row div {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  justify-content: space-between;
-}
-
-.summary-container .form .buttons-container {
+/* ==================== Buttons ==================== */
+.form .buttons-container {
   margin-left: auto;
   width: max-content;
 }
 
-.summary-container .form .buttons-container button {
+.form .buttons-container button {
   padding: 16px;
   border-radius: 8px;
   border: transparent;
@@ -388,22 +360,22 @@ body {
   font-weight: 500;
 }
 
-.summary-container .form .buttons-container button:nth-child(1) {
+.form .buttons-container button:nth-child(1) {
   background-color: #dbdbdb;
   color: black;
 }
 
-.summary-container .form .buttons-container button:nth-child(2) {
+.form .buttons-container button:nth-child(2) {
   background-color: #00247C;
   color: white;
   margin-left: 4px;
 }
 
-.summary-container .form .buttons-container button:nth-child(1):hover {
+.form .buttons-container button:nth-child(1):hover {
   background-color: #c9c9c9;
 }
 
-.summary-container .form .buttons-container button:nth-child(2):hover {
+.form .buttons-container button:nth-child(2):hover {
   background-color: #00164d;
 }
 
@@ -421,9 +393,9 @@ body {
   outline: 1px solid red;
 }
 
-.hidden {
+/* .hidden {
   display: none;
-}
+} */
 
 /* ===== MAP MODAL STYLES ===== */
 .map-modal {
@@ -532,4 +504,14 @@ body {
 
 .map-btn:hover {
   background-color: #c9c9c9;
+}
+
+@media screen and (max-width: 900px) {
+  .summary-container .form #summaryContent {
+    flex-direction: column;
+  }
+
+  .summary-container .form #summaryContent .summary-header-and-info {
+    width: 100%;
+  }
 }
