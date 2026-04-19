@@ -451,7 +451,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
               <div class="label-and-input"><label for="createAccEmail">Email <span style="color:#BB1B1B">*</span></label><input type="email" name="createAccEmail" id="createAccEmail" required><div class="error-msg"></div></div>
               <div class="label-and-input"><label for="password">Password <span style="color:#BB1B1B">*</span></label><input type="password" name="password" id="password" required><div class="error-msg"></div></div>
               <div class="label-and-input"><label for="reTypePassword">Re-type password <span style="color:#BB1B1B">*</span></label><input type="password" name="reTypePassword" id="reTypePassword" required><div class="error-msg"></div></div>
-              <div class="label-and-input"><label><input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.</label><div class="error-msg"></div></div>
+              <div class="label-and-input"><label><input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="/client/pages/auth/terms.php" target="_blank" rel="noopener">terms and conditions</a> and <a href="/client/pages/auth/privacy.php" target="_blank" rel="noopener">privacy policy</a>.</label><div class="error-msg"></div></div>
             </div>
             <div class="buttons-container"><button type="button" id="createAccBackBtn">Back</button><button type="submit" id="createAccSubmitBtn">Submit</button><button type="button" id="resendEmailBtn">Resend verification email</button></div>
           </form>

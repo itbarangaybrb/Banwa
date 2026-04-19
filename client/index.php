@@ -795,7 +795,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                 </div>
                                 <div class="label-and-input">
                                     <label>
-                                        <input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="#">terms and conditions</a> and <a href="#">privacy policy</a>.
+                                        <input type="checkbox" id="agreeCheckBox" required> I confirm that I have read and accept the <a href="/client/pages/auth/terms.php" target="_blank" rel="noopener">terms and conditions</a> and <a href="/client/pages/auth/privacy.php" target="_blank" rel="noopener">privacy policy</a>.
                                     </label>
                                     <div class="error-msg"></div>
                                 </div>
