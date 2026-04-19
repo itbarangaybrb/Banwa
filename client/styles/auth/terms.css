@@ -1,0 +1,772 @@
+:root {
+  /* ── Color Palette ───────────────────────────────────────────────── */
+  --ink:            #0B1526;            /* Near-black — primary text    */
+  --navy:           #00247C;            /* Brand primary                */
+  --navy-deep:      #001050;            /* Darker navy — hero bg        */
+  --navy-06:        rgba(0,36,124,0.06);/* Navy tint — card backgrounds */
+  --navy-10:        rgba(0,36,124,0.10);/* Navy tint — borders          */
+  --navy-18:        rgba(0,36,124,0.18);/* Navy tint — stronger borders */
+  --gold:           #B8820F;            /* Accent — labels, callouts    */
+  --gold-bg:        #FDF5E4;            /* Gold tint — callout bg       */
+  --white:          #FFFFFF;
+  --surface:        #F6F6F3;            /* Off-white page surface       */
+  --surface-alt:    #EEEEEA;            /* Slightly darker surface      */
+  --border:         #E2E2DC;            /* Default border color         */
+  --border-strong:  #C8C8BF;            /* Emphasized borders           */
+  --text-secondary: #4E5668;            /* Secondary body text          */
+  --text-muted:     #8F96A5;            /* Captions, labels             */
+  --green:          #1A7A4A;            /* Success / open indicator     */
+  --green-bg:       #EAF5EF;            /* Green tint bg                */
+  --red:            #C0291A;            /* Danger / closed indicator    */
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --ff-display: 'Raleway', 'Arial Narrow', sans-serif; /* Headers      */
+  --ff-body:    'DM Sans', system-ui, sans-serif;       /* Body copy    */
+
+  /* Font Sizes — fluid type scale */
+  --fs-2xs:  0.68rem;
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.85rem;
+  --fs-base: 0.95rem;
+  --fs-md:   1.05rem;
+  --fs-lg:   1.2rem;
+  --fs-xl:   1.5rem;
+  --fs-2xl:  2rem;
+  --fs-3xl:  2.75rem;
+
+  /* Line Heights */
+  --lh-tight:  1.05;
+  --lh-snug:   1.25;
+  --lh-normal: 1.5;
+  --lh-loose:  1.75;
+
+  /* Font Weights */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-black:    800;
+
+  /* ── Spacing (8-pt grid) ─────────────────────────────────────────── */
+  --s1:  8px;
+  --s2:  16px;
+  --s3:  24px;
+  --s4:  32px;
+  --s5:  40px;
+  --s6:  48px;
+  --s8:  64px;
+  --s10: 80px;
+
+  /* ── Layout ──────────────────────────────────────────────────────── */
+  --max-w: 1200px;  /* Max content width, consistent with home2.css     */
+
+  /* ── Border Radius ───────────────────────────────────────────────── */
+  --r-sm: 4px;
+  --r-md: 8px;
+
+  /* ── Motion ──────────────────────────────────────────────────────── */
+  --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 0.15s;
+  --t-base: 0.25s;
+  --t-slow: 0.45s;
+}
+
+
+/* ==========================================================================
+   2. RESET & BASE
+   Minimal reset — avoids opinionated resets while ensuring cross-browser
+   consistency. Inherits the same scrollbar styling as the main site.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--ff-body);
+  font-size: var(--fs-base);
+  color: var(--ink);
+  background: var(--white);
+  line-height: var(--lh-normal);
+  overflow-x: hidden;
+}
+
+img  { display: block; max-width: 100%; }
+a    { color: var(--navy); text-decoration: none; }
+a:hover { text-decoration: underline; }
+ul, ol { padding-left: var(--s3); }
+
+/* Custom scrollbar — matches home2.css */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--navy-18); border-radius: 3px; }
+
+
+/* ==========================================================================
+   3. TOP BAR
+   Sticky header that remains visible while scrolling. Uses backdrop blur
+   for a frosted-glass effect consistent with the main nav's scrolled state.
+   ========================================================================== */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  height: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.topbar__inner {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--s4);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Brand / wordmark cluster */
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  text-decoration: none;
+}
+
+.topbar__wordmark {
+  font-family: var(--ff-display);
+  font-size: 1.15rem;
+  font-weight: var(--fw-black);
+  letter-spacing: 0.14em;
+  color: var(--navy);
+}
+
+/* Thin vertical pipe between wordmark and page name */
+.topbar__divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-strong);
+  margin-inline: var(--s2);
+}
+
+.topbar__page {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+}
+
+/* "Close & return" back link */
+.topbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.topbar__back:hover {
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.topbar__back svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+
+/* ==========================================================================
+   4. DOCUMENT HERO BANNER
+   Full-width dark banner at the top of the page. Mirrors the hero section's
+   navy-deep background and decorative grid-lines from home2.css.
+   ========================================================================== */
+
+.doc-hero {
+  background: var(--navy-deep);
+  padding: var(--s10) 0 var(--s8);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Horizontal rule accent along the bottom edge */
+.doc-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+}
+
+/* 12-column ghost grid — decorative only, matches hero__grid-lines */
+.doc-hero__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.018) 0px,
+    rgba(255,255,255,0.018) 1px,
+    transparent 1px,
+    transparent calc((100% - 64px) / 12 + 64px / 12)
+  );
+}
+
+/* Max-width container inside the hero */
+.doc-hero__inner {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--s4);
+  position: relative;
+  z-index: 1;
+}
+
+/* Small "— Barangay Blue Ridge B" line above the title */
+.doc-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.doc-hero__eyebrow-line {
+  width: 28px;
+  height: 1px;
+  background: rgba(255,255,255,0.28);
+}
+
+.doc-hero__eyebrow-text {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+}
+
+/* Primary hero title */
+.doc-hero__title {
+  font-family: var(--ff-display);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: var(--fw-black);
+  color: var(--white);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s3);
+}
+
+/* Row of pill badges (effective date, version, etc.) */
+.doc-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-top: var(--s4);
+}
+
+.doc-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50px;
+  font-size: var(--fs-xs);
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.04em;
+}
+
+/* Gold dot inside each badge */
+.doc-hero__badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+
+/* ==========================================================================
+   5. CONTENT LAYOUT
+   Two-column grid: narrow sticky sidebar on the left, document body on the
+   right. Collapses to single-column below 900px.
+   ========================================================================== */
+
+.doc-layout {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--s4);
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--s10);
+  align-items: start;
+  padding-top: var(--s8);
+  padding-bottom: var(--s10);
+}
+
+
+/* ==========================================================================
+   6. SIDEBAR — TABLE OF CONTENTS
+   Sticky scrollspy navigation. JS in the PHP file toggles the .active class
+   as the user scrolls through document sections.
+   ========================================================================== */
+
+.doc-toc {
+  position: sticky;
+  /* Offset by topbar height + a little breathing room */
+  top: calc(60px + var(--s4));
+}
+
+/* "On This Page" heading */
+.doc-toc__label {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--s2);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-toc__list { list-style: none; padding: 0; }
+.doc-toc__item { margin-bottom: 2px; }
+
+/* Individual TOC link */
+.doc-toc__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px var(--s2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  transition: all var(--t-fast);
+  text-decoration: none;
+  /* Left accent border — only visible in active/hover state */
+  border-left: 2px solid transparent;
+}
+
+/* Section number pulled from data-n attribute */
+.doc-toc__link::before {
+  content: attr(data-n);
+  font-size: 0.62rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  min-width: 18px;
+}
+
+/* Hover & active state */
+.doc-toc__link:hover,
+.doc-toc__link.active {
+  background: var(--navy-06);
+  color: var(--navy);
+  border-left-color: var(--navy);
+  text-decoration: none;
+}
+
+.doc-toc__link.active::before {
+  color: var(--navy);
+}
+
+
+/* ==========================================================================
+   7. DOCUMENT BODY
+   Main reading area. All document sections live here.
+   ========================================================================== */
+
+.doc-body {
+  min-width: 0; /* Prevents grid blowout on narrow containers */
+}
+
+
+/* ------------------------------------------------------------------
+   7a. Section Wrappers
+   Each <section> is separated by a bottom border. The last section
+   drops the border to avoid a double-rule at the page bottom.
+   ------------------------------------------------------------------ */
+
+.doc-section {
+  margin-bottom: var(--s8);
+  padding-bottom: var(--s8);
+  border-bottom: 1px solid var(--border);
+  /* Offset for sticky topbar when jumping via anchor link */
+  scroll-margin-top: calc(60px + var(--s4));
+}
+
+.doc-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+
+/* ------------------------------------------------------------------
+   7b. Section Numbering Badges
+   Small "01 — Section" label above each section title. Mirrors the
+   section-index pattern from home2.css.
+   ------------------------------------------------------------------ */
+
+.doc-section__num {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+/* The numbered pill (e.g. "01") */
+.doc-section__num-badge {
+  font-family: var(--ff-display);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--navy);
+  background: var(--navy-06);
+  border: 1px solid var(--navy-10);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+}
+
+/* The word "Section" beside the badge */
+.doc-section__num-label {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: var(--fw-bold);
+}
+
+
+/* ------------------------------------------------------------------
+   7c. Section Titles
+   ------------------------------------------------------------------ */
+
+.doc-section__title {
+  font-family: var(--ff-display);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  color: var(--navy);
+  line-height: var(--lh-snug);
+  margin-bottom: var(--s4);
+  letter-spacing: -0.01em;
+}
+
+
+/* ------------------------------------------------------------------
+   7d. Body Text — Paragraphs & Lists
+   ------------------------------------------------------------------ */
+
+.doc-section p {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-loose);
+  color: var(--text-secondary);
+  margin-bottom: var(--s3);
+}
+
+/* No bottom margin on the final paragraph in a section */
+.doc-section p:last-child {
+  margin-bottom: 0;
+}
+
+.doc-section ul,
+.doc-section ol {
+  margin-bottom: var(--s3);
+}
+
+.doc-section li {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-loose);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* Inline bold emphasis within body copy */
+.doc-section strong {
+  font-weight: var(--fw-semibold);
+  color: var(--ink);
+}
+
+
+/* ------------------------------------------------------------------
+   7e. Callout Boxes
+   Highlighted blocks for important notices, reminders, or disclaimers.
+   Three variants: gold (default), navy, and green.
+   ------------------------------------------------------------------ */
+
+/* Base callout */
+.doc-callout {
+  background: var(--gold-bg);
+  border: 1px solid rgba(184, 130, 15, 0.20);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-sm);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+}
+
+/* Navy variant — used for procedural notes */
+.doc-callout--navy {
+  background: var(--navy-06);
+  border-color: var(--navy-10);
+  border-left-color: var(--navy);
+}
+
+/* Shared callout body text */
+.doc-callout p {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Small all-caps label above the callout body */
+.doc-callout strong {
+  color: var(--gold);
+  display: block;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+/* Override label color for navy variant */
+.doc-callout--navy strong {
+  color: var(--navy);
+}
+
+
+/* ------------------------------------------------------------------
+   7f. Data Table
+   Used in the Services section to list services and processing times.
+   ------------------------------------------------------------------ */
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--s4);
+  font-size: var(--fs-xs);
+}
+
+/* Table header row */
+.doc-table th {
+  background: var(--navy-06);
+  color: var(--navy);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px var(--s2);
+  text-align: left;
+  border: 1px solid var(--navy-10);
+}
+
+/* Table data cells */
+.doc-table td {
+  padding: 10px var(--s2);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  line-height: var(--lh-normal);
+}
+
+/* Zebra striping — alternating row background */
+.doc-table tr:nth-child(even) td {
+  background: var(--surface);
+}
+
+
+/* ------------------------------------------------------------------
+   7g. Contact Card Grid
+   2-column grid of contact info items (address, email, phone, etc.)
+   used at the bottom of the document.
+   ------------------------------------------------------------------ */
+
+.contact-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-top: var(--s4);
+}
+
+.contact-card__item {
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+/* All-caps field label */
+.contact-card__label {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.contact-card__value {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+}
+
+
+/* ==========================================================================
+   8. FOOTER
+   Minimal dark footer — mirrors the main site footer from home2.css.
+   ========================================================================== */
+
+.doc-footer {
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: var(--s3) var(--s4);
+}
+
+.doc-footer__inner {
+  max-width: var(--max-w);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+/* BANWA wordmark */
+.doc-footer__brand {
+  font-family: var(--ff-display);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-black);
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.28);
+}
+
+/* Footer nav links (Terms / Privacy) */
+.doc-footer__links {
+  display: flex;
+  gap: var(--s3);
+}
+
+.doc-footer__links a {
+  font-size: var(--fs-xs);
+  color: rgba(255,255,255,0.28);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.doc-footer__links a:hover {
+  color: rgba(255,255,255,0.65);
+}
+
+/* Copyright line */
+.doc-footer__copy {
+  font-size: var(--fs-xs);
+  color: rgba(255,255,255,0.18);
+}
+
+
+/* ==========================================================================
+   9. RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+
+/* ------------------------------------------------------------------
+   9a. Tablet — ≤ 900px
+   Sidebar collapses from sticky vertical list into a horizontal
+   scrollable pill-row above the content.
+   ------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+
+  /* Stack sidebar above body */
+  .doc-layout {
+    grid-template-columns: 1fr;
+    gap: var(--s6);
+    padding-top: var(--s6);
+  }
+
+  /* Convert sidebar to horizontal pill nav */
+  .doc-toc {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .doc-toc__label { display: none; } /* Hide "On This Page" label     */
+
+  .doc-toc__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .doc-toc__item { margin: 0; }
+
+  /* Pill style for collapsed TOC links */
+  .doc-toc__link {
+    border-left: none;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+  }
+
+  .doc-toc__link.active {
+    border-color: var(--navy);
+  }
+
+  /* Contact card goes single-column */
+  .contact-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ------------------------------------------------------------------
+   9b. Mobile — ≤ 520px
+   Tighten spacing and collapse footer to vertical stack.
+   ------------------------------------------------------------------ */
+
+@media (max-width: 520px) {
+
+  /* Hide back-link label text, keep the arrow icon */
+  .topbar__back span { display: none; }
+
+  /* Less generous hero padding on small screens */
+  .doc-hero { padding: var(--s8) 0 var(--s6); }
+
+  /* Reduce section title size */
+  .doc-section__title { font-size: var(--fs-xl); }
+
+  /* Stack footer items vertically */
+  .doc-footer__inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .doc-footer__links {
+    justify-content: center;
+  }
+}

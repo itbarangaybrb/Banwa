@@ -64,9 +64,10 @@
         </div>
     </header>
 
-    <div id="page-loader">
-        <div class="spinner"></div>
-        <p>Loading…</p>
+    <div id="loader" role="status" aria-label="Loading BANWA">
+        <span class="loader__wordmark">BANWA</span>
+        <span class="loader__sub">Barangay Blue Ridge B</span>
+        <div class="loader__track"><div class="loader__bar"></div></div>
     </div>
 
     <main>

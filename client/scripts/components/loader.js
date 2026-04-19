@@ -2,9 +2,13 @@
  * Hide page loader after full window load
  * Ensures loader is removed when all resources are ready
  */
-window.addEventListener("load", () => {
-    const loader = document.getElementById("page-loader");
-    if (loader) loader.style.display = "none";
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    var el=document.getElementById('loader');
+    if(!el)return;
+    el.classList.add('out');
+    setTimeout(function(){el.style.display='none';},520);
+  },1700);
 });
 
 
