@@ -78,70 +78,76 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
 
 <!-- HERO -->
 <section class="hero" id="hero" aria-labelledby="hero-title">
-  <div class="hero__bg" aria-hidden="true">
-    <img class="hero__bg-slide is-active" src="../client/img/building-1.png" alt="">
-    <img class="hero__bg-slide" src="../client/img/building-2.png" alt="">
-    <img class="hero__bg-slide" src="../client/img/building-3.png" alt="">
-    <img class="hero__bg-slide" src="../client/img/building-4.png" alt="">
-    <img class="hero__bg-slide" src="../client/img/building-5.png" alt="">
-  </div>
-  <div class="hero__overlay" aria-hidden="true"></div>
-  <div class="hero__grid-lines" aria-hidden="true"></div>
+  <div class="hero__container">
 
-  <div class="hero__visual" aria-hidden="true">
-    <div class="hero__visual-img"><img class="is-active" src="../client/img/building-2.png" alt=""></div>
-    <div class="hero__visual-gap"></div>
-    <div class="hero__visual-img"><img class="is-active" src="../client/img/building-4.png" alt=""></div>
-  </div>
-
-  <div class="hero__dots" aria-label="Slide navigation">
-    <button class="hero__dot is-active" data-slide="0" aria-label="Slide 1"></button>
-    <button class="hero__dot" data-slide="1" aria-label="Slide 2"></button>
-    <button class="hero__dot" data-slide="2" aria-label="Slide 3"></button>
-    <button class="hero__dot" data-slide="3" aria-label="Slide 4"></button>
-    <button class="hero__dot" data-slide="4" aria-label="Slide 5"></button>
-  </div>
-
-  <div class="hero__content">
-    <div class="wrap hero__body">
-      <div class="hero__label" aria-hidden="true">
-        <span class="hero__label-line"></span>
-        <span class="hero__label-text">Barangay Blue Ridge B &mdash; Quezon City</span>
-      </div>
-      <h1 class="hero__title" id="hero-title">BANWA</h1>
-      <p class="hero__title-sub">Barangay Management System</p>
-
-      <div class="hero__status" role="group" aria-label="Office hours indicator">
-        <span class="hero__status-pip" id="heroPip" aria-hidden="true"></span>
-        <span class="hero__status-text" id="heroStatusText" tabindex="0">Checking office hours&hellip;</span>
-        <div class="hero__hours-popup" role="tooltip">
-          <div class="hours-popup__title">Onsite Office Hours</div>
-          <div class="hours-popup__row">
-            <span class="hours-popup__days">Monday &ndash; Friday</span>
-            <span class="hours-popup__time">8:00 AM &ndash; 5:00 PM</span>
-          </div>
-          <div class="hours-popup__row">
-            <span class="hours-popup__days">Saturday</span>
-            <span class="hours-popup__time">8:00 AM &ndash; 12:00 PM</span>
-          </div>
-          <div class="hours-popup__row">
-            <span class="hours-popup__days">Sunday &amp; Holidays</span>
-            <span class="hours-popup__time is-closed">Closed</span>
-          </div>
-          <div class="hours-popup__status" id="hoursPopupStatus">
-            <span class="hours-popup__status-dot"></span>
-            <span id="hoursPopupStatusText">Loading&hellip;</span>
-          </div>
-          <p class="hours-popup__next" id="hoursPopupNext" style="display:none;"></p>
-        </div>
-      </div>
-
-      <p class="hero__desc">The system enables Barangay Blue Ridge B to efficiently manage infrastructure, business clearances, utilities, and incidents — available online 24 hours a day, 7 days a week.</p>
+    <!-- Background images -->
+    <div class="hero__bg" aria-hidden="true">
+      <img class="hero__bg-slide is-active" src="../client/img/building-1.png" alt="">
+      <img class="hero__bg-slide" src="../client/img/building-2.png" alt="">
+      <img class="hero__bg-slide" src="../client/img/building-3.png" alt="">
+      <img class="hero__bg-slide" src="../client/img/building-4.png" alt="">
+      <img class="hero__bg-slide" src="../client/img/building-5.png" alt="">
     </div>
-  </div>
+    <div class="hero__overlay" aria-hidden="true"></div>
+    <div class="hero__grid-lines" aria-hidden="true"></div>
 
-  <div class="hero__stats-bar" aria-label="Key figures">
-    <div class="wrap">
+    <!-- Right-side image strip -->
+    <div class="hero__visual" aria-hidden="true">
+      <div class="hero__visual-img"><img class="is-active" src="../client/img/building-2.png" alt=""></div>
+      <div class="hero__visual-gap"></div>
+      <div class="hero__visual-img"><img class="is-active" src="../client/img/building-4.png" alt=""></div>
+    </div>
+
+    <!-- Slide navigation dots -->
+    <div class="hero__dots" aria-label="Slide navigation">
+      <button class="hero__dot is-active" data-slide="0" aria-label="Slide 1"></button>
+      <button class="hero__dot" data-slide="1" aria-label="Slide 2"></button>
+      <button class="hero__dot" data-slide="2" aria-label="Slide 3"></button>
+      <button class="hero__dot" data-slide="3" aria-label="Slide 4"></button>
+      <button class="hero__dot" data-slide="4" aria-label="Slide 5"></button>
+    </div>
+
+    <!-- Main content -->
+    <div class="hero__content">
+      <div class="hero__body">
+        <div class="hero__label" aria-hidden="true">
+          <span class="hero__label-line"></span>
+          <span class="hero__label-text">Barangay Blue Ridge B &mdash; Quezon City</span>
+        </div>
+        <h1 class="hero__title" id="hero-title">BANWA</h1>
+        <p class="hero__title-sub">Barangay Management System</p>
+
+        <div class="hero__status" role="group" aria-label="Office hours indicator">
+          <span class="hero__status-pip" id="heroPip" aria-hidden="true"></span>
+          <span class="hero__status-text" id="heroStatusText" tabindex="0">Checking office hours&hellip;</span>
+          <div class="hero__hours-popup" role="tooltip">
+            <div class="hours-popup__title">Onsite Office Hours</div>
+            <div class="hours-popup__row">
+              <span class="hours-popup__days">Monday &ndash; Friday</span>
+              <span class="hours-popup__time">8:00 AM &ndash; 5:00 PM</span>
+            </div>
+            <div class="hours-popup__row">
+              <span class="hours-popup__days">Saturday</span>
+              <span class="hours-popup__time">8:00 AM &ndash; 12:00 PM</span>
+            </div>
+            <div class="hours-popup__row">
+              <span class="hours-popup__days">Sunday &amp; Holidays</span>
+              <span class="hours-popup__time is-closed">Closed</span>
+            </div>
+            <div class="hours-popup__status" id="hoursPopupStatus">
+              <span class="hours-popup__status-dot"></span>
+              <span id="hoursPopupStatusText">Loading&hellip;</span>
+            </div>
+            <p class="hours-popup__next" id="hoursPopupNext" style="display:none;"></p>
+          </div>
+        </div>
+
+        <p class="hero__desc">The system enables Barangay Blue Ridge B to efficiently manage infrastructure, business clearances, utilities, and incidents — available online 24 hours a day, 7 days a week.</p>
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="hero__stats-bar" aria-label="Key figures">
       <div class="hero__stats-inner">
         <div class="hero__stat"><div class="hero__stat-num">24/7</div><div class="hero__stat-label">Online Access</div></div>
         <div class="hero__stat"><div class="hero__stat-num">4</div><div class="hero__stat-label">Core Services</div></div>
@@ -149,8 +155,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         <div class="hero__stat"><div class="hero__stat-num">1</div><div class="hero__stat-label">Unified Platform</div></div>
       </div>
     </div>
+
+    <div class="hero__rule" aria-hidden="true"></div>
   </div>
-  <div class="hero__rule" aria-hidden="true"></div>
 </section>
 
 <!-- SERVICES -->

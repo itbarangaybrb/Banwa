@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     refreshStatus();
 
-    
+
     // 2. HERO BACKGROUND CAROUSEL
     // ─────────────────────────────────────────────
     var hSlides = document.querySelectorAll('.hero__bg-slide');
@@ -82,18 +82,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─────────────────────────────────────────────
     // 3. STORY IMAGE THUMBNAILS
     // ─────────────────────────────────────────────
-    //------
-    const mainCarouselImage = document.getElementById('mainCarouselImage');
-    const thumbs = document.querySelectorAll('.thumb');
-
-    if (mainCarouselImage && thumbs.length) {
-        thumbs[0].classList.add('active');
-
-        thumbs.forEach(thumb => {
+    var storyMain = document.getElementById('storyMainImg');
+    var thumbImgs = document.querySelectorAll('.story__img-thumb img');
+ 
+    if (storyMain && thumbImgs.length) {
+        thumbImgs.forEach(function (thumb) {
             thumb.addEventListener('click', function () {
-                mainCarouselImage.src = this.dataset.image;
-                thumbs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
+                storyMain.src = this.dataset.full;
             });
         });
     }
