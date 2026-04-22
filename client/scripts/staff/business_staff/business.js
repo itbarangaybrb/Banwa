@@ -1547,7 +1547,7 @@ function printSummary() {
 
     const paymentStatus = app.payment_status || 'Unpaid';
 
-    // Create print-specific HTML with the same structure as updateSummary()
+    // Create print-specific HTML
     const printHTML = `
         <!DOCTYPE html>
         <html>
@@ -1561,7 +1561,6 @@ function printSummary() {
             <link rel="stylesheet" href="../../../styles/staff/dss.css" />
             <link rel="stylesheet" href="../../../styles/staff/map_staff.css" />
             <style>
-                /* Set half-inch margins for the printed page */
                 @media print {
                     @page {
                         margin: 0.5in;
@@ -1663,18 +1662,13 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })}</p>
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}</p>
                     <p>Barangay Business Management System</p>
                 </div>
             </div>
             
             <script>
-                // Auto-print when page loads, but DO NOT close the window afterwards
                 window.onload = function() {
                     window.print();
                 };
@@ -1683,7 +1677,8 @@ function printSummary() {
         </html>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    // CHANGED: Removed 'width=900,height=650' to force browser to open as a New Tab
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
 }
@@ -1988,7 +1983,7 @@ function generateClearance(appId) {
     <div class="document-container">
         <header>
             <div class="logo">
-                <img src="../../../scripts/staff/business_staff/assets/logo.png" alt="Barangay Logo">
+                <img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo">
             </div>
             
             <div class="header-center">
@@ -2075,10 +2070,20 @@ function generateClearance(appId) {
 </body>
 </html>`;
 
-    const w = window.open('', '_blank', 'width=1000,height=850');
+    const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
-    w.onload = () => { w.print(); };
+    // This triggers the print dialog as soon as the content is loaded
+    w.focus(); // Necessary for some browsers to focus the print dialog
+
+    // Use a slight timeout to ensure styles and images (like your logo) are rendered
+    setTimeout(() => {
+        w.print();
+
+        // Optional: Uncomment the line below if you want the window to close 
+        // automatically after the user clicks 'Print' or 'Cancel'
+        // w.close(); 
+    }, 500);
 }
 
 

@@ -1333,7 +1333,7 @@ function printSummary() {
         year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Create print-specific HTML with the same structure as updateIncidentSummary()
+    // Create print-specific HTML
     const printHTML = `
         <!DOCTYPE html>
         <html>
@@ -1472,39 +1472,41 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    })}</p>
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</p>
                     <p>Barangay Incident Report Management System</p>
                 </div>
             </div>
             
             <script>
-                // Auto-print when page loads
+                // Auto-print when page loads - tab stays open
                 window.onload = function() {
                     window.print();
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
-                };
-                
-                // Also close when print dialog is cancelled
-                window.onafterprint = function() {
-                    setTimeout(function() {
-                        window.close();
-                    }, 100);
                 };
             </script>
         </body>
         </html>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    // CHANGED: Removed window features to force a New Tab behavior
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
+        // This triggers the print dialog as soon as the content is loaded
+    w.focus(); // Necessary for some browsers to focus the print dialog
+
+    // Use a slight timeout to ensure styles and images (like your logo) are rendered
+    setTimeout(() => {
+        w.print();
+
+        // Optional: Uncomment the line below if you want the window to close 
+        // automatically after the user clicks 'Print' or 'Cancel'
+        // w.close(); 
+    }, 500);
 }
 
 /**

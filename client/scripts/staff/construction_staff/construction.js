@@ -2009,7 +2009,8 @@ function printSummary() {
         </html>
     `;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
+    // CHANGED: Removed the 'width=900,height=650' argument to force a New Tab behavior
+    const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
 }
