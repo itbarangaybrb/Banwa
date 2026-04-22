@@ -382,7 +382,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         <h2 class="section-title section-title--md section-title--light reveal reveal-d1" id="contact-heading">Get in Touch</h2>
         <p class="section-lead section-lead--light reveal reveal-d2" style="margin-top:var(--s2);">Have questions or need assistance? Reach us through any of the channels below.</p>
         <div class="contact__info-grid reveal reveal-d2">
-          <div class="contact__info-item"><div class="contact__info-label">Address</div><div class="contact__info-value">5 Moonlight Loop, Blue Ridge B<br>Quezon City, Metro Manila</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Address</div><div class="contact__info-value">5 Moonlight Loop,<br>Blue Ridge B,<br>Quezon City, Metro Manila</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Mobile</div><div class="contact__info-value">0917-1822272</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Landline</div><div class="contact__info-value">8-5359822</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Email</div><div class="contact__info-value">brgy.blueridgeb@quezoncity.gov.ph</div></div>
