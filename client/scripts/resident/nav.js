@@ -259,9 +259,4 @@ function initMobileNavigation() {
             }
         }
     });
-
-    /* NAV SCROLL */
-    var nav=document.getElementById('mainNav');
-    var onScroll=function(){nav.classList.toggle('nav--scrolled',window.scrollY>50);};
-    window.addEventListener('scroll',onScroll,{passive:true});onScroll();
 }
