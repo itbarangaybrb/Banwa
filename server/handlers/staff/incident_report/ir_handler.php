@@ -316,7 +316,7 @@ function handleUpdateStatus($pdo)
         $currentReport = $getStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentReport['dss_status'] ?? null;
 
-        $sql = "UPDATE incident_reports SET status = :status, update_comments = :comments ";
+        $sql = "UPDATE incident_reports SET status = :status, update_comments = :comments, updated_at = NOW()";
         $params = [':status' => $newStatus, ':comments' => $comments, ':id' => $id];
 
         if ($newStatus === 'Resolved') {
