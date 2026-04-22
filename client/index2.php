@@ -390,9 +390,18 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
           <div class="contact__info-item"><div class="contact__info-label">Online System</div><div class="contact__info-value">Available 24 hours a day,<br>7 days a week</div></div>
         </div>
       </div>
-      <div class="contact__map reveal reveal-d3" aria-label="Location placeholder">
-        <div class="contact__map-icon"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <p class="contact__map-label">BANWA &mdash; Brgy. Blue Ridge B<br>5 Moonlight Loop, Quezon City</p>
+
+      <div class="contact__map reveal reveal-d3" aria-label="Barangay Blue Ridge B location map">
+        <iframe
+          src="https://www.google.com/maps?q=14.6183228,121.0744429&z=18&output=embed"
+          width="100%"
+          height="100%"
+          style="border:0; display:block;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Barangay Blue Ridge B — 5 Moonlight Loop, Quezon City">
+        </iframe>
       </div>
     </div>
   </div>
