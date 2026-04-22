@@ -271,7 +271,7 @@ ul, ol {
 }
 
 .nav--scrolled .nav__time {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .btn-cta {
@@ -326,8 +326,6 @@ ul, ol {
    HERO
    -------------------------------------------------------------------------- */
 
-
-
 .hero {
   background: var(--navy-deep);
 }
@@ -341,7 +339,6 @@ ul, ol {
   flex-direction: column;
 }
 
-/* Background images */
 .hero__bg {
   position: absolute;
   inset: 0;
@@ -362,7 +359,6 @@ ul, ol {
   opacity: 1;
 }
 
-/* Dark gradient overlay */
 .hero__overlay {
   position: absolute;
   inset: 0;
@@ -376,7 +372,6 @@ ul, ol {
     );
 }
 
-/* Decorative 12-column ghost grid lines */
 .hero__grid-lines {
   position: absolute;
   inset: 0;
@@ -392,7 +387,6 @@ ul, ol {
     );
 }
 
-/* Horizontal rule at bottom of hero */
 .hero__rule {
   position: absolute;
   bottom: 0;
@@ -402,7 +396,6 @@ ul, ol {
   z-index: 3;
 }
 
-/* Main text content — fills vertical space so stats bar sits at bottom */
 .hero__content {
   position: relative;
   z-index: 2;
@@ -417,7 +410,6 @@ ul, ol {
   padding: 0 var(--s4) var(--s16);
 }
 
-/* Section label row */
 .hero__label {
   display: inline-flex;
   align-items: center;
@@ -438,7 +430,6 @@ ul, ol {
   color: rgba(255,255,255,0.45);
 }
 
-/* Main title */
 .hero__title {
   font-family: var(--ff-display);
   font-size: var(--fs-hero);
@@ -466,7 +457,6 @@ ul, ol {
   margin-bottom: var(--s6);
 }
 
-/* Office status indicator */
 .hero__status {
   display: inline-flex;
   align-items: center;
@@ -520,7 +510,6 @@ ul, ol {
   border-color: rgba(255,255,255,0.50);
 }
 
-/* Hours popup */
 .hero__hours-popup {
   position: absolute;
   top: calc(100% + 12px);
@@ -607,7 +596,6 @@ ul, ol {
   line-height: 1.5;
 }
 
-/* Right-side image strip */
 .hero__visual {
   position: absolute;
   top: 0;
@@ -648,7 +636,6 @@ ul, ol {
   flex-shrink: 0;
 }
 
-/* Gradient mask on the left edge of the image strip */
 .hero__visual::before {
   content: '';
   position: absolute;
@@ -659,7 +646,6 @@ ul, ol {
   z-index: 2;
 }
 
-/* Stats bar — pinned to bottom of container */
 .hero__stats-bar {
   position: relative;
   z-index: 3;
@@ -698,7 +684,6 @@ ul, ol {
   color: rgba(255,255,255,0.35);
 }
 
-/* Carousel dots — vertical on right edge of container */
 .hero__dots {
   position: absolute;
   right: var(--s4);
@@ -787,6 +772,12 @@ ul, ol {
   margin-block: var(--s6);
 }
 
+.story .section-index::before,
+.contact .section-index::before {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.70);
+}
 
 /* --------------------------------------------------------------------------
    SERVICES SECTION
@@ -1069,11 +1060,10 @@ ul, ol {
   width: auto;
   object-fit: contain;
   opacity: 0.30;
-  filter: brightness(10) saturate(0);
   transition: opacity var(--t-base);
 }
 
-.story__partner-logos img:hover { opacity: 0.55; }
+.story__partner-logos img:hover { opacity: 0.8; }
 
 .story__images {
   display: grid;
@@ -1583,7 +1573,6 @@ ul, ol {
   color: rgba(255,255,255,0.18);
 }
 
-
 /* --------------------------------------------------------------------------
    AUTH MODAL
    -------------------------------------------------------------------------- */
@@ -1599,6 +1588,7 @@ ul, ol {
   display: flex; align-items: center; justify-content: center;
   z-index: 3000;
 }
+
 #submitConfirmModal .modal-box {
   background: var(--white);
   border-radius: var(--r-md);
@@ -1607,6 +1597,7 @@ ul, ol {
   box-shadow: 0 24px 64px rgba(0,0,0,0.22);
   animation: modalIn 0.18s var(--ease);
 }
+
 #submitConfirmModal .modal-title {
   font-family: var(--ff-display);
   font-size: var(--fs-lg);
@@ -1614,19 +1605,35 @@ ul, ol {
   color: var(--navy);
   margin-bottom: 8px;
 }
+
 #submitConfirmModal .modal-body {
   font-size: var(--fs-sm);
   color: var(--text-secondary);
   padding: 0; margin-bottom: var(--s3);
 }
+
 #submitConfirmModal .modal-actions {
   display: flex; gap: 8px; justify-content: flex-end;
 }
+
 #submitConfirmModal .btn {
   padding: 9px 18px; border-radius: var(--r-sm);
   border: none; cursor: pointer;
   font-family: var(--ff-body); font-size: var(--fs-sm); font-weight: var(--fw-semibold);
 }
+
+#createAccForm .label-and-input label a {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: var(--fw-semibold);
+  transition: color var(--t-fast);
+}
+
+#createAccForm .label-and-input label a:hover {
+  color: var(--navy-deep);
+}
+
 #submitConfirmModal .btn-cancel { background: var(--surface-alt); color: var(--ink); }
 #submitConfirmModal .btn-confirm { background: var(--navy); color: var(--white); }
 

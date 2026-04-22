@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ─────────────────────────────────────────────
+    // 0. NAVIGATION TIME DISPLAY
+    // ─────────────────────────────────────────────
     var timeEl=document.getElementById('navTime');
     function tick(){
     if(!timeEl)return;
@@ -45,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     refreshStatus();
 
-
+    // ─────────────────────────────────────────────
     // 2. HERO BACKGROUND CAROUSEL
     // ─────────────────────────────────────────────
     var hSlides = document.querySelectorAll('.hero__bg-slide');
@@ -193,5 +196,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if(!isOpen){this.classList.add('is-open');this.setAttribute('aria-expanded','true');ans.classList.add('is-open');}
     });
     });
+
+    // ─────────────────────────────────────────────
+    // 8. NAV SCROLL
+    // ─────────────────────────────────────────────
+    var nav = document.getElementById('mainNav');
+    function onScroll() {
+        nav.classList.toggle('nav--scrolled', window.scrollY > 50);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
 });

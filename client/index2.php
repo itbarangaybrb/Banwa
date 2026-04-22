@@ -110,39 +110,41 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
     <!-- Main content -->
     <div class="hero__content">
       <div class="hero__body">
-        <div class="hero__label" aria-hidden="true">
-          <span class="hero__label-line"></span>
-          <span class="hero__label-text">Barangay Blue Ridge B &mdash; Quezon City</span>
-        </div>
-        <h1 class="hero__title" id="hero-title">BANWA</h1>
-        <p class="hero__title-sub">Barangay Management System</p>
-
-        <div class="hero__status" role="group" aria-label="Office hours indicator">
-          <span class="hero__status-pip" id="heroPip" aria-hidden="true"></span>
-          <span class="hero__status-text" id="heroStatusText" tabindex="0">Checking office hours&hellip;</span>
-          <div class="hero__hours-popup" role="tooltip">
-            <div class="hours-popup__title">Onsite Office Hours</div>
-            <div class="hours-popup__row">
-              <span class="hours-popup__days">Monday &ndash; Friday</span>
-              <span class="hours-popup__time">8:00 AM &ndash; 5:00 PM</span>
-            </div>
-            <div class="hours-popup__row">
-              <span class="hours-popup__days">Saturday</span>
-              <span class="hours-popup__time">8:00 AM &ndash; 12:00 PM</span>
-            </div>
-            <div class="hours-popup__row">
-              <span class="hours-popup__days">Sunday &amp; Holidays</span>
-              <span class="hours-popup__time is-closed">Closed</span>
-            </div>
-            <div class="hours-popup__status" id="hoursPopupStatus">
-              <span class="hours-popup__status-dot"></span>
-              <span id="hoursPopupStatusText">Loading&hellip;</span>
-            </div>
-            <p class="hours-popup__next" id="hoursPopupNext" style="display:none;"></p>
+        <div class="wrap">
+          <div class="hero__label" aria-hidden="true">
+            <span class="hero__label-line"></span>
+            <span class="hero__label-text">Barangay Blue Ridge B &mdash; Quezon City</span>
           </div>
-        </div>
+          <h1 class="hero__title" id="hero-title">BANWA</h1>
+          <p class="hero__title-sub">Barangay Management System</p>
 
-        <p class="hero__desc">The system enables Barangay Blue Ridge B to efficiently manage infrastructure, business clearances, utilities, and incidents — available online 24 hours a day, 7 days a week.</p>
+          <div class="hero__status" role="group" aria-label="Office hours indicator">
+            <span class="hero__status-pip" id="heroPip" aria-hidden="true"></span>
+            <span class="hero__status-text" id="heroStatusText" tabindex="0">Checking office hours&hellip;</span>
+            <div class="hero__hours-popup" role="tooltip">
+              <div class="hours-popup__title">Onsite Office Hours</div>
+              <div class="hours-popup__row">
+                <span class="hours-popup__days">Monday &ndash; Friday</span>
+                <span class="hours-popup__time">8:00 AM &ndash; 5:00 PM</span>
+              </div>
+              <div class="hours-popup__row">
+                <span class="hours-popup__days">Saturday</span>
+                <span class="hours-popup__time">8:00 AM &ndash; 12:00 PM</span>
+              </div>
+              <div class="hours-popup__row">
+                <span class="hours-popup__days">Sunday &amp; Holidays</span>
+                <span class="hours-popup__time is-closed">Closed</span>
+              </div>
+              <div class="hours-popup__status" id="hoursPopupStatus">
+                <span class="hours-popup__status-dot"></span>
+                <span id="hoursPopupStatusText">Loading&hellip;</span>
+              </div>
+              <p class="hours-popup__next" id="hoursPopupNext" style="display:none;"></p>
+            </div>
+          </div>
+
+          <p class="hero__desc">The system enables Barangay Blue Ridge B to efficiently manage infrastructure, business clearances, utilities, and incidents — available online 24 hours a day, 7 days a week.</p>
+        </div>
       </div>
     </div>
 
