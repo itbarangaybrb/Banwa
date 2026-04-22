@@ -350,7 +350,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
           <h3 class="faq__panel-title">Technical Support</h3>
           <div class="faq__item"><button class="faq__question" aria-expanded="false">How do I reset my password?<span class="faq__chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq__answer" role="region"><p>Click "Forgot password?" on the login page and enter your registered email. If you don't receive the reset email within a few minutes, check your spam folder.</p></div></div>
           <div class="faq__item"><button class="faq__question" aria-expanded="false">What file formats are accepted for ID upload?<span class="faq__chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq__answer" role="region"><p>We accept JPG, JPEG, and PNG formats. Maximum file size is 5&thinsp;MB. Ensure the image is clear and all text on the ID is fully readable.</p></div></div>
-          <div class="faq__item"><button class="faq__question" aria-expanded="false">Who do I contact for technical issues?<span class="faq__chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq__answer" role="region"><p>Email: blueridgeb@yahoo.com<br>Mobile: 0917-1822272<br>Landline: 8-5359822<br>Or visit the barangay hall during office hours and ask for IT support staff.</p></div></div>
+          <div class="faq__item"><button class="faq__question" aria-expanded="false">Who do I contact for technical issues?<span class="faq__chevron" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></span></button><div class="faq__answer" role="region"><p>Email: brgy.blueridgeb@quezoncity.gov.ph<br>Mobile: 0917-1822272<br>Landline: 8-5359822<br>Or visit the barangay hall during office hours and ask for IT support staff.</p></div></div>
         </div>
 
         <div class="faq__panel" id="faq-payments">
@@ -373,10 +373,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         <h2 class="section-title section-title--md section-title--light reveal reveal-d1" id="contact-heading">Get in Touch</h2>
         <p class="section-lead section-lead--light reveal reveal-d2" style="margin-top:var(--s2);">Have questions or need assistance? Reach us through any of the channels below.</p>
         <div class="contact__info-grid reveal reveal-d2">
-          <div class="contact__info-item"><div class="contact__info-label">Address</div><div class="contact__info-value">5 Moonlight Loop, Project 4<br>Quezon City, Metro Manila</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Address</div><div class="contact__info-value">5 Moonlight Loop, Blue Ridge B<br>Quezon City, Metro Manila</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Mobile</div><div class="contact__info-value">0917-1822272</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Landline</div><div class="contact__info-value">8-5359822</div></div>
-          <div class="contact__info-item"><div class="contact__info-label">Email</div><div class="contact__info-value">blueridgeb@yahoo.com</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Email</div><div class="contact__info-value">brgy.blueridgeb@quezoncity.gov.ph</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Office Hours</div><div class="contact__info-value">Mon&ndash;Fri: 8:00 AM &ndash; 5:00 PM<br>Sat: 8:00 AM &ndash; 12:00 PM</div></div>
           <div class="contact__info-item"><div class="contact__info-label">Online System</div><div class="contact__info-value">Available 24 hours a day,<br>7 days a week</div></div>
         </div>
