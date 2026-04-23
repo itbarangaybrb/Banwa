@@ -886,7 +886,7 @@ ul, ol {
   display: grid;
   grid-template-columns: 5fr 4fr;
   gap: var(--s12);
-  align-items: start;
+  align-items: end;
 }
 
 .story__text p {
@@ -906,16 +906,19 @@ ul, ol {
 
 .story__partners {
   display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--s4);
   flex-wrap: wrap;
   margin-top: var(--s6);
   padding-top: var(--s5);
   border-top: 1px solid rgba(255,255,255,0.07);
+  padding-right: 32px;
 }
 
 .story__partners-label {
-  font-size: var(--fs-2xs);
+  font-size: var(--fs-lg);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.25);
@@ -929,7 +932,7 @@ ul, ol {
 }
 
 .story__partner-logos img {
-  height: 28px;
+  height: 40px;
   width: auto;
   object-fit: contain;
   opacity: 0.30;
@@ -940,7 +943,7 @@ ul, ol {
 
 .story__images {
   display: grid;
-  grid-template-rows: 280px 160px;
+  grid-template-rows: 300px 160px;
   grid-template-columns: 1fr 1fr;
   gap: 3px;
   border-radius: var(--r-md);
@@ -1332,7 +1335,7 @@ ul, ol {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s12);
-  align-items: start;
+  align-items: end;
 }
 
 .contact__info-grid {
@@ -1372,7 +1375,7 @@ ul, ol {
 
 /* Google Maps embed container */
 .contact__map {
-  height: 340px;
+  height: 570px;
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: var(--r-md);
   overflow: hidden;
@@ -1526,7 +1529,7 @@ ul, ol {
   .hero__visual         { display: none; }
   .hero__stats-inner    { grid-template-columns: repeat(2, 1fr); }
 
-  .services__grid       { grid-template-columns: 1fr; max-width: 440px; }
+  .services__grid       { grid-template-columns: 1fr; }
   .services__header     { flex-direction: column; align-items: flex-start; gap: var(--s3); }
 
   .faq__layout          { grid-template-columns: 1fr; gap: var(--s5); }

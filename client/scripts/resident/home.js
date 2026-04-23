@@ -148,32 +148,54 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─────────────────────────────────────────────
     // 6. BARANGAY OFFICIALS CAROUSEL
     // ─────────────────────────────────────────────
-    var track=document.getElementById('officialsTrack');
-    var indWrap=document.getElementById('officialsIndicators');
-    var cards=track?Array.from(track.children):[];
-    var oIdx=0;
-    cards.forEach(function(_,i){
-    var dot=document.createElement('button');
-    dot.className='officials__dot'+(i===0?' is-active':'');
-    dot.setAttribute('aria-label','Official '+(i+1));
-    dot.dataset.i=i;
-    dot.addEventListener('click',function(){goOff(+this.dataset.i);});
-    indWrap.appendChild(dot);
-    });
+    var track = document.getElementById('officialsTrack');
+    var indWrap = document.getElementById('officialsIndicators');
 
-    function pv(){return window.innerWidth<=600?1:window.innerWidth<=900?2:3;}
-    function goOff(i){
-    var p=pv(),max=Math.max(0,cards.length-p);
-    oIdx=Math.max(0,Math.min(i,max));
-    var w=cards[0]?cards[0].offsetWidth+24:0;
-    track.style.transform='translateX(-'+oIdx*w+'px)';
-    cards.forEach(function(c,idx){c.classList.toggle('is-active',idx>=oIdx&&idx<oIdx+p);});
-    indWrap.querySelectorAll('.officials__dot').forEach(function(d,idx){d.classList.toggle('is-active',idx===oIdx);});
+    // Only run carousel code if BOTH elements exist
+    if (track && indWrap) {
+        var cards = Array.from(track.children);
+        var oIdx = 0;
+        
+        cards.forEach(function(_, i) {
+            var dot = document.createElement('button');
+            dot.className = 'officials__dot' + (i === 0 ? ' is-active' : '');
+            dot.setAttribute('aria-label', 'Official ' + (i + 1));
+            dot.dataset.i = i;
+            dot.addEventListener('click', function() { goOff(+this.dataset.i); });
+            indWrap.appendChild(dot);
+        });
+
+        function pv() { 
+            return window.innerWidth <= 600 ? 1 : window.innerWidth <= 900 ? 2 : 3; 
+        }
+        
+        function goOff(i) {
+            var p = pv(),
+                max = Math.max(0, cards.length - p);
+            oIdx = Math.max(0, Math.min(i, max));
+            var w = cards[0] ? cards[0].offsetWidth + 24 : 0;
+            track.style.transform = 'translateX(-' + oIdx * w + 'px)';
+            cards.forEach(function(c, idx) {
+                c.classList.toggle('is-active', idx >= oIdx && idx < oIdx + p);
+            });
+            indWrap.querySelectorAll('.officials__dot').forEach(function(d, idx) {
+                d.classList.toggle('is-active', idx === oIdx);
+            });
+        }
+
+        var prevBtn = document.getElementById('officialsPrev');
+        var nextBtn = document.getElementById('officialsNext');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() { goOff(oIdx - 1); });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() { goOff(oIdx + 1); });
+        }
+        
+        window.addEventListener('resize', function() { goOff(oIdx); }, { passive: true });
+        setTimeout(function() { goOff(0); }, 100);
     }
-    document.getElementById('officialsPrev').addEventListener('click',function(){goOff(oIdx-1);});
-    document.getElementById('officialsNext').addEventListener('click',function(){goOff(oIdx+1);});
-    window.addEventListener('resize',function(){goOff(oIdx);},{passive:true});
-    setTimeout(function(){goOff(0);},100);
 
 
     // ─────────────────────────────────────────────
@@ -196,15 +218,4 @@ document.addEventListener('DOMContentLoaded', function () {
         if(!isOpen){this.classList.add('is-open');this.setAttribute('aria-expanded','true');ans.classList.add('is-open');}
     });
     });
-
-    // ─────────────────────────────────────────────
-    // 8. NAV SCROLL
-    // ─────────────────────────────────────────────
-    var nav = document.getElementById('mainNav');
-    function onScroll() {
-        nav.classList.toggle('nav--scrolled', window.scrollY > 50);
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
 });

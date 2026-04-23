@@ -36,14 +36,6 @@ if ($_SESSION['role_id'] != 1) {
           <p>Over the years, the barangay has continuously adapted to social and technological changes to better serve the needs of its people — guided by transparent leadership and active community participation.</p>
           <p>Today, Barangay Blue Ridge B stands as a progressive and organized community that values cooperation, innovation, and sustainable growth for every resident.</p>
         </div>
-        <div class="story__partners reveal reveal-d3">
-          <span class="story__partners-label">Partners</span>
-          <div class="story__partner-logos">
-            <img src="../../img/logo-1.png" alt="Partner 1">
-            <img src="../../img/logo-2.png" alt="Partner 2">
-            <img src="../../img/logo-3.png" alt="Partner 3">
-          </div>
-        </div>
       </div>
       <div class="story__images reveal reveal-d2">
         <div class="story__img-main"><img src="../../img/building-1.png" alt="Barangay Hall" id="storyMainImg"></div>
@@ -51,6 +43,14 @@ if ($_SESSION['role_id'] != 1) {
         <div class="story__img-thumb"><img src="../../img/building-5.png" alt="Meeting Hall" data-full="../../img/building-5.png" onclick="document.getElementById('storyMainImg').src=this.dataset.full"></div>
       </div>
     </div>
+      <div class="story__partners reveal reveal-d3">
+        <span class="story__partners-label">Partners</span>
+        <div class="story__partner-logos">
+          <img src="../../img/logo-1.png" alt="Partner 1">
+          <img src="../../img/logo-2.png" alt="Partner 2">
+          <img src="../../img/logo-3.png" alt="Partner 3">
+        </div>
+      </div>
   </div>
 </section>
 
