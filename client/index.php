@@ -506,6 +506,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
 </div>
 
 <script type="module" src="../client/scripts/auth/auth-modal.js"></script>
+<script type="module" src="../client/scripts/resident/nav.js"></script>
 <script type="module" src="../client/scripts/resident/home.js"></script>
 <script type="module" src="../client/scripts/components/loader.js"></script>
 </body>
