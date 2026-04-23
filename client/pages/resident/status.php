@@ -15,7 +15,7 @@ if ($_SESSION['role_id'] != 1) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Status</title>
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">\
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
     <link rel="stylesheet" href="../../styles/resident/status.css">
 </head>
 
@@ -84,8 +84,9 @@ if ($_SESSION['role_id'] != 1) {
 
     <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
     <script type="module" src="../../scripts/resident/status.js"></script>
+
+    <?php include '_layout/end.php'; ?>
 </body>
 
 </html>
 
-<?php include '_layout/end.php'; ?>
