@@ -1,4 +1,4 @@
-import supabase from '../../../server/api/supabase.js'
+import supabase from '../../../server/api/supabase.js';
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
@@ -266,6 +266,9 @@ async function loadUserData() {
         address.value = data.address || '';
         const emailEl = document.getElementById('email');
         if (emailEl) emailEl.value = data.email || '';
+
+        const usernameEl = document.getElementById('username');
+        if (usernameEl) usernameEl.value = data.email || '';
 
         const avatar = document.getElementById('profileAvatar');
         const fullNameEl = document.getElementById('userFullName');
@@ -696,82 +699,73 @@ function disablePanelSwitch(state) {
     const btnChange = document.getElementById('changePasswordBtn');
     const btnManage = document.getElementById('manageAccountBtn');
 
+    if (!btnChange || !btnManage) return;
+
     btnChange.disabled = state;
     btnManage.disabled = state;
 
     btnChange.style.pointerEvents = state ? "none" : "auto";
     btnManage.style.pointerEvents = state ? "none" : "auto";
-    // =========================
-    // Logout button event listener
-    // =========================
+}
+
+// =========================
+// Logout button event listener
+// =========================
+function initLogoutBtn() {
     const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-            const result = await Swal.fire({
-                title: 'Log Out',
-                text: 'Are you sure you want to log out?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, log out',
-                cancelButtonText: 'Cancel',
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener("click", async () => {
+        const result = await Swal.fire({
+            title: 'Log Out',
+            text: 'Are you sure you want to log out?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, log out',
+            cancelButtonText: 'Cancel',
+            color: '#363636',
+            confirmButtonColor: '#00247C',
+            cancelButtonColor: '#d33',
+            customClass: { popup: 'modal-content', confirmButton: 'btn-proceed' }
+        });
+
+        if (!result.isConfirmed) return;
+
+        const { error: supabaseError } = await supabase.auth.signOut();
+        if (supabaseError) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to log out from Supabase. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK',
                 color: '#363636',
                 confirmButtonColor: '#00247C',
-                cancelButtonColor: '#d33',
-                customClass: {
-                    popup: 'modal-content',
-                    confirmButton: 'btn-proceed',
-                }
+                customClass: { popup: 'modal-content', confirmButton: 'btn-proceed' }
             });
+            return;
+        }
 
-            if (!result.isConfirmed) return;
-
-            const { error: supabaseError } = await supabase.auth.signOut();
-            if (supabaseError) {
-                console.error("Supabase sign-out error:", supabaseError.message);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Failed to log out from Supabase. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    color: '#363636',
-                    confirmButtonColor: '#00247C',
-                    customClass: {
-                        popup: 'modal-content',
-                        confirmButton: 'btn-proceed',
-                    }
-                });
-                return;
-            }
-
-            try {
-                const response = await fetch('/server/api/shared/signout_user.php', {
-                    method: 'POST'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                window.location.href = "/client/index.php";
-
-            } catch (fetchError) {
-                console.error("Server sign-out error:", fetchError);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Failed to log out from the server. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    color: '#363636',
-                    confirmButtonColor: '#00247C',
-                    customClass: {
-                        popup: 'modal-content',
-                        confirmButton: 'btn-proceed',
-                    }
-                });
-            }
-        });
-    }
+        try {
+            const response = await fetch('/server/api/shared/signout_user.php', { method: 'POST' });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            window.location.href = "/client/index.php";
+        } catch (fetchError) {
+            console.error("Server sign-out error:", fetchError);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to log out from the server. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                color: '#363636',
+                confirmButtonColor: '#00247C',
+                customClass: { popup: 'modal-content', confirmButton: 'btn-proceed' }
+            });
+        }
+    });
 }
+
+// Call once on load
+initLogoutBtn();
 
 
 // =========================

@@ -94,11 +94,13 @@ if ($_SESSION['role_id'] != 1) {
                     </div>
 
                     <form action="" class="forms" id="changePassForm">
+                        <input type="text" name="username" id="username" autocomplete="username" hidden>
+                        
                         <div class="inputs-container">
                             <div class="form-group">
                                 <label for="currentPassword">Current Password</label>
                                 <div class="input-with-icon">
-                                    <input type="password" name="currentPassword" id="currentPassword" placeholder="Enter current password" disabled>
+                                    <input type="password" name="currentPassword" id="currentPassword" placeholder="Enter current password" autocomplete="current-password" disabled>
                                     <span class="input-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -112,7 +114,7 @@ if ($_SESSION['role_id'] != 1) {
                             <div class="form-group">
                                 <label for="newPassword">New Password</label>
                                 <div class="input-with-icon">
-                                    <input type="password" name="newPassword" id="newPassword" placeholder="Enter new password" disabled>
+                                    <input type="password" name="newPassword" id="newPassword" placeholder="Enter new password" autocomplete="new-password" disabled>
                                     <span class="input-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -126,7 +128,7 @@ if ($_SESSION['role_id'] != 1) {
                             <div class="form-group">
                                 <label for="reTypeNewPassword">Confirm New Password</label>
                                 <div class="input-with-icon">
-                                    <input type="password" name="reTypeNewPassword" id="reTypeNewPassword" placeholder="Re-type new password" disabled>
+                                    <input type="password" name="reTypeNewPassword" id="reTypeNewPassword" placeholder="Re-type new password" autocomplete="new-password" disabled>
                                     <span class="input-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
