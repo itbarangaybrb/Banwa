@@ -45,3 +45,5 @@ Stack trace:
 [08-Apr-2026 21:09:38 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [14-Apr-2026 16:05:44 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [14-Apr-2026 16:05:45 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[18-Apr-2026 03:03:04 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[18-Apr-2026 03:03:04 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

@@ -18,6 +18,9 @@ $full_name = getCurrentUserName();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archives</title>
 
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../img/browser-icon.svg">
+
     <link rel="stylesheet" href="../../../styles/staff/superadmin/main.css">
     <link rel="stylesheet" href="../../../styles/staff/superadmin/manage_users.css">
     <link rel="stylesheet" href="../../../styles/components/loader.css">

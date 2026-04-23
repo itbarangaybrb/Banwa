@@ -350,3 +350,9 @@ LINE 14:                     requirement_upload_json AS requirement_u...
 [25-Mar-2026 11:15:46 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [25-Mar-2026 11:23:15 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
 [25-Mar-2026 11:23:15 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:45:02 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:45:02 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:45:02 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:54:07 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:54:07 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[20-Apr-2026 12:54:07 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21

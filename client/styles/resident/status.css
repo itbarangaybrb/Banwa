@@ -20,6 +20,55 @@
     --fw-medium: 500;
     --fw-semibold: 600;
     --fw-bold: 700;
+
+    --color-blue-1: #1249B4;
+    --color-blue-2: #00247C;
+    --table-header-bg: #19316B;
+    --table-border: #dee2e6;
+    --text-muted: #6c757d;
+
+    --btn-yellow-bg: #FEF9EC;
+    --btn-yellow-text: #9A6500;
+    --btn-yellow-border: #F5C842;
+    --btn-yellow-dot: #F5C842;
+
+    --btn-purple-bg: #F0EFFE;
+    --btn-purple-text: #362F8A;
+    --btn-purple-border: #AFA9EC;
+    --btn-purple-dot: #7F77DD;
+
+    --btn-orange-bg: #FEF1EC;
+    --btn-orange-text: #8C3A1A;
+    --btn-orange-border: #F0997B;
+    --btn-orange-dot: #D85A30;
+    --btn-orange-hover: #FDE4D8;
+
+    --btn-blue-bg: #EAF2FF;
+    --btn-blue-text: #1251A3;
+    --btn-blue-border: #85B7EB;
+    --btn-blue-dot: #378ADD;
+    --btn-blue-hover: #D6E8FF;
+
+    --btn-teal-bg: #E4F6F4;
+    --btn-teal-text: #0A6B5C;
+    --btn-teal-border: #5DCAA5;
+    --btn-teal-dot: #1D9E75;
+
+    --btn-green-bg: #EEF6E4;
+    --btn-green-text: #2E6010;
+    --btn-green-border: #97C459;
+    --btn-green-dot: #639922;
+
+    --btn-red-bg: #FEECEC;
+    --btn-red-text: #8A2020;
+    --btn-red-border: #F09595;
+    --btn-red-dot: #E24B4A;
+
+    --btn-gray-bg: #F4F3F1;
+    --btn-gray-text: #444441;
+    --btn-gray-border: #B4B2A9;
+    --btn-gray-dot: #888780;
+
 }
 
 *,
@@ -73,7 +122,7 @@ body {
     margin-bottom: 8px;
     font-size: var(--h4);
     line-height: var(--h4-lh);
-    font-weight: var(--bold);
+    font-weight: var(--fw-bold);
 }
 
 /* ==================== Status section ==================== */
@@ -220,31 +269,19 @@ body {
 :root {
     --color-blue-1: #1249B4;
     --color-blue-2: #00247C;
-    --table-header-bg: #007bff;
+    --table-header-bg: #19316B;
     /* Bright blue from image */
     --table-border: #dee2e6;
     --text-muted: #6c757d;
-}
-
-/* ... keep existing basic resets and layout styles ... */
-
-.sections {
-    width: 100%;
-    max-width: 1440px;
-    padding: 40px 64px;
-    /* Reduced top padding slightly */
-    margin-inline: auto;
 }
 
 /* Container fix to match image width style */
 .containers.status-table-container {
     background: white;
     padding: 0;
-    /* Remove padding to let table touch edges */
-    border-radius: 4px;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     overflow: hidden;
-    /* For rounded corners */
     border: 1px solid var(--table-border);
 }
 
@@ -314,68 +351,189 @@ body {
 }
 
 .detail-info {
-    font-size: 13px;
+    font-size: 14px;
     color: #555;
     margin-bottom: 2px;
-}
-
-/* Status Column */
-.status-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: white;
-    background-color: #28a745;
-    /* Default Green */
-    margin-bottom: 8px;
-}
-
-.status-badge.pending {
-    background-color: #ffc107;
-    color: #333;
-}
-
-.status-badge.rejected {
-    background-color: #dc3545;
-}
-
-.validation-btn {
-    display: block;
-    background-color: var(--table-header-bg);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    width: fit-content;
-    margin-top: 5px;
-}
-
-.validation-hint {
-    font-size: 10px;
     color: var(--text-muted);
-    margin-top: 4px;
-    display: block;
 }
 
-/* Action Column */
+.detail-info span {
+    font-weight: 700;
+}
+
+/* ==================== Statuses ==================== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    /* padding: 4px 10px;
+    border-radius: 4px; */
+    font-size: 14px;
+    font-weight: 700;
+    /* letter-spacing: 0.5px; */
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-badge.pending,
+.status-badge.unpaid,
+.status-badge.payment-submitted {
+    /* background: var(--btn-yellow-bg); */
+    color: var(--btn-yellow-text);
+    /* border: 0.5px solid var(--btn-yellow-border); */
+}
+
+.status-badge.pending::before,
+.status-badge.unpaid::before,
+.status-badge.payment-submitted::before {
+    background: var(--btn-yellow-dot);
+}
+
+.status-badge.processing,
+.status-badge.under-investigation,
+.status-badge.referred-to-authorities {
+    /* background: var(--btn-purple-bg); */
+    color: var(--btn-purple-text);
+    /* border: 0.5px solid var(--btn-purple-border); */
+}
+
+.status-badge.processing::before,
+.status-badge.under-investigation::before,
+.status-badge.referred-to-authorities::before {
+    background: var(--btn-purple-dot);
+}
+
+.status-badge.additional-requirements {
+    /* background: var(--btn-orange-bg); */
+    color: var(--btn-orange-text);
+    /* border: 0.5px solid var(--btn-orange-border); */
+}
+
+.status-badge.additional-requirements::before {
+    background: var(--btn-orange-dot);
+}
+
+.status-badge.for-payment {
+    /* background: var(--btn-blue-bg); */
+    color: var(--btn-blue-text);
+    /* border: 0.5px solid var(--btn-blue-border); */
+}
+
+.status-badge.for-payment::before {
+    background: var(--btn-blue-dot);
+}
+
+.status-badge.pending-verification,
+.status-badge.resolved,
+.status-badge.pre-approved {
+    /* background: var(--btn-teal-bg); */
+    color: var(--btn-teal-text);
+    /* border: 0.5px solid var(--btn-teal-border); */
+}
+
+.status-badge.pending-verification::before,
+.status-badge.resolved::before,
+.status-badge.pre-approved::before {
+    background: var(--btn-teal-dot);
+}
+
+.status-badge.approved,
+.status-badge.success,
+.status-badge.complied,
+.status-badge.verified,
+.status-badge.paid,
+.status-badge.completed {
+    /* background: var(--btn-green-bg); */
+    color: var(--btn-green-text);
+    /* border: 0.5px solid var(--btn-green-border); */
+}
+
+.status-badge.approved::before,
+.status-badge.success::before,
+.status-badge.complied::before,
+.status-badge.verified::before,
+.status-badge.paid::before,
+.status-badge.completed::before {
+    background: var(--btn-green-dot);
+}
+
+.status-badge.disapproved,
+.status-badge.rejected {
+    /* background: var(--btn-red-bg); */
+    color: var(--btn-red-text);
+    /* border: 0.5px solid var(--btn-red-border); */
+}
+
+.status-badge.disapproved::before,
+.status-badge.rejected::before {
+    background: var(--btn-red-dot);
+}
+
+.status-badge.cancelled,
+.status-badge.closed {
+    /* background: var(--btn-gray-bg); */
+    color: var(--btn-gray-text);
+    /* border: 0.5px solid var(--btn-gray-border); */
+}
+
+.status-badge.cancelled::before,
+.status-badge.closed::before {
+    background: var(--btn-gray-dot);
+}
+
+/* ==================== Action Buttons ==================== */
 .action-btn-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.main-action-btn {
+.action-btn-group .action-btn,
+.view-receipt-btn {
+    display: block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.action-btn-group .validation-btn {
+    background: var(--btn-blue-bg);
+    color: var(--btn-blue-text);
+    border: 1px solid var(--btn-blue-border);
+}
+
+.action-btn-group .validation-btn:hover,
+.view-receipt-btn:hover {
+    background: var(--btn-blue-hover);
+}
+
+.action-btn-group .cancel-action-btn {
+    background: var(--btn-orange-bg);
+    color: var(--btn-orange-text);
+    border: 1px solid var(--btn-orange-border);
+}
+
+.action-btn-group .cancel-action-btn:hover {
+    background: var(--btn-orange-hover);
+}
+
+/* .main-action-btn {
     background-color: #6c757d;
-    /* Gray color from image */
     color: white;
     border: none;
     padding: 10px;
-    width: 100%;
+    width: max-content;
     border-radius: 4px;
     cursor: pointer;
     font-weight: 600;
@@ -389,8 +547,7 @@ body {
 
 .main-action-btn.pay {
     background-color: #007bff;
-    /* Blue for payment actions */
-}
+} */
 
 .download-link {
     display: block;
@@ -405,45 +562,12 @@ body {
     text-decoration: underline;
 }
 
-/* Keep Modal Styles (Previous CSS) below here... */
-/* ... (Copy your existing Modal CSS here) ... */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-    padding-top: 60px;
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 700px;
-    border-radius: 8px;
-    position: relative;
-}
-
-.modal-close-btn {
+/* .payment-modal-close-btn {
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-}
-
-.payment-modal-close-btn {
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
+} */
 
 /* Edit Modal specific styles */
 #modal-form-content h2 {
@@ -545,42 +669,42 @@ body {
 
 /* New styles for the edit application button */
 .edit-action-btn {
-    background-color: var(--color-blue-1);
-    color: white;
-    padding: 8px 15px;
-    border: none;
+    background: var(--btn-blue-bg);
+    color: var(--btn-blue-text);
+    border: 1px solid var(--btn-blue-border);
+    padding: 6px 12px;
     border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: var(--fw-medium);
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
-    /* Adjust as needed for spacing */
+    width: max-content;
+    transition: background 0.15s;
+    margin-top: 0;
 }
 
 .edit-action-btn:hover {
-    background-color: var(--color-blue-2);
+    background: var(--btn-blue-hover);
 }
 
 /* New styles for payment action button */
 .payment-action-btn {
-    background-color: #28a745;
-    /* Green color for payment */
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
+    background: var(--btn-blue-bg);
+    color: var(--btn-blue-text);
+    border: 1px solid var(--btn-blue-border);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: var(--fw-medium);
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
-    margin-left: 5px;
-    /* Spacing between buttons */
+    width: fit-content;
+    transition: background 0.15s;
+    margin-top: 0;
+    margin-left: 0;
 }
 
 .payment-action-btn:hover {
-    background-color: #218838;
+    background: var(--btn-blue-hover);
+    color: var(--btn-blue-text);
 }
 
 /* Payment Modal specific styles */
@@ -589,7 +713,7 @@ body {
     /* Adjust as needed for payment form */
 }
 
-.payment-modal-close-btn {
+/* .payment-modal-close-btn {
     color: #aaa;
     float: right;
     font-size: 28px;
@@ -601,7 +725,7 @@ body {
     color: black;
     text-decoration: none;
     cursor: pointer;
-}
+} */
 
 #payment-modal-form-content h2 {
     margin-top: 0;
