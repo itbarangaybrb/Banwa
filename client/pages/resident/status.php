@@ -15,8 +15,7 @@ if ($_SESSION['role_id'] != 1) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Status</title>
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <link rel="stylesheet" href="../../styles/global.css">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">\
     <link rel="stylesheet" href="../../styles/resident/status.css">
 </head>
 

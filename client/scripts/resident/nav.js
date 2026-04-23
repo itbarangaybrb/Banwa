@@ -1,262 +1,254 @@
-// Main navigation script
 document.addEventListener('DOMContentLoaded', function () {
-    try {
-        // Initialize all navigation functions
-        initNavHighlighting();
-        displayLiveDateTime();
-        loadUserDataAndUpdateAvatar();
-        initMobileNavigation();
-    } catch (error) {
-        console.error('Error in navigation script:', error);
+
+    // ─────────────────────────────────────────────
+    // 1. LIVE TIME (top-right of nav)
+    // ─────────────────────────────────────────────
+    const timeEl = document.getElementById('navTime');
+
+    function tick() {
+        if (!timeEl) return;
+        const d   = new Date();
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        let h      = d.getHours();
+        const m    = d.getMinutes();
+        const ap   = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        timeEl.textContent =
+            days[d.getDay()] + ' ' +
+            (h < 10 ? '0' + h : h) + ':' +
+            (m < 10 ? '0' + m : m) + ' ' + ap;
     }
-});
 
-// ==================== NAVIGATION HIGHLIGHTING ====================
-function initNavHighlighting() {
-    // FIRST CHECK: Return if nav container doesn't exist on this page
-    const navContainer = document.querySelector('.nav_list');
-    if (!navContainer) {
-        console.log('Navigation container not found on this page - skipping highlight');
-        return;
+    tick();
+    setInterval(tick, 30000);
+
+
+    // ─────────────────────────────────────────────
+    // 2. SCROLL BEHAVIOUR
+    //    Pages that have a .hero → transparent until
+    //    user scrolls. Pages without → always scrolled.
+    // ─────────────────────────────────────────────
+    const nav     = document.getElementById('mainNav');
+    const hasHero = !!document.querySelector('.hero');
+
+    function applyScroll() {
+        if (!nav) return;
+        if (!hasHero || window.scrollY > 50) {
+            nav.classList.add('nav--scrolled');
+        } else {
+            nav.classList.remove('nav--scrolled');
+        }
     }
-    
-    const currentPath = window.location.pathname;
-    const currentPage = currentPath.split('/').pop() || 'home.php';
-    const navItems = document.querySelectorAll('.nav_list a, .nav_list button');
 
-    if (navItems.length === 0) return;
+    if (!hasHero && nav) {
+        nav.classList.add('nav--scrolled');
+    }
 
-    navItems.forEach(item => {
-        item.classList.remove('active');
-        // ADDED EXTRA SAFETY CHECK: Verify item is a valid DOM element
-        if (item && item.nodeType === 1 && typeof item.hasAttribute === 'function') {
-            if (item.hasAttribute('aria-current')) {
-                item.removeAttribute('aria-current');
+    window.addEventListener('scroll', applyScroll, { passive: true });
+    applyScroll();
+
+
+    // ─────────────────────────────────────────────
+    // 3. ACTIVE LINK HIGHLIGHTING
+    // ─────────────────────────────────────────────
+    const currentPage = window.location.pathname.split('/').pop() || '';
+
+    document.querySelectorAll('.nav__link, .nav__dropdown-menu a').forEach(function (link) {
+        const href = link.getAttribute('href') || '';
+        const page = href.split('/').pop();
+        if (page && page === currentPage) {
+            link.classList.add('is-active');
+            // Also mark parent dropdown toggle active
+            const parentDropdown = link.closest('.nav__dropdown');
+            if (parentDropdown) {
+                const toggle = parentDropdown.querySelector('.nav__dropdown-toggle');
+                if (toggle) toggle.classList.add('is-active');
             }
         }
     });
 
-    let foundActive = false;
 
-    navItems.forEach(item => {
-        // ADDED SAFETY CHECK: Skip if item is not a valid element
-        if (!item || item.nodeType !== 1) return;
-        
-        const linkHref = item.getAttribute('href');
+    // ─────────────────────────────────────────────
+    // 4. CLEARANCES DROPDOWN (click-based, keyboard-friendly)
+    // ─────────────────────────────────────────────
+    document.querySelectorAll('.nav__dropdown').forEach(function (dropdown) {
+        const toggle = dropdown.querySelector('.nav__dropdown-toggle');
+        if (!toggle) return;
 
-        // Skip button (logout) - it doesn't have href
-        if (!linkHref) return;
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = dropdown.classList.contains('is-open');
 
-        const linkPage = linkHref.split('/').pop();
+            // Close all other dropdowns first
+            document.querySelectorAll('.nav__dropdown.is-open').forEach(function (d) {
+                d.classList.remove('is-open');
+                const t = d.querySelector('.nav__dropdown-toggle');
+                if (t) t.setAttribute('aria-expanded', 'false');
+            });
 
-        // Match if: page filename matches
-        if (linkPage === currentPage) {
-            item.classList.add('active');
-            // Add aria-current only if element is valid
-            if (item && item.nodeType === 1 && typeof item.setAttribute === 'function') {
-                item.setAttribute('aria-current', 'page');
+            if (!isOpen) {
+                dropdown.classList.add('is-open');
+                toggle.setAttribute('aria-expanded', 'true');
             }
-            foundActive = true;
-            console.log('Nav item activated:', linkPage);
-        }
+        });
+
+        // Keyboard: Escape closes
+        toggle.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('is-open');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.focus();
+            }
+        });
     });
 
-    if (!foundActive) {
-        // Fallback: activate home link if no match
-        const homeLink = document.querySelector('.nav_list a[href*="home.php"]');
-        if (homeLink && homeLink.nodeType === 1) {
-            homeLink.classList.add('active');
-            if (typeof homeLink.setAttribute === 'function') {
-                homeLink.setAttribute('aria-current', 'page');
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function () {
+        document.querySelectorAll('.nav__dropdown.is-open').forEach(function (d) {
+            d.classList.remove('is-open');
+            const t = d.querySelector('.nav__dropdown-toggle');
+            if (t) t.setAttribute('aria-expanded', 'false');
+        });
+    });
+
+
+    // ─────────────────────────────────────────────
+    // 5. PROFILE CIRCLE DROPDOWN
+    // ─────────────────────────────────────────────
+    const profileWrapper = document.getElementById('navProfile');
+    const profileBtn     = document.getElementById('profileIcon');
+
+    if (profileWrapper && profileBtn) {
+        profileBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = profileWrapper.classList.contains('is-open');
+            profileWrapper.classList.toggle('is-open', !isOpen);
+            profileBtn.setAttribute('aria-expanded', String(!isOpen));
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!profileWrapper.contains(e.target)) {
+                profileWrapper.classList.remove('is-open');
+                profileBtn.setAttribute('aria-expanded', 'false');
             }
-            // console.log('Fallback: Home link activated');
-        }
-    }
-}
+        });
 
-// ==================== LIVE DATE TIME ====================
-function displayLiveDateTime() {
-    function update() {
-        const weekdayBox = document.querySelector('.weekday-box');
-        const timePart = document.querySelector('.time-part');
-        const dateDisplay = document.querySelector('.date-display');
-
-        if (!weekdayBox || !timePart || !dateDisplay) return;
-
-        const now = new Date();
-
-        // Format weekday: "Wed" (for the blue box)
-        const weekdayOptions = { weekday: 'short' };
-        const weekdayString = now.toLocaleDateString('en-US', weekdayOptions);
-
-        // Format time: "03:11 AM" (for the time part)
-        const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
-        const timeString = now.toLocaleTimeString('en-US', timeOptions);
-        const formattedTime = timeString.replace(',', '');
-
-        // Format date: "03/04/2026"
-        const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-        const dateString = now.toLocaleDateString('en-US', dateOptions);
-
-        // Update displays
-        weekdayBox.textContent = weekdayString.toUpperCase();
-        timePart.textContent = formattedTime;
-        dateDisplay.textContent = dateString;
+        // Keyboard: Escape closes
+        profileWrapper.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                profileWrapper.classList.remove('is-open');
+                profileBtn.setAttribute('aria-expanded', 'false');
+                profileBtn.focus();
+            }
+        });
     }
 
-    update();
-    setInterval(update, 1000);
-}
 
-// ==================== USER AVATAR ====================
-async function loadUserDataAndUpdateAvatar() {
-    try {
-        // Function to get user initials from name
-        function getInitialsFromUserData(data) {
-            // Prefer first + last name initials
+    // ─────────────────────────────────────────────
+    // 6. PROFILE AVATAR — fetch initials from API
+    // ─────────────────────────────────────────────
+    async function loadAvatar() {
+        const circle = document.getElementById('profileIcon');
+        if (!circle) return;
+
+        // Set a fallback immediately
+        circle.textContent = 'US';
+
+        try {
+            const res  = await fetch('/server/api/resident/get_user.php', { credentials: 'include' });
+            const data = await res.json();
+            if (data.error) return;
+
+            let initials = 'US';
+
             if (data.first_name && data.last_name) {
-                return (data.first_name[0] + data.last_name[0]).toUpperCase();
-            }
-            // Fallback: first two letters of first name
-            if (data.first_name && data.first_name.length >= 2) {
-                return data.first_name.slice(0, 2).toUpperCase();
-            }
-            // Fallback: first two letters of full name
-            if (data.full_name) {
+                initials = (data.first_name[0] + data.last_name[0]).toUpperCase();
+            } else if (data.first_name && data.first_name.length >= 2) {
+                initials = data.first_name.slice(0, 2).toUpperCase();
+            } else if (data.full_name) {
                 const tokens = data.full_name.split(/\s+/).filter(Boolean);
                 if (tokens.length >= 2) {
-                    return (tokens[0][0] + tokens[1][0]).toUpperCase();
-                }
-                if (tokens.length === 1 && tokens[0].length >= 2) {
-                    return tokens[0].slice(0, 2).toUpperCase();
+                    initials = (tokens[0][0] + tokens[1][0]).toUpperCase();
+                } else if (tokens.length === 1 && tokens[0].length >= 2) {
+                    initials = tokens[0].slice(0, 2).toUpperCase();
                 }
             }
-            // Default fallback
-            return 'US';
-        }
 
-        // Fetch user data from your backend
-        const res = await fetch('/server/api/resident/get_user.php', {
-            credentials: 'include'
-        });
-        const data = await res.json();
+            circle.textContent = initials;
 
-        if (data.error) return;
-
-        // Get the profile circle element
-        const profileCircle = document.querySelector('.profile_circle');
-
-        if (profileCircle) {
-            // Get initials from user data
-            const initials = getInitialsFromUserData(data);
-
-            // Update the text content
-            profileCircle.textContent = initials;
-
-            // Add a subtle animation
-            profileCircle.style.transition = 'transform 0.2s ease';
-            profileCircle.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                profileCircle.style.transform = 'scale(1)';
-            }, 200);
-        }
-
-    } catch (err) {
-        console.error('Failed to load user data for nav avatar:', err);
-        // Show default if fetch fails
-        const profileCircle = document.querySelector('.profile_circle');
-        if (profileCircle && !profileCircle.textContent) {
-            profileCircle.textContent = 'US';
+        } catch (err) {
+            console.error('Could not load user avatar:', err);
         }
     }
-}
 
-// ==================== MOBILE NAVIGATION ====================
-function initMobileNavigation() {
+    loadAvatar();
+
+
+    // ─────────────────────────────────────────────
+    // 7. MARK PROFILE / STATUS LINKS ACTIVE
+    // ─────────────────────────────────────────────
+    document.querySelectorAll('.nav__profile-link[href]').forEach(function (link) {
+        const page = (link.getAttribute('href') || '').split('/').pop();
+        if (page && page === currentPage) {
+            link.classList.add('is-active');
+        }
+    });
+
+
+    // ─────────────────────────────────────────────
+    // 8. HAMBURGER — mobile drawer
+    // ─────────────────────────────────────────────
     const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const navMenu = document.getElementById('navMenu');
-    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    const navMenu      = document.getElementById('navMenu');
+    const navOverlay   = document.getElementById('navOverlay');
 
-    if (!hamburgerBtn || !navMenu) return;
-
-    // Toggle mobile menu
-    hamburgerBtn.addEventListener('click', function () {
-        this.classList.toggle('active');
-        navMenu.classList.toggle('active');
-        document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
-    });
-
-    // Handle dropdown toggles on mobile
-    function handleDropdownClick(e) {
-        e.preventDefault();
-        const dropdown = this.closest('.dropdown');
-        if (dropdown) {
-            dropdown.classList.toggle('active');
-        }
+    function openDrawer() {
+        if (!navMenu || !hamburgerBtn) return;
+        navMenu.classList.add('is-open');
+        hamburgerBtn.classList.add('is-open');
+        hamburgerBtn.setAttribute('aria-expanded', 'true');
+        if (navOverlay) navOverlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
     }
 
-    // Check if mobile view and attach handlers
-    function checkMobileView() {
-        if (window.innerWidth <= 992) {
-            dropdownToggles.forEach(toggle => {
-                if (toggle) {
-                    toggle.removeEventListener('click', handleDropdownClick);
-                    toggle.addEventListener('click', handleDropdownClick);
-                }
-            });
-        } else {
-            dropdownToggles.forEach(toggle => {
-                if (toggle) {
-                    toggle.removeEventListener('click', handleDropdownClick);
-                }
-            });
-
-            // Reset dropdowns when switching to desktop
-            document.querySelectorAll('.dropdown').forEach(dropdown => {
-                if (dropdown) {
-                    dropdown.classList.remove('active');
-                }
-            });
-        }
+    function closeDrawer() {
+        if (!navMenu || !hamburgerBtn) return;
+        navMenu.classList.remove('is-open');
+        hamburgerBtn.classList.remove('is-open');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+        if (navOverlay) navOverlay.classList.remove('is-open');
+        document.body.style.overflow = '';
     }
 
-    // Initial check
-    checkMobileView();
-
-    // Close menu when clicking on a link
-    const navLinks = document.querySelectorAll('.nav_select, .dropdown-menu a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', function () {
-            if (window.innerWidth <= 992) {
-                hamburgerBtn.classList.remove('active');
-                navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            }
+    if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            navMenu && navMenu.classList.contains('is-open') ? closeDrawer() : openDrawer();
         });
-    });
+    }
 
-    // Handle window resize
+    if (navOverlay) {
+        navOverlay.addEventListener('click', closeDrawer);
+    }
+
+    // Close drawer on nav link click (mobile)
+    if (navMenu) {
+        navMenu.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth <= 860) closeDrawer();
+            });
+        });
+    }
+
+    // Close drawer on resize back to desktop
     window.addEventListener('resize', function () {
-        checkMobileView();
+        if (window.innerWidth > 860) closeDrawer();
+    }, { passive: true });
 
-        // Close mobile menu if window becomes larger than mobile breakpoint
-        if (window.innerWidth > 992) {
-            if (navMenu.classList.contains('active')) {
-                hamburgerBtn.classList.remove('active');
-                navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        }
+    // Escape key closes drawer
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeDrawer();
     });
 
-    // Close menu when clicking outside
-    document.addEventListener('click', function (e) {
-        if (window.innerWidth <= 992) {
-            if (!navMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                hamburgerBtn.classList.remove('active');
-                navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        }
-    });
-}
+});

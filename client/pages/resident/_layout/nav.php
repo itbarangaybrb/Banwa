@@ -4,64 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../styles/global.css">
+    <link rel="stylesheet" href="../../styles/resident/nav.css">
+    <link rel="stylesheet" href="../../styles/components/loader.css">
+    <link rel="stylesheet" href="../../styles/resident/home2.css">
 </head>
 
 <body>
     <header>
-        <div class="logo_container">
-            <!-- Hamburger Menu Button for Mobile - Position it before nav -->
-            <button class="hamburger-menu" id="hamburgerBtn" aria-label="Menu">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </button>
-            
-            <div class="head_space">
-                <img class="logo" src="../../img/logo-1.png" alt="Logo">
-                <img class="logo" src="../../img/banwalogo.png" alt="BANWA Logo">
-                <span class="company_name">BANWA</span>
-            </div>
+        <!-- NAV -->
+        <nav class="nav" id="mainNav" aria-label="Main navigation">
+            <div class="wrap nav__inner">
 
-            <!-- Add nav-menu class here for mobile functionality -->
-            <nav class="nav-menu" id="navMenu">
-                <ul class="nav_list">
-                    <li><a class="nav_select <?php echo ($page_title == "Home") ? 'active' : ''; ?>" href="../resident/home.php">Home</a></li>
-                    <li><a class="nav_select <?php echo ($page_title == "About Us") ? 'active' : ''; ?>" href="../resident/about_us.php">About Us</a></li>
-                    <li class="dropdown">
-                        <a class="nav_select2 dropdown-toggle" id="clearancesDropdown">
-                            Clearances
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="../resident/construction_app.php" <?php echo ($page_title == "Construction Application") ? 'class="active"' : ''; ?>>Construction Application</a></li>
-                            <li><a href="../resident/business_app.php" <?php echo ($page_title == "Business Application") ? 'class="active"' : ''; ?>>Business Application</a></li>
-                            <li><a href="../resident/utilities_app.php" <?php echo ($page_title == "Utilities Application") ? 'class="active"' : ''; ?>>Utilities Application</a></li>
-                            <li><a href="../resident/incidentReport.php" <?php echo ($page_title == "Incident Report") ? 'class="active"' : ''; ?>>Incident Report</a></li>
-                        </ul>
+                <!-- Brand -->
+                <a href="/client/pages/resident/home.php" class="nav__brand">
+                <div class="nav__logos" aria-hidden="true">
+                    <img src="/client/img/logo-1.png" alt="">
+                    <img src="/client/img/banwalogo.png" alt="">
+                </div>
+                <span class="nav__wordmark">BANWA</span>
+                </a>
+
+                <!-- Centre links -->
+                <div class="nav__links" id="navMenu" aria-label="Site navigation">
+                <ul class="nav__list">
+                    <li>
+                    <a class="nav__link" href="/client/pages/resident/home.php">Home</a>
+                    </li>
+                    <li>
+                    <a class="nav__link" href="/client/pages/resident/about_us.php">About Us</a>
+                    </li>
+                    <li class="nav__dropdown">
+                    <button class="nav__link nav__dropdown-toggle" aria-haspopup="true" aria-expanded="false" id="clearancesToggle">
+                        Clearances
+                        <svg class="nav__dropdown-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                    <ul class="nav__dropdown-menu" role="menu" aria-labelledby="clearancesToggle">
+                        <li role="none"><a role="menuitem" href="/client/pages/resident/construction_app.php">Construction Application</a></li>
+                        <li role="none"><a role="menuitem" href="/client/pages/resident/business_app.php">Business Application</a></li>
+                        <li role="none"><a role="menuitem" href="/client/pages/resident/utilities_app.php">Utilities Application</a></li>
+                        <li role="none"><a role="menuitem" href="/client/pages/resident/incidentReport.php">Incident Report</a></li>
+                    </ul>
                     </li>
                 </ul>
-            </nav>
+                </div>
 
-            <div class="user_profile">
-                <div class="profile_dropdown">
-                    <button class="profile_circle" id="profileIcon">
-                        <!-- Initials will be set by JS -->
+                <!-- Right side -->
+                <div class="nav__right">
+                <time class="nav__time" id="navTime" aria-live="polite"></time>
+
+                <!-- Profile dropdown -->
+                <div class="nav__profile" id="navProfile">
+                    <button class="nav__profile-circle" id="profileIcon" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+                    <!-- Initials injected by JS -->
                     </button>
-                    <div class="profile_dropdown_menu">
-                        <a href="../resident/profile.php" class="dropdown_link <?php echo ($page_title == "Profile") ? 'active' : ''; ?>">Profile</a>
-                        <a href="../resident/status.php" class="dropdown_link <?php echo ($page_title == "Status") ? 'active' : ''; ?>">Status</a>
-                        <button class="dropdown_link" id="signoutBtn">Logout</button>
+                    <div class="nav__profile-menu" id="profileMenu" role="menu">
+                    <a role="menuitem" class="nav__profile-link" href="/client/pages/resident/profile.php">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        Profile
+                    </a>
+                    <a role="menuitem" class="nav__profile-link" href="/client/pages/resident/status.php">
+                        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        My Status
+                    </a>
+                    <div class="nav__profile-divider" role="separator"></div>
+                    <button role="menuitem" class="nav__profile-link nav__profile-link--danger" id="signoutBtn">
+                        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
+                    </button>
                     </div>
                 </div>
-                <div class="time_date" id="live_datetime">
-                    <div class="time-display">
-                        <span class="weekday-box"></span>
-                        <span class="time-part"></span>
-                    </div>
-                    <div class="date-display"></div>
+
+                <!-- Hamburger (mobile only) -->
+                <button class="nav__hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">
+                    <span class="nav__hamburger-line"></span>
+                    <span class="nav__hamburger-line"></span>
+                    <span class="nav__hamburger-line"></span>
+                </button>
                 </div>
+
             </div>
-        </div>
+        </nav>
+
+        <!-- Mobile overlay -->
+        <div class="nav__overlay" id="navOverlay" aria-hidden="true"></div>
     </header>
 
     <div id="loader" role="status" aria-label="Loading BANWA">

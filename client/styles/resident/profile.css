@@ -13,6 +13,10 @@
 } */
 
 /* Profile Page Styles */
+
+body {
+    padding-top: 64px;
+}
 .content {
     margin-left: 70px;
     margin-top: 70px;

@@ -1,69 +1,31 @@
-/* ==========================================================================
-   BANWA — Barangay Blue Ridge B Management System
-   Legal Pages Stylesheet  |  terms_privacy.css
-   Used by: terms.php  ·  privacy.php
-   ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   TABLE OF CONTENTS
-   --------------------------------------------------------------------------
-   1.  DESIGN TOKENS
-   2.  RESET & BASE
-   3.  TOP BAR
-   4.  DOCUMENT HERO BANNER
-       4a. Hero Shell & Decorative Grid
-       4b. Eyebrow, Title & Meta Badges
-       4c. Shield Icon  ················  privacy.php only
-   5.  CONTENT LAYOUT
-   6.  SIDEBAR — TABLE OF CONTENTS (scrollspy)
-   7.  DOCUMENT BODY — SHARED COMPONENTS
-       7a. Section Wrappers
-       7b. Section Numbering Badges
-       7c. Section Titles
-       7d. Body Text
-       7e. Callout Boxes  (gold · navy · green)
-       7f. Data Table  ················  terms.php only
-       7g. Contact Card Grid
-   8.  DOCUMENT BODY — PRIVACY-ONLY COMPONENTS
-       8a. Data Grid
-       8b. Rights Grid
-   9.  FOOTER
-   10. RESPONSIVE BREAKPOINTS
-       10a. ≤ 900px  (tablet)
-       10b. ≤ 520px  (mobile)
-   -------------------------------------------------------------------------- */
-
-
-/* ==========================================================================
-   1. DESIGN TOKENS
-   ========================================================================== */
-
 :root {
-  /* ── Color Palette ─────────────────────────────────────────────── */
-  --ink:            #0B1526;
-  --navy:           #00247C;
-  --navy-deep:      #001050;
-  --navy-06:        rgba(0, 36, 124, 0.06);
-  --navy-10:        rgba(0, 36, 124, 0.10);
-  --navy-18:        rgba(0, 36, 124, 0.18);
-  --gold:           #B8820F;
-  --gold-bg:        #FDF5E4;
+
+  /* ── Color Palette ─────────────────────────────────────────────────────── */
+  --ink:            #0B1526;             /* Near-black — primary text         */
+  --navy:           #00247C;             /* Brand primary                     */
+  --navy-deep:      #001050;             /* Darker navy — hero backgrounds    */
+  --navy-06:        rgba(0,36,124,0.06); /* Navy tint — subtle card fills     */
+  --navy-10:        rgba(0,36,124,0.10); /* Navy tint — light borders         */
+  --navy-18:        rgba(0,36,124,0.18); /* Navy tint — stronger borders      */
+  --gold:           #B8820F;             /* Accent — callout labels, badges   */
+  --gold-bg:        #FDF5E4;             /* Gold tint — callout backgrounds   */
   --white:          #FFFFFF;
-  --surface:        #F6F6F3;
-  --surface-alt:    #EEEEEA;
-  --border:         #E2E2DC;
-  --border-strong:  #C8C8BF;
-  --text-secondary: #4E5668;
-  --text-muted:     #8F96A5;
-  --green:          #1A7A4A;
-  --green-bg:       #EAF5EF;
-  --red:            #C0291A;
-  --red-bg:         #FDECEA;
+  --surface:        #F6F6F3;             /* Off-white page surface            */
+  --surface-alt:    #EEEEEA;             /* Slightly darker surface           */
+  --border:         #E2E2DC;             /* Default border color              */
+  --border-strong:  #C8C8BF;             /* Emphasized borders                */
+  --text-secondary: #4E5668;             /* Secondary body text               */
+  --text-muted:     #8F96A5;             /* Captions, meta labels             */
+  --green:          #1A7A4A;             /* Success / privacy commitment      */
+  --green-bg:       #EAF5EF;             /* Green tint — callout background   */
+  --red:            #C0291A;             /* Danger / closed indicator         */
+  --red-bg:         #FDECEA;             /* Red tint — error background       */
 
-  /* ── Typography ────────────────────────────────────────────────── */
-  --ff-display: 'Raleway', 'Arial Narrow', sans-serif;
-  --ff-body:    'DM Sans', system-ui, sans-serif;
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --ff-display: 'Raleway', 'Arial Narrow', sans-serif; /* Display / headings */
+  --ff-body:    'DM Sans', system-ui, sans-serif;       /* Body copy          */
 
+  /* Font Sizes — fluid type scale */
   --fs-2xs:  0.68rem;
   --fs-xs:   0.75rem;
   --fs-sm:   0.85rem;
@@ -74,18 +36,20 @@
   --fs-2xl:  2rem;
   --fs-3xl:  2.75rem;
 
+  /* Line Heights */
   --lh-tight:  1.05;
   --lh-snug:   1.25;
   --lh-normal: 1.5;
   --lh-loose:  1.75;
 
+  /* Font Weights */
   --fw-regular:  400;
   --fw-medium:   500;
   --fw-semibold: 600;
   --fw-bold:     700;
   --fw-black:    800;
 
-  /* ── Spacing (8-pt grid) ───────────────────────────────────────── */
+  /* ── Spacing (8-pt grid) ────────────────────────────────────────────────── */
   --s1:  8px;
   --s2:  16px;
   --s3:  24px;
@@ -95,24 +59,31 @@
   --s8:  64px;
   --s10: 80px;
 
-  /* ── Layout ────────────────────────────────────────────────────── */
-  --max-w: 1200px;
-  --r-sm:  4px;
-  --r-md:  8px;
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  --max-w: 1200px; /* Consistent with home2.css max content width */
 
-  /* ── Motion ────────────────────────────────────────────────────── */
+  /* ── Border Radius — tight, institutional, not bubbly ───────────────────── */
+  --r-sm: 4px;
+  --r-md: 8px;
+
+  /* ── Motion ─────────────────────────────────────────────────────────────── */
   --ease:   cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 0.15s;
   --t-base: 0.25s;
   --t-slow: 0.45s;
+
 }
 
 
 /* ==========================================================================
    2. RESET & BASE
+   Minimal reset — avoids opinionated frameworks while ensuring cross-browser
+   consistency. Scrollbar style matches home2.css for visual cohesion.
    ========================================================================== */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -137,6 +108,7 @@ a       { color: var(--navy); text-decoration: none; }
 a:hover { text-decoration: underline; }
 ul, ol  { padding-left: var(--s3); }
 
+/* Custom scrollbar — matches home2.css */
 ::-webkit-scrollbar       { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--navy-18); border-radius: 3px; }
@@ -144,7 +116,8 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    3. TOP BAR
-   Sticky frosted-glass header shared by both pages.
+   Sticky 60px header shared by both pages. Uses backdrop-filter blur to
+   replicate the frosted-glass look of the main site's scrolled nav state.
    ========================================================================== */
 
 .topbar {
@@ -170,6 +143,7 @@ ul, ol  { padding-left: var(--s3); }
   justify-content: space-between;
 }
 
+/* ── Brand / wordmark cluster ── */
 .topbar__brand {
   display: flex;
   align-items: center;
@@ -185,7 +159,7 @@ ul, ol  { padding-left: var(--s3); }
   color: var(--navy);
 }
 
-/* Thin vertical pipe between wordmark and page name */
+/* Thin vertical pipe separating wordmark from page name */
 .topbar__divider {
   width: 1px;
   height: 16px;
@@ -201,6 +175,7 @@ ul, ol  { padding-left: var(--s3); }
   color: var(--text-muted);
 }
 
+/* ── "Close & return" back link ── */
 .topbar__back {
   display: inline-flex;
   align-items: center;
@@ -229,6 +204,9 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    4. DOCUMENT HERO BANNER
+   Full-width navy-deep banner at the top of each legal page. Mirrors the
+   hero section in home2.css — same background, grid-line overlay, and
+   bottom rule accent.
    ========================================================================== */
 
 /* ------------------------------------------------------------------
@@ -242,16 +220,18 @@ ul, ol  { padding-left: var(--s3); }
   overflow: hidden;
 }
 
-/* Thin gradient rule along the bottom edge */
+/* Thin gradient rule along the bottom edge of the banner */
 .doc-hero::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
 }
 
-/* 12-column ghost grid overlay */
+/* 12-column ghost grid overlay — decorative only, matches hero__grid-lines */
 .doc-hero__grid {
   position: absolute;
   inset: 0;
@@ -265,7 +245,7 @@ ul, ol  { padding-left: var(--s3); }
   );
 }
 
-/* Max-width wrapper, sits above the grid overlay */
+/* Max-width wrapper inside the banner, sits above the grid overlay */
 .doc-hero__inner {
   max-width: var(--max-w);
   margin-inline: auto;
@@ -275,9 +255,11 @@ ul, ol  { padding-left: var(--s3); }
 }
 
 /* ------------------------------------------------------------------
-   4b. Eyebrow, Title & Meta Badges — shared by both pages
+   4b. Eyebrow, Title & Meta Badges
+   Shared by both pages.
    ------------------------------------------------------------------ */
 
+/* Small "— Barangay Blue Ridge B" label above the main title */
 .doc-hero__eyebrow {
   display: inline-flex;
   align-items: center;
@@ -298,6 +280,7 @@ ul, ol  { padding-left: var(--s3); }
   color: rgba(255,255,255,0.38);
 }
 
+/* Primary display title */
 .doc-hero__title {
   font-family: var(--ff-display);
   font-size: clamp(2.5rem, 6vw, 4rem);
@@ -308,6 +291,7 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: var(--s3);
 }
 
+/* Row of pill badges — effective date, version, compliance labels */
 .doc-hero__meta {
   display: flex;
   align-items: center;
@@ -329,6 +313,7 @@ ul, ol  { padding-left: var(--s3); }
   letter-spacing: 0.04em;
 }
 
+/* Gold dot inside each badge */
 .doc-hero__badge-dot {
   width: 5px;
   height: 5px;
@@ -337,8 +322,9 @@ ul, ol  { padding-left: var(--s3); }
 }
 
 /* ------------------------------------------------------------------
-   4c. Shield Icon Block — privacy.php only
-   Appears above the title on the Privacy Policy page.
+   4c. Shield Icon Block  ·········  privacy.php only
+   Appears above the hero title on the Privacy Policy page to signal
+   the data-protection context. Not present on terms.php.
    ------------------------------------------------------------------ */
 
 .doc-hero__icon {
@@ -366,7 +352,8 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    5. CONTENT LAYOUT
-   Two-column grid: 240px sticky sidebar + fluid body.
+   Two-column CSS Grid: 240px sticky sidebar on the left, fluid body on the
+   right. Collapses to a single column at the 900px breakpoint (Section 10a).
    ========================================================================== */
 
 .doc-layout {
@@ -384,14 +371,17 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    6. SIDEBAR — TABLE OF CONTENTS (scrollspy)
-   JS in each PHP file toggles .active as the user scrolls.
+   Sticky "On This Page" navigation. The inline <script> in each PHP file
+   adds / removes the .active class on .doc-toc__link as the user scrolls.
    ========================================================================== */
 
 .doc-toc {
   position: sticky;
+  /* Offset so the active section is not hidden behind the sticky topbar */
   top: calc(60px + var(--s4));
 }
 
+/* "On This Page" heading above the link list */
 .doc-toc__label {
   font-size: var(--fs-2xs);
   font-weight: var(--fw-bold);
@@ -406,6 +396,7 @@ ul, ol  { padding-left: var(--s3); }
 .doc-toc__list { list-style: none; padding: 0; }
 .doc-toc__item { margin-bottom: 2px; }
 
+/* Individual TOC link — left accent border reveals on active/hover */
 .doc-toc__link {
   display: flex;
   align-items: center;
@@ -420,7 +411,7 @@ ul, ol  { padding-left: var(--s3); }
   border-left: 2px solid transparent;
 }
 
-/* Section number from data-n attribute */
+/* Section number rendered from the data-n attribute on each link */
 .doc-toc__link::before {
   content: attr(data-n);
   font-size: 0.62rem;
@@ -430,6 +421,7 @@ ul, ol  { padding-left: var(--s3); }
   min-width: 18px;
 }
 
+/* Hover & JS-toggled active state */
 .doc-toc__link:hover,
 .doc-toc__link.active {
   background: var(--navy-06);
@@ -438,17 +430,26 @@ ul, ol  { padding-left: var(--s3); }
   text-decoration: none;
 }
 
-.doc-toc__link.active::before { color: var(--navy); }
+.doc-toc__link.active::before {
+  color: var(--navy);
+}
 
 
 /* ==========================================================================
    7. DOCUMENT BODY — SHARED COMPONENTS
+   All components used by both terms.php and privacy.php.
    ========================================================================== */
 
-.doc-body { min-width: 0; }
+.doc-body {
+  min-width: 0; /* Prevents grid blowout inside the CSS Grid layout */
+}
+
 
 /* ------------------------------------------------------------------
    7a. Section Wrappers
+   Each <section class="doc-section"> is separated by a bottom border.
+   The last section drops the border to avoid a double-rule at page end.
+   Uses scroll-margin-top so anchor jumps don't land beneath the topbar.
    ------------------------------------------------------------------ */
 
 .doc-section {
@@ -463,8 +464,11 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: 0;
 }
 
+
 /* ------------------------------------------------------------------
    7b. Section Numbering Badges
+   Small "01 — Section" label displayed above each section title.
+   Pattern mirrors the .section-index component in home2.css.
    ------------------------------------------------------------------ */
 
 .doc-section__num {
@@ -474,6 +478,7 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: var(--s3);
 }
 
+/* Numbered pill — e.g. "01" */
 .doc-section__num-badge {
   font-family: var(--ff-display);
   font-size: var(--fs-2xs);
@@ -486,6 +491,7 @@ ul, ol  { padding-left: var(--s3); }
   padding: 2px 8px;
 }
 
+/* The word "Section" alongside the badge */
 .doc-section__num-label {
   font-size: var(--fs-xs);
   letter-spacing: 0.12em;
@@ -493,6 +499,7 @@ ul, ol  { padding-left: var(--s3); }
   color: var(--text-muted);
   font-weight: var(--fw-bold);
 }
+
 
 /* ------------------------------------------------------------------
    7c. Section Titles
@@ -508,8 +515,9 @@ ul, ol  { padding-left: var(--s3); }
   letter-spacing: -0.01em;
 }
 
+
 /* ------------------------------------------------------------------
-   7d. Body Text
+   7d. Body Text — Paragraphs, Lists & Inline Emphasis
    ------------------------------------------------------------------ */
 
 .doc-section p {
@@ -519,10 +527,15 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: var(--s3);
 }
 
-.doc-section p:last-child { margin-bottom: 0; }
+/* Remove bottom margin from the last paragraph in any section */
+.doc-section p:last-child {
+  margin-bottom: 0;
+}
 
 .doc-section ul,
-.doc-section ol { margin-bottom: var(--s3); }
+.doc-section ol {
+  margin-bottom: var(--s3);
+}
 
 .doc-section li {
   font-size: var(--fs-sm);
@@ -531,19 +544,24 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: 4px;
 }
 
+/* Inline <strong> — slightly darker than body text, not navy */
 .doc-section strong {
   font-weight: var(--fw-semibold);
   color: var(--ink);
 }
 
+
 /* ------------------------------------------------------------------
    7e. Callout Boxes
+   Highlighted blocks for important notices, reminders, and disclaimers.
+
    Variants:
      .doc-callout              — gold  (default, both pages)
      .doc-callout--navy        — navy  (procedural notes, both pages)
      .doc-callout--green       — green (privacy commitment, privacy.php only)
    ------------------------------------------------------------------ */
 
+/* ── Base callout — gold ── */
 .doc-callout {
   background: var(--gold-bg);
   border: 1px solid rgba(184, 130, 15, 0.20);
@@ -553,24 +571,28 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: var(--s4);
 }
 
+/* ── Navy variant — procedural / interagency notes ── */
 .doc-callout--navy {
   background: var(--navy-06);
   border-color: var(--navy-10);
   border-left-color: var(--navy);
 }
 
+/* ── Green variant — privacy-positive notices (privacy.php only) ── */
 .doc-callout--green {
   background: var(--green-bg);
   border-color: rgba(26, 122, 74, 0.20);
   border-left-color: var(--green);
 }
 
+/* Shared body text inside every callout */
 .doc-callout p {
   font-size: var(--fs-sm);
   color: var(--text-secondary);
   margin: 0;
 }
 
+/* All-caps label rendered as <strong> above the callout body */
 .doc-callout strong {
   color: var(--gold);
   display: block;
@@ -580,12 +602,16 @@ ul, ol  { padding-left: var(--s3); }
   margin-bottom: 5px;
 }
 
+/* Override label color per variant */
 .doc-callout--navy strong  { color: var(--navy); }
 .doc-callout--green strong { color: var(--green); }
 
+
 /* ------------------------------------------------------------------
-   7f. Data Table — terms.php only
-   Services table in Section 04.
+   7f. Data Table  ·············  terms.php only
+   Used in the Services section of terms.php to display all four
+   barangay services with their expected processing times.
+   Not present on privacy.php.
    ------------------------------------------------------------------ */
 
 .doc-table {
@@ -595,6 +621,7 @@ ul, ol  { padding-left: var(--s3); }
   font-size: var(--fs-xs);
 }
 
+/* Header row — navy-tinted background with uppercase labels */
 .doc-table th {
   background: var(--navy-06);
   color: var(--navy);
@@ -606,6 +633,7 @@ ul, ol  { padding-left: var(--s3); }
   border: 1px solid var(--navy-10);
 }
 
+/* Data cells */
 .doc-table td {
   padding: 10px var(--s2);
   border: 1px solid var(--border);
@@ -613,11 +641,16 @@ ul, ol  { padding-left: var(--s3); }
   line-height: var(--lh-normal);
 }
 
-/* Zebra striping */
-.doc-table tr:nth-child(even) td { background: var(--surface); }
+/* Zebra striping — alternating row background for readability */
+.doc-table tr:nth-child(even) td {
+  background: var(--surface);
+}
+
 
 /* ------------------------------------------------------------------
-   7g. Contact Card Grid — shared, used in final section of both pages
+   7g. Contact Card Grid
+   2-column grid of contact info items (address, email, phone, etc.).
+   Used in the final section of both pages.
    ------------------------------------------------------------------ */
 
 .contact-card {
@@ -634,6 +667,7 @@ ul, ol  { padding-left: var(--s3); }
   background: var(--surface);
 }
 
+/* All-caps field label (e.g. "Address", "Email") */
 .contact-card__label {
   font-size: var(--fs-2xs);
   font-weight: var(--fw-bold);
@@ -652,11 +686,16 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    8. DOCUMENT BODY — PRIVACY-ONLY COMPONENTS
+   The two components below appear exclusively in privacy.php. They are
+   kept here rather than in a separate file so legal.css stays self-contained
+   and both PHP files need only one <link> tag.
    ========================================================================== */
 
 /* ------------------------------------------------------------------
-   8a. Data Grid — privacy.php only
-   Section 02: six categories of personal data collected.
+   8a. Data Grid  ·············  privacy.php only
+   Used in Section 02 (Data We Collect) to display the six categories
+   of personal data collected — Identity, Contact, Account, Application,
+   Technical, and Sensitive Personal Information.
    ------------------------------------------------------------------ */
 
 .data-grid {
@@ -673,6 +712,7 @@ ul, ol  { padding-left: var(--s3); }
   background: var(--surface);
 }
 
+/* All-caps category label, navy color to distinguish from contact-card */
 .data-grid__label {
   font-size: var(--fs-2xs);
   font-weight: var(--fw-bold);
@@ -688,10 +728,12 @@ ul, ol  { padding-left: var(--s3); }
   line-height: var(--lh-loose);
 }
 
+
 /* ------------------------------------------------------------------
-   8b. Rights Grid — privacy.php only
-   Section 07: eight data-subject rights under RA 10173.
-   Each card has a 2px navy top accent bar.
+   8b. Rights Grid  ············  privacy.php only
+   Used in Section 07 (Your Rights) to display the eight data-subject
+   rights under RA 10173 as individual cards. Each card has a 2px navy
+   top accent bar, a bold Raleway title, and a short description line.
    ------------------------------------------------------------------ */
 
 .rights-grid {
@@ -710,10 +752,13 @@ ul, ol  { padding-left: var(--s3); }
   overflow: hidden;
 }
 
+/* 2px navy top rule — signals official / institutional weight */
 .rights-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 2px;
   background: var(--navy);
 }
@@ -735,7 +780,8 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ==========================================================================
    9. FOOTER
-   Dark footer matching home2.css — cross-links between both legal pages.
+   Minimal dark footer shared by both pages. Mirrors the main site footer
+   in home2.css — same ink background, muted branding, and copyright line.
    ========================================================================== */
 
 .doc-footer {
@@ -754,6 +800,7 @@ ul, ol  { padding-left: var(--s3); }
   gap: var(--s2);
 }
 
+/* BANWA wordmark */
 .doc-footer__brand {
   font-family: var(--ff-display);
   font-size: var(--fs-sm);
@@ -762,7 +809,11 @@ ul, ol  { padding-left: var(--s3); }
   color: rgba(255,255,255,0.28);
 }
 
-.doc-footer__links { display: flex; gap: var(--s3); }
+/* Cross-links between the two legal pages */
+.doc-footer__links {
+  display: flex;
+  gap: var(--s3);
+}
 
 .doc-footer__links a {
   font-size: var(--fs-xs);
@@ -771,8 +822,11 @@ ul, ol  { padding-left: var(--s3); }
   transition: color var(--t-fast);
 }
 
-.doc-footer__links a:hover { color: rgba(255,255,255,0.65); }
+.doc-footer__links a:hover {
+  color: rgba(255,255,255,0.65);
+}
 
+/* Copyright notice */
 .doc-footer__copy {
   font-size: var(--fs-xs);
   color: rgba(255,255,255,0.18);
@@ -785,19 +839,21 @@ ul, ol  { padding-left: var(--s3); }
 
 /* ------------------------------------------------------------------
    10a. Tablet — ≤ 900px
-   Two-column layout → single column.
-   Sidebar converts from sticky vertical list to horizontal pill row.
-   All multi-column content grids collapse to single column.
+   Two-column layout collapses to single column. Sticky sidebar
+   converts from a vertical list into a horizontal pill-row above the
+   document body. All multi-column content grids go to a single column.
    ------------------------------------------------------------------ */
 
 @media (max-width: 900px) {
 
+  /* Stack sidebar above the document body */
   .doc-layout {
     grid-template-columns: 1fr;
     gap: var(--s6);
     padding-top: var(--s6);
   }
 
+  /* Convert sidebar into a horizontal pill nav */
   .doc-toc {
     position: static;
     display: flex;
@@ -806,6 +862,7 @@ ul, ol  { padding-left: var(--s3); }
     align-items: center;
   }
 
+  /* Hide "On This Page" heading — not needed in pill layout */
   .doc-toc__label { display: none; }
 
   .doc-toc__list {
@@ -817,6 +874,7 @@ ul, ol  { padding-left: var(--s3); }
 
   .doc-toc__item { margin: 0; }
 
+  /* Pill appearance for collapsed TOC links */
   .doc-toc__link {
     border-left: none;
     padding: 6px 12px;
@@ -824,33 +882,45 @@ ul, ol  { padding-left: var(--s3); }
     border-radius: 50px;
   }
 
-  .doc-toc__link.active { border-color: var(--navy); }
+  .doc-toc__link.active {
+    border-color: var(--navy);
+  }
 
-  /* All multi-column grids → single column */
+  /* Collapse all multi-column content grids to single column */
   .contact-card,
-  .data-grid,
-  .rights-grid {
+  .data-grid,      /* privacy.php — Section 8a */
+  .rights-grid {   /* privacy.php — Section 8b */
     grid-template-columns: 1fr;
   }
+
 }
+
 
 /* ------------------------------------------------------------------
    10b. Mobile — ≤ 520px
-   Tighten spacing, reduce title size, collapse footer.
+   Further tighten vertical spacing, reduce section title size, and
+   collapse the footer into a centered vertical stack.
    ------------------------------------------------------------------ */
 
 @media (max-width: 520px) {
 
+  /* Keep the back-arrow icon; hide the text label to save space */
   .topbar__back span { display: none; }
 
+  /* Reduce hero padding on small screens */
   .doc-hero { padding: var(--s8) 0 var(--s6); }
 
+  /* Step down section title size for narrow viewports */
   .doc-section__title { font-size: var(--fs-xl); }
 
+  /* Stack footer items vertically and center-align */
   .doc-footer__inner {
     flex-direction: column;
     text-align: center;
   }
 
-  .doc-footer__links { justify-content: center; }
+  .doc-footer__links {
+    justify-content: center;
+  }
+
 }

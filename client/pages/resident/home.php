@@ -14,7 +14,7 @@ if ($_SESSION['role_id'] != 1) {
     <title>Home</title>
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <link rel="stylesheet" href="../../styles/resident/home.css">
+    <link rel="stylesheet" href="../../styles/resident/home2.css">
 </head>
 
 
@@ -23,171 +23,128 @@ if ($_SESSION['role_id'] != 1) {
     $page_title = "Home";
     include '../../pages/resident/_layout/nav.php';
     ?>
-    <section data-theme="white" class="services-section">
-        <div class="cont">
-            <!-- Section Header with 24/7 prominence -->
-            <div class="services-header">
-                <div class="header-badge">
-                    <span class="live-chip">
-                        <span class="pulse-dot"></span>
-                        ONLINE 24/7
-                    </span>
-                    <h2>Barangay Services</h2>
-                </div>
-                <p class="header-description">All services available online 24 hours a day, 7 days a week.</p>
-            </div>
 
-            <!-- 3 Horizontal Cards - These should link to actual pages -->
-            <div class="services-horizontal">
-                <!-- Card 1: Construction Clearance -->
-                <a href="construction_app.php" class="service-h-card" id="constructionCard">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M2 20L22 20" stroke-linecap="round" />
-                                <rect x="4" y="9" width="16" height="11" rx="1" stroke="currentColor" />
-                                <path d="M8 6L12 3L16 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </div>
-                    </div>
+<section class="services" id="services" aria-labelledby="services-heading">
+  <div class="wrap">
+    <div class="services__header">
+      <div>
+        <div class="section-index reveal" data-n="01">Barangay Services</div>
+        <h2 class="section-title section-title--lg reveal reveal-d1" id="services-heading">What We<br>Offer Online</h2>
+      </div>
+      <div class="services__header-right reveal reveal-d2">
+        <div class="services__online-badge"><span class="online-pip" aria-hidden="true"></span>Available online 24 / 7</div>
+        <p class="services__note">Applications outside office hours are<br>processed the next business day.</p>
+      </div>
+    </div>
 
-                    <h3>Construction Clearance</h3>
-                    <p class="card-subtitle">Home Repairs, Renovations, and New Construction</p>
+    <div class="services__grid reveal reveal-d1">
 
-                    <div class="card-preview-content">
-                        <div class="preview-header">
-                            <span class="preview-title">Requirements</span>
-                        </div>
-                        <ul class="preview-list">
-                            <li>Construction Information</li>
-                            <li>Contractor Information</li>
-                            <li>Blueprint Document</li>
-                        </ul>
-                        <div class="preview-footer">
-                            <span class="preview-cta">Proceed →</span>
-                        </div>
-                    </div>
-                </a>
+      <a href="construction_app.php" class="service-card" aria-label="Construction Clearance — Apply online">
+        <span class="service-card__number" aria-hidden="true">01</span>
+        <div class="service-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 20h20" stroke-linecap="round"/><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M8 9V6l4-3 4 3v3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="service-card__name">Construction Clearance</div>
+        <div class="service-card__tag">Home Repairs, Renovations, New Construction</div>
+        <div class="service-card__divider" aria-hidden="true"></div>
+        <div class="service-card__req-label">Requirements</div>
+        <ul class="service-card__req-list">
+          <li>Construction Information</li>
+          <li>Contractor Information</li>
+          <li>Blueprint Document</li>
+        </ul>
+        <div class="service-card__cta" aria-hidden="true">Apply Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
 
-                <!-- Card 2: Business Clearance -->
-                <a href="business_app.php" class="service-h-card" id="businessCard">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <rect x="3" y="7" width="18" height="14" rx="2" stroke="currentColor" />
-                                <path d="M16 3L16 7" stroke="currentColor" stroke-linecap="round" />
-                                <path d="M8 3L8 7" stroke="currentColor" stroke-linecap="round" />
-                                <path d="M8 13L16 13" stroke="currentColor" stroke-linecap="round" />
-                            </svg>
-                        </div>
-                    </div>
+      <a href="business_app.php" class="service-card" aria-label="Business Clearance — Apply online">
+        <span class="service-card__number" aria-hidden="true">02</span>
+        <div class="service-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke-linecap="round"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>
+        <div class="service-card__name">Business Clearance</div>
+        <div class="service-card__tag">New Businesses, Renewals, and Closure</div>
+        <div class="service-card__divider" aria-hidden="true"></div>
+        <div class="service-card__req-label">Requirements</div>
+        <ul class="service-card__req-list">
+          <li>SEC or DTI Registration</li>
+          <li>TCT or Lease Contract</li>
+        </ul>
+        <div class="service-card__cta" aria-hidden="true">Apply Now <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
 
-                    <h3>Business Clearance</h3>
-                    <p class="card-subtitle">New businesses, Renewals, and Closure</p>
+      <a href="utilities_app.php" class="service-card" aria-label="Utilities Services — File a request">
+        <span class="service-card__number" aria-hidden="true">03</span>
+        <div class="service-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v5M12 17v5M22 12h-5M7 12H2" stroke-linecap="round"/></svg></div>
+        <div class="service-card__name">Utilities Services</div>
+        <div class="service-card__tag">Water, Electricity, Internet &amp; Billing</div>
+        <div class="service-card__divider" aria-hidden="true"></div>
+        <div class="service-card__req-label">Available Services</div>
+        <ul class="service-card__req-list">
+          <li>Water Connection</li>
+          <li>Electrical Repair</li>
+          <li>Internet Connectivity</li>
+          <li>Billing Inquiries</li>
+        </ul>
+        <div class="service-card__cta" aria-hidden="true">File Request <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
 
-                    <div class="card-preview-content">
-                        <div class="preview-header">
-                            <span class="preview-title">Requirements</span>
-                        </div>
-                        <ul class="preview-list">
-                            <li>SEC Registration or DTI Registration</li>
-                            <li>TCT or Lease Contract</li>
-                        </ul>
-                        <div class="preview-footer">
-                            <span class="preview-cta">Proceed →</span>
-                        </div>
-                    </div>
-                </a>
+      <a href="incidentReport.php" class="service-card" aria-label="Incident Report — File a report">
+        <span class="service-card__number" aria-hidden="true">04</span>
+        <div class="service-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg></div>
+        <div class="service-card__name">Incident Report</div>
+        <div class="service-card__tag">Report Incidents, Seek Assistance</div>
+        <div class="service-card__divider" aria-hidden="true"></div>
+        <div class="service-card__req-label">Information Needed</div>
+        <ul class="service-card__req-list">
+          <li>Reporter &amp; Victim Details</li>
+          <li>Suspect Description</li>
+          <li>Map-based Location Pin</li>
+          <li>Witness Statements</li>
+        </ul>
+        <div class="service-card__cta" aria-hidden="true">File Report <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      </a>
 
-                <!-- Card 3: Utilities Services -->
-                <a href="utilities_app.php" class="service-h-card" id="utilitiesCard">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <circle cx="12" cy="12" r="5" stroke="currentColor" />
-                                <path d="M12 2L12 7" stroke="currentColor" stroke-linecap="round" />
-                                <path d="M12 17L12 22" stroke="currentColor" stroke-linecap="round" />
-                                <path d="M22 12L17 12" stroke="currentColor" stroke-linecap="round" />
-                                <path d="M7 12L2 12" stroke="currentColor" stroke-linecap="round" />
-                            </svg>
-                        </div>
-                    </div>
+    </div>
+  </div>
+</section>
 
-                    <h3>Utilities Services</h3>
-                    <p class="card-subtitle">Water, Electricity, Internet and Billing Inquiries</p>
-
-                    <div class="card-preview-content">
-                        <div class="preview-header">
-                            <span class="preview-title">Services</span>
-                        </div>
-                        <ul class="preview-list">
-                            <li>Water connection</li>
-                            <li>Electrical repair</li>
-                            <li>Internet Connectivity</li>
-                            <li>Billing inquiries</li>
-                        </ul>
-                        <div class="preview-footer">
-                            <span class="preview-cta">Proceed →</span>
-                        </div>
-                    </div>
-                </a>
-
-                <!-- Card 3: Incident Report Services -->
-                <a href="incidentReport.php" class="service-h-card" id="incidentReportCard">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-linejoin="round" />
-                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-linejoin="round" />
-                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-linejoin="round" />
-                                <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <h3>Incident Report</h3>
-                    <p class="card-subtitle">Report Incidents and Seek Assistance</p>
-
-                    <div class="card-preview-content">
-                        <div class="preview-header">
-                            <span class="preview-title">Information Needed</span>
-                        </div>
-                        <ul class="preview-list">
-                            <li>Reporting Person Details</li>
-                            <li>Victim Information</li>
-                            <li>Suspect Description</li>
-                            <li>Incident Location (Map-based)</li>
-                            <li>Witness Statements</li>
-                        </ul>
-                        <div class="preview-footer">
-                            <span class="preview-cta">Proceed →</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="always-open-note">
-                <span><strong>Applications submitted outside office hours will be processed the next business day.</strong></span>
-            </div>
+<!-- CONTACT -->
+<section class="contact" id="contact" aria-labelledby="contact-heading">
+  <div class="wrap">
+    <div class="contact__layout">
+      <div>
+        <div class="section-index reveal" data-n="02" style="color:rgba(255,255,255,0.30);">Contact Us</div>
+        <h2 class="section-title section-title--md section-title--light reveal reveal-d1" id="contact-heading">Get in Touch</h2>
+        <p class="section-lead section-lead--light reveal reveal-d2" style="margin-top:var(--s2);">Have questions or need assistance? Reach us through any of the channels below.</p>
+        <div class="contact__info-grid reveal reveal-d2">
+          <div class="contact__info-item"><div class="contact__info-label">Address</div><div class="contact__info-value">5 Moonlight Loop,<br>Blue Ridge B,<br>Quezon City, Metro Manila</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Mobile</div><div class="contact__info-value">0917-182-2272</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Landline</div><div class="contact__info-value">8-5359822</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Email</div><div class="contact__info-value">brgy.blueridgeb@quezoncity.gov.ph</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Office Hours</div><div class="contact__info-value">Monday &ndash; Friday:<br>8:00 AM &ndash; 5:00 PM<br>Saturday:<br>8:00 AM &ndash; 12:00 PM</div></div>
+          <div class="contact__info-item"><div class="contact__info-label">Online System</div><div class="contact__info-value">Available 24 hours a day,<br>7 days a week</div></div>
         </div>
-    </section>
+      </div>
 
-    <section data-theme="blue">
-        <div class="cont">
-            <div class="contact-content">
-                <div class="story-text">
-                    <h2>Contact Us</h2>
-                    <p>If you have questions, concerns, or need assistance with any barangay services, feel free to reach out through the channels below.</p>
-                    <ul class="contact-info">
-                        <li><strong>BANWA | Barangay Blue Ridge B</strong><br> 5 Moonlight Loop, Project 4, Quezon City, Metro Manila</li>
-                        <li><strong>Mobile:</strong> 0917-1822272</li>
-                        <li><strong>Landline:</strong> 8-5359822</li>
-                        <li><strong>Email:</strong> blueridgeb@yahoo.com</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="contact__map reveal reveal-d3" aria-label="Barangay Blue Ridge B location map">
+        <iframe
+          src="https://www.google.com/maps?q=14.6183228,121.0744429&z=18&output=embed"
+          width="100%"
+          height="100%"
+          style="border:0; display:block;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Barangay Blue Ridge B — 5 Moonlight Loop, Quezon City">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer" role="contentinfo">
+  <div class="wrap footer__inner">
+    <span class="footer__brand">BANWA</span>
+    <span class="footer__copy">&copy; <?php echo date('Y'); ?> Barangay Blue Ridge B. All rights reserved.</span>
+  </div>
+</footer>
 
     <?php include '../../pages/resident/_layout/end.php'; ?>
 </body>
