@@ -1,17 +1,15 @@
 <?php
-// ===============================
-// Database Connection Diagnostic
-// ===============================
-// ===============================
-// Database Connection Diagnostic
-// ===============================
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->safeLoad();
 
 // Configuration
-$host = 'localhost';
-$db   = 'capstone';
-$user = 'postgres';
-$pass = 'lancelance';
-$port = '5432';
+$host = $_ENV['DB_HOST'] ?? 'host.docker.internal';
+$db   = $_ENV['DB_NAME'] ?? 'capstone';
+$user = $_ENV['DB_USER'] ?? 'postgres';
+$pass = $_ENV['DB_PASS'] ?? '';
+$port = $_ENV['DB_PORT'] ?? '5432';
 
 if (!extension_loaded('pdo_pgsql')) {
     ob_clean(); // Clear any previous junk
@@ -25,5 +23,4 @@ try {
     http_response_code(500);
     die(json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]));
 }
-?>
 ?>
