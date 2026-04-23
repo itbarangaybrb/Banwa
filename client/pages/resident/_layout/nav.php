@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../../styles/resident/nav.css">
     <link rel="stylesheet" href="../../styles/components/loader.css">
-    <link rel="stylesheet" href="../../styles/resident/home2.css">
+    <link rel="stylesheet" href="../../styles/resident/home.css">
 </head>
 
 <body>

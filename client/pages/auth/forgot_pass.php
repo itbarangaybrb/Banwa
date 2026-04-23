@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
-    <link rel="stylesheet" href="../../styles/resident/home2.css">
+    <link rel="stylesheet" href="../../styles/resident/home.css">
     <link rel="stylesheet" href="../../styles/resident/nav.css">
     <link rel="stylesheet" href="../../styles/components/loader.css">
     <link rel="stylesheet" href="../../styles/auth/forgot_pass.css">
