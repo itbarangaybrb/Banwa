@@ -263,7 +263,7 @@ function handleUpdateStatus($pdo)
         $currentApp = $getStmt->fetch(PDO::FETCH_ASSOC);
         $currentDSSStatus = $currentApp['dss_status'] ?? null;
 
-        $sql = "UPDATE utility_applications SET status = :status, approval_comments = :comments ";
+        $sql = "UPDATE utility_applications SET status = :status, approval_comments = :comments, updated_at = NOW()";
         $params = [':status' => $newStatus, ':comments' => $comments, ':id' => $id];
 
         if ($newStatus === 'Disapproved') {

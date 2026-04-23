@@ -18,8 +18,8 @@ $full_name = getCurrentUserName();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Application Management System</title>
 
-    <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../../img/browser-icon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../../img/browser-icon.svg">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -346,6 +346,7 @@ $full_name = getCurrentUserName();
                         <option value="Completed">Completed</option>
                         <option value="Disapproved">Disapproved</option>
                         <option value="Rejected">Rejected</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
                     <button class="buttons" type="button" data-modal="exportApplicationsTable">Export As PDF</button>
                 </div>

@@ -21,7 +21,8 @@ try {
             'Business' AS app_category,
             or_number AS reference_number,
             requirement_upload AS proof_file,
-            or_file_path
+            or_file_path,
+            NULL AS nature_of_activity
         FROM business_applications
         WHERE supabase_user_id = :supabase_user_id 
           AND payment_status IN ('Paid', 'For Payment', 'Pending Verification', 'Verified')
@@ -37,7 +38,8 @@ try {
             'Construction' AS app_category,
             or_number AS reference_number,
             requirement_upload AS proof_file,
-            or_file_path
+            or_file_path,
+            nature_of_activity
         FROM construction_applications
         WHERE supabase_user_id = :supabase_user_id 
           AND payment_status IN ('Paid', 'For Payment', 'Pending Verification', 'Verified')
@@ -48,21 +50,24 @@ try {
     $stmt->execute([':supabase_user_id' => $supabase_user_id]);
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $payments = array_map(function($row) {
+    $payments = array_map(function ($row) {
+        if ($row['app_category'] === 'Construction') {
+            $type = 'Construction' . (!empty($row['nature_of_activity']) ? ': ' . $row['nature_of_activity'] : '');
+        } else {
+            $type = $row['app_category'] . ($row['display_name'] ? ': ' . $row['display_name'] : '');
+        }
         return [
             'id' => $row['id'],
-            'type' => $row['app_category'] . ' Application' . ($row['display_name'] ? ': ' . $row['display_name'] : ''),
+            'type' => $type,
             'amount' => $row['amount'],
             'payment_date' => $row['payment_date'],
             'status' => $row['status'],
             'reference_number' => $row['reference_number'],
-            // Prioritize the Official Receipt path if it exists, otherwise show the proof
             'file_url' => !empty($row['or_file_path']) ? $row['or_file_path'] : $row['proof_file']
         ];
     }, $results);
 
     echo json_encode(['success' => true, 'payments' => $payments]);
-
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Database error', 'success' => false]);

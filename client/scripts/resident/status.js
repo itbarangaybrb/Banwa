@@ -175,7 +175,7 @@ async function loadCurrentTab() {
     if (currentTab === 'applications') {
         header.innerHTML = `
             <tr>
-                <th>Reference No.</th>
+                <th>Ref. No.</th>
                 <th>Details</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -1023,41 +1023,33 @@ async function loadApplications() {
             .forEach(app => {
                 const tr = document.createElement('tr');
 
-                let displayDate = 'N/A';
-                if (app.updated_at) {
-                    displayDate = new Date(app.updated_at).toLocaleString();
-                } else if (app.created_at) {
-                    displayDate = new Date(app.created_at).toLocaleString();
-                } else if (app.request_date) {
-                    displayDate = new Date(app.request_date).toLocaleString();
-                }
+                const filedDate = formatLocalDate(app.created_at || app.request_date);
+                const statusDate = formatLocalDate(app.updated_at);
 
                 const appType = app.type || "Application";
-                const businessName = app.business_name ? `<div class="detail-info">Business: ${app.business_name}</div>` : '';
-                const ownerName = `<div class="detail-info">Owner: ${app.first_name} ${app.last_name}</div>`;
+                const businessName = app.business_name ? `<div class="detail-info"><span>Business:</span> ${app.business_name}</div>` : '';
+                const ownerName = `<div class="detail-info"><span>Owner:</span> ${app.first_name} ${app.last_name}</div>`;
 
                 const statusText = app.status || 'Pending';
-                let statusClass = 'pending';
-                if (statusText.toLowerCase().includes('approved')) statusClass = 'success';
-                if (statusText.toLowerCase().includes('disapproved')) statusClass = 'rejected';
+                const statusClass = (app.status || 'pending').toLowerCase().replace(/\s+/g, '-');
 
-                let remarksBtn = '<span class="detail-info" style="font-style:italic; margin-top:5px; display:block;">No remarks</span>';
+                let remarksBtn = '';
 
                 if (app.approval_comments && app.approval_comments.trim() !== '') {
                     const safeRemarks = app.approval_comments.replace(/"/g, '&quot;');
 
                     remarksBtn = `
-                        <button class="validation-btn view-remarks-btn" data-remarks="${safeRemarks}">
+                        <button class="action-btn validation-btn view-remarks-btn" data-remarks="${safeRemarks}">
                             View Remarks
                         </button>
-                        <span class="validation-hint">Click for details</span>
                     `;
                 }
 
                 let actionButtonsHtml = '';
                 // Check if status is 'additional requirements' - show edit button
                 if (app.status && app.status.toLowerCase() === 'additional requirements') {
-                    actionButtonsHtml += `<button class="main-action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`;
+                    actionButtonsHtml += `<button class="action-btn edit-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Edit Application</button>`;
+                    actionButtonsHtml += `<button class="action-btn cancel-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Cancel</button>`;
                 }
 
                 // Check if status is 'for payment' AND no payment has been submitted yet
@@ -1066,34 +1058,49 @@ async function loadApplications() {
                     const hasPayment = app.has_payment === true || app.payment_status === 'pending' || app.payment_status === 'verified';
 
                     if (!hasPayment) {
-                        actionButtonsHtml += `<button class="main-action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`;
+                        actionButtonsHtml += `<button class="action-btn pay payment-action-btn" data-app-id="${app.id}" data-app-type="${app.type}" data-app-purpose="${app.type}">Submit Payment</button>`;
+                        actionButtonsHtml += `<button class="action-btn cancel-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Cancel</button>`;
                     } else {
                         // Show a disabled state or different message if payment already submitted
                         actionButtonsHtml += '<span class="detail-info payment-submitted">Payment Submitted - Pending Verification</span>';
                     }
                 }
 
-                if (!actionButtonsHtml) actionButtonsHtml = '<span class="detail-info">Processing...</span>';
+                if (!actionButtonsHtml) {
+                    const s = (app.status || '').toLowerCase();
+
+                    if (s === 'pending') {
+                        actionButtonsHtml = `<button class="action-btn cancel-action-btn" data-app-id="${app.id}" data-app-type="${app.type}">Cancel</button>`;
+                    } else if (['disapproved', 'cancelled', 'resolved', 'closed', 'referred to authorities', 'compiled', 'approved'].includes(s)) {
+                        actionButtonsHtml = '<span class="detail-info"><i>No action needed.</i></span>';
+                    } else {
+                        actionButtonsHtml = '<span class="detail-info"><i>Awaiting update.</i></span>';
+                    }
+                }
+
+                const statusDateLabel = (() => {
+                    if (!app.updated_at) return '';
+                    const label = statusText.toLowerCase() === 'cancelled' ? 'Cancelled on' : 'Updated';
+                    return `<div class="detail-info"><span>${label}:</span> ${statusDate}</div>`;
+                })();
 
                 tr.innerHTML = `
                     <td>
                         <span class="ref-id">${app.id}</span>
-                        <div style="margin-top: 10px;">
-                            <span class="date-label">Date Filed:</span>
-                            <span class="date-filed">${displayDate}</span>
-                        </div>
                     </td>
                     <td>
-                        <span class="detail-title">${appType}</span>
+                        <div class="detail-info"><span>Type:</span> ${appType}</div>
                         ${businessName}
                         ${ownerName}
+                        <div class="detail-info"><span>Date:</span> ${filedDate}</div>
                     </td>
                     <td>
                         <span class="status-badge ${statusClass}">${statusText}</span>
-                        ${remarksBtn}
+                        ${statusDateLabel}
                     </td>
                     <td>
                         <div class="action-btn-group">
+                            ${remarksBtn}
                             ${actionButtonsHtml}
                         </div>
                     </td>
@@ -1125,6 +1132,15 @@ async function loadApplications() {
                         const appType = e.target.getAttribute('data-app-type');
                         const appPurpose = e.target.getAttribute('data-app-purpose');
                         openPaymentModalFor(appId, appType, appPurpose);
+                    });
+                }
+
+                const cancelBtn = tr.querySelector('.cancel-action-btn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', (e) => {
+                        const appId = e.target.getAttribute('data-app-id');
+                        const appType = e.target.getAttribute('data-app-type');
+                        handleCancelApplication(appId, appType);
                     });
                 }
             });
@@ -1168,17 +1184,17 @@ async function loadPayments() {
                     <div style="font-size: 11px; color: #666; margin-top: 4px;">Ref: ${pay.reference_number || '---'}</div>
                 </td>
                 <td>
-                    <div style="font-weight: 600; color: #00247C;">${pay.type}</div>
-                    <div style="font-size: 13px; margin-top: 4px;">Amount: ₱${parseFloat(pay.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                    <div style="font-size: 11px; color: #666;">Date: ${payDate}</div>
+                    <p class="detail-info"><span>${pay.type.split(':')[0].trim()}:</span> ${pay.type.split(':').slice(1).join(':').trim()}</p>
+                    <p class="detail-info"><span>Amount:</span> ₱${parseFloat(pay.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                    <p class="detail-info"><span>Date:</span> ${payDate}</p>
                 </td>
                 <td>
                     <span class="status-badge ${statusClass}">${pay.status}</span>
                 </td>
                 <td>
-                    <button class="main-action-btn view-receipt-btn" 
+                    <button class="action-btn view-receipt-btn" 
                             data-url="${pay.file_url || ''}" 
-                            ${!pay.file_url ? 'disabled style="background:#ccc; cursor:not-allowed;"' : 'style="background:#17a2b8;"'}>
+                            ${!pay.file_url ? 'disabled style="background:#ccc; cursor:not-allowed;"' : 'style="background: var(--btn-blue-bg); color: var(--btn-blue-text); border: 1px solid var(--btn-blue-border);"'}>
                         ${pay.file_url ? 'View Receipt' : 'No File'}
                     </button>
                 </td>
@@ -1315,6 +1331,67 @@ function showStatusNotification(appId, appType, newStatus) {
             });
         });
     }
+}
+
+async function handleCancelApplication(appId, appType) {
+    const confirm = await BanwaSwal.fire({
+        icon: 'warning',
+        title: 'Cancel Application?',
+        html: `Are you sure you want to cancel this business application? This action cannot be undone.`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Cancel It',
+        confirmButtonColor: '#d33',
+        cancelButtonText: 'Go Back',
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+        const formData = new FormData();
+        formData.append('application_id', appId);
+        formData.append('app_type', appType);
+
+        const response = await fetch('/server/api/resident/cancel_application.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status !== 'success') {
+            throw new Error(result.message || 'Failed to cancel application.');
+        }
+
+        sendWebSocketUpdate(appType, appId, 'cancel');
+
+        await BanwaSwal.fire({
+            icon: 'success',
+            title: 'Application Cancelled',
+            html: 'Your application has been successfully cancelled.',
+            showCancelButton: false,
+        });
+
+        loadApplications();
+
+    } catch (error) {
+        BanwaSwal.fire({
+            icon: 'error',
+            title: 'Cancellation Failed',
+            html: `<strong>${error.message}</strong>`,
+            showCancelButton: false,
+        });
+    }
+}
+
+// Add this helper function at the top of your JS file, before loadApplications()
+function formatLocalDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    const dateOptions = {
+        year: 'numeric', month: 'short', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+    return new Date(dateStr + '+00:00').toLocaleString('en-US', dateOptions);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
