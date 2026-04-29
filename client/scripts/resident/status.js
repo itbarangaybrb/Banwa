@@ -1016,8 +1016,8 @@ async function loadApplications() {
 
         data.applications
             .sort((a, b) => {
-                const dateA = new Date(a.application_date || a.created_at || a.updated_at);
-                const dateB = new Date(b.application_date || b.created_at || b.updated_at);
+                const dateA = new Date(a.updated_at || a.application_date || a.created_at);
+                const dateB = new Date(b.updated_at || b.application_date || b.created_at);
                 return dateB - dateA;
             })
             .forEach(app => {
