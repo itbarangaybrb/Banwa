@@ -391,7 +391,7 @@ function handleUpdateStatus($pdo)
             $params[':dss_status'] = $currentDSSStatus;
         }
 
-        $sql .= ", updated_at = NOW() WHERE id = :id";
+        $sql .= " WHERE id = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
