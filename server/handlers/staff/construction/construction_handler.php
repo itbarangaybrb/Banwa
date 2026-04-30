@@ -538,24 +538,44 @@ function handleUpdateApplication($pdo)
         $updateFields[] = "status = 'Complied'";
         $params[':dss_status'] = $currentDSSStatus;
 
-        // Handle file upload if provided
+// Handle file upload if provided
         $uploadDir = __DIR__ . '/uploads/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
         $uploadedFiles = [];
-        if (!empty($_FILES['requirementUpload']['name'][0])) {
-            foreach ($_FILES['requirementUpload']['tmp_name'] as $key => $tmpName) {
-                if ($_FILES['requirementUpload']['error'][$key] === 0) {
-                    $originalName = basename($_FILES['requirementUpload']['name'][$key]);
-                    $savedName = uniqid('const_') . '_' . $originalName;
-                    $targetPath = $uploadDir . $savedName;
-                    if (move_uploaded_file($tmpName, $targetPath)) {
-                        $uploadedFiles[] = [
-                            'filename' => $originalName,
-                            'saved_filename' => $savedName,
-                            'file_url' => '/server/handlers/staff/construction/uploads/' . $savedName
-                        ];
+        
+        // Safely check if a file was actually uploaded
+        if (isset($_FILES['requirementUpload'])) {
+            
+            // CASE 1: File sent as an array (e.g., requirementUpload[])
+            if (is_array($_FILES['requirementUpload']['name'])) {
+                foreach ($_FILES['requirementUpload']['tmp_name'] as $key => $tmpName) {
+                    if ($_FILES['requirementUpload']['error'][$key] === 0 && !empty($_FILES['requirementUpload']['name'][$key])) {
+                        $originalName = basename($_FILES['requirementUpload']['name'][$key]);
+                        $savedName = uniqid('const_') . '_' . $originalName;
+                        $targetPath = $uploadDir . $savedName;
+                        if (move_uploaded_file($tmpName, $targetPath)) {
+                            $uploadedFiles[] = [
+                                'filename' => $originalName,
+                                'saved_filename' => $savedName,
+                                'file_url' => '/server/handlers/staff/construction/uploads/' . $savedName
+                            ];
+                        }
                     }
+                }
+            } 
+            // CASE 2: File sent as a single item (from status.js)
+            else if ($_FILES['requirementUpload']['error'] === 0 && !empty($_FILES['requirementUpload']['name'])) {
+                $originalName = basename($_FILES['requirementUpload']['name']);
+                $tmpName = $_FILES['requirementUpload']['tmp_name'];
+                $savedName = uniqid('const_') . '_' . $originalName;
+                $targetPath = $uploadDir . $savedName;
+                if (move_uploaded_file($tmpName, $targetPath)) {
+                    $uploadedFiles[] = [
+                        'filename' => $originalName,
+                        'saved_filename' => $savedName,
+                        'file_url' => '/server/handlers/staff/construction/uploads/' . $savedName
+                    ];
                 }
             }
         }

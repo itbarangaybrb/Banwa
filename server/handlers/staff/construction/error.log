@@ -594,3 +594,18 @@ Stack trace:
 [14-Apr-2026 16:00:33 UTC] No files uploaded for application 80, skipping OCR queue.
 [14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No
 [14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:37:38 UTC] === CREATE DEBUG === Uploaded files count: 1 | JSON: [{"filename":"toappeal.png","saved_filename":"const_69f2a451f3261_toappeal.png","file_url":"\/server\/handlers\/staff\/construction\/uploads\/const_69f2a451f3261_toappeal.png"}]
+[30-Apr-2026 00:37:38 UTC] OCR job queued for application 81 with 1 files
+[30-Apr-2026 00:37:38 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:37:38 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:39:47 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in /var/www/html/server/handlers/staff/construction/construction_handler.php on line 547
+[30-Apr-2026 00:39:48 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:39:48 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:50:57 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in /var/www/html/server/handlers/staff/construction/construction_handler.php on line 547
+[30-Apr-2026 00:50:58 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 00:50:58 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 01:09:19 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in /var/www/html/server/handlers/staff/construction/construction_handler.php on line 547
+[30-Apr-2026 01:09:19 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 01:09:19 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 01:21:21 UTC] CR1 Check - Has file upload: No
+[30-Apr-2026 01:21:21 UTC] CR1 Check - Has file upload: No
