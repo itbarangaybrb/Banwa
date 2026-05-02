@@ -73,3 +73,4 @@
 {"timestamp":"2026-03-25 11:18:41","application_id":75,"dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-03-25 11:19:46","application_id":"75","dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
 {"timestamp":"2026-04-14 16:00:34","application_id":80,"dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}
+{"timestamp":"2026-04-29 16:15:29","application_id":"80","dss_status":"Additional Requirements Needed","score":4,"max_score":7,"probability":57.14,"passed_rules":4,"failed_rules":3}

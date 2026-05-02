@@ -84,8 +84,8 @@ export async function archiveRecord(tableName, recordId) {
 
     if (data.success) {
         const socket = sockets["main"];
-        if (socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
+        if (socket) {
+            socket.emit(JSON.stringify({
                 type: "archives_update",
                 action: "archive",
                 tableName: tableName,
@@ -158,8 +158,8 @@ async function restoreRecord(archiveId) {
 
     if (data.success) {
         const socket = sockets["main"];
-        if (socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({
+        if (socket) {
+            socket.emit(JSON.stringify({
                 type: "archives_update",
                 action: "restore",
                 archiveId: archiveId

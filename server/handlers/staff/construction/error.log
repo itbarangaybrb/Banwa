@@ -594,3 +594,10 @@ Stack trace:
 [14-Apr-2026 16:00:33 UTC] No files uploaded for application 80, skipping OCR queue.
 [14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No
 [14-Apr-2026 16:00:33 UTC] CR1 Check - Has file upload: No
+[29-Apr-2026 16:15:08 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[29-Apr-2026 16:15:08 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[29-Apr-2026 16:15:28 UTC] PHP Warning:  foreach() argument must be of type array|object, string given in C:\Users\jeffm\Desktop\Banwa\server\handlers\staff\construction\construction_handler.php on line 547
+[29-Apr-2026 16:15:29 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[29-Apr-2026 16:15:29 UTC] PHP Deprecated:  Function curl_close() is deprecated since 8.5, as it has no effect since PHP 8.0 in C:\Users\jeffm\Desktop\Banwa\server\services\broadcast.php on line 21
+[29-Apr-2026 16:15:29 UTC] CR1 Check - Has file upload: No
+[29-Apr-2026 16:15:29 UTC] CR1 Check - Has file upload: No

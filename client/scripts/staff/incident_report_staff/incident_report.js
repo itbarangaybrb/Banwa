@@ -1809,8 +1809,8 @@ function createApplication(event) {
                             document.getElementById('otherSpecifyContainer').classList.add('hidden');
 
                             const socket = sockets["main"];
-                            if (socket?.readyState === WebSocket.OPEN) {
-                                socket.send(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
+                            if (socket) {
+                                socket.emit(JSON.stringify({ type: "incident_report_applications_update", action: "new" }));
                             }
 
                             loadManagementTable();

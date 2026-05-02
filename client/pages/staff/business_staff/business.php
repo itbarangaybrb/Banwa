@@ -90,24 +90,8 @@ $full_name = getCurrentUserName();
         </ul>
     </aside>
 
-    <div class="main-wrapper">
+    <main class="main">
         <div id="alert-container"></div>
-        <!-- <div class="staff-content">
-            <div id="alert-container"></div>
-                 <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Activity</th>
-                                <th>Created At</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="auditTableBody"></tbody>
-                    </table>
-                </div>
-        </div> -->
 
         <div id="mapping" class="tab-pane active">
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
@@ -235,6 +219,7 @@ $full_name = getCurrentUserName();
                         <!-- Shows current logged-in user and live date/time -->
                         <div class="gm-user-pill">
                             <span class="gm-page-title">Business Application Management</span>
+                            <div class="gm-user-divider"></div>
                             <div class="time_date" id="currentDateTime"></div>
                             <div class="gm-user-divider"></div>
                             <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
@@ -303,10 +288,6 @@ $full_name = getCurrentUserName();
                 </div>
             </header>
 
-            <div class="page-header">
-                <h1>Dashboard</h1>
-                <p class="page-description">Overview of business applications and analytics</p>
-            </div>
 
             <div class="analytics-container">
                 <div class="charts">
@@ -336,6 +317,7 @@ $full_name = getCurrentUserName();
                 <div class="pagination-container" id="auditsPagination"></div>
             </div>
         </div>
+
         <!-- Management tab with application table and search -->
         <div id="management" class="tab-pane">
             <header class="top-header">
@@ -348,10 +330,6 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </header>
-            <div class="page-header">
-                <h1>Review Business Applications</h1>
-                <p class="page-description">Manage and process all submitted applications</p>
-            </div>
 
             <div class="search-box">
                 <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
@@ -386,6 +364,7 @@ $full_name = getCurrentUserName();
                 <div class="pagination-container" id="businessApplicationsPagination"></div>
             </div>
         </div>
+
         <!-- Create New Application form with validation and OCR verification -->
         <div id="create" class="tab-pane">
             <header class="top-header">
@@ -398,10 +377,6 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </header>
-            <div class="page-header">
-                <h1>Create New Business Application</h1>
-                <p class="page-description">Fill in the details to register a new business</p>
-            </div>
 
             <form id="createStaffForm" onsubmit="createApplication(event)">
 
@@ -678,8 +653,8 @@ $full_name = getCurrentUserName();
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Submit Application</button>
                     <button type="reset" class="btn btn-secondary">Clear Form</button>
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
                 </div>
             </form>
         </div>
@@ -722,24 +697,21 @@ $full_name = getCurrentUserName();
                 </div>
             </header>
 
-            <div class="page-header" id="summaryHeader">
-                <h1>Generate Business Summary</h1>
-                <p class="page-description">View or export complete business profiles</p>
-            </div>
-
-            <div class="summary-controls">
-                <div class="control-row">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
-                        <option value="">-- Select Business Application --</option>
-                    </select>
-                    <button onclick="loadSummarySelect()" class="btn btn-secondary" title="Refresh List">Refresh</button>
+            <div class="summary-container">
+                <div class="summary-controls">
+                    <div class="control-row">
+                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                            <option value="">-- Select Application --</option>
+                        </select>
+                        <button onclick="loadSummarySelect()" class="btn btn-secondary" title="Refresh List">Refresh</button>
+                    </div>
                 </div>
-            </div>
 
-            <div id="summaryOutput" class="summary-report-container">
-                <div class="placeholder-state">
-                    <i class="fas fa-file-invoice fa-3x"></i>
-                    <p id="summaryPlaceholder">Select a business from the list above to view the full report.</p>
+                <div id="summaryOutput" class="summary-report-container">
+                    <div class="placeholder-state">
+                        <i class="fas fa-file-invoice fa-3x"></i>
+                        <p id="summaryPlaceholder">Select a business from the list above to view the full report.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -755,10 +727,6 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </header>
-            <div class="page-header">
-                <h2>Archives</h2>
-                <p class="form-description">View and restore your archived records.</p>
-            </div>
 
             <div class="table-responsive">
                 <table>
@@ -803,58 +771,60 @@ $full_name = getCurrentUserName();
                     <button class="close-btn">&times;</button>
                 </div>
                 <form id="updateForm" onsubmit="submitUpdate(event)">
-                    <input type="hidden" id="updateAppId" name="id">
 
-                    <div class="form-group">
-                        <label>Current Status:</label>
-                        <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
-                    </div>
+                    <div class="update-form-container">
+                        <input type="hidden" id="updateAppId" name="id">
 
-                    <div class="info-banner" style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px;">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified.
-                        Use <em>"Missing Docs"</em> to trigger a notification to the applicant.
-                    </div>
+                        <div class="info-banner" style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 13px;">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Guidance:</strong> Choose <em>"Complete"</em> only if all documents are verified.
+                            Use <em>"Missing Docs"</em> to trigger a notification to the applicant.
+                        </div>
 
-                    <div class="form-group">
-                        <label for="newStatus">New Status *</label>
-                        <div id="statusWarning" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; display: none; font-size: 13px;"></div>
-                        <select id="newStatus" name="newStatus" required onchange="toggleAmountField()" required onchange="updateWarningUI(this.value)">
-                            <option value="" disabled selected>Select Action...</option>
-                            <option value="Pre-Approved">Pre-Approved</option>
-                            <option value="Additional Requirements">Additional Requirements</option>
-                            <option value="For Payment">For Payment (Assessment)</option>
-                            <option value="Approved">Approved (Final)</option>
-                            <option value="Disapproved">Disapproved</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label>Current Status:</label>
+                            <input type="text" id="displayCurrentStatus" readonly style="background:#eee; color:#555;">
+                        </div>
 
-                    <div class="form-group hidden" id="amountFieldGroup">
-                        <label for="assessmentAmount">Assessment Amount (PHP) *</label>
-                        <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
-                        <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
-                    </div>
+                        <div class="form-group">
+                            <label for="newStatus">New Status *</label>
+                            <div id="statusWarning" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; display: none; font-size: 13px;"></div>
+                            <select id="newStatus" name="newStatus" required onchange="toggleAmountField()" required onchange="updateWarningUI(this.value)">
+                                <option value="" disabled selected>Select Action...</option>
+                                <option value="Pre-Approved">Pre-Approved</option>
+                                <option value="Additional Requirements">Additional Requirements</option>
+                                <option value="For Payment">For Payment (Assessment)</option>
+                                <option value="Approved">Approved (Final)</option>
+                                <option value="Disapproved">Disapproved</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
 
-                    <label for="updateComments">Remarks / Comments *</label>
-                    <label>Quick Responses:</label>
-                    <div class="prompt-suggestions">
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('The application is missing [list missing documents]. Please upload the necessary documents to proceed.')">Missing Docs</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('The copies of the submitted documents are unclear. Please resubmit a clear scan to verify details.')">Unclear Copies</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('There are inconsistencies between the application form and the submitted documents. Please clarify.')">Inconsistent Data</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures are missing from your documents. Please ensure all forms are signed.')">Missing Signatures</button>
-                        <button type="button" class="prompt-tag" onclick="applyPrompt('The nature of your business is not allowed in this specific zone. Please contact the office.')">Zoning Issue</button>
-                    </div>
-                    <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
-                    <div class="button-group">
-                        <button type="submit" class="btn btn-primary">Update Status</button>
-                        <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                        <div class="form-group hidden" id="amountFieldGroup">
+                            <label for="assessmentAmount">Assessment Amount (PHP) *</label>
+                            <input type="number" step="0.01" id="assessmentAmount" name="assessmentAmount" placeholder="0.00">
+                            <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
+                        </div>
+
+                        <label for="updateComments">Remarks / Comments *</label>
+                        <div class="prompt-suggestions">
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('The application is missing [list missing documents]. Please upload the necessary documents to proceed.')">Missing Docs</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('The copies of the submitted documents are unclear. Please resubmit a clear scan to verify details.')">Unclear Copies</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('There are inconsistencies between the application form and the submitted documents. Please clarify.')">Inconsistent Data</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures are missing from your documents. Please ensure all forms are signed.')">Missing Signatures</button>
+                            <button type="button" class="prompt-tag" onclick="applyPrompt('The nature of your business is not allowed in this specific zone. Please contact the office.')">Zoning Issue</button>
+                        </div>
+                        <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">Update Status</button>
+                            <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

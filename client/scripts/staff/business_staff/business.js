@@ -1129,7 +1129,7 @@ function viewDetails(appId) {
             });
 
             let ocrHtml = `
-                <div class="detail-card" id="ocrResultsCard">
+                <div class="detail-card" style="margin-bottom:20px;" id="ocrResultsCard">
                     <h3>OCR Results (${ocrResults.length} ${ocrResults.length === 1 ? 'run' : 'runs'})</h3>
             `;
 
@@ -1296,7 +1296,6 @@ function viewDetails(appId) {
 function loadSummarySelect() {
     loadApplicationsFromDB().finally(() => {
         const select = document.getElementById('summaryApplicationSelect');
-        select.innerHTML = '<option value="">-- Select Application --</option>';
         applications.forEach(app => {
             select.innerHTML += `<option value="${app.id}">ID: ${app.id} - ${app.business_name || 'Business Application'}</option>`;
         });
