@@ -1,7 +1,7 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
 import { createPaginator } from '../../utils/pagination.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
@@ -1472,12 +1472,12 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}</p>
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })}</p>
                     <p>Barangay Incident Report Management System</p>
                 </div>
             </div>
@@ -1496,7 +1496,7 @@ function printSummary() {
     const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
-        // This triggers the print dialog as soon as the content is loaded
+    // This triggers the print dialog as soon as the content is loaded
     w.focus(); // Necessary for some browsers to focus the print dialog
 
     // Use a slight timeout to ensure styles and images (like your logo) are rendered
@@ -2263,7 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "incident_report_applications_update":
                 refreshActiveTab();

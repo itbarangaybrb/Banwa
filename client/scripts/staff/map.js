@@ -460,7 +460,7 @@ function displayDetailsInModal(data, type) {
             )
             .join("");
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     tableRows = [
@@ -512,7 +512,7 @@ function displayDetailsInModal(data, type) {
       // ── Witnesses ──
       witnessRows
         ? `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Witnesses</td></tr>` +
-          witnessRows
+        witnessRows
         : "",
       // ── Resolution ──
       `<tr><td colspan="2" style="padding:8px 12px 4px;font-size:11px;font-weight:700;color:#00247c;text-transform:uppercase;letter-spacing:.5px;background:#f7f9ff;">Resolution</td></tr>`,
@@ -642,9 +642,9 @@ function displayHouseDetailsInModal(data, apps) {
   let appRows = "";
   const total = apps
     ? apps.businesses.length +
-      apps.constructions.length +
-      apps.utilities.length +
-      apps.incidents.length
+    apps.constructions.length +
+    apps.utilities.length +
+    apps.incidents.length
     : 0;
 
   if (total === 0) {
@@ -941,7 +941,7 @@ function shouldShowConstructionMarker(marker) {
     marker.nature_of_work ||
     (marker.construction_data
       ? marker.construction_data.nature_of_work ||
-        marker.construction_data.nature_of_activity
+      marker.construction_data.nature_of_activity
       : "") ||
     "";
   const mappedType = natureToSubtypeMap[nature] || "other";
@@ -1180,10 +1180,10 @@ function performSearch() {
             label: "House",
             value: marker.house_number
               ? (
-                  "#" +
-                  marker.house_number +
-                  (marker.street_name ? " " + marker.street_name : "")
-                ).trim()
+                "#" +
+                marker.house_number +
+                (marker.street_name ? " " + marker.street_name : "")
+              ).trim()
               : null,
           },
           { label: "Street", value: marker.street_name },
@@ -2286,11 +2286,11 @@ function tagMarkersWithHouseAddress() {
       {};
     return new Date(
       d.updated_at ||
-        d.application_date ||
-        d.date_of_work ||
-        d.request_date ||
-        d.incident_timestamp ||
-        0,
+      d.application_date ||
+      d.date_of_work ||
+      d.request_date ||
+      d.incident_timestamp ||
+      0,
     );
   }
 
@@ -2412,7 +2412,7 @@ async function getFloodHousesSummary() {
       const sortedHouses = [...houses].sort(
         (a, b) =>
           (riskRank[(a.risk_level || "").toLowerCase()] || 9) -
-            (riskRank[(b.risk_level || "").toLowerCase()] || 9) ||
+          (riskRank[(b.risk_level || "").toLowerCase()] || 9) ||
           (impactRank[a.impact_level] || 0) - (impactRank[b.impact_level] || 0),
       );
       const houseRows = sortedHouses
@@ -2462,15 +2462,14 @@ async function getFloodHousesSummary() {
                         <div style="font-size:10px;color:#dc3545;font-weight:600;margin-top:2px;">${total > 0 ? ((highCount / total) * 100).toFixed(1) : "0.0"}%</div>
                         <div style="font-size:10px;color:#aaa;margin-top:1px;">Fully Affected</div>
                     </div>
-                    ${
-                      affectedNoPoly > 0
-                        ? `<div class="rpt-stat" style="border-left-color:#888;">
+                    ${affectedNoPoly > 0
+          ? `<div class="rpt-stat" style="border-left-color:#888;">
                         <div class="rpt-stat-num" style="color:#555;">${affectedNoPoly}</div>
                         <div class="rpt-stat-label">In Flood Zone (no polygon)</div>
                         <div style="font-size:10px;color:#888;font-weight:600;margin-top:2px;">${total > 0 ? ((affectedNoPoly / total) * 100).toFixed(1) : "0.0"}%</div>
                     </div>`
-                        : ""
-                    }
+          : ""
+        }
                 </div>
                 <div class="rpt-list-box">
                     <h4>Affected Households <span style="font-weight:400;color:#aaa;">(${total})</span></h4>
@@ -2565,17 +2564,16 @@ async function showFaultLineRiskAssessment() {
                         </div>
                     </div>
                     ${s.address ? `<div style="color:#888;margin-bottom:6px;">${s.address}</div>` : ""}
-                    ${
-                      s.requirements?.length
-                        ? `
+                    ${s.requirements?.length
+              ? `
                     <div style="background:#f5f5f5;border-left:3px solid #00247c;padding:10px 12px;border-radius:4px;margin-top:6px;">
                         <strong style="color:#00247c;font-size:11px;">REQUIRED ACTIONS:</strong>
                         <ul style="margin:5px 0 0;padding-left:16px;font-size:12px;color:#555;">
                             ${s.requirements.map((r) => `<li>${r}</li>`).join("")}
                         </ul>
                     </div>`
-                        : ""
-                    }`;
+              : ""
+            }`;
           return rptRow(
             `fs-${i}`,
             `${s.distance_meters}m`,
@@ -3945,26 +3943,24 @@ function createRuleCard(rule, totalHouses, cardId) {
                 <p style="margin: 0 0 10px 0; color: #555; font-size: 14px; line-height: 1.5;">${rule.description}</p>
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666; margin-bottom: 12px;">
                     <span>${rule.count > 0 ? `${pct}% of total houses affected` : "No violations detected"}</span>
-                    ${
-                      rule.count > 0
-                        ? `
+                    ${rule.count > 0
+      ? `
                     <div style="flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; max-width: 150px;">
                         <div style="height: 100%; width: ${Math.min(100, parseFloat(pct))}%; background: ${colors.border};"></div>
                     </div>`
-                        : ""
-                    }
+      : ""
+    }
                 </div>
-                ${
-                  rule.count > 0 && safeKey
-                    ? `
+                ${rule.count > 0 && safeKey
+      ? `
                 <button data-rule-key="${safeKey}" data-rule-name="${rule.name.replace(/"/g, "&quot;")}"
                         style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
                                background: #00247c; color: white; border: none; border-radius: 6px;
                                font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">
                     <i class="fas fa-list"></i> View ${rule.count} Affected Household${rule.count !== 1 ? "s" : ""}
                 </button>`
-                    : ""
-                }
+      : ""
+    }
             </div>
         </div>
     `;
@@ -4398,11 +4394,10 @@ async function showDSSEvalsOnMap(type, evList) {
                 <span style="font-size:11px;font-weight:600;color:${sc};">${pct}%</span>
             </div>
             <div style="margin-top:4px;">
-                ${
-                  ev.failed_rules.length > 0
-                    ? `<div style="font-size:11px;color:#cc0000;"><i class="fas fa-times-circle"></i> ${ev.failed_rules.length} failed rule${ev.failed_rules.length !== 1 ? "s" : ""}</div>`
-                    : `<div style="font-size:11px;color:#28a745;"><i class="fas fa-check-circle"></i> All rules passed</div>`
-                }
+                ${ev.failed_rules.length > 0
+        ? `<div style="font-size:11px;color:#cc0000;"><i class="fas fa-times-circle"></i> ${ev.failed_rules.length} failed rule${ev.failed_rules.length !== 1 ? "s" : ""}</div>`
+        : `<div style="font-size:11px;color:#28a745;"><i class="fas fa-check-circle"></i> All rules passed</div>`
+      }
             </div>
         `;
     div.addEventListener("click", () => {
@@ -4448,24 +4443,22 @@ function buildEvalPopup(ev, sc, pct) {
                 <p><strong>Address:</strong> ${ev.address || "—"}</p>
                 <p><strong>Score:</strong> <span style="color:${sc};font-weight:700;">${pct}% (${ev.score}/${ev.max_score})</span></p>
             </div>
-            ${
-              ev.failed_rules.length > 0
-                ? `
+            ${ev.failed_rules.length > 0
+      ? `
             <div class="popup-section">
                 <p style="font-weight:700;color:#cc0000;margin-bottom:4px;">Failed Rules:</p>
                 <ul style="margin:0;padding-left:0;list-style:none;font-size:12px;">${failedItems}</ul>
             </div>`
-                : ""
-            }
-            ${
-              ev.passed_rules.length > 0
-                ? `
+      : ""
+    }
+            ${ev.passed_rules.length > 0
+      ? `
             <div class="popup-section">
                 <p style="font-weight:700;color:#28a745;margin-bottom:4px;">Passed Rules:</p>
                 <ul style="margin:0;padding-left:0;list-style:none;font-size:12px;">${passedItems}</ul>
             </div>`
-                : ""
-            }
+      : ""
+    }
             <button class="view-details-btn" onclick="viewMapDetails(${ev.id}, '${ev.type}')">
                 View Full Details
             </button>
@@ -4481,7 +4474,7 @@ const messageMap = {
   finance_applications_update: "updated status from finance",
 };
 
-initSocket("main", "http://localhost:8081", (data) => {
+initSocket("main", "https://banwa-ws.onrender.com", (data) => {
   const message = messageMap[data.type];
   if (message) {
     loadAllMarkers();

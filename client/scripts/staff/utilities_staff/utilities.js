@@ -1,7 +1,7 @@
 // Configuration
-import { initSocket, sockets } from '../../utils/socket.js';
 import { archiveRecord } from '../../utils/archives.js';
 import { createPaginator } from '../../utils/pagination.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 
 const UTILITY_HANDLER_URL = '/server/handlers/staff/utility/utility_handler.php';
 
@@ -1787,7 +1787,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateApplicationDate, 60000);
 
     // Socket initialization
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "utility_applications_update":
                 refreshActiveTab();

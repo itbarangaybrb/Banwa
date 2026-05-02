@@ -1662,8 +1662,8 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    })}</p>
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    })}</p>
                     <p>Barangay Business Management System</p>
                 </div>
             </div>
@@ -2442,7 +2442,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     fetchAuditLogs();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "business_applications_update":
             case "finance_applications_update":

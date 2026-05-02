@@ -1,7 +1,7 @@
-import { initSocket, sockets } from '../../utils/socket.js';
 import { addressCoordinates } from '../../../../server/api/resident/addresses.js';
 import { archiveRecord } from '../../utils/archives.js';
 import { createPaginator } from '../../utils/pagination.js';
+import { initSocket, sockets } from '../../utils/socket.js';
 
 // ===============================================
 // 1. GLOBAL STYLE FIX (Inject this at the very top)
@@ -2675,7 +2675,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateApplicationDate();
     setInterval(updateApplicationDate, 60000);
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "construction_applications_update":
                 refreshActiveTab();

@@ -1069,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTableRows(pageItems);
     });
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "users_update":
                 fetchUsers();

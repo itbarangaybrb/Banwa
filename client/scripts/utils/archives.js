@@ -1,5 +1,5 @@
-import { initSocket, sockets } from './socket.js';
 import { fetchUsers } from '../staff/superadmin/manage_users.js';
+import { initSocket, sockets } from './socket.js';
 
 const swalStyle = document.createElement('style');
 swalStyle.innerHTML = `
@@ -318,7 +318,7 @@ document.addEventListener('click', async (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     fetchArchives();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "archives_update":
                 fetchArchives();

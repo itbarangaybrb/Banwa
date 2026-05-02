@@ -861,7 +861,7 @@ async function handleSubmitChanges(event, appId, appType) {
         const fileInput = form.querySelector('#requirementUpload');
         if (fileInput && fileInput.files.length > 0) {
             changedFields.add('requirementUpload');
-            
+
             // SPECIFIC FIX FOR CONSTRUCTION: Send as a single file, not an array
             if (appType === 'Construction') {
                 finalFormData.append('requirementUpload', fileInput.files[0]);
@@ -1395,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadCurrentTab();
 
-    initSocket("main", "http://localhost:8081", (data) => {
+    initSocket("main", "https://banwa-ws.onrender.com", (data) => {
         switch (data.type) {
             case "construction_applications_update":
             case "business_applications_update":
