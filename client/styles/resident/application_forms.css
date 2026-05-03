@@ -48,7 +48,8 @@ body {
     background: white;
     padding: 2rem;
     border-radius: 8px;
-    box-shadow: 6px 8px 16px 8px #edededfa;
+    /* box-shadow: 6px 8px 16px 8px #edededfa; */
+    border: 1px solid lightgray;
 }
 
 .sections .header-and-parag {
