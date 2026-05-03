@@ -494,7 +494,7 @@ function generateBusinessFormHtml(data) {
     const ownerName = `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''}`.trim();
 
     return `
-        <form id="simple-edit-form">
+        <form id="simple-edit-form" enctype="multipart/form-data">
             <h2>Edit Business Application</h2>
             
             <div class="form-group remarks">
@@ -521,7 +521,7 @@ function generateBusinessFormHtml(data) {
             
             <div class="form-group">
                 <label for="requirementUpload">Upload New/Corrected Document</label>
-                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <input type="file" id="requirementUpload" name="requirementUpload[]" accept=".pdf,.jpg,.jpeg,.png">
                 <small>If you upload a new file, it will replace the old one.</small>
             </div>
 
@@ -543,7 +543,7 @@ function generateConstructionFormHtml(data) {
     const ownerName = `${data.first_name || ''} ${data.middle_name || ''} ${data.last_name || ''} ${data.suffix || ''}`.trim();
 
     return `
-        <form id="simple-edit-form">
+        <form id="simple-edit-form" enctype="multipart/form-data">
             <h2>Edit Construction Application</h2>
             
             <div class="form-group remarks">
@@ -588,7 +588,7 @@ function generateUtilitiesFormHtml(data) {
     document.getElementById('provider').value = data.provider || '';
 
     return `
-        <form id="simple-edit-form">
+        <form id="simple-edit-form" enctype="multipart/form-data">
             <h2>Edit Utility Application</h2>
             
             <div class="form-group remarks">
@@ -626,7 +626,7 @@ function generateUtilitiesFormHtml(data) {
             
             <div class="form-group">
                 <label for="requirementUpload">Upload New/Corrected Document</label>
-                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <input type="file" id="requirementUpload" name="requirementUpload[]" accept=".pdf,.jpg,.jpeg,.png">
                 <small>If you upload a new file, it will replace the old one.</small>
             </div>
 
@@ -652,7 +652,7 @@ function generateIncidentReportFormHtml(data) {
     const incidentDescription = data.description || '';
 
     return `
-        <form id="simple-edit-form">
+        <form id="simple-edit-form" enctype="multipart/form-data">
             <h2>Edit Incident Report</h2>
             
             <div class="form-group remarks">
@@ -684,7 +684,7 @@ function generateIncidentReportFormHtml(data) {
             
             <div class="form-group">
                 <label for="requirementUpload">Upload New/Corrected Document/Photo</label>
-                <input type="file" id="requirementUpload" name="requirementUpload" accept=".pdf,.jpg,.jpeg,.png">
+                <input type="file" id="requirementUpload" name="requirementUpload[]" accept=".pdf,.jpg,.jpeg,.png">
                 <small>If you upload a new file, it will replace the old one.</small>
             </div>
 
@@ -861,20 +861,17 @@ async function handleSubmitChanges(event, appId, appType) {
         const fileInput = form.querySelector('#requirementUpload');
         if (fileInput && fileInput.files.length > 0) {
             changedFields.add('requirementUpload');
-            finalFormData.set('requirementUpload', fileInput.files[0]);
+            
+            // SPECIFIC FIX FOR CONSTRUCTION: Send as a single file, not an array
+            if (appType === 'Construction') {
+                finalFormData.append('requirementUpload', fileInput.files[0]);
+            } else {
+                // For Business, Utilities, etc. keep sending as an array
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    finalFormData.append('requirementUpload[]', fileInput.files[i]);
+                }
+            }
         }
-
-        // // If nothing changed, inform the user
-        // if (changedFields.size === 0) {
-        //     throw new Error('No changes detected. Please modify at least one field before submitting.');
-        // }
-
-        // // Debug: Log what's being sent
-        // console.log('Changed fields:', Array.from(changedFields));
-        // console.log('FormData entries:');
-        // for (const [key, value] of finalFormData.entries()) {
-        //     console.log(`${key}:`, value);
-        // }
 
         const updateResponse = await fetch(updateEndpoint, {
             method: 'POST',
