@@ -32,23 +32,6 @@ body {
     box-shadow: 2px 0 25px rgba(0, 0, 0, 0.6);
 }
 
-/* Override map_staff.css :hover expansion - sidebar only expands on click */
-/* .side_nav:hover {
-    width: 70px !important;
-}
-.side_nav:hover .nav_text {
-    opacity: 0;
-}
-.side_nav.expanded .nav_text {
-    opacity: 1;
-}
-.side_nav:hover .company_name {
-    opacity: 0;
-}
-.side_nav.expanded .company_name {
-    opacity: 1;
-} */
-
 .nav_header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -1408,11 +1391,6 @@ h2 {
     display: block !important;
 }
 
-/* When sidebar is expanded */
-/* body:has(.side_nav.expanded) #mapping {
-    left: 325px;
-} */
-
 /* Override map_staff.css top:70px — fill full height from top */
 .map-wrapper {
     position: absolute !important;
@@ -1584,11 +1562,6 @@ h2 {
 }
 
 /* ====================== CLEAN SIDEBAR FIX (Click-only + Perfect Layout) ====================== */
-
-/* 1. Disable hover expansion completely (only click ☰ works) */
-/* .side_nav:hover {
-    width: 70px !important;
-} */
 .side_nav:not(.expanded):hover .nav_text,
 .side_nav:not(.expanded):hover .company_name {
     opacity: 0 !important;
@@ -1599,12 +1572,6 @@ h2 {
     margin-left: 0 !important;
     transition: margin-left 0.35s ease;
 }
-
-/* .side_nav.expanded ~ .main-wrapper,
-.side_nav.expanded + .main-wrapper {
-    margin-left: 325px !important;
-    width: calc(100% - 325px) !important;
-} */
 
 /* 3. Top header follows sidebar perfectly */
 .top-header {

@@ -1056,10 +1056,8 @@ function viewDetails(appId) {
                         <div class="detail-row"><span class="detail-label">Contact</span> <span class="detail-value">${app.telephone_no_owner}</span></div>
                         <div class="detail-row"><span class="detail-label">Address</span> <span class="detail-value">${app.address_owner}</span></div>
                     </div>
-                </div>
-
-                <div class="col-right">
-                    <div class="detail-card">
+                    
+                    <div class="detail-card" style="margin-top:20px;">
                         <h3>Documents & Files</h3>
                         <div style="margin-bottom:15px;">
                             <span class="detail-label" style="display:block; margin-bottom:5px;">Checklist:</span>
@@ -1067,7 +1065,9 @@ function viewDetails(appId) {
                         </div>
                         ${fileHtml}
                     </div>
+                </div>
 
+                <div class="col-right">
                     <div class="detail-card" style="margin-top:20px; border-color: #bee5eb;">
                         <h3>Assessment</h3>
                         ${app.amount_due > 0 ? `
@@ -1076,15 +1076,14 @@ function viewDetails(appId) {
                         <div class="detail-row"><span class="detail-label">OR Number</span> <span class="detail-value">${app.or_number || 'Pending'}</span></div>
                         ` : '<p style="color:#666; font-style:italic;">No assessment amount set yet.</p>'}
                     </div>
+                    ${app.approval_comments || app.disapproval_reason ? `
+                    <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba; margin-top:20px;">
+                        <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
+                        <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
-
-            ${app.approval_comments || app.disapproval_reason ? `
-            <div class="detail-card" style="background:#fff8e1; border-color:#ffeeba;">
-                <h3 style="color:#856404; border-color:#ffeeba;">Official Remarks</h3>
-                <p style="margin:0; color:#555;">${app.approval_comments || app.disapproval_reason}</p>
-            </div>
-            ` : ''}
         </div>
     `;
 
@@ -1661,8 +1660,8 @@ function printSummary() {
 
                 <div class="footer-note">
                     <p>Document generated on ${new Date().toLocaleDateString('en-US', {
-                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    })}</p>
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    })}</p>
                     <p>Barangay Business Management System</p>
                 </div>
             </div>
@@ -1922,152 +1921,152 @@ function generateClearance(appId) {
     const isClosure = nature.includes('closure') ? 'checked' : '';
 
     const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Barangay Blue Ridge B - Business Clearance</title>
-    <style>
-        body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
-        .document-container {
-            width: 8.5in; min-height: 11in; margin:0 auto; background:white;
-            padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative;
-        }
-        header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
-        .logo img { width:105px; }
-        .header-center { text-align:center; flex:1; padding:0 20px; }
-        .header-center h1 { font-size:23px; margin:6px 0 3px; text-transform:uppercase; letter-spacing:1px; }
-        .header-center h2 { font-size:15px; margin:0; font-weight:bold; }
-        .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
-        
-        .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
-
-        .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
-        .sidebar {
-            background:#b8bad9; padding:20px 18px; border:1.5px solid #b8bad9;
-            font-size:13px; line-height:1.65;
-        }
-        .main-body { font-size:15.2px; line-height:1.75; }
-        
-        .fill-line {
-            border-bottom:1px solid #000; display:inline-block; min-width:260px; text-align:center;
-        }
-        .checkbox-group { margin:15px 0 25px 40px; }
-        .checkbox-option { margin:8px 0; font-weight:600; }
-        .checkbox-option::before { content:"☐ "; }
-        .checkbox-option.checked::before { content:"☑ "; }
-
-        .issue-date { margin:35px 0 25px 0; text-align:center; font-size:15.2px; }
-        
-        .signature-area {
-            margin-top:70px; display:flex; justify-content:space-between;
-        }
-        .signature-block { width:46%; text-align:center; }
-        .signature-line {
-            border-bottom:1px solid black; margin:8px auto 4px auto; width:90%; padding-top:25px;
-            font-weight:bold; text-transform:uppercase;
-        }
-        
-        .seal-note {
-            text-align:center; margin-top:55px; font-size:12.8px; font-style:italic; color:#222;
-        }
-        
-        @media print {
-            body { background:white; padding:0; }
-            .document-container { box-shadow:none; padding:40px 48px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="document-container">
-        <header>
-            <div class="logo">
-                <img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo">
-            </div>
-            
-            <div class="header-center">
-                <div>Republic of the Philippines</div>
-                <div>Quezon City • District III</div>
-                <h1>BARANGAY BLUE RIDGE B</h1>
-                <h2>OFFICE OF THE PUNONG BARANGAY</h2>
-            </div>
-
-            <div class="clearance-no">
-                Clearance No.<br>
-                <span style="font-size:15.5px;">${clearanceNumber}</span>
-            </div>
-        </header>
-
-        <div class="doc-title">BARANGAY BUSINESS CLEARANCE</div>
-
-        <div class="content-wrapper">
-            <!-- Sidebar (matches your screenshot exactly) -->
-            <div class="sidebar">
-                <strong>HON. ${CAPTAIN_NAME}</strong><br>
-                <span style="font-size:12.5px;">Punong Barangay</span><br><br>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Barangay Blue Ridge B - Business Clearance</title>
+            <style>
+                body { font-family: "Times New Roman", serif; margin:0; padding:20px; background:#f4f4f4; }
+                .document-container {
+                    width: 8.5in; min-height: 11in; margin:0 auto; background:white;
+                    padding:45px 50px; box-shadow:0 0 20px rgba(0,0,0,0.1); position:relative;
+                }
+                header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
+                .logo img { width:105px; }
+                .header-center { text-align:center; flex:1; padding:0 20px; }
+                .header-center h1 { font-size:23px; margin:6px 0 3px; text-transform:uppercase; letter-spacing:1px; }
+                .header-center h2 { font-size:15px; margin:0; font-weight:bold; }
+                .clearance-no { text-align:right; font-size:13.5px; font-weight:bold; }
                 
-                <strong>KAGAWADS</strong><br>
-                HON. ${KAGAWAD_1}<br>
-                HON. ${KAGAWAD_2}<br>
-                HON. ${KAGAWAD_3}<br>
-                HON. ${KAGAWAD_4}<br>
-                HON. ${KAGAWAD_5}<br>
-                HON. ${KAGAWAD_6}<br><br>
+                .doc-title { text-align:center; font-size:27px; font-weight:800; text-transform:uppercase; letter-spacing:2px; margin:35px 0 40px 0; }
+
+                .content-wrapper { display:grid; grid-template-columns:235px 1fr; gap:35px; }
+                .sidebar {
+                    background:#b8bad9; padding:20px 18px; border:1.5px solid #b8bad9;
+                    font-size:13px; line-height:1.65;
+                }
+                .main-body { font-size:15.2px; line-height:1.75; }
                 
-                <strong>MR. ${SECRETARY_NAME}</strong><br>
-                <span style="font-size:12.5px;">Barangay Secretary</span>
-            </div>
+                .fill-line {
+                    border-bottom:1px solid #000; display:inline-block; min-width:260px; text-align:center;
+                }
+                .checkbox-group { margin:15px 0 25px 40px; }
+                .checkbox-option { margin:8px 0; font-weight:600; }
+                .checkbox-option::before { content:"☐ "; }
+                .checkbox-option.checked::before { content:"☑ "; }
 
-            <!-- Main Content -->
-            <div class="main-body">
-                <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
+                .issue-date { margin:35px 0 25px 0; text-align:center; font-size:15.2px; }
                 
-                <p>This is to certify that <span class="fill-line">${grantee_name}</span> of 
-                <span class="fill-line">${businessName}</span> located at Barangay Blue Ridge B, 
-                Quezon City, has complied with all the requirements of this Barangay.</p>
+                .signature-area {
+                    margin-top:70px; display:flex; justify-content:space-between;
+                }
+                .signature-block { width:46%; text-align:center; }
+                .signature-line {
+                    border-bottom:1px solid black; margin:8px auto 4px auto; width:90%; padding-top:25px;
+                    font-weight:bold; text-transform:uppercase;
+                }
+                
+                .seal-note {
+                    text-align:center; margin-top:55px; font-size:12.8px; font-style:italic; color:#222;
+                }
+                
+                @media print {
+                    body { background:white; padding:0; }
+                    .document-container { box-shadow:none; padding:40px 48px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="document-container">
+                <header>
+                    <div class="logo">
+                        <img class="logo" src="../../../img/banwalogo.png" alt="BANWA Logo">
+                    </div>
+                    
+                    <div class="header-center">
+                        <div>Republic of the Philippines</div>
+                        <div>Quezon City • District III</div>
+                        <h1>BARANGAY BLUE RIDGE B</h1>
+                        <h2>OFFICE OF THE PUNONG BARANGAY</h2>
+                    </div>
 
-                <p>This clearance is hereby granted to operate or engage in the said business 
-                for the purpose of securing a Mayor’s Permit.</p>
+                    <div class="clearance-no">
+                        Clearance No.<br>
+                        <span style="font-size:15.5px;">${clearanceNumber}</span>
+                    </div>
+                </header>
 
-                <strong>Type of Application:</strong>
-                <div class="checkbox-group">
-                    <div class="checkbox-option ${isNew}">NEW</div>
-                    <div class="checkbox-option ${isRenewal}">RENEWAL</div>
-                    <div class="checkbox-option ${isClosure}">CLOSURE</div>
+                <div class="doc-title">BARANGAY BUSINESS CLEARANCE</div>
+
+                <div class="content-wrapper">
+                    <!-- Sidebar (matches your screenshot exactly) -->
+                    <div class="sidebar">
+                        <strong>HON. ${CAPTAIN_NAME}</strong><br>
+                        <span style="font-size:12.5px;">Punong Barangay</span><br><br>
+                        
+                        <strong>KAGAWADS</strong><br>
+                        HON. ${KAGAWAD_1}<br>
+                        HON. ${KAGAWAD_2}<br>
+                        HON. ${KAGAWAD_3}<br>
+                        HON. ${KAGAWAD_4}<br>
+                        HON. ${KAGAWAD_5}<br>
+                        HON. ${KAGAWAD_6}<br><br>
+                        
+                        <strong>MR. ${SECRETARY_NAME}</strong><br>
+                        <span style="font-size:12.5px;">Barangay Secretary</span>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="main-body">
+                        <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
+                        
+                        <p>This is to certify that <span class="fill-line">${grantee_name}</span> of 
+                        <span class="fill-line">${businessName}</span> located at Barangay Blue Ridge B, 
+                        Quezon City, has complied with all the requirements of this Barangay.</p>
+
+                        <p>This clearance is hereby granted to operate or engage in the said business 
+                        for the purpose of securing a Mayor’s Permit.</p>
+
+                        <strong>Type of Application:</strong>
+                        <div class="checkbox-group">
+                            <div class="checkbox-option ${isNew}">NEW</div>
+                            <div class="checkbox-option ${isRenewal}">RENEWAL</div>
+                            <div class="checkbox-option ${isClosure}">CLOSURE</div>
+                        </div>
+
+                        <div class="issue-date">
+                            Issued this <span class="fill-line" style="min-width:48px;">${day}</span> 
+                            day of <span class="fill-line" style="min-width:115px;">${month}</span>, 
+                            ${yearIssued}.
+                        </div>
+
+                        <div style="margin-top:20px;">
+                            <strong>OR No.:</strong> <span class="fill-line">${or_number}</span><br><br>
+                            <strong>Date Issued:</strong> <span class="fill-line">${date_issued}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="issue-date">
-                    Issued this <span class="fill-line" style="min-width:48px;">${day}</span> 
-                    day of <span class="fill-line" style="min-width:115px;">${month}</span>, 
-                    ${yearIssued}.
+                <div class="signature-area">
+                    <div class="signature-block">
+                        <div>Attested by:</div>
+                        <div class="signature-line">${SECRETARY_NAME}</div>
+                        <div>Barangay Secretary</div>
+                    </div>
+                    <div class="signature-block">
+                        <div>Approved by:</div>
+                        <div class="signature-line">${CAPTAIN_NAME}</div>
+                        <div>Punong Barangay</div>
+                    </div>
                 </div>
 
-                <div style="margin-top:20px;">
-                    <strong>OR No.:</strong> <span class="fill-line">${or_number}</span><br><br>
-                    <strong>Date Issued:</strong> <span class="fill-line">${date_issued}</span>
+                <div class="seal-note">
+                    *** THIS DOCUMENT IS NOT VALID WITHOUT THE OFFICIAL DRY SEAL OF THE BARANGAY ***
                 </div>
             </div>
-        </div>
-
-        <div class="signature-area">
-            <div class="signature-block">
-                <div>Attested by:</div>
-                <div class="signature-line">${SECRETARY_NAME}</div>
-                <div>Barangay Secretary</div>
-            </div>
-            <div class="signature-block">
-                <div>Approved by:</div>
-                <div class="signature-line">${CAPTAIN_NAME}</div>
-                <div>Punong Barangay</div>
-            </div>
-        </div>
-
-        <div class="seal-note">
-            *** THIS DOCUMENT IS NOT VALID WITHOUT THE OFFICIAL DRY SEAL OF THE BARANGAY ***
-        </div>
-    </div>
-</body>
-</html>`;
+        </body>
+        </html>`;
 
     const w = window.open('', '_blank');
     w.document.write(html);

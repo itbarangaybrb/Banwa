@@ -1436,44 +1436,6 @@ tbody tr:last-child td {
     font-weight: 600;
 }
 
-/* sidebar expanded pushes main content */
-/* .side_nav.expanded ~ .main-wrapper,
-.side_nav.expanded + .main-wrapper {
-    margin-left: 325px;
-    width: calc(100% - 325px);
-} */
-
-/* - Inside business.css */
-
-/* Loading Spinner Animation */
-.fa-spin {
-    animation: fa-spin 2s infinite linear;
-}
-
-@keyframes fa-spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Tooltip Styling for Action Buttons */
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    background: #333;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    top: -30px;
-    white-space: nowrap;
-    z-index: 100;
-}
-
 /* Info Banner for QoL */
 .info-banner {
     border-left: 4px solid #19316b;
@@ -1499,11 +1461,6 @@ tbody tr:last-child td {
 
 #mapping.active {
     display: block !important;
-}
-
-/* When sidebar is expanded */
-body:has(.side_nav.expanded) #mapping {
-    left: 325px;
 }
 
 /* Override map_staff.css: remove top:70px and left:70px offset - fill full space */
@@ -1933,11 +1890,6 @@ body {
     height: 100vh;
     transition: margin-left 0.3s ease;
 }
-
-/* .side_nav:hover + .main-wrapper {
-    margin-left: 325px;
-    width: calc(100% - 325px);
-} */
 
 /* TOP HEADER */
 .top-header {

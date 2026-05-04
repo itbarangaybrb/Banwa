@@ -1330,11 +1330,6 @@ h2 {
     display: block !important;
 }
 
-/* When sidebar is expanded */
-body:has(.side_nav.expanded) #mapping {
-    left: 325px;
-}
-
 /* Override map_staff.css top:70px — fill full height from top */
 .map-wrapper {
     position: absolute !important;

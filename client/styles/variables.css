@@ -1,8 +1,135 @@
-/* 
-    TODO: 
-        I will update this for variables. - jep
-*/
-
 :root {
+    --ff: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
+    --h1: 72px;
+    --h2: 60px;
+    --h3: 48px;
+    --h4: 36px;
+    --h5: 30px;
+    --h6: 24px;
+
+    --txt-1: 20px;
+    --txt-2: 18px;
+    --txt-3: 16px;
+    --txt-4: 14px;
+    --txt-5: 12px;
+
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+
+    --lh-h1: 90px;
+    --lh-h2: 75px;
+    --lh-h3: 60px;
+    --lh-h4: 44px;
+    --lh-h5: 37.5px;
+    --lh-h6: 30px;
+
+    --lh-txt-1: 0%;
+    --lh-txt-2: 0.1%;
+    --lh-txt-3: 0.15%;
+    --lh-txt-4: 0.2%;
+    --lh-txt-5: 0.25%;
+
+    --ls-h1: -0.5%;
+    --ls-h2: -0.4%;
+    --ls-h3: -0.3%;
+    --ls-h4: -0.2%;
+    --ls-h5: -0.15%;
+    --ls-h6: -0.1%;
+
+    --ls-txt-1: 0%;
+    --ls-txt-2: 0.1%;
+    --ls-txt-3: 0.15%;
+    --ls-txt-4: 0.2%;
+    --ls-txt-5: 0.25%;
+
+    --clr-white-1: #fdfdfd;
+    --clr-white-2: #fafafa;
+    --clr-white-3: #f6f6f6;
+    --clr-white-4: #f2f2f2;
+    --clr-white-5: #efefef;
+    --clr-white-6: #ebebeb;
+    --clr-white-7: #c8c8c8;
+    --clr-white-8: #a7a7a7;
+    --clr-white-9: #868686;
+    --clr-white-10: #6a6a6a;
+
+    --clr-grey-1: #ebebeb;
+    --clr-grey-2: #cecfcf;
+    --clr-grey-3: #a8a8a9;
+    --clr-grey-4: #7f8081;
+    --clr-grey-5: #59595b;
+    --clr-grey-6: #343537;
+    --clr-grey-7: #2c2d2f;
+    --clr-grey-8: #252627;
+    --clr-grey-9: #1e1e1f;
+    --clr-grey-10: #171819;
+
+    --clr-blue-1: #e6e9f2;
+    --clr-blue-2: #c3cae0;
+    --clr-blue-3: #93a0c8;
+    --clr-blue-4: #6174ae;
+    --clr-blue-5: #314b95;
+    --clr-blue-6: #04237e;
+    --clr-blue-7: #031e6b;
+    --clr-blue-8: #031959;
+    --clr-blue-9: #021448;
+    --clr-blue-10: #021039;
+    
+    --clr-green-1: #e6f3eb;
+    --clr-green-2: #c4e3d0;
+    --clr-green-3: #95cdab;
+    --clr-green-4: #64b684;
+    --clr-green-5: #35a05e;
+    --clr-green-6: #098b3b;
+    --clr-green-7: #087632;
+    --clr-green-8: #06632a;
+    --clr-green-9: #054f22;
+    --clr-green-10: #043f1b;
+    
+    --clr-teal-1: #e6f3f1;
+    --clr-teal-2: #c4e3dd;
+    --clr-teal-3: #95cdc2;
+    --clr-teal-4: #64b6a6;
+    --clr-teal-5: #35a08b;
+    --clr-teal-6: #098b71;
+    --clr-teal-7: #087660;
+    --clr-teal-8: #066350;
+    --clr-teal-9: #054f40;
+    --clr-teal-10: #043f33;
+
+    --clr-red-1: #f6e7e7;
+    --clr-red-2: #e8c5c5;
+    --clr-red-3: #d69797;
+    --clr-red-4: #c36767;
+    --clr-red-5: #b13939;
+    --clr-red-6: #a00e0e;
+    --clr-red-7: #880c0c;
+    --clr-red-8: #720a0a;
+    --clr-red-9: #5b0808;
+    --clr-red-10: #480606;
+
+    --clr-purple-1: #f1e7f6;
+    --clr-purple-2: #ddc5e8;
+    --clr-purple-3: #c297d6;
+    --clr-purple-4: #a667c3;
+    --clr-purple-5: #8b39b1;
+    --clr-purple-6: #710ea0;
+    --clr-purple-7: #600c88;
+    --clr-purple-8: #500a72;
+    --clr-purple-9: #40085b;
+    --clr-purple-10: #330648;
+
+    --clr-orange-1: #f6f1e8;
+    --clr-orange-2: #eaddc7;
+    --clr-orange-3: #dac29a;
+    --clr-orange-4: #c8a66c;
+    --clr-orange-5: #b88b3f;
+    --clr-orange-6: #a87215;
+    --clr-orange-7: #8f6112;
+    --clr-orange-8: #77510f;
+    --clr-orange-9: #60410c;
+    --clr-orange-10: #4c3309;
 }
