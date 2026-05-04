@@ -223,8 +223,8 @@ $full_name = getCurrentUserName();
                             <div class="time_date" id="currentDateTime"></div>
                             <div class="gm-user-divider"></div>
                             <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
-                            <div class="user_image" style="width:32px;height:32px;">
-                                <i class="fas fa-user" style="font-size:16px;color:white;"></i>
+                            <div class="user_image">
+                                <i class="fas fa-user"></i>
                             </div>
                         </div>
                         <!-- Map tile switcher buttons -->
@@ -806,16 +806,18 @@ $full_name = getCurrentUserName();
                             <small style="color: #666;">Enter the total amount the applicant needs to pay.</small>
                         </div>
 
-                        <label for="updateComments">Remarks / Comments *</label>
-                        <div class="prompt-suggestions">
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('The application is missing [list missing documents]. Please upload the necessary documents to proceed.')">Missing Docs</button>
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('The copies of the submitted documents are unclear. Please resubmit a clear scan to verify details.')">Unclear Copies</button>
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('There are inconsistencies between the application form and the submitted documents. Please clarify.')">Inconsistent Data</button>
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures are missing from your documents. Please ensure all forms are signed.')">Missing Signatures</button>
-                            <button type="button" class="prompt-tag" onclick="applyPrompt('The nature of your business is not allowed in this specific zone. Please contact the office.')">Zoning Issue</button>
+                        <div class="form-group">
+                            <label for="updateComments">Remarks / Comments *</label>
+                            <div class="prompt-suggestions">
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Application is complete. Proceed to payment.')">Complete</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('The application is missing [list missing documents]. Please upload the necessary documents to proceed.')">Missing Docs</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('The copies of the submitted documents are unclear. Please resubmit a clear scan to verify details.')">Unclear Copies</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('There are inconsistencies between the application form and the submitted documents. Please clarify.')">Inconsistent Data</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('Required signatures are missing from your documents. Please ensure all forms are signed.')">Missing Signatures</button>
+                                <button type="button" class="prompt-tag" onclick="applyPrompt('The nature of your business is not allowed in this specific zone. Please contact the office.')">Zoning Issue</button>
+                            </div>
+                            <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                         </div>
-                        <textarea id="updateComments" name="updateComments" required placeholder="Enter instructions..."></textarea>
                         <div class="button-group">
                             <button type="submit" class="btn btn-primary">Update Status</button>
                             <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>

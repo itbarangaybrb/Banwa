@@ -382,8 +382,7 @@ $full_name = getCurrentUserName();
                     </div>
                     <div class="header-right">
                         <div class="user-greeting">
-                            <p class="username">Admin</p>
-                            <div class="user_image"><span class="user_avatar_header">A</span></div>
+                            <p class="username"><?php echo htmlspecialchars($full_name); ?></p>
                         </div>
                     </div>
                 </header>
