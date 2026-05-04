@@ -323,7 +323,13 @@ function renderTableRows(data) {
             <td>${app.nature_of_work || 'N/A'}</td>
             <td>${app.address_of_utility || 'N/A'}</td>
             <td><span class="status-badge status-${badgeClass}">${app.status}</span></td>
-            <td>${actionBtn}</td>
+            <td>
+                <div class="action-buttons">
+                    ${actionBtn}
+                    <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
+                </div>
+            </td>
         `;
         tbody.appendChild(row);
     });

@@ -47,8 +47,8 @@ body {
     margin-inline: auto;
     background: white;
     padding: 2rem;
-    border-radius: 8px;
-    /* box-shadow: 6px 8px 16px 8px #edededfa; */
+    border-radius: 12px;
+    box-shadow: 4px 7px 20px 6px #f1f1f1fa;
     border: 1px solid lightgray;
 }
 
@@ -391,7 +391,7 @@ body {
         flex-direction: column;
     }
 
-    .summary-container .form #summaryContent .summary-header-and-info{
+    .summary-container .form #summaryContent .summary-header-and-info {
         width: 100%;
     }
 }

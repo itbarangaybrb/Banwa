@@ -772,23 +772,25 @@ newSummaryForm.addEventListener('submit', async function (e) {
 
         // Add action for business_handler.php
         formData.append('action', 'create');
-
+        
         // Capture form data
         formData.append('businessName', document.getElementById('businessName').value);
-
+        
         // Get Supabase user ID
         const { data: { user } } = await supabase.auth.getUser();
         const supabaseUserId = user?.id;
         formData.append('supabase_user_id', supabaseUserId);
-
+        
         // Type of Business (radio)
         const typeBiz = document.querySelector('input[name="typeOfBusiness"]:checked');
         formData.append('typeOfBusiness', typeBiz ? typeBiz.value : '');
-
+        
+        
         // Nature of Business
+        formData.append('natureOfApplication', document.getElementById('natureOfApplication').value);
         formData.append('natureOfBusiness', document.getElementById('natureOfBusinessSelect').value);
         formData.append('natureOfBusinessSpecify', document.getElementById('natureOfBusinessSpecify').value);
-
+        
         // Business Address
         formData.append('businessLotNo', document.getElementById('businessLotNo').value);
         formData.append('businessStreet', document.getElementById('businessStreet').value);
@@ -807,7 +809,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
         formData.append('lastName', document.getElementById('lastName').value);
         formData.append('contactNoOwner', document.getElementById('contactNoOwner').value);
         formData.append('addressOwner', document.getElementById('addressOwner').value);
-
+        
         // Structure Details
         formData.append('typeOfStructureSelect', document.getElementById('typeOfStructureSelect').value);
         formData.append('typeOfStructureSpecify', document.getElementById('typeOfStructureSpecify').value);
