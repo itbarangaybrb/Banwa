@@ -122,7 +122,6 @@ if ($_SESSION['role_id'] != 1) {
                             <option value="renovation">Renovation / Remodeling</option>
                             <option value="demolition">Demolition</option>
                             <option value="addition">Extension / Additional Structure</option>
-                            <option value="repair">Repair</option>
                             <option value="Other">Other</option>
                         </select>
                         <div class="error-msg"></div>

@@ -276,10 +276,41 @@ const validator = (() => {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const currentYear = today.getFullYear();
 
-        if (rules.pastOnly && date >= today) {
-            showError(input, rules.errorMessage || 'Date must be in the past');
+        if (rules.birthDate) {
+            const minBirthDate = new Date(today);
+            minBirthDate.setFullYear(minBirthDate.getFullYear() - 18);
+            const minRealisticYear = 1900;
+
+            if (date.getFullYear() < minRealisticYear) {
+                showError(input, rules.errorMessage || `Birth year must be ${minRealisticYear} or later`);
+                return false;
+            }
+            if (date > minBirthDate) {
+                showError(input, rules.errorMessage || 'Must be at least 18 years old');
+                return false;
+            }
+
+            clearError(input);
+            return true;
+        }
+
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
+
+        if (date < yearStart || date > yearEnd) {
+            showError(input, rules.errorMessage || `Date must be within the current year (${currentYear})`);
             return false;
+        }
+
+        if (rules.pastOnly) {
+            const threshold = input.type === 'datetime-local' ? now : today;
+            if (date >= threshold) {
+                showError(input, rules.errorMessage || 'Date must be in the past');
+                return false;
+            }
         }
 
         if (rules.futureOnly && date <= today) {
@@ -288,12 +319,8 @@ const validator = (() => {
         }
 
         if (rules.todayOnly) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const inputDate = new Date(value);
             inputDate.setHours(0, 0, 0, 0);
-
             if (inputDate.getTime() !== today.getTime()) {
                 showError(input, rules.errorMessage || 'Date must be today');
                 return false;
@@ -304,7 +331,6 @@ const validator = (() => {
             showError(input, rules.errorMessage || `Date must be after ${rules.minDate}`);
             return false;
         }
-
         if (rules.maxDate && date > new Date(rules.maxDate)) {
             showError(input, rules.errorMessage || `Date must be before ${rules.maxDate}`);
             return false;
@@ -314,7 +340,6 @@ const validator = (() => {
         return true;
     }
 
-    // Public API of the validator module
     return {
         text: validateText,
         file: validateFile,
@@ -339,8 +364,9 @@ const validationConfig = [
     { el: natureOfActivity, type: 'select', message: 'Please select nature of activity' },
     { el: typeOfWork, type: 'select', message: 'Please select the type of construction work' },
     { el: detailsOfWork, type: 'text', message: 'Details required', rules: { minLength: 10, maxLength: 500 } },
-    { el: startDate, type: 'date', message: 'Please select the expected start date' },
-    { el: endDate, type: 'date', message: 'Please select the expected completion date' },
+    { el: startDate, type: 'date', message: 'Please select the expected start date', rules: { futureOnly: true } },
+    { el: endDate, type: 'date', message: 'Please select the expected completion date', rules: { futureOnly: true } },
+    { el: numberOfWorkingDays, type: 'number', message: 'Number of working days is required', rules: { minLength: 1, maxLength: 2, errorMessage: 'Invalid number of working days' } },
     { el: numberOfWorkers, type: 'number', message: 'Please enter the number of workers', rules: { minLength: 1, maxLength: 2, errorMessage: 'Number of workers must be at least 1' } },
     { el: contractorName, type: 'text', message: 'Please enter the contractor\'s name', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
     { el: contractorContactNumber, type: 'number', message: 'Contractor contact number is required', rules: { phoneType: 'ph' } },
@@ -375,7 +401,7 @@ function validateField(config) {
         case 'file': return validator.file(el, message, rules);
         case 'checkbox': return validator.checkbox(el, message);
         case 'select': return validator.select(el, message);
-        case 'date': return validator.date(el, message);
+        case 'date': return validator.date(el, message, rules);
     }
 }
 
@@ -407,7 +433,7 @@ function validateField(config) {
     constructionLotNo.addEventListener('input', () => validator.clear(constructionLotNo));
     constructionStreet.addEventListener('input', () => validator.clear(constructionStreet));
 
-    [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers].forEach(el => {
+    [contactNoOwner, contractorContactNumber, constructionLotNo, numberOfWorkers, numberOfWorkingDays].forEach(el => {
         el.addEventListener('input', () => {
             el.value = el.value.replace(/\D/g, '');
             validator.clear(el);
@@ -443,15 +469,17 @@ document.getElementById('nextToConstruction').addEventListener('click', () => {
  */
 document.getElementById('nextToWaiver').addEventListener('click', () => {
     const stepFields = [
-        typeOfWork,
-        typeOfWork.value === 'Other' ? detailsOfWork : null,
+        typeOfWork.closest('.label-and-input').style.display !== 'none' ? typeOfWork : null,
+        (typeOfWork.value === 'Other' || natureOfActivity.value === 'Repairs' || natureOfActivity.value === 'Demolition') ? detailsOfWork : null,
         natureOfActivity,
         startDate,
         endDate,
+        numberOfWorkingDays,
         numberOfWorkers,
         contractorName,
         contractorContactNumber,
-        natureOfActivity.value !== 'Demolition' ? applicationMethod : null,
+        natureOfActivity.value !== 'Demolition' && natureOfActivity.value !== 'Repairs'
+            ? applicationMethod : null,
         requirementUpload.closest('.label-and-input').style.display !== 'none' ? requirementUpload : null
     ].filter(f => f !== null);
 
@@ -653,6 +681,7 @@ newSummaryForm.addEventListener('submit', async (e) => {
                     }
 
                     Swal.fire({
+                        icon: 'success',
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
                         confirmButtonText: 'OK',
@@ -1076,6 +1105,8 @@ function calculateTotalDays(startEl, endEl, outputEl) {
     const diffTime = end - start;
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
     outputEl.value = diffDays > 0 ? diffDays : 0;
+
+    validator.clear(outputEl);
 }
 
 /**
@@ -1088,15 +1119,11 @@ function toggleFileUploads() {
     const additionalFiles = document.getElementById('additionalFiles').closest('.label-and-input');
 
     if (applicationMethod.value === 'In Person' || applicationMethod.value === '') {
-        // Hide file upload inputs
         requirementUpload.style.display = 'none';
         additionalFiles.style.display = 'none';
-
-        // Optional: Clear any existing validation errors
         validator.clear(document.getElementById('requirementUpload'));
         validator.clear(document.getElementById('additionalFiles'));
     } else {
-        // Show file upload inputs (for 'Online' or default)
         requirementUpload.style.display = 'block';
         additionalFiles.style.display = 'block';
     }
@@ -1104,19 +1131,27 @@ function toggleFileUploads() {
 
 /**
  * Toggles visibility of the application method field based on nature of activity selection
- * Hides the field and clears its value when 'Demolition' is selected, as submission
+ * Hides the field and clears its value when 'Demolition' and 'Repairs' is selected, as submission
  * method is not applicable for demolition work. Also re-triggers file upload visibility.
  */
 function toggleApplicationMethod() {
     const natureOfActivity = document.getElementById('natureOfActivity');
     const applicationMethodWrapper = document.getElementById('applicationMethod').closest('.label-and-input');
+    const typeOfWorkWrapper = document.getElementById('typeOfWork').closest('.label-and-input');
+    const detailsOfWorkWrapper = document.getElementById('detailsOfWork').closest('.label-and-input');
 
-    if (natureOfActivity.value === 'Demolition') {
+    if (natureOfActivity.value === 'Demolition' || natureOfActivity.value === 'Repairs') {
         applicationMethodWrapper.style.display = 'none';
+        typeOfWorkWrapper.style.display = 'none';
         document.getElementById('applicationMethod').value = '';
+        document.getElementById('typeOfWork').value = '';
         validator.clear(document.getElementById('applicationMethod'));
+        validator.clear(document.getElementById('typeOfWork'));
+        detailsOfWorkWrapper.style.display = '';
     } else {
         applicationMethodWrapper.style.display = '';
+        typeOfWorkWrapper.style.display = '';
+        handleOthersSelect(typeOfWork, detailsOfWork);
     }
 
     toggleFileUploads();
@@ -1140,7 +1175,6 @@ function handleOthersSelect(selectEl, specifyEl) {
     }
 }
 
-// Set up automatic calculation of working days when dates change
 document.addEventListener('DOMContentLoaded', () => {
     if (startDate && endDate) {
         [startDate, endDate].forEach(el => {
