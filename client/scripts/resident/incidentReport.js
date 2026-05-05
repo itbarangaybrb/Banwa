@@ -1,8 +1,8 @@
 // Configuration imports for service worker registration, address data, and Supabase authentication
 import { registerServiceWorker } from '../../../register_sw.js';
 import { addressCoordinates } from '../../../server/api/resident/addresses.js';
-import { initSocket, sockets } from '../utils/socket.js';
 import supabase from '../../../server/api/supabase.js';
+import { initSocket, sockets } from '../utils/socket.js';
 
 const IR_HANDLER_URL = '/server/handlers/staff/incident_report/ir_handler.php';
 
@@ -252,14 +252,63 @@ const validator = (() => {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const currentYear = today.getFullYear();
 
-        if (rules.pastOnly && date > today) {
-            showError(input, rules.errorMessage || 'Date cannot be in the future');
+        if (rules.birthDate) {
+            const minBirthDate = new Date(today);
+            minBirthDate.setFullYear(minBirthDate.getFullYear() - 18);
+            const minRealisticYear = 1900;
+
+            if (date.getFullYear() < minRealisticYear) {
+                showError(input, rules.errorMessage || `Birth year must be ${minRealisticYear} or later`);
+                return false;
+            }
+            if (date > minBirthDate) {
+                showError(input, rules.errorMessage || 'Must be at least 18 years old');
+                return false;
+            }
+
+            clearError(input);
+            return true;
+        }
+
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
+
+        if (date < yearStart || date > yearEnd) {
+            showError(input, rules.errorMessage || `Date must be within the current year (${currentYear})`);
             return false;
         }
 
-        if (rules.futureOnly && date < today) {
-            showError(input, rules.errorMessage || 'Date cannot be in the past');
+        if (rules.pastOnly) {
+            const threshold = input.type === 'datetime-local' ? now : today;
+            if (date >= threshold) {
+                showError(input, rules.errorMessage || 'Date must be in the past');
+                return false;
+            }
+        }
+
+        if (rules.futureOnly && date <= today) {
+            showError(input, rules.errorMessage || 'Date must be in the future');
+            return false;
+        }
+
+        if (rules.todayOnly) {
+            const inputDate = new Date(value);
+            inputDate.setHours(0, 0, 0, 0);
+            if (inputDate.getTime() !== today.getTime()) {
+                showError(input, rules.errorMessage || 'Date must be today');
+                return false;
+            }
+        }
+
+        if (rules.minDate && date < new Date(rules.minDate)) {
+            showError(input, rules.errorMessage || `Date must be after ${rules.minDate}`);
+            return false;
+        }
+        if (rules.maxDate && date > new Date(rules.maxDate)) {
+            showError(input, rules.errorMessage || `Date must be before ${rules.maxDate}`);
             return false;
         }
 
@@ -356,7 +405,7 @@ const validationConfig = [
     { el: vicContact, type: 'number', message: 'Please enter victim contact number', rules: { phoneType: 'ph' } },
     { el: vicCitizenship, type: 'text', message: 'Please enter victim citizenship', rules: { minLength: 3 } },
     { el: vicGender, type: 'select', message: 'Please select victim gender' },
-    { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { pastOnly: true } },
+    { el: vicDOB, type: 'date', message: 'Please enter victim date of birth', rules: { birthDate: true } },
     { el: vicOccupation, type: 'text', message: 'Please enter victim occupation', rules: { minLength: 2 } },
 
     // Suspect Details validation rules
@@ -411,27 +460,6 @@ function validateField(config) {
         });
     });
 
-    // Address validation setup for different sections with varying requirements
-    // const addressPairs = [
-    //     { lot: rpLotNo, street: rpStreet, validateExistence: false },
-    //     { lot: vicLotNo, street: vicStreet, validateExistence: false },
-    //     { lot: susLotNo, street: susStreet, optional: true, validateExistence: false },
-    //     { lot: incidentLotNo, street: incidentStreet, validateExistence: true }
-    // ];
-
-    // addressPairs.forEach(({ lot, street, optional = false, validateExistence = true }) => {
-    //     if (!lot || !street) return;
-
-    //     [lot, street].forEach(el => {
-    //         el.addEventListener('blur', () => {
-    //             if (lot.value && street.value) {
-    //                 validator.address(lot, street, { optional, validateExistence });
-    //             }
-    //         });
-    //         el.addEventListener('input', () => validator.clear(el));
-    //     });
-    // });
-
     // Input sanitization for contact number fields (remove non-digit characters)
     [rpContact, vicContact, susContact].forEach(el => {
         if (el) {
@@ -441,16 +469,6 @@ function validateField(config) {
             });
         }
     });
-
-    // Input sanitization for lot number fields (remove non-digit characters)
-    // [rpLotNo, vicLotNo, incidentLotNo].forEach(el => {
-    //     if (el) {
-    //         el.addEventListener('input', function () {
-    //             this.value = this.value.replace(/\D/g, '');
-    //             validator.clear(this);
-    //         });
-    //     }
-    // });
 })();
 
 /**

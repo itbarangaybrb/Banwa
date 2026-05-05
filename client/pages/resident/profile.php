@@ -95,7 +95,7 @@ if ($_SESSION['role_id'] != 1) {
 
                     <form action="" class="forms" id="changePassForm">
                         <input type="text" name="username" id="username" autocomplete="username" hidden>
-                        
+
                         <div class="inputs-container">
                             <div class="form-group">
                                 <label for="currentPassword">Current Password</label>
@@ -112,7 +112,7 @@ if ($_SESSION['role_id'] != 1) {
                             </div>
 
                             <div class="form-group">
-                                <label for="newPassword">New Password</label>
+                                <!-- <label for="newPassword">New Password</label>
                                 <div class="input-with-icon">
                                     <input type="password" name="newPassword" id="newPassword" placeholder="Enter new password" autocomplete="new-password" disabled>
                                     <span class="input-icon">
@@ -137,13 +137,44 @@ if ($_SESSION['role_id'] != 1) {
                                     </span>
                                 </div>
                                 <div class="error-msg"></div>
-                            </div>
-                        </div>
+                            </div> -->
 
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary" id="saveNewPass" disabled>Save Changes</button>
-                            <button type="button" class="btn-secondary" id="changePassCancelBtn" style="display: none;">Cancel</button>
-                        </div>
+                                <div id="newPassFields" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="newPassword">New Password</label>
+                                        <div class="input-with-icon">
+                                            <input type="password" name="newPassword" id="newPassword" placeholder="Enter new password" autocomplete="new-password" disabled>
+                                            <span class="input-icon">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="error-msg"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="reTypeNewPassword">Confirm New Password</label>
+                                        <div class="input-with-icon">
+                                            <input type="password" name="reTypeNewPassword" id="reTypeNewPassword" placeholder="Re-type new password" autocomplete="new-password" disabled>
+                                            <span class="input-icon">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="error-msg"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn-primary" id="nextBtn" style="display: none;">Next</button>
+                                <button type="submit" class="btn-primary" id="saveNewPass" disabled>Save Changes</button>
+                                <button type="button" class="btn-secondary" id="changePassCancelBtn" style="display: none;">Cancel</button>
+                            </div>
                     </form>
                 </div>
 
