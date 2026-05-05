@@ -81,7 +81,6 @@
 
 body {
     font-family: "Inter", sans-serif;
-    padding: 32px;
 }
 
 .sections {
@@ -875,7 +874,7 @@ body {
 
 @media (max-width: 768px) {
     .sections {
-        padding: 40px 16px;
+        padding: 96px 16px;
     }
 
     .containers.status-table-container {
