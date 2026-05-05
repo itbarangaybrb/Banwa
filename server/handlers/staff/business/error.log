@@ -1369,3 +1369,18 @@ Stack trace:
 [03-May-2026 15:54:58 UTC] R1 Check - Required: ["Previous Business Clearance"]
 [03-May-2026 15:54:58 UTC] R1 Check - Submitted: ["Previous Business Clearance"]
 [03-May-2026 15:54:58 UTC] R1 Check - Missing: []
+[05-May-2026 06:23:06 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[05-May-2026 06:23:06 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[05-May-2026 06:24:00 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[05-May-2026 06:24:00 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[05-May-2026 10:05:05 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[05-May-2026 10:05:05 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[05-May-2026 10:05:29 UTC] handleAnalyzeDocuments invoked. method=POST, session_cookie_present=yes, cookie_keys=PHPSESSID, session_keys=user_id,supabase_user_id,full_name,role_id,is_staff, is_staff=false
+[05-May-2026 10:05:29 UTC] handleAnalyzeDocuments: temporary bypass of is_staff check (debug mode). session_keys=user_id,supabase_user_id,full_name,role_id,is_staff
+[05-May-2026 10:05:30 UTC] Auto-OCR output: {"status":"success","analysis":{"results":[{"filename":"banwa.onrender.com_client_pages_resident_construction_app.php.png","text":"","detected":[],"error":"cURL failed: operation aborted by callback"}],"missing":["Notarized affidavit for Business Closure"],"allVerified":false}}
+[05-May-2026 10:05:30 UTC] R1 Check - Required: ["Notarized affidavit for Business Closure"]
+[05-May-2026 10:05:30 UTC] R1 Check - Submitted: ["Notarized affidavit for Business Closure"]
+[05-May-2026 10:05:30 UTC] R1 Check - Missing: []
+[05-May-2026 10:05:30 UTC] R1 Check - Required: ["Notarized affidavit for Business Closure"]
+[05-May-2026 10:05:30 UTC] R1 Check - Submitted: ["Notarized affidavit for Business Closure"]
+[05-May-2026 10:05:30 UTC] R1 Check - Missing: []

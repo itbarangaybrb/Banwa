@@ -265,10 +265,41 @@ const validator = (() => {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const currentYear = today.getFullYear();
 
-        if (rules.pastOnly && date >= today) {
-            showError(input, rules.errorMessage || 'Date must be in the past');
+        if (rules.birthDate) {
+            const minBirthDate = new Date(today);
+            minBirthDate.setFullYear(minBirthDate.getFullYear() - 18);
+            const minRealisticYear = 1900;
+
+            if (date.getFullYear() < minRealisticYear) {
+                showError(input, rules.errorMessage || `Birth year must be ${minRealisticYear} or later`);
+                return false;
+            }
+            if (date > minBirthDate) {
+                showError(input, rules.errorMessage || 'Must be at least 18 years old');
+                return false;
+            }
+
+            clearError(input);
+            return true;
+        }
+
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
+
+        if (date < yearStart || date > yearEnd) {
+            showError(input, rules.errorMessage || `Date must be within the current year (${currentYear})`);
             return false;
+        }
+
+        if (rules.pastOnly) {
+            const threshold = input.type === 'datetime-local' ? now : today;
+            if (date >= threshold) {
+                showError(input, rules.errorMessage || 'Date must be in the past');
+                return false;
+            }
         }
 
         if (rules.futureOnly && date <= today) {
@@ -277,12 +308,8 @@ const validator = (() => {
         }
 
         if (rules.todayOnly) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const inputDate = new Date(value);
             inputDate.setHours(0, 0, 0, 0);
-
             if (inputDate.getTime() !== today.getTime()) {
                 showError(input, rules.errorMessage || 'Date must be today');
                 return false;
@@ -293,7 +320,6 @@ const validator = (() => {
             showError(input, rules.errorMessage || `Date must be after ${rules.minDate}`);
             return false;
         }
-
         if (rules.maxDate && date > new Date(rules.maxDate)) {
             showError(input, rules.errorMessage || `Date must be before ${rules.maxDate}`);
             return false;
@@ -303,7 +329,6 @@ const validator = (() => {
         return true;
     }
 
-    // Public API of the validator module
     return {
         text: validateText,
         select: validateSelect,
@@ -570,6 +595,7 @@ newSummaryForm.addEventListener('submit', async function (e) {
                     }
 
                     Swal.fire({
+                        icon: 'success',
                         title: 'Success!',
                         text: 'Submitted successfully! Reference ID: ' + data.id,
                         confirmButtonText: 'OK',

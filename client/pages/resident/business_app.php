@@ -230,6 +230,7 @@ if ($_SESSION['role_id'] != 1) {
                         <label><input type="checkbox" name="requirements" value="DTI"> DTI (Department of Trade and Industry) Registration</label>
                         <label><input type="checkbox" name="requirements" value="SEC"> SEC (Securities and Exchange Commission) Registration</label>
                         <label><input type="checkbox" name="requirements" value="Previous Business Clearance"> Previous Business Clearance</label>
+                        <label><input type="checkbox" name="requirements" value="Notarized affidavit for Business Closure"> Notarized affidavit for Business Closure</label>
                         <div class="error-msg"></div>
                     </div>
                     <div class="label-and-input">

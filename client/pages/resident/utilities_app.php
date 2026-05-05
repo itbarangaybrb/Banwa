@@ -86,8 +86,8 @@ if ($_SESSION['role_id'] != 1) {
                 <h6>Utilities Information</h6>
                 <div class="inputs-container">
                     <div class="label-and-input">
-                        <label for="requestDate">Request Date <span style="color: #BB1B1B;">*</span></label>
-                        <input type="date" name="requestDate" id="requestDate">
+                        <label for="requestDate">Request Date</label>
+                        <input type="date" name="requestDate" id="requestDate" readonly>
                         <span class="error-msg"></span>
                     </div>
                     <div class="label-and-input">
