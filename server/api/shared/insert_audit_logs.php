@@ -58,6 +58,9 @@ function writeAuditLog(
     $newLog = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($newLog) {
+        if ($newLog['created_at']) {
+            $newLog['created_at'] = date('M j, Y, g:i:s A', strtotime($newLog['created_at']));
+        }
         broadcastEvent('new_audit_log', ['payload' => $newLog]);
     }
 }

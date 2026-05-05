@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Includes database configuration and sets response type to JSON.
  * Starts a session if none exists.
@@ -40,7 +41,7 @@ if (!in_array((int)$userRoleId, $allowedRoles)) {
     echo json_encode(['error' => 'Forbidden']);
     exit;
 }
-    
+
 /**
  * Fetch audit logs from the database.
  *
@@ -99,6 +100,10 @@ try {
     foreach ($logs as &$log) {
         $log['old_data'] = $log['old_data'] ? json_decode($log['old_data'], true) : null;
         $log['new_data'] = $log['new_data'] ? json_decode($log['new_data'], true) : null;
+
+        if ($log['created_at']) {
+            $log['created_at'] = date('M j, Y, g:i:s A', strtotime($log['created_at']));
+        }
     }
 
     echo json_encode($logs);
