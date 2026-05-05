@@ -11,7 +11,7 @@ if ($_SESSION['role_id'] != 1) {
 <html lang="en">
 
 <head>
-    <title>Home</title>
+    <title>About Us</title>
     <meta name="description" content="Professional residential management system with elegant design and user-friendly interface">
     <link rel="icon" type="image/png" sizes="32x32" href="../../img/browser-icon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="../../img/browser-icon.svg">
