@@ -59,38 +59,42 @@ try {
     if ($isRestricted) {
         $stmt = $pdo->prepare("
             SELECT 
-                id,
-                supabase_user_id,
-                role_id,
-                full_name,
-                category,
-                action,
-                table_name,
-                record_id,
-                old_data,
-                new_data,
-                created_at
-            FROM audit_logs
-            WHERE supabase_user_id = :supabase_user_id
-            ORDER BY created_at DESC
+                a.id,
+                a.supabase_user_id,
+                a.role_id,
+                r.role_name,
+                a.full_name,
+                a.category,
+                a.action,
+                a.table_name,
+                a.record_id,
+                a.old_data,
+                a.new_data,
+                a.created_at
+            FROM audit_logs a
+            LEFT JOIN role r ON r.role_id = a.role_id
+            WHERE a.supabase_user_id = :supabase_user_id
+            ORDER BY a.created_at DESC
         ");
         $stmt->execute(['supabase_user_id' => $supabaseUserId]);
     } else {
         $stmt = $pdo->prepare("
             SELECT 
-                id,
-                supabase_user_id,
-                role_id,
-                full_name,
-                category,
-                action,
-                table_name,
-                record_id,
-                old_data,
-                new_data,
-                created_at
-            FROM audit_logs
-            ORDER BY created_at DESC
+                a.id,
+                a.supabase_user_id,
+                a.role_id,
+                r.role_name,
+                a.full_name,
+                a.category,
+                a.action,
+                a.table_name,
+                a.record_id,
+                a.old_data,
+                a.new_data,
+                a.created_at
+            FROM audit_logs a
+            LEFT JOIN role r ON r.role_id = a.role_id
+            ORDER BY a.created_at DESC
         ");
         $stmt->execute();
     }
@@ -102,7 +106,9 @@ try {
         $log['new_data'] = $log['new_data'] ? json_decode($log['new_data'], true) : null;
 
         if ($log['created_at']) {
-            $log['created_at'] = date('M j, Y, g:i:s A', strtotime($log['created_at']));
+            $dt = new DateTime($log['created_at'], new DateTimeZone('UTC'));
+            $dt->setTimezone(new DateTimeZone('Asia/Manila'));
+            $log['created_at'] = $dt->format('M j, Y, h:i:s A');
         }
     }
 

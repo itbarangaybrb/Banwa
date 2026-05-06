@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
 require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
-if ($_SESSION['role_id'] != 8) {
+if ($_SESSION['role_id'] != 7) {
     header("Location: /client/index.php");
     exit;
 }
@@ -277,9 +277,9 @@ $full_name = getCurrentUserName();
                     <p class="page-description">Overview of incident reports and analytics</p>
                 </div>
                 <div class="analytics-container">
-                    <div class="charts">
+                    <!-- <div class="charts">
                         <canvas id="chart1"></canvas>
-                    </div>
+                    </div> -->
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
@@ -629,7 +629,7 @@ $full_name = getCurrentUserName();
                                 <th>Email</th>
                                 <th>Archived At</th>
                                 <th>Restored At</th>
-                                <th>Role ID</th>
+                                <th>Role</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

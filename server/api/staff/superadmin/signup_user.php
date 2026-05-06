@@ -60,7 +60,7 @@ try {
     writeAuditLog(
         $pdo,
         'CREATE',
-        'users',
+        'Users',
         $recordId,
         null,
         [

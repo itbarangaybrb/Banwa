@@ -20,7 +20,7 @@ swalStyle.innerHTML = `
 
     /* Standardized Titles */
     .archive-swal2-popup .swal2-title {
-        color: #00247C !important;
+        color: #111827 !important;
         font-size: 1.6rem !important;
         font-weight: 700 !important;
         margin: 0.5rem 0 !important;
@@ -41,22 +41,32 @@ swalStyle.innerHTML = `
     }
 
     .archive-swal2-popup .swal2-actions button {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
+        padding: 12px 24px;
+        border-radius: 6px;
+        border: transparent;
+        transition: all 0.2s ease;
         font-weight: 600;
+        cursor: pointer;
     }
 
     .archive-swal2-popup .swal2-actions .swal2-confirm {
-        background: #00247c !important;
-        color: white;
+        background-color: #00247c !important;
+        color: #ffffff;
+        border: 1px solid #d1d5db;
+    }
+
+    .archive-swal2-popup .swal2-actions .swal2-confirm:hover {
+        background-color: #001a5c !important;
     }
 
     .archive-swal2-popup .swal2-actions .swal2-cancel {
-        background: #ecf0f1 !important;
-        color: #333;
+        background-color: #f3f4f6 !important;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .archive-swal2-popup .swal2-actions .swal2-cancel:hover {
+        background-color: #e5e7eb !important;
     }
 `;
 document.head.appendChild(swalStyle);
@@ -219,11 +229,11 @@ async function fetchArchives() {
                 <td>${item.archive_id}</td>
                 <td>${item.table_name}</td>
                 <td>${item.record_id}</td>
-                <td>${item.full_name || ''}</td>
-                <td>${item.email || ''}</td>
+                <td>${item.full_name || '-'}</td>
+                <td>${item.email || '-'}</td>
                 <td>${item.archived_at}</td>
                 <td>${item.restored_at || 'Not restored'}</td>
-                <td>${item.role_id || ''}</td>
+                <td>${item.role_name || '-'}</td>
                 <td>
                     ${restoreButton}
                 </td>
@@ -240,7 +250,7 @@ async function fetchArchives() {
 /**
  * Handles user interactions for restore and archive buttons.
  * FIX: archive-btn handler now checks data-table and only processes
- * "users" table archives. Other tables (e.g. utility_applications)
+ * "users" table archives. Other tables (e.g. "Utility Applications")
  * are handled by their own module's click listener.
  */
 document.addEventListener('click', async (e) => {
@@ -268,8 +278,8 @@ document.addEventListener('click', async (e) => {
     }
 
     if (e.target.classList.contains('archive-btn')) {
-        const tableName = e.target.dataset.table || 'users';
-        if (tableName !== 'users') return;
+        const tableName = e.target.dataset.table || 'Users';
+        if (tableName !== 'Users') return;
 
         const userId = e.target.dataset.id;
 
@@ -305,7 +315,7 @@ document.addEventListener('click', async (e) => {
 
         if (!confirmResult.isConfirmed) return;
 
-        await archiveRecord('users', userId);
+        await archiveRecord('Users', userId);
         fetchArchives();
         return;
     }

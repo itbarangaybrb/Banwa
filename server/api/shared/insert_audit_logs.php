@@ -59,7 +59,9 @@ function writeAuditLog(
 
     if ($newLog) {
         if ($newLog['created_at']) {
-            $newLog['created_at'] = date('M j, Y, g:i:s A', strtotime($newLog['created_at']));
+            $dt = new DateTime($newLog['created_at'], new DateTimeZone('UTC'));
+            $dt->setTimezone(new DateTimeZone('Asia/Manila'));
+            $newLog['created_at'] = $dt->format('M j, Y, h:i:s A');
         }
         broadcastEvent('new_audit_log', ['payload' => $newLog]);
     }

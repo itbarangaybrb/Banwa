@@ -239,11 +239,11 @@ function handleCreateApplication($pdo)
             writeAuditLog(
                 $pdo,
                 'CREATE',
-                'incident_reports',
+                'Incident Reports',
                 $reportId,
                 null,
                 $newData,
-                'INCIDENT_REPORT'
+                'INCIDENT REPORT'
             );
         } catch (Throwable $auditEx) {
             error_log("writeAuditLog failed in ir handleCreateApplication (id={$reportId}): " . $auditEx->getMessage());
@@ -356,11 +356,11 @@ function handleUpdateStatus($pdo)
             writeAuditLog(
                 $pdo,
                 'STATUS UPDATED',
-                'incident_reports',
+                'Incident Reports',
                 $id,
                 $oldData,
                 $newData,
-                'STATUS_UPDATE'
+                'STATUS UPDATE'
             );
         } catch (Throwable $auditEx) {
             error_log("writeAuditLog failed in ir handleUpdateStatus (id={$id}): " . $auditEx->getMessage());
@@ -573,11 +573,11 @@ function handleUpdateApplication($pdo)
                 writeAuditLog(
                     $pdo,
                     'UPDATE',
-                    'incident_reports',
+                    'Incident Reports',
                     $reportId,
                     $oldData,
                     $newData,
-                    'INCIDENT_REPORT'
+                    'INCIDENT REPORT'
                 );
             } catch (Throwable $auditEx) {
                 error_log("writeAuditLog failed in ir handleUpdateApplication (id={$reportId}): " . $auditEx->getMessage());
@@ -855,15 +855,15 @@ function updateWitnessDataJson($pdo, $reportId)
 function handleChartIncidentType($pdo)
 {
     try {
-        $sql1 = "
-            SELECT date_reported, COUNT(*) AS total
-            FROM incident_reports
-            GROUP BY date_reported
-            ORDER BY date_reported ASC
-        ";
+        // $sql1 = "
+        //     SELECT date_reported, COUNT(*) AS total
+        //     FROM incident_reports
+        //     GROUP BY date_reported
+        //     ORDER BY date_reported ASC
+        // ";
 
-        $stmt1 = $pdo->query($sql1);
-        $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+        // $stmt1 = $pdo->query($sql1);
+        // $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $sql2 = "
             SELECT 
@@ -893,7 +893,7 @@ function handleChartIncidentType($pdo)
 
         echo json_encode([
             "status" => "success",
-            "data_by_date" => $dataByDate,
+            // "data_by_date" => $dataByDate,
             "data_by_type" => $dataByType,
             "data_by_dss" => $dataByDSS
         ]);

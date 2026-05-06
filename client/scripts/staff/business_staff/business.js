@@ -251,7 +251,7 @@ function filterApplications() {
         //             <div class="action-buttons">
         //                 ${actionBtn}
         //                 <button class="btn btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-        //                 <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+        //                 <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="Business Applications">Archive</button>
         //             </div>
         //         </td>
         //     `;
@@ -299,7 +299,7 @@ function renderTableRows(data) {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn btn-info" onclick="viewDetails(${app.id})">View</button>
-                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="business_applications">Archive</button>
+                    <button class="btn btn-secondary archive-btn" data-id="${app.id}" data-table="Business Applications">Archive</button>
                 </div>
             </td>
         `;
@@ -2485,7 +2485,7 @@ document.addEventListener('click', (e) => {
 
     const tableName = e.target.dataset.table;
 
-    if (tableName !== 'business_applications') return;
+    if (tableName !== 'Business Applications') return;
 
     e.preventDefault();
     const appId = e.target.dataset.id;
@@ -2515,7 +2515,7 @@ document.addEventListener('click', (e) => {
     }).then(async (result) => {
         if (result.isConfirmed) {
 
-            await archiveRecord('business_applications', appId);
+            await archiveRecord('Business Applications', appId);
 
             const row = e.target.closest('tr');
             if (row) row.remove();

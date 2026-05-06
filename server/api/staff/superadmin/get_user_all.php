@@ -14,10 +14,11 @@ require_once __DIR__ . '/../../../configs/database.php';
  */
 try {
     $stmt = $pdo->query("
-        SELECT user_id, full_name, email, role_id, is_archived, status, reason_details, 
-            street, lot_no
-        FROM users
-        ORDER BY full_name DESC
+        SELECT u.user_id, u.full_name, u.email, u.role_id, r.role_name, u.is_archived, u.status, u.reason_details, 
+            u.street, u.lot_no
+        FROM users u
+        LEFT JOIN role r ON r.role_id = u.role_id
+        ORDER BY u.full_name DESC
     ");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
