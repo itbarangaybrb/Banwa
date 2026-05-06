@@ -639,7 +639,7 @@ $full_name = getCurrentUserName();
                                 <th>Email</th>
                                 <th>Archived At</th>
                                 <th>Restored At</th>
-                                <th>Role ID</th>
+                                <th>Role</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

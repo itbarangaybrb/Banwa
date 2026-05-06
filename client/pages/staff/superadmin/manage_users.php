@@ -28,8 +28,6 @@ $full_name = getCurrentUserName();
 </head>
 
 <body>
-    <?php include '../../../components/loader.php'; ?>
-
     <header class="header">
         <h1>
             Manage Users
@@ -106,7 +104,7 @@ $full_name = getCurrentUserName();
 
 
         <section class="sections">
-            <div class="containers">
+            <div class="table-container containers">
                 <table id="usersTable">
                     <thead>
                         <tr>
@@ -152,11 +150,11 @@ $full_name = getCurrentUserName();
                             <option value="">Select</option>
                             <option value="1">Resident</option>
                             <option value="2">Super Admin</option>
-                            <option value="3">Admin</option>
                             <option value="4">Business staff</option>
                             <option value="5">Construction staff</option>
                             <option value="6">Utility staff</option>
-                            <option value="7">Finance staff</option>
+                            <option value="7">Incident report staff</option>
+                            <option value="8">Finance staff</option>
                         </select>
                         <div class="error-msg"></div>
                     </div>
@@ -240,11 +238,11 @@ $full_name = getCurrentUserName();
                             <option value="">Select</option>
                             <option value="1">Resident</option>
                             <option value="2">Super Admin</option>
-                            <option value="3">Admin</option>
                             <option value="4">Business staff</option>
                             <option value="5">Construction staff</option>
                             <option value="6">Utility staff</option>
-                            <option value="7">Finance staff</option>
+                            <option value="7">Incident report staff</option>
+                            <option value="8">Finance staff</option>
                         </select>
                         <div class="error-msg"></div>
                     </div>

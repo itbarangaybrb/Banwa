@@ -327,7 +327,7 @@ function renderTableRows(data) {
                 <div class="action-buttons">
                     ${actionBtn}
                     <button class="btn-info" onclick="viewDetails(${app.id})" title="View Details">View</button>
-                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="utility_applications">Archive</button>
+                    <button class="btn-secondary archive-btn" data-id="${app.id}" data-table="Utility Applications">Archive</button>
                 </div>
             </td>
         `;
@@ -1725,7 +1725,7 @@ document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('archive-btn')) return;
 
     const tableName = e.target.dataset.table;
-    if (tableName !== 'utility_applications') return;
+    if (tableName !== 'Utility Applications') return;
 
     e.preventDefault();
     const appId = e.target.dataset.id;
@@ -1754,7 +1754,7 @@ document.addEventListener('click', (e) => {
         }
     }).then(async (result) => {
         if (result.isConfirmed) {
-            await archiveRecord('utility_applications', appId);
+            await archiveRecord('Utility Applications', appId);
 
             // Remove the row immediately from the UI
             const row = e.target.closest('tr');

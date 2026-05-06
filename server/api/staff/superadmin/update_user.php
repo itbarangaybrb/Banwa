@@ -91,7 +91,7 @@ try {
     writeAuditLog(
         $pdo,
         'UPDATE',
-        'users',
+        'Users',
         $user_id,
         $oldData,
         $newData

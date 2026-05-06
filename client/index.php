@@ -16,12 +16,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         $redirectMap = [
             1 => '/client/pages/resident/home.php',
             2 => '/client/pages/staff/superadmin/dashboard.php',
-            3 => '/client/pages/admin/dashboard.php',
             4 => '/client/pages/staff/business_staff/business.php',
             5 => '/client/pages/staff/construction_staff/construction.php',
             6 => '/client/pages/staff/utilities_staff/utilities.php',
-            7 => '/client/pages/staff/finance_staff/finance.php',
-            8 => '/client/pages/staff/incident_report_staff/incident_report.php',
+            7 => '/client/pages/staff/incident_report_staff/incident_report.php',
+            8 => '/client/pages/staff/finance_staff/finance.php',
         ];
         $roleId = $_SESSION['role_id'];
         if (isset($redirectMap[$roleId])) { header("Location: {$redirectMap[$roleId]}"); }

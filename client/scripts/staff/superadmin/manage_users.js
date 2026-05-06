@@ -52,48 +52,48 @@ document.head.appendChild(swalStyle);
  * Each key is a main reason, and its value is an array of detailed templates.
  * @type {Object<string, string[]>}
  */
-const reasonTemplates = {
-    "Violation of Terms of Service": [
-        "User submitted content that violates platform guidelines.",
-        "User repeatedly ignored community standards.",
-        "User posted prohibited or restricted material."
-    ],
-    "Fraudulent Activity": [
-        "User attempted to manipulate system records.",
-        "User provided falsified information during verification.",
-        "User engaged in deceptive financial activity."
-    ],
-    "Suspicious or Unusual Activity": [
-        "User exhibited irregular login or access patterns.",
-        "User performed actions that suggest account compromise.",
-        "User displayed behavior inconsistent with normal activity."
-    ],
-    "Harassment or Abuse": [
-        "User sent abusive or threatening messages.",
-        "User engaged in repeated harassment of another member.",
-        "User used offensive or discriminatory language."
-    ],
-    "Repeated Policy Violations": [
-        "User has repeatedly failed to comply with platform rules.",
-        "User ignored previous warnings regarding policy violations.",
-        "User continues prohibited activity despite sanctions."
-    ],
-    "Unauthorized Data Access or Misuse": [
-        "User accessed data they were not authorized to view.",
-        "User misused confidential or private information.",
-        "User attempted to bypass security controls."
-    ],
-    "Impersonation or Identity Misrepresentation": [
-        "User created an account pretending to be someone else.",
-        "User provided false identity information.",
-        "User impersonated staff or other members to deceive."
-    ],
-    "Failure to Meet Verification Requirements": [
-        "User did not submit required verification documents.",
-        "User provided incomplete or invalid verification information.",
-        "User failed to complete identity confirmation within the allowed period."
-    ]
-};
+// const reasonTemplates = {
+//     "Violation of Terms of Service": [
+//         "User submitted content that violates platform guidelines.",
+//         "User repeatedly ignored community standards.",
+//         "User posted prohibited or restricted material."
+//     ],
+//     "Fraudulent Activity": [
+//         "User attempted to manipulate system records.",
+//         "User provided falsified information during verification.",
+//         "User engaged in deceptive financial activity."
+//     ],
+//     "Suspicious or Unusual Activity": [
+//         "User exhibited irregular login or access patterns.",
+//         "User performed actions that suggest account compromise.",
+//         "User displayed behavior inconsistent with normal activity."
+//     ],
+//     "Harassment or Abuse": [
+//         "User sent abusive or threatening messages.",
+//         "User engaged in repeated harassment of another member.",
+//         "User used offensive or discriminatory language."
+//     ],
+//     "Repeated Policy Violations": [
+//         "User has repeatedly failed to comply with platform rules.",
+//         "User ignored previous warnings regarding policy violations.",
+//         "User continues prohibited activity despite sanctions."
+//     ],
+//     "Unauthorized Data Access or Misuse": [
+//         "User accessed data they were not authorized to view.",
+//         "User misused confidential or private information.",
+//         "User attempted to bypass security controls."
+//     ],
+//     "Impersonation or Identity Misrepresentation": [
+//         "User created an account pretending to be someone else.",
+//         "User provided false identity information.",
+//         "User impersonated staff or other members to deceive."
+//     ],
+//     "Failure to Meet Verification Requirements": [
+//         "User did not submit required verification documents.",
+//         "User provided incomplete or invalid verification information.",
+//         "User failed to complete identity confirmation within the allowed period."
+//     ]
+// };
 
 /**
  * Validator for form input fields
@@ -292,7 +292,7 @@ function renderTableRows(data) {
                 <td>${user.lot_no || ''}</td>
                 <td>${user.street || ''}</td>
                 <td><span class="status-badge status-${user.status}">${user.status}</span></td>
-                <td>${user.role_id}</td>
+                <td>${user.role_name}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="buttons edit-btn"
@@ -384,34 +384,34 @@ async function unsuspendUser(userId) {
  * Populates the reasonTemplates container with buttons for the selected reason.
  * Clicking a button fills the suspendReasonDetails textarea with the corresponding template.
  */
-function initializeSuspendTemplates() {
-    const select = document.getElementById('suspendReason');
-    const textarea = document.getElementById('suspendReasonDetails');
-    const container = document.getElementById('reasonTemplates');
+// function initializeSuspendTemplates() {
+//     const select = document.getElementById('suspendReason');
+//     const textarea = document.getElementById('suspendReasonDetails');
+//     const container = document.getElementById('reasonTemplates');
 
-    if (!select || !textarea || !container) return;
+//     if (!select || !textarea || !container) return;
 
-    select.addEventListener('change', () => {
-        const selected = select.value;
-        container.innerHTML = '';
+//     select.addEventListener('change', () => {
+//         const selected = select.value;
+//         container.innerHTML = '';
 
-        if (!reasonTemplates[selected]) return;
+//         if (!reasonTemplates[selected]) return;
 
-        reasonTemplates[selected].forEach(template => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.classList.add('buttons', 'reason-btn');
-            btn.textContent = template;
+//         reasonTemplates[selected].forEach(template => {
+//             const btn = document.createElement('button');
+//             btn.type = 'button';
+//             btn.classList.add('buttons', 'reason-btn');
+//             btn.textContent = template;
 
-            btn.addEventListener('click', () => {
-                textarea.value = template;
-                validator.clear(textarea);
-            });
+//             btn.addEventListener('click', () => {
+//                 textarea.value = template;
+//                 validator.clear(textarea);
+//             });
 
-            container.appendChild(btn);
-        });
-    });
-}
+//             container.appendChild(btn);
+//         });
+//     });
+// }
 
 /**
  * Generates validation configuration for a form
@@ -548,7 +548,6 @@ function realtimeValidation(config) {
         retype.addEventListener('input', () => validator.clear(retype));
     }
 
-    // Address blur validation — only fires for resident role
     const lotNo = config.find(c => c.el.name === 'lotNo')?.el;
     const street = config.find(c => c.el.name === 'street' && c.el.closest('#createForm'))?.el;
     if (lotNo && street) {
@@ -621,8 +620,6 @@ async function handleCreateFormSubmit(form) {
         text: 'You are about to create this account.',
         icon: 'warning',
         showCancelButton: true,
-        timer: 3000,
-        timerProgressBar: true,
         confirmButtonText: 'Yes, create it',
         cancelButtonText: 'Cancel',
         buttonsStyling: false,
@@ -789,110 +786,110 @@ async function handleUpdateFormSubmit(form) {
  * @async
  * @param {HTMLFormElement} form - The suspend form element being submitted
  */
-async function handleSuspendFormSubmit(form) {
-    const userId = form.dataset.userId;
+// async function handleSuspendFormSubmit(form) {
+//     const userId = form.dataset.userId;
 
-    if (!userId || userId === 'undefined') {
-        console.error('Invalid userId:', userId);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'User ID is missing. Please try again.',
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
-        return;
-    }
+//     if (!userId || userId === 'undefined') {
+//         console.error('Invalid userId:', userId);
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error',
+//             text: 'User ID is missing. Please try again.',
+//             buttonsStyling: false,
+//             customClass: {
+//                 popup: 'swal-popup',
+//                 title: 'swal-title',
+//                 confirmButton: 'swal-confirm-btn',
+//                 cancelButton: 'swal-cancel-btn'
+//             }
+//         });
+//         return;
+//     }
 
-    const reasonInput = form.querySelector('[name="suspendReason"]');
-    const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+//     const reasonInput = form.querySelector('[name="suspendReason"]');
+//     const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
 
-    if (!validator.select(reasonInput, 'Please select a reason')) return;
+//     if (!validator.select(reasonInput, 'Please select a reason')) return;
 
-    const confirmResult = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'You are about to suspend this account.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, suspend it',
-        cancelButtonText: 'Cancel',
-        buttonsStyling: false,
-        customClass: {
-            popup: 'swal-popup',
-            title: 'swal-title',
-            confirmButton: 'swal-confirm-btn',
-            cancelButton: 'swal-cancel-btn'
-        }
-    });
+//     const confirmResult = await Swal.fire({
+//         title: 'Are you sure?',
+//         text: 'You are about to suspend this account.',
+//         icon: 'warning',
+//         showCancelButton: true,
+//         confirmButtonText: 'Yes, suspend it',
+//         cancelButtonText: 'Cancel',
+//         buttonsStyling: false,
+//         customClass: {
+//             popup: 'swal-popup',
+//             title: 'swal-title',
+//             confirmButton: 'swal-confirm-btn',
+//             cancelButton: 'swal-cancel-btn'
+//         }
+//     });
 
-    if (!confirmResult.isConfirmed) return;
+//     if (!confirmResult.isConfirmed) return;
 
-    try {
-        const payload = {
-            user_id: userId,
-            reason: reasonInput.value.trim(),
-            details: detailsInput.value.trim()
-        };
+//     try {
+//         const payload = {
+//             user_id: userId,
+//             reason: reasonInput.value.trim(),
+//             details: detailsInput.value.trim()
+//         };
 
-        const resp = await fetch('/server/api/staff/superadmin/suspend_user.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload)
-        });
+//         const resp = await fetch('/server/api/staff/superadmin/suspend_user.php', {
+//             method: 'POST',
+//             headers: { 'Content-Type': 'application/json' },
+//             credentials: 'include',
+//             body: JSON.stringify(payload)
+//         });
 
-        if (!resp.ok) throw new Error('Request failed');
+//         if (!resp.ok) throw new Error('Request failed');
 
-        const result = await resp.json();
-        if (!result.success) throw new Error(result.message || 'Failed to suspend');
+//         const result = await resp.json();
+//         if (!result.success) throw new Error(result.message || 'Failed to suspend');
 
-        form.closest('.modal')?.classList.remove('active');
-        form.reset();
+//         form.closest('.modal')?.classList.remove('active');
+//         form.reset();
 
-        validator.clear(reasonInput);
-        validator.clear(detailsInput);
+//         validator.clear(reasonInput);
+//         validator.clear(detailsInput);
 
-        delete form.dataset.userId;
+//         delete form.dataset.userId;
 
-        await Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'User suspended!',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
+//         await Swal.fire({
+//             toast: true,
+//             position: 'top-end',
+//             icon: 'success',
+//             title: 'User suspended!',
+//             showConfirmButton: false,
+//             timer: 3000,
+//             timerProgressBar: true,
+//             buttonsStyling: false,
+//             customClass: {
+//                 popup: 'swal-popup',
+//                 title: 'swal-title',
+//                 confirmButton: 'swal-confirm-btn',
+//                 cancelButton: 'swal-cancel-btn'
+//             }
+//         });
 
-        fetchUsers();
-    } catch (err) {
-        console.error('Error in suspend:', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: err.message || 'Failed to suspend user',
-            buttonsStyling: false,
-            customClass: {
-                popup: 'swal-popup',
-                title: 'swal-title',
-                confirmButton: 'swal-confirm-btn',
-                cancelButton: 'swal-cancel-btn'
-            }
-        });
-    }
-}
+//         fetchUsers();
+//     } catch (err) {
+//         console.error('Error in suspend:', err);
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error',
+//             text: err.message || 'Failed to suspend user',
+//             buttonsStyling: false,
+//             customClass: {
+//                 popup: 'swal-popup',
+//                 title: 'swal-title',
+//                 confirmButton: 'swal-confirm-btn',
+//                 cancelButton: 'swal-cancel-btn'
+//             }
+//         });
+//     }
+// }
 
 /**
  * Handles all click interactions in the user management interface.
@@ -909,11 +906,8 @@ async function handleSuspendFormSubmit(form) {
  * @param {Event} e - Click event
  */
 document.addEventListener('click', (e) => {
-    // Handle modal opening via data-modal attribute
     const modalId = e.target.dataset.modal;
     if (modalId) document.getElementById(modalId)?.classList.add('active');
-
-    // Handle cancel button clicks - close modal, reset form, clear validation
     if (e.target.classList.contains('cancel-btn')) {
         const modal = e.target.closest('.modal');
         modal?.classList.remove('active');
@@ -928,7 +922,6 @@ document.addEventListener('click', (e) => {
         }
     }
 
-    // Handle edit button clicks
     if (e.target.classList.contains('edit-btn')) {
         const btn = e.target;
 
@@ -943,7 +936,6 @@ document.addEventListener('click', (e) => {
         const roleMap = {
             'Resident': '1',
             'Super Admin': '2',
-            'Admin': '3',
             'Business staff': '4',
             'Construction staff': '5',
             'Utility staff': '6',
@@ -955,76 +947,72 @@ document.addEventListener('click', (e) => {
         }
 
         form.querySelector('[name="editRole"]').value = roleValue || '';
-
         form.querySelector('[name="street"]').value = btn.dataset.street || '';
         form.querySelector('[name="editLotNo"]').value = btn.dataset.lotno || '';
 
         form.dataset.userId = btn.dataset.id;
 
-        const isSuspended = btn.dataset.status === 'suspended';
-        const suspendBtn = document.getElementById('editSuspendBtn');
-        const unsuspendBtn = document.getElementById('editUnsuspendBtn');
+        // const isSuspended = btn.dataset.status === 'suspended';
+        // const suspendBtn = document.getElementById('editSuspendBtn');
+        // const unsuspendBtn = document.getElementById('editUnsuspendBtn');
 
-        suspendBtn.dataset.id = btn.dataset.id;
-        unsuspendBtn.dataset.id = btn.dataset.id;
-
-        suspendBtn.style.display = isSuspended ? 'none' : '';
-        unsuspendBtn.style.display = isSuspended ? '' : 'none';
+        // suspendBtn.dataset.id = btn.dataset.id;
+        // unsuspendBtn.dataset.id = btn.dataset.id;
+        // suspendBtn.style.display = isSuspended ? 'none' : '';
+        // unsuspendBtn.style.display = isSuspended ? '' : 'none';
 
         document.getElementById('editArchiveBtn').dataset.id = btn.dataset.id;
     }
 
-    // Handle suspend button clicks
-    if (e.target.classList.contains('suspend-btn')) {
-        if (e.target.type === 'submit' || e.target.closest('#suspendForm')) return;
+    // if (e.target.classList.contains('suspend-btn')) {
+    //     if (e.target.type === 'submit' || e.target.closest('#suspendForm')) return;
 
-        const userId = e.target.dataset.id;
+    //     const userId = e.target.dataset.id;
 
-        const form = document.getElementById('suspendForm');
-        if (!form) return;
+    //     const form = document.getElementById('suspendForm');
+    //     if (!form) return;
 
-        if (!userId || userId === 'undefined') {
-            console.error('Invalid userId in click handler:', userId);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Invalid user ID. Please try again.',
-                buttonsStyling: false,
-                customClass: {
-                    popup: 'swal-popup',
-                    title: 'swal-title',
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
-                }
-            });
-            return;
-        }
+    //     if (!userId || userId === 'undefined') {
+    //         console.error('Invalid userId in click handler:', userId);
+    //         Swal.fire({
+    //             icon: 'error',
+    //             title: 'Error',
+    //             text: 'Invalid user ID. Please try again.',
+    //             buttonsStyling: false,
+    //             customClass: {
+    //                 popup: 'swal-popup',
+    //                 title: 'swal-title',
+    //                 confirmButton: 'swal-confirm-btn',
+    //                 cancelButton: 'swal-cancel-btn'
+    //             }
+    //         });
+    //         return;
+    //     }
 
-        form.dataset.userId = userId;
-        form.reset();
+    //     form.dataset.userId = userId;
+    //     form.reset();
 
-        const reasonInput = form.querySelector('[name="suspendReason"]');
-        const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
-        if (reasonInput) validator.clear(reasonInput);
-        if (detailsInput) validator.clear(detailsInput);
+    //     const reasonInput = form.querySelector('[name="suspendReason"]');
+    //     const detailsInput = form.querySelector('[name="suspendReasonDetails"]');
+    //     if (reasonInput) validator.clear(reasonInput);
+    //     if (detailsInput) validator.clear(detailsInput);
 
-        document.getElementById('editModal')?.classList.remove('active');
-        form.closest('.modal')?.classList.add('active');
-    }
+    //     document.getElementById('editModal')?.classList.remove('active');
+    //     form.closest('.modal')?.classList.add('active');
+    // }
 
     // Handle unsuspend button clicks
-    if (e.target.classList.contains('unsuspend-btn')) {
-        const userId = e.target.dataset.id;
-        document.getElementById('editModal')?.classList.remove('active');
-        unsuspendUser(userId);
-    }
+    // if (e.target.classList.contains('unsuspend-btn')) {
+    //     const userId = e.target.dataset.id;
+    //     document.getElementById('editModal')?.classList.remove('active');
+    //     unsuspendUser(userId);
+    // }
 
     // Handle archive button clicks
     if (e.target.id === 'editArchiveBtn') {
         const userId = e.target.dataset.id;
         document.getElementById('editModal')?.classList.remove('active');
 
-        // Show confirmation dialog before archiving
         Swal.fire({
             title: 'Are you sure?',
             text: 'This user will be archived.',
@@ -1041,18 +1029,16 @@ document.addEventListener('click', (e) => {
             }
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await archiveRecord('users', userId);
-                // Explicitly refresh users table after archiving
+                await archiveRecord('Users', userId);
                 fetchUsers();
             }
         });
     }
 
-    // Handle suspend modal back button
-    if (e.target.id === 'suspendBackBtn') {
-        document.getElementById('suspendModal').classList.remove('active');
-        document.getElementById('editModal').classList.add('active');
-    }
+    // if (e.target.id === 'suspendBackBtn') {
+    //     document.getElementById('suspendModal').classList.remove('active');
+    //     document.getElementById('editModal').classList.add('active');
+    // }
 });
 
 /**
@@ -1085,9 +1071,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const editForm = document.getElementById('editForm');
     if (editForm) initializeForm(editForm, handleUpdateFormSubmit);
 
-    const suspendForm = document.getElementById('suspendForm');
-    if (suspendForm) {
-        initializeForm(suspendForm, handleSuspendFormSubmit);
-        initializeSuspendTemplates();
-    }
+    // const suspendForm = document.getElementById('suspendForm');
+    // if (suspendForm) {
+    //     initializeForm(suspendForm, handleSuspendFormSubmit);
+    //     initializeSuspendTemplates();
+    // }
 });
