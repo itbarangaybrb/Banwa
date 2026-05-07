@@ -41,10 +41,9 @@ swalStyle.innerHTML = `
 `;
 document.head.appendChild(swalStyle);
 
-// =========================
-// Change password form elements
-// =========================
-// Panel switch helper (used by other resident scripts) - map logical ids to actual DOM ids
+/**
+ * Panel switch helper
+ */
 function switchPanel(panelId) {
     const mapping = {
         changePass: 'changePasswordForm',
@@ -58,13 +57,28 @@ function switchPanel(panelId) {
     });
     window.scrollTo(0, 0);
 }
+
+/**
+ * Form element references
+ */
+// Change password elements
 const currentPassword = document.getElementById('currentPassword');
 const newPassword = document.getElementById('newPassword');
 const reTypeNewPassword = document.getElementById('reTypeNewPassword');
+const newPassFields = document.getElementById('newPassFields');
+let currentPassVerified = false;
 
-// =========================
-// Toggle Password Visibility
-// =========================
+// Manage account elements
+const firstName = document.getElementById('firstName');
+const middleName = document.getElementById('middleName');
+const lastName = document.getElementById('lastName');
+const suffix = document.getElementById('suffix');
+const contactNo = document.getElementById('contactNo');
+const address = document.getElementById('address');
+
+/**
+ * Toggle Password Visibility
+ */
 const EYE_OPEN = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -87,171 +101,340 @@ document.querySelectorAll('.input-with-icon .input-icon').forEach(icon => {
     });
 });
 
-// =========================
-// Manage account form elements
-// =========================
-const firstName = document.getElementById('firstName');
-const middleName = document.getElementById('middleName');
-const lastName = document.getElementById('lastName');
-const suffix = document.getElementById('suffix');
-const contactNo = document.getElementById('contactNo');
-const address = document.getElementById('address');
-
-
 // Show panel by default
 switchPanel('changePass');
 
-// =========================
-// Function: Validate single input
-// =========================
-function getWrapper(el) {
-    if (!el) return null;
-    return el.closest('.label-and-input') || el.closest('.form-group') || el.closest('.input-with-icon') || el.parentElement || null;
-}
-
-function getErrorElFrom(el) {
-    const wrapper = getWrapper(el);
-    if (!wrapper) return null;
-    return wrapper.querySelector('.error-msg');
-}
-
-function validateInput(input, message = 'This field is required', rules = {}) {
-    const wrapper = getWrapper(input);
-    const errorEl = getErrorElFrom(input);
-    const value = (input && input.value) ? input.value.trim() : '';
-
-    if (value === '') {
-        if (input) input.classList.add('error');
-        if (errorEl) errorEl.textContent = message;
-        return false;
-    } else {
-        if (errorEl) errorEl.textContent = '';
+/**
+ * COMPREHENSIVE VALIDATOR UTILITY (Same pattern as first code)
+ */
+const validator = (() => {
+    /**
+     * Gets the wrapper element containing the input and error message
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The parent wrapper element
+     */
+    function getWrapper(el) {
+        if (!el) return null;
+        return el.closest('.label-and-input') || el.closest('.form-group') || el.closest('.input-with-icon') || el.parentElement;
     }
 
-    if (rules.pattern && !rules.pattern.test(value)) {
-        input.classList.add('error');
-        errorEl.textContent = rules.errorMessage || 'Invalid format';
-        return false;
+    /**
+     * Gets the error message element associated with an input
+     * @param {HTMLElement} el - The input element
+     * @returns {HTMLElement} - The error message span element
+     */
+    function getErrorEl(el) {
+        const wrapper = getWrapper(el);
+        if (!wrapper) return null;
+        return wrapper.querySelector('.error-msg');
     }
 
-    if (rules.maxLength && value.length > rules.maxLength) {
-        input.classList.add('error');
-        errorEl.textContent = `Maximum ${rules.maxLength} characters allowed`;
-        return false;
+    /**
+     * Displays an error message for an invalid input field
+     * @param {HTMLElement} el - The input element with validation error
+     * @param {string} message - The error message to display
+     */
+    function showError(el, message) {
+        const errorEl = getErrorEl(el);
+        if (!errorEl) return;
+        el.classList.add('error');
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
     }
 
-    if (input) input.classList.remove('error');
-    if (errorEl) errorEl.textContent = '';
+    /**
+     * Clears any error state from a validated input field
+     * @param {HTMLElement} el - The input element to clear
+     */
+    function clearError(el) {
+        const errorEl = getErrorEl(el);
+        if (!errorEl) return;
+        el.classList.remove('error');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+    }
+
+    /**
+     * Validates text input fields with optional normalization and pattern rules
+     * @param {HTMLInputElement} input - The text input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules configuration
+     * @returns {boolean} - Whether the input is valid
+     */
+    function validateText(input, message, rules = {}) {
+        if (!input) return true;
+        let value = input.value.trim();
+        if (rules.normalizeSpaces) value = value.replace(/\s+/g, ' ').trim();
+        
+        if (value === '') { 
+            showError(input, message); 
+            return false; 
+        }
+        
+        if (rules.lettersOnly) {
+            if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value)) {
+                showError(input, rules.errorMessage || 'Only letters are allowed'); 
+                return false;
+            }
+            if (value.length < 2) { 
+                showError(input, 'Too short'); 
+                return false; 
+            }
+            if (value.length > 50) { 
+                showError(input, 'Too long'); 
+                return false; 
+            }
+            if (/(.)\1{3,}/.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+            if (/^([A-Za-z])\s\1(\s\1)*$/.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+            if (value.length >= 6 && !/[aeiouAEIOU]/.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+        }
+
+        if (rules.minLength && value.length < rules.minLength) { 
+            showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`); 
+            return false; 
+        }
+        if (rules.maxLength && value.length > rules.maxLength) { 
+            showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`); 
+            return false; 
+        }
+        if (rules.noSpam) {
+            if (/(.)\1{4,}/.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+            if (/^(.{2,6})\1{2,}$/i.test(value)) { 
+                showError(input, rules.errorMessage || 'Invalid input'); 
+                return false; 
+            }
+        }
+
+        clearError(input); 
+        return true;
+    }
+
+    /**
+     * Validates numeric input fields with digit and length constraints
+     * @param {HTMLInputElement} input - The number input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for numeric input
+     * @returns {boolean} - Whether the number is valid
+     */
+    function validateNumber(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value.trim();
+        
+        if (value === '') { 
+            showError(input, message); 
+            return false; 
+        }
+        
+        if (!/^\d+$/.test(value)) { 
+            showError(input, rules.errorMessage || 'Only numeric digits are allowed'); 
+            return false; 
+        }
+        
+        if (rules.phoneType === 'ph') {
+            const isMobile = /^09\d{9}$/.test(value);
+            const isLandline8 = /^[2-9]\d{7}$/.test(value);
+            const isLandlineArea = /^0[2-9]\d{8}$/.test(value);
+            if (!isMobile && !isLandline8 && !isLandlineArea) { 
+                showError(input, 'Enter a valid number (e.g. 09171234567 or 85359822)'); 
+                return false; 
+            }
+            if (/^(\d)\1{10}$/.test(value) || /^09(\d)\1{8}$/.test(value)) { 
+                showError(input, 'Enter a real contact number'); 
+                return false; 
+            }
+            if (/^(?:0(?:123456789|987654321)|09(?:12345678|87654321))$/.test(value)) { 
+                showError(input, 'Enter a real contact number'); 
+                return false; 
+            }
+            clearError(input); 
+            return true;
+        }
+        
+        if (rules.exactLength && value.length !== rules.exactLength) { 
+            showError(input, rules.errorMessage || `Must be exactly ${rules.exactLength} digits`); 
+            return false; 
+        }
+        if (rules.minLength && value.length < rules.minLength) { 
+            showError(input, rules.errorMessage || `At least ${rules.minLength} digits`); 
+            return false; 
+        }
+        if (rules.maxLength && value.length > rules.maxLength) { 
+            showError(input, rules.errorMessage || `Cannot exceed ${rules.maxLength} digits`); 
+            return false; 
+        }
+        
+        clearError(input); 
+        return true;
+    }
+
+    /**
+     * Validates password fields with strength requirements
+     * @param {HTMLInputElement} input - The password input element
+     * @param {string} message - Required field error message
+     * @param {Object} rules - Validation rules for password
+     * @returns {boolean} - Whether the password is valid
+     */
+    function validatePassword(input, message, rules = {}) {
+        if (!input) return true;
+        const value = input.value;
+        
+        if (value === '') { 
+            showError(input, message); 
+            return false; 
+        }
+        
+        if (rules.minLength && value.length < rules.minLength) {
+            showError(input, rules.errorMessage || `Minimum ${rules.minLength} characters`);
+            return false;
+        }
+        
+        if (rules.maxLength && value.length > rules.maxLength) {
+            showError(input, rules.errorMessage || `Maximum ${rules.maxLength} characters`);
+            return false;
+        }
+        
+        if (rules.requireLettersAndNumbers) {
+            if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) {
+                showError(input, 'Password must contain both letters and numbers');
+                return false;
+            }
+        }
+        
+        clearError(input);
+        return true;
+    }
+
+    /**
+     * Validates password confirmation match
+     * @param {HTMLInputElement} passwordInput - The password input
+     * @param {HTMLInputElement} confirmInput - The confirm password input
+     * @param {string} message - Error message when passwords don't match
+     * @returns {boolean} - Whether passwords match
+     */
+    function validatePasswordMatch(passwordInput, confirmInput, message) {
+        if (!passwordInput || !confirmInput) return true;
+        
+        if (confirmInput.value !== passwordInput.value) {
+            showError(confirmInput, message);
+            return false;
+        }
+        
+        clearError(confirmInput);
+        return true;
+    }
+
+    return {
+        text: validateText,
+        number: validateNumber,
+        password: validatePassword,
+        passwordMatch: validatePasswordMatch,
+        clear: clearError,
+        showError: showError
+    };
+})();
+
+/**
+ * VALIDATION CONFIGURATION
+ */
+const validationConfig = [
+    { el: firstName, type: 'text', message: 'First name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: middleName, type: 'text', message: 'Middle name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: lastName, type: 'text', message: 'Last name is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: suffix, type: 'text', message: 'Suffix is required', rules: { lettersOnly: true, normalizeSpaces: true, errorMessage: 'Only letters are allowed' } },
+    { el: contactNo, type: 'number', message: 'Contact number is required', rules: { phoneType: 'ph' } },
+    { el: address, type: 'text', message: 'Address is required', rules: { minLength: 5, maxLength: 200 } },
+    { el: currentPassword, type: 'password', message: 'Current password is required', rules: { minLength: 1 } },
+    { el: newPassword, type: 'password', message: 'New password is required', rules: { minLength: 8, maxLength: 16, requireLettersAndNumbers: true } }
+];
+
+/**
+ * Validates a single form field based on its configuration
+ * @param {Object} config - Validation configuration object
+ * @returns {boolean} - Whether the field passed validation
+ */
+function validateField(config) {
+    const { el, type, message, rules } = config;
+    if (!el) return true;
+
+    switch (type) {
+        case 'number': return validator.number(el, message, rules);
+        case 'text': return validator.text(el, message, rules);
+        case 'password': return validator.password(el, message, rules);
+    }
     return true;
 }
 
-// =========================
-// Real-time validation of Change Password
-// =========================
+/**
+ * Sets up real-time validation on form field interactions
+ * Validates on blur and clears errors on input for immediate feedback
+ */
 (() => {
-    const inputs = [currentPassword, newPassword, reTypeNewPassword];
-    const submitBtn = document.getElementById('saveNewPass');
-    if (!submitBtn) return;
+    validationConfig.forEach(config => {
+        const { el } = config;
+        if (!el) return;
 
-    const checkEnableSubmit = () => {
-        const allFilled = inputs.every(i => i && i.value.trim() !== '');
-        const passwordsMatch = newPassword.value === reTypeNewPassword.value;
-        const newPassValid = newPassword.value.length >= 8 &&
-            newPassword.value.length <= 16 &&
-            /[A-Za-z]/.test(newPassword.value) &&
-            /[0-9]/.test(newPassword.value);
-        submitBtn.disabled = !(allFilled && passwordsMatch && newPassValid && currentPassword.value.trim() !== '');
-    };
-
-    inputs.filter(Boolean).forEach(input => {
-        input.addEventListener('input', () => {
-            validateInput(input);
-
-            // New password rules
-            if (input === newPassword) {
-                const errorEl = getErrorElFrom(newPassword);
-                if (input.value.length < 8 || input.value.length > 16) {
-                    input.classList.add('error');
-                    if (errorEl) errorEl.textContent = 'Password should be 8-16 characters long';
-                } else if (!/[A-Za-z]/.test(input.value) || !/[0-9]/.test(input.value)) {
-                    input.classList.add('error');
-                    if (errorEl) errorEl.textContent = 'Password must contain letters and numbers';
-                } else {
-                    input.classList.remove('error');
-                    if (errorEl) errorEl.textContent = '';
-                }
-            }
-
-            // Retype password match
-            const reTypeErrorEl = getErrorElFrom(reTypeNewPassword);
-            if (reTypeNewPassword.value && reTypeNewPassword.value !== newPassword.value) {
-                reTypeNewPassword.classList.add('error');
-                if (reTypeErrorEl) reTypeErrorEl.textContent = 'Passwords do not match';
-            } else if (reTypeNewPassword.value === newPassword.value) {
-                reTypeNewPassword.classList.remove('error');
-                if (reTypeErrorEl) reTypeErrorEl.textContent = '';
-            }
-
-            // Current password required
-            const currentErrorEl = getErrorElFrom(currentPassword);
-            if (input === currentPassword) {
-                if (input.value.trim() === '') {
-                    input.classList.add('error');
-                    if (currentErrorEl) currentErrorEl.textContent = 'Current password is required';
-                } else {
-                    input.classList.remove('error');
-                    if (currentErrorEl) currentErrorEl.textContent = '';
-                }
-            }
-
-            // Enable/disable submit
-            checkEnableSubmit();
-        });
+        el.addEventListener('blur', () => validateField(config));
+        el.addEventListener('input', () => validator.clear(el));
     });
 
-    // Initial check in case fields are autofilled
-    checkEnableSubmit();
-})();
-
-// =========================
-// Real-time validation for Manage Account
-// =========================
-(() => {
-    const manageInputs = [firstName, middleName, lastName, suffix, contactNo, address];
-
-    manageInputs.filter(Boolean).forEach(input => {
-        input.addEventListener('input', () => {
-            validateInput(input);
-
-            // Extra validation for contact number
-            if (input === contactNo) {
-                const errorEl = getErrorElFrom(contactNo);
-                const value = input.value.trim();
-
-                contactNo.value = value.replace(/[^0-9]/g, '');
-
-                if (value === '') {
-                    contactNo.classList.add('error');
-                    errorEl.textContent = 'Contact number is required';
-                } else if (!/^[0-9]+$/.test(value)) {
-                    contactNo.classList.add('error');
-                    errorEl.textContent = 'Contact number must be numeric';
-                } else if (value.length !== 11) {
-                    contactNo.classList.add('error');
-                    errorEl.textContent = 'Contact number must be exactly 11 digits';
-                } else {
-                    contactNo.classList.remove('error');
-                    errorEl.textContent = '';
-                }
+    // Special handling for password match
+    if (newPassword && reTypeNewPassword) {
+        newPassword.addEventListener('blur', () => {
+            validateField(validationConfig.find(c => c.el === newPassword));
+            if (reTypeNewPassword.value) {
+                validator.passwordMatch(newPassword, reTypeNewPassword, 'Passwords do not match');
             }
         });
-    });
+        
+        reTypeNewPassword.addEventListener('blur', () => {
+            validator.passwordMatch(newPassword, reTypeNewPassword, 'Passwords do not match');
+        });
+        
+        reTypeNewPassword.addEventListener('input', () => {
+            if (newPassword.value && reTypeNewPassword.value) {
+                validator.passwordMatch(newPassword, reTypeNewPassword, 'Passwords do not match');
+            } else {
+                validator.clear(reTypeNewPassword);
+            }
+        });
+    }
+
+    // Contact number input filtering
+    if (contactNo) {
+        contactNo.addEventListener('input', () => {
+            contactNo.value = contactNo.value.replace(/\D/g, '');
+        });
+    }
 })();
 
+/**
+ * Validates a group of fields
+ * @param {Array} fields - Array of form elements to validate
+ * @returns {boolean} - Whether all fields are valid
+ */
+function validateStep(fields) {
+    return fields.map(f => validateField(validationConfig.find(c => c.el === f))).every(v => v);
+}
 
-// =========================
-// Autofill the Management Account form inputs
-// =========================
+/**
+ * Autofill user data
+ */
 async function loadUserData() {
     try {
         const res = await fetch('/server/api/resident/get_user.php', { credentials: 'include' });
@@ -264,6 +447,7 @@ async function loadUserData() {
         suffix.value = data.suffix || '';
         contactNo.value = data.contact_no || '';
         address.value = data.address || '';
+        
         const emailEl = document.getElementById('email');
         if (emailEl) emailEl.value = data.email || '';
 
@@ -280,8 +464,8 @@ async function loadUserData() {
         if (fullNameEl) fullNameEl.textContent = full || fullNameEl.textContent;
 
         const memberSinceEl = document.getElementById('memberSince');
-        if (memberSinceEl) {
-            if (data.member_since) memberSinceEl.textContent = data.member_since;
+        if (memberSinceEl && data.member_since) {
+            memberSinceEl.textContent = data.member_since;
         }
 
         if (avatar) {
@@ -342,44 +526,350 @@ async function loadApplicationSummary() {
 loadUserData();
 loadApplicationSummary();
 
-// =========================
-// Change Password: "Save" click
-// =========================
-document.getElementById('changePassForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+/**
+ * Change Password Functions
+ */
+function setChangePassReadonly(state) {
+    if (currentPassword) currentPassword.disabled = state;
+    if (newPassword) newPassword.disabled = true;
+    if (reTypeNewPassword) reTypeNewPassword.disabled = true;
+    if (state) {
+        if (newPassFields) newPassFields.style.display = 'none';
+        if (currentPassword && currentPassword.closest('.form-group')) {
+            currentPassword.closest('.form-group').style.display = 'block';
+        }
+        const saveBtn = document.getElementById('saveNewPass');
+        if (saveBtn) saveBtn.style.display = 'none';
+        currentPassVerified = false;
+        if (currentPassword) currentPassword.value = '';
+        if (newPassword) newPassword.value = '';
+        if (reTypeNewPassword) reTypeNewPassword.value = '';
+    }
+}
 
-    const validations = [
-        validateInput(currentPassword, 'Current password is required'),
-        validateInput(newPassword, 'New password is required'),
-        validateInput(reTypeNewPassword, 'Re-type password is required')
-    ];
+function toggleChangePassButtons(mode) {
+    const btnEdit = document.getElementById('changePassEditBtn');
+    const btnSave = document.getElementById('saveNewPass');
+    const btnCancel = document.getElementById('changePassCancelBtn');
+    const next = document.getElementById('nextBtn');
 
-    const newPassError = getErrorElFrom(newPassword);
-
-    if (newPassword.value.length < 8 || newPassword.value.length > 16) {
-        newPassword.classList.add('error');
-        newPassError.textContent = 'Password should be 8-16 characters long';
-        validations.push(false);
-    } else if (!/[A-Za-z]/.test(newPassword.value) || !/[0-9]/.test(newPassword.value)) {
-        newPassword.classList.add('error');
-        newPassError.textContent = 'Password must contain letters and numbers';
-        validations.push(false);
+    if (mode === "view") {
+        if (btnEdit) btnEdit.style.display = "block";
+        if (btnSave) btnSave.style.display = "none";
+        if (btnCancel) btnCancel.style.display = "none";
+        if (next) next.style.display = "none";
     }
 
-    const reTypeError = getErrorElFrom(reTypeNewPassword);
-    if (reTypeNewPassword.value !== newPassword.value) {
-        reTypeNewPassword.classList.add('error');
-        reTypeError.textContent = 'Passwords do not match';
-        validations.push(false);
+    if (mode === "edit") {
+        if (btnEdit) btnEdit.style.display = "none";
+        if (btnSave) btnSave.style.display = "none";
+        if (btnCancel) btnCancel.style.display = "block";
+        if (next) next.style.display = "block";
     }
+}
 
-    if (validations.every(v => v)) {
+let originalPassData = {};
+
+function captureOriginalPassData() {
+    originalPassData = {
+        current: currentPassword ? currentPassword.value : '',
+        newPass: newPassword ? newPassword.value : '',
+        retype: reTypeNewPassword ? reTypeNewPassword.value : ''
+    };
+}
+
+function clearChangePassErrors() {
+    [currentPassword, newPassword, reTypeNewPassword].forEach(input => {
+        if (!input) return;
+        validator.clear(input);
+        // Reset eye icon
+        const icon = input.closest('.input-with-icon')?.querySelector('.input-icon');
+        if (icon) icon.innerHTML = EYE_OPEN;
+        input.type = 'password';
+    });
+}
+
+/**
+ * Change Password: "Next" button click — verify current password
+ */
+const nextBtn = document.getElementById('nextBtn');
+if (nextBtn) {
+    nextBtn.addEventListener('click', async () => {
+        // Validate current password field
+        const isValid = validateField(validationConfig.find(c => c.el === currentPassword));
+        if (!isValid) return;
+
+        const val = currentPassword.value.trim();
+
+        // Show loading state
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'Verifying...';
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) {
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Next';
+            return;
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: user.email,
+            password: val
+        });
+
+        nextBtn.disabled = false;
+        nextBtn.textContent = 'Next';
+
+        if (signInError) {
+            currentPassVerified = false;
+            validator.showError(currentPassword, 'Current password is incorrect');
+        } else {
+            currentPassVerified = true;
+            validator.clear(currentPassword);
+
+            if (currentPassword.closest('.form-group')) {
+                currentPassword.closest('.form-group').style.display = 'none';
+            }
+            nextBtn.style.display = 'none';
+            if (newPassFields) newPassFields.style.display = 'block';
+            const saveBtn = document.getElementById('saveNewPass');
+            if (saveBtn) {
+                saveBtn.style.display = 'block';
+                saveBtn.disabled = true;
+            }
+            if (newPassword) {
+                newPassword.disabled = false;
+                newPassword.focus();
+            }
+            if (reTypeNewPassword) reTypeNewPassword.disabled = false;
+        }
+    });
+}
+
+// Enable save button when new password is valid
+if (newPassword && reTypeNewPassword) {
+    const checkEnableSubmit = () => {
+        const saveBtn = document.getElementById('saveNewPass');
+        if (!saveBtn) return;
+        
+        const newPassValid = newPassword.value.length >= 8 &&
+            newPassword.value.length <= 16 &&
+            /[A-Za-z]/.test(newPassword.value) &&
+            /[0-9]/.test(newPassword.value);
+        const passwordsMatch = newPassword.value === reTypeNewPassword.value;
+        
+        saveBtn.disabled = !(currentPassVerified && passwordsMatch && newPassValid && 
+                            newPassword.value.trim() !== '' && reTypeNewPassword.value.trim() !== '');
+    };
+
+    newPassword.addEventListener('input', checkEnableSubmit);
+    reTypeNewPassword.addEventListener('input', checkEnableSubmit);
+}
+
+/**
+ * Change Password: Form Submit
+ */
+const changePassForm = document.getElementById('changePassForm');
+if (changePassForm) {
+    changePassForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Validate new password fields
+        const newPassValid = validateField(validationConfig.find(c => c.el === newPassword));
+        const confirmValid = validator.passwordMatch(newPassword, reTypeNewPassword, 'Passwords do not match');
+
+        if (!newPassValid || !confirmValid) return;
+
         const result = await Swal.fire({
             title: 'Change Password',
             text: 'Are you sure you want to change your password?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, change it',
+            cancelButtonText: 'Cancel',
+            color: '#363636',
+            confirmButtonColor: '#00247C',
+            cancelButtonColor: '#d33',
+            customClass: { popup: 'modal-content', confirmButton: 'btn-proceed' }
+        });
+
+        if (!result.isConfirmed) return;
+
+        const { data, error } = await supabase.auth.updateUser({ password: newPassword.value });
+
+        if (error) {
+            Swal.fire({ 
+                title: 'Error!', 
+                text: 'Failed to update password: ' + error.message, 
+                icon: 'error', 
+                confirmButtonText: 'OK', 
+                confirmButtonColor: '#00247C' 
+            });
+        } else {
+            Swal.fire({ 
+                title: 'Success!', 
+                text: 'Password updated successfully!', 
+                icon: 'success', 
+                confirmButtonText: 'OK', 
+                confirmButtonColor: '#00247C' 
+            });
+            setChangePassReadonly(true);
+            toggleChangePassButtons("view");
+            captureOriginalPassData();
+            disablePanelSwitch(false);
+        }
+    });
+}
+
+/**
+ * Manage Account Functions
+ */
+function setManageAccReadonly(state) {
+    [firstName, middleName, lastName, suffix, contactNo, address].forEach(i => {
+        if (i) i.readOnly = state;
+    });
+}
+
+function toggleManageButtons(mode) {
+    const btnEdit = document.getElementById('manageAccEditBtn');
+    const btnSave = document.getElementById('saveNewAccDetails');
+    const btnCancel = document.getElementById('manageAccCancelBtn');
+
+    if (mode === "view") {
+        if (btnEdit) btnEdit.style.display = "inline-block";
+        if (btnSave) {
+            btnSave.style.display = "none";
+            btnSave.disabled = true;
+        }
+        if (btnCancel) {
+            btnCancel.style.display = "none";
+            btnCancel.disabled = true;
+        }
+    }
+
+    if (mode === "edit") {
+        if (btnEdit) btnEdit.style.display = "none";
+        if (btnSave) {
+            btnSave.style.display = "inline-block";
+            btnSave.disabled = false;
+        }
+        if (btnCancel) {
+            btnCancel.style.display = "inline-block";
+            btnCancel.disabled = false;
+        }
+    }
+}
+
+setManageAccReadonly(true);
+toggleManageButtons("view");
+
+let originalManageData = {};
+
+function captureOriginalData() {
+    originalManageData = {
+        firstName: firstName ? firstName.value : '',
+        middleName: middleName ? middleName.value : '',
+        lastName: lastName ? lastName.value : '',
+        suffix: suffix ? suffix.value : '',
+        contactNo: contactNo ? contactNo.value : '',
+        address: address ? address.value : '',
+    };
+}
+
+function hasChanges() {
+    return (
+        (firstName && firstName.value !== originalManageData.firstName) ||
+        (middleName && middleName.value !== originalManageData.middleName) ||
+        (lastName && lastName.value !== originalManageData.lastName) ||
+        (suffix && suffix.value !== originalManageData.suffix) ||
+        (contactNo && contactNo.value !== originalManageData.contactNo) ||
+        (address && address.value !== originalManageData.address)
+    );
+}
+
+function clearManageAccErrors() {
+    const inputs = [firstName, middleName, lastName, suffix, contactNo, address];
+    inputs.forEach(input => {
+        if (input) validator.clear(input);
+    });
+}
+
+/**
+ * Manage Account Event Listeners
+ */
+const manageAccEditBtn = document.getElementById('manageAccEditBtn');
+if (manageAccEditBtn) {
+    manageAccEditBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        captureOriginalData();
+        setManageAccReadonly(false);
+        toggleManageButtons("edit");
+        disablePanelSwitch(true);
+    });
+}
+
+const manageAccCancelBtn = document.getElementById('manageAccCancelBtn');
+if (manageAccCancelBtn) {
+    manageAccCancelBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        if (!hasChanges()) {
+            clearManageAccErrors();
+            setManageAccReadonly(true);
+            toggleManageButtons("view");
+            disablePanelSwitch(false);
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: 'Discard Changes?',
+            text: 'You made changes. Discard them?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, discard',
+            cancelButtonText: 'Keep editing',
+            color: '#363636',
+            confirmButtonColor: '#00247C',
+            cancelButtonColor: '#d33',
+            customClass: {
+                popup: 'modal-content',
+                confirmButton: 'btn-proceed',
+            }
+        });
+
+        if (result.isConfirmed) {
+            if (firstName) firstName.value = originalManageData.firstName;
+            if (middleName) middleName.value = originalManageData.middleName;
+            if (lastName) lastName.value = originalManageData.lastName;
+            if (suffix) suffix.value = originalManageData.suffix;
+            if (contactNo) contactNo.value = originalManageData.contactNo;
+            if (address) address.value = originalManageData.address;
+        }
+
+        clearManageAccErrors();
+        setManageAccReadonly(true);
+        toggleManageButtons("view");
+        disablePanelSwitch(false);
+    });
+}
+
+const mngAccForm = document.getElementById('mngAccForm');
+if (mngAccForm) {
+    mngAccForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Validate all manage account fields
+        const manageFields = [firstName, middleName, lastName, suffix, contactNo, address];
+        const stepFieldsValid = validateStep(manageFields);
+
+        if (!stepFieldsValid) return;
+
+        const result = await Swal.fire({
+            title: 'Save Changes?',
+            text: 'Save changes to your account?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, save',
             cancelButtonText: 'Cancel',
             color: '#363636',
             confirmButtonColor: '#00247C',
@@ -392,309 +882,83 @@ document.getElementById('changePassForm').addEventListener('submit', async (e) =
 
         if (!result.isConfirmed) return;
 
-        const { data, error } = await supabase.auth.updateUser({
-            // TODO: Front-end dev will add for current password/email/number
-            // still undecided ...
-            // i used password only - jep
-            password: newPassword.value
-        });
+        const manageAccAllData = {
+            firstName: firstName ? firstName.value : '',
+            middleName: middleName ? middleName.value : '',
+            lastName: lastName ? lastName.value : '',
+            suffix: suffix ? suffix.value : '',
+            contactNo: contactNo ? contactNo.value : '',
+            address: address ? address.value : '',
+        };
 
-        if (error) {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to update password: ' + error.message,
-                icon: 'error',
-                confirmButtonText: 'OK',
-                color: '#363636',
-                confirmButtonColor: '#00247C',
-                customClass: {
-                    popup: 'modal-content',
-                    confirmButton: 'btn-proceed',
-                }
+        try {
+            const resp = await fetch('/server/api/resident/update_user.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(manageAccAllData)
             });
-        } else {
-            Swal.fire({
-                title: 'Success!',
-                text: 'Password updated successfully!',
-                icon: 'success',
-                confirmButtonText: 'OK',
-                color: '#363636',
-                confirmButtonColor: '#00247C',
-                customClass: {
-                    popup: 'modal-content',
-                    confirmButton: 'btn-proceed',
+            const json = await resp.json();
+            if (json.success) {
+                const saveBtn = document.getElementById('saveNewAccDetails');
+                if (saveBtn) {
+                    saveBtn.textContent = 'Saved';
+                    setTimeout(() => saveBtn.textContent = 'Save Changes', 1500);
                 }
-            });
-
-            setChangePassReadonly(true);
-            toggleChangePassButtons("view");
-            captureOriginalPassData();
-            disablePanelSwitch(false);
-
-            console.log('Updated user data:', data);
-
-            // TODO: Back-end developer, these are the data to be sent to db.
-            // add here if necessary...
-        }
-    }
-
-});
-
-
-// =========================
-// Manage Account: Read only the input
-// =========================
-function setManageAccReadonly(state) {
-    [firstName, middleName, lastName, suffix, contactNo, address].forEach(i => {
-        i.readOnly = state;
-    });
-}
-
-// =========================
-// Manage Account: Show "Save" and "Cancel" after "Edit" click
-// =========================
-function toggleManageButtons(mode) {
-    const btnEdit = document.getElementById('manageAccEditBtn');
-    const btnSave = document.getElementById('saveNewAccDetails');
-    const btnCancel = document.getElementById('manageAccCancelBtn');
-
-    if (mode === "view") {
-        btnEdit.style.display = "inline-block";
-        btnSave.style.display = "none";
-        if (btnSave) btnSave.disabled = true;
-        btnCancel.style.display = "none";
-        if (btnCancel) btnCancel.disabled = true;
-    }
-
-    if (mode === "edit") {
-        btnEdit.style.display = "none";
-        btnSave.style.display = "inline-block";
-        if (btnSave) btnSave.disabled = false;
-        btnCancel.style.display = "inline-block";
-        if (btnCancel) btnCancel.disabled = false;
-    }
-}
-
-setManageAccReadonly(true);
-toggleManageButtons("view");
-
-// =========================
-// Manage Account: Remember the original if "Cancel" click
-// =========================
-let originalManageData = {};
-
-function captureOriginalData() {
-    originalManageData = {
-        firstName: firstName.value,
-        middleName: middleName.value,
-        lastName: lastName.value,
-        suffix: suffix.value,
-        contactNo: contactNo.value,
-        address: address.value,
-    };
-}
-
-// =========================
-// Manage Account: Check if there has change
-// =========================
-function hasChanges() {
-    return (
-        firstName.value !== originalManageData.firstName ||
-        middleName.value !== originalManageData.middleName ||
-        lastName.value !== originalManageData.lastName ||
-        suffix.value !== originalManageData.suffix ||
-        contactNo.value !== originalManageData.contactNo ||
-        address.value !== originalManageData.address
-    );
-}
-
-// =====================================
-// Manage Account: "Edit" click
-// =====================================
-document.getElementById('manageAccEditBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-
-    captureOriginalData();
-    setManageAccReadonly(false);
-    toggleManageButtons("edit");
-    disablePanelSwitch(true);
-});
-
-// =====================================
-// Manage Account: Clear Validations if "Cancel" click
-// =====================================
-function clearManageAccErrors() {
-    const inputs = [firstName, middleName, lastName, suffix, contactNo, address];
-
-    inputs.forEach(input => {
-        if (!input) return;
-        input.classList.remove('error');
-        const errorEl = getErrorElFrom(input);
-        if (errorEl) errorEl.textContent = '';
-    });
-}
-
-// =====================================
-// Manage Account: "Cancel" click
-// =====================================
-document.getElementById('manageAccCancelBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-
-    // If no changes, simply reset UI
-    if (!hasChanges()) {
-        clearManageAccErrors();
-        setManageAccReadonly(true);
-        toggleManageButtons("view");
-        disablePanelSwitch(false);
-        return;
-    }
-
-    // If there are changes, confirm discard
-    const result = await Swal.fire({
-        title: 'Discard Changes?',
-        text: 'You made changes. Discard them?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, discard',
-        cancelButtonText: 'Keep editing',
-        color: '#363636',
-        confirmButtonColor: '#00247C',
-        cancelButtonColor: '#d33',
-        customClass: {
-            popup: 'modal-content',
-            confirmButton: 'btn-proceed',
-        }
-    });
-
-    if (result.isConfirmed) {
-        // Restore original values
-        firstName.value = originalManageData.firstName;
-        middleName.value = originalManageData.middleName;
-        lastName.value = originalManageData.lastName;
-        suffix.value = originalManageData.suffix;
-        contactNo.value = originalManageData.contactNo;
-        address.value = originalManageData.address;
-    }
-
-    clearManageAccErrors();
-    setManageAccReadonly(true);
-    toggleManageButtons("view");
-    disablePanelSwitch(false);
-});
-
-// =====================================
-// Manage Account: "Save" click
-// =====================================
-document.getElementById('mngAccForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const validations = [
-        validateInput(firstName, 'First name is required'),
-        validateInput(middleName, 'Middle name is required'),
-        validateInput(lastName, 'Last name is required'),
-        validateInput(suffix, 'Suffix is required'),
-        validateInput(contactNo, 'Contact No. is required', {
-            pattern: /^[0-9]+$/,
-            maxLength: 11,
-            errorMessage: 'Contact number must be numeric, max 11 digits'
-        }),
-        validateInput(address, 'Address is required'),
-    ];
-
-    if (!validations.every(v => v)) return;
-
-    const result = await Swal.fire({
-        title: 'Save Changes?',
-        text: 'Save changes?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, save',
-        cancelButtonText: 'Cancel',
-        color: '#363636',
-        confirmButtonColor: '#00247C',
-        cancelButtonColor: '#d33',
-        customClass: {
-            popup: 'modal-content',
-            confirmButton: 'btn-proceed',
-        }
-    });
-
-    if (!result.isConfirmed) return;
-
-    const manageAccAllData = {
-        firstName: firstName.value,
-        middleName: middleName.value,
-        lastName: lastName.value,
-        suffix: suffix.value,
-        contactNo: contactNo.value,
-        address: address.value,
-    };
-
-    try {
-        const resp = await fetch('/server/api/resident/update_user.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(manageAccAllData)
-        });
-        const json = await resp.json();
-        if (json.success) {
-            const saveBtn = document.getElementById('saveNewAccDetails');
-            saveBtn.textContent = 'Saved';
-            setTimeout(() => saveBtn.textContent = 'Save Changes', 1500);
-            setManageAccReadonly(true);
-            captureOriginalData();
-            toggleManageButtons("view");
-            disablePanelSwitch(false);
-            // refresh overview if needed
-            loadApplicationSummary();
-        } else {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to save: ' + (json.error || 'Unknown'),
-                icon: 'error',
-                confirmButtonText: 'OK',
-                color: '#363636',
-                confirmButtonColor: '#00247C',
-                customClass: {
-                    popup: 'modal-content',
-                    confirmButton: 'btn-proceed',
-                }
-            });
-        }
-    } catch (err) {
-        console.error(err);
-        Swal.fire({
-            title: 'Error!',
-            text: 'Failed to save account details.',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            color: '#363636',
-            confirmButtonColor: '#00247C',
-            customClass: {
-                popup: 'modal-content',
-                confirmButton: 'btn-proceed',
+                setManageAccReadonly(true);
+                captureOriginalData();
+                toggleManageButtons("view");
+                disablePanelSwitch(false);
+                loadApplicationSummary();
+                
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Account details updated successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    color: '#363636',
+                    confirmButtonColor: '#00247C',
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to save: ' + (json.error || 'Unknown'),
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    color: '#363636',
+                    confirmButtonColor: '#00247C',
+                });
             }
-        });
-    }
-});
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to save account details.',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                color: '#363636',
+                confirmButtonColor: '#00247C',
+            });
+        }
+    });
+}
 
-
-// =========================
-// Change Password Panel Button
-// =========================
+/**
+ * Panel Navigation
+ */
 const changePasswordBtnEl = document.getElementById('changePasswordBtn');
-if (changePasswordBtnEl) changePasswordBtnEl.addEventListener('click', () => switchPanel('changePass'));
+if (changePasswordBtnEl) {
+    changePasswordBtnEl.addEventListener('click', () => switchPanel('changePass'));
+}
 
-// =========================
-// Manage Account Panel Button
-// =========================
 const manageAccountBtnEl = document.getElementById('manageAccountBtn');
-if (manageAccountBtnEl) manageAccountBtnEl.addEventListener('click', () => switchPanel('manageAcc'));
+if (manageAccountBtnEl) {
+    manageAccountBtnEl.addEventListener('click', () => switchPanel('manageAcc'));
+}
 
-// =========================
-// Disable panels if "Edit" click
-// =========================
+/**
+ * Disable panels during edit
+ */
 function disablePanelSwitch(state) {
     const btnChange = document.getElementById('changePasswordBtn');
     const btnManage = document.getElementById('manageAccountBtn');
@@ -708,9 +972,40 @@ function disablePanelSwitch(state) {
     btnManage.style.pointerEvents = state ? "none" : "auto";
 }
 
-// =========================
-// Logout button event listener
-// =========================
+/**
+ * Change Password Edit/Cancel buttons
+ */
+const changePassEditBtn = document.getElementById('changePassEditBtn');
+if (changePassEditBtn) {
+    changePassEditBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        captureOriginalPassData();
+        if (currentPassword) currentPassword.disabled = false;
+        if (nextBtn) nextBtn.style.display = 'block';
+        toggleChangePassButtons("edit");
+        disablePanelSwitch(true);
+    });
+}
+
+const changePassCancelBtn = document.getElementById('changePassCancelBtn');
+if (changePassCancelBtn) {
+    changePassCancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (currentPassword) currentPassword.value = originalPassData.current || '';
+        if (newPassword) newPassword.value = originalPassData.newPass || '';
+        if (reTypeNewPassword) reTypeNewPassword.value = originalPassData.retype || '';
+
+        clearChangePassErrors();
+        setChangePassReadonly(true);
+        toggleChangePassButtons("view");
+        disablePanelSwitch(false);
+    });
+}
+
+/**
+ * Logout button event listener
+ */
 function initLogoutBtn() {
     const logoutBtn = document.getElementById("logoutBtn");
     if (!logoutBtn) return;
@@ -764,96 +1059,8 @@ function initLogoutBtn() {
     });
 }
 
-// Call once on load
 initLogoutBtn();
 
-
-// =========================
-// Change Password: Read only the input
-// =========================
-function setChangePassReadonly(state) {
-    currentPassword.disabled = state;
-    newPassword.disabled = state;
-    reTypeNewPassword.disabled = state;
-}
-
-// =========================
-// Change Password: Show "Save" and "Cancel" after "Edit" click
-// =========================
-function toggleChangePassButtons(mode) {
-    const btnEdit = document.getElementById('changePassEditBtn');
-    const btnSave = document.getElementById('saveNewPass');
-    const btnCancel = document.getElementById('changePassCancelBtn');
-
-    if (mode === "view") {
-        btnEdit.style.display = "block";
-        btnSave.style.display = "none";
-        btnCancel.style.display = "none";
-    }
-
-    if (mode === "edit") {
-        btnEdit.style.display = "none";
-        btnSave.style.display = "block";
-        btnCancel.style.display = "block";
-    }
-}
-
+// Set initial readonly states
 setChangePassReadonly(true);
 toggleChangePassButtons("view");
-
-// =========================
-// Change Password: Remember the original if "Cancel" click
-// =========================
-let originalPassData = {};
-
-function captureOriginalPassData() {
-    originalPassData = {
-        current: currentPassword.value,
-        newPass: newPassword.value,
-        retype: reTypeNewPassword.value
-    };
-}
-
-// =========================
-// Change Password: Clear validations if "Cancel" click
-// =========================
-function clearChangePassErrors() {
-    [currentPassword, newPassword, reTypeNewPassword].forEach(input => {
-        if (!input) return;
-        input.classList.remove('error');
-        const err = getErrorElFrom(input);
-        if (err) err.textContent = "";
-
-        // Reset eye icon
-        const icon = input.closest('.input-with-icon')?.querySelector('.input-icon');
-        if (icon) icon.innerHTML = EYE_OPEN;
-        input.type = 'password'; // reset to hidden
-    });
-}
-
-// =========================
-// Change Password: "Edit" click
-// =========================
-document.getElementById('changePassEditBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    captureOriginalPassData();
-    setChangePassReadonly(false);
-    toggleChangePassButtons("edit");
-    disablePanelSwitch(true);
-});
-
-// =========================
-// Change Password: "Cancel" click
-// =========================
-document.getElementById('changePassCancelBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-
-    currentPassword.value = originalPassData.current || '';
-    newPassword.value = originalPassData.newPass || '';
-    reTypeNewPassword.value = originalPassData.retype || '';
-
-    clearChangePassErrors();
-    setChangePassReadonly(true);
-    toggleChangePassButtons("view");
-    disablePanelSwitch(false);
-});

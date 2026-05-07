@@ -16,7 +16,7 @@ function loadAnalytics() {
             const totals1 = values1.slice();
             const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
 
-            const labels2 = res.data_by_role.map(x => x.role_id);
+            const labels2 = res.data_by_role.map(x => x.role_name);
             const values2 = res.data_by_role.map(x => x.total);
             const totals2 = values2.slice();
             const percentages2 = values2.map(v => ((v / values2.reduce((a, b) => a + b, 0)) * 100).toFixed(2));

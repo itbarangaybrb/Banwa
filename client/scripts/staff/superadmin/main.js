@@ -77,7 +77,7 @@ function renderRowsAudit(logs) {
             <td>${log.full_name}</td>
             <td>${log.table_name}</td>
             <td>${log.record_id}</td>
-            <td>${log.role_id}</td>
+            <td>${log.role_name}</td>
             <td>${log.created_at}</td>
         `;
         tbody.appendChild(tr);
@@ -154,7 +154,7 @@ function handleSearch() {
         if (visibleCount === 0) {
             const tr = document.createElement('tr');
             tr.classList.add('no-users-row');
-            tr.innerHTML = `<td colspan="6" style="text-align:center;">No users found</td>`;
+            tr.innerHTML = `<td colspan="9" style="text-align:center;">No users found</td>`;
             tbody.appendChild(tr);
         }
     });

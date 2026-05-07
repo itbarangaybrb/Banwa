@@ -29,8 +29,6 @@ $full_name = getCurrentUserName();
 </head>
 
 <body>
-    <?php include '../../../components/loader.php'; ?>
-
     <header class="header">
         <h1>
             Dashboard
@@ -112,7 +110,7 @@ $full_name = getCurrentUserName();
         </section>
 
         <section class="sections">
-            <div class="containers">
+            <div class="table-container containers">
                 <table id="usersTable">
                     <thead>
                         <tr>
@@ -126,7 +124,7 @@ $full_name = getCurrentUserName();
                             </th>
                             <th>Table</th>
                             <th>Record ID</th>
-                            <th>Role ID</th>
+                            <th>Role</th>
                             <th>Created At</th>
                         </tr>
                     </thead>

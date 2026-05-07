@@ -21,7 +21,7 @@ if ($_SESSION['role_id'] != 1) {
 
 <body>
     <?php
-    $page_title = "Home";
+    $page_title = "Status";
     include '_layout/nav.php';
     ?>
 

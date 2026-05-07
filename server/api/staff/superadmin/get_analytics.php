@@ -27,12 +27,13 @@ function handleChartUsers($pdo)
     $dataByDate = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
     $sql2 = "
-        SELECT role_id,
+        SELECT u.role_id, r.role_name,
         COUNT(*) AS total,
         ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS percentage
-        FROM users
-        GROUP BY role_id
-        ORDER BY total ASC;
+        FROM users u
+        LEFT JOIN role r ON r.role_id = u.role_id
+        GROUP BY u.role_id, r.role_name
+        ORDER BY total ASC
     ";
 
     $stmt2 = $pdo->query($sql2);

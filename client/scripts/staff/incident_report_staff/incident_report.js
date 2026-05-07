@@ -246,7 +246,7 @@ function filterIncidents() {
     //         <div class="action-buttons">
     //             ${actionBtn}
     //             <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
-    //             <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="incident_reports">Archive</button>
+    //             <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="Incident Reports">Archive</button>
     //         </div>
     //     </td>
     // `;
@@ -305,7 +305,7 @@ function renderTableRows(data) {
             <div class="action-buttons">
                 ${actionBtn}
                 <button class="btn-info" onclick="viewDetails(${incident.id})" title="View Details">View</button>
-                <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="incident_reports">Archive</button>
+                <button class="btn-secondary archive-btn" data-id="${incident.id}" data-table="Incident Reports">Archive</button>
             </div>
         </td>
     `;
@@ -419,7 +419,7 @@ function loadProcessTable() {
     });
 }
 
-let chart1Instance;
+// let chart1Instance;
 let chart2Instance;
 let chart3Instance;
 
@@ -432,10 +432,10 @@ function loadAnalyticsTab() {
         .then(res => {
             if (res.status !== 'success') return;
 
-            const labels1 = res.data_by_date.map(x => x.date_reported);
-            const values1 = res.data_by_date.map(x => x.total);
-            const totals1 = values1.slice();
-            const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
+            // const labels1 = res.data_by_date.map(x => x.date_reported);
+            // const values1 = res.data_by_date.map(x => x.total);
+            // const totals1 = values1.slice();
+            // const percentages1 = values1.map(v => ((v / values1.reduce((a, b) => a + b, 0)) * 100).toFixed(2));
 
             const labels2 = res.data_by_type.map(x => x.incident_type);
             const values2 = res.data_by_type.map(x => x.total);
@@ -450,42 +450,42 @@ function loadAnalyticsTab() {
             const typeColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
             const dssColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FDCB6E', '#E17055', '#00CEC9'];
 
-            if (chart1Instance) chart1Instance.destroy();
+            // if (chart1Instance) chart1Instance.destroy();
             if (chart2Instance) chart2Instance.destroy();
             if (chart3Instance) chart3Instance.destroy();
 
-            chart1Instance = new Chart(document.getElementById('chart1'), {
-                type: 'line',
-                data: {
-                    labels: labels1,
-                    datasets: [{
-                        label: 'Incidents Timeline',
-                        data: values1,
-                        backgroundColor: dateColors,
-                        borderWidth: 2,
-                        tension: 0.4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { display: false },
-                        y: { beginAtZero: true }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const total = totals1[context.dataIndex];
-                                    const percent = percentages1[context.dataIndex];
-                                    return `${context.label}: ${total} (${percent}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+            // chart1Instance = new Chart(document.getElementById('chart1'), {
+            //     type: 'line',
+            //     data: {
+            //         labels: labels1,
+            //         datasets: [{
+            //             label: 'Incidents Timeline',
+            //             data: values1,
+            //             backgroundColor: dateColors,
+            //             borderWidth: 2,
+            //             tension: 0.4,
+            //         }]
+            //     },
+            //     options: {
+            //         responsive: true,
+            //         maintainAspectRatio: false,
+            //         scales: {
+            //             x: { display: false },
+            //             y: { beginAtZero: true }
+            //         },
+            //         plugins: {
+            //             tooltip: {
+            //                 callbacks: {
+            //                     label: function (context) {
+            //                         const total = totals1[context.dataIndex];
+            //                         const percent = percentages1[context.dataIndex];
+            //                         return `${context.label}: ${total} (${percent}%)`;
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            // });
 
             chart2Instance = new Chart(document.getElementById('chart2'), {
                 type: 'bar',
@@ -2354,7 +2354,7 @@ document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('archive-btn')) return;
 
     const tableName = e.target.dataset.table;
-    if (tableName !== 'incident_reports') return;
+    if (tableName !== 'Incident Reports') return;
 
     e.preventDefault();
     const appId = e.target.dataset.id;
@@ -2383,7 +2383,7 @@ document.addEventListener('click', (e) => {
         }
     }).then(async (result) => {
         if (result.isConfirmed) {
-            await archiveRecord('incident_reports', appId);
+            await archiveRecord('Incident Reports', appId);
 
             // Remove the row immediately from the UI
             const row = e.target.closest('tr');
