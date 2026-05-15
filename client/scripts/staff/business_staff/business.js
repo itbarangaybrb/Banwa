@@ -1686,8 +1686,7 @@ function printSummary() {
 /**
  * Downloads a summary report as a Word document
  * Generates HTML content with embedded styles and triggers file download
- * 
- * @param {number} appId - The application ID to download summary for
+ * * @param {number} appId - The application ID to download summary for
  */
 function downloadSummary(appId) {
     const app = applications.find(a => a.id == appId);
@@ -1737,26 +1736,27 @@ function downloadSummary(appId) {
     const amountDue = app.amount_due ? parseFloat(app.amount_due).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '₱0.00';
     const paymentStatus = app.payment_status || 'Unpaid';
 
-    // Parse Comments
+    // Parse Comments (Switched to tables for Word compatibility)
     let commentsHtml = '';
     if (app.status === 'Approved' && app.approval_comments) {
-        commentsHtml = `<div style="background:#d4edda; border:1px solid #c3e6cb; padding:15px; border-radius:5px; margin-top:20px;">
+        commentsHtml = `<table width="100%" cellpadding="15" cellspacing="0" style="background:#d4edda; border:1px solid #c3e6cb; margin-top:20px;"><tr><td>
             <h3 style="margin-top:0; color:#155724; font-size:14pt;">Official Remarks (Approval)</h3>
             <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
-        </div>`;
+        </td></tr></table>`;
     } else if (app.status === 'Disapproved' && app.disapproval_reason) {
-        commentsHtml = `<div style="background:#f8d7da; border:1px solid #f5c6cb; padding:15px; border-radius:5px; margin-top:20px;">
+        commentsHtml = `<table width="100%" cellpadding="15" cellspacing="0" style="background:#f8d7da; border:1px solid #f5c6cb; margin-top:20px;"><tr><td>
             <h3 style="margin-top:0; color:#721c24; font-size:14pt;">Disapproval Reason</h3>
             <p style="margin:0; font-style:italic;">"${app.disapproval_reason}"</p>
-        </div>`;
+        </td></tr></table>`;
     } else if (app.approval_comments) {
-        commentsHtml = `<div style="background:#f8f9fa; border:1px solid #ddd; padding:15px; border-radius:5px; margin-top:20px;">
+        commentsHtml = `<table width="100%" cellpadding="15" cellspacing="0" style="background:#f8f9fa; border:1px solid #ddd; margin-top:20px;"><tr><td>
             <h3 style="margin-top:0; color:#333; font-size:14pt;">Official Remarks</h3>
             <p style="margin:0; font-style:italic;">"${app.approval_comments}"</p>
-        </div>`;
+        </td></tr></table>`;
     }
 
     // --- HTML CONSTRUCTION FOR MS WORD ---
+    // Key fixes: Changed span to div, used nested tables for .card elements
     const htmlContent = `
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head>
@@ -1768,11 +1768,10 @@ function downloadSummary(appId) {
                 .header-table { width: 100%; border-bottom: 2px solid #00247C; padding-bottom: 10px; margin-bottom: 20px; }
                 .title { font-size: 24pt; color: #00247C; margin: 0; font-weight: bold; }
                 .meta { color: #666; font-size: 11pt; }
-                .badge { background: ${statusBg}; color: ${statusColor}; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 11pt; text-align: center; border: 1px solid ${statusColor}; }
                 .section-title { font-size: 14pt; color: #00247C; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
-                .card { background: #fdfdfd; border: 1px solid #e2e2e2; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
-                .label { color: #666; font-size: 9pt; text-transform: uppercase; margin-bottom: 2px; display: block; }
-                .value { font-size: 11pt; font-weight: bold; margin-top: 0; margin-bottom: 12px; display: block; color: #222; }
+                /* Using div instead of span ensures block rendering in Word */
+                .label { color: #666; font-size: 9pt; text-transform: uppercase; margin-bottom: 2px; }
+                .value { font-size: 11pt; font-weight: bold; margin-top: 0; margin-bottom: 15px; color: #222; }
                 .footer { text-align: center; font-size: 9pt; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px; }
             </style>
         </head>
@@ -1784,7 +1783,11 @@ function downloadSummary(appId) {
                         <div class="meta">Application ID: #${app.id} &bull; Date: ${dateApplied}</div>
                     </td>
                     <td width="30%" align="right" valign="middle">
-                        <span class="badge">${app.status}</span>
+                        <table cellpadding="6" cellspacing="0" style="background: ${statusBg}; border: 1px solid ${statusColor}; border-radius: 4px; display: inline-table;">
+                            <tr>
+                                <td style="color: ${statusColor}; font-weight: bold; font-size: 11pt; text-align: center;">${app.status}</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
@@ -1792,67 +1795,79 @@ function downloadSummary(appId) {
             <table width="100%" cellpadding="10" cellspacing="0" border="0">
                 <tr>
                     <td width="50%" valign="top" style="padding-left: 0;">
-                        <div class="card">
-                            <h3 class="section-title">Business Identity</h3>
-                            
-                            <span class="label">Business Name</span>
-                            <span class="value">${app.business_name}</span>
-                            
-                            <span class="label">Type / Nature</span>
-                            <span class="value">${app.type_of_business} &bull; ${app.nature_of_business}</span>
-                            
-                            <span class="label">Address</span>
-                            <span class="value">${app.address_of_business}</span>
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background: #fdfdfd; border: 1px solid #e2e2e2; margin-bottom: 20px;">
+                            <tr><td>
+                                <h3 class="section-title">Business Identity</h3>
+                                
+                                <div class="label">Business Name</div>
+                                <div class="value">${app.business_name}</div>
+                                
+                                <div class="label">Type / Nature</div>
+                                <div class="value">${app.type_of_business} &bull; ${app.nature_of_business}</div>
+                                
+                                <div class="label">Address</div>
+                                <div class="value">${app.address_of_business}</div>
 
-                            <span class="label">Address Status</span>
-                            <span class="value">${businessStatus}</span>
+                                <div class="label">Address Status</div>
+                                <div class="value">${businessStatus}</div>
 
-                            <span class="label">Contact</span>
-                            <span class="value">${app.telephone_no_business} &bull; ${app.email_address || 'N/A'}</span>
-                        </div>
+                                <div class="label">Contact</div>
+                                <div class="value">${app.telephone_no_business} &bull; ${app.email_address || 'N/A'}</div>
+                            </td></tr>
+                        </table>
 
-                        <div class="card">
-                            <h3 class="section-title">Ownership</h3>
-                            
-                            <span class="label">Owner Name</span>
-                            <span class="value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</span>
-                            
-                            <span class="label">Owner Contact</span>
-                            <span class="value">${app.telephone_no_owner}</span>
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background: #fdfdfd; border: 1px solid #e2e2e2; margin-bottom: 20px;">
+                            <tr><td>
+                                <h3 class="section-title">Ownership</h3>
+                                
+                                <div class="label">Owner Name</div>
+                                <div class="value">${app.first_name} ${app.middle_name || ''} ${app.last_name}</div>
+                                
+                                <div class="label">Owner Contact</div>
+                                <div class="value">${app.telephone_no_owner}</div>
 
-                            <span class="label">Owner Address</span>
-                            <span class="value">${app.address_owner}</span>
-                        </div>
+                                <div class="label">Owner Address</div>
+                                <div class="value">${app.address_owner}</div>
+                            </td></tr>
+                        </table>
                     </td>
-                    <td width="50%" valign="top" style="padding-right: 0;">
-                        <div class="card">
-                            <h3 class="section-title">Operations & Docs</h3>
-                            
-                            <span class="label">Structure Type</span>
-                            <span class="value">${app.type_of_structure}</span>
-                            
-                            <span class="label">Number of Employees</span>
-                            <span class="value">${app.no_of_employees}</span>
-                            
-                            <span class="label">Submitted Requirements</span>
-                            <ul style="margin-top: 5px; padding-left: 20px; font-size: 10pt; color: #222;">
-                                ${requirementsHtml}
-                            </ul>
-                            ${fileUploadText}
-                        </div>
 
-                        <div class="card">
-                            <h3 class="section-title">Financial Status</h3>
-                            
-                            <span class="label">Payment Status</span>
-                            <span class="value">${paymentStatus}</span>
-                            
-                            <span class="label">OR Number</span>
-                            <span class="value">${app.or_number || '--'}</span>
-                            
-                            <span class="label">Total Assessment</span>
-                            <span class="value" style="color: #00247C;">${amountDue}</span>
-                        </div>
+                    <td width="50%" valign="top" style="padding-right: 0;">
+                        
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background: #fdfdfd; border: 1px solid #e2e2e2; margin-bottom: 20px;">
+                            <tr><td>
+                                <h3 class="section-title">Operations & Docs</h3>
+                                
+                                <div class="label">Structure Type</div>
+                                <div class="value">${app.type_of_structure}</div>
+                                
+                                <div class="label">Number of Employees</div>
+                                <div class="value">${app.no_of_employees}</div>
+                                
+                                <div class="label">Submitted Requirements</div>
+                                <ul style="margin-top: 5px; margin-bottom: 15px; padding-left: 20px; font-size: 10pt; color: #222;">
+                                    ${requirementsHtml}
+                                </ul>
+                                
+                                ${fileUploadText}
+                            </td></tr>
+                        </table>
+
+                        <table width="100%" cellpadding="15" cellspacing="0" style="background: #fdfdfd; border: 1px solid #e2e2e2; margin-bottom: 20px;">
+                            <tr><td>
+                                <h3 class="section-title">Financial Status</h3>
+                                
+                                <div class="label">Payment Status</div>
+                                <div class="value">${paymentStatus}</div>
+                                
+                                <div class="label">OR Number</div>
+                                <div class="value">${app.or_number || '--'}</div>
+                                
+                                <div class="label">Total Assessment</div>
+                                <div class="value" style="color: #00247C;">${amountDue}</div>
+                            </td></tr>
+                        </table>
                     </td>
                 </tr>
             </table>
@@ -1882,8 +1897,7 @@ function downloadSummary(appId) {
 /**
  * Generates a business clearance document client-side using application data
  * Creates a professional HTML document with dynamic content and opens print dialog
- * 
- * @param {number} appId - The application ID to generate clearance for
+ * * @param {number} appId - The application ID to generate clearance for
  */
 function generateClearance(appId) {
     const app = applications.find(a => a.id == appId);
@@ -1916,11 +1930,29 @@ function generateClearance(appId) {
     const KAGAWAD_5 = "NATALIA L. MARISTELA";
     const KAGAWAD_6 = "MODESTO CARLO M. RUIZ JR.";
 
+    // Robust application nature check
+    let nature = app.nature_of_application || 'new';
+    if (Array.isArray(nature)) {
+        nature = nature.join(', ').toLowerCase();
+    } else if (typeof nature === 'string') {
+        nature = nature.toLowerCase();
+    } else {
+        nature = 'new';
+    }
 
-    const nature = (app.nature_of_application || 'new').toLowerCase();
-    const isNew = nature.includes('new') ? 'checked' : '';
-    const isRenewal = nature.includes('renew') ? 'checked' : '';
-    const isClosure = nature.includes('closure') ? 'checked' : '';
+    let isNew = '';
+    let isRenewal = '';
+    let isClosure = '';
+
+    if (nature.includes('close') || nature.includes('closure')) {
+        isClosure = 'checked';
+    } else if (nature.includes('renew') || nature.includes('renewal')) {
+        isRenewal = 'checked';
+    } else if (nature.includes('new')) {
+        isNew = 'checked';
+    } else {
+        isNew = 'checked'; // Fallback for unmatched inputs
+    }
 
     const html = `
 <!DOCTYPE html>
@@ -2002,7 +2034,6 @@ function generateClearance(appId) {
         <div class="doc-title">BARANGAY BUSINESS CLEARANCE</div>
 
         <div class="content-wrapper">
-            <!-- Sidebar (matches your screenshot exactly) -->
             <div class="sidebar">
                 <strong>HON. ${CAPTAIN_NAME}</strong><br>
                 <span style="font-size:12.5px;">Punong Barangay</span><br><br>
@@ -2019,7 +2050,6 @@ function generateClearance(appId) {
                 <span style="font-size:12.5px;">Barangay Secretary</span>
             </div>
 
-            <!-- Main Content -->
             <div class="main-body">
                 <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
                 
@@ -2073,16 +2103,10 @@ function generateClearance(appId) {
     const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
-    // This triggers the print dialog as soon as the content is loaded
-    w.focus(); // Necessary for some browsers to focus the print dialog
+    w.focus();
 
-    // Use a slight timeout to ensure styles and images (like your logo) are rendered
     setTimeout(() => {
         w.print();
-
-        // Optional: Uncomment the line below if you want the window to close 
-        // automatically after the user clicks 'Print' or 'Cancel'
-        // w.close(); 
     }, 500);
 }
 
