@@ -94,6 +94,7 @@ $full_name = getCurrentUserName();
         <div class="staff-content">
             <div id="alert-container"></div>
 
+            <!-- Mapping Tab -->
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
@@ -272,6 +273,7 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </div>
+
             <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-pane">
                 <header class="top-header">
@@ -284,9 +286,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
                     <h2>Dashboard</h2>
-                    <p>Overview of utilities applications and activities</p>
+                    <p class="page-description">Overview of system data and analytics</p>
                 </div>
 
                 <div class="analytics-container">
@@ -319,7 +322,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Review Tab -->
+            <!-- Manage Applications Tab -->
             <div id="management" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -331,9 +334,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h1>Review Utilities Applications</h1>
-                    <p class="form-description">Search, filter, and manage all utilities applications</p>
+                    <h1>Review and Manage Requests</h1>
+                    <p class="page-description">View, check, and manage submitted requests and their status.</p>
                 </div>
 
                 <div class="search-box">
@@ -387,9 +391,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h1>Create New Utilities Application (Staff)</h1>
-                    <p class="form-description">Fill in the details to register a new utilities application</p>
+                    <h1>Create New Request</h1>
+                    <p class="page-description">Fill in the details to submit a new request</p>
                 </div>
 
                 <div id="createStaffForm">
@@ -548,10 +553,12 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
                     <h2>Process Applications</h2>
-                    <p class="form-description">Review and update application status.</p>
+                    <p class="page-description">Review and update application status.</p>
                 </div>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -575,14 +582,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Summary Tab -->
-            <!-- <div id="summary" class="tab-pane">
-                <h2>Generate Summary</h2>
-                <div class="form-group">
-                    <select id="summaryApplicationSelect" onchange="updateSummary()"></select>
-                </div>
-                <div id="summaryOutput"></div>
-            </div> -->
+            <!-- Generate Summary Tab -->
             <div id="summary" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -594,8 +594,13 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
+                 <div class="page-header">
+                    <h1>Generate Summary</h1>
+                    <p class="page-description">Generate, print, and download summaries of submitted requests.</p>
+                </div>
+
                 <div class="summary-controls">
-                    <h2>Generate Utility Summary</h2>
                     <div class="control-row">
                         <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                             <option value="">-- Select Application --</option>
@@ -612,6 +617,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
+            <!-- Archives Tab -->
             <div id="archives" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -623,9 +629,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h2>Archives</h2>
-                    <p class="form-description">View and restore your archived records.</p>
+                    <h1>Archives</h1>
+                    <p class="page-description">View and restore your archived records.</p>
                 </div>
 
                 <div class="table-responsive">
@@ -638,7 +645,6 @@ $full_name = getCurrentUserName();
                                 <th>Full Name</th>
                                 <th>Email</th>
                                 <th>Archived At</th>
-                                <th>Restored At</th>
                                 <th>Role</th>
                                 <th>Actions</th>
                             </tr>
@@ -654,7 +660,6 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Modals -->
             <div id="detailsModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">

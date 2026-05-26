@@ -219,11 +219,10 @@ async function fetchArchives() {
         }
 
         archives.forEach(item => {
+            if (item.is_restored || (item.restored_at && item.restored_at !== 'Not restored')) return;
+
             const tr = document.createElement('tr');
-            const isRestored = item.restored_at && item.restored_at !== 'Not restored' && item.restored_at !== null;
-            const restoreButton = !isRestored
-                ? `<button class="btn buttons restore-btn" data-id="${item.archive_id}">Restore</button>`
-                : '<span style="color:#28a745; font-weight:500;">Restored</span>';
+            const restoreButton = `<button class="btn buttons restore-btn" data-id="${item.archive_id}">Restore</button>`;
 
             tr.innerHTML = `
                 <td>${item.archive_id}</td>
@@ -232,11 +231,8 @@ async function fetchArchives() {
                 <td>${item.full_name || '-'}</td>
                 <td>${item.email || '-'}</td>
                 <td>${item.archived_at}</td>
-                <td>${item.restored_at || 'Not restored'}</td>
                 <td>${item.role_name || '-'}</td>
-                <td>
-                    ${restoreButton}
-                </td>
+                <td>${restoreButton}</td>
             `;
             tbody.appendChild(tr);
         });
