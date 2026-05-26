@@ -124,7 +124,12 @@ $full_name = getCurrentUserName();
                             <th>House No.</th>
                             <th>Street</th>
                             <th>Status</th>
-                            <th>Role</th>
+                            <th id="roleFilter" class="th-filter"> 
+                                <span class="th-content">
+                                    <img src="../../../img/arrow-down-up-icon.svg" alt="">
+                                    Role
+                                </span>
+                            </th>
                             <!-- <th>Details</th> -->
                             <th>Actions</th>
                         </tr>

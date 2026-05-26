@@ -478,12 +478,12 @@ input[type="checkbox"] {
 }
 
 .btn-secondary {
-    background: #ecf0f1;
+    background: #f0f0f0;
     color: #333;
 }
 
 .btn-secondary:hover {
-    background: #d5dbdb;
+    background: #e0e0e0;
 }
 
 .btn-success {
@@ -1112,10 +1112,10 @@ tbody tr:last-child td {
 
 /* Controls Section */
 .summary-controls {
-    background: white;
+    /* background: white; */
     padding: 20px 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); */
     margin-bottom: 20px;
 }
 
@@ -1124,6 +1124,7 @@ tbody tr:last-child td {
     gap: 10px;
     margin-top: 15px;
     margin-bottom: 15px;
+    justify-content: center;
 }
 
 .control-row select {
@@ -1627,8 +1628,8 @@ tbody tr:last-child td {
 /* Page header (Dashboard title etc.) stays fixed too */
 .tab-pane:not(#mapping)>.page-header {
     flex-shrink: 0;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    /* margin-bottom: 20px;
+    padding-bottom: 15px; */
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1678,11 +1679,10 @@ tbody tr:last-child td {
 
 /* Page header inside content area (compact BANWA size) */
 .page-header {
-
     margin-top: 80px;
     margin-bottom: 22px;
     margin-inline: 2%;
-    padding-bottom: 18px;
+    /* padding-bottom: 18px; */
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1697,7 +1697,7 @@ tbody tr:last-child td {
 .page-description {
     color: #64748b;
     font-size: 0.97rem;
-    margin: 3px 0 0 0;
+    margin-bottom: 20px;
 }
 
 /* Button group consistency (fixes your button styling issue) */
