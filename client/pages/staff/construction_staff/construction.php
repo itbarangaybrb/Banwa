@@ -92,6 +92,8 @@ $full_name = getCurrentUserName();
     <!-- Main Content -->
     <div class="main-wrapper">
         <div class="staff-content">
+
+            <!-- Mapping Tab -->
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
@@ -271,6 +273,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
+            <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -282,10 +285,12 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h1>Construction Dashboard</h1>
-                    <p class="page-description">Overview of construction applications and analytics</p>
+                    <h1>Dashboard</h1>
+                    <p class="page-description">Overview of system data and analytics</p>
                 </div>
+
                 <div class="analytics-container">
                     <div class="charts">
                         <canvas id="chart1"></canvas>
@@ -316,7 +321,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Review Tab -->
+            <!-- Manage Applications Tab -->
             <div id="management" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -330,8 +335,8 @@ $full_name = getCurrentUserName();
                 </header>
 
                 <div class="page-header">
-                    <h1>Review Construction Applications</h1>
-                    <p class="page-description">Manage and review construction applications</p>
+                    <h1>Review and Manage Requests</h1>
+                    <p class="page-description">View, check, and manage submitted requests and their status.</p>
                 </div>
 
                 <div class="search-box">
@@ -390,10 +395,12 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h2>Create New Construction Application</h2>
-                    <p class="form-description">Fill in the details to create a new construction application</p>
+                    <h1>Create New Request</h1>
+                    <p class="page-description">Fill in the details to submit a new request</p>
                 </div>
+
                 <form id="createForm" onsubmit="createApplication(event)">
                     <!-- Owner Information -->
                     <div class="section-title">Owner Information</div>
@@ -580,7 +587,7 @@ $full_name = getCurrentUserName();
             <!-- Process Tab -->
             <div id="process" class="tab-pane">
                 <h2>Process Applications</h2>
-                <p class="form-description">Assess fees, send for payment, or issue final approval.</p>
+                <p class="page-description">Assess fees, send for payment, or issue final approval.</p>
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -604,25 +611,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Summary Tab -->
-            <!-- <div id="summary" class="tab-pane">
-                <div class="summary-controls">
-                    <h2>Generate Business Summary</h2>
-                    <div class="control-row">
-                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
-                            <option value="">-- Select Business Application --</option>
-                        </select>
-                        <button onclick="loadSummarySelect()" class="btn-secondary" title="Refresh List">Refresh</button>
-                    </div>
-                </div>
-
-                <div id="summaryOutput" class="summary-report-container">
-                    <div class="placeholder-state">
-                        <i class="fas fa-file-invoice fa-3x"></i>
-                        <p>Select a business from the list above to view the full report.</p>
-                    </div>
-                </div>
-            </div> -->
+            <!-- Generate Summary Tab -->
             <div id="summary" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -634,8 +623,13 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
+                <div class="page-header">
+                    <h1>Generate Summary</h1>
+                    <p class="page-description">Generate, print, and download summaries of submitted requests.</p>
+                </div>
+
                 <div class="summary-controls">
-                    <h2>Generate Construction Summary</h2>
                     <div class="control-row">
                         <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                             <option value="">-- Select Application --</option>
@@ -647,11 +641,12 @@ $full_name = getCurrentUserName();
                 <div id="summaryOutput" class="summary-report-container">
                     <div class="placeholder-state">
                         <i class="fas fa-file-invoice fa-3x"></i>
-                        <p id="summaryPlaceholder">Select a construction application from the list above to view the full report.</p>
+                        <p id="summaryPlaceholder">Select an application from the list above to view the full report.</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Archives Tab -->
             <div id="archives" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -663,9 +658,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h2>Archives</h2>
-                    <p class="form-description">View and restore your archived records.</p>
+                    <h1>Archives</h1>
+                    <p class="page-description">View and restore archived records.</p>
                 </div>
 
                 <div class="table-responsive">
@@ -678,8 +674,7 @@ $full_name = getCurrentUserName();
                                 <th>Full Name</th>
                                 <th>Email</th>
                                 <th>Archived At</th>
-                                <th>Restored At</th>
-                                <th>Role ID</th>
+                                <th>Role</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -695,8 +690,6 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-
-        <!-- Modals -->
         <div id="detailsModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -761,7 +754,6 @@ $full_name = getCurrentUserName();
                 </form>
             </div>
         </div>
-    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

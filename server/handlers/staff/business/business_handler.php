@@ -413,11 +413,11 @@ function handleUpdateStatus($pdo)
         writeAuditLog(
             $pdo,
             'STATUS UPDATED',
-            'business_applications',
+            'Business Applications',
             $id,
             $oldData,
             $newData,
-            'STATUS_UPDATE'
+            'STATUS UPDATE'
         );
 
     } catch (PDOException $e) {
@@ -645,11 +645,11 @@ function handleUpdateApplication($pdo)
             writeAuditLog(
                 $pdo,
                 'UPDATE',
-                'business_applications',
+                'Business Applications',
                 $applicationId,
                 $oldData,
                 $newData,
-                'BUSINESS_APPLICATION'
+                'BUSINESS APPLICATION'
             );
 
             triggerDSSevaluation($pdo, $applicationId);

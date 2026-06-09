@@ -48,11 +48,11 @@ try {
     $table = $archive['table_name'];
 
     $tableMap = [
-        'users'                    => 'UPDATE users SET is_archived = FALSE WHERE user_id = ?',
-        'utility_applications'     => 'UPDATE utility_applications SET is_archived = FALSE WHERE id = ?',
-        'business_applications'    => 'UPDATE business_applications SET is_archived = FALSE WHERE id = ?',
-        'construction_applications'=> 'UPDATE construction_applications SET is_archived = FALSE WHERE id = ?',
-        'incident_reports'         => 'UPDATE incident_reports SET is_archived = FALSE WHERE id = ?',
+        'Users'                    => 'UPDATE users SET is_archived = FALSE WHERE user_id = ?',
+        'Utility Applications'     => 'UPDATE utility_applications SET is_archived = FALSE WHERE id = ?',
+        'Business Applications'    => 'UPDATE business_applications SET is_archived = FALSE WHERE id = ?',
+        'Construction Applications'=> 'UPDATE construction_applications SET is_archived = FALSE WHERE id = ?',
+        'Incident Reports'         => 'UPDATE incident_reports SET is_archived = FALSE WHERE id = ?',
     ];
 
     if (!isset($tableMap[$table])) {

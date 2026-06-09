@@ -103,3 +103,4 @@
 {"timestamp":"2026-04-29 16:50:23","application_id":"144","dss_status":"Pre-Approved","score":10,"max_score":10,"probability":100,"passed_rules":10,"failed_rules":0}
 {"timestamp":"2026-05-03 15:54:58","application_id":147,"dss_status":"Additional Requirements Needed","score":7,"max_score":10,"probability":70,"passed_rules":7,"failed_rules":3}
 {"timestamp":"2026-05-05 10:05:31","application_id":152,"dss_status":"Pre-Approved","score":9,"max_score":10,"probability":90,"passed_rules":9,"failed_rules":1}
+{"timestamp":"2026-05-06 14:02:48","application_id":154,"dss_status":"Rejected","score":7,"max_score":10,"probability":70,"passed_rules":7,"failed_rules":3}

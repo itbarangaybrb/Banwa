@@ -188,11 +188,11 @@ function handleCreateApplication($pdo)
             writeAuditLog(
                 $pdo,
                 'CREATE',
-                'utility_applications',
+                'Utility Applications',
                 $applicationId,
                 null,
                 $newData,
-                'UTILITY_APPLICATION'
+                'UTILITY APPLICATION'
             );
         } catch (Throwable $auditEx) {
             error_log("writeAuditLog failed in handleCreateApplication (utility, id={$applicationId}): " . $auditEx->getMessage());
@@ -305,11 +305,11 @@ function handleUpdateStatus($pdo)
             writeAuditLog(
                 $pdo,
                 'STATUS UPDATED',
-                'utility_applications',
+                'Utility Applications',
                 $id,
                 $oldData,
                 $newData,
-                'STATUS_UPDATE'
+                'STATUS UPDATE'
             );
         } catch (Throwable $auditEx) {
             error_log("writeAuditLog failed in handleUpdateStatus (utility, id={$id}): " . $auditEx->getMessage());
@@ -456,11 +456,11 @@ function handleUpdateApplication($pdo)
                 writeAuditLog(
                     $pdo,
                     'UPDATE',
-                    'utility_applications',
+                    'Utility Applications',
                     $applicationId,
                     $oldData,
                     $newData,
-                    'UTILITY_APPLICATION'
+                    'UTILITY APPLICATION'
                 );
             } catch (Throwable $auditEx) {
                 error_log("writeAuditLog failed in handleUpdateApplication (utility, id={$applicationId}): " . $auditEx->getMessage());

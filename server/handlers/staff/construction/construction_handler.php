@@ -277,11 +277,11 @@ function handleCreateApplication($pdo)
         writeAuditLog(
             $pdo,
             'CREATE',
-            'construction_applications',
+            'Construction Applications',
             $applicationId,
             null,
             $newData,
-            'CONSTRUCTION_APPLICATION'
+            'CONSTRUCTION APPLICATION'
         );
 
         // === QUEUE OCR JOB AFTER SUCCESSFUL INSERT ===
@@ -415,11 +415,11 @@ function handleUpdateStatus($pdo)
             writeAuditLog(
                 $pdo,
                 'STATUS UPDATED',
-                'construction_applications',
+                'Construction Applications',
                 $id,
                 $oldData,
                 $newData,
-                'STATUS_UPDATE'
+                'STATUS UPDATE'
             );
         } catch (Throwable $auditEx) {
             error_log("writeAuditLog failed in handleUpdateStatus (id={$id}): " . $auditEx->getMessage());
@@ -642,11 +642,11 @@ function handleUpdateApplication($pdo)
             writeAuditLog(
                 $pdo,
                 'UPDATE',
-                'construction_applications',
+                'Construction Applications',
                 $applicationId,
                 $oldData,
                 $newData,
-                'CONSTRUCTION_APPLICATION'
+                'CONSTRUCTION APPLICATION'
             );
 
             triggerDSSevaluation($pdo, $applicationId);

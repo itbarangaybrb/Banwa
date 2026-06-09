@@ -460,12 +460,12 @@ input[type="checkbox"] {
 }
 
 .btn-secondary {
-    background: #ecf0f1;
+    background: #f0f0f0;
     color: #333;
 }
 
 .btn-secondary:hover {
-    background: #d5dbdb;
+    background: #e0e0e0;
 }
 
 .btn-success {
@@ -947,11 +947,11 @@ tbody tr:last-child td {
 }
 
 .summary-controls {
-    background: white;
+    /* background: white; */
     padding: 20px 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    height: max-content;
+    /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); */
+    margin-bottom: 20px;
 }
 
 .control-row {
@@ -959,6 +959,7 @@ tbody tr:last-child td {
     gap: 10px;
     margin-top: 15px;
     margin-bottom: 15px;
+    justify-content: center;
 }
 
 .control-row select {
@@ -1240,7 +1241,256 @@ tbody tr:last-child td {
     color: #19316b;
 }
 
-/* ==================== VERIFY PAYMENT & SWEETALERT GROUP ====================*/
+/* MAP FULLSCREEN FIX - overrides map_staff.css which sets top:70px causing gray space */
+#mapping {
+    display: none;
+    position: fixed !important;
+    top: 0;
+    left: 70px;
+    right: 0;
+    bottom: 0;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden;
+    z-index: 1;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent;
+}
+
+#mapping.active {
+    display: block !important;
+}
+
+/* When sidebar is expanded */
+/* body:has(.side_nav.expanded) #mapping {
+    left: 325px;
+} */
+
+/* Override map_staff.css: remove top:70px and left:70px offset - fill full space */
+.map-wrapper {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.map-wrapper #map {
+    position: absolute;
+    inset: 0;
+    height: 100% !important;
+    width: 100% !important;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* STAFF MODAL STYLES */
+.staff-modal {
+    display: none;
+    position: fixed;
+    z-index: 4000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.3s ease-out;
+    align-items: center;
+    justify-content: center;
+}
+
+.staff-modal.show,
+.staff-modal.active {
+    display: flex;
+}
+
+.staff-modal-content {
+    background-color: #fefefe;
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 620px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.staff-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #19316b, #1a3a7a);
+    border-radius: 8px 8px 0 0;
+}
+
+.staff-modal-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 1.3em;
+}
+
+.staff-modal-content .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+    padding: 0;
+}
+
+.staff-modal-content .close-btn:hover {
+    color: white;
+}
+
+.staff-modal-content form,
+.staff-modal-content #modalBody {
+    padding: 20px;
+}
+
+.staff-modal-content .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+/* ====================== PERFECT PER-TAB SCROLLING ====================== */
+.tab-pane {
+    display: none;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.tab-pane.active {
+    display: flex;
+}
+
+/* Mapping stays untouched */
+#mapping.active {
+    display: block !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Top header is always pinned */
+.tab-pane:not(#mapping)>.top-header {
+    flex-shrink: 0;
+    z-index: 10;
+    background: #f4f4f4;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    left: 70px;
+}
+
+/* Page header (Dashboard title etc.) stays fixed too */
+.tab-pane:not(#mapping)>.page-header {
+    flex-shrink: 0;
+    /* margin-bottom: 20px;
+    padding-bottom: 15px; */
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* ==================== SPECIFIC SCROLL AREAS ONLY ==================== */
+
+/* Dashboard → only charts scroll */
+#dashboard .analytics-container {
+    /* flex: 1 1 auto; */
+    /* overflow-y: auto; */
+    padding: 10px 10px;
+    /* min-height: 0; important for flex scrolling */
+}
+
+/* Management → only table scrolls */
+#management .table-responsive {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Create → only the form scrolls */
+#create #createStaffForm {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 10px;
+    /* nice scrollbar space */
+}
+
+/* Summary → only the report area scrolls */
+#summary #summaryOutput {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* General content padding after headers */
+.tab-pane:not(#mapping)> :not(.top-header):not(.page-header) {
+    padding: 0 30px;
+}
+
+/* Make sure charts inside dashboard don't overflow badly */
+.analytics-container .charts {
+    height: 380px;
+    margin-bottom: 25px;
+}
+
+/* Page header inside content area (compact BANWA size) */
+.page-header {
+    margin-top: 80px;
+    margin-bottom: 22px;
+    margin-inline: 2%;
+    /* padding-bottom: 18px; */
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.page-header h1 {
+    color: #19316b;
+    margin: 0 0 5px 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.page-description {
+    color: #64748b;
+    font-size: 0.97rem;
+    margin-bottom: 20px;
+}
+
+/* Button group consistency (fixes your button styling issue) */
+/* .button-group {
+    margin-top: 40px;
+    margin-bottom: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+.btn-primary, .btn-secondary {
+    min-width: 160px;
+    padding: 14px 24px;
+    font-weight: 600;
+    border-radius: 6px;
+} */
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #19316b;
+    margin-bottom: 15px;
+}
+
 #verifyPaymentBtn {
     background: linear-gradient(135deg, #f39c12, #d68910);
     color: white;

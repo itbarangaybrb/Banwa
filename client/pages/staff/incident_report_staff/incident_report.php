@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../../server/api/shared/check_session.php';
 require_once __DIR__ . '/../../../../server/api/shared/get_fullname.php';
 
-if ($_SESSION['role_id'] != 8) {
+if ($_SESSION['role_id'] != 7) {
     header("Location: /client/index.php");
     exit;
 }
@@ -91,6 +91,8 @@ $full_name = getCurrentUserName();
     <!-- Main Content -->
     <div class="main-wrapper">
         <div class="staff-content">
+
+            <!-- Mapping Tab -->
             <div id="mapping" class="tab-pane active">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                     <i class="fas fa-bars"></i>
@@ -261,6 +263,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
+            <!-- Dashboard Tab -->
             <div id="dashboard" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -273,13 +276,13 @@ $full_name = getCurrentUserName();
                     </div>
                 </header>
                 <div class="page-header">
-                    <h1>Incident Dashboard</h1>
-                    <p class="page-description">Overview of incident reports and analytics</p>
+                    <h1>Dashboard</h1>
+                    <p class="page-description">Overview of system data and analytics</p>
                 </div>
                 <div class="analytics-container">
-                    <div class="charts">
+                    <!-- <div class="charts">
                         <canvas id="chart1"></canvas>
-                    </div>
+                    </div> -->
                     <div class="charts">
                         <canvas id="chart2"></canvas>
                     </div>
@@ -306,7 +309,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Management Tab -->
+            <!-- Manage Applications Tab -->
             <div id="management" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -320,8 +323,8 @@ $full_name = getCurrentUserName();
                 </header>
 
                 <div class="page-header">
-                    <h1>Review Incident Reports</h1>
-                    <p class="page-description">Manage and review incident reports</p>
+                    <h1>Review and Manage Requests</h1>
+                    <p class="page-description">View, check, and manage submitted requests and their status.</p>
                 </div>
 
                 <div class="search-box">
@@ -376,10 +379,12 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h2>Create New Incident Report</h2>
-                    <p class="form-description">Fill in the details to create a new incident report</p>
+                    <h2>Create New Request</h2>
+                    <p class="page-description">Fill in the details to submit a new request</p>
                 </div>
+
                 <form id="createIncidentForm" onsubmit="createApplication(event)">
                     <div class="section-title">Reporting Person Information</div>
                     <div class="form-row">
@@ -547,7 +552,7 @@ $full_name = getCurrentUserName();
                 </header>
                 <div class="page-header">
                     <h2>Process Incident Reports</h2>
-                    <p class="form-description">Review and update incident report status</p>
+                    <p class="page-description">Review and update incident report status</p>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -572,7 +577,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
-            <!-- Summary Tab -->
+            <!-- Generate Summary Tab -->
             <div id="summary" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -584,8 +589,13 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
+                <div class="page-header">
+                    <h1>Generate Summary</h1>
+                    <p class="page-description">Generate, print, and download summaries of submitted requests.</p>
+                </div>
+
                 <div class="summary-controls">
-                    <h2>Generate Incident Summary</h2>
                     <div class="control-row">
                         <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
                             <option value="">-- Select Incident Report --</option>
@@ -602,6 +612,7 @@ $full_name = getCurrentUserName();
                 </div>
             </div>
 
+            <!-- Archives Tab -->
             <div id="archives" class="tab-pane">
                 <header class="top-header">
                     <div class="header-left">
@@ -613,9 +624,10 @@ $full_name = getCurrentUserName();
                         </div>
                     </div>
                 </header>
+
                 <div class="page-header">
-                    <h2>Archives</h2>
-                    <p class="form-description">View and restore your archived records.</p>
+                    <h1>Archives</h1>
+                    <p class="page-description">View and restore archived records.</p>
                 </div>
 
                 <div class="table-responsive">
@@ -628,8 +640,7 @@ $full_name = getCurrentUserName();
                                 <th>Full Name</th>
                                 <th>Email</th>
                                 <th>Archived At</th>
-                                <th>Restored At</th>
-                                <th>Role ID</th>
+                                <th>Role</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -645,7 +656,6 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Modals -->
         <div id="detailsModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -701,7 +711,6 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Map Picker Modal -->
         <div id="mapPickerModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">

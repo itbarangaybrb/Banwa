@@ -92,7 +92,8 @@ $full_name = getCurrentUserName();
 
     <main class="main">
         <div id="alert-container"></div>
-
+      
+        <!-- Mapping Tab -->
         <div id="mapping" class="tab-pane active">
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -218,8 +219,7 @@ $full_name = getCurrentUserName();
                     <div class="gm-topright-row">
                         <!-- Shows current logged-in user and live date/time -->
                         <div class="gm-user-pill">
-                            <span class="gm-page-title">Business Application Management</span>
-                            <div class="gm-user-divider"></div>
+                            <!-- <span class="gm-page-title">Business Application Management</span> -->
                             <div class="time_date" id="currentDateTime"></div>
                             <div class="gm-user-divider"></div>
                             <span class="gm-user-name"><?php echo htmlspecialchars($full_name); ?></span>
@@ -275,7 +275,7 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Dashboard tab with analytics charts -->
+        <!-- Dashboard Tab -->
         <div id="dashboard" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
@@ -288,6 +288,10 @@ $full_name = getCurrentUserName();
                 </div>
             </header>
 
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p class="page-description">Overview of system data and analytics</p>
+            </div>
 
             <div class="analytics-container">
                 <div class="charts">
@@ -318,7 +322,7 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Management tab with application table and search -->
+        <!-- Manage Applications Tab -->
         <div id="management" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
@@ -330,6 +334,11 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </header>
+
+            <div class="page-header">
+                <h1>Review and Manage Requests</h1>
+                <p class="page-description">View, check, and manage submitted requests and their status.</p>
+            </div>
 
             <div class="search-box">
                 <input type="text" id="managementSearch" placeholder="Search..." onkeyup="filterApplications()">
@@ -365,7 +374,7 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
-        <!-- Create New Application form with validation and OCR verification -->
+        <!-- Create Tab -->
         <div id="create" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
@@ -377,6 +386,11 @@ $full_name = getCurrentUserName();
                     </div>
                 </div>
             </header>
+
+            <div class="page-header">
+                <h1>Create New Request</h1>
+                <p class="page-description">Fill in the details to submit a new request</p>
+            </div>
 
             <form id="createStaffForm" onsubmit="createApplication(event)">
 
@@ -659,6 +673,7 @@ $full_name = getCurrentUserName();
             </form>
         </div>
 
+        <!-- Process Tab -->
         <div id="process" class="tab-pane">
             <h2>Process Applications</h2>
             <p class="form-description">Assess fees, send for payment, or issue final approval.</p>
@@ -684,7 +699,8 @@ $full_name = getCurrentUserName();
                 </table>
             </div>
         </div>
-        <!-- Generate Business Summary with export options -->
+
+        <!-- Generate Summary Tab -->
         <div id="summary" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
@@ -697,15 +713,19 @@ $full_name = getCurrentUserName();
                 </div>
             </header>
 
-            <div class="summary-container">
-                <div class="summary-controls">
-                    <div class="control-row">
-                        <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
-                            <option value="">-- Select Application --</option>
-                        </select>
-                        <button onclick="loadSummarySelect()" class="btn btn-secondary" title="Refresh List">Refresh</button>
-                    </div>
+            <div class="page-header" id="summaryHeader">
+                <h1>Generate Summary</h1>
+                <p class="page-description">Generate, print, and download summaries of submitted requests.</p>
+            </div>
+
+            <div class="summary-controls">
+                <div class="control-row">
+                    <select id="summaryApplicationSelect" onchange="updateSummary()" class="form-control">
+                        <option value="">-- Select Business Application --</option>
+                    </select>
+                    <button onclick="loadSummarySelect()" class="btn btn-secondary" title="Refresh List">Refresh</button>
                 </div>
+            </div>
 
                 <div id="summaryOutput" class="summary-report-container">
                     <div class="placeholder-state">
@@ -716,6 +736,7 @@ $full_name = getCurrentUserName();
             </div>
         </div>
 
+        <!-- Archives Tab -->
         <div id="archives" class="tab-pane">
             <header class="top-header">
                 <div class="header-left">
@@ -728,6 +749,11 @@ $full_name = getCurrentUserName();
                 </div>
             </header>
 
+            <div class="page-header">
+                <h1>Archives</h1>
+                <p class="page-description">View and restore archived records.</p>
+            </div>
+
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -738,8 +764,7 @@ $full_name = getCurrentUserName();
                             <th>Full Name</th>
                             <th>Email</th>
                             <th>Archived At</th>
-                            <th>Restored At</th>
-                            <th>Role ID</th>
+                            <th>Role</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -841,7 +866,6 @@ $full_name = getCurrentUserName();
     <script type="module" src="../../../scripts/staff/export.js"></script>
     <script type="module" src="../../../scripts/staff/filter.js"></script>
     <script type="module" src="../../../scripts/utils/archives.js"></script>
-
 
 </body>
 

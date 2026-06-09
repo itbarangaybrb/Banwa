@@ -29,6 +29,27 @@ if (!$input || !isset($input['table_name'], $input['record_id'])) {
 $table    = $input['table_name'];
 $recordId = $input['record_id'];
 
+$selectMap = [
+    'Users'                     => 'SELECT * FROM users WHERE user_id = ?',
+    'Utility Applications'      => 'SELECT * FROM utility_applications WHERE id = ?',
+    'Business Applications'     => 'SELECT * FROM business_applications WHERE id = ?',
+    'Construction Applications' => 'SELECT * FROM construction_applications WHERE id = ?',
+    'Incident Reports'          => 'SELECT * FROM incident_reports WHERE id = ?',
+];
+
+$archiveMap = [
+    'Users'                     => 'UPDATE users SET is_archived = TRUE WHERE user_id = ?',
+    'Utility Applications'      => 'UPDATE utility_applications SET is_archived = TRUE WHERE id = ?',
+    'Business Applications'     => 'UPDATE business_applications SET is_archived = TRUE WHERE id = ?',
+    'Construction Applications' => 'UPDATE construction_applications SET is_archived = TRUE WHERE id = ?',
+    'Incident Reports'          => 'UPDATE incident_reports SET is_archived = TRUE WHERE id = ?',
+];
+
+if (!isset($selectMap[$table])) {
+    echo json_encode(["success" => false, "message" => "Unsupported table"]);
+    exit;
+}
+
 // Helper: build full name from name-part fields
 function buildFullName(array $record): string {
     return trim(
@@ -40,16 +61,16 @@ function buildFullName(array $record): string {
 }
 
 try {
-    if ($table === 'users') {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
-        $stmt->execute([$recordId]);
-        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare($selectMap[$table]);
+    $stmt->execute([$recordId]);
+    $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$record) {
-            echo json_encode(["success" => false, "message" => "Record not found"]);
-            exit;
-        }
+    if (!$record) {
+        echo json_encode(["success" => false, "message" => "Record not found"]);
+        exit;
+    }
 
+    if ($table === 'Users') {
         $isRestricted = in_array((int)$userRoleId, [4, 5, 6, 7, 8]);
         if ($isRestricted && $record['supabase_user_id'] !== $supabaseUserId) {
             http_response_code(403);
@@ -59,27 +80,9 @@ try {
 
         $archiveFullName = $record['full_name'] ?? null;
         $archiveEmail    = $record['email']     ?? null;
-        $archiveRoleId   = $userRoleId;
-        $archiveUserId   = $supabaseUserId;
-
-    } elseif (in_array($table, ['utility_applications', 'business_applications', 'construction_applications', 'incident_reports'])) {
-        $stmt = $pdo->prepare("SELECT * FROM {$table} WHERE id = ?");
-        $stmt->execute([$recordId]);
-        $record = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$record) {
-            echo json_encode(["success" => false, "message" => "Record not found"]);
-            exit;
-        }
-
+    } else {
         $archiveFullName = buildFullName($record);
         $archiveEmail    = '';
-        $archiveRoleId   = $userRoleId;
-        $archiveUserId   = $supabaseUserId;
-
-    } else {
-        echo json_encode(["success" => false, "message" => "Unsupported table"]);
-        exit;
     }
 
     // Insert archive record
@@ -88,11 +91,10 @@ try {
             (table_name, record_id, supabase_user_id, full_name, email, role_id, archived_at)
         VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->execute([$table, $recordId, $archiveUserId, $archiveFullName, $archiveEmail, $archiveRoleId]);
+    $stmt->execute([$table, $recordId, $supabaseUserId, $archiveFullName, $archiveEmail, $userRoleId]);
 
     // Mark record as archived
-    $pkColumn = ($table === 'users') ? 'user_id' : 'id';
-    $stmt = $pdo->prepare("UPDATE {$table} SET is_archived = TRUE WHERE {$pkColumn} = ?");
+    $stmt = $pdo->prepare($archiveMap[$table]);
     $stmt->execute([$recordId]);
 
     writeAuditLog($pdo, 'ARCHIVE', $table, $recordId, $record, null, 'ARCHIVE');
