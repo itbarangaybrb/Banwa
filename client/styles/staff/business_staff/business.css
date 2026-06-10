@@ -742,7 +742,7 @@ tbody tr:last-child td {
 
 .page-header {
 
-    margin-top: 80px;
+    /* margin-top: 80px; */
     margin-bottom: 22px;
     margin-inline: 2%;
     padding-bottom: 18px;
@@ -1447,7 +1447,7 @@ tbody tr:last-child td {
 
 /* Page header inside content area (compact BANWA size) */
 .page-header {
-    margin-top: 80px;
+    /* margin-top: 80px; */
     margin-bottom: 22px;
     margin-inline: 2%;
     /* padding-bottom: 18px; */

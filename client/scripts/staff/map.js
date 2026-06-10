@@ -3148,7 +3148,7 @@ function attachAccordionHandler(popup) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  initNavbar();
+  // initNavbar();
 
   const searchInput = document.getElementById("search-input");
   if (searchInput) {
