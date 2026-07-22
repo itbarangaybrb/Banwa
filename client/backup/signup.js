@@ -477,7 +477,7 @@
 //     const { error } = await supabase.auth.resend({
 //         type: 'signup',
 //         email: signupData.email,
-//         options: { emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php" }
+//         options: { emailRedirectTo: "https://banwa-2ujo.onrender.com/client/pages/auth/confirm_verification.php" }
 //     });
 
 //     if (error) {
@@ -543,7 +543,7 @@
 //                 password: signupData.password,
 //                 options: {
 //                     data: signupData,
-//                     emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php"
+//                     emailRedirectTo: "https://banwa-2ujo.onrender.com/client/pages/auth/confirm_verification.php"
 //                 }
 //             });
 
