@@ -464,7 +464,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: allData.email,
-        options: { emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php" }
+        options: { emailRedirectTo: "https://banwa-2ujo.onrender.com/client/pages/auth/confirm_verification.php" }
     });
     if (error) {
         formElements.formMessage.style.color = 'red';
@@ -571,7 +571,7 @@ function setupAccountSubmission() {
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
-                options: { data: allData, emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification.php" }
+                options: { data: allData, emailRedirectTo: "https://banwa-2ujo.onrender.com/client/pages/auth/confirm_verification.php" }
             });
 
             if (error) {

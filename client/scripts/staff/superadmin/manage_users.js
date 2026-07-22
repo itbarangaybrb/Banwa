@@ -669,7 +669,7 @@ async function handleCreateFormSubmit(form) {
                     latitude: latitude,
                     longitude: longitude
                 },
-                emailRedirectTo: "https://banwa.onrender.com/client/pages/auth/confirm_verification_superadmin.php"
+                emailRedirectTo: "https://banwa-2ujo.onrender.com/client/pages/auth/confirm_verification_superadmin.php"
             }
         });
 
