@@ -279,7 +279,7 @@ function validation() {
                 password: signupData.password,
                 options: {
                     data: signupData,
-                    emailRedirectTo: "https://banwa-evw1.onrender.com/client/pages/auth/confirm_verification.php",
+                    emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php",
                 },
             });
 
@@ -358,7 +358,7 @@ function validation() {
             type: 'signup',
             email: signupData.email,
             options: {
-                emailRedirectTo: "https://banwa-evw1.onrender.com/client/pages/auth/confirm_verification.php"
+                emailRedirectTo: "http://localhost:8080/client/pages/auth/confirm_verification.php"
             }
         });
 

@@ -546,7 +546,7 @@ async function resendVerificationEmail() {
     const { error } = await supabase.auth.resend({
         type: 'signup',
         email: allData.email,
-        options: { emailRedirectTo: 'https://banwa-evw1.onrender.com/client/pages/auth/confirm_verification.php' },
+        options: { emailRedirectTo: 'http://localhost:8080/client/pages/auth/confirm_verification.php' },
     });
 
     if (error) {
@@ -657,7 +657,7 @@ function setupSignupSubmission() {
             const { data, error } = await supabase.auth.signUp({
                 email: allData.email,
                 password: allData.password,
-                options: { data: allData, emailRedirectTo: 'https://banwa-evw1.onrender.com/client/pages/auth/confirm_verification.php' },
+                options: { data: allData, emailRedirectTo: 'http://localhost:8080/client/pages/auth/confirm_verification.php' },
             });
 
             if (error) {
